@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<UserCombinePreferences filename="/home/sayao/Projects/msnp-sharp/msnpsharp.mds">
+  <Files>
+    <File filename="./msnp-sharp/AssemblyInfo.cs" />
+  </Files>
+  <Views>
+    <ViewMemento Id="MonoDevelop.Ide.Gui.Pads.ProjectPad">
+      <TreeView>
+        <Node expanded="True">
+          <Node name="msnp-sharp" expanded="True">
+            <Node name="enums.cs" expanded="False" selected="True" />
+          </Node>
+        </Node>
+      </TreeView>
+    </ViewMemento>
+    <ViewMemento Id="MonoDevelop.Ide.Gui.Pads.ClassPad">
+      <TreeView>
+        <Node expanded="True" />
+      </TreeView>
+    </ViewMemento>
+    <ViewMemento Id="MonoDevelop.NUnit.TestPad">
+      <TreeView>
+        <Node expanded="True" />
+      </TreeView>
+    </ViewMemento>
+    <ViewMemento Id="MonoQuery.DatabasePad">
+      <TreeView>
+        <Node expanded="False" />
+      </TreeView>
+    </ViewMemento>
+  </Views>
+  <Properties>
+    <Properties>
+      <Property key="ActiveConfiguration" value="Release" />
+      <Property key="ActiveWindow" value="/home/sayao/Projects/msnp-sharp/msnp-sharp/AssemblyInfo.cs" />
+    </Properties>
+  </Properties>
+</UserCombinePreferences>

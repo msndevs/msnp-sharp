@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+pkglibdir=@libdir@/@PACKAGE@
+Libraries=  ${pkglibdir}/@MSNP_SHARP_NUNIT_DEBUG_LIB@@MSNP_SHARP_NUNIT_RELEASE_LIB@
+
+Name: msnp-sharp.msnp-sharp-nunit
+Description: 
+Version: @VERSION@
+
+Requires:  nunit-2.2 msnp-sharp.ProxyServer msnp-sharp.msnp-sharp
+Libs:  -r:${pkglibdir}/@MSNP_SHARP_NUNIT_DEBUG_LIB@@MSNP_SHARP_NUNIT_RELEASE_LIB@

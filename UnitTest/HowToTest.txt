@@ -1,0 +1,13 @@
+* UnitTesting DotMSN
+
+In order to test DotMSN you need two working accounts. Please note that in the process the displayname will be changed! Besides that contactgroups and contacts will be added and removed (thus restoring the original state). But this can corrupt your list when a test fails!!
+
+WARNING:
+It is strongly advised to create two accounts solely for testing purposes and not use your own account!!
+
+Before you can run the tests you will have to specify account settings in the TestBase constructor in TestBase.cs. Change the following lines to represent your test environment:
+
+_client1 = new Messenger();
+_client1.Credentials = new Credentials("**ACCOUNT1**", "**PASSWORD**", "msmsgs@msnmsgr.com", "Q1P7W2E4J9R8U3S5");
+_client2 = new Messenger();
+_client2.Credentials = new Credentials("**ACCOUNT2**", "**PASSWORD**", "msmsgs@msnmsgr.com", "Q1P7W2E4J9R8U3S5");

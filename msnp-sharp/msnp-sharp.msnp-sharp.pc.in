@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+pkglibdir=@libdir@/@PACKAGE@
+Libraries=  ${pkglibdir}/@MSNP_SHARP_DEBUG_LIB@@MSNP_SHARP_RELEASE_LIB@
+
+Name: msnp-sharp.msnp-sharp
+Description: 
+Version: @VERSION@
+
+Requires: 
+Libs:  -r:${pkglibdir}/@MSNP_SHARP_DEBUG_LIB@@MSNP_SHARP_RELEASE_LIB@
