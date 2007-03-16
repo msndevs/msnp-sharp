@@ -1439,7 +1439,7 @@ namespace MSNPSharp
 					throw new MSNPSharpException("Passport server responded with an unknown header");
 				}				
 			}
-			catch(Exception e)
+			catch(HttpException e)
 			{
 				if (retries < 3)
 				{
