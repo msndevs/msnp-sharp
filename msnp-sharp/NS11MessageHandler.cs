@@ -641,7 +641,7 @@ namespace MSNPSharp
 		/// Fires the <see cref="AuthenticationError"/> event.
 		/// </summary>
 		/// <param name="e">The exception which was thrown</param>
-		protected virtual void OnAuthenticationErrorOccurred(UnauthorizedException e)
+		protected virtual void OnAuthenticationErrorOccurred(Exception e)
 		{
 			if(AuthenticationError != null)
 				AuthenticationError(this, new ExceptionEventArgs(e));
@@ -1357,17 +1357,12 @@ namespace MSNPSharp
 
 				return ticket;
 			}
-			catch(UnauthorizedException e)
+			catch(Exception e)
 			{				
 				// call this event
 				OnAuthenticationErrorOccurred(e);
 
 				// rethrow to client programmer
-				throw e;
-			}
-			catch(Exception e)
-			{
-				// wrap in a new exception
 				throw new MSNPSharpException("Authenticating with the Nexus service failed : " +e.ToString(), e);
 			}
 		}

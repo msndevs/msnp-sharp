@@ -1,0 +1,16 @@
+2007-03-16  Thiago M. Sayão <thiago.sayao@gmail.com> 
+
+	* msnp-sharp/NS11MessageHandler.cs: Fix AuthenticationException
+	* msnp-sharp/SocketMessageProcessor.cs: Reduce the timeout, it was too
+	  much
+
+2007-03-05 Thiago M. Sayão <thiago.sayao@gmail.com>
+	* Rename the project to MSNPSharp as requested by the original author
+	(Bas Geertsema)
+
+2007-02-27 Thiago M. Sayão <thiago.sayao@gmail.com>
+	* Fix file transfers
+	* Changed the API, added the AcceptTransfer and RejectTransfer instead
+	or using the argument variable Accept to true and false (solve thread
+	problems between the UI and DotMSN)
+

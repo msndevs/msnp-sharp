@@ -159,9 +159,8 @@ namespace MSNPSharp.Core
 
 			// set socket options
 
-			//Send operations will timeout of confirmation is not received within 60000 milliseconds.
-			socket.SendTimeout = 60000;
-			socket.ReceiveTimeout = 60000;
+			//Send operations will timeout of confirmation is not received within 3000 milliseconds.
+			socket.SendTimeout = 3000;
 			
 			LingerOption lingerOption = new LingerOption(false, 0);
 			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, lingerOption);
