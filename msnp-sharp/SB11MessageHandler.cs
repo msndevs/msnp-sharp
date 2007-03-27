@@ -121,6 +121,8 @@ namespace MSNPSharp
 	/// Used when a emoticon definition is received from a remote contact. 
 	/// </summary>
 	public delegate void EmoticonDefinitionReceivedEventHandler(object sender, EmoticonDefinitionEventArgs e);
+	
+	public delegate void WinkReceivedEventHandler (object sender, WinkEventArgs args);
 
 	/// <summary>
 	/// Used when a remote contact begins typing. 		
@@ -235,6 +237,8 @@ namespace MSNPSharp
 		/// Fired when a contact sends a emoticon definition.
 		/// </summary>
 		public event EmoticonDefinitionReceivedEventHandler		EmoticonDefinitionReceived;
+		
+		public event WinkReceivedEventHandler WinkReceived;
 
 		/// <summary>
 		/// Fired when a contact sends a nudge
@@ -365,6 +369,17 @@ namespace MSNPSharp
 					EmoticonDefinitionReceived(this, new EmoticonDefinitionEventArgs(contact, emoticon));
 				}
 			}
+		}
+		
+		protected virtual void OnWinkReceived (MSGMessage message, Contact contact)
+		{
+			string body = System.Text.Encoding.UTF8.GetString(message.InnerBody);
+			
+			Wink obj = new Wink ();
+			obj.ParseContext (body, false);
+			
+			if (WinkReceived != null)
+				WinkReceived (this, new WinkEventArgs (contact, obj));
 		}
 		
 		/// <summary>
@@ -662,7 +677,7 @@ namespace MSNPSharp
 			SBMessage sbMessage = new SBMessage();
 			
 			MSGMessage msgMessage = new MSGMessage();
-			msgMessage.MimeHeader["Content-Type"] = "text/x-msnmsgr-datacast\r\n\r\nID: 69\r\n\r\n\r\n";
+			msgMessage.MimeHeader["Content-Type"] = "text/x-msnmsgr-datacast\r\n\r\nID: 1\r\n\r\n\r\n";
 			sbMessage.InnerMessage = msgMessage;			
 			
 			// send it over the network
@@ -892,7 +907,7 @@ namespace MSNPSharp
                        
 			// get the corresponding SBMSGMessage object
 			MSGMessage sbMSGMessage = new MSGMessage(message);
-
+			
 			if (sbMSGMessage.MimeHeader.ContainsKey ("Content-Type"))
 				switch(sbMSGMessage.MimeHeader["Content-Type"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture))
 				{
@@ -922,9 +937,14 @@ namespace MSNPSharp
 					
 					#region text/x-msnmsgr-datacast
 					case "text/x-msnmsgr-datacast":
-						if (message.CommandValues[2].ToString () == "69")
+if (Convert.ToInt32 (message.CommandValues[2]) == 69)
+					{
+Console.WriteLine (sbMSGMessage.InnerBody.ToString ());
+						
 							OnNudgeReceived (contact);
-						//wink is 1325
+					}
+						if (Convert.ToInt32 (message.CommandValues[2]) == 1325)
+							OnWinkReceived (sbMSGMessage, contact);
 						break;
 					#endregion
 							

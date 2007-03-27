@@ -55,7 +55,6 @@
     <File name="./P2PMessagePool.cs" subtype="Code" buildaction="Compile" />
     <File name="./P2PMessageSession.cs" subtype="Code" buildaction="Compile" />
     <File name="./P2PTransferSession.cs" subtype="Code" buildaction="Compile" />
-    <File name="./PersistentStream.cs" subtype="Code" buildaction="Compile" />
     <File name="./SB11MessageHandler.cs" subtype="Code" buildaction="Compile" />
     <File name="./SBMessage.cs" subtype="Code" buildaction="Compile" />
     <File name="./SBMessagePool.cs" subtype="Code" buildaction="Compile" />
@@ -76,6 +75,7 @@
     <File name="./ProxySocket/SocksHandler.cs" subtype="Code" buildaction="Compile" />
     <File name="./QRYFactory.cs" subtype="Code" buildaction="Compile" />
     <File name="./PersonalMessage.cs" subtype="Code" buildaction="Compile" />
+    <File name="./Wink.cs" subtype="Code" buildaction="Compile" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />

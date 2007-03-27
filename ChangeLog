@@ -1,3 +1,13 @@
+2007-03-26  Thiago M. Sayão <thiago.sayao@gmail.com> 
+
+	* msnp-sharp/PersistentStream.cs: Removed
+	* msnp-sharp/NS11MessageHandler.cs: Fix bug when removing contacts
+	* msnp-sharp/EventArgs.cs, msnp-sharp/SB11MessageHandler.cs,
+	  msnp-sharp/Wink.cs: Add Winks support
+	* msnp-sharp/MSNSLPHandler.cs, msnp-sharp/MSNObject.cs: Add Winks
+	  support, cleanup
+	* msnp-sharp/DisplayImage.cs: Remove PersistentStream
+
 2007-03-16  Thiago M. Sayão <thiago.sayao@gmail.com> 
 
 	* msnp-sharp/NS11MessageHandler.cs: Fix AuthenticationException

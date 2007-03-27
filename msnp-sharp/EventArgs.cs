@@ -105,6 +105,35 @@ namespace MSNPSharp
 			Sender  = sender;
 		}
 	}
+	
+	[Serializable()]
+	public class WinkEventArgs : EventArgs
+	{
+		private Contact sender;
+		
+		/// <summary>
+		/// The sender of the message.
+		/// </summary>
+		public Contact Sender
+		{
+			get { return sender; }
+			set { sender = value;}
+		}
+
+		private Wink wink;
+		
+		public Wink Wink
+		{
+			get { return wink; }
+			set { wink = value; }
+		}
+		
+		public WinkEventArgs (Contact contact, Wink wink)
+		{
+			this.sender = contact;
+			this.wink = wink;
+		}
+	}
 
 	/// <summary>
 	/// Used as event argument when a emoticon definition is send.

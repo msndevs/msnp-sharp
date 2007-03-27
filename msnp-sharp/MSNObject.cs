@@ -41,30 +41,13 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Defines the type of MSNObject.
-	/// </summary>
+	
 	public enum MSNObjectType
 	{
-		/// <summary>
-		/// Unknown msnobject type.
-		/// </summary>
 		Unknown = 0,
-		/// <summary>
-		/// Emotion icon.
-		/// </summary>
 		Emoticon = 2,
-		/// <summary>
-		/// User display image.
-		/// </summary>
 		UserDisplay = 3,
-		/// <summary>
-		/// Background image.
-		/// </summary>
 		Background = 5,
-		/// <summary>
-		/// Wink.
-		/// </summary>
 		Wink = 8
 	}	 
 
@@ -74,43 +57,72 @@ namespace MSNPSharp
 	[Serializable()]
 	public class MSNObject
 	{		
-		/// <summary>
-		/// </summary>
 		private string	originalContext = null;
-		/// <summary>
-		/// </summary>
 		private string	oldHash = "";
-		/// <summary>
-		/// </summary>
 		[NonSerialized]
-		private PersistentStream dataStream = null;		
+		private Stream dataStream = null;		
 
-		/// <summary>
-		/// </summary>
 		private string fileLocation = null;
-		/// <summary>
-		/// </summary>
 		private string creator;
-		/// <summary>
-		/// </summary>
 		private int	size;
-		/// <summary>
-		/// </summary>
 		private MSNObjectType type;
-		/// <summary>
-		/// </summary>
 		private string location;		 
-		/// <summary>
-		/// </summary>
-		private string friendly = null;		 
-		/// <summary>
-		/// </summary>
+		private string friendly = "\0";		 
 		private string sha = String.Empty;
 
+		
+		public MSNObject()
+		{			
+			DataStream = new MemoryStream();
+		}
+
+		/// <summary>
+		/// Constructs a MSN object based on a (memory)stream. The client programmer is responsible for inserting this object in the global msn object collection.
+		/// The stream must remain open during the whole life-length of the application.
+		/// </summary>
+		/// <param name="creator"></param>
+		/// <param name="inputStream"></param>
+		/// <param name="type"></param>
+		/// <param name="location"></param>
+		public MSNObject(string creator, Stream inputStream, MSNObjectType type, string location)
+		{						
+			this.creator = creator;
+			this.size	= (int)inputStream.Length;
+			this.type 	= type;
+			this.location = location;// + new Random().Next().ToString();
+			
+			this.sha = GetStreamHash(inputStream);
+
+			this.DataStream = inputStream;
+		}
+
+		/// <summary>
+		/// Constructs a MSN object based on a physical file. The client programmer is responsible for inserting this object in the global msn object collection.
+		/// </summary>
+		/// <param name="creator"></param>
+		/// <param name="type"></param>
+		/// <param name="fileLocation"></param>
+		public MSNObject(string creator, string fileLocation, MSNObjectType type)
+		{			
+			this.location  = Path.GetFullPath(fileLocation).Replace(Path.GetPathRoot(fileLocation), "");			
+			this.location += new Random().Next().ToString(CultureInfo.InvariantCulture);
+
+			this.fileLocation = fileLocation;
+
+			Stream stream = OpenStream();
+			
+			this.creator = creator;
+			this.size	= (int)stream.Length;
+			this.type 	= type;
+			
+			this.sha = GetStreamHash(stream);
+			stream.Close();
+		}	
+		
 		/// <summary>
 		/// The datastream to write to, or to read from
 		/// </summary>
-		protected PersistentStream DataStream
+		public Stream DataStream
 		{
 			get { return dataStream; }
 			set 
@@ -202,7 +214,7 @@ namespace MSNPSharp
                 dataStream.Close();
 
             // and open a new stream
-            dataStream = new PersistentStream(new MemoryStream());
+            dataStream = new MemoryStream();
 
             // copy the file
             byte[] buffer = new byte[512];
@@ -266,17 +278,6 @@ namespace MSNPSharp
 			return Convert.ToBase64String(hashBytes);
 		}
 				
-		/// <summary>
-		/// Creates a MSNObject.
-		/// </summary>		
-		public MSNObject()
-		{			
-			DataStream = new PersistentStream(new MemoryStream());
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
 		private static Regex contextRe = new Regex("(?<Name>[^= ]+)=\"(?<Value>[^\"]+)\"");
 
 		/// <summary>
@@ -319,58 +320,17 @@ namespace MSNPSharp
 							case "2": type = MSNObjectType.Emoticon; break;
 							case "3": type = MSNObjectType.UserDisplay; break;
 							case "5": type = MSNObjectType.Background; break;
+							case "8": type = MSNObjectType.Wink; break;
 						}
 						break;
 					}
 					case "location":this.location = val; break;
 					case "sha1d": this.sha = val; break;
-					case "friendly": this.friendly = val; break;
+					case "friendly": this.friendly = UTF8Encoding.UTF8.GetString(Convert.FromBase64String (val)); break;
+					//case "friendly": this.friendly =  val; break;
 				}
 			}
 		}
-
-		/// <summary>
-		/// Constructs a MSN object based on a (memory)stream. The client programmer is responsible for inserting this object in the global msn object collection.
-		/// The stream must remain open during the whole life-length of the application.
-		/// </summary>
-		/// <param name="creator"></param>
-		/// <param name="inputStream"></param>
-		/// <param name="type"></param>
-		/// <param name="location"></param>
-		public MSNObject(string creator, Stream inputStream, MSNObjectType type, string location)
-		{						
-			this.creator = creator;
-			this.size	= (int)inputStream.Length;
-			this.type 	= type;
-			this.location = location;// + new Random().Next().ToString();
-			
-			this.sha = GetStreamHash(inputStream);
-
-			this.DataStream = new PersistentStream(inputStream);
-		}
-
-		/// <summary>
-		/// Constructs a MSN object based on a physical file. The client programmer is responsible for inserting this object in the global msn object collection.
-		/// </summary>
-		/// <param name="creator"></param>
-		/// <param name="type"></param>
-		/// <param name="fileLocation"></param>
-		public MSNObject(string creator, string fileLocation, MSNObjectType type)
-		{			
-			this.location  = Path.GetFullPath(fileLocation).Replace(Path.GetPathRoot(fileLocation), "");			
-			this.location += new Random().Next().ToString(CultureInfo.InvariantCulture);
-
-			this.fileLocation = fileLocation;
-
-			Stream stream = OpenStream();
-			
-			this.creator = creator;
-			this.size	= (int)stream.Length;
-			this.type 	= type;
-			
-			this.sha = GetStreamHash(stream);
-			stream.Close();
-		}	
 
 		/// <summary>
 		/// Returns the stream to read from. In case of an in-memory stream that stream is returned. In case of a filelocation
@@ -379,17 +339,6 @@ namespace MSNPSharp
 		/// <returns></returns>
 		public virtual Stream OpenStream()
 		{				
-			/*if(dataStream == null)
-			{
-				if(fileLocation != null && this.fileLocation.Length > 0)
-					dataStream = new PersistentStream(new FileStream(fileLocation, FileMode.Open, FileAccess.Read));
-				else
-					throw new MSNPSharpException("No memorystream or filestream available to open in a MSNObject context.");
-			}
-			else*/
-				dataStream.Open();		
-			
-			// otherwise it's a memorystream
 			return dataStream;
 		}		
 		
@@ -436,7 +385,7 @@ namespace MSNPSharp
 			                         Size,
 			                         (int)Type,
 			                         Location,
-			                         Friendly,
+			                         Convert.ToBase64String (Encoding.UTF8.GetBytes (Friendly)),
 			                         Sha.Replace (' ', '+'), //this is needed, it's not on the docs, but it has, trust me!
 			                         CalculateChecksum ());
 		}

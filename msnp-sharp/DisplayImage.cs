@@ -112,9 +112,8 @@ namespace MSNPSharp
 		/// </summary>
 		public void UpdateStream()
 		{
-			Stream output = new MemoryStream();			
-			image.Save(output, ImageFormat.Png);
-			DataStream = new PersistentStream(output);
+			DataStream = new MemoryStream();			
+			image.Save(DataStream, ImageFormat.Png);
 			Size = (int)DataStream.Length;							
 			Sha = GetStreamHash(DataStream);
 		}

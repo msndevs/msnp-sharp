@@ -2227,7 +2227,7 @@ namespace MSNPSharp
 			if(list == MSNLists.ReverseList && ReverseRemoved != null)
 				ReverseRemoved(this, new ContactEventArgs(contact));
 
-			if(ContactRemoved != null)
+			if(list == MSNLists.ForwardList && ContactRemoved != null)
 				ContactRemoved(this, new ListMutateEventArgs(contact, list));
 		}
 

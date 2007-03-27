@@ -50,20 +50,20 @@ namespace MSNPSharp.DataTransfer
 		/// <summary>
 		/// Unknown datatransfer type.
 		/// </summary>
-		Unknown,
+		Unknown = 0,
 		/// <summary>
 		/// Filetransfer.
 		/// </summary>
-		File,
+		File = 1,
 		/// <summary>
 		/// Emoticon transfer.
 		/// </summary>
-		Emoticon,
+		Emoticon = 2,
 		/// <summary>
 		/// Displayimage transfer.
 		/// </summary>
-		DisplayImage,
-		Wink,
+		DisplayImage = 3,
+		Wink = 8,
 		WebCam
 	}
 
@@ -464,8 +464,8 @@ namespace MSNPSharp.DataTransfer
 		/// <summary>
 		/// The guid used in webcam
 		/// </summary>
-		public const string WebCamShowGuid  = "4BD96FC0-AB17-4425-A14A-439185962DC8";
-		public const string WebCamSeeGuid  = "1C9AA97E-9C05-4583-A3BD-908A196F1E92";
+		public const string WebCamShowGuid  = "{4BD96FC0-AB17-4425-A14A-439185962DC8}";
+		public const string WebCamSeeGuid  = "{1C9AA97E-9C05-4583-A3BD-908A196F1E92}";
 		
 		/// <summary>
 		/// The guid used in winks
@@ -518,13 +518,19 @@ namespace MSNPSharp.DataTransfer
 			properties.LocalContact = localContact;
 			properties.RemoteContact = remoteContact;
 			
+			string guid = MSNSLPHandler.UserDisplayGuid;
+			
 			if(msnObject.Type == MSNObjectType.Emoticon)
 				properties.DataType = DataTransferType.Emoticon;
 			else if(msnObject.Type == MSNObjectType.UserDisplay)
 				properties.DataType = DataTransferType.DisplayImage;
 			else if(msnObject.Type == MSNObjectType.Wink)
+			{
 				properties.DataType = DataTransferType.Wink;
+				guid = MSNSLPHandler.WinkGuid;
+			}
 			
+						
 			//Console.WriteLine ("Original Context: {0}", msnObject.OriginalContext);
 			//Console.WriteLine ("Context: {0}", msnObject.ContextPlain);
 			
@@ -545,7 +551,7 @@ namespace MSNPSharp.DataTransfer
 			slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
 			slpMessage.MaxForwards = 0;
 			slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-			slpMessage.Body = "EUF-GUID: " + MSNSLPHandler.UserDisplayGuid + "\r\nSessionID: " + properties.SessionId + "\r\nAppID: 1\r\n" +
+			slpMessage.Body = "EUF-GUID: " + guid + "\r\nSessionID: " + properties.SessionId + "\r\nAppID: 1\r\n" +
 				"Context: " + base64Context + "\r\n\r\n";
 
 			P2PMessage p2pMessage = new P2PMessage();
@@ -828,7 +834,7 @@ namespace MSNPSharp.DataTransfer
 				{
 					properties.DataType = DataTransferType.WebCam;
 				}
-
+				
 				// store the branch for use in the OK Message
 				properties.LastBranch = new Guid(message.Branch);
 				properties.LastCSeq = message.CSeq;
@@ -1182,7 +1188,9 @@ namespace MSNPSharp.DataTransfer
 					invitationArgs.Filename = strfname;					
 					//TODO: File Preview
 				}
-				else
+				else if (properties.DataType == DataTransferType.DisplayImage
+				         || properties.DataType == DataTransferType.Emoticon
+				         || properties.DataType == DataTransferType.Wink)
 				{
 					// create a MSNObject based upon the send context
 					invitationArgs.MSNObject = new MSNObject();
