@@ -73,7 +73,7 @@ namespace MSNPSharp
 		
 		public MSNObject()
 		{			
-			DataStream = new MemoryStream();
+			
 		}
 
 		/// <summary>
@@ -109,25 +109,29 @@ namespace MSNPSharp
 
 			this.fileLocation = fileLocation;
 
-			Stream stream = OpenStream();
+			//Stream stream = OpenStream();
 			
 			this.creator = creator;
-			this.size	= (int)stream.Length;
+			//this.size	= (int)stream.Length;
 			this.type 	= type;
 			
-			this.sha = GetStreamHash(stream);
-			stream.Close();
+			//this.sha = GetStreamHash(stream);
+			//stream.Close();
 		}	
 		
 		/// <summary>
 		/// The datastream to write to, or to read from
 		/// </summary>
-		public Stream DataStream
+		public virtual Stream DataStream
 		{
-			get { return dataStream; }
-			set 
-			{ 
-				dataStream = value;			
+			get {
+				if (dataStream == null)
+					dataStream = new MemoryStream ();
+				
+				return dataStream;
+			}
+			set {
+				dataStream = value;
 			}
 		}
 
@@ -209,24 +213,17 @@ namespace MSNPSharp
             this.fileLocation = fileName;
             this.location = Path.GetRandomFileName();
 
-            // close any current datastreams. One is always created in the constructor
-            if (dataStream != null)
-                dataStream.Close();
-
-            // and open a new stream
-            dataStream = new MemoryStream();
-
             // copy the file
             byte[] buffer = new byte[512];
             Stream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
             int cnt = 0;
             while ((cnt = fileStream.Read(buffer, 0, 512)) > 0)
             {
-                dataStream.Write(buffer, 0, cnt);
+                DataStream.Write(buffer, 0, cnt);
             }
 
-            this.size = (int)dataStream.Length;
-            this.sha = GetStreamHash(dataStream);
+            this.size = (int)DataStream.Length;
+            this.sha = GetStreamHash(DataStream);
 
             UpdateInCollection();
         }
@@ -331,17 +328,6 @@ namespace MSNPSharp
 				}
 			}
 		}
-
-		/// <summary>
-		/// Returns the stream to read from. In case of an in-memory stream that stream is returned. In case of a filelocation
-		/// a stream to the file will be opened and returned. The stream is not guaranteed to positioned at the beginning of the stream.
-		/// </summary>
-		/// <returns></returns>
-		public virtual Stream OpenStream()
-		{				
-			return dataStream;
-		}		
-		
 		
 		/// <summary>
 		/// Calculates the checksum for the entire MSN Object.

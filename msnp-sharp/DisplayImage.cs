@@ -112,7 +112,6 @@ namespace MSNPSharp
 		/// </summary>
 		public void UpdateStream()
 		{
-			DataStream = new MemoryStream();			
 			image.Save(DataStream, ImageFormat.Png);
 			Size = (int)DataStream.Length;							
 			Sha = GetStreamHash(DataStream);
@@ -123,7 +122,8 @@ namespace MSNPSharp
 		/// </summary>
 		public void RetrieveImage()
 		{
-			Stream input = OpenStream();
+			Stream input = DataStream;
+			
 			if(input != null)
 			{
 				lock(input)

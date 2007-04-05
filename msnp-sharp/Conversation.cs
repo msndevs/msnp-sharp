@@ -168,7 +168,7 @@ namespace MSNPSharp
 					MSNSLPHandler msnslpHandler = (MSNSLPHandler)handlerObject;					
 					
 					P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalContact, session.RemoteContact, e.Emoticon);
-					transferSession.DataStream = e.Emoticon.OpenStream();
+					transferSession.DataStream = e.Emoticon.DataStream;
 					transferSession.ClientData = e.Emoticon;					
 
 					transferSession.TransferAborted += new EventHandler(transferSession_TransferFinished);					

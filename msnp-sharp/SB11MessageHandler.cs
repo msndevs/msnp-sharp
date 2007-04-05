@@ -937,13 +937,9 @@ namespace MSNPSharp
 					
 					#region text/x-msnmsgr-datacast
 					case "text/x-msnmsgr-datacast":
-if (Convert.ToInt32 (message.CommandValues[2]) == 69)
-					{
-Console.WriteLine (sbMSGMessage.InnerBody.ToString ());
-						
+						if (message.CommandValues[2].Equals ("69"))
 							OnNudgeReceived (contact);
-					}
-						if (Convert.ToInt32 (message.CommandValues[2]) == 1325)
+						else if (message.CommandValues[2].Equals ("1325"))
 							OnWinkReceived (sbMSGMessage, contact);
 						break;
 					#endregion

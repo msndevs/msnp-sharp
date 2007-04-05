@@ -571,7 +571,7 @@ namespace MSNPSharp.DataTransfer
 			MessageSession.AddTransferSession(session);
 
 			// set the data stream to write to
-			session.DataStream = msnObject.OpenStream();
+			session.DataStream = msnObject.DataStream;
 			session.IsSender = false;
 			session.CallId = properties.CallId;			
 

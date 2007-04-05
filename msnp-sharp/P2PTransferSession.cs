@@ -152,7 +152,7 @@ namespace MSNPSharp.DataTransfer
 		/// <summary>
 		/// The stream to read from when data is send, or to write to when data is received.
 		/// </summary>
-		private Stream dataStream = new MemoryStream();
+		private Stream dataStream;
 
 		/// <summary>
 		/// The stream to read from when data is send, or to write to when data is received. Default is a MemorySteam.
@@ -164,7 +164,9 @@ namespace MSNPSharp.DataTransfer
 		/// </remarks>
 		public Stream DataStream
 		{
-			get { return dataStream; }
+			get {
+				return dataStream; 
+			}
 			set { dataStream = value;}
 		}		
 

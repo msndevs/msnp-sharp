@@ -451,7 +451,7 @@ namespace MSNPSharp
 		{			
 			if(e.TransferProperties.DataType == DataTransferType.DisplayImage)
 			{
-				e.TransferSession.DataStream = nsMessageHandler.Owner.DisplayImage.OpenStream();				
+				e.TransferSession.DataStream = nsMessageHandler.Owner.DisplayImage.DataStream;				
 				e.TransferSession.AutoCloseStream = false;
 				
 				e.TransferSession.ClientData = nsMessageHandler.Owner.DisplayImage;
@@ -469,7 +469,7 @@ namespace MSNPSharp
 					if(emoticon.Sha == msnObject.Sha)
 					{
 						e.TransferSession.AutoCloseStream = true;
-						e.TransferSession.DataStream = emoticon.OpenStream();
+						e.TransferSession.DataStream = emoticon.DataStream;
 						e.TransferSession.ClientData = emoticon;
 						e.Handler.AcceptTransfer (e);
 					}
