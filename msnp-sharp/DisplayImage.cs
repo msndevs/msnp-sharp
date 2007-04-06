@@ -37,44 +37,31 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// A User display image.
-	/// </summary>
-	/// <remarks>
-	/// This class can be used for convenient access to contact's and owner's user displays. It enables you to directly retrieve a .Net image object to
-	/// view and manipulate.
-	/// </remarks>
 	[Serializable()]
 	public class DisplayImage : MSNObject
 	{
-		/// <summary>
-		/// Constructs a null image.
-		/// </summary>
+		Image image = null;
+		
 		public DisplayImage()
 		{
 			Type = MSNObjectType.UserDisplay;		
 			Location = "dotmsn.png";
 		}
 
-		/// <summary>
-		/// Constructs a null image.
-		/// </summary>
-		/// <param name="creator">Creator of the image</param>
 		public DisplayImage(string creator)
 		{
 			Type = MSNObjectType.UserDisplay;		
 			Location = "dotmsn.png";
 			Creator = creator;
 		}
+		
+		public DisplayImage(string creator, Stream input, string location)
+			: base(creator, input, MSNObjectType.UserDisplay, location)
+		{
+			RetrieveImage();
+		}		
 
-		/// <summary>
-		/// </summary>
-		private	Image	image = null;
-
-		/// <summary>
-		/// The user display image. Null if not set
-		/// </summary>
-		public Image	Image
+		public Image Image
 		{
 			get { return image; }
 			set 
@@ -84,42 +71,13 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// Loads an image based on a stream.
-		/// </summary>
-		/// <param name="creator">Creator of the image</param>
-		/// <param name="input">Stream representing the image</param>
-		/// <param name="location">A location name given to the image</param>
-		public DisplayImage(string creator, Stream input, string location)
-			: base(creator, input, MSNObjectType.UserDisplay, location)
-		{
-			RetrieveImage();
-		}		
-
-		/// <summary>
-		/// Loads the image in the specified file.
-		/// </summary>
-		/// <param name="creator">Creator of the image</param>
-		/// <param name="file">Filename of the imagefile</param>
-		public DisplayImage(string creator, string file)
-			: base(creator, file, MSNObjectType.UserDisplay)
-		{
-			RetrieveImage();
-		}
-
-		/// <summary>
-		/// Saves the image to the inner stream which is send to remote contacts. Is also automatically called when setting the Image property.
-		/// </summary>
-		public void UpdateStream()
+		void UpdateStream()
 		{
 			image.Save(DataStream, ImageFormat.Png);
 			Size = (int)DataStream.Length;							
 			Sha = GetStreamHash(DataStream);
 		}
 		
-		/// <summary>
-		/// Sets the Image object based on the MSNObject's datastream.
-		/// </summary>
 		public void RetrieveImage()
 		{
 			Stream input = DataStream;
@@ -133,9 +91,10 @@ namespace MSNPSharp
 					{						
 						image = System.Drawing.Image.FromStream(input);
 					}
+					
+					input.Position = 0;
 				}
 			}
-			input.Close();
 		}
 	}
 }

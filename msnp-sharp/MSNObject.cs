@@ -95,33 +95,7 @@ namespace MSNPSharp
 
 			this.DataStream = inputStream;
 		}
-
-		/// <summary>
-		/// Constructs a MSN object based on a physical file. The client programmer is responsible for inserting this object in the global msn object collection.
-		/// </summary>
-		/// <param name="creator"></param>
-		/// <param name="type"></param>
-		/// <param name="fileLocation"></param>
-		public MSNObject(string creator, string fileLocation, MSNObjectType type)
-		{			
-			this.location  = Path.GetFullPath(fileLocation).Replace(Path.GetPathRoot(fileLocation), "");			
-			this.location += new Random().Next().ToString(CultureInfo.InvariantCulture);
-
-			this.fileLocation = fileLocation;
-
-			//Stream stream = OpenStream();
-			
-			this.creator = creator;
-			//this.size	= (int)stream.Length;
-			this.type 	= type;
-			
-			//this.sha = GetStreamHash(stream);
-			//stream.Close();
-		}	
 		
-		/// <summary>
-		/// The datastream to write to, or to read from
-		/// </summary>
 		public virtual Stream DataStream
 		{
 			get {
@@ -135,18 +109,12 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// The local contact list owner
-		/// </summary>
 		public string Creator
 		{
 			get { return creator; }
 			set { creator = value; UpdateInCollection(); }
 		}
 
-		/// <summary>
-		/// The friendly name of the file
-		/// </summary>
 		public string Friendly
 		{
 			get {
@@ -155,44 +123,29 @@ namespace MSNPSharp
 			set { friendly = value; UpdateInCollection(); }
 		}
 		
-		/// <summary>
-		/// The original context string that was send by the remote contact
-		/// </summary>
 		public string OriginalContext
 		{
 			get { return originalContext; }
 		}
 
-		/// <summary>
-		/// The total data size
-		/// </summary>
 		public int Size
 		{
 			get { return size; }
 			set { size = value; UpdateInCollection(); }
 		}
 
-		/// <summary>
-		/// The type of MSN Object
-		/// </summary>
 		public MSNObjectType Type
 		{
 			get { return type; }
 			set { type = value; UpdateInCollection(); }
 		}
 
-		/// <summary>
-		/// The location of the object. This is a location on the hard-drive. Use relative paths. This is only a text string; na data is read in after setting this field. Use FileLocation for that purpose.
-		/// </summary>
 		public string Location
 		{
 			get { return location; }
 			set { location = value; UpdateInCollection(); }
 		}
 
-		/// <summary>
-		/// [Deprecated, use LoadFile()] Gets or sets the file location. When a file is set the file data is immediately read in memory to extract the filehash. It will retain in memory afterwards.
-		/// </summary>
 		public string FileLocation
 		{
 			get { return fileLocation; }
@@ -203,10 +156,6 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-        /// Gets or sets the file location. When a file is set the file data is immediately read in memory to extract the filehash. It will retain in memory afterwards.
-        /// </summary>
-        /// <param name="fileName"></param>
         public void LoadFile(string fileName)
         {
             if (this.fileLocation == fileName) return;
@@ -228,21 +177,12 @@ namespace MSNPSharp
             UpdateInCollection();
         }
 
-		/// <summary>
-		/// The SHA1 encrypted hash of the datastream.
-		/// </summary>
-		/// <remarks>
-		/// Usually the application programmer don't need to set this itself.
-		/// </remarks>
 		public string Sha
 		{
 			get { return sha; }
 			set { sha = value; UpdateInCollection(); }
 		}
 
-		/// <summary>
-		/// Updates the msn object in the global MSNObjectCatalog.
-		/// </summary>
 		public void UpdateInCollection()
 		{
 			if(oldHash.Length != 0)
@@ -253,11 +193,6 @@ namespace MSNPSharp
 			MSNObjectCatalog.GetInstance().Add(oldHash, this);
 		}
 
-		/// <summary>
-		/// Calculates the hash of datastream.
-		/// </summary>
-		/// <param name="stream"></param>
-		/// <returns></returns>
 		protected string GetStreamHash(Stream stream)
 		{
 			stream.Seek(0, SeekOrigin.Begin);
@@ -277,20 +212,11 @@ namespace MSNPSharp
 				
 		private static Regex contextRe = new Regex("(?<Name>[^= ]+)=\"(?<Value>[^\"]+)\"");
 
-		/// <summary>
-		/// Parses a context send by the remote contact and set the corresponding class variables. Context input is assumed to be not base64 encoded.
-		/// </summary>
-		/// <param name="context"></param>
 		public virtual void ParseContext(string context)
 		{
 			ParseContext(context, false);
 		}
 
-		/// <summary>
-		/// Parses a context send by the remote contact and set the corresponding class variables.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="base64Encoded"></param>
 		public virtual void ParseContext(string context, bool base64Encoded)
 		{
 			originalContext = context;
@@ -324,16 +250,10 @@ namespace MSNPSharp
 					case "location":this.location = val; break;
 					case "sha1d": this.sha = val; break;
 					case "friendly": this.friendly = UTF8Encoding.UTF8.GetString(Convert.FromBase64String (val)); break;
-					//case "friendly": this.friendly =  val; break;
 				}
 			}
 		}
 		
-		/// <summary>
-		/// Calculates the checksum for the entire MSN Object.
-		/// </summary>
-		/// <remarks>This value is used to uniquely identify a MSNObject.</remarks>
-		/// <returns></returns>
 		public string CalculateChecksum()
 		{
 			string checksum = "Creator"+Creator+"Size"+Size+"Type"+(int)this.Type+"Location"+Location+"Friendly"+Friendly+"SHA1D"+Sha;
@@ -343,27 +263,17 @@ namespace MSNPSharp
 			return baseEncChecksum;
 		}
 
-		/// <summary>
-		/// The context as an url-encoded xml string.
-		/// </summary>
 		public string Context
 		{
 			get { return GetEncodedString(); }
 			set { ParseContext(value);  }
 		}
 
-		/// <summary>
-		/// The context as an xml string, not url-encoded.
-		/// </summary>
 		public string ContextPlain
 		{
 			get { return GetXmlString(); }			
 		}
 		
-		/// <summary>
-		/// Returns the xml string.
-		/// </summary>
-		/// <returns></returns>
 		protected virtual string GetXmlString()
 		{
 			return String.Format ("<msnobj Creator=\"{0}\" Size=\"{1}\" Type=\"{2}\" Location=\"{3}\" Friendly=\"{4}\" SHA1D=\"{5}\" SHA1C=\"{6}\"/>",
@@ -376,10 +286,6 @@ namespace MSNPSharp
 			                         CalculateChecksum ());
 		}
 
-		/// <summary>
-		/// Returns the url-encoded xml string.
-		/// </summary>
-		/// <returns></returns>
 		protected virtual string GetEncodedString()
 		{			
 			return HttpUtility.UrlPathEncode(GetXmlString());

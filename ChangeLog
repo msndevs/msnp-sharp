@@ -1,3 +1,6 @@
+2007-04-06  Thiago M. Sayão <thiago.sayao@gmail.com> 
+	* msnp-sharp/DisplayImage.cs: don't close the DataStream on RetieveImage ()
+
 2007-04-04  Thiago M. Sayão <thiago.sayao@gmail.com> 
 	* Fix display image transfer
 	* Code cleanup	

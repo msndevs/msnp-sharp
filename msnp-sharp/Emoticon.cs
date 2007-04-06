@@ -35,24 +35,17 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Defines a single emoticon.
-	/// </summary>
 	[Serializable()]
 	public class Emoticon : DisplayImage
 	{
-		/// <summary>
-		/// </summary>
+		string shortcut;
+		
 		public Emoticon()
 		{
 			Type = MSNObjectType.Emoticon;		
 			Location = Guid.NewGuid().ToString();
 		}
 
-		/// <summary>
-		/// </summary>
-		/// <param name="creator"></param>
-		/// <param name="shortcut">The textual shortcut used in messages for this emoticon.</param>
 		public Emoticon(string creator, string shortcut)
 		{
 			Type = MSNObjectType.Emoticon;		
@@ -61,14 +54,6 @@ namespace MSNPSharp
 			Shortcut = shortcut;
 		}
 
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="creator"></param>
-		/// <param name="input"></param>
-		/// <param name="location"></param>
-		/// <param name="shortcut">The textual shortcut used in messages for this emoticon.</param>
 		public Emoticon(string creator, Stream input, string location, string shortcut)
 			: base(creator, input, location)
 		{
@@ -76,31 +61,10 @@ namespace MSNPSharp
 			Shortcut = shortcut;
 		}		
 
-		/// <summary>
-		/// Loads the image in the specified file.
-		/// </summary>
-		/// <param name="creator"></param>
-		/// <param name="file"></param>
-		/// <param name="shortcut">The textual shortcut used in messages for this emoticon.</param>
-		public Emoticon(string creator, string file, string shortcut)
-		: base(creator, file)
-		{
-			Type = MSNObjectType.Emoticon;		
-			Shortcut = shortcut;
-		}
-
-		/// <summary>
-		/// </summary>
-		private	string shortcut;
-
-		/// <summary>
-		/// The shortcut used for this emoticon.
-		/// </summary>
 		public string Shortcut
 		{
 			get { return shortcut; }
 			set { shortcut = value;}
 		}
-
 	}
 }
