@@ -22,7 +22,7 @@ if test "x$GMCS" = "xno"; then
 fi
 
 
-PKG_CHECK_MODULES([NUNIT_22], [nunit-2.2])
+PKG_CHECK_MODULES([NUNIT], [nunit])
 
 
 AC_ARG_ENABLE(debug,
@@ -31,16 +31,6 @@ AC_ARG_ENABLE(debug,
 		enable_debug=yes, enable_debug=no)
 AM_CONDITIONAL(ENABLE_DEBUG, test x$enable_debug = xyes)
 if test "x$enable_debug" = "xyes" ; then
-	MSNP_SHARP_DEBUG_LIB='MSNPSharp.dll'
-	AC_SUBST(MSNP_SHARP_DEBUG_LIB)
-	MSNP_SHARP_NUNIT_DEBUG_LIB='NUNit2.dll'
-	AC_SUBST(MSNP_SHARP_NUNIT_DEBUG_LIB)
-	PROXYSERVER_DEBUG_LIB='ProxyServer.dll'
-	AC_SUBST(PROXYSERVER_DEBUG_LIB)
-	DEBUG_CONFIG_LIBRARIES=' ${pkglibdir}/MSNPSharp.dll ${pkglibdir}/NUNit2.dll ${pkglibdir}/ProxyServer.dll'
-	DEBUG_CONFIG_LIBS=' -r:${pkglibdir}/MSNPSharp.dll -r:${pkglibdir}/NUNit2.dll -r:${pkglibdir}/ProxyServer.dll'
-	AC_SUBST(DEBUG_CONFIG_LIBRARIES)
-	AC_SUBST(DEBUG_CONFIG_LIBS)
 	CONFIG_REQUESTED="yes"
 fi
 AC_ARG_ENABLE(release,
@@ -49,44 +39,23 @@ AC_ARG_ENABLE(release,
 		enable_release=yes, enable_release=no)
 AM_CONDITIONAL(ENABLE_RELEASE, test x$enable_release = xyes)
 if test "x$enable_release" = "xyes" ; then
-	MSNP_SHARP_RELEASE_LIB='XihSolutions.DotMSN.dll'
-	AC_SUBST(MSNP_SHARP_RELEASE_LIB)
-	MSNP_SHARP_NUNIT_RELEASE_LIB='NUNit2.dll'
-	AC_SUBST(MSNP_SHARP_NUNIT_RELEASE_LIB)
-	PROXYSERVER_RELEASE_LIB='ProxyServer.dll'
-	AC_SUBST(PROXYSERVER_RELEASE_LIB)
-	RELEASE_CONFIG_LIBRARIES=' ${pkglibdir}/XihSolutions.DotMSN.dll ${pkglibdir}/NUNit2.dll ${pkglibdir}/ProxyServer.dll'
-	RELEASE_CONFIG_LIBS=' -r:${pkglibdir}/XihSolutions.DotMSN.dll -r:${pkglibdir}/NUNit2.dll -r:${pkglibdir}/ProxyServer.dll'
-	AC_SUBST(RELEASE_CONFIG_LIBRARIES)
-	AC_SUBST(RELEASE_CONFIG_LIBS)
 	CONFIG_REQUESTED="yes"
 fi
 if test -z "$CONFIG_REQUESTED" ; then
-	MSNP_SHARP_RELEASE_LIB='XihSolutions.DotMSN.dll'
-	AC_SUBST(MSNP_SHARP_RELEASE_LIB)
-	MSNP_SHARP_NUNIT_RELEASE_LIB='NUNit2.dll'
-	AC_SUBST(MSNP_SHARP_NUNIT_RELEASE_LIB)
-	PROXYSERVER_RELEASE_LIB='ProxyServer.dll'
-	AC_SUBST(PROXYSERVER_RELEASE_LIB)
-	RELEASE_CONFIG_LIBRARIES=' ${pkglibdir}/XihSolutions.DotMSN.dll ${pkglibdir}/NUNit2.dll ${pkglibdir}/ProxyServer.dll'
-	RELEASE_CONFIG_LIBS=' -r:${pkglibdir}/XihSolutions.DotMSN.dll -r:${pkglibdir}/NUNit2.dll -r:${pkglibdir}/ProxyServer.dll'
-	AC_SUBST(RELEASE_CONFIG_LIBRARIES)
-	AC_SUBST(RELEASE_CONFIG_LIBS)
 	AM_CONDITIONAL(ENABLE_RELEASE, true)
 fi
 
 
 AC_CONFIG_FILES([
 ./ProxyServer/Makefile
-./UnitTest/msnp-sharp.msnp-sharp-nunit.pc
-./Example/dotmsnclient
-./ProxyServer/msnp-sharp.ProxyServer.pc
-./msnp-sharp/msnp-sharp.msnp-sharp.pc
+./UnitTest/msnp-sharp-nunit.pc
 ./UnitTest/Makefile
 ./msnp-sharp/Makefile
 ./Example/Makefile
-./Example/msnp-sharp.msnp-sharp-client.pc
+./Example/msnp-sharp-client
 ./Makefile
+./ProxyServer/proxyserver.pc
+./msnp-sharp/msnp-sharp.pc
 
 ])
 

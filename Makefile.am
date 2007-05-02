@@ -7,6 +7,4 @@ if ENABLE_RELEASE
  SUBDIRS =  msnp-sharp Example ProxyServer UnitTest
 endif
 
-pkglib_DATA =  $(DLL_REFERENCES)
-DLL_REFERENCES =  
-EXTRA_DIST =  $(DLL_REFERENCES)
+EXTRA_DIST =  

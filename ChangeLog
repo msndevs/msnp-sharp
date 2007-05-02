@@ -1,5 +1,6 @@
 2007-05-01 Thiago M. Sayão <thiago.sayao@gmail.com> 
 	* new Logo
+	* Fix autotools
 
 2007-04-06  Thiago M. Sayão <thiago.sayao@gmail.com> 
 	* msnp-sharp/DisplayImage.cs: don't close the DataStream on RetieveImage ()

@@ -37,17 +37,18 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-DIST_COMMON = $(srcdir)/DotMSN.DotMSN2.pc.in $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/Makefile.include
-subdir = ./DotMSN
+DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(srcdir)/msnp-sharp.pc.in $(top_srcdir)/Makefile.include
+subdir = ./msnp-sharp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_CLEAN_FILES = DotMSN.DotMSN2.pc
+CONFIG_CLEAN_FILES = msnp-sharp.pc
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibdir)" \
-	"$(DESTDIR)$(pkgconfigdir)"
+	"$(DESTDIR)$(linuxpkgconfigdir)" \
+	"$(DESTDIR)$(programfilesdir)"
 binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
 pkglibSCRIPT_INSTALL = $(INSTALL_SCRIPT)
 SCRIPTS = $(bin_SCRIPTS) $(pkglib_SCRIPTS)
@@ -59,8 +60,9 @@ am__vpath_adj = case $$p in \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-pkgconfigDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(pkgconfig_DATA)
+linuxpkgconfigDATA_INSTALL = $(INSTALL_DATA)
+programfilesDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(linuxpkgconfig_DATA) $(programfiles_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -69,11 +71,7 @@ AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CYGPATH_W = @CYGPATH_W@
-DEBUG_CONFIG_LIBRARIES = @DEBUG_CONFIG_LIBRARIES@
-DEBUG_CONFIG_LIBS = @DEBUG_CONFIG_LIBS@
 DEFS = @DEFS@
-DOTMSN2_DEBUG_LIB = @DOTMSN2_DEBUG_LIB@
-DOTMSN2_RELEASE_LIB = @DOTMSN2_RELEASE_LIB@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -91,10 +89,8 @@ LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MCS = @MCS@
-NUNIT2_DEBUG_LIB = @NUNIT2_DEBUG_LIB@
-NUNIT2_RELEASE_LIB = @NUNIT2_RELEASE_LIB@
-NUNIT_22_CFLAGS = @NUNIT_22_CFLAGS@
-NUNIT_22_LIBS = @NUNIT_22_LIBS@
+NUNIT_CFLAGS = @NUNIT_CFLAGS@
+NUNIT_LIBS = @NUNIT_LIBS@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -103,10 +99,6 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
-PROXYSERVER_DEBUG_LIB = @PROXYSERVER_DEBUG_LIB@
-PROXYSERVER_RELEASE_LIB = @PROXYSERVER_RELEASE_LIB@
-RELEASE_CONFIG_LIBRARIES = @RELEASE_CONFIG_LIBRARIES@
-RELEASE_CONFIG_LIBS = @RELEASE_CONFIG_LIBS@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -145,16 +137,17 @@ target_alias = @target_alias@
 @ENABLE_RELEASE_TRUE@ASSEMBLY_COMPILER_COMMAND = gmcs
 @ENABLE_DEBUG_TRUE@ASSEMBLY_COMPILER_FLAGS = -noconfig -codepage:utf8 -warn:4 -debug -d:DEBUG
 @ENABLE_RELEASE_TRUE@ASSEMBLY_COMPILER_FLAGS = -noconfig -codepage:utf8 -warn:4
-@ENABLE_DEBUG_TRUE@ASSEMBLY = ./bin/Debug/XihSolutions.DotMSN.dll
-@ENABLE_RELEASE_TRUE@ASSEMBLY = ./bin/Release/XihSolutions.DotMSN.dll
+@ENABLE_DEBUG_TRUE@ASSEMBLY = ./bin/Debug/MSNPSharp.dll
+@ENABLE_RELEASE_TRUE@ASSEMBLY = ./bin/Release/MSNPSharp.dll
 @ENABLE_DEBUG_TRUE@COMPILE_TARGET = library
 @ENABLE_RELEASE_TRUE@COMPILE_TARGET = library
-@ENABLE_DEBUG_TRUE@PC_FILES_IN = DotMSN.DotMSN2.pc.in
-@ENABLE_RELEASE_TRUE@PC_FILES_IN = DotMSN.DotMSN2.pc.in
 @ENABLE_DEBUG_TRUE@PROJECT_REFERENCES = 
 @ENABLE_RELEASE_TRUE@PROJECT_REFERENCES = 
 @ENABLE_DEBUG_TRUE@BUILD_DIR = ./bin/Debug/
 @ENABLE_RELEASE_TRUE@BUILD_DIR = ./bin/Release/
+LINUX_PKGCONFIG = \
+	$(MSNP_SHARP_PC)  
+
 FILES = \
 	./AssemblyInfo.cs \
 	./Configuration.cs \
@@ -167,7 +160,7 @@ FILES = \
 	./Conversation.cs \
 	./Credentials.cs \
 	./DisplayImage.cs \
-	./DotMSNException.cs \
+	./MSNPSharpException.cs \
 	./Emoticon.cs \
 	./EmoticonMessage.cs \
 	./enums.cs \
@@ -196,7 +189,6 @@ FILES = \
 	./P2PMessagePool.cs \
 	./P2PMessageSession.cs \
 	./P2PTransferSession.cs \
-	./PersistentStream.cs \
 	./SB11MessageHandler.cs \
 	./SBMessage.cs \
 	./SBMessagePool.cs \
@@ -215,13 +207,16 @@ FILES = \
 	./ProxySocket/Socks5Handler.cs \
 	./ProxySocket/SocksHandler.cs \
 	./QRYFactory.cs \
-	./PersonalMessage.cs 
+	./PersonalMessage.cs \
+	./Wink.cs 
 
 DATA_FILES = 
 RESOURCES = \
 	./owner.png 
 
-EXTRAS = 
+EXTRAS = \
+	./msnp-sharp.pc.in 
+
 REFERENCES = \
 	-r:System \
 	-r:System.Data \
@@ -230,20 +225,21 @@ REFERENCES = \
 	-r:System.Drawing
 
 DLL_REFERENCES = 
+MSNP_SHARP_PC = $(BUILD_DIR)/msnp-sharp.pc
 build_sources = $(addprefix $(srcdir)/, $(FILES) $(GENERATED_FILES))
 build_resources = $(addprefix $(srcdir)/, $(RESOURCES))
 build_resources_embed = $(foreach res,$(build_resources), $(addprefix -resource:,$(res)),$(RESOURCES_PREFIX)$(notdir $(res)))
 build_references_ref = $(REFERENCES) $(foreach ref, $(DLL_REFERENCES), \
 	-r:$(ref)) $(foreach ref, $(PROJECT_REFERENCES), -r:$(ref))
-pc_files = $(PC_FILES_IN:.pc.in=.pc)
-build_datafiles = $(addprefix $(BUILD_DIR)/, $(DATA_FILES))
-EXTRA_DIST = $(FILES) $(GENERATED_FILES) $(RESOURCES) $(ASSEMBLY_WRAPPER_IN) $(EXTRAS) $(DATA_FILES) $(PC_FILES_IN)
-CLEANFILES = $(ASSEMBLY) $(ASSEMBLY).mdb $(DLL_REFERENCES)
-DISTCLEANFILES = $(GENERATED_FILES) $(build_datafiles) $(pc_files)
-pkglib_SCRIPTS = $(ASSEMBLY) $(build_datafiles)
-bin_SCRIPTS = $(ASSEMBLY_WRAPPER)
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = $(pc_files)
+EXTRA_DIST = $(FILES) $(GENERATED_FILES) $(RESOURCES) $(ASSEMBLY_WRAPPER_IN) $(EXTRAS) $(DATA_FILES)
+CLEANFILES = $(ASSEMBLY) $(ASSEMBLY).mdb $(BINARIES) $(PROGRAMFILES) $(LINUX_PKGCONFIG) 
+DISTCLEANFILES = $(GENERATED_FILES) $(pc_files)
+pkglib_SCRIPTS = $(ASSEMBLY)
+bin_SCRIPTS = $(BINARIES)
+programfilesdir = @prefix@/lib/@PACKAGE@
+programfiles_DATA = $(PROGRAMFILES)
+linuxpkgconfigdir = @prefix@/lib/pkgconfig
+linuxpkgconfig_DATA = $(LINUX_PKGCONFIG)
 all: all-am
 
 .SUFFIXES:
@@ -256,9 +252,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/Makefile.include $(a
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  ./DotMSN/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  ./msnp-sharp/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  ./DotMSN/Makefile
+	  $(AUTOMAKE) --foreign  ./msnp-sharp/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -276,7 +272,7 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-DotMSN.DotMSN2.pc: $(top_builddir)/config.status $(srcdir)/DotMSN.DotMSN2.pc.in
+msnp-sharp.pc: $(top_builddir)/config.status $(srcdir)/msnp-sharp.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
@@ -317,22 +313,39 @@ uninstall-pkglibSCRIPTS:
 	  rm -f "$(DESTDIR)$(pkglibdir)/$$f"; \
 	done
 uninstall-info-am:
-install-pkgconfigDATA: $(pkgconfig_DATA)
+install-linuxpkgconfigDATA: $(linuxpkgconfig_DATA)
 	@$(NORMAL_INSTALL)
-	test -z "$(pkgconfigdir)" || $(mkdir_p) "$(DESTDIR)$(pkgconfigdir)"
-	@list='$(pkgconfig_DATA)'; for p in $$list; do \
+	test -z "$(linuxpkgconfigdir)" || $(mkdir_p) "$(DESTDIR)$(linuxpkgconfigdir)"
+	@list='$(linuxpkgconfig_DATA)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f=$(am__strip_dir) \
-	  echo " $(pkgconfigDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(pkgconfigdir)/$$f'"; \
-	  $(pkgconfigDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(pkgconfigdir)/$$f"; \
+	  echo " $(linuxpkgconfigDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(linuxpkgconfigdir)/$$f'"; \
+	  $(linuxpkgconfigDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(linuxpkgconfigdir)/$$f"; \
 	done
 
-uninstall-pkgconfigDATA:
+uninstall-linuxpkgconfigDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(pkgconfig_DATA)'; for p in $$list; do \
+	@list='$(linuxpkgconfig_DATA)'; for p in $$list; do \
 	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(pkgconfigdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(pkgconfigdir)/$$f"; \
+	  echo " rm -f '$(DESTDIR)$(linuxpkgconfigdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(linuxpkgconfigdir)/$$f"; \
+	done
+install-programfilesDATA: $(programfiles_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(programfilesdir)" || $(mkdir_p) "$(DESTDIR)$(programfilesdir)"
+	@list='$(programfiles_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(programfilesDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(programfilesdir)/$$f'"; \
+	  $(programfilesDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(programfilesdir)/$$f"; \
+	done
+
+uninstall-programfilesDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(programfiles_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(programfilesdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(programfilesdir)/$$f"; \
 	done
 tags: TAGS
 TAGS:
@@ -373,7 +386,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(SCRIPTS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibdir)" "$(DESTDIR)$(pkgconfigdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibdir)" "$(DESTDIR)$(linuxpkgconfigdir)" "$(DESTDIR)$(programfilesdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -420,7 +433,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-pkgconfigDATA
+install-data-am: install-linuxpkgconfigDATA install-programfilesDATA
 
 install-exec-am: install-binSCRIPTS install-pkglibSCRIPTS
 
@@ -447,31 +460,30 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binSCRIPTS uninstall-info-am \
-	uninstall-pkgconfigDATA uninstall-pkglibSCRIPTS
+	uninstall-linuxpkgconfigDATA uninstall-pkglibSCRIPTS \
+	uninstall-programfilesDATA
 
 .PHONY: all all-am check check-am clean clean-generic distclean \
 	distclean-generic distdir dvi dvi-am html html-am info info-am \
 	install install-am install-binSCRIPTS install-data \
 	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-pkgconfigDATA \
-	install-pkglibSCRIPTS install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	install-info-am install-linuxpkgconfigDATA install-man \
+	install-pkglibSCRIPTS install-programfilesDATA install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
 	pdf-am ps ps-am uninstall uninstall-am uninstall-binSCRIPTS \
-	uninstall-info-am uninstall-pkgconfigDATA \
-	uninstall-pkglibSCRIPTS
+	uninstall-info-am uninstall-linuxpkgconfigDATA \
+	uninstall-pkglibSCRIPTS uninstall-programfilesDATA
 
 
-all: $(ASSEMBLY)
+all: $(ASSEMBLY) $(LINUX_PKGCONFIG) 
+$(MSNP_SHARP_PC): msnp-sharp.pc
+	mkdir -p $(BUILD_DIR)
+	cp msnp-sharp.pc $(MSNP_SHARP_PC)
 
 $(ASSEMBLY) $(ASSEMBLY).mdb: $(build_sources) $(build_resources) $(build_datafiles) 
 	mkdir -p $(dir $(ASSEMBLY))		
-
 	$(ASSEMBLY_COMPILER_COMMAND) $(ASSEMBLY_COMPILER_FLAGS) -out:$@ -target:$(COMPILE_TARGET) $(build_sources) $(build_resources_embed) $(build_references_ref)
-
-$(build_datafiles): $(BUILD_DIR)/% : $(addprefix $(srcdir)/, %)
-	mkdir -p $(dir $@)		
-	cp $< $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

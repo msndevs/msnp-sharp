@@ -6,7 +6,6 @@ ASSEMBLY_COMPILER_COMMAND = mcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -debug -d:DEBUG
 ASSEMBLY = ./bin/Debug/ProxyServer.dll
 COMPILE_TARGET = library
-PC_FILES_IN = msnp-sharp.ProxyServer.pc.in
 PROJECT_REFERENCES = 
 BUILD_DIR = ./bin/Debug/
 endif
@@ -15,13 +14,15 @@ ASSEMBLY_COMPILER_COMMAND = mcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4
 ASSEMBLY = ./bin/Release/ProxyServer.dll
 COMPILE_TARGET = library
-PC_FILES_IN = msnp-sharp.ProxyServer.pc.in
 PROJECT_REFERENCES = 
 BUILD_DIR = ./bin/Release/
 endif
 
+LINUX_PKGCONFIG = \
+	$(PROXYSERVER_PC)  
+
 	
-all: $(ASSEMBLY)
+all: $(ASSEMBLY) $(LINUX_PKGCONFIG) 
 
 FILES = \
 	./AssemblyInfo.cs \
@@ -51,7 +52,8 @@ DATA_FILES =
 
 RESOURCES = 
 
-EXTRAS = 
+EXTRAS = \
+	./proxyserver.pc.in 
 
 REFERENCES =  \
 	-r:System \
@@ -60,9 +62,15 @@ REFERENCES =  \
 
 DLL_REFERENCES = 
 
+PROXYSERVER_PC = $(BUILD_DIR)/proxyserver.pc
+$(PROXYSERVER_PC): proxyserver.pc
+	mkdir -p $(BUILD_DIR)
+	cp proxyserver.pc $(PROXYSERVER_PC)
+
+
+
 $(ASSEMBLY) $(ASSEMBLY).mdb: $(build_sources) $(build_resources) $(build_datafiles) 
 	mkdir -p $(dir $(ASSEMBLY))		
-
 	$(ASSEMBLY_COMPILER_COMMAND) $(ASSEMBLY_COMPILER_FLAGS) -out:$@ -target:$(COMPILE_TARGET) $(build_sources) $(build_resources_embed) $(build_references_ref)
 
 include $(top_srcdir)/Makefile.include
