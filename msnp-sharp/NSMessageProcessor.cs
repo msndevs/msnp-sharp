@@ -111,17 +111,12 @@ namespace MSNPSharp
 			MSNMessage NSMessage = (MSNMessage)message;
 			NSMessage.TransactionID = IncreaseTransactionID();
 
-			if(Settings.TraceSwitch.TraceVerbose)
-			{				
-				// prepare the message for the debug string
-				message.PrepareMessage();
-
-				System.Diagnostics.Trace.WriteLine("Outgoing message:\r\n" + message.ToDebugString(), "NSMessageProcessor");				
-			}
-
 			// prepare the message
 			message.PrepareMessage();
 			
+			if(Settings.TraceSwitch.TraceVerbose)
+				System.Diagnostics.Trace.WriteLine("Outgoing message:\r\n" + message.ToDebugString(), "NSMessageProcessor");
+
 			// convert to bytes and send it over the socket
 			SendSocketData(NSMessage.GetBytes());
 		}

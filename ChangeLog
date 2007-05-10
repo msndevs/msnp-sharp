@@ -1,3 +1,7 @@
+2007-05-10 Thiago M. Sayão <thiago.sayao@gmail.com> 
+	* Fix bug on profile getting
+	* Begin to fix p2p direct connect transfers
+
 2007-05-01 Thiago M. Sayão <thiago.sayao@gmail.com> 
 	* new Logo
 	* Fix autotools

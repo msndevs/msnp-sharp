@@ -12,17 +12,8 @@ fi
 
 AC_PROG_INSTALL
 
-AC_PATH_PROG(MCS, mcs, no)
-if test "x$MCS" = "xno"; then
-        AC_MSG_ERROR([mcs Not found])
-fi
-AC_PATH_PROG(GMCS, gmcs, no)
-if test "x$GMCS" = "xno"; then
-        AC_MSG_ERROR([gmcs Not found])
-fi
 
 
-PKG_CHECK_MODULES([NUNIT], [nunit])
 
 
 AC_ARG_ENABLE(debug,
@@ -47,15 +38,7 @@ fi
 
 
 AC_CONFIG_FILES([
-./ProxyServer/Makefile
-./UnitTest/msnp-sharp-nunit.pc
-./UnitTest/Makefile
-./msnp-sharp/Makefile
-./Example/Makefile
-./Example/msnp-sharp-client
 ./Makefile
-./ProxyServer/proxyserver.pc
-./msnp-sharp/msnp-sharp.pc
 
 ])
 

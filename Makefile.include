@@ -7,13 +7,9 @@ build_references_ref += $(foreach ref, $(DLL_REFERENCES), -r:$(ref))
 build_references_ref += $(foreach ref, $(PROJECT_REFERENCES), -r:$(ref))
 
 EXTRA_DIST = $(FILES) $(GENERATED_FILES) $(RESOURCES) $(ASSEMBLY_WRAPPER_IN) $(EXTRAS) $(DATA_FILES)
-CLEANFILES = $(ASSEMBLY) $(ASSEMBLY).mdb $(BINARIES) $(PROGRAMFILES) $(LINUX_PKGCONFIG) 
+CLEANFILES = $(ASSEMBLY) $(ASSEMBLY).mdb $(BINARIES) 
 DISTCLEANFILES = $(GENERATED_FILES) $(pc_files)
 
 pkglib_SCRIPTS = $(ASSEMBLY)
 bin_SCRIPTS = $(BINARIES)
 
-programfilesdir = @prefix@/lib/@PACKAGE@
-programfiles_DATA = $(PROGRAMFILES)
-linuxpkgconfigdir = @prefix@/lib/pkgconfig
-linuxpkgconfig_DATA = $(LINUX_PKGCONFIG)

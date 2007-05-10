@@ -102,7 +102,7 @@ namespace MSNPSharp.DataTransfer
 		/// <summary>
 		/// The GUID used in the handshake message for direct connections
 		/// </summary>
-		public Guid				Nonce
+		public Guid	Nonce
 		{
 			get { return nonce; }
 			set { nonce = value;}
@@ -110,12 +110,12 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private Guid				nonce = Guid.Empty;
+		private Guid nonce = Guid.Empty;
 
 		/// <summary>
 		/// The branch last received in the message session
 		/// </summary>
-		public Guid				LastBranch
+		public Guid	LastBranch
 		{
 			get { return lastBranch; }
 			set { lastBranch = value;}
@@ -123,12 +123,12 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private Guid			lastBranch = Guid.Empty;
+		private Guid lastBranch = Guid.Empty;
 
 		/// <summary>
 		/// The unique call id for this transfer
 		/// </summary>
-		public Guid				CallId
+		public Guid	CallId
 		{
 			get { return callId; }
 			set { callId = value;}
@@ -136,12 +136,12 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private Guid				callId = Guid.Empty;
+		private Guid callId = Guid.Empty;
 		
 		/// <summary>
 		/// The unique session id for the transfer
 		/// </summary>
-		public uint				SessionId
+		public uint	SessionId
 		{
 			get { return sessionId; }
 			set { sessionId = value;}
@@ -149,12 +149,12 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private uint				sessionId = 0;
+		private uint sessionId = 0;
 				
 		/// <summary>
 		/// The total length of the data, in bytes
 		/// </summary>
-		public uint				DataSize
+		public uint	DataSize
 		{
 			get { return dataSize; }
 			set { dataSize = value;}
@@ -162,12 +162,12 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private uint				dataSize = 0;
+		private uint dataSize = 0;
 
 		/// <summary>
 		/// The context send in the invitation. This informs the client about the type of transfer, filename, file-hash, msn object settings, etc.
 		/// </summary>
-		public string			Context
+		public string Context
 		{
 			get { return context; }
 			set { context = value;}
@@ -175,7 +175,7 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private string			context = "";
+		private string context = "";
 
 		/// <summary>
 		/// The checksum of the fields used in the context
@@ -188,12 +188,12 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private string			checksum = "";
+		private string checksum = "";
 
 		/// <summary>
 		/// CSeq identifier
 		/// </summary>
-		public int				LastCSeq
+		public int LastCSeq
 		{
 			get { return lastCSeq; }
 			set { lastCSeq = value;}
@@ -201,12 +201,12 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private int				lastCSeq = 0;
+		private int lastCSeq = 0;
 
 		/// <summary>
 		/// The account of the local contact
 		/// </summary>
-		public string			LocalContact
+		public string LocalContact
 		{
 			get { return localContact; }
 			set { localContact = value;}
@@ -219,7 +219,7 @@ namespace MSNPSharp.DataTransfer
 		/// <summary>
 		/// The account of the remote contact
 		/// </summary>
-		public string			RemoteContact
+		public string RemoteContact
 		{
 			get { return remoteContact; }
 			set { remoteContact = value;}
@@ -227,7 +227,7 @@ namespace MSNPSharp.DataTransfer
 
 		/// <summary>
 		/// </summary>
-		private string			remoteContact = "";
+		private string remoteContact = "";
 	}
 
 	/// <summary>
@@ -322,6 +322,15 @@ namespace MSNPSharp.DataTransfer
 			get { return fileSize; }
 			set { fileSize = value;}
 		}
+		
+		
+		private byte[] preview;
+		
+		public byte[] Preview
+		{
+			get { return preview; }
+			set { preview = value; }
+		}
 
 		/// <summary>
 		/// </summary>
@@ -412,7 +421,7 @@ namespace MSNPSharp.DataTransfer
 		public IMessageProcessor MessageProcessor
 		{
 			get
-			{				
+			{
 				return messageProcessor;
 			}
 			set
@@ -429,7 +438,7 @@ namespace MSNPSharp.DataTransfer
 		/// The client end-point as perceived by the server. This can differ from the actual local endpoint through the use of routers.
 		/// This value is used to determine how to set-up a direct connection.
 		/// </summary>
-		public IPEndPoint	ExternalEndPoint
+		public IPEndPoint ExternalEndPoint
 		{
 			get { return externalEndPoint; }
 			set { externalEndPoint = value;}
@@ -443,12 +452,12 @@ namespace MSNPSharp.DataTransfer
 		/// The client's local end-point. This can differ from the external endpoint through the use of routers.
 		/// This value is used to determine how to set-up a direct connection.
 		/// </summary>
-		public IPEndPoint	LocalEndPoint
+		public IPEndPoint LocalEndPoint
 		{
 			get { return localEndPoint; }
 			set { localEndPoint = value;}
 		}
-
+		
 		#endregion
 
 		#region Public
@@ -479,9 +488,8 @@ namespace MSNPSharp.DataTransfer
 		{
 			if(Settings.TraceSwitch.TraceInfo)
 				System.Diagnostics.Trace.WriteLine("Constructing object", "MSNSLPHandler");
-
-		}		
-
+		}	
+		
 		/// <summary>
 		/// The message session to send message to. This is simply the MessageProcessor property, but explicitly casted as a P2PMessageSession.
 		/// </summary>
@@ -531,9 +539,6 @@ namespace MSNPSharp.DataTransfer
 			}
 			
 						
-			//Console.WriteLine ("Original Context: {0}", msnObject.OriginalContext);
-			//Console.WriteLine ("Context: {0}", msnObject.ContextPlain);
-			
 			MSNSLPMessage slpMessage = new MSNSLPMessage();
 			//byte[] contextArray  = System.Text.ASCIIEncoding.ASCII.GetBytes(System.Web.HttpUtility.UrlDecode(msnObject.OriginalContext));//GetEncodedString());
 			byte[] contextArray = System.Text.ASCIIEncoding.ASCII.GetBytes (msnObject.ContextPlain);
@@ -889,6 +894,7 @@ namespace MSNPSharp.DataTransfer
 					else
 						connectionType = "Symmetric-NAT";
 				}
+				
 				if(Settings.TraceSwitch.TraceInfo)
 				{
 					System.Diagnostics.Trace.WriteLine("Connection type set to " + connectionType + " for session " + transferProperties.SessionId.ToString(CultureInfo.InvariantCulture), "MSNSLPHandler");
@@ -1076,7 +1082,7 @@ namespace MSNPSharp.DataTransfer
 					System.Diagnostics.Trace.WriteLine("P2PMessage incoming:\r\n" + p2pMessage.ToDebugString(), "MSNSLPHandler");
 				return;
 			}
-
+			
 			MSNSLPMessage slpMessage = new MSNSLPMessage();
 			slpMessage.CreateFromMessage(message);
 						
@@ -1135,7 +1141,7 @@ namespace MSNPSharp.DataTransfer
 			if(message.CSeq == 1 && message.StartLine.IndexOf("200 OK") >= 0)
 			{
 				Guid callGuid = new Guid(message.CallId);
-				MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);				
+				MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);	
 				P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
 				
 				if(properties.DataType == DataTransferType.File)
@@ -1159,19 +1165,16 @@ namespace MSNPSharp.DataTransfer
 				p2pTransfer.SessionId = properties.SessionId;				
 
 				// hold a reference to this argument object because we need the accept property later
-				MSNSLPInvitationEventArgs invitationArgs = new MSNSLPInvitationEventArgs(this,
-				                                                                             properties,
-				                                                                             message,
-				                                                                             p2pTransfer);
+				MSNSLPInvitationEventArgs invitationArgs = new MSNSLPInvitationEventArgs(this, properties, message, p2pTransfer);
 
 				if(properties.DataType == DataTransferType.File)
 				{
 					// set the filetransfer values in the EventArgs object.
 					// see the SendInvitation(..) method for more info about the layout of the context string
-					byte[] data = Convert.FromBase64String(message.MessageValues["Context"].ToString());					
+					byte[] data = Convert.FromBase64String(message.MessageValues["Context"].ToString());
 					MemoryStream memStream = new MemoryStream(data);
 					BinaryReader reader = new BinaryReader(memStream);
-					int previewDataLength = reader.ReadInt32();	// 4
+					int hdrsize = reader.ReadInt32();	// 4
 					reader.ReadInt32(); // first flag, 4
 					invitationArgs.FileSize = reader.ReadInt64(); // 8
 					reader.ReadInt32(); // 2nd flag, 4
@@ -1185,8 +1188,13 @@ namespace MSNPSharp.DataTransfer
 					}
 					
 					strfname = strfname.Substring (0, i);
-					invitationArgs.Filename = strfname;					
-					//TODO: File Preview
+					invitationArgs.Filename = strfname;
+					
+					//File preview
+					reader.BaseStream.Seek (hdrsize, SeekOrigin.Begin);
+					int size = Convert.ToInt32 (reader.BaseStream.Length-hdrsize);
+					
+					invitationArgs.Preview = reader.ReadBytes (size); 
 				}
 				else if (properties.DataType == DataTransferType.DisplayImage
 				         || properties.DataType == DataTransferType.Emoticon
@@ -1278,6 +1286,7 @@ namespace MSNPSharp.DataTransfer
 				{
 					s.Bind(new IPEndPoint(System.Net.IPAddress.Any, p));
 					s.Close();
+					
 					return p;
 				}
 				catch (SocketException ex) 
@@ -1299,9 +1308,9 @@ namespace MSNPSharp.DataTransfer
 		/// <param name="message"></param>
 		protected virtual void OnDCRequest(MSNSLPMessage message)
 		{
-			// let's listen			
+			// let's listen	
 			MSNSLPMessage slpMessage = new MSNSLPMessage();										
-
+			
 			// Find host by name
 			IPHostEntry iphostentry = Dns.GetHostEntry(Dns.GetHostName());
 
@@ -1322,7 +1331,6 @@ namespace MSNPSharp.DataTransfer
 			slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture).ToUpper(System.Globalization.CultureInfo.InvariantCulture);
 			slpMessage.MaxForwards = 0;
 			slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
-			//slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
 			slpMessage.Body = 
 				"Bridge: TCPv1\r\n" +
 				"Listening: true\r\n" +
@@ -1344,15 +1352,14 @@ namespace MSNPSharp.DataTransfer
 			P2PMessage p2pMessage = new P2PMessage();
 			p2pMessage.InnerMessage = slpMessage;
 
-			//P2PTransferSession transferSession = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+			//FIXME: is this needed?
 			P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
 			hsMessage.Guid = properties.Nonce;
 			MessageSession.HandshakeMessage = hsMessage;			
 
 			// and notify the remote client that he can connect
-			MessageProcessor.SendMessage(p2pMessage);			
+			MessageProcessor.SendMessage(p2pMessage);
 		}
-
 
 		/// <summary>
 		/// Called when the remote client send us it's direct-connect capabilities
@@ -1360,8 +1367,8 @@ namespace MSNPSharp.DataTransfer
 		/// <param name="message"></param>
 		protected virtual void OnDCResponse(MSNSLPMessage message)
 		{
-			// read the values			
-			Hashtable bodyValues = message.MessageValues;			
+			// read the values
+			Hashtable bodyValues = message.MessageValues;
 
 			// check the protocol
 			if(bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)

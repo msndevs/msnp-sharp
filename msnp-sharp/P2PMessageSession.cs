@@ -330,11 +330,11 @@ namespace MSNPSharp.DataTransfer
 			// we want this session to listen to incoming messages
 			processor.RegisterHandler(this);						
 
-            // add to the list of processors trying to establish a connection
-            AddPendingProcessor(processor); 
-            
-            // start to listen
-            processor.Listen(host, port);
+			// add to the list of processors trying to establish a connection
+			AddPendingProcessor(processor); 
+
+			// start to listen
+			processor.Listen(host, port);
 
 			return processor;
 		}
@@ -489,8 +489,8 @@ namespace MSNPSharp.DataTransfer
 		/// </summary>
 		protected virtual void SendHandshakeMessage(IMessageProcessor processor)
 		{
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine("Preparing to send handshake message", "P2PMessageSession");
+			if (Settings.TraceSwitch.TraceError)
+				System.Diagnostics.Trace.WriteLine("Preparing to send handshake message", "P2PMessageSession");
 
 			if(HandshakeMessage == null)
 			{
@@ -659,7 +659,7 @@ namespace MSNPSharp.DataTransfer
 				// create a handshake message based on the incoming p2p message and send it				
 				P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage);				
 				sender.SendMessage(dcHsMessage.CreateAcknowledgement());				
-                OnHandshakeCompleted((P2PDirectProcessor)sender);
+				OnHandshakeCompleted((P2PDirectProcessor)sender);
 				return;
 			}
 

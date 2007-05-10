@@ -2343,25 +2343,18 @@ namespace MSNPSharp
 		protected virtual void OnMSGReceived(MSNMessage message)
 		{
 			MSGMessage msgMessage = new MSGMessage(message);
-
-			Regex  ContentTypeRE = new Regex("Content-Type:\\s+(?<ContentType>[\\w/\\-0-9]+)", RegexOptions.Multiline | RegexOptions.Compiled);
-			Match  match;
-			if((match = ContentTypeRE.Match((string)msgMessage.MimeHeader["Content-Type"])).Success)
-			{
-				switch(match.Groups["ContentType"].ToString())
-				{
-					case "text/x-msmsgsprofile" :					OnProfileReceived(msgMessage); break;
-					case "text/x-msmsgsemailnotification":
-					case "application/x-msmsgsemailnotification":	OnMailNotificationReceived(msgMessage); break;
-					case "text/x-msmsgsactivemailnotification":		OnMailChanged(msgMessage);		break;
-					case "text/x-msmsgsinitialemailnotification":					
-					case "application/x-msmsgsinitialemailnotification":
-																	OnMailboxStatusReceived(msgMessage); break;
-				}
-			}
-
+			
+			string mime = msgMessage.MimeHeader["Content-Type"].ToString ();
+				
+			if (mime.IndexOf ("text/x-msmsgsprofile") >= 0)
+				OnProfileReceived (msgMessage);
+			else if (mime.IndexOf ("x-msmsgsemailnotification") >= 0)
+				OnMailNotificationReceived(msgMessage); 
+			else if (mime.IndexOf ("x-msmsgsactivemailnotification") >= 0)
+				OnMailChanged(msgMessage);
+			else if (mime.IndexOf ("x-msmsgsinitialemailnotification") >= 0)
+				OnMailboxStatusReceived(msgMessage);
 		}
-
 	
 		/// <summary>
 		/// Called when the owner has removed or moved e-mail.
@@ -2424,11 +2417,12 @@ namespace MSNPSharp
 		protected virtual void OnProfileReceived(MSGMessage message)
 		{
 			int clientPort = int.Parse(message.MimeHeader["ClientPort"].ToString().Replace('.', ' '), System.Globalization.CultureInfo.InvariantCulture);
-			clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);			
-
+			//FIXME: is this still needed?
+			clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
+	
 			Owner.UpdateProfile(
 				(string)message.MimeHeader["LoginTime"],
-				bool.Parse((string)message.MimeHeader["EmailEnabled"]),
+				Convert.ToInt32(message.MimeHeader["EmailEnabled"]) == 1,
 				(string)message.MimeHeader["MemberIdHigh"],
 				(string)message.MimeHeader["MemberIdLow"],
 				(string)message.MimeHeader["lang_preference"],

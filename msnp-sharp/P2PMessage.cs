@@ -48,20 +48,37 @@ namespace MSNPSharp.DataTransfer
 		/// Acknowledgement message.
 		/// </summary>
 		Acknowledgement = 0x02,
+		
+		WaitingReply = 0x04,
 		/// <summary>
 		/// Messages notifies a binary error.
 		/// </summary>
-		BinaryError = 0x8,
+		BinaryError = 0x08,
 		/// <summary>
 		/// Messages defines a msn object.
 		/// </summary>
 		MSNObject = 0x20,
+		
+		
 		/// <summary>
 		/// Messages defines data for a filetransfer.
 		/// </summary>
 		FileData = 0x01000030
 	}
 
+/*
+0x00 - No flags
+0x01 - Unknown
+0x02 - Acknowledgement
+0x04 - Waiting for a reply
+0x08 - Error (Possibly binary level)
+0x10 - Unknown
+0x20 - Data for DP/CE
+0x40 - Bye ack (He who got BYE)
+0x80 - Bye ack (He who sent BYE)
+0x1000030 - Data for FT
+*/
+	
 	/// <summary>
 	/// Represents a single P2P framework message.
 	/// </summary>
@@ -222,7 +239,7 @@ namespace MSNPSharp.DataTransfer
 			P2PMessage ack = new P2PMessage();
 					
 			ack.TotalSize       = TotalSize;
-			ack.Flags			= 0x2;//P2PFlag.Acknowledgement;			
+			ack.Flags			= (uint) P2PFlag.Acknowledgement;			
 			ack.AckSessionId    = Identifier;
 			ack.AckIdentifier	= AckSessionId;
 			ack.AckTotalSize   	= TotalSize;			
@@ -418,13 +435,9 @@ namespace MSNPSharp.DataTransfer
 			writer.Write(innerBytes);
 
 			if(BitConverter.IsLittleEndian == false)
-			{
 				writer.Write(Footer);
-			}
 			else
-			{
 				writer.Write(FlipEndian(Footer));
-			}
 
 			// clean up
 			writer.Close();
@@ -484,7 +497,7 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		public override string ToString()
 		{
-			/*string debugLine =
+			string debugLine =
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionId     : {1:x} ({0})\r\n", SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionId) +
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier    : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "Offset        : {1:x} ({0})\r\n", Offset.ToString(System.Globalization.CultureInfo.InvariantCulture), Offset) +
@@ -495,8 +508,7 @@ namespace MSNPSharp.DataTransfer
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({1})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize) +
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
-			return "[P2PDataMessage]\r\n" + debugLine;*/
-			return "";
+			return "[P2PDataMessage]\r\n" + debugLine;
 		}
 
 	}
@@ -731,7 +743,7 @@ namespace MSNPSharp.DataTransfer
 			get { return guid; }
 			set 
 			{ 
-				guid = value;				
+				guid = value;
 			}
 		}
 
@@ -746,7 +758,6 @@ namespace MSNPSharp.DataTransfer
 			// first get the bytes for the handshake
 			byte[] handshakeMessage = base.GetBytes();
 
-			
 			byte[] totalMessage = new byte[handshakeMessage.Length + 8];
 			byte[] fooMessage = new byte[]{ 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 };
 			byte[] guidMessage = guid.ToByteArray();

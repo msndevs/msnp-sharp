@@ -39,76 +39,53 @@ using MSNPSharp;
 
 namespace MSNPSharp.DataTransfer
 {
-	/// <summary>
-	/// Handles the direct connections in P2P sessions.
-	/// </summary>
 	public class P2PDirectProcessor : SocketMessageProcessor
 	{
-		/// <summary>
-		/// Constructor.
-		/// </summary>
+		bool isListener = false;
+		Socket dcSocket = null;
+		
 		public P2PDirectProcessor()
 		{
 			if(Settings.TraceSwitch.TraceInfo)
 				System.Diagnostics.Trace.WriteLine("Constructing object", "P2PDirectProcessor");
+			
 			MessagePool = new P2PDCPool();
 		}
-
-		/// <summary>
-		/// Starts listening at the specified port in the connectivity settings.
-		/// </summary>
+		
 		public void Listen(IPAddress address, int port)
 		{
 			ProxySocket socket = GetPreparedSocket();
-
+			
 			// begin waiting for the incoming connection			
 			socket.Bind(new IPEndPoint(address, port));
 			
 			socket.Listen(100);
 			
-            // set this value so we know whether to send a handshake message or not later in the process
-            isListener = true;
-
-			socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
+			// set this value so we know whether to send a handshake message or not later in the process
+			isListener = true;
+						socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
 		}
-
-		/// <summary>
-        /// Returns whether this processor was initiated as listening (true) or connecting (false).
-        /// </summary>
-        private bool isListener = false;
-
-        /// <summary>
-        /// Returns whether this processor was initiated as listening (true) or connecting (false).
-        /// </summary>
-        public bool IsListener
-        {
-            get { return isListener; }
-            set { isListener = value; }
-        }
-          
-
-
-		/// <summary>
-		/// Called when an incoming connection has been accepted.
-		/// </summary>
-		/// <param name="ar"></param>
+		
+		/// Returns whether this processor was initiated as listening (true) or connecting (false).
+		public bool IsListener
+		{
+			get { return isListener; }
+			set { isListener = value; }
+		}
+			
 		protected virtual void EndAcceptCallback(IAsyncResult ar)
 		{
-			ProxySocket listenSocket = (ProxySocket)ar.AsyncState;						
+			ProxySocket listenSocket = (ProxySocket)ar.AsyncState;
 			dcSocket = listenSocket.EndAccept(ar);
 			
 			//listenSocket.Shutdown(SocketShutdown.Both);
-			//listenSocket.Close();														
-
+			//listenSocket.Close();	
+			
 			// begin accepting messages
 			BeginDataReceive(dcSocket);
 
 			OnConnected();			
-
-
-		}		
-
-		private Socket dcSocket = null;
+		}
 
 		/// <summary>
 		/// Closes the socket connection.
@@ -131,7 +108,7 @@ namespace MSNPSharp.DataTransfer
 		/// </summary>
 		/// <param name="data"></param>
 		protected override void OnMessageReceived(byte[] data)
-		{			
+		{
 			System.Diagnostics.Trace.WriteLine("analyzing message", "P2PDirect In");
 			// check if it is the 'foo' message
 			//if(data.Length == 4)
@@ -139,7 +116,7 @@ namespace MSNPSharp.DataTransfer
 
 			// convert to a p2pdc message
 			P2PDCMessage dcMessage = new P2PDCMessage();
-			dcMessage.ParseBytes(data);			
+			dcMessage.ParseBytes(data);	
 
 			System.Diagnostics.Trace.WriteLine(dcMessage.ToDebugString(), "P2PDirect In");
 			lock(MessageHandlers)
@@ -149,20 +126,14 @@ namespace MSNPSharp.DataTransfer
 					handler.HandleMessage(this, dcMessage);
 				}
 			}
-	
 		}
 
-		/// <summary>
-		/// Sends the P2PMessage directly over the socket. Accepts P2PDCMessage and P2PMessage objects.
-		/// </summary>
-		/// <param name="message"></param>
 		public override void SendMessage(NetworkMessage message)
 		{						
 			// if it is a regular message convert it
 			if((message is P2PDCMessage) == false)
-			{
-				message = new P2PDCMessage((P2PMessage)message);				
-			}
+				message = new P2PDCMessage((P2PMessage)message);
+			
 			// otherwise we just assume it is a P2PDCMessage
 
 			// prepare the message
@@ -179,7 +150,5 @@ namespace MSNPSharp.DataTransfer
 			else
 				SendSocketData(message.GetBytes());
 		}
-
-
 	}
 }

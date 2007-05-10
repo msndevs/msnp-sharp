@@ -11,10 +11,20 @@ using NUnit;
 using MSNPSharp;
 using MSNPSharp.Core;
 using MSNPSharp.DataTransfer;
-
+using System.Security.Cryptography.X509Certificates;
+using System.Net;
 
 namespace MSNPSharp.Test
 {
+	public class CertificatePolicy : ICertificatePolicy 
+	{
+
+		public bool CheckValidationResult (ServicePoint sp, X509Certificate certificate, WebRequest request, int error)
+		{
+			return true;
+		}
+	}
+	
 	/// <summary>
 	/// Base class for unit tests.
 	/// </summary>
@@ -45,10 +55,12 @@ namespace MSNPSharp.Test
 		#region Constructor and credentials
 		public TestBase()
 		{
+			ServicePointManager.CertificatePolicy = new CertificatePolicy ();
+				
 			_client1 = new Messenger();
-			_client1.Credentials = new Credentials("tvbot_test@msn.com", "8wkL5t", "msmsgs@msnmsgr.com", "Q1P7W2E4J9R8U3S5");
+			_client1.Credentials = new Credentials("msntest1@test.com", "abc123", "PROD0090YUAUV{2B", "YMM8C_H7KCQ2S_KL");
 			_client2 = new Messenger();
-			_client2.Credentials = new Credentials("msnbot200@hotmail.com", "200wkL5t", "msmsgs@msnmsgr.com", "Q1P7W2E4J9R8U3S5");	
+			_client2.Credentials = new Credentials("msntest2@test.com", "abc123", "PROD0090YUAUV{2B", "YMM8C_H7KCQ2S_KL");	
 		}
 
 		#endregion
