@@ -34,7 +34,7 @@ namespace MSNPSharp.Test
 			CreateWait();
 				Client1.Owner.StatusChanged += statusChangedHandler;
 				Client1.Owner.Status = PresenceStatus.Online;			
-			Wait(5000);
+			Wait(15000);
 				Client1.Owner.StatusChanged -= statusChangedHandler;
 			Assert.IsTrue(Client1.Owner.Status == PresenceStatus.Online);
 			Assert.IsTrue(Client1.Owner.Online);
@@ -44,7 +44,7 @@ namespace MSNPSharp.Test
 				Client2.ContactList[Client1.Owner.Mail].ContactOffline += statusChangedHandler;
 				Client1.Owner.StatusChanged += statusChangedHandler;
 				Client1.Nameserver.SetPresenceStatus(PresenceStatus.Hidden);			
-			Wait(2000);
+			Wait(10000);
 				Client2.ContactList[Client1.Owner.Mail].ContactOffline -= statusChangedHandler;
 				Client1.Owner.StatusChanged -= statusChangedHandler;
 
@@ -61,7 +61,7 @@ namespace MSNPSharp.Test
 			CreateWait();
 				Client1.Owner.StatusChanged += statusChangedHandler;
 				Client1.Nameserver.SetPresenceStatus(PresenceStatus.Busy);			
-			Wait(2000);
+			Wait(10000);
 				Client1.Owner.StatusChanged -= statusChangedHandler;
 
 			// check the outcome
@@ -78,7 +78,8 @@ namespace MSNPSharp.Test
 			CreateWait();
 				Client1.Owner.Name = name;
 				Client1.Owner.ScreenNameChanged += new MSNPSharp.Contact.ContactChangedEventHandler(Owner_ScreenNameChanged);
-			Wait(2000);			
+			Wait(30000);
+			
 			Assert.IsTrue(Client1.Owner.Name == name);
 		}
 
@@ -97,7 +98,7 @@ namespace MSNPSharp.Test
 					Client1.Nameserver.ContactAdded += contactAddedHandler;
 					Client1.Nameserver.AddNewContact(Client2.Owner.Mail);					
 				System.Console.WriteLine("Waiting 1");
-				Wait(2000);
+				Wait(10000);
 					Client1.Nameserver.ContactAdded -= contactAddedHandler;
 					Client2.Nameserver.ContactAdded -= contactAddedHandler;
 				Assert.IsTrue(Client1.ContactList[Client2.Owner.Mail] != null);
@@ -112,7 +113,7 @@ namespace MSNPSharp.Test
 					Client2.Nameserver.ContactAdded += contactAddedHandler;
 					Client2.Nameserver.AddNewContact(Client1.Owner.Mail);
 				System.Console.WriteLine("Waiting 2");
-				Wait(2000);
+				Wait(10000);
 					Client1.Nameserver.ContactAdded -= contactAddedHandler;
 					Client2.Nameserver.ContactAdded -= contactAddedHandler;
 				Assert.IsTrue(Client2.ContactList[Client1.Owner.Mail] != null);
@@ -132,7 +133,7 @@ namespace MSNPSharp.Test
 					Client1.ContactList[Client2.Owner.Mail].Blocked = false;					
 					Client1.Nameserver.RemoveContact(Client1.ContactList[Client2.Owner.Mail]);					
 				System.Console.WriteLine("Waiting 3");
-				Wait(3000);
+				Wait(10000);
 					Client1.Nameserver.ContactRemoved -= contactAddedHandler;		
 					Client2.Nameserver.ContactRemoved -= contactAddedHandler;		
 				Assert.IsTrue(Client1.ContactList[Client2.Owner.Mail] != null);
@@ -151,7 +152,7 @@ namespace MSNPSharp.Test
 					Client2.ContactList[Client1.Owner.Mail].Blocked = false;					
 					Client2.Nameserver.RemoveContact(Client2.ContactList[Client1.Owner.Mail]);				
 				System.Console.WriteLine("Waiting 4");
-				Wait(3000);					
+				Wait(10000);					
 					Client2.Nameserver.ContactRemoved -= contactAddedHandler;
 					Client1.Nameserver.ContactRemoved -= contactAddedHandler;
 				Assert.IsTrue(Client2.ContactList[Client1.Owner.Mail] != null);
@@ -176,7 +177,7 @@ namespace MSNPSharp.Test
 				Client1.Nameserver.AddContactToList(Client1.ContactList[Client2.Owner.Mail], MSNLists.ForwardList);
 				Client2.Nameserver.AddContactToList(Client2.ContactList[Client1.Owner.Mail], MSNLists.ForwardList);
 			System.Console.WriteLine("Waiting 5");
-			Wait(3000);
+			Wait(10000);
 				Client1.Nameserver.ContactAdded -= contactAddedHandler;
 				Client2.Nameserver.ContactAdded -= contactAddedHandler;
 			Assert.IsTrue(Client1.ContactList[Client2.Owner.Mail].OnForwardList == true);
@@ -219,7 +220,7 @@ namespace MSNPSharp.Test
 					Client1.ContactList[Client2.Owner.Mail].ContactBlocked += contactChangedHandler;
 					Client2.Nameserver.ContactOffline += nsContactChangedHandler;
 					Client1.ContactList[Client2.Owner.Mail].Blocked = true;	
-				Wait(4000);
+				Wait(15000);
 					Client1.ContactList[Client2.Owner.Mail].ContactBlocked -= contactChangedHandler;
 					Client2.Nameserver.ContactOffline -= nsContactChangedHandler;
 				Assert.IsTrue(((Contact)Client1.ContactList[Client2.Owner.Mail]).Blocked == true);
@@ -233,7 +234,7 @@ namespace MSNPSharp.Test
 					Client1.ContactList[Client2.Owner.Mail].ContactUnBlocked += contactChangedHandler;
 					Client2.Nameserver.ContactOnline += nsContactChangedHandler;
 					Client1.ContactList[Client2.Owner.Mail].Blocked = false;
-				Wait(4000);
+				Wait(15000);
 					Client1.ContactList[Client2.Owner.Mail].ContactUnBlocked -= contactChangedHandler;
 					Client2.Nameserver.ContactOnline -= nsContactChangedHandler;
 				Assert.IsTrue(((Contact)Client1.ContactList[Client2.Owner.Mail]).Blocked == false);
@@ -252,7 +253,7 @@ namespace MSNPSharp.Test
 			CreateWait();
 				Client1.Nameserver.ContactGroupAdded += groupChangedEventHandler;
 				Client1.Nameserver.AddContactGroup(newName);				
-			Wait(2000);
+			Wait(15000);
 				Client1.Nameserver.ContactGroupAdded -= groupChangedEventHandler;
 
 			ContactGroup newGroup = Client1.ContactGroups[newName];				

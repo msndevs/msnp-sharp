@@ -5,19 +5,21 @@ using System.Web;
 using System.Text.RegularExpressions;
 using MSNPSharp.Core;
 
-
 namespace MSNPSharp
 {
-	
+	[Serializable()]
 	public class PersonalMessage
 	{
-		NSMessage message;
 		string personalmessage;
 		string machineguid;
 		string appname;
 		string format;
-		string[] content;
 		MediaType mediatype;
+		
+		[NonSerialized]
+		NSMessage message;
+		
+		string[] content;
 		
 		public PersonalMessage (string personalmsg, MediaType mediatype, string[] currentmediacontent)
 		{
@@ -63,7 +65,7 @@ namespace MSNPSharp
 				return personalmessage;
 			}
 			set {
-				personalmessage = value;	
+				personalmessage = value;
 			}
 		}
 		

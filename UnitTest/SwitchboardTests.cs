@@ -40,7 +40,7 @@ namespace MSNPSharp.Test
 				Client2.ConversationCreated += conversationCreatedHandler;	
 				conversation.Switchboard.ContactJoined += contactJoinedHandler;				
 				conversation.Invite(Client1.ContactList[Client2.Owner.Mail]);
-			Wait(16000);
+			Wait(36000);
 				conversation.Switchboard.ContactJoined -= contactJoinedHandler;
 				Client2.ConversationCreated -= conversationCreatedHandler;
 

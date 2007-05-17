@@ -37,285 +37,229 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Used as event argument when a contact changes it's status.
-	/// </summary>
 	[Serializable()]
 	public class ContactStatusChangeEventArgs : EventArgs
 	{
-		/// <summary>
-		/// </summary>
-		private Contact			contact;
+		Contact contact;
+		PresenceStatus oldStatus;
 
-		/// <summary>
-		/// The affected contact.
-		/// </summary>
-		public Contact			Contact
+		public Contact Contact
 		{
-			get { return contact; }
-			set { contact = value;}
+			get { 
+				return contact; 
+			}
+			set { 
+				contact = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private PresenceStatus	oldStatus;
-
-		/// <summary>
-		/// The status the contact had before the change.
-		/// </summary>
-		public PresenceStatus	OldStatus
+		public PresenceStatus OldStatus
 		{
-			get { return oldStatus; }
-			set { oldStatus = value;}
+			get { 
+				return oldStatus; 
+			}
+			set { 
+				oldStatus = value;
+			}
 		}
 
-		
-		/// <summary>
-		/// Constructor, mostly used internal by the library.
-		/// </summary>
-		/// <param name="contact"></param>
-		/// <param name="oldStatus"></param>
-		public ContactStatusChangeEventArgs(Contact contact, PresenceStatus oldStatus)
+		public ContactStatusChangeEventArgs(Contact contact, 
+		                                    PresenceStatus oldStatus)
 		{
-			Contact		= contact;
-			OldStatus	= oldStatus;
+			Contact = contact;
+			OldStatus = oldStatus;
 		}
 	}
 
 
-	/// <summary>
-	/// Used as event argument when a contact is affected.
-	/// </summary>
 	[Serializable()]
 	public class ContactEventArgs : System.EventArgs
 	{
-		/// <summary>
-		/// The affected contact
-		/// </summary>
+		Contact contact;
+		
 		public Contact Contact
 		{
-			get { return contact ; }
-			set { contact = value; }
+			get { 
+				return contact ; 
+			}
+			set { 
+				contact = value; 
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private Contact contact;
-		
-
-		/// <summary>
-		/// Constructor, mostly used internal by the library.
-		/// </summary>
-		/// <param name="contact"></param>
 		public ContactEventArgs(Contact contact)
 		{
-			Contact		= contact;
+			Contact = contact;
 		}
 	}
 
-
-	/// <summary>
-	/// Used as event argument when a contact changed status.
-	/// </summary>
-	/// <remarks>
-	/// The difference between this class and <see cref="ContactStatusChangeEventArgs"/> is that this class is dispatched by the Contact class. And as such does not contain a Contact property, since that is the sender object.
-	/// </remarks>
 	[Serializable()]
 	public class StatusChangeEventArgs : EventArgs
 	{
-		/// <summary>
-		/// </summary>
 		private PresenceStatus oldStatus;
 
-		/// <summary>
-		/// The old presence status
-		/// </summary>
 		public PresenceStatus OldStatus
 		{
-			get { return oldStatus; }
-			set { oldStatus = value;}
+			get { 
+				return oldStatus; 
+			}
+			set { 
+				oldStatus = value;
+			}
 		}
 
-		/// <summary>
-		/// Constructs a StatusChangeEventArgs object.
-		/// </summary>
-		/// <param name="oldStatus"></param>
 		public StatusChangeEventArgs(PresenceStatus oldStatus)
 		{
 			OldStatus = oldStatus;
 		}
 	}
 
-
-	/// <summary>
-	/// Represents a single contact.
-	/// </summary>
-	/// <remarks>
-	/// Of every contact in the contactlist there is only one single Contact instance in the library at any time. 
-	/// By getting/setting properties you can easily block, remove or change contactgroup of a contact.
-	/// It is possible that a Contact object exists, but is not available in the contact list. This is the case when
-	/// a contact is in a switchboard session (invited by somebody else), who is not on the local owner's contact list.
-	/// </remarks>
 	[Serializable()]
 	public class Contact
 	{
-		#region Private
+		string guid;
+		string mail;
+		string name;
+		string homePhone;
+		string workPhone;
+		string mobilePhone;
+		bool hasBlog;
 		
-		/// <summary>
-		/// Constructor.
-		/// </summary>
+		[NonSerialized]
+		IMessageHandler nsMessageHandler;
+
+		ArrayList contactGroups = new ArrayList ();
+		MSNLists lists;	
+		PresenceStatus status = PresenceStatus.Offline;	
+
+		DisplayImage displayImage = null;
+		
+		PersonalMessage personalMessage;
+
+		Hashtable emoticons = null;
+
+		ClientCapacities clientCapacities = 0;
+
+		bool mobileDevice = false;
+		bool mobileAccess = false;
+
+		object clientData;
+
 		protected Contact()
 		{
 		}
-
-		private string guid;
-		private string mail;
-		private string name;
-		private string homePhone;
-		private string workPhone;
-		private string mobilePhone;
-		private bool hasBlog;
-
 		
-		[NonSerialized]
-		private IMessageHandler nsMessageHandler;
-
-		//private string			contactGroup = String.Empty;
-		private ArrayList		contactGroups = new ArrayList ();
-		private MSNLists		lists;	
-		private PresenceStatus	status  = PresenceStatus.Offline;		
-
-		private DisplayImage	displayImage = null;
-		private PersonalMessage personalMessage;
-
-		private	Hashtable		emoticons = null;
-
-		private ClientCapacities	clientCapacities = 0;
-
-		private bool			mobileDevice = false;
-		private bool			mobileAccess = false;
-		#endregion
-		
-		#region Public fields
-		/// <summary>
-		/// Indicates whether the contact has a mobile device enabled.
-		/// </summary>
 		public bool	MobileDevice
 		{
-			get { return mobileDevice; }
+			get { 
+				return mobileDevice; 
+			}
 		}
 
-		/// <summary>
-		/// Indicates whether the contact allows contacts to send mobile messages.
-		/// </summary>
 		public bool	MobileAccess
 		{
-			get { return mobileAccess; }
+			get { 
+				return mobileAccess; 
+			}
 		}
 
-
-		/// <summary>
-		/// Telephonenumber at home
-		/// </summary>
-		public string HomePhone { get { return homePhone; } }
-		/// <summary>
-		/// Telephonenumber at work
-		/// </summary>
-		public string WorkPhone { get { return workPhone; } }
-		/// <summary>
-		/// Mobile phonenumber
-		/// </summary>
-		public string MobilePhone { get { return mobilePhone; } }
-
+		public string HomePhone 
+		{ 
+			get { 
+				return homePhone; 
+			} 
+		}
 		
-		/// <summary>
-		/// A list of all capacities of the remote client.
-		/// </summary>
-		/// <remarks>
-		/// Use bitwise AND ( &amp; ) to extract specific capacities. For example:
-		/// <code>
-		/// if(contact.ClientCapacities &amp; ClientCapacities.Mobile)
-		/// { 
-		///		// client is a mobile device 
-		/// }
-		/// </code>
-		/// </remarks>
+		public string WorkPhone 
+		{ 
+			get { 
+				return workPhone; 
+			} 
+		}
+		
+		public string MobilePhone 
+		{ 
+			get { 
+				return mobilePhone; 
+			} 
+		}
+
 		public ClientCapacities ClientCapacities
 		{
-			get { return clientCapacities; }
-			set { clientCapacities = value;}
+			get { 
+				return clientCapacities; 
+			}
+			set { 
+				clientCapacities = value;
+			}
 		}
 
-		/// <summary>
-		/// The contact's unique e-mail adress. Used to identify a Microsoft Passport account
-		/// </summary>
 		public string Mail
 		{
-			get { return mail;  }
+			get { 
+				return mail;  
+			}
 		}
 
-		/// <summary>
-		/// The username (screenname) of this contact
-		/// </summary>
 		public string Name
 		{
-			get { return name;  }
+			get { 
+				return name;  
+			}
 		}
 		
 		public PersonalMessage PersonalMessage
 		{
-			get { return personalMessage; }
+			get { 
+				return personalMessage; 
+			}
 		}
 		
 		public string Guid
 		{
-			get { return guid; }
+			get { 
+				return guid; 
+			}
 		}
 		
-		/// <summary>
-		/// Retrieve the current status of this contact. It defaults to offline
-		/// </summary>
 		public PresenceStatus Status
 		{
-			get { return status; }
+			get { 
+				return status; 
+			}
 		}
 
-		/// <summary>
-		/// Indicates whether the specified is online. It will return true for all presence states (online, away, busy, etc) except PresenceStatus.Offline
-		/// </summary>
 		public bool Online
 		{
-			get { return status != PresenceStatus.Offline; }
+			get { 
+				return status != PresenceStatus.Offline; 
+			}
 		}
 
-		/// <summary>
-		/// Indicates whether the contact has an updated blog
-		/// </summary>
 		public bool HasBlog
 		{
-			get { return hasBlog; }
+			get { 
+				return hasBlog; 
+			}
 		}
 
-		/// <summary>
-		/// The notification message handler which controls this contact object
-		/// </summary>
-		public	NSMessageHandler NSMessageHandler
+		public NSMessageHandler NSMessageHandler
 		{
-			get { return (NSMessageHandler)nsMessageHandler; }
-			set { nsMessageHandler = (NSMessageHandler)value;}
+			get { 
+				return (NSMessageHandler)nsMessageHandler; 
+			}
+			set { 
+				nsMessageHandler = value;
+			}
 		}
 
-		/// <summary>
-		/// The user display image of the contact. Null if not present
-		/// </summary>
 		public DisplayImage DisplayImage
 		{
-			get { return displayImage; }
+			get { 
+				return displayImage; 
+			}
 		}
 
-		/// <summary>
-		/// A collection of all emoticons used by this contact
-		/// </summary>
 		public Hashtable Emoticons
 		{
 			get 
@@ -327,94 +271,46 @@ namespace MSNPSharp
 			}
 		}
 
-		
-		#endregion					
-		
-		/// <summary>
-		/// </summary>
-		private object clientData;
-
-
-		/// <summary>
-		/// The client programmer can specify custom data related to this contact in this property
-		/// </summary>
 		public object ClientData
 		{
-			get { return clientData; }
-			set { clientData = value;}
+			get { 
+				return clientData; 
+			}
+			set { 
+				clientData = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		internal bool inList = false;
 
 		#region Public events
 
-		/// <summary>
-		/// Used in events where a property of the contact changed
-		/// </summary>
-		public delegate void ContactChangedEventHandler(object sender, EventArgs e);
+		public delegate void ContactChangedEventHandler(object sender, 
+		                                                EventArgs e);
 
+		public delegate void StatusChangedEventHandler(object sender, 
+		                                               StatusChangeEventArgs e);
 
-		/// <summary>
-		/// Used in events where the presence state of a contact changed
-		/// </summary>
-		public delegate void StatusChangedEventHandler(object sender, StatusChangeEventArgs e);
+		public event ContactChangedEventHandler ScreenNameChanged;
 
+		public event ContactChangedEventHandler PersonalMessageChanged;
 		
-		/// <summary>
-		/// Called when the username of this contact has changed
-		/// </summary>
-		public event ContactChangedEventHandler		ScreenNameChanged;
-
-		/// <summary>
-		/// Called when the display message of this contact has changed
-		/// </summary>
-		public event ContactChangedEventHandler		PersonalMessageChanged;
-		
-		/// <summary>
-		/// Called when this user has been moved to another contactgroup
-		/// </summary>
-		//public event ContactChangedEventHandler		ContactGroupChanged;
-
-
 		public event ContactGroupChangedEventHandler ContactGroupAdded;
-
 
 		public event ContactGroupChangedEventHandler ContactGroupRemoved;
 
-		/// <summary>
-		/// Called when this user has been blocked
-		/// </summary>
-		public event ContactChangedEventHandler		ContactBlocked;
+		public event ContactChangedEventHandler ContactBlocked;
 		
-		/// <summary>
-		/// Called when this user has been unblocked
-		/// </summary>
-		public event ContactChangedEventHandler		ContactUnBlocked;		
+		public event ContactChangedEventHandler ContactUnBlocked;
 
-		/// <summary>
-		/// Called when this contact goes online
-		/// </summary>
-		public event ContactChangedEventHandler		ContactOnline;
+		public event ContactChangedEventHandler ContactOnline;
 
-		/// <summary>		
-		/// Called when this contact goes offline
-		/// </summary>
-		public event StatusChangedEventHandler			ContactOffline;
+		public event StatusChangedEventHandler ContactOffline;
 
-		/// <summary>
-		/// Called when the user changed from state
-		/// </summary>
-		public event StatusChangedEventHandler			StatusChanged;
+		public event StatusChangedEventHandler StatusChanged;
 
 		#endregion
 
 		#region Internal setters
-		/// <summary>
-		/// Used internal by the NS message handler. Raises the ScreenNameChanged event
-		/// </summary>		
-		/// <param name="newName">URL-encoded name</param>
 		internal void SetName(string newName)
 		{
 			if(name != newName)
@@ -451,63 +347,36 @@ namespace MSNPSharp
 			this.guid = guid;
 		}
 
-		/// <summary>
-		/// Sets the list this contact is in. Received after a LST command
-		/// </summary>
-		/// <param name="lists"></param>
 		internal void SetLists(MSNLists lists)
 		{
 			this.lists = lists;
 		}
 
-	
-		/// <summary>
-		/// Sets the contact's home phone
-		/// </summary>		
 		internal void SetMobileDevice(bool enabled)
 		{
 			mobileDevice = enabled;
 		}
 
-		/// <summary>
-		/// Sets the contact's home phone
-		/// </summary>
 		internal void SetMobileAccess(bool enabled)
 		{
 			mobileAccess = enabled;
 		}
 
-		/// <summary>
-		/// Sets the contact's home phone
-		/// </summary>
-		/// <param name="number"></param>
 		internal void SetHomePhone(string number)
 		{
 			homePhone = number;
 		}
 
-		/// <summary>
-		/// Sets the contact's home phone
-		/// </summary>
-		/// <param name="number"></param>
 		internal void SetMobilePhone(string number)
 		{
 			mobilePhone = number;
 		}
 
-		/// <summary>
-		/// Sets the contact's work phone
-		/// </summary>
-		/// <param name="number"></param>
 		internal void SetWorkPhone(string number)
 		{
 			workPhone = number;
 		}
 	
-		/// <summary>
-		/// Used internal by the NS message handler. It will raise the <see cref="StatusChanged"/>, <see cref="ContactOnline"/> or <see cref="ContactOffline"/>. Depending on the (new) presence state.
-		/// </summary>		
-		/// <param name="newStatus"></param>
 		internal void SetStatus(PresenceStatus newStatus)
 		{
 			if(status != newStatus)
@@ -522,42 +391,12 @@ namespace MSNPSharp
 				// raise the online/offline events
 				if(oldStatus == PresenceStatus.Offline && ContactOnline != null)
 					ContactOnline(this, new EventArgs());
+				
 				if(newStatus == PresenceStatus.Offline && ContactOffline != null)
 					ContactOffline(this, new StatusChangeEventArgs(oldStatus));
 			}
 		}
 
-
-
-		/// <summary>
-		/// Used internal by the NS message handler. It will raise the <see cref="ContactGroupChanged"/> event.
-		/// </summary>
-		/// <param name="newGroup"></param>
-		//[Deprecated]
-		/*internal void SetContactGroup(string guid)
-		{
-			if (contactGroups.Contains (guid))
-				return;
-				
-			if(NSMessageHandler == null)
-				return;
-				
-			ContactGroup group;
-			group = (ContactGroup)((NSMessageHandler)NSMessageHandler).ContactGroups[guid];
-			
-			if (group == null)
-				return;
-			
-			contactGroups.Add(group);
-			
-			if(ContactGroupChanged != null)
-				ContactGroupChanged(this, new EventArgs());
-		}*/
-
-		/// <summary>
-		/// Used internal by the NS message handler. It will raise the <see cref="ContactGroupAdded"/> event.
-		/// </summary>
-		/// <param name="group"></param>
 		internal void AddContactToGroup(ContactGroup group)
 		{
 			if(contactGroups.Contains(group))
@@ -569,11 +408,6 @@ namespace MSNPSharp
 				ContactGroupAdded (this, new ContactGroupEventArgs (group));
 		}
 
-
-		/// <summary>
-		/// Used internal by the NS message handler. It will raise the <see cref="RemoveContactFromGroup"/> event.
-		/// </summary>
-		/// <param name="group"></param>
 		internal void RemoveContactFromGroup(ContactGroup group)
 		{
 			if(contactGroups.Contains(group))
@@ -585,10 +419,6 @@ namespace MSNPSharp
 			}
 		}
 		
-		/// <summary>
-		/// Used internal by the NS message handler. It will raise the <see cref="ContactBlocked"/> event if the list is the Blocked list and the contact wasn't on the blocked list before.
-		/// </summary>
-		/// <param name="list"></param>
 		internal void AddToList(MSNLists list)
 		{
 			if(list == MSNLists.BlockedList && !Blocked)
@@ -604,10 +434,6 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// Used internal by the NS message handler. It will raise the <see cref="ContactUnBlocked"/> event if the list is the Blocked list and the contact was on the blocked list before.
-		/// </summary>
-		/// <param name="list"></param>
 		internal void RemoveFromList(MSNLists list)
 		{
 			if(list == MSNLists.BlockedList && Blocked)
@@ -630,17 +456,11 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// Used internal by the ContactList. This will set the contact's account, or mail adress, when it is created.
-		/// </summary>
 		internal void SetMail(string account)
 		{
 			mail = account;
 		}
 
-		/// <summary>
-		/// Used internal. This will set the msn object context for the contact's user display.
-		/// </summary>
 		internal void SetUserDisplay(DisplayImage userDisplay)
 		{
 			displayImage = userDisplay;
@@ -650,25 +470,6 @@ namespace MSNPSharp
 
 		#region Public setters
 
-		/// <summary>
-		/// The contactgroup this contact belongs to. You can change this by setting a new ContactGroup object.
-		/// </summary>
-		//[Deprecated]
-		/*public ContactGroup ContactGroup
-		{
-			get 
-			{ 
-				return (contactGroups.Count > 0) ? (ContactGroup) contactGroups[0] : null;
-			}
-			set
-			{
-				if(NSMessageHandler != null)
-				{
-					NSMessageHandler.ChangeGroup(this, value);
-				}
-			}
-		}*/
-		
 		public ArrayList ContactGroups
 		{
 			get {
@@ -681,10 +482,6 @@ namespace MSNPSharp
 			return contactGroups.Contains (group);
 		}
 
-		/// <summary>
-		/// Request the server to send us the current screenname for this contact
-		/// After receiving the screenname it will raise the ScreenNameChanged event
-		/// </summary>
 		public void UpdateScreenName()
 		{
 			if(NSMessageHandler != null)
@@ -695,12 +492,11 @@ namespace MSNPSharp
 				throw new MSNPSharpException("No valid message handler object");
 		}
 
-		/// <summary>
-		/// Get or set whether this person is blocked. When someone is 'blocked' this means he or she is on your blocked list.
-		/// </summary>
 		public bool Blocked
 		{
-			get { return (lists & MSNLists.BlockedList) > 0; }
+			get { 
+				return (lists & MSNLists.BlockedList) > 0; 
+			}
 			set 
 			{ 
 				if(NSMessageHandler != null)
@@ -713,24 +509,18 @@ namespace MSNPSharp
 			}
 		}
 
-
-		/// <summary>
-		/// Indicates whether this contact is on the blocked list. When a contact is on your blocked list it can't see your presence status or send messages to you.
-		/// </summary>
-		/// <remarks>
-		/// You can use the <see cref="Blocked"/> property to block a contact.
-		/// </remarks>
 		public bool OnBlockedList
 		{
-			get { return ((lists & MSNLists.BlockedList) == MSNLists.BlockedList); }			
+			get { 
+				return ((lists & MSNLists.BlockedList) == MSNLists.BlockedList); 
+			}			
 		}
 
-		/// <summary>
-		/// Indicates whether this contact is on the forward list
-		/// </summary>
 		public bool OnForwardList
 		{
-			get { return ((lists & MSNLists.ForwardList) == MSNLists.ForwardList); }
+			get { 
+				return ((lists & MSNLists.ForwardList) == MSNLists.ForwardList); 
+			}
 			set 
 			{ 
 				if(value != OnForwardList)
@@ -743,12 +533,11 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// Indicates whether this contact is on the allowed list
-		/// </summary>
 		public bool OnAllowedList
 		{
-			get { return ((lists & MSNLists.AllowedList) == MSNLists.AllowedList); }
+			get { 
+				return ((lists & MSNLists.AllowedList) == MSNLists.AllowedList); 
+			}
 			set 
 			{ 
 				if(value != OnAllowedList)
@@ -761,25 +550,22 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// Indicates whether this contact is on the reversed list. Obviously this field is read-only because the other client decides whether he accepts you or not.
-		/// </summary>
 		public bool OnReverseList
 		{
-			get { return ((lists & MSNLists.ReverseList) == MSNLists.ReverseList); }
+			get { 
+				return ((lists & MSNLists.ReverseList) == MSNLists.ReverseList); 
+			}
 		}
 		
 		
 		public bool OnPendingList
 		{
-			get { return ((lists & MSNLists.PendingList) == MSNLists.PendingList); }
+			get { 
+				return ((lists & MSNLists.PendingList) == MSNLists.PendingList); 
+			}
 		}
 
 
-		
-		/// <summary>
-		/// Removes the contact from both the forward and allowed list.
-		/// </summary>
 		public void RemoveFromList()
 		{
 			if(NSMessageHandler != null)
@@ -788,10 +574,6 @@ namespace MSNPSharp
 
 		#endregion
 
-		/// <summary>
-		/// Used to compare contacts. This returns the Mail-field hashcode.
-		/// </summary>
-		/// <returns></returns>
 		override public int GetHashCode()
 		{
 			return mail.GetHashCode();

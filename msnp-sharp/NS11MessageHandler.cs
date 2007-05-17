@@ -1753,12 +1753,24 @@ namespace MSNPSharp
 			
 			switch(type)
 			{
-				case "PHH":	Owner.SetHomePhone(number); break;
-				case "PHW":	Owner.SetWorkPhone(number); break;
-				case "PHM":	Owner.SetMobilePhone(number); break;
-				case "MBE":	Owner.SetMobileDevice((number == "Y") ? true : false); break;
-				case "MOB":	Owner.SetMobileAccess((number == "Y") ? true : false); break;
-				case "MFN": Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[1])); break;
+				case "PHH":	
+					Owner.SetHomePhone(number); 
+					break;
+				case "PHW":	
+					Owner.SetWorkPhone(number); 
+					break;
+				case "PHM":	
+					Owner.SetMobilePhone(number); 
+					break;
+				case "MBE":	
+					Owner.SetMobileDevice((number == "Y") ? true : false); 
+					break;
+				case "MOB":	
+					Owner.SetMobileAccess((number == "Y") ? true : false); 
+					break;
+				case "MFN": 
+					Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[1])); 
+					break;
 			}
 		}
 

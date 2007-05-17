@@ -32,13 +32,14 @@ namespace MSNPSharp.Test
 	[TestFixture]
 	public class TestBase
 	{
-		private Messenger	_client1 = null;
+		static Messenger _client1 = null;
+		static Messenger _client2 = null;
+		
 		protected Messenger Client1
 		{
 			get { return _client1; }
 		}
 
-		private Messenger	_client2 = null;
 		protected Messenger	Client2
 		{
 			get { return _client2; }
@@ -56,48 +57,73 @@ namespace MSNPSharp.Test
 		public TestBase()
 		{
 			ServicePointManager.CertificatePolicy = new CertificatePolicy ();
-				
-			_client1 = new Messenger();
-			_client1.Credentials = new Credentials("msntest1@test.com", "abc123", "PROD0090YUAUV{2B", "YMM8C_H7KCQ2S_KL");
-			_client2 = new Messenger();
-			_client2.Credentials = new Credentials("msntest2@test.com", "abc123", "PROD0090YUAUV{2B", "YMM8C_H7KCQ2S_KL");	
+			
+			if (_client1 == null)
+			{
+				_client1 = new Messenger();
+				_client1.Credentials = new Credentials("msntest1@test.com", "abc123", "PROD0090YUAUV{2B", "YMM8C_H7KCQ2S_KL");
+			
+			}
+		
+			if (_client2 == null)
+			{
+				_client2 = new Messenger();
+				_client2.Credentials = new Credentials("msntest2@test.com", "abc123", "PROD0090YUAUV{2B", "YMM8C_H7KCQ2S_KL");
+			}
 		}
 
 		#endregion
 
 		#region init and teardown
+		
 		[TestFixtureSetUp]
 		public void Connect()
 		{			
 			System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(System.Console.Out));
-            Settings.TraceSwitch.Level = TraceLevel.Verbose;
+			Settings.TraceSwitch.Level = TraceLevel.Error;
 
-			Client1.Nameserver.ServerErrorReceived += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
-			Client2.Nameserver.ServerErrorReceived += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
-			Client1.NameserverProcessor.HandlerException += new ProcessorExceptionEventHandler(NameserverProcessor_HandlerException);
-			Client2.NameserverProcessor.HandlerException += new ProcessorExceptionEventHandler(NameserverProcessor_HandlerException);
-			
-			Client1.Nameserver.SynchronizationCompleted += CreateWaitHandler();
-			Client2.Nameserver.SynchronizationCompleted += CreateWaitHandler();
+			if (!Client1.Connected)
+			{
+				Client1.Nameserver.ServerErrorReceived += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
+				Client1.NameserverProcessor.HandlerException += new ProcessorExceptionEventHandler(NameserverProcessor_HandlerException);
+				Client1.Nameserver.SynchronizationCompleted += CreateWaitHandler();
 				Client1.Connect();
+			}
+			
+			if (!Client2.Connected)
+			{
+				Client2.Nameserver.ServerErrorReceived += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
+				Client2.NameserverProcessor.HandlerException += new ProcessorExceptionEventHandler(NameserverProcessor_HandlerException);
+				Client2.Nameserver.SynchronizationCompleted += CreateWaitHandler();
 				Client2.Connect();
+			}
+			
 			Wait(45000);
 
 			
+			MSNPSharp.Contact.ContactChangedEventHandler busyHandler 
+				= new MSNPSharp.Contact.ContactChangedEventHandler(Owner_ContactOnline);
 
-			MSNPSharp.Contact.ContactChangedEventHandler busyHandler = new MSNPSharp.Contact.ContactChangedEventHandler(Owner_ContactOnline);
-			
-			CreateWait();			
+			if (Client1.Owner.Status != PresenceStatus.Busy)
+			{
+				CreateWait();
 				Client1.Owner.ContactOnline += busyHandler;
 				Client1.Owner.Status = PresenceStatus.Busy;
-			Wait(2000);
+				
+				Wait(2000);
 				Client1.Owner.ContactOnline -= busyHandler;			
-
-			CreateWait();			
+			}
+			
+			if (Client2.Owner.Status != PresenceStatus.Busy)
+			{
+				CreateWait();			
 				Client2.Owner.ContactOnline += busyHandler;
 				Client2.Owner.Status = PresenceStatus.Busy;
-			Wait(2000);
+				
+				Wait(2000);
 				Client2.Owner.ContactOnline -= busyHandler;
+
+			}
 		}
 
 		[TestFixtureTearDown]
@@ -130,13 +156,15 @@ namespace MSNPSharp.Test
 		protected EventHandler CreateWaitHandler()
 		{
 			CreateWait();
-			return new EventHandler(handler_Pulse);			
+			return new EventHandler(handler_Pulse);	
 		}
 
 		public void Wait(int timeOut)
 		{			
-			if(stackCount == 0) return;						
+			if(stackCount == 0) return;	
+			
 			currentWait.Reset();
+			
 			if(currentWait.WaitOne(timeOut * multiplier, false) == false)
 			{
 				throw new Exception("Timeout occured. Waited for " + timeOut.ToString() + " ms");

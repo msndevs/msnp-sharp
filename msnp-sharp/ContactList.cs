@@ -30,126 +30,70 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using MSNPSharp.Core;
 using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// A collection of all contacts.	
-	/// </summary>
-	/// <remarks>
-	/// Contactlist is a strongly-typed collection with extended functionality to support easy enumerating.
-	/// By providing multiple enumerators one can walk through the forward list, blocked list, etc.
-	/// All contacts are still stored only once in the internal collection.
-	/// 
-	/// Example of how to use this class:
-	/// <code>
-	/// // loop through all contacts in our forward list
-	/// foreach(Contact contact in Contacts.Forward)
-	/// {
-	///		// do something with contact
-	/// }
-	/// // loop through all contacts available
-	/// foreach(Contact contact in Contacts.All)
-	/// {
-	///		// do something with contact
-	/// }
-	/// </code>
-	/// </remarks>
+
 	[Serializable()]
 	public class ContactList
 	{		
-		/// <summary>
-		/// The container that holds the contacts
-		/// </summary>
-		private Hashtable contacts = new Hashtable(8);
+		Dictionary<string, Contact> contacts 
+			= new Dictionary<string, Contact> (10);
 
-		/// <summary>
-		/// The listenumerator is the base class for the more specific other iterators in ContactList.
-		/// </summary>
 		public class ListEnumerator : IEnumerator
 		{
-			/// <summary>
-			/// </summary>
 			private IDictionaryEnumerator baseEnum;
 
-			/// <summary>
-			/// The enumerator will use a standard IDictionaryEnumerator to do the work
-			/// </summary>
 			protected IDictionaryEnumerator BaseEnum
 			{
 				get { return baseEnum; }
 				set { baseEnum = value;}
 			}
 
-			/// <summary>
-			/// </summary>
-			/// <param name="listEnum"></param>
 			public ListEnumerator(IDictionaryEnumerator listEnum)
 			{
 				baseEnum = listEnum;
 			}
 
-			/// <summary> 
-			/// </summary>
-			/// <returns></returns>
 			public virtual bool MoveNext()
 			{					
 				return baseEnum.MoveNext();
 			}
 
-			/// <summary>
-			/// </summary>
 			Object IEnumerator.Current 
 			{
 				get { return baseEnum.Value; }
 			}
 
-			/// <summary>
-			/// The current contact the enumerator points to.
-			/// </summary>
 			public Contact Current 
 			{
-				get { return (Contact)baseEnum.Value; }
+				get { 
+					return (Contact)baseEnum.Value; 
+				}
 			}
 
-			/// <summary>
-			/// </summary>
 			public void Reset()
 			{
 				baseEnum.Reset();
 			}
 
-			/// <summary>
-			/// </summary>
-			/// <returns></returns>
 			public IEnumerator GetEnumerator()
 			{			
 				return this;
 			}
 		}
 
-
-		/// <summary>
-		/// Enumerating through this list will only process contacts which are on your forward list:
-		/// these are the contacts on YOUR contactlist.
-		/// </summary>
+		//filters the forward list contacts
 		public class ForwardListEnumerator : ContactList.ListEnumerator
 		{
-			/// <summary>
-			/// Constructor.
-			/// </summary>
-			/// <param name="listEnum"></param>
 			public ForwardListEnumerator(IDictionaryEnumerator listEnum)
 				: base(listEnum)
 			{
 			}
 
-			/// <summary>
-			/// Used by the foreach language structure
-			/// </summary>
-			/// <returns>True when there are still items left</returns>
 			public override bool MoveNext()
 			{					
 				while(BaseEnum.MoveNext())
@@ -158,28 +102,19 @@ namespace MSNPSharp
 					if(((Contact)BaseEnum.Value).OnForwardList)
 						return true;
 				}
+				
 				return false;
 			}
 		}
 
-		/// <summary>
-		/// Enumerating through this list will only process contacts which are on your pending list
-		/// </summary>
+		//filters the pending list contacts
 		public class PendingListEnumerator : ContactList.ListEnumerator
 		{
-			/// <summary>
-			/// Constructor.
-			/// </summary>
-			/// <param name="listEnum"></param>
 			public PendingListEnumerator(IDictionaryEnumerator listEnum)
 				: base(listEnum)
 			{
 			}
 
-			/// <summary>
-			/// Used by the foreach language structure
-			/// </summary>
-			/// <returns>True when there are still items left</returns>
 			public override bool MoveNext()
 			{					
 				while(BaseEnum.MoveNext())
@@ -188,29 +123,19 @@ namespace MSNPSharp
 					if(((Contact)BaseEnum.Value).OnPendingList)
 						return true;
 				}
+				
 				return false;
 			}
 		}
 
-
-		/// <summary>
-		/// Enumerating through this list will only process contacts which are on your reverse list:
-		/// these are contacts who have YOU in their contactlist.
-		/// </summary>
+		//filter the reverse list contacts
 		public class ReverseListEnumerator : ContactList.ListEnumerator
 		{
-			/// <summary>
-			/// Constructor.
-			/// </summary>
-			/// <param name="listEnum"></param>
 			public ReverseListEnumerator(IDictionaryEnumerator listEnum)
 				: base(listEnum)
 			{
 			}
 
-			/// <summary>
-			/// </summary>
-			/// <returns></returns>
 			public override bool MoveNext()
 			{					
 				while(BaseEnum.MoveNext())
@@ -223,52 +148,33 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// Enumerating through this list will only process contacts which are on your blocked list:
-		/// these are contacts who YOU have blocked and are not able to see your status.
-		/// </summary>
+		//filters the blocked list contacts
 		public class BlockedListEnumerator : ContactList.ListEnumerator
 		{
-			/// <summary>
-			/// </summary>
-			/// <param name="listEnum"></param>
 			public BlockedListEnumerator(IDictionaryEnumerator listEnum)
 				: base(listEnum)
 			{
 			}
 
-			/// <summary>
-			/// </summary>
-			/// <returns></returns>
 			public override bool MoveNext()
 			{					
 				while(BaseEnum.MoveNext())
 				{
-					// filter on the forward boolean						
-					if((((Contact)BaseEnum.Value).Blocked))
+					if(((Contact)BaseEnum.Value).Blocked)
 						return true;
 				}
 				return false;
 			}
 		}
 
-		/// <summary>
-		/// Enumerating through this list will only process contacts which are on your allowed list:
-		/// these are contacts who are allowed to see your status.
-		/// </summary>
+		//filters the allowed list contacts
 		public class AllowedListEnumerator : ContactList.ListEnumerator
 		{
-			/// <summary>
-			/// </summary>
-			/// <param name="listEnum"></param>
 			public AllowedListEnumerator(IDictionaryEnumerator listEnum)
 				: base(listEnum)
 			{
 			}
 
-			/// <summary>
-			/// </summary>
-			/// <returns></returns>
 			public override bool MoveNext()
 			{					
 				while(BaseEnum.MoveNext())
@@ -281,73 +187,62 @@ namespace MSNPSharp
 			}
 		}
 
-
-		/// <summary>
-		/// A collection of all contacts on the forward list
-		/// </summary>
 		public ContactList.ForwardListEnumerator Forward
 		{
-			get { return new ContactList.ForwardListEnumerator(contacts.GetEnumerator()); }
+			get { 
+				return new ContactList.ForwardListEnumerator(contacts.GetEnumerator()); 
+			}
 		}
 		
-		/// <summary>
-		/// A collection of all contacts on the pending list
-		/// </summary>
 		public ContactList.PendingListEnumerator Pending
 		{
-			get { return new ContactList.PendingListEnumerator(contacts.GetEnumerator()); }
+			get { 
+				return new ContactList.PendingListEnumerator(contacts.GetEnumerator()); 
+			}
 		}
 
-		/// <summary>
-		/// A collection of all contacts on the reverse list
-		/// </summary>
 		public ContactList.ReverseListEnumerator Reverse
 		{
-			get { return new ContactList.ReverseListEnumerator(contacts.GetEnumerator()); }
-		}		
+			get { 
+				return new ContactList.ReverseListEnumerator(contacts.GetEnumerator()); 
+			}
+		}
 
-		/// <summary>
-		/// A collection of all contacts on the blocked list
-		/// </summary>
 		public ContactList.BlockedListEnumerator BlockedList
 		{
-			get { return new ContactList.BlockedListEnumerator(contacts.GetEnumerator()); }
+			get { 
+				return new ContactList.BlockedListEnumerator(contacts.GetEnumerator()); 
+			}
 		}
 
-		/// <summary>
-		/// A collection of all contacts on the allowed list
-		/// </summary>
 		public ContactList.AllowedListEnumerator Allowed
 		{
-			get { return new ContactList.AllowedListEnumerator(contacts.GetEnumerator()); }
+			get { 
+				return new ContactList.AllowedListEnumerator(contacts.GetEnumerator()); 
+			}
 		}
 
-		/// <summary>
-		/// A collection of all contacts in your lists.
-		/// </summary>
 		public ContactList.ListEnumerator All
 		{
-			get { return new ContactList.ListEnumerator(contacts.GetEnumerator()); }
+			get { 
+				return new ContactList.ListEnumerator(contacts.GetEnumerator()); 
+			}
 		}
 
-		/// <summary>
-		/// Retrieves the Contact object with the specified account. The account is typically an e-mail adres, eg name@hotmail.com.
-		/// When no contact is found a new contact is created with the specified account.
-		/// </summary>
-		/// <param name="account">The account, or e-mail address, of the contact to search for</param>
-		/// <returns>The associated Contact object.</returns>
 		public Contact GetContact(string account)
 		{			
 			if(contacts.ContainsKey(account))
-				return (Contact)contacts[account];
+				return contacts[account];
 			else
 			{
 				Contact	tmpContact = Factory.CreateContact();
+				
 				tmpContact.SetMail(account);
-				tmpContact.SetName(account);				
-				//tmpContact.SetContactGroup(String.Empty);
+				tmpContact.SetName(account);
+				
 				contacts.Add(account, tmpContact);
-				return (Contact)contacts[account];
+				
+				return contacts[account];
 			}			
 		}
 		
@@ -362,37 +257,29 @@ namespace MSNPSharp
 			return null;
 		}
 		
-		/// <summary>
-		/// Retrieves the Contact object with the specified account.
-		/// </summary>
-		/// <remarks>Uses <see cref="GetContact"/>. The account is usually a principal's e-mail adress.</remarks>
-		public Contact this[string key]
+		public Contact this[string account]
 		{
 			get
 			{
-				return GetContact (key);
+				if(contacts.ContainsKey(account))
+					return contacts[account];
+				
+				return null;
 			}
 			set
 			{
-				contacts[key] = value;
+				contacts[account] = value;
 			}
 		}
 		
 		public bool HasContact (string account)
 		{
-			return (contacts[account] != null);
+			return contacts.ContainsKey (account);
 		}
 
-		
-		/// <summary>
-		/// Copies all contacts to the specified array, starting at the index.
-		/// </summary>
-		/// <param name="array"></param>
-		/// <param name="index"></param>
 		public void CopyTo(Contact[] array, int index)
 		{
-			((Hashtable)contacts).CopyTo(array, index);
+			contacts.Values.CopyTo (array, index);
 		}
 	}
-	
 }

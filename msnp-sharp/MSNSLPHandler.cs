@@ -998,7 +998,7 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		private string ExtractChecksum(string context)
 		{
-			Regex shaRe = new Regex("SHA1C=\"([^\"]+)\"");
+			Regex shaRe = new Regex("SHA1[C-D]=\"([^\"]+)\"");
 			Match match = shaRe.Match(context);
 			if(match.Success)
 			{

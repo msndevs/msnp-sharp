@@ -18,6 +18,7 @@
     <Execute type="None" entry="msnp-sharp-client" />
     <Execute type="None" entry="msnp-sharp-nunit" />
     <Execute type="None" entry="ProxyServer" />
+    <Execute type="None" entry="msnp-sharp-test-unit" />
   </StartMode>
   <Entries>
     <Entry filename="./msnp-sharp/MSNPSharp.mdp" />

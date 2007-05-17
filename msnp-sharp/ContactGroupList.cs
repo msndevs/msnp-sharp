@@ -30,18 +30,17 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Summary description for ContactGroupList.
-	/// </summary>
 	[Serializable()]
 	public class ContactGroupList : IEnumerable
 	{
-		/// <summary>
-		/// </summary>
-		private ArrayList list = new ArrayList();
+		List<ContactGroup> list = new List<ContactGroup> ();
+		
+		[NonSerialized]
+		NSMessageHandler nsMessageHandler = null;
 
 		internal void AddGroup(ContactGroup group)
 		{
@@ -52,58 +51,30 @@ namespace MSNPSharp
 			list.Remove(group);
 		}
 
-
-		/// <summary>
-		/// The nameserver handler that performs the adding/removing actions.
-		/// </summary>
-		[NonSerialized]
-		protected  NSMessageHandler	nsMessageHandler = null;
-		
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		/// <param name="handler"></param>
 		internal ContactGroupList(NSMessageHandler handler)
 		{
 			nsMessageHandler = handler;
 		}
 
-
-		
-		/// <summary>
-		/// Add a new contactgroup.
-		/// </summary>
-		/// <remarks>
-		/// This method delegates the action to the nameserver handler.
-		/// </remarks>
-		/// <param name="name">The name of the new contactgroup</param>
 		protected virtual void Add(string name)
 		{
 			if(nsMessageHandler == null)
 				throw new MSNPSharpException("No nameserver handler defined");
-            nsMessageHandler.AddContactGroup(name);
+			
+			nsMessageHandler.AddContactGroup(name);
 		}
 
-		/// <summary>
-		/// Removes an existing contactgroup.
-		/// </summary>
-		/// <remarks>
-		/// This method delegates the action to the nameserver handler.
-		/// </remarks>
 		protected virtual void Remove(ContactGroup group)
 		{
 			if(nsMessageHandler == null)
 				throw new MSNPSharpException("No nameserver handler defined");
+			
 			if(this[group.Guid] != null)
 				nsMessageHandler.RemoveContactGroup(group);
 			else
 				throw new MSNPSharpException("Contactgroup not defined in this list");
 		}
 
-
-		/// <summary>
-		/// Returns the contactgroup specified by the Name.
-		/// </summary>		
 		public ContactGroup GetByName (string name)
 		{
 			foreach(ContactGroup group in list)
@@ -111,11 +82,9 @@ namespace MSNPSharp
 				if(group.Name == name)
 					return group;
 			}
+			
 			return null;		}
 
-		/// <summary>
-		/// Returns the contactgroup specified by the name.
-		/// </summary>
 		public ContactGroup this[string guid]
 		{
 			get 
@@ -128,17 +97,11 @@ namespace MSNPSharp
 				return null;
 			}
 		}
-		#region IEnumerable Members
-
-		/// <summary>
-		/// Returns an enumerator to ContactGroup objects in the list.
-		/// </summary>
-		/// <returns></returns>
+		
 		public IEnumerator GetEnumerator()
 		{			
 			return list.GetEnumerator();
 		}
 
-		#endregion
 	}
 }

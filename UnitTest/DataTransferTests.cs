@@ -35,7 +35,7 @@ namespace MSNPSharp.Test
 
 			MemoryStream memStream = new MemoryStream(sendBuffer);
 			MSNSLPHandler handler = Client1.GetMSNSLPHandler(Client2.Owner.Mail);
-			Thread.Sleep(2000);
+			Thread.Sleep(10000);
 			Client2.ConversationCreated += new ConversationCreatedEventHandler(Client2_ConversationCreated);				
 			Client2.TransferInvitationReceived += new MSNSLPInvitationReceivedEventHandler(Client2_TransferInvitationReceived);
 			handler.TransferSessionClosed += new P2PTransferSessionChangedEventHandler(handler_TransferSessionClosed);
