@@ -80,7 +80,7 @@ namespace MSNPSharp.Test
 		public void Connect()
 		{			
 			System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(System.Console.Out));
-			Settings.TraceSwitch.Level = TraceLevel.Error;
+			Settings.TraceSwitch.Level = TraceLevel.Info;
 
 			if (!Client1.Connected)
 			{

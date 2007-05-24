@@ -36,32 +36,42 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp.Core
 {
-	/// <summary>
-	/// NSMessage represents a single message, or command, send from and to the Notification Server.
-	/// </summary>
 	[Serializable()]
 	public class NSMessage : MSNMessage
 	{
-		#region Private
-		#endregion
+		public NSMessage() : base ()
+		{
+			
+		}
 
-		#region Public
-		/// <summary>
-		/// Returns the NS message as a byte array. This can be directly send over a networkconnection.
-		/// Remember to set the transaction ID before calling this method.
-		/// Uses UTF8 Encoding.
-		/// No MSG commands can be send to the NS, and is therefore not supported by this function.
-		/// This function will add a \r\n at the end of the string, with the exception of a QRY command. Which does not work with a trailing \r\n.
-		/// </summary>
-		/// <returns></returns>
+		public NSMessage(string command, ArrayList commandValues)
+			: base(command, commandValues)
+		{			
+		}
+
+		public NSMessage(string command, string[] commandValues)
+			: base(command, new ArrayList(commandValues))
+		{			
+		}
+		
+		public NSMessage(string command) : base ()
+		{
+			Command = command;
+		}
+		
+		//this is only different for QRY response
 		public override byte[] GetBytes()
 		{
+			if (Command == "PNG")
+				return System.Text.Encoding.UTF8.GetBytes("PNG\r\n");
+			
 			if(Command != "QRY")
 				return base.GetBytes();
-
-			// for the exception do it ourselves
+			
 			StringBuilder builder = new StringBuilder(64);
 			builder.Append(Command);
+			
+			// for the exception do it ourselves
 			builder.Append(' ');
 			builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
 			foreach(string val in CommandValues)
@@ -69,37 +79,7 @@ namespace MSNPSharp.Core
 				builder.Append(val);
 			}
 			
-			if(Command != "QRY") builder.Append("\r\n");
-			
 			return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
 		}
-
-	
-
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		public NSMessage()
-		{
-			
-		}
-
-		/// <summary>
-		/// Constructor providing initial values.
-		/// </summary>
-		public NSMessage(string command, ArrayList commandValues)
-			: base(command, commandValues)
-		{			
-		}
-
-		/// <summary>
-		/// Constructor providing initial values.
-		/// </summary>
-		public NSMessage(string command, string[] commandValues)
-			: base(command, new ArrayList(commandValues))
-		{			
-		}
-
-		#endregion
 	}
 }

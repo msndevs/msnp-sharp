@@ -37,34 +37,25 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp.Core
 {
-	/// <summary>
-	/// The base class for all messages which are directly send to, or received from the msn server.
-	/// This class has the basic methods to perform bytearray to message and message to bytearray conversions.
-	/// The SB and NS command messages are typical examples which use this class as their baseclass.
-	/// </summary>
 	[Serializable()]
 	public class MSNMessage : NetworkMessage
 	{
-		#region Private
-		/// <summary>
-		/// </summary>
-		private int			transactionID;
-		/// <summary>
-		/// </summary>
-		private string		command;
-		/// <summary>
-		/// </summary>
-		private ArrayList	commandValues = new ArrayList(4);
+		int	transactionID;
+		string command;
+		ArrayList commandValues;
+		string acknowledgement = "N";
 
-		/// <summary>
-		/// </summary>
-		private string		acknowledgement = "N";
-		#endregion
+		public MSNMessage()
+		{
+			commandValues = new ArrayList ();
+		}
 
-		#region Public overrides
-		/// <summary>
-		/// Clears the Command and CommandValues when an innermessage is set. So the innermessage can set these properties.
-		/// </summary>
+		public MSNMessage(string command, ArrayList commandValues)
+		{
+			Command = command;
+			CommandValues = commandValues;
+		}		
+		
 		public override void PrepareMessage()
 		{
 			if(InnerMessage != null)
@@ -72,62 +63,57 @@ namespace MSNPSharp.Core
 				Command = "";
 				CommandValues.Clear();
 			}
+			
 			base.PrepareMessage ();
 		}
-		#endregion
-		#region Public
-
-		/// <summary>
-		/// Acknowledgement
-		/// </summary>
+		
 		public string Acknowledgement
 		{
-			get { return acknowledgement; }
-			set { acknowledgement = value;}
+			get { 
+				return acknowledgement; 
+			}
+			set { 
+				acknowledgement = value;
+			}
 		}
 
-		/// <summary>
-		/// The transaction identifier of this message. Only valid when the message is received from the notification server.
-		/// </summary>
-		public int		TransactionID
+		public int TransactionID
 		{
-			get { return transactionID; }
-			set { transactionID = value;}
+			get { 
+				return transactionID; 
+			}
+			set { 
+				transactionID = value;
+			}
 		}
 
-
-		/// <summary>
-		/// The command name. This is always a string composed of 3 characters.
-		/// </summary>
-		public string	Command
+		public string Command
 		{
-			get { return command; }
-			set { command = value;}
+			get { 
+				return command; 
+			}
+			set { 
+				command = value;
+			}
 		}
 		
-		/// <summary>
-		/// A list of all values after the initial command string. The values are all stored as strings. After construction this is an empty list.
-		/// </summary>
 		public ArrayList CommandValues
 		{
-			get { return commandValues; }
-			set { commandValues = value;}
+			get { 
+				return commandValues; 
+			}
+			set { 
+				commandValues = value;
+			}
 		}
-
-
-		/// <summary>
-		/// Returns the command message as a byte array. This can be directly send over a networkconnection.
-		/// Remember to set the transaction ID before calling this method.
-		/// Uses UTF8 Encoding.				
-		/// </summary>
-		/// <returns></returns>
+		
 		public override byte[] GetBytes()
 		{
 			byte[] contents = null;
 
 			if(InnerMessage != null)
 			{
-				contents = InnerMessage.GetBytes();							
+				contents = InnerMessage.GetBytes();	
 
 				// prepare a default MSG message if an inner message is specified
 				if(Command.Length == 0)
@@ -150,29 +136,24 @@ namespace MSNPSharp.Core
 					builder.Append(' ');
 					builder.Append(val);
 				}
+				
 				builder.Append("\r\n");
 			}
-
+			
 			if(InnerMessage != null)
 				return AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), contents);
 			else
 				return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
 		}
 
-		/// <summary>
-		/// Parses incoming byte data send from the network.
-		/// This will set the command values and other properties of the class, depending on the message.
-		/// </summary>
-		/// <param name="data">The raw message as received from the server</param>
 		public override void ParseBytes(byte[] data)
 		{
 			int cnt = 0;
 			int bodyStart = 0;
 			
 			while(data[cnt] != '\r')
-			{				
-				cnt++;
-
+			{
+				cnt++;
 				// watch out for buffer overflow
 				if(cnt == data.Length)
 					throw new MSNPSharpException("Parsing of incoming command message failed. No newline was detected.");
@@ -186,7 +167,7 @@ namespace MSNPSharp.Core
 
 			// get the command parameters
 			Command = System.Text.Encoding.ASCII.GetString(data, 0, 3);
-			CommandValues  = new ArrayList(System.Text.Encoding.UTF8.GetString(data, 4, cnt - 4).Split(new char[] { ' '}));
+			CommandValues = new ArrayList(System.Text.Encoding.UTF8.GetString(data, 4, cnt - 4).Split(new char[] { ' '}));
 			
 			// set the inner body contents, if it is available
 			if(bodyStart < data.Length)
@@ -198,27 +179,6 @@ namespace MSNPSharp.Core
 			}			
 		}
 
-
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		public MSNMessage()
-		{
-			
-		}
-
-		/// <summary>
-		/// Constructor providing initial values.
-		/// </summary>
-		public MSNMessage(string command, ArrayList commandValues)
-		{
-			Command		  = command;
-			CommandValues = commandValues;
-		}		
-
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
 		public override string ToString()
 		{
 			PrepareMessage();
@@ -226,16 +186,10 @@ namespace MSNPSharp.Core
 			return System.Text.Encoding.ASCII.GetString (GetBytes ());
 		}
 
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
 		public override string ToDebugString()
 		{
 			PrepareMessage();
 			return base.ToDebugString ();
 		}
-
-
-		#endregion
 	}
 }

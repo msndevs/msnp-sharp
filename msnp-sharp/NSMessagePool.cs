@@ -220,14 +220,6 @@ namespace MSNPSharp.Core
 								EnqueueCurrentBuffer ();
 								CreateNewBuffer ();	
 							}
-
-							/*
-							TODO: UBX can have the size 0
-							if(remainingBuffer == 0)
-							{
-								// something went wrong while getting the message size
-								throw new MSNPSharpException("While parsing incoming messages from the NS session an invalid payload size was encountered");
-							}*/
 						}
 						else
 						{

@@ -1,3 +1,9 @@
+2007-05-23 Thiago M. Sayão <thiago.sayao@gmail.com> 
+	* Add the SendPing command to keep the connection alive
+	* Cleanup
+	* Add the ability to send custom nicknames on messages 
+	  (by Thijs Walcarius)
+
 2007-05-16 Thiago M. Sayão <thiago.sayao@gmail.com> 
 	* Fix some testing units
 	* Fix serialization of contactlist and contact groups

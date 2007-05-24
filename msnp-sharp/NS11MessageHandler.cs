@@ -1146,17 +1146,18 @@ namespace MSNPSharp
 			// and send it
 			MessageProcessor.SendMessage(nsMessage);            
 		}
+		
+		public virtual void SendPing ()
+		{
+			MessageProcessor.SendMessage(new NSMessage("PNG"));	
+		}
 
 		#endregion
 
 		#region IMessageHandler Members	
 
-        /// <summary>
-        /// </summary>
 		private	EventHandler	processorConnectedHandler = null;
 
-		/// <summary>
-		/// </summary>
 		private	EventHandler	processorDisconnectedHandler = null;
 
 		/// <summary>
@@ -2465,7 +2466,7 @@ namespace MSNPSharp
 		/// </remarks>
 		/// <param name="message"></param>
 		protected virtual void OnQNGReceived(NSMessage message)
-		{			
+		{	
 			if(PingAnswer != null)
 			{
 				// get the number of seconds till the next ping and fire the event

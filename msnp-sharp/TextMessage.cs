@@ -120,18 +120,32 @@ namespace MSNPSharp
 		/// </summary>
 		private MessageCharSet charSet = MessageCharSet.Ansi;
 
-        /// <summary>
-        /// </summary>
-        private bool rightToLeft = false;
-       
-        /// <summary>
-        /// Text is read right-to-left
-        /// </summary>
-        public bool RightToLeft
-        {
-            get { return rightToLeft; }
-            set { rightToLeft = value; }
-        }
+		/// <summary>
+		/// </summary>
+		private bool rightToLeft = false;
+
+		/// <summary>
+		/// Text is read right-to-left
+		/// </summary>
+		public bool RightToLeft
+		{
+			get { return rightToLeft; }
+			set { rightToLeft = value; }
+		}
+
+		/// <summary>
+		/// The (optional) custom nickname of this message
+		/// </summary>
+		private string customNickname = string.Empty;
+
+		/// <summary>
+		/// The (optional) custom nickname of this message
+		/// </summary>
+		public string CustomNickname
+		{
+			get { return customNickname; }
+			set { customNickname = value; }
+		}
 
 		/// <summary>
 		/// Parses the header in the parent message and sets the style properties.
@@ -166,6 +180,9 @@ namespace MSNPSharp
 				MSGMessage msgMessage = (MSGMessage)ParentMessage;
 				msgMessage.MimeHeader["Content-Type"] = "text/plain; charset=UTF-8";
 				msgMessage.MimeHeader["X-MMS-IM-Format"] = GetStyleString();
+				
+				if (customNickname != string.Empty)
+					msgMessage.MimeHeader["P4-Context"] = customNickname;
 			}
 		}
 
@@ -259,7 +276,10 @@ namespace MSNPSharp
 					{
 					}
 				}
-			}	
+				
+				if (MSGMessage.MimeHeader.Contains("P4-Context"))
+					this.customNickname = MSGMessage.MimeHeader["P4-Context"].ToString();
+			}
 		}
 
 		/// <summary>
