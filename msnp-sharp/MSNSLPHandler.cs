@@ -33,6 +33,7 @@ using System.IO;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Globalization;
@@ -1092,16 +1093,25 @@ namespace MSNPSharp.DataTransfer
 			// call the methods belonging to the content-type to handle the message
 			switch(slpMessage.ContentType)
 			{
-				case "application/x-msnmsgr-sessionreqbody":	OnSessionRequest(slpMessage); break;
-				case "application/x-msnmsgr-transreqbody":		OnDCRequest(slpMessage); break;
-				case "application/x-msnmsgr-transrespbody":		OnDCResponse(slpMessage); break;				
-				case "application/x-msnmsgr-sessionclosebody":	OnSessionCloseRequest(slpMessage); break;
+				case "application/x-msnmsgr-sessionreqbody":
+					OnSessionRequest(slpMessage); 
+					break;
+				
+				case "application/x-msnmsgr-transreqbody":
+					OnDCRequest(slpMessage); 
+					break;
+				
+				case "application/x-msnmsgr-transrespbody":	
+					OnDCResponse(slpMessage); 
+					break;				
+				case "application/x-msnmsgr-sessionclosebody":
+					OnSessionCloseRequest(slpMessage); 
+					break;
+					
 				default:
-				{
 					if(Settings.TraceSwitch.TraceWarning)
 						System.Diagnostics.Trace.WriteLine("Content-type not supported: " + slpMessage.ContentType, "MSNSLPHandler");
 					break;
-				}				
 			}
 		}
 
@@ -1309,17 +1319,15 @@ namespace MSNPSharp.DataTransfer
 		protected virtual void OnDCRequest(MSNSLPMessage message)
 		{
 			// let's listen	
-			MSNSLPMessage slpMessage = new MSNSLPMessage();										
+			MSNSLPMessage slpMessage = new MSNSLPMessage();	
 			
 			// Find host by name
 			IPHostEntry iphostentry = Dns.GetHostEntry(Dns.GetHostName());
-
+			
 			MSNSLPTransferProperties properties = GetTransferProperties(new Guid(message.CallId));
-
 			properties.Nonce = Guid.NewGuid();
-						
+			
 			int port = GetNextDirectConnectionPort();
-
 			MessageSession.ListenForDirectConnection(iphostentry.AddressList[0], port);
 			
 			// create the message
@@ -1346,17 +1354,26 @@ namespace MSNPSharp.DataTransfer
 				"IPv4External-Port: " + port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 			}
 
+			/*
+			TODO: I was playing with WireShark a bit and noticed that
+				IPV4Internal-Addrs and IPV4Internal-Ports are not used
+				anymore..
+			*/
+			
 			// close the message body
 			slpMessage.Body += "\r\n";
 
 			P2PMessage p2pMessage = new P2PMessage();
 			p2pMessage.InnerMessage = slpMessage;
 
-			//FIXME: is this needed?
-			P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
+			//FIXME: is this needed? Should't it be sent after confirmation?
+			/*P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
 			hsMessage.Guid = properties.Nonce;
-			MessageSession.HandshakeMessage = hsMessage;			
+			MessageSession.HandshakeMessage = hsMessage;*/			
 
+			//Console.WriteLine ("WE ARE SENDING THIS MESSAGE: ");
+			//Console.WriteLine (slpMessage);
+			
 			// and notify the remote client that he can connect
 			MessageProcessor.SendMessage(p2pMessage);
 		}
@@ -1368,17 +1385,17 @@ namespace MSNPSharp.DataTransfer
 		protected virtual void OnDCResponse(MSNSLPMessage message)
 		{
 			// read the values
-			Hashtable bodyValues = message.MessageValues;
+			Dictionary<string, string> bodyValues = message.MessageValues;
 
 			// check the protocol
 			if(bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
 			{
 				if(bodyValues.ContainsKey("IPv4Internal-Addrs") && 
-					bodyValues.ContainsKey("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
+					bodyValues.ContainsKey("Listening") && bodyValues["Listening"].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
 				{
 					// we must connect to the remote client
 					ConnectivitySettings settings = new ConnectivitySettings();
-					settings.Host = bodyValues["IPv4Internal-Addrs"].ToString();
+					settings.Host = bodyValues["IPv4Internal-Addrs"];
 					settings.Port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);															
 
 					// let the message session connect
@@ -1386,7 +1403,7 @@ namespace MSNPSharp.DataTransfer
 
 					//P2PTransferSession transferSession = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
 
-					properties.Nonce = new Guid(bodyValues["Nonce"].ToString());
+					properties.Nonce = new Guid(bodyValues["Nonce"]);
 					
  					// create the handshake message to send upon connection
 					P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();

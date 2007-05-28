@@ -46,7 +46,7 @@ namespace MSNPSharp
 	/// These message objects are dispatched by events. 
 	/// </remarks>
 	[Serializable()]
-	public class TextMessage : NetworkMessage
+	public class TextMessage : NetworkMessage, ICloneable
 	{	
 		/// <summary>
 		/// The body of the message
@@ -310,5 +310,25 @@ namespace MSNPSharp
 		{
 			Text = message;
 		}
+		
+		#region ICloneable Members
+
+		public object Clone()
+		{
+			TextMessage message = new TextMessage();
+			message.charSet = this.charSet;
+			message.color = this.color;
+			message.customNickname = this.customNickname;
+			message.decorations = this.decorations;
+			message.font = this.font;
+			message.InnerBody = this.InnerBody;
+			message.rightToLeft = this.rightToLeft;
+			message.text = this.text;
+
+			return message;
+		}
+
+		#endregion
+		
 	}
 }

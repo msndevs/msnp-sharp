@@ -35,51 +35,37 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Handles the I/O of the switchboard server. 
-	/// </summary>
-	/// <remarks>
-	/// SBMessageProcessor uses <see cref="SBMessagePool"/> as it's MessagePool.
-	/// </remarks>
+	
 	public class SBMessageProcessor : SocketMessageProcessor
 	{
-		/// <summary>
-		/// </summary>
-		private int transactionID = 1;
+		int transactionID = 1;
+		
+		public event ProcessorExceptionEventHandler	HandlerException;
 
-		/// <summary>
-		/// Get the transaction identifier used by the last message send
-		/// </summary>
 		public int TransactionID
 		{
-			get { return transactionID; }
-			set { transactionID = value;}
+			get { 
+				return transactionID; 
+			}
+			set { 
+				transactionID = value;
+			}
 		}
 
-
-		/// <summary>
-		/// Increases the transaction identifier by one and returns that value.
-		/// </summary>
 		protected int IncreaseTransactionID()
 		{
 			transactionID++;
 			return transactionID;
 		}
 
-		/// <summary>
-		/// Constructs a NSMessageProcessor object.
-		/// </summary>
 		private SBMessageProcessor()
 		{
 			if(Settings.TraceSwitch.TraceInfo)
 				System.Diagnostics.Trace.WriteLine("Constructing object", "SBMessageProcessor");
+			
 			MessagePool = new SBMessagePool();	
 		}
 
-		/// <summary>
-		/// Creates a SBMessage object. After that the message is send to the handler(s).
-		/// </summary>
-		/// <param name="data"></param>
 		protected override void OnMessageReceived(byte[] data)
 		{
 			if(Settings.TraceSwitch.TraceVerbose)
@@ -96,18 +82,14 @@ namespace MSNPSharp
 			DispatchMessage(message);				
 		}
 
-		/// <summary>
-		/// Sends the received network message, from the server, to all registered handlers.
-		/// </summary>
-		/// <param name="message">The message to send</param>
 		protected virtual void DispatchMessage(NetworkMessage message)
 		{
 			// copy the messageHandlers array because the collection can be 
 			// modified during the message handling. (Handlers are registered/unregistered)
-			ArrayList messageHandlersCopy = (ArrayList)MessageHandlers.Clone();
+			IMessageHandler[] handlers = MessageHandlers.ToArray ();
 
 			// now give the handlers the opportunity to handle the message
-			foreach(IMessageHandler handler in messageHandlersCopy)
+			foreach(IMessageHandler handler in handlers)
 			{
 				try
 				{
@@ -122,10 +104,6 @@ namespace MSNPSharp
 			}
 		}
 		
-		/// <summary>
-		/// Called when a registered handler raised an exception while handling a message. Fires the <see cref="HandlerException"/> event.
-		/// </summary>
-		/// <param name="e"></param>
 		protected virtual void OnHandlerException(Exception e)
 		{
 			MSNPSharpException dotmsnException = new MSNPSharpException("An exception occured while handling a switchboard message. See inner exception for more details.", e);
@@ -136,18 +114,14 @@ namespace MSNPSharp
 				HandlerException(this, new ExceptionEventArgs(dotmsnException));
 		}
 
-		/// <summary>
-		/// Sends the specified SBMessage over the connection.
-		/// </summary>
-		/// <param name="message">A SBMessage object</param>
 		public override void SendMessage(NetworkMessage message)
-		{						
+		{
 			SBMessage sbMessage = (SBMessage)message;
 
 			sbMessage.TransactionID = IncreaseTransactionID();
 
 			if(Settings.TraceSwitch.TraceVerbose)
-			{				
+			{
 				System.Diagnostics.Trace.WriteLine("Outgoing message:\r\n" + sbMessage.ToDebugString(), "SBMessageProcessor");
 			}
 
@@ -158,20 +132,10 @@ namespace MSNPSharp
 			SendSocketData(sbMessage.GetBytes());
 		}
 
-		/// <summary>
-		/// Disconnect from the switchboard server.
-		/// </summary>
-		/// <remarks>Sends the OUT command before disconnecting.</remarks>
 		public override void Disconnect()
 		{
 			SendMessage(new SBMessage("OUT", new string[]{}));
 			base.Disconnect ();
 		}
-		
-		/// <summary>
-		/// Occurs when an exception was raised by one of the registered handlers while processing an incoming message.
-		/// </summary>
-		public event ProcessorExceptionEventHandler	HandlerException;
-
 	}
 }

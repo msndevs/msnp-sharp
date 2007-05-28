@@ -33,6 +33,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using Org.Mentalis.Network.ProxySocket;
 using MSNPSharp;
@@ -41,72 +42,46 @@ using MSNPSharp.DataTransfer;
 namespace MSNPSharp.Core
 {	
 
-	/// <summary>
-	/// Processes I/O of network message through a network connection.
-	/// </summary>
-	/// <remarks>
-	/// SocketMessageProcessor is a message processor which sends over and receives messages
-	/// from a socket connection. This is usually across the internet, but for file transfers
-	/// or alternative messenger servers this can also be a LAN connection.
-	/// A SocketMessageProcess object uses the connection settings in the <see cref="Connection"/> class. 
-	/// Proxyservers and Webproxies are supported.
-	/// </remarks>
 	public class SocketMessageProcessor : IMessageProcessor
 	{
 
-		#region Private
-		/// <summary>
-		/// </summary>
-		private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
+		ConnectivitySettings connectivitySettings = new ConnectivitySettings();
+		byte[] socketBuffer = new byte[1500];
+		IPEndPoint proxyEndPoint = null;
+		ProxySocket socket = null;
+		MessagePool messagePool	= null;
+		List<IMessageHandler> messageHandlers = new List<IMessageHandler> ();
 
-		/// <summary>
-		/// The buffer in which the socket writes the data.
-		/// Default buffer size is 1500 bytes.
-		/// We can use a buffer at class level because data is received synchronized.
-		/// E.g.: there are no multiple calls to BeginReceive().
-		/// </summary>
-		private byte[] socketBuffer = new byte[1500];
-
-		#endregion
+		public event EventHandler ConnectionEstablished;
+		public event EventHandler ConnectionClosed;
+		public event ProcessorExceptionEventHandler ConnectingException;
+		public event ProcessorExceptionEventHandler ConnectionException;
 		
-		#region Protected
-		/// <summary>
-		/// Set when a socket is prepared with proxy server enabled. This caches the ip adress of the proxyserver and eliminates resolving it everytime a socket is prepared.
-		/// </summary>
+		public SocketMessageProcessor()
+		{
+			
+		}
+		
 		protected IPEndPoint ProxyEndPoint
 		{
-			get { return proxyEndPoint; }
-			set { proxyEndPoint = value;}
+			get { 
+				return proxyEndPoint; 
+			}
+			set { 
+				proxyEndPoint = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private IPEndPoint proxyEndPoint = null;
-
-		/// <summary>
-		/// The socket used for exchanging messages.
-		/// </summary>
-        private ProxySocket socket = null;
-
-		/// <summary>
-		/// The messagepool used to buffer messages. 
-		/// </summary>
 		protected MessagePool MessagePool
 		{
-			get { return messagePool; }
-			set { messagePool = value;}
+			get { 
+				return messagePool; 
+			}
+			set { 
+				messagePool = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private MessagePool messagePool	= null;
-
-		/// <summary>
-		/// Returns a socket which is setup using the settings in the ConnectivitySettings field.
-		/// Always use this method when you want to use sockets.
-		/// </summary>
-		/// <exception cref="ConnectivityException">Raised when the proxy server can not be resolved</exception>
-		/// <returns></returns>
 		protected virtual ProxySocket GetPreparedSocket()
 		{
             //Creates the Socket for sending data over TCP.
@@ -158,31 +133,19 @@ namespace MSNPSharp.Core
 				socket.ProxyType = ProxyTypes.None;
 
 			// set socket options
-
 			//Send operations will timeout of confirmation is not received within 3000 milliseconds.
 			socket.SendTimeout = 3000;
-			
-			LingerOption lingerOption = new LingerOption(false, 0);
-			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, lingerOption);
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
 			
 			return socket;
 		}
 
-		/// <summary>
-		/// The callback used by the Socket.BeginReceive method.
-		/// </summary> 
-		/// <param name="ar">The used socket.</param>
 		protected virtual void EndSendCallback(IAsyncResult ar)
 		{
 			ProxySocket socket = (ProxySocket)ar.AsyncState;
 			socket.EndSend(ar);
 		}
 
-		/// <summary>
-		/// Used by descendants classes to send raw byte data over the socket connection.
-		/// This function is at the moment blocking. This method uses the default socket in the SocketMessageProcessor class.
-		/// </summary>
-		/// <param name="data"></param>
 		protected void SendSocketData(byte[] data)
 		{
 			if (socket == null || !socket.Connected)
@@ -195,11 +158,7 @@ namespace MSNPSharp.Core
 			SendSocketData(socket, data);
 		}
 
-		/// <summary>
-		/// Used by descendants classes to send raw byte data over the socket connection.
-		/// This function is at the moment blocking. The data is send over the specified socket connection.
-		/// </summary>
-		protected void SendSocketData(Socket psocket, byte[] data)
+		protected static void SendSocketData(Socket psocket, byte[] data)
 		{			
 			try
 			{
@@ -214,22 +173,11 @@ namespace MSNPSharp.Core
 			}
 		}
 
-
-		/// <summary>
-		/// This methods is called when data is retreived from the message pool.
-		/// It represents a single message. The processor has to convert this to
-		/// a NetworkMessage object and pass it on to a MessageHandler.
-		/// </summary>
-		/// <param name="data"></param>
 		protected virtual void OnMessageReceived(byte[] data)
 		{
 			// do nothing since this is a base class
 		}		
 
-		/// <summary>
-		/// The callback used by the Socket.BeginReceive method.
-		/// </summary> 
-		/// <param name="ar">The used socket.</param>
 		protected virtual void EndReceiveCallback(IAsyncResult ar)
 		{
 			int cnt = 0;
@@ -237,7 +185,7 @@ namespace MSNPSharp.Core
 			{
 				System.Diagnostics.Debug.Assert(messagePool != null, "Field messagepool must be defined in derived class of SocketMessageProcessor.");
 
-                Socket socket = (Socket)ar.AsyncState;
+				Socket socket = (Socket)ar.AsyncState;
 				cnt = socket.EndReceive(ar);
 				if(cnt == 0)
 				{
@@ -296,23 +244,18 @@ namespace MSNPSharp.Core
 		}
 
 
-		/// <summary>
-		/// The callback used by the Socket.BeginConnect() method.
-		/// The ProxySocket class behaves different from the standard Socket class.
-		/// The callback is called after a connection has already been established.
-		/// </summary>
-		/// <param name="ar">The used socket.</param>
 		protected virtual void EndConnectCallback(IAsyncResult ar)
 		{
 			try
 			{
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("End Connect Callback", "SocketMessageProcessor");
+				if (Settings.TraceSwitch.TraceVerbose)
+					System.Diagnostics.Trace.WriteLine("End Connect Callback", "SocketMessageProcessor");
 
-                ((ProxySocket)socket).EndConnect(ar);
+				((ProxySocket)socket).EndConnect(ar);
 
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("End Connect Callback Daarna", "SocketMessageProcessor");
+				if (Settings.TraceSwitch.TraceVerbose)
+					System.Diagnostics.Trace.WriteLine("End Connect Callback Daarna", "SocketMessageProcessor");
+				
 				OnConnected();				
 
 				// Begin receiving data
@@ -320,21 +263,16 @@ namespace MSNPSharp.Core
 			}
 			catch(Exception e)
 			{
-                if (Settings.TraceSwitch.TraceError)
-                    System.Diagnostics.Trace.WriteLine("** EndConnectCallback exception **" + e.ToString(), "SocketMessageProessor");
+				if (Settings.TraceSwitch.TraceError)
+					System.Diagnostics.Trace.WriteLine("** EndConnectCallback exception **" + e.ToString(), "SocketMessageProessor");
 
-                // an exception was raised while connecting to the endpoint
+				// an exception was raised while connecting to the endpoint
 				// fire the event to notify the client programmer
 				if(ConnectingException != null)
 					ConnectingException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor failed to connect to the specified endpoint. See the inner exception for more information.",e)));
 			}
 		}
 
-
-		/// <summary>
-		/// Starts an a-synchronous receive.
-		/// </summary>
-		/// <param name="socket"></param>
 		protected virtual void BeginDataReceive(Socket socket)
 		{
 			// now go retrieve data	
@@ -342,10 +280,6 @@ namespace MSNPSharp.Core
 			socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(EndReceiveCallback), socket);
 		}
 
-
-		/// <summary>
-		/// Fires the Connected event.
-		/// </summary>
 		protected virtual void OnConnected()
 		{
 			if(Settings.TraceSwitch.TraceInfo)
@@ -354,10 +288,6 @@ namespace MSNPSharp.Core
 				ConnectionEstablished(this, new EventArgs());			
 		}
 
-
-		/// <summary>
-		/// Fires the Disconnected event.
-		/// </summary>
 		protected virtual void OnDisconnected()
 		{
 			if(Settings.TraceSwitch.TraceInfo)
@@ -366,31 +296,22 @@ namespace MSNPSharp.Core
 				ConnectionClosed(this, new EventArgs());			
 		}
 
-		#endregion
-
-		#region Public
-		/// <summary>
-		/// Specifies the connection configuration used to set up the socket connection.
-		/// By default the basic constructor is called.
-		/// </summary>
 		public  ConnectivitySettings ConnectivitySettings
 		{
-			get { return connectivitySettings; }
-			set { connectivitySettings = value;}
+			get { 
+				return connectivitySettings; 
+			}
+			set { 
+				connectivitySettings = value;
+			}
 		}
 
-		/// <summary>
-		/// Determines whether the socket is connected
-		/// </summary>
 		public bool Connected
 		{
 			get { return socket != null && socket.Connected; }
 		}
 
 
-		/// <summary>
-		/// The local end point of the connection
-		/// </summary>
 		public EndPoint LocalEndPoint
 		{
 			get 
@@ -399,31 +320,13 @@ namespace MSNPSharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Constructor to instantiate a SocketMessageProcessor object.
-		/// </summary>
-		public SocketMessageProcessor()
+		protected List<IMessageHandler> MessageHandlers
 		{
-			
+			get { 
+				return messageHandlers; 
+			}
 		}
 
-		/// <summary>
-		/// Holds all messagehandlers for this socket processor
-		/// </summary>
-		protected ArrayList	MessageHandlers
-		{
-			get { return messageHandlers; }
-			//set { messageHandlers = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private ArrayList	messageHandlers	= new ArrayList();
-
-		/// <summary>
-		/// Registers a message handler with this processor.
-		/// </summary>
-		/// <param name="handler"></param>
 		public virtual void	RegisterHandler(IMessageHandler handler)
 		{
 			lock(messageHandlers)
@@ -436,10 +339,6 @@ namespace MSNPSharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Unregisters the message handler from this processor.
-		/// </summary>
-		/// <param name="handler"></param>
 		public virtual void	UnregisterHandler(IMessageHandler handler)
 		{
 			lock(messageHandlers)
@@ -449,34 +348,32 @@ namespace MSNPSharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Connect to the endpoint specified in the ConnectivitySettings field.
-		/// If the socket is already connected this method will return immediately and leave the current connection open.
-		/// </summary>
 		public virtual void Connect()
 		{
-            if (socket != null && socket.Connected)
-            {
-                if (Settings.TraceSwitch.TraceWarning)
-                    System.Diagnostics.Trace.WriteLine("SocketMessageProcess.Connect() called, but already a socket available.", "NS9MessageHandler");
-                return;
-            }
+			if (socket != null && socket.Connected)
+			{
+				if (Settings.TraceSwitch.TraceWarning)
+					System.Diagnostics.Trace.WriteLine("SocketMessageProcess.Connect() called, but already a socket available.", "NS9MessageHandler");
+				
+				return;
+			}
 
 			try
 			{
 				// create a socket
-                socket = GetPreparedSocket(); //
+				socket = GetPreparedSocket(); //
 
-                IPAddress hostIP = null;
-                if (IPAddress.TryParse(ConnectivitySettings.Host, out hostIP))
-                {
-                    // start connecting				
-                    ((ProxySocket)socket).BeginConnect(new System.Net.IPEndPoint(IPAddress.Parse(ConnectivitySettings.Host), ConnectivitySettings.Port), new AsyncCallback(EndConnectCallback), socket);
-                }
-                else
-                {
-                    ((ProxySocket)socket).BeginConnect(ConnectivitySettings.Host, ConnectivitySettings.Port, new AsyncCallback(EndConnectCallback), socket);
-                }
+				IPAddress hostIP = null;
+				
+				if (IPAddress.TryParse(ConnectivitySettings.Host, out hostIP))
+				{
+					// start connecting				
+					((ProxySocket)socket).BeginConnect(new System.Net.IPEndPoint(IPAddress.Parse(ConnectivitySettings.Host), ConnectivitySettings.Port), new AsyncCallback(EndConnectCallback), socket);
+				}
+				else
+				{
+					((ProxySocket)socket).BeginConnect(ConnectivitySettings.Host, ConnectivitySettings.Port, new AsyncCallback(EndConnectCallback), socket);
+				}
 			}
 			catch(Exception e)
 			{
@@ -493,10 +390,6 @@ namespace MSNPSharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Disconnect the current connection by sending the OUT command and closing the socket. If the connection is already closed
-		/// nothing happens (<i>no</i> exception is thrown).
-		/// </summary>
 		public virtual void Disconnect()
 		{						
 			// clean up the socket properly
@@ -510,37 +403,9 @@ namespace MSNPSharp.Core
 			}
 		}
 
-
-		/// <summary>
-		/// The base class does nothing here. Descendant classes should implement this function
-		/// by encoding the message in a byte array and send it using the <see cref="MSNPSharp.Core.SocketMessageProcessor.SendSocketData(byte[])"/> method.
-		/// </summary>
-		/// <param name="message"></param>
 		public virtual void SendMessage(NetworkMessage message)
 		{
 			throw new NotImplementedException("SendMessage() on the base class SocketMessageProcessor is invalid.");
 		}
-
-		/// <summary>
-		/// Occurs when a connection is established with the remote endpoint.
-		/// </summary>
-		public event EventHandler	ConnectionEstablished;
-
-		/// <summary>
-		/// Occurs when a connection is closed with the remote endpoint.
-		/// </summary>
-		public event EventHandler	ConnectionClosed;
-
-		/// <summary>
-		/// Occurs when an exception was raised while <i>connecting</i> to the endpoint.
-		/// </summary>
-		public event ProcessorExceptionEventHandler	ConnectingException;
-
-		/// <summary>
-		/// Occurs when an exception was raised which caused the open connection to become invalid.
-		/// </summary>
-		public event ProcessorExceptionEventHandler	ConnectionException;
-	
-		#endregion
 	}
 }

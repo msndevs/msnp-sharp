@@ -978,7 +978,6 @@ namespace MSNPSharp
 			if(synSended == false)
 				throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
-			//MSNP9/MSNC1: added the 268435456 at the end			
 			string context = "";
 			if(Owner.DisplayImage != null)
 				context = Owner.DisplayImage.Context;
@@ -987,7 +986,22 @@ namespace MSNPSharp
 				messageProcessor.Disconnect ();
 			//don't set the same status or it will result in disconnection
 			else if (status != Owner.Status)
-				MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), "1073791084", context }));						
+			{
+				//TODO: Setter for Capacities/ rename to Capabilities
+				int c = (int) ClientCapacities.CanHandleMSNC7;
+				
+				c += (int) ClientCapacities.CanVideoConference;
+				c += (int) ClientCapacities.CanMultiPacketMSG;
+				c += (int) ClientCapacities.CanDirectIM;
+				c += (int) ClientCapacities.CanReceiveWinks;
+				c += (int) ClientCapacities.CanReceiveVoiceClips;
+				c += (int) ClientCapacities.CanSecureChannel;
+				c += (int) ClientCapacities.CanSIP;
+				
+				string cap = Convert.ToString (c);
+				
+				MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), cap, context }));
+			}
 		}
 
 		/// <summary>
@@ -996,17 +1010,18 @@ namespace MSNPSharp
 		/// </summary>
 		public virtual void SetScreenName(string newName)
 		{
-			if(owner == null) throw new MSNPSharpException("Not a valid owner");			
+			if(owner == null) throw new MSNPSharpException("Not a valid owner");
 			
 			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", System.Web.HttpUtility.UrlEncode(newName, Encoding.UTF8).Replace("+", "%20") }));
 		}
 		
 		public virtual void SetPersonalMessage (PersonalMessage pmsg)
 		{
-			if(owner == null) throw new MSNPSharpException("Not a valid owner");			
+			if(owner == null) throw new MSNPSharpException("Not a valid owner");
 			
 			MSNMessage msg = new MSNMessage ();
-			string payload = pmsg.Payload; 
+			
+			string payload = pmsg.Payload;
 			msg.Command = payload;
 			
 			int size = payload.Length;
@@ -1378,37 +1393,37 @@ namespace MSNPSharp
 		/// <returns></returns>
 		private WebResponse PassportServerLogin(Uri serverUri, string twnString, int retries)
 		{
-            // create the header to login
+			// create the header to login
 			// example header:
 			// >>> GET /login2.srf HTTP/1.1\r\n
 			// >>> Authorization: Passport1.4 OrgVerb=GET,OrgURL=http%3A%2F%2Fmessenger%2Emsn%2Ecom,example%40passport.com,pwd=password,lc=1033,id=507,tw=40,fs=1,ru=http%3A%2F%2Fmessenger%2Emsn%2Ecom,ct=1062764229,kpp=1,kv=5,ver=2.1.0173.1,tpf=43f8a4c8ed940c04e3740be46c4d1619\r\n
 			// >>> Host: login.passport.com\r\n
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(serverUri);			
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(serverUri);			
 			if(ConnectivitySettings.WebProxy != null)
 				request.Proxy = ConnectivitySettings.WebProxy;
-            
-            request.Headers.Clear();
+			
+			request.Headers.Clear();
 			string authorizationHeader = "Authorization: Passport1.4 OrgVerb=GET,OrgURL=http%3A%2F%2Fmessenger%2Emsn%2Ecom,sign-in="+HttpUtility.UrlEncode(Credentials.Account)+",pwd="+HttpUtility.UrlEncode(Credentials.Password)+"," + twnString;
 			request.Headers.Add(authorizationHeader);
 			//string headersstr = request.Headers.ToString();
 
-            // auto redirect does not work correctly in this case! (we get HTML pages that way)
+			// auto redirect does not work correctly in this case! (we get HTML pages that way)
 			request.AllowAutoRedirect = false;		
 			request.PreAuthenticate = false;
 			request.Timeout = 60000;
 
-            if (Settings.TraceSwitch.TraceVerbose)
-                System.Diagnostics.Trace.WriteLine("Making connection with Passport. URI=" + request.RequestUri, "NS11MessgeHandler");
+			if (Settings.TraceSwitch.TraceVerbose)
+				System.Diagnostics.Trace.WriteLine("Making connection with Passport. URI=" + request.RequestUri, "NS11MessgeHandler");
 				
 
 			// now do the transaction
 			try
 			{
 				// get response
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("Response received from Passport service: "+response.StatusCode.ToString ()+".", "NS11MessgeHandler");
+				HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+				if (Settings.TraceSwitch.TraceVerbose)
+					System.Diagnostics.Trace.WriteLine("Response received from Passport service: "+response.StatusCode.ToString ()+".", "NS11MessgeHandler");
 
 				// check for responses						
 				if(response.StatusCode == HttpStatusCode.OK)
@@ -2258,10 +2273,12 @@ namespace MSNPSharp
 			if(Owner == null) return;
 		
 			string type = "";
+			
 			if(message.CommandValues.Count == 1)
 				type = message.CommandValues[0].ToString();
 			else
-				type = message.CommandValues[2].ToString();
+				type = message.CommandValues[1].ToString();
+			
 			switch(type)
 			{
 				case "AL":

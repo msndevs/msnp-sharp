@@ -35,77 +35,52 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Handles the I/O of the Notification Server. 
-	/// </summary>
-	/// <remarks>
-	/// NSMessageProcessor uses <see cref="NSMessagePool"/> as it's MessagePool.
-	/// </remarks>
 	public class NSMessageProcessor : SocketMessageProcessor
 	{
-		/// <summary>
-		/// </summary>
-		private int transactionID = 1;
+		int transactionID = 1;
+		
+		public event ProcessorExceptionEventHandler	HandlerException;
 
-		/// <summary>
-		/// The transaction identifier used by the last message send
-		/// </summary>
+		private NSMessageProcessor()
+		{
+			MessagePool = new NSMessagePool();	
+		}
+		
 		public int TransactionID
 		{
-			get { return transactionID; }
-			set { transactionID = value;}
+			get { 
+				return transactionID; 
+			}
+			set { 
+				transactionID = value;
+			}
 		}
 
-
-		/// <summary>
-		/// Increases the transaction identifier by one and returns that value.
-		/// </summary>
 		protected int IncreaseTransactionID()
 		{
 			transactionID++;
 			return transactionID;
 		}
 
-
-		/// <summary>
-		/// Constructs a NSMessageProcessor object.
-		/// </summary>
-		private NSMessageProcessor()
-		{
-			MessagePool = new NSMessagePool();	
-		}
-
-		/// <summary>
-		/// Creates a NSMessage object. After that the message is send to the handler.
-		/// </summary>
-		/// <param name="data"></param>
 		protected override void OnMessageReceived(byte[] data)
 		{
 			base.OnMessageReceived (data);
 			
-			NSMessage message = new NSMessage();									
+			NSMessage message = new NSMessage();
 
 			// trace that we will be parsing
 			System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command..", "NSMessageProcessor");
 
 			// parse the incoming data
-			message.ParseBytes(data);			
+			message.ParseBytes(data);
 
 			// trace and dispatch the message
 			if(Settings.TraceSwitch.TraceInfo)
-			{
-				System.Diagnostics.Trace.WriteLine("Dispatching incoming NS command : " + message.ToDebugString(), "NSMessageProcessor");				
-				DispatchMessage(message);				
-			}
-			else
-				DispatchMessage(message);
-
+				System.Diagnostics.Trace.WriteLine("Dispatching incoming NS command : " + message.ToDebugString(), "NSMessageProcessor");
+			
+			DispatchMessage(message);
 		}
 		
-		/// <summary>
-		/// Sends the specified NSMessage over the connection.
-		/// </summary>
-		/// <param name="message">A NSMessage object</param>
 		public override void SendMessage(NetworkMessage message)
 		{
 			MSNMessage NSMessage = (MSNMessage)message;
@@ -121,29 +96,20 @@ namespace MSNPSharp
 			SendSocketData(NSMessage.GetBytes());
 		}
 
-		/// <summary>
-		/// Disconnect from the nameserver.
-		/// </summary>
-		/// <remarks>Sends the OUT command before disconnecting.</remarks>
 		public override void Disconnect()
 		{
 			SendMessage(new NSMessage("OUT", new string[]{}));
 			base.Disconnect ();
 		}
 
-
-		/// <summary>
-		/// Sends the received network message, from the server, to all registered handlers.
-		/// </summary>
-		/// <param name="message">The message to send</param>
 		protected virtual void DispatchMessage(NetworkMessage message)
 		{
 			// copy the messageHandlers array because the collection can be 
 			// modified during the message handling. (Handlers are registered/unregistered)
-			ArrayList messageHandlersCopy = (ArrayList)MessageHandlers.Clone();
+			IMessageHandler[] handlers = MessageHandlers.ToArray ();
 
 			// now give the handlers the opportunity to handle the message
-			foreach(IMessageHandler handler in messageHandlersCopy)
+			foreach(IMessageHandler handler in handlers)
 			{
 				try
 				{
@@ -156,11 +122,5 @@ namespace MSNPSharp
 				}
 			}
 		}
-
-		/// <summary>
-		/// Occurs when an exception was raised by one of the registered handlers while processing an incoming message.
-		/// </summary>
-		public event ProcessorExceptionEventHandler	HandlerException;
-		
 	}
 }

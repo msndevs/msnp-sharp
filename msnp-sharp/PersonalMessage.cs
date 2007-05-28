@@ -3,6 +3,7 @@ using System.Xml;
 using System.IO;
 using System.Web;
 using System.Text.RegularExpressions;
+using System.Text;
 using MSNPSharp.Core;
 
 namespace MSNPSharp
@@ -52,10 +53,11 @@ namespace MSNPSharp
 				
 				personalmessage = System.Web.HttpUtility.HtmlEncode (personalmessage);
 				
-				if (personalmessage.Length > 129)
-					personalmessage = personalmessage.Substring (0, 129);
+				string pload = String.Format ("<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia></Data>", 
+				                              personalmessage, 
+				                              currentmedia);
 				
-				return String.Format ("<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia></Data>", personalmessage, currentmedia);
+				return pload; 
 			}
 		}
 		
@@ -118,7 +120,7 @@ namespace MSNPSharp
 		
 		void Handle ()
 		{
-			XmlDocument xmlDoc = new XmlDocument();			
+			XmlDocument xmlDoc = new XmlDocument();
 			TextReader	reader = new StreamReader(new MemoryStream(message.InnerBody), new System.Text.UTF8Encoding(false));
 			
 			xmlDoc.Load (reader);
@@ -176,7 +178,7 @@ namespace MSNPSharp
 					content = new String[size];
 					
 					for (int i=0; i<size; i++)
-						content[i] = vals[i+4];						
+						content[i] = vals[i+4];
 				}
 			}
 			

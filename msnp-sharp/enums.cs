@@ -444,41 +444,36 @@ namespace MSNPSharp
 	/// <summary>
 	/// The functions a (remote) client supports.
 	/// </summary>
+	
+				
 	[FlagsAttribute]
 	public enum ClientCapacities
 	{
-		/// <summary>
-		/// Accepts direct mobile messages.
-		/// </summary>
-		IsMobile = 1, 
-		/// <summary>
-		/// Can view ink messages.
-		/// </summary>
-		CanViewInk = 4, 
-		/// <summary>
-		/// Can view and create ink messages.
-		/// </summary>
-		CanViewCreateInk = 8, 
-		/// <summary>
-		/// Can videoconference.
-		/// </summary>
-		CanVideoConference = 16,
-		/// <summary>
-		/// Can receive pages.
-		/// </summary>
-		CanReceivePages = 64,
-		/// <summary>
-		/// Can receive direct pages.
-		/// </summary>
-		CanReceiveDirectPages = 128,
-		/// <summary>
-		/// Can handle the MSNC1 protocol.
-		/// </summary>
-		CanHandleMSNC1 = 268435456,
-		/// <summary>
-		/// Can handle the MSNC2 protocol.
-		/// </summary>
-		CanHandleMSNC2 = 536870912
+		IsMobile = 0x01,
+		MsnExplorer8User = 0x02,
+		CanViewInkGIF = 0x04, 
+		CanViewInkISF = 0x08, 
+		CanVideoConference = 0x10,
+		CanMultiPacketMSG = 0x20,
+		IsMobileDevice = 0x40,
+		IsDirectDevice = 0x80,
+		HasMSNSpaces = 0x1000,
+		UsingXPMediaCenter = 0x2000,
+		CanDirectIM = 0x4000,
+		CanReceiveWinks = 0x8000,
+		CanMSNSearch = 0x10000,
+		CanReceiveVoiceClips = 0x40000,
+		CanSecureChannel = 0x80000,
+		CanSIP = 0x100000,
+		CanShareFolders = 0x400000,
+		
+		CanHandleMSNC1 = 0x10000000, //MSN 6.0
+		CanHandleMSNC2 = 0x20000000, //MSN 6.1
+		CanHandleMSNC3 = 0x30000000, //MSN 6.2
+		CanHandleMSNC4 = 0x40000000, //MSN 7.0
+		CanHandleMSNC5 = 0x50000000, //MSN 7.5
+		CanHandleMSNC6 = 0x60000000, //MSN 8.0
+		CanHandleMSNC7 = 0x70000000 //MSN 8.1
 	}
 	
 	/// <summary>

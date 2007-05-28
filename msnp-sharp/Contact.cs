@@ -315,7 +315,7 @@ namespace MSNPSharp
 		{
 			if(name != newName)
 			{			
-				name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);				
+				name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);
 				if(ScreenNameChanged != null)
 				{
 					// notify the user we changed our name

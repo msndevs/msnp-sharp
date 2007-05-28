@@ -16,7 +16,7 @@ contributors may be used to endorse or promote products derived
 from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUSDING, BUT NOT LIMITED TO, THE 
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
 ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
 LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
@@ -30,6 +30,8 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using MSNPSharp.Core;
 using MSNPSharp.DataTransfer;
 
@@ -199,7 +201,7 @@ namespace MSNPSharp
 		/// </summary>
 		private P2PHandler				p2pHandler = null;
 
-
+		private Hashtable multiPacketMessages = new Hashtable();
 		#endregion
 		
 		#region Public Events
@@ -622,15 +624,58 @@ namespace MSNPSharp
 		/// <param name="message">The message to send.</param>
 		public virtual void SendTextMessage(TextMessage message)
 		{						
-			SBMessage sbMessage = new SBMessage();
-			MSGMessage msgMessage = new MSGMessage();
-
-			sbMessage.InnerMessage = msgMessage;
-
-			msgMessage.InnerMessage = message;			
+			//First, we have to check whether the content of the message is not to big for one message
+			//There's a maximum of 1600 bytes per message, let's play safe and take 1400 bytes
+			UTF8Encoding encoding = new UTF8Encoding();
 			
-			// send it over the network
-			MessageProcessor.SendMessage(sbMessage);
+			if (encoding.GetByteCount(message.Text) > 1400)
+			{
+				//we'll have to use multi-packets messages
+				Guid guid = Guid.NewGuid();
+				byte[] text = encoding.GetBytes(message.Text);
+				int chunks = Convert.ToInt32(Math.Ceiling((double)text.GetUpperBound(0) / (double)1400));
+				for (int i = 0; i < chunks; i++)
+				{
+					SBMessage sbMessage = new SBMessage();
+					MSGMessage msgMessage = new MSGMessage();
+					
+					//Clone the message
+					TextMessage chunkMessage = (TextMessage)message.Clone();
+ 
+					//Get the part of the message that we are going to send
+					if (text.GetUpperBound(0) - (i * 1400) > 1400)
+						chunkMessage.Text = encoding.GetString(text, i * 1400, 1400);
+					else
+						chunkMessage.Text = encoding.GetString(text, i * 1400, text.GetUpperBound(0) - (i * 1400));
+
+					//Add the correct headers
+					msgMessage.MimeHeader.Add("Message-ID", "{" + guid.ToString() + "}");
+					
+					if (i == 0)
+						msgMessage.MimeHeader.Add("Chunks", chunks);
+					else
+						msgMessage.MimeHeader.Add("Chunk", i);
+
+					sbMessage.InnerMessage = msgMessage;
+
+					msgMessage.InnerMessage = chunkMessage;
+
+					//send it over the network
+					MessageProcessor.SendMessage(sbMessage);
+				}
+			}
+			else
+			{
+				SBMessage sbMessage = new SBMessage();
+				MSGMessage msgMessage = new MSGMessage();
+
+				sbMessage.InnerMessage = msgMessage;
+
+				msgMessage.InnerMessage = message;
+
+				// send it over the network
+				MessageProcessor.SendMessage(sbMessage);
+			}
 		}
 
 		/// <summary>
@@ -903,49 +948,84 @@ namespace MSNPSharp
 
 			Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
 			// update the name to make sure we have it up-to-date
-			contact.SetName(message.CommandValues[1].ToString());		
-                       
+			contact.SetName(message.CommandValues[1].ToString());
+			
 			// get the corresponding SBMSGMessage object
 			MSGMessage sbMSGMessage = new MSGMessage(message);
+			
+			//first check if we are dealing with multi-packet-messages
+			if (sbMSGMessage.MimeHeader.ContainsKey("Message-ID"))
+			{
+				//is this the first message?
+				if (sbMSGMessage.MimeHeader.Contains("Chunks"))
+				{
+					multiPacketMessages.Add(sbMSGMessage.MimeHeader["Message-ID"] + "/0", sbMSGMessage);
+					return;
+				}
+				
+				else if (sbMSGMessage.MimeHeader.Contains("Chunk"))
+				{
+					//Is this the last message?
+					if (Convert.ToInt32(sbMSGMessage.MimeHeader["Chunk"]) + 1 == Convert.ToInt32(((MSGMessage)multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"]).MimeHeader["Chunks"]))
+					{
+						//Paste all the pieces together
+						MSGMessage completeMessage = (MSGMessage)multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"];
+						multiPacketMessages.Remove(sbMSGMessage.MimeHeader["Message-ID"] + "/0");
+
+						int chunksToProcess = Convert.ToInt32(completeMessage.MimeHeader["Chunks"]) - 2;
+						List<byte> completeText = new List<byte>(completeMessage.InnerBody);
+						for (int i = 0; i < chunksToProcess; i++)
+						{
+							MSGMessage part = (MSGMessage)multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/" + Convert.ToString(i + 1)];
+							completeText.AddRange(part.InnerBody);
+
+							//Remove the part from the buffer
+							multiPacketMessages.Remove(sbMSGMessage.MimeHeader["Message-ID"] + "/" + Convert.ToString(i + 1));
+						}
+						
+						completeText.AddRange(sbMSGMessage.InnerBody);
+						completeMessage.InnerBody = completeText.ToArray();
+
+						//process the message
+						sbMSGMessage = completeMessage;
+					}
+					else
+					{
+						multiPacketMessages.Add(sbMSGMessage.MimeHeader["Message-ID"].ToString() + "/" + sbMSGMessage.MimeHeader["Chunk"].ToString(), sbMSGMessage);
+						return;
+					}
+				}
+				else
+					throw new Exception("Multi-packetmessage with damaged headers received");
+			}
 			
 			if (sbMSGMessage.MimeHeader.ContainsKey ("Content-Type"))
 				switch(sbMSGMessage.MimeHeader["Content-Type"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture))
 				{
-					#region text/x-msmsgscontrol
 					case "text/x-msmsgscontrol":
 						// make sure we don't parse the rest of the message in the next loop											
 						OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"].ToString()));					
 						break;
-					#endregion
 					
-					#region text/x-msmsgsinvite
 					case "text/x-msmsgsinvite":
 						break;
-					#endregion
 					
-					#region application/x-msnmsgrp2p
 					case "application/x-msnmsgrp2p":
 						break;
-					#endregion
 						
-					#region text/x-mms-emoticon
 					case "text/x-mms-emoticon":
 					case "text/x-mms-animemoticon":
 						OnEmoticonDefinition(sbMSGMessage, contact);
 						break;
-					#endregion
 					
-					#region text/x-msnmsgr-datacast
 					case "text/x-msnmsgr-datacast":
 						if (message.CommandValues[2].Equals ("69"))
 							OnNudgeReceived (contact);
 						else if (message.CommandValues[2].Equals ("1325"))
 							OnWinkReceived (sbMSGMessage, contact);
 						break;
-					#endregion
 							
 					default:
-						#region textual messages
 						if(sbMSGMessage.MimeHeader["Content-Type"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
 						{
 							// a normal message has been sent, notify the client programmer
@@ -954,8 +1034,7 @@ namespace MSNPSharp
 							OnTextMessageReceived(msg, contact);
 						}
 						break;
-						#endregion
-				}			
+				}
 		}			
 		#endregion
 	}

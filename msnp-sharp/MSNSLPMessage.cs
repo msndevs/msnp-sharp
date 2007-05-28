@@ -32,198 +32,176 @@ using System;
 using System.Text;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using MSNPSharp.Core;
 using MSNPSharp;
 
 namespace MSNPSharp.DataTransfer
 {
-	/// <summary>
-	/// Represents a single MSNSLPMessage. Usually this message is contained in a P2P Message.
-	/// </summary>
 	[Serializable()]
 	public class MSNSLPMessage : NetworkMessage
 	{
+		Encoding encoding = Encoding.UTF8;
+		string version = "MSNSLP/1.0";
+		int maxForwards = 0;
+		string to;
+		string from;
+		string via;
+		int cSeq;
+		string callId;
+		string contentType;
+		int contentLength;
+		string body;
+		string startLine;
+		Dictionary<string, string> messageValues = new Dictionary<string, string>();
+
 		
-		/// <summary>
-		/// Defaults to UTF8
-		/// </summary>
 		public Encoding Encoding
 		{
-			get { return encoding; }
-			set { encoding = value;}
+			get { 
+				return encoding; 
+			}
+			set { 
+				encoding = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private Encoding encoding = Encoding.UTF8;		
-	
-		/// <summary>
-		/// </summary>
 		public string Version
 		{
-			get { return version; }
-			set { version = value;}
+			get { 
+				return version; 
+			}
+			set { 
+				version = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string version = "MSNSLP/1.0";
-	
-	
-		/// <summary>
-		/// </summary>
 		public int MaxForwards
 		{
-			get { return maxForwards; }
-			set { maxForwards = value;}
+			get { 
+				return maxForwards; 
+			}
+			set { 
+				maxForwards = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private int maxForwards = 0;
-
-		/// <summary>
-		/// </summary>
 		public string To
 		{
-			get { return to; }
-			set { to = value;}
+			get { 
+				return to; 
+			}
+			set { 
+				to = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string to;
-
-		/// <summary>
-		/// </summary>
 		public string From
 		{
-			get { return from; }
-			set { from = value;}
+			get { 
+				return from; 
+			}
+			set { 
+				from = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string from;
-
-		/// <summary>
-		/// The contact that send the message.
-		/// </summary>
 		public string FromMail
 		{
-			get { return From.Replace("<msnmsgr:", "").Replace(">", ""); }
+			get { 
+				return From.Replace("<msnmsgr:", "").Replace(">", ""); 
+			}
 		}
-		/// <summary>
-		/// The contact that receives the message.
-		/// </summary>
+		
 		public string ToMail
 		{
-			get { return To.Replace("<msnmsgr:", "").Replace(">", ""); }
+			get { 
+				return To.Replace("<msnmsgr:", "").Replace(">", ""); 
+			}
 		}
 	
-		/// <summary>
-		/// </summary>
 		public string Via
 		{
-			get { return via; }
-			set { via = value;}
+			get { 
+				return via; 
+			}
+			set { 
+				via = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string via;
-
-		
-		/// <summary>
-		/// The current branch this message applies to.
-		/// </summary>
 		public string Branch
 		{
-			get { return Via.Substring(Via.IndexOf("{")); }
+			get { 
+				return Via.Substring(Via.IndexOf("{")); 
+			}
 		}
 
-		/// <summary>
-		/// The sequence count of this message.
-		/// </summary>
-		public int	  CSeq
+		public int CSeq
 		{
-			get { return cSeq; }
-			set { cSeq = value;}
+			get { 
+				return cSeq; 
+			}
+			set { 
+				cSeq = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private int cSeq;
-		
-		/// <summary>
-		/// </summary>
 		public string CallId
 		{
-			get { return callId; }
-			set { callId = value;}
+			get { 
+				return callId; 
+			}
+			set { 
+				callId = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string callId;
-	
-		/// <summary>
-		/// </summary>
 		public string ContentType
 		{
-			get { return contentType; }
-			set { contentType = value;}
+			get { 
+				return contentType; 
+			}
+			set { 
+				contentType = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string contentType;
-
-		/// <summary>
-		/// </summary>
 		public int ContentLength
 		{
-			get { return contentLength; }
-			set { contentLength = value;}
+			get { 
+				return contentLength; 
+			}
+			set { 
+				contentLength = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private int contentLength;
-
-		/// <summary>
-		/// </summary>
 		public string Body
 		{
-			get { return body; }
-			set { body = value;}
+			get { 
+				return body; 
+			}
+			set { 
+				body = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string body;
-
-		/// <summary>
-		/// </summary>
 		public string StartLine
 		{
-			get { return startLine; }
-			set { startLine = value;}
+			get { 
+				return startLine; 
+			}
+			set { 
+				startLine = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private string startLine;
-
-		/// <summary>
-		/// Builds the entire message and returns it as a byte array. Ready to be used in a P2P Message.
-		/// This function adds the 0x00 at the end of the message.
-		/// </summary>
-		/// <returns></returns>
-		public override byte[]	GetBytes()
+		public override byte[] GetBytes()
 		{			
-			StringBuilder builder = new StringBuilder(512);	
+			StringBuilder builder = new StringBuilder(512);
+			
 			builder.Append(StartLine);
 			builder.Append("\r\n");
 			builder.Append("To: ");
@@ -250,7 +228,7 @@ namespace MSNPSharp.DataTransfer
 			builder.Append("Content-Length: ");
 			builder.Append((Encoding.GetByteCount(Body)+1).ToString(CultureInfo.InvariantCulture));
 			builder.Append("\r\n");
-			builder.Append("\r\n");			
+			builder.Append("\r\n");	
 			builder.Append(Body);
 			
 			foreach(string key in MessageValues.Keys)
@@ -258,36 +236,28 @@ namespace MSNPSharp.DataTransfer
 				builder.Append(key).Append(": ").Append(MessageValues[key]);
 			}
 		
-			// get the bytes			
+			// get the bytes
 			byte[] message = Encoding.GetBytes(builder.ToString());
 
 			// add the additional 0x00
-			byte[] totalMessage = new byte[message.Length + 1];			
+			byte[] totalMessage = new byte[message.Length + 1];	
 			message.CopyTo(totalMessage, 0);
 			totalMessage[message.Length] = 0x00;
-						
+			
+			message = null;
+			
 			return totalMessage;
 		}		
 
-		/// <summary>
-		/// Contains all name/value combinations of non-header fields in the message
-		/// </summary>
-		public Hashtable MessageValues
+		public Dictionary<string,string> MessageValues
 		{
-			get { return messageValues; }
-			//set { messageValues = value;}
+			get { 
+				return messageValues; 
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private Hashtable messageValues	= new Hashtable(16);
-
-		/// <summary>
-		/// Parses an MSNSLP message and stores the values in the object's fields.
-		/// </summary>
-		/// <param name="data">The messagedata to parse</param>			
 		public override void ParseBytes(byte[] data)
-		{					
+		{
 			// get the lines
 			MessageValues.Clear();
 			string[] lines = Encoding.GetString(data).Split('\n');
@@ -333,13 +303,9 @@ namespace MSNPSharp.DataTransfer
 							break;
 					}
 				}
-			}			
+			}
 		}
 
-		/// <summary>
-		/// Textual presentation.
-		/// </summary>
-		/// <returns></returns>
 		public override string ToString()
 		{
 			if(Body == null) Body = "";
