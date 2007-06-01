@@ -611,6 +611,9 @@ namespace MSNPSharp
 		/// <param name="contact">The contact's account to invite.</param>
 		public virtual void	Invite(string contact)
 		{
+			if (Contacts.Contains (contact))
+				return;
+			
 			invitationQueue.Enqueue(contact);
 			ProcessInvitations();
 		}
@@ -1007,11 +1010,11 @@ namespace MSNPSharp
 						OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"].ToString()));					
 						break;
 					
-					case "text/x-msmsgsinvite":
+					/*case "text/x-msmsgsinvite":
 						break;
 					
 					case "application/x-msnmsgrp2p":
-						break;
+						break;*/
 						
 					case "text/x-mms-emoticon":
 					case "text/x-mms-animemoticon":

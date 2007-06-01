@@ -54,12 +54,13 @@ namespace MSNPSharp.DataTransfer
 		
 		public void Listen(IPAddress address, int port)
 		{
+			Console.WriteLine ("P2PDirectProcessor listening on {0} port {1}", address, port);
 			ProxySocket socket = GetPreparedSocket();
 			
 			// begin waiting for the incoming connection			
 			socket.Bind(new IPEndPoint(address, port));
 			
-			socket.Listen(100);
+			socket.Listen(10);
 			
 			// set this value so we know whether to send a handshake message or not later in the process
 			isListener = true;
@@ -75,6 +76,9 @@ namespace MSNPSharp.DataTransfer
 			
 		protected virtual void EndAcceptCallback(IAsyncResult ar)
 		{
+		
+			Console.WriteLine ("CONNECTED UHULLLL");
+
 			ProxySocket listenSocket = (ProxySocket)ar.AsyncState;
 			dcSocket = listenSocket.EndAccept(ar);
 			

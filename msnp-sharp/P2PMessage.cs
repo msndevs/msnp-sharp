@@ -238,11 +238,12 @@ namespace MSNPSharp.DataTransfer
 		{
 			P2PMessage ack = new P2PMessage();
 					
-			ack.TotalSize       = TotalSize;
-			ack.Flags			= (uint) P2PFlag.Acknowledgement;			
-			ack.AckSessionId    = Identifier;
-			ack.AckIdentifier	= AckSessionId;
-			ack.AckTotalSize   	= TotalSize;			
+			ack.TotalSize = TotalSize;
+			ack.Flags = (uint) P2PFlag.Acknowledgement;
+			
+			ack.AckSessionId = Identifier;
+			ack.AckIdentifier = AckSessionId;
+			ack.AckTotalSize = TotalSize;
 
 			return ack;
 		}	

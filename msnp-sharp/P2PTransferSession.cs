@@ -432,7 +432,7 @@ namespace MSNPSharp.DataTransfer
 					chunkMessage.Flags         = p2pMessage.Flags;
 					chunkMessage.Footer        = p2pMessage.Footer;
 					if(p2pMessage.Flags == 0x1000030)
-						chunkMessage.Footer        = 2;//p2pMessage.Footer;
+						chunkMessage.Footer        = 0x2;
 					chunkMessage.Identifier    = p2pMessage.Identifier;
 					chunkMessage.MessageSize   = (uint)Math.Min((uint)1202, (uint)(p2pMessage.TotalSize - bytesSend));
 					chunkMessage.Offset        = bytesSend;

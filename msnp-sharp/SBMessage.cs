@@ -37,34 +37,18 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp.Core
 {
-	/// <summary>
-	/// Represents a single message, or command, send from and to the switchboard server.
-	/// </summary>
 	[Serializable()]
 	public class SBMessage : MSNMessage
 	{
-		/// <summary>
-		/// Constructor.
-		/// </summary>
 		public SBMessage()
 		{
 		}
 
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		/// <param name="command">The 3 characters command</param>
-		/// <param name="commandValues">Command parameters</param>
 		public SBMessage(string command, string[] commandValues)
 			: base(command, new ArrayList(commandValues))
 		{
 		}
 
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		/// <param name="command">The 3 characters command</param>
-		/// <param name="commandValues">Command parameters</param>
 		public SBMessage(string command, ArrayList commandValues)
 			: base(command, commandValues)
 		{

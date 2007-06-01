@@ -92,7 +92,7 @@ namespace MSNPSharp.DataTransfer
 		private bool remoteInvited = false;
 
 		/// <summary>
-		/// Defines whether the remote client has invited the transfer (true) or the local client has initiated the transfer (false).
+		/// DefiSnes whether the remote client has invited the transfer (true) or the local client has initiated the transfer (false).
 		/// </summary>
 		public bool	RemoteInvited
 		{
@@ -571,7 +571,7 @@ namespace MSNPSharp.DataTransfer
 
 			// create a transfer session to handle the actual data transfer
 			P2PTransferSession session = Factory.CreateP2PTransferSession();
-			session.MessageSession = (P2PMessageSession)MessageProcessor;
+			session.MessageSession = MessageSession;
 			session.SessionId = properties.SessionId;
 
 			MessageSession.AddTransferSession(session);
@@ -679,7 +679,7 @@ namespace MSNPSharp.DataTransfer
 
 			// create a transfer session to handle the actual data transfer
 			P2PTransferSession session = Factory.CreateP2PTransferSession();
-			session.MessageSession = (P2PMessageSession)MessageProcessor;
+			session.MessageSession = MessageSession;
 			session.SessionId = properties.SessionId;
 
 			MessageSession.AddTransferSession(session);
@@ -705,7 +705,7 @@ namespace MSNPSharp.DataTransfer
 		{
 			foreach(MSNSLPTransferProperties properties in TransferProperties)
 			{
-				P2PMessageSession session = (P2PMessageSession)MessageProcessor;
+				P2PMessageSession session = MessageSession;
 				P2PTransferSession transferSession = session.GetTransferSession(properties.SessionId);				
 				MessageProcessor.SendMessage(CreateClosingMessage(properties));
 				if(transferSession != null)
@@ -973,7 +973,7 @@ namespace MSNPSharp.DataTransfer
 		protected virtual void RemoveTransferSession(P2PTransferSession session)
 		{	
 			// remove the session
-			((P2PMessageSession)MessageProcessor).RemoveTransferSession(session);
+			MessageSession.RemoveTransferSession(session);
 
 			OnTransferSessionClosed(session);
 		}
@@ -999,7 +999,8 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		private string ExtractChecksum(string context)
 		{
-			Regex shaRe = new Regex("SHA1[C-D]=\"([^\"]+)\"");
+			//FIXME: What about Sha1D?
+			Regex shaRe = new Regex("SHA1C=\"([^\"]+)\"");
 			Match match = shaRe.Match(context);
 			if(match.Success)
 			{
@@ -1127,7 +1128,7 @@ namespace MSNPSharp.DataTransfer
 		{
 			Guid callGuid = new Guid(message.CallId);
 			MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);
-			P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);			
+			P2PTransferSession session = MessageSession.GetTransferSession(properties.SessionId);			
 
 			// remove the resources
 			RemoveTransferSession(session);			
@@ -1152,7 +1153,7 @@ namespace MSNPSharp.DataTransfer
 			{
 				Guid callGuid = new Guid(message.CallId);
 				MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);	
-				P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+				P2PTransferSession session = MessageSession.GetTransferSession(properties.SessionId);
 				
 				if(properties.DataType == DataTransferType.File)
 				{
@@ -1171,7 +1172,7 @@ namespace MSNPSharp.DataTransfer
 
 				// create a p2p transfer
 				P2PTransferSession p2pTransfer = Factory.CreateP2PTransferSession();
-				p2pTransfer.MessageSession = (P2PMessageSession)MessageProcessor;
+				p2pTransfer.MessageSession = MessageSession;
 				p2pTransfer.SessionId = properties.SessionId;				
 
 				// hold a reference to this argument object because we need the accept property later
@@ -1251,7 +1252,7 @@ namespace MSNPSharp.DataTransfer
 			// the client programmer has accepted, continue !
 			TransferProperties.Add(properties.CallId, properties);
 			
-			((P2PMessageSession)MessageProcessor).AddTransferSession(p2pTransfer);
+			MessageSession.AddTransferSession(p2pTransfer);
 
 			// we want to be notified of messages through this session
 			p2pTransfer.RegisterHandler(this);
@@ -1264,13 +1265,15 @@ namespace MSNPSharp.DataTransfer
 			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
 			{
 				// for some kind of weird behavior, our local identifier must now subtract 4 ?
-				((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);				
+				MessageSession.CorrectLocalIdentifier(-4);				
 				p2pTransfer.IsSender = true;
 			}
 
 			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
 			{
-				p2pTransfer.MessageFlag = 0x1000030;					
+				MessageSession.CorrectLocalIdentifier(-4);
+				
+				p2pTransfer.MessageFlag = 0x1000030;
 				p2pTransfer.IsSender = false;
 			}
 
@@ -1289,9 +1292,10 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		protected virtual int GetNextDirectConnectionPort()
 		{
-			for (int p = 1119; p <= IPEndPoint.MaxPort; p++) 
+			for (int p = 6890; p <= IPEndPoint.MaxPort; p++) 
 			{
 				Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+				
 				try 
 				{
 					s.Bind(new IPEndPoint(System.Net.IPAddress.Any, p));
@@ -1327,9 +1331,6 @@ namespace MSNPSharp.DataTransfer
 			MSNSLPTransferProperties properties = GetTransferProperties(new Guid(message.CallId));
 			properties.Nonce = Guid.NewGuid();
 			
-			int port = GetNextDirectConnectionPort();
-			MessageSession.ListenForDirectConnection(iphostentry.AddressList[0], port);
-			
 			// create the message
 			slpMessage.StartLine = "MSNSLP/1.0 200 OK";
 			slpMessage.To  = "<msnmsgr:" + properties.RemoteContact + ">";
@@ -1342,40 +1343,38 @@ namespace MSNPSharp.DataTransfer
 			slpMessage.Body = 
 				"Bridge: TCPv1\r\n" +
 				"Listening: true\r\n" +
-				"Nonce: " + properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "\r\n" +
-				"IPv4Internal-Addrs: " + iphostentry.AddressList[0].ToString() + "\r\n" +
-				"IPv4Internal-Port: " + port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+				"Nonce: " + properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "\r\n";
 
+			int port = GetNextDirectConnectionPort();
+			
 			// check if client is behind firewall (NAT-ted)
 			// if so, send the public ip also the client, so it can try to connect to that ip
 			if(ExternalEndPoint != null && ExternalEndPoint.Address != iphostentry.AddressList[0])
 			{
-				slpMessage.Body += "\r\nIPv4External-Addrs: " + ExternalEndPoint.Address.ToString() + "\r\n" +
-				"IPv4External-Port: " + port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+				slpMessage.Body += "IPv4External-Addrs: " + ExternalEndPoint.Address.ToString() + "\r\n" +
+				"IPv4External-Port: " + port.ToString(System.Globalization.CultureInfo.InvariantCulture)+"\r\n";
 			}
-
-			/*
-			TODO: I was playing with WireShark a bit and noticed that
-				IPV4Internal-Addrs and IPV4Internal-Ports are not used
-				anymore..
-			*/
-			
+					
+			slpMessage.Body += "IPv4Internal-Addrs: " + iphostentry.AddressList[0].ToString() + "\r\n" +
+				"IPv4Internal-Port: " + port.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n";
+					
 			// close the message body
 			slpMessage.Body += "\r\n";
 
-			P2PMessage p2pMessage = new P2PMessage();
-			p2pMessage.InnerMessage = slpMessage;
-
-			//FIXME: is this needed? Should't it be sent after confirmation?
-			/*P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
+			//set the handshake message
+			P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
 			hsMessage.Guid = properties.Nonce;
-			MessageSession.HandshakeMessage = hsMessage;*/			
-
-			//Console.WriteLine ("WE ARE SENDING THIS MESSAGE: ");
-			//Console.WriteLine (slpMessage);
+			MessageSession.HandshakeMessage = hsMessage;
 			
 			// and notify the remote client that he can connect
-			MessageProcessor.SendMessage(p2pMessage);
+			P2PMessage p2pMessage = new P2PMessage();
+			p2pMessage.InnerMessage = slpMessage;
+			
+			MessageSession.ListenForDirectConnection(iphostentry.AddressList[0], port);
+			
+			MessageSession.SendMessage (p2pMessage);
+			
+			Console.WriteLine ("OnDCRequest");
 		}
 
 		/// <summary>
@@ -1401,14 +1400,14 @@ namespace MSNPSharp.DataTransfer
 					// let the message session connect
 					MSNSLPTransferProperties properties = GetTransferProperties(new Guid(message.CallId));
 
-					//P2PTransferSession transferSession = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+					//P2PTransferSession transferSession = MessageSession.GetTransferSession(properties.SessionId);
 
 					properties.Nonce = new Guid(bodyValues["Nonce"]);
 					
  					// create the handshake message to send upon connection
 					P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
 					hsMessage.Guid = properties.Nonce;
-					MessageSession.HandshakeMessage = hsMessage;										
+					MessageSession.HandshakeMessage = hsMessage;
 					
 					MessageSession.CreateDirectConnection(settings.Host, settings.Port);
 				}

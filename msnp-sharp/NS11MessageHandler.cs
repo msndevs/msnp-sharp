@@ -133,7 +133,7 @@ namespace MSNPSharp
 		/// <param name="seconds"></param>
 		public PingAnswerEventArgs(int seconds)
 		{
-			SecondsToWait = seconds;			
+			SecondsToWait = seconds;
 		}
 	}
 
@@ -1024,7 +1024,7 @@ namespace MSNPSharp
 			string payload = pmsg.Payload;
 			msg.Command = payload;
 			
-			int size = payload.Length;
+			int size = System.Text.Encoding.Default.GetByteCount(payload);
 			
 			MessageProcessor.SendMessage(new NSMessage("UUX", new string[] { Convert.ToString (size) }));
 			MessageProcessor.SendMessage(msg);

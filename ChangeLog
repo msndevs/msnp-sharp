@@ -1,3 +1,6 @@
+2007-06-01 Thiago M. Sayão <thiago.sayao@gmail.com> 
+	* Continue fixing direct connection (still doesn't work)
+
 2007-05-27 Thiago M. Sayão <thiago.sayao@gmail.com> 
 	* More code cleanup & move to generics
 	* Added support for Multi-packet messages by Thijs Walcarius

@@ -111,6 +111,7 @@ namespace MSNPSharp.Core
 		{
 			byte[] contents = null;
 
+			//FIXME: maybe move this to SBMessage?
 			if(InnerMessage != null)
 			{
 				contents = InnerMessage.GetBytes();	
@@ -118,7 +119,7 @@ namespace MSNPSharp.Core
 				// prepare a default MSG message if an inner message is specified
 				if(Command.Length == 0)
 				{
-					Command = "MSG";		
+					Command = "MSG";
 					CommandValues.Add(Acknowledgement);
 					CommandValues.Add(contents.Length.ToString(CultureInfo.InvariantCulture));
 				}				

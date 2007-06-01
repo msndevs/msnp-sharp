@@ -399,7 +399,7 @@ namespace MSNPSharp.DataTransfer
 				{
 					// if it is an acknowledgement then the local client initiated the session.
 					// this means the session alread exists, but the remote identifier are not yet set.
-					session = SetSessionIdentifiersAfterAck(p2pMessage);									
+					session = SetSessionIdentifiersAfterAck(p2pMessage);
 				}
 				else
 				{
@@ -426,8 +426,8 @@ namespace MSNPSharp.DataTransfer
 			// send an acknowledgement after the last message
 			if(p2pMessage.IsAcknowledgement == false
 			      && p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
-			{				
-				P2PMessage ack = p2pMessage.CreateAcknowledgement();				
+			{
+				P2PMessage ack = p2pMessage.CreateAcknowledgement();
 				session.SendMessage(ack);
 			}
 						

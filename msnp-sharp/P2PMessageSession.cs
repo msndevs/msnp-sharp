@@ -325,6 +325,7 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		public IMessageProcessor ListenForDirectConnection(IPAddress host, int port)
 		{
+			Console.WriteLine ("ListenForDirectConnection");
 			P2PDirectProcessor processor = new P2PDirectProcessor();
 
 			// we want this session to listen to incoming messages
@@ -360,7 +361,7 @@ namespace MSNPSharp.DataTransfer
 		{
 			foreach(P2PTransferSession session in transferSessions.Values)
 			{
-				session.AbortTransfer();				
+				session.AbortTransfer();
 			}
 		}
 
@@ -472,7 +473,6 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		protected SBMessage WrapMessage(NetworkMessage networkMessage)
 		{
-			// create wrapper messages
 			MSGMessage msgWrapper = new MSGMessage();
 			msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
 			msgWrapper.MimeHeader["Content-Type"] = "application/x-msnmsgrp2p";			
@@ -649,6 +649,7 @@ namespace MSNPSharp.DataTransfer
 			// check whether it is an acknowledgement to data preparation message
 			if(p2pMessage.Flags == 0x100 && DCHandshakeAck != 0)
 			{
+				Console.WriteLine ("HANDSHAKE!");
 				OnHandshakeCompleted((P2PDirectProcessor)sender);		
 				return;
 			}
@@ -656,6 +657,7 @@ namespace MSNPSharp.DataTransfer
 			// check if it's a direct connection handshake
 			if(p2pMessage.Flags == 0x100 && AutoHandshake == true)
 			{
+				Console.WriteLine ("HANDSHAKE!");
 				// create a handshake message based on the incoming p2p message and send it				
 				P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage);				
 				sender.SendMessage(dcHsMessage.CreateAcknowledgement());				
@@ -712,21 +714,12 @@ namespace MSNPSharp.DataTransfer
 		/// over the new connection.
 		/// </remarks>
 		/// <param name="message">The P2PMessage to send to the remote contact.</param>
+		
+		//TODO: Convert param to Generics
 		public void SendMessage(NetworkMessage message)
-		{									
+		{	
 			P2PMessage p2pMessage = (P2PMessage)message;
 
-			// check whether it's already set. This is important to check for acknowledge messages.
-			if(p2pMessage.Identifier == 0)
-			{
-				IncreaseLocalIdentifier();
-				p2pMessage.Identifier = LocalIdentifier;
-			}
-			if(p2pMessage.AckSessionId == 0)
-			{
-				p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);			
-			}			
-			
 			// maximum length by default is 1202 bytes.
 			int maxSize = 1202;
 
@@ -735,6 +728,16 @@ namespace MSNPSharp.DataTransfer
 			{
 				maxSize = 1352;
 			}
+			
+			//this is the most common identifier, so just set if not set
+			if(p2pMessage.Identifier == 0)
+			{
+				IncreaseLocalIdentifier();
+				p2pMessage.Identifier = LocalIdentifier;
+			}
+			
+			if(p2pMessage.AckSessionId == 0)
+				p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
 
 			// split up large messages which go to the SB
 			if(p2pMessage.MessageSize > maxSize)
@@ -778,9 +781,7 @@ namespace MSNPSharp.DataTransfer
 						if(MessageProcessor != null && ((SocketMessageProcessor)MessageProcessor).Connected == true)
 						{
 							if(DirectConnected == true)
-							{					
 								MessageProcessor.SendMessage(new P2PDCMessage(chunkMessage));
-							}
 							else
 							{
 								// wrap the message before sending it to the (probably) SB processor
@@ -804,21 +805,16 @@ namespace MSNPSharp.DataTransfer
 				}
 			}
 			else
-			{													
+			{
 				try
 				{
 					if(MessageProcessor != null)
 					{
 						if(DirectConnected == true)
-						{					
 							MessageProcessor.SendMessage(new P2PDCMessage(p2pMessage));
-						}
 						else
-						{
-							// wrap the message before sending it to the (probably) SB processor
-							MessageProcessor.SendMessage(WrapMessage(p2pMessage));
-						}
-					}					
+							MessageProcessor.SendMessage(WrapMessage (p2pMessage));
+					}
 					else
 					{
 						InvalidateProcessor();

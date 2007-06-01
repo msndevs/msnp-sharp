@@ -62,9 +62,10 @@ namespace MSNPSharp.Core
 		public override byte[] GetBytes()
 		{
 			StringBuilder builder = new StringBuilder();
+			
 			foreach(string key in MimeHeader.Keys)
 			{
-				builder.Append(key.ToString()).Append(": ").Append(MimeHeader[key].ToString()).Append("\r\n");
+				builder.Append(key).Append(": ").Append(MimeHeader[key].ToString()).Append("\r\n");
 			}
 			builder.Append("\r\n");
 
@@ -140,7 +141,7 @@ namespace MSNPSharp.Core
 			while(enumerator.MoveNext())
 				writer.Write((byte)enumerator.Current);
 			InnerBody = memStream.ToArray();
-			memStream.Close();			
+			memStream.Close();
 		}
 
 
