@@ -31,62 +31,56 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 using System;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using MSNPSharp;
 using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp.Core
 {
-	/// <summary>
-	/// Represents a single MSG command sended over a switchboard or nameserver session.
-	/// </summary>
 	[Serializable()]
 	public class MSGMessage : NetworkMessage
 	{
-		/// <summary>
-		/// </summary>
-		private Hashtable mimeHeader;
-
-		/// <summary>
-		/// A collection of all name/value pairs in the mime header
-		/// </summary>
-		public  Hashtable	MimeHeader
+		StrDictionary mimeHeader;
+		
+		public MSGMessage()
 		{
-			get { return mimeHeader; }
+			mimeHeader = new StrDictionary (); 
+			mimeHeader.Add("MIME-Version", "1.0");
 		}
 
-		/// <summary>
-		/// Gets the header with the inner message appended as a byte array.
-		/// </summary>
-		/// <returns></returns>
+		public MSGMessage(NetworkMessage message)
+		{
+			ParseBytes(message.InnerBody);
+			message.InnerMessage = this;
+		}
+
+		public StrDictionary MimeHeader
+		{
+			get { 
+				return mimeHeader; 
+			}
+		}
+
 		public override byte[] GetBytes()
 		{
 			StringBuilder builder = new StringBuilder();
 			
-			foreach(string key in MimeHeader.Keys)
-			{
-				builder.Append(key).Append(": ").Append(MimeHeader[key].ToString()).Append("\r\n");
-			}
+			foreach(StrKeyValuePair entry in MimeHeader)
+				builder.Append(entry.Key).Append(": ").Append(entry.Value).Append("\r\n");
+			
 			builder.Append("\r\n");
-
+			
 			if(InnerMessage != null)
-				return AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), InnerMessage.GetBytes());    
-			return
-				System.Text.Encoding.UTF8.GetBytes(builder.ToString());    			
+				return AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), InnerMessage.GetBytes());
+			
+			return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
 		}
 
-
-		/// <summary>
-		/// Parse the MIME-header. The enumerator points after the \r\n\r\n after finishing.
-		/// </summary>
-		/// <remarks>
-		/// The enumerator will be pointer directly before the first character of the message body when this method is finished.
-		/// </remarks>
-		/// <param name="enumerator"></param>
-		/// <returns></returns>
-		protected Hashtable ParseMime(IEnumerator enumerator)
+		protected StrDictionary ParseMime(IEnumerator enumerator)
 		{
-			Hashtable table = new Hashtable();
+			StrDictionary table = new StrDictionary ();
+			
 			StringBuilder name = new StringBuilder();
 			StringBuilder val  = new StringBuilder();
 			StringBuilder active = name;
@@ -102,7 +96,11 @@ namespace MSNPSharp.Core
 						return table;		
 					}
 
-					table.Add(name.ToString(), val.ToString());
+					string strname = name.ToString ();
+					
+					if (!table.ContainsKey (strname))
+						table.Add(strname, val.ToString());
+					
 					name.Length = 0;
 					val.Length  = 0;
 					active = name;
@@ -120,15 +118,10 @@ namespace MSNPSharp.Core
 					active.Append(Convert.ToChar(enumerator.Current, System.Globalization.CultureInfo.InvariantCulture));
 				}
 			}
-
+			
 			return table;
 		}
 
-		/// <summary>
-		/// Parses incoming byte data from the server. This will set the properties and message body with the values specified in the data array.
-		/// </summary>
-		/// <exception cref="MSNPSharpException">Thrown when parsing fails.</exception>		
-		/// <param name="data">The message as received from the server.</param>		
 		public override void ParseBytes(byte[] data)
 		{
 			// parse the header
@@ -144,40 +137,15 @@ namespace MSNPSharp.Core
 			memStream.Close();
 		}
 
-
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		public MSGMessage()
-		{
-			mimeHeader = new Hashtable();
-			mimeHeader.Add("MIME-Version", "1.0");
-		}
-
-		/// <summary>
-		/// Constructs a MSGMessage from the inner body contents of the specified SBMessage object.
-		/// This will also set the InnerMessage property of the SBMessage object to the newly created MSGMessage.
-		/// </summary>
-		public MSGMessage(NetworkMessage message)
-		{
-			ParseBytes(message.InnerBody);
-			message.InnerMessage = this;
-		}
-
-		/// <summary>
-		/// Textual presentation.
-		/// </summary>
-		/// <returns></returns>
 		public override string ToString()
 		{
 			StringBuilder builder = new StringBuilder();
-			foreach(string key in MimeHeader.Keys)
+			foreach(StrKeyValuePair entry in MimeHeader)
 			{
-				builder.Append(key.ToString()).Append(": ").Append(MimeHeader[key].ToString()).Append("\r\n");
+				builder.Append(entry.Key).Append(": ").Append(entry.Value).Append("\r\n");
 			}
 			builder.Append("\r\n");
 			return "[MSGMessage] " + builder.ToString();
 		}
-
 	}
 }

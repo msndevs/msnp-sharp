@@ -231,14 +231,14 @@ namespace MSNPSharp
 			// we expect a MSGMessage object
 			MSGMessage MSGMessage = (MSGMessage)ParentMessage;
 
-			if(MSGMessage.MimeHeader.Contains("X-MMS-IM-Format"))
+			if(MSGMessage.MimeHeader.ContainsKey("X-MMS-IM-Format"))
 			{
-				Match match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"].ToString(), "FN=(?<Font>.+?);", RegexOptions.Multiline );
+				Match match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "FN=(?<Font>.+?);", RegexOptions.Multiline );
 				if(match.Success)
 				{
 					Font = System.Web.HttpUtility.UrlDecode(match.Groups["Font"].ToString());
 				}			
-				match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"].ToString(), "EF=(?<Decoration>\\S*);", RegexOptions.Multiline );
+				match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "EF=(?<Decoration>\\S*);", RegexOptions.Multiline );
 				if(match.Success)
 				{
 					Decorations = TextDecorations.None;
@@ -248,7 +248,7 @@ namespace MSNPSharp
 					if(dec.IndexOf('U') >= 0) Decorations |= TextDecorations.Underline;
 					if(dec.IndexOf('S') >= 0) Decorations |= TextDecorations.Strike;
 				}
-				match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"].ToString(), "CO=(?<Color>\\S+);", RegexOptions.Multiline );
+				match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "CO=(?<Color>\\S+);", RegexOptions.Multiline );
 				if(match.Success)
 				{
 					string color = match.Groups["Color"].ToString();
@@ -265,20 +265,20 @@ namespace MSNPSharp
 					{
 					}
 				}
-				match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"].ToString(), "CS=(?<Charset>\\d+);", RegexOptions.Multiline );
+				match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "CS=(?<Charset>\\d+);", RegexOptions.Multiline );
 				if(match.Success)
 				{
 					try
 					{
-						CharSet = (MessageCharSet)int.Parse(match.Groups["Charset"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+						CharSet = (MessageCharSet)int.Parse(match.Groups["Charset"].ToString (), System.Globalization.CultureInfo.InvariantCulture);
 					}
 					catch(Exception)
 					{
 					}
 				}
 				
-				if (MSGMessage.MimeHeader.Contains("P4-Context"))
-					this.customNickname = MSGMessage.MimeHeader["P4-Context"].ToString();
+				if (MSGMessage.MimeHeader.ContainsKey("P4-Context"))
+					this.customNickname = MSGMessage.MimeHeader["P4-Context"];
 			}
 		}
 

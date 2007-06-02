@@ -84,15 +84,18 @@ namespace MSNPSharp.Core
 
 		protected virtual ProxySocket GetPreparedSocket()
 		{
-            //Creates the Socket for sending data over TCP.
+			//Creates the Socket for sending data over TCP.
 			ProxySocket socket = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            
+			
 			// incorporate the connection settings like proxy's						
 			// Note: ProxyType is in MSNPSharp namespace, ProxyTypes in ProxySocket namespace.
 			if(ConnectivitySettings.ProxyType != ProxyType.None)
 			{
 				// set the proxy type
-				socket.ProxyType = (ConnectivitySettings.ProxyType == ProxyType.Socks4) ? Org.Mentalis.Network.ProxySocket.ProxyTypes.Socks4 : Org.Mentalis.Network.ProxySocket.ProxyTypes.Socks5;
+				socket.ProxyType = (ConnectivitySettings.ProxyType == ProxyType.Socks4) 
+					? Org.Mentalis.Network.ProxySocket.ProxyTypes.Socks4 
+					: Org.Mentalis.Network.ProxySocket.ProxyTypes.Socks5;
+				
 				socket.ProxyUser = ConnectivitySettings.ProxyUsername;
 				socket.ProxyPass = ConnectivitySettings.ProxyPassword;
 
@@ -148,12 +151,12 @@ namespace MSNPSharp.Core
 
 		protected void SendSocketData(byte[] data)
 		{
-			if (socket == null || !socket.Connected)
+			/*if (socket == null || !socket.Connected)
 			{
 				// the connection is closed
 				OnDisconnected();
 				return;
-			}
+			}*/
 			
 			SendSocketData(socket, data);
 		}
@@ -164,7 +167,7 @@ namespace MSNPSharp.Core
 			{
 				lock(psocket)
 				{
-					psocket.Send(data, 0, data.Length, SocketFlags.None);
+					psocket.Send (data);
 				}
 			}
 			catch(Exception e)

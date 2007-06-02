@@ -655,9 +655,9 @@ namespace MSNPSharp
 					msgMessage.MimeHeader.Add("Message-ID", "{" + guid.ToString() + "}");
 					
 					if (i == 0)
-						msgMessage.MimeHeader.Add("Chunks", chunks);
+						msgMessage.MimeHeader.Add("Chunks", Convert.ToString (chunks));
 					else
-						msgMessage.MimeHeader.Add("Chunk", i);
+						msgMessage.MimeHeader.Add("Chunk", Convert.ToString (i));
 
 					sbMessage.InnerMessage = msgMessage;
 
@@ -960,13 +960,13 @@ namespace MSNPSharp
 			if (sbMSGMessage.MimeHeader.ContainsKey("Message-ID"))
 			{
 				//is this the first message?
-				if (sbMSGMessage.MimeHeader.Contains("Chunks"))
+				if (sbMSGMessage.MimeHeader.ContainsKey("Chunks"))
 				{
 					multiPacketMessages.Add(sbMSGMessage.MimeHeader["Message-ID"] + "/0", sbMSGMessage);
 					return;
 				}
 				
-				else if (sbMSGMessage.MimeHeader.Contains("Chunk"))
+				else if (sbMSGMessage.MimeHeader.ContainsKey("Chunk"))
 				{
 					//Is this the last message?
 					if (Convert.ToInt32(sbMSGMessage.MimeHeader["Chunk"]) + 1 == Convert.ToInt32(((MSGMessage)multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"]).MimeHeader["Chunks"]))
@@ -994,7 +994,7 @@ namespace MSNPSharp
 					}
 					else
 					{
-						multiPacketMessages.Add(sbMSGMessage.MimeHeader["Message-ID"].ToString() + "/" + sbMSGMessage.MimeHeader["Chunk"].ToString(), sbMSGMessage);
+						multiPacketMessages.Add(sbMSGMessage.MimeHeader["Message-ID"] + "/" + sbMSGMessage.MimeHeader["Chunk"], sbMSGMessage);
 						return;
 					}
 				}
@@ -1003,11 +1003,11 @@ namespace MSNPSharp
 			}
 			
 			if (sbMSGMessage.MimeHeader.ContainsKey ("Content-Type"))
-				switch(sbMSGMessage.MimeHeader["Content-Type"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture))
+				switch(sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture))
 				{
 					case "text/x-msmsgscontrol":
 						// make sure we don't parse the rest of the message in the next loop											
-						OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"].ToString()));					
+						OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"]));					
 						break;
 					
 					/*case "text/x-msmsgsinvite":
@@ -1029,7 +1029,7 @@ namespace MSNPSharp
 						break;
 							
 					default:
-						if(sbMSGMessage.MimeHeader["Content-Type"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
+						if(sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
 						{
 							// a normal message has been sent, notify the client programmer
 							TextMessage msg = new TextMessage();

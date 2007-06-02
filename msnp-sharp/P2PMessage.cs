@@ -35,205 +35,155 @@ using MSNPSharp;
 
 namespace MSNPSharp.DataTransfer
 {
-	/// <summary>
-	/// Defines the type of P2P message.
-	/// </summary>
+	/*
+	0x00 - No flags
+	0x01 - Unknown
+	0x02 - Acknowledgement
+	0x04 - Waiting for a reply
+	0x08 - Error (Possibly binary level)
+	0x10 - Unknown
+	0x20 - Data for DP/CE
+	0x40 - Bye ack (He who got BYE)
+	0x80 - Bye ack (He who sent BYE)
+	0x1000030 - Data for FT
+	*/
 	public enum P2PFlag
 	{
-		/// <summary>
-		/// Normal (protocl) message.
-		/// </summary>
 		Normal = 0,
-		/// <summary>
-		/// Acknowledgement message.
-		/// </summary>
 		Acknowledgement = 0x02,
-		
 		WaitingReply = 0x04,
-		/// <summary>
-		/// Messages notifies a binary error.
-		/// </summary>
 		BinaryError = 0x08,
-		/// <summary>
-		/// Messages defines a msn object.
-		/// </summary>
 		MSNObject = 0x20,
-		
-		
-		/// <summary>
-		/// Messages defines data for a filetransfer.
-		/// </summary>
 		FileData = 0x01000030
 	}
-
-/*
-0x00 - No flags
-0x01 - Unknown
-0x02 - Acknowledgement
-0x04 - Waiting for a reply
-0x08 - Error (Possibly binary level)
-0x10 - Unknown
-0x20 - Data for DP/CE
-0x40 - Bye ack (He who got BYE)
-0x80 - Bye ack (He who sent BYE)
-0x1000030 - Data for FT
-*/
 	
-	/// <summary>
-	/// Represents a single P2P framework message.
-	/// </summary>
+
 	[Serializable()]
 	public class P2PMessage : NetworkMessage
 	{
-		/// <summary>
-		/// The session identifier field. Bytes 0-4 in the binary header.
-		/// </summary>
-		public uint  SessionId
-		{
-			get { return sessionId; }
-			set { sessionId = value;}
-		}
+		uint sessionId = 0;
+		uint identifier = 0;
+		ulong offset = 0;
+		ulong totalSize = 0;
+		uint messageSize = 0;
+		uint flags = 0;
+		uint ackSessionId;
+		uint ackIdentifier = 0;
+		ulong ackTotalSize;
+		uint footer = 0;
 
-		/// <summary>
-		/// </summary>
-		private uint  sessionId = 0;
-				
-		/// <summary>
-		/// The identifier of this message. Bytes 5-8 in the binary header.
-		/// </summary>
-		public uint  Identifier
-		{
-			get { return identifier; }
-			set { identifier = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private uint  identifier = 0;
-				
-		/// <summary>
-		/// The offset in bytes from the begin of the total message. Bytes 9-16 in the binary header.
-		/// </summary>
-		public ulong Offset
-		{
-			get { return offset; }
-			set { offset = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private ulong offset = 0;
-
-		/// <summary>
-		/// Total message length in bytes.  Bytes 17-24 in the binary header.
-		/// </summary>
-		public ulong TotalSize
-		{
-			get { return totalSize; }
-			set { totalSize = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private ulong totalSize = 0;
-
-		/// <summary>
-		/// Message length in bytes of the current message. Bytes 25-28 in the binary header.
-		/// </summary>
-		public uint  MessageSize
-		{
-			get { return messageSize; }
-			set { messageSize = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private uint  messageSize = 0;
-
-		/// <summary>
-		/// Flag parameter. Bytes 29-32 in the binary header.
-		/// </summary>
-		public uint  Flags
-		{
-			get { return flags; }
-			set { flags = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private uint  flags = 0;
-
-		/// <summary>
-		/// Acknowledge session identifier. Acknowledgement messages respond with this number in their acknowledge identfier. Bytes 33-36 in the binary header.
-		/// </summary>
-		public uint  AckSessionId
-		{
-			get { return ackSessionId; }
-			set { ackSessionId = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private uint  ackSessionId;
-
-		/// <summary>
-		/// Acknowledge identifier. Set when the message is an acknowledgement to a received message. Bytes 37-40 in the binary header.
-		/// </summary>
-		public uint  AckIdentifier
-		{
-			get { return ackIdentifier; }
-			set { ackIdentifier = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private uint  ackIdentifier = 0;
-
-		/// <summary>
-		/// Acknowledged total message length. Set when the message is an acknowledgement to a received message. Bytes 41-48 in the binary header.
-		/// </summary>
-		public ulong AckTotalSize
-		{
-			get { return ackTotalSize; }
-			set { ackTotalSize = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private ulong ackTotalSize;
-
-		/// <summary>
-		/// The footer, or Application Identifier. Bytes 0-4 in the binary footer.
-		/// </summary>
-		public uint  Footer
-		{
-			get { return footer; }
-			set { footer = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private uint  footer = 0;
-
-		/// <summary>
-		/// Indicates whether the message is an acknowledgement message
-		/// </summary>
-		public bool IsAcknowledgement
-		{
-			get { return AckIdentifier > 0; }
-		}
-
-		/// <summary> 
-		/// </summary>
 		public P2PMessage()
 		{
 
 		}
+		
+		public uint  SessionId
+		{
+			get { 
+				return sessionId; 
+			}
+			set { 
+				sessionId = value;
+			}
+		}
 
-		/// <summary>
-		/// Creates an acknowledgement message to this message.
-		/// </summary>
-		/// <returns></returns>
+		public uint  Identifier
+		{
+			get { 
+				return identifier; 
+			}
+			set { 
+				identifier = value;
+			}
+		}
+
+		public ulong Offset
+		{
+			get { 
+				return offset; 
+			}
+			set { 
+				offset = value;
+			}
+		}
+
+		public ulong TotalSize
+		{
+			get { 
+				return totalSize; 
+			}
+			set { 
+				totalSize = value;
+			}
+		}
+
+		public uint MessageSize
+		{
+			get { 
+				return messageSize; 
+			}
+			set { 
+				messageSize = value;
+			}
+		}
+
+		public uint  Flags
+		{
+			get { 
+				return flags; 
+			}
+			set { 
+				flags = value;
+			}
+		}
+
+		public uint  AckSessionId
+		{
+			get { 
+				return ackSessionId;
+			}
+			set { 
+				ackSessionId = value;
+			}
+		}
+
+		public uint  AckIdentifier
+		{
+			get {
+				return ackIdentifier;
+			}
+			set { 
+				ackIdentifier = value;
+			}
+		}
+
+		public ulong AckTotalSize
+		{
+			get { 
+				return ackTotalSize;
+			}
+			set { 
+				ackTotalSize = value;
+			}
+		}
+
+		public uint  Footer
+		{
+			get { 
+				return footer; 
+			}
+			set { 
+				footer = value;
+			}
+		}
+
+		public bool IsAcknowledgement
+		{
+			get { 
+				return Flags == (uint) P2PFlag.Acknowledgement;
+			}
+		}
+
 		public virtual P2PMessage CreateAcknowledgement()
 		{
 			P2PMessage ack = new P2PMessage();
@@ -241,17 +191,13 @@ namespace MSNPSharp.DataTransfer
 			ack.TotalSize = TotalSize;
 			ack.Flags = (uint) P2PFlag.Acknowledgement;
 			
-			ack.AckSessionId = Identifier;
+			ack.AckSessionId = (uint) (new Random()).Next(10000, int.MaxValue);
 			ack.AckIdentifier = AckSessionId;
 			ack.AckTotalSize = TotalSize;
-
+			
 			return ack;
 		}	
 
-		/// <summary>
-		/// Returns debug info
-		/// </summary>
-		/// <returns></returns>
 		public override string ToString()
 		{			
 			string debugLine =
@@ -271,14 +217,7 @@ namespace MSNPSharp.DataTransfer
 
 
 		#region Protected helper methods
-		/// <summary>
 		/// Flips the bytes of the unsigned integer.
-		/// </summary>
-		/// <remarks>
-		/// This method is used when the message data (byte array) is requested.
-		/// </remarks>
-		/// <param name="number"></param>
-		/// <returns></returns>
 		protected uint FlipEndian(uint number)
 		{
 			return (uint)  (((number & 0x000000ff) << 24) +
@@ -287,14 +226,7 @@ namespace MSNPSharp.DataTransfer
 				((number & 0xff000000) >> 24));
 		}
 
-		/// <summary>
 		/// Flips the bytes of the unsigned long.
-		/// </summary>
-		/// <remarks>
-		/// This method is used when the message data (byte array) is requested.
-		/// </remarks>
-		/// <param name="number"></param>
-		/// <returns></returns>
 		protected ulong FlipEndian(ulong number)
 		{
 			return (ulong) 
@@ -310,9 +242,7 @@ namespace MSNPSharp.DataTransfer
 		#endregion
 
 		
-		/// <summary>
 		/// Sets the D as acknowledgement in the ParentMessage.ParentMessage. This should be a SBMessage object.
-		/// </summary>
 		public override void PrepareMessage()
 		{
 			base.PrepareMessage ();
@@ -321,9 +251,7 @@ namespace MSNPSharp.DataTransfer
 					((SBMessage)ParentMessage.ParentMessage).Acknowledgement = "D";
 		}
 
-		/// <summary>
 		/// Parses the given message.
-		/// </summary>
 		public override void ParseBytes(byte[] data)
 		{								
 			Stream memStream = new System.IO.MemoryStream(data);
@@ -369,11 +297,7 @@ namespace MSNPSharp.DataTransfer
 			memStream.Close();			
 		}
 		
-		/// <summary>
 		/// Returns the inner message as a byte array.
-		/// </summary>
-		/// <remarks>If the inner message is set the GetBytes() method is called upon that inner message. If there is no inner message set, but the InnerBody property contains data then that data is returned.</remarks>
-		/// <returns></returns>
 		protected virtual byte[] GetInnerBytes()
 		{
 			// if there is a message we contain get the contents
@@ -385,10 +309,7 @@ namespace MSNPSharp.DataTransfer
 				return new byte[0];
 		}
 
-		/// <summary>
 		/// Creates a P2P Message. This sets the MessageSize properly.
-		/// </summary>
-		/// <returns></returns>
 		public override byte[] GetBytes()
 		{
 			// get the inner contents and set the message size

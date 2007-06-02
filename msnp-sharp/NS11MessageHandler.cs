@@ -32,6 +32,7 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Web;
@@ -2446,32 +2447,44 @@ namespace MSNPSharp
 		/// <param name="message"></param>
 		protected virtual void OnProfileReceived(MSGMessage message)
 		{
-			int clientPort = int.Parse(message.MimeHeader["ClientPort"].ToString().Replace('.', ' '), System.Globalization.CultureInfo.InvariantCulture);
-			//FIXME: is this still needed?
-			clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
+			StrDictionary hdr = message.MimeHeader;
+			
+			int clientPort = 0;
+			
+			if (hdr.ContainsKey ("ClientPort"))
+			{
+				clientPort = int.Parse(message.MimeHeader["ClientPort"].Replace('.', ' '), 
+										   System.Globalization.CultureInfo.InvariantCulture);
+				
+				clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
+			}
 	
+			
 			Owner.UpdateProfile(
-				(string)message.MimeHeader["LoginTime"],
-				Convert.ToInt32(message.MimeHeader["EmailEnabled"]) == 1,
-				(string)message.MimeHeader["MemberIdHigh"],
-				(string)message.MimeHeader["MemberIdLow"],
-				(string)message.MimeHeader["lang_preference"],
-				(string)message.MimeHeader["preferredEmail"],
-				(string)message.MimeHeader["country"],
-				(string)message.MimeHeader["PostalCode"],
-				(string)message.MimeHeader["Gender"],
-				(string)message.MimeHeader["Kid"],
-				(string)message.MimeHeader["Age"],				
-				(string)message.MimeHeader["Birthday"],
-				(string)message.MimeHeader["Wallet"],
-				(string)message.MimeHeader["sid"],
-				(string)message.MimeHeader["kv"],
-				(string)message.MimeHeader["MSPAuth"],
-				IPAddress.Parse((string)message.MimeHeader["ClientIP"]),
+				hdr["LoginTime"],
+				(hdr.ContainsKey ("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
+				hdr["MemberIdHigh"],
+				hdr["MemberIdLow"],
+				hdr["lang_preference"],
+				hdr["preferredEmail"],
+				hdr["country"],
+				hdr["PostalCode"],
+				hdr["Gender"],
+				hdr["Kid"],
+				hdr["Age"],
+				hdr["Birthday"],
+				hdr["Wallet"],
+				hdr["sid"],
+				hdr["kv"],
+				hdr["MSPAuth"],
+				(hdr.ContainsKey ("ClientIP")) ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None,
 				clientPort);
-
+			                    
+			if (hdr.ContainsKey ("ClientIP"))
+			{
 			// set the external end point. This can be used in file transfer connectivity determing
-			externalEndPoint = new IPEndPoint(IPAddress.Parse((string)message.MimeHeader["ClientIP"]), clientPort);
+				externalEndPoint = new IPEndPoint(IPAddress.Parse(hdr["ClientIP"]), clientPort);
+			}
 		}
 
 		/// <summary>

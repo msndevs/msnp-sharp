@@ -1099,6 +1099,7 @@ namespace MSNPSharp.DataTransfer
 					break;
 				
 				case "application/x-msnmsgr-transreqbody":
+					SendDCRequestAck (p2pMessage);
 					OnDCRequest(slpMessage); 
 					break;
 				
@@ -1271,8 +1272,6 @@ namespace MSNPSharp.DataTransfer
 
 			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
 			{
-				MessageSession.CorrectLocalIdentifier(-4);
-				
 				p2pTransfer.MessageFlag = 0x1000030;
 				p2pTransfer.IsSender = false;
 			}
@@ -1312,9 +1311,22 @@ namespace MSNPSharp.DataTransfer
 						throw;
 				}
 			}
-			throw new SocketException(10048);		
+			throw new SocketException(10048);
 		}
 
+		
+		protected virtual void SendDCRequestAck(P2PMessage p2pMessage)
+		{
+			Console.WriteLine ("Sending DC Request Ack");
+			MessageSession.IncreaseLocalIdentifier ();
+			
+			P2PMessage ack = p2pMessage.CreateAcknowledgement();
+			ack.SessionId = 0;
+			ack.Identifier = MessageSession.LocalIdentifier;
+			
+			MessageSession.SendMessage (ack);
+		}
+		
 		/// <summary>
 		/// Called when the remote client sends a file and sends us it's direct-connect capabilities.
 		/// A reply will be send with the local client's connectivity.
@@ -1384,7 +1396,7 @@ namespace MSNPSharp.DataTransfer
 		protected virtual void OnDCResponse(MSNSLPMessage message)
 		{
 			// read the values
-			Dictionary<string, string> bodyValues = message.MessageValues;
+			StrDictionary bodyValues = message.MessageValues;
 
 			// check the protocol
 			if(bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
@@ -1395,7 +1407,7 @@ namespace MSNPSharp.DataTransfer
 					// we must connect to the remote client
 					ConnectivitySettings settings = new ConnectivitySettings();
 					settings.Host = bodyValues["IPv4Internal-Addrs"];
-					settings.Port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);															
+					settings.Port = int.Parse(bodyValues["IPv4Internal-Port"], System.Globalization.CultureInfo.InvariantCulture);															
 
 					// let the message session connect
 					MSNSLPTransferProperties properties = GetTransferProperties(new Guid(message.CallId));

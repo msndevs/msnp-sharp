@@ -1,3 +1,16 @@
+2007-06-02  Thiago Milczarek Sayão <thiago.sayao@gmail.com> 
+
+	* msnp-sharp/SBMSGMessage.cs, msnp-sharp/NS11MessageHandler.cs,
+	  msnp-sharp/SocketMessageProcessor.cs,
+	  msnp-sharp/SB11MessageHandler.cs, msnp-sharp/P2PMessageSession.cs,
+	  msnp-sharp/MSNSLPHandler.cs, msnp-sharp/P2PTransferSession.cs,
+	  msnp-sharp/MSNSLPMessage.cs, msnp-sharp/P2PHandler.cs,
+	  msnp-sharp/P2PMessage.cs: Changes to make Direct Connection work
+	  (still not working)
+	* msnp-sharp/StrKeyValuePair.cs, msnp-sharp/StrDictionary.cs:
+	  Compatibility with Mono since Hashtable/Dictionary loop order is
+	  not necessarely the Add order
+
 2007-06-01 Thiago M. Sayão <thiago.sayao@gmail.com> 
 	* Continue fixing direct connection (still doesn't work)
 

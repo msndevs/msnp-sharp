@@ -314,7 +314,7 @@ namespace MSNPSharp.DataTransfer
 			// check if it is a content message
 			// if it is not a file transfer message, and the footer is not set to 1 (for emoticons/user displays), ignore it.
 			if(p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
-				&& (p2pMessage.Flags == 0x1000030 || p2pMessage.Footer == 1))
+				&& (p2pMessage.Flags == (uint) P2PFlag.FileData || p2pMessage.Footer == 1))
 			{
 				// indicates whether we must stream this message
 				bool writeToStream = true;
@@ -408,14 +408,14 @@ namespace MSNPSharp.DataTransfer
 			P2PMessage p2pMessage = (P2PMessage)message;
 
 			// check whether it's already set. This is important to check for acknowledge messages.
-			if(p2pMessage.Identifier == 0)
+			/*if(p2pMessage.Identifier == 0)
 			{
 				MessageSession.IncreaseLocalIdentifier();
 				p2pMessage.Identifier = MessageSession.LocalIdentifier;
 			}
 			
 			if(p2pMessage.AckSessionId == 0)
-				p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);			
+				p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);*/
 
 			// split up large messages which go to the SB
 			if(MessageSession.DirectConnected == false && p2pMessage.MessageSize > 1202)
@@ -473,7 +473,6 @@ namespace MSNPSharp.DataTransfer
 				{
 					// wrap the message before sending it to the SB processor
 					p2pMessage.PrepareMessage();
-					//SBMessage sbMessage = WrapMessage(p2pMessage);
 					if(processor != null)
 						processor.SendMessage(p2pMessage);
 				}				

@@ -474,8 +474,8 @@ namespace MSNPSharp.DataTransfer
 		protected SBMessage WrapMessage(NetworkMessage networkMessage)
 		{
 			MSGMessage msgWrapper = new MSGMessage();
-			msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
-			msgWrapper.MimeHeader["Content-Type"] = "application/x-msnmsgrp2p";			
+			msgWrapper.MimeHeader.Add ("Content-Type", "application/x-msnmsgrp2p");
+			msgWrapper.MimeHeader.Add ("P2P-Dest", RemoteContact);
 			msgWrapper.InnerMessage = networkMessage;
 
 			SBMessage sbMessageWrapper = new SBMessage();
@@ -500,7 +500,7 @@ namespace MSNPSharp.DataTransfer
 
 				// but close the direct connection
 				((SocketMessageProcessor)processor).Disconnect();
-				return;			
+				return;	
 			}
 
 			IncreaseLocalIdentifier();
@@ -565,11 +565,11 @@ namespace MSNPSharp.DataTransfer
 		{			
 			//DCHandshakeProcessor = (IMessageProcessor)sender;
 			
-            if (((P2PDirectProcessor)sender).IsListener == false)
+			if (((P2PDirectProcessor)sender).IsListener == false)
 			{
 				if(AutoHandshake == true && HandshakeMessage != null)
 				{
-                    SendHandshakeMessage((P2PDirectProcessor)sender);
+					SendHandshakeMessage((P2PDirectProcessor)sender);
 				}
 			}			
 		}
@@ -946,6 +946,6 @@ namespace MSNPSharp.DataTransfer
 			}
 		}
 		
-		#endregion		
+		#endregion
 	}
 }

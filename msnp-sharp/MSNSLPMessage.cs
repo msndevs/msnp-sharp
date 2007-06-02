@@ -54,9 +54,8 @@ namespace MSNPSharp.DataTransfer
 		int contentLength;
 		string body;
 		string startLine;
-		Dictionary<string, string> messageValues = new Dictionary<string, string>();
+		StrDictionary messageValues = new StrDictionary ();
 
-		
 		public Encoding Encoding
 		{
 			get { 
@@ -234,9 +233,9 @@ namespace MSNPSharp.DataTransfer
 			builder.Append("\r\n");	
 			builder.Append(Body);
 			
-			foreach(string key in MessageValues.Keys)
+			foreach(StrKeyValuePair entry in MessageValues)
 			{
-				builder.Append(key).Append(": ").Append(MessageValues[key]);
+				builder.Append(entry.Key).Append(": ").Append(entry.Value);
 			}
 		
 			// get the bytes
@@ -252,7 +251,7 @@ namespace MSNPSharp.DataTransfer
 			return totalMessage;
 		}		
 
-		public Dictionary<string,string> MessageValues
+		public StrDictionary MessageValues
 		{
 			get { 
 				return messageValues; 

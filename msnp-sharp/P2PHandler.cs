@@ -370,7 +370,7 @@ namespace MSNPSharp.DataTransfer
 			}
 
 			// check if it's a valid p2p message
-			if(msgMessage.MimeHeader["Content-Type"].ToString() != "application/x-msnmsgrp2p")
+			if(msgMessage.MimeHeader["Content-Type"] != "application/x-msnmsgrp2p")
 			{			
 				return;
 			}
@@ -407,7 +407,7 @@ namespace MSNPSharp.DataTransfer
 					// in the session. So create a new session to handle following messages.
 					session = CreateSessionFromRemote(p2pMessage);
 					session.RemoteContact = sbMessage.CommandValues[0].ToString();
-					session.LocalContact = msgMessage.MimeHeader["P2P-Dest"].ToString();
+					session.LocalContact = msgMessage.MimeHeader["P2P-Dest"];
 
 					// add the session to the session list
 					messageSessions.Add(session);
@@ -423,13 +423,13 @@ namespace MSNPSharp.DataTransfer
 			// diagnostic check
 			System.Diagnostics.Debug.Assert(session != null, "Session is null", "P2P Message session");
 
-			// send an acknowledgement after the last message
+			/*// send an acknowledgement after the last message
 			if(p2pMessage.IsAcknowledgement == false
 			      && p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
 			{
 				P2PMessage ack = p2pMessage.CreateAcknowledgement();
 				session.SendMessage(ack);
-			}
+			}*/
 						
 			// now handle the message
 			session.HandleMessage(sender, p2pMessage);
