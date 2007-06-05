@@ -423,13 +423,13 @@ namespace MSNPSharp.DataTransfer
 			// diagnostic check
 			System.Diagnostics.Debug.Assert(session != null, "Session is null", "P2P Message session");
 
-			/*// send an acknowledgement after the last message
+			// send an acknowledgement after the last message
 			if(p2pMessage.IsAcknowledgement == false
 			      && p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
 			{
 				P2PMessage ack = p2pMessage.CreateAcknowledgement();
 				session.SendMessage(ack);
-			}*/
+			}
 						
 			// now handle the message
 			session.HandleMessage(sender, p2pMessage);

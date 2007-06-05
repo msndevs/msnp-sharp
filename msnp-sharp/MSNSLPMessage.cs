@@ -214,10 +214,7 @@ namespace MSNPSharp.DataTransfer
 			builder.Append("\r\n");
 			builder.Append("CSeq: ");
 			builder.Append(CSeq.ToString(CultureInfo.InvariantCulture));
-			if (ContentType != null && ContentType == "application/x-msnmsgr-transrespbody")
-				builder.Append("\r\n"); 
-			else
-				builder.Append(" \r\n"); //the space is required
+			builder.Append(" \r\n"); //the space is required
 			builder.Append("Call-ID: ");
 			builder.Append(CallId);
 			builder.Append("\r\n");

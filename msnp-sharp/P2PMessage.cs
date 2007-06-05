@@ -191,7 +191,7 @@ namespace MSNPSharp.DataTransfer
 			ack.TotalSize = TotalSize;
 			ack.Flags = (uint) P2PFlag.Acknowledgement;
 			
-			ack.AckSessionId = (uint) (new Random()).Next(10000, int.MaxValue);
+			ack.AckSessionId = Identifier;
 			ack.AckIdentifier = AckSessionId;
 			ack.AckTotalSize = TotalSize;
 			
@@ -213,7 +213,6 @@ namespace MSNPSharp.DataTransfer
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
 			return "[P2PMessage]\r\n" + debugLine;
 		}
-
 
 
 		#region Protected helper methods

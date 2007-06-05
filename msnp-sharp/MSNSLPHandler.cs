@@ -1095,15 +1095,14 @@ namespace MSNPSharp.DataTransfer
 			switch(slpMessage.ContentType)
 			{
 				case "application/x-msnmsgr-sessionreqbody":
-					OnSessionRequest(slpMessage); 
+					OnSessionRequest(slpMessage);
 					break;
 				
 				case "application/x-msnmsgr-transreqbody":
-					SendDCRequestAck (p2pMessage);
 					OnDCRequest(slpMessage); 
 					break;
 				
-				case "application/x-msnmsgr-transrespbody":	
+				case "application/x-msnmsgr-transrespbody":
 					OnDCResponse(slpMessage); 
 					break;				
 				case "application/x-msnmsgr-sessionclosebody":
@@ -1137,7 +1136,7 @@ namespace MSNPSharp.DataTransfer
 			// and close the connection
 			//session.CloseDirectConnection();
 		}
-
+		
 		/// <summary>
 		/// Called when a remote client request a session
 		/// </summary>
@@ -1259,9 +1258,6 @@ namespace MSNPSharp.DataTransfer
 			p2pTransfer.RegisterHandler(this);
 			p2pTransfer.DataStream = invitationArgs.TransferSession.DataStream;
 
-			P2PMessage replyMessage = new P2PMessage();				
-			replyMessage.InnerMessage = CreateAcceptanceMessage(properties);
-			
 			// check for a msn object request
 			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
 			{
@@ -1272,9 +1268,13 @@ namespace MSNPSharp.DataTransfer
 
 			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
 			{
+				MessageSession.CorrectLocalIdentifier(-4);
 				p2pTransfer.MessageFlag = 0x1000030;
 				p2pTransfer.IsSender = false;
 			}
+			
+			P2PMessage replyMessage = new P2PMessage();	
+			replyMessage.InnerMessage = CreateAcceptanceMessage(properties);
 
 			p2pTransfer.CallId = properties.CallId;
 			OnTransferSessionCreated(p2pTransfer);
@@ -1314,18 +1314,18 @@ namespace MSNPSharp.DataTransfer
 			throw new SocketException(10048);
 		}
 
-		
-		protected virtual void SendDCRequestAck(P2PMessage p2pMessage)
+		/*protected virtual void SendDefaultAck(P2PMessage p2pMessage) 
 		{
-			Console.WriteLine ("Sending DC Request Ack");
-			MessageSession.IncreaseLocalIdentifier ();
-			
-			P2PMessage ack = p2pMessage.CreateAcknowledgement();
-			ack.SessionId = 0;
-			ack.Identifier = MessageSession.LocalIdentifier;
+			MessageSession.SendMessage (p2pMessage.CreateAcknowledgement ());
+		}
+		
+		protected virtual void SendRemoteAck(P2PMessage p2pMessage) 
+		{
+			P2PMessage ack = p2pMessage.CreateAcknowledgement ();
+			ack.Identifier = MessageSession.RemoteIdentifier + 1;
 			
 			MessageSession.SendMessage (ack);
-		}
+		}*/
 		
 		/// <summary>
 		/// Called when the remote client sends a file and sends us it's direct-connect capabilities.

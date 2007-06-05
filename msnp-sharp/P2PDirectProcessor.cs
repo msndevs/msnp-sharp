@@ -60,7 +60,7 @@ namespace MSNPSharp.DataTransfer
 			// begin waiting for the incoming connection			
 			socket.Bind(new IPEndPoint(address, port));
 			
-			socket.Listen(10);
+			socket.Listen(100);
 			
 			// set this value so we know whether to send a handshake message or not later in the process
 			isListener = true;

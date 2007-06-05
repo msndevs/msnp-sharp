@@ -383,8 +383,8 @@ namespace MSNPSharp.DataTransfer
 		public void IncreaseLocalIdentifier()
 		{
 			localIdentifier++;
-			if(localIdentifier == localBaseIdentifier)
-				localIdentifier++;
+			//if(localIdentifier == localBaseIdentifier)
+				//localIdentifier++;
 		}	
 
 		/// <summary>
@@ -737,8 +737,8 @@ namespace MSNPSharp.DataTransfer
 			}
 			
 			if(p2pMessage.AckSessionId == 0)
-				p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-
+				p2pMessage.AckSessionId = (UInt32)new Random().Next(50000, Int32.MaxValue);
+			
 			// split up large messages which go to the SB
 			if(p2pMessage.MessageSize > maxSize)
 			{				

@@ -1025,7 +1025,7 @@ namespace MSNPSharp
 			string payload = pmsg.Payload;
 			msg.Command = payload;
 			
-			int size = System.Text.Encoding.Default.GetByteCount(payload);
+			int size = System.Text.Encoding.UTF8.GetByteCount(payload);
 			
 			MessageProcessor.SendMessage(new NSMessage("UUX", new string[] { Convert.ToString (size) }));
 			MessageProcessor.SendMessage(msg);
