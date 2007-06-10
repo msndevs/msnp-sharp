@@ -32,6 +32,7 @@ using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Globalization;
@@ -56,40 +57,32 @@ namespace MSNPSharp
 	/// </summary>
 	[Serializable()]
 	public class MSNObject
-	{		
-		private string	originalContext = null;
-		private string	oldHash = "";
+	{
+		string originalContext = null;
+		string oldHash = "";
 		[NonSerialized]
-		private Stream dataStream = null;		
+		Stream dataStream = null;		
 
-		private string fileLocation = null;
-		private string creator;
-		private int	size;
-		private MSNObjectType type;
-		private string location;		 
-		private string friendly = "\0";		 
-		private string sha = String.Empty;
+		string fileLocation = null;
+		string creator;
+		int	size;
+		MSNObjectType type;
+		string location;		 
+		string friendly = "\0";		 
+		string sha = String.Empty;
+		static Regex contextRe = new Regex("(?<Name>[^= ]+)=\"(?<Value>[^\"]+)\"");
 
-		
 		public MSNObject()
 		{			
 			
 		}
-
-		/// <summary>
-		/// Constructs a MSN object based on a (memory)stream. The client programmer is responsible for inserting this object in the global msn object collection.
-		/// The stream must remain open during the whole life-length of the application.
-		/// </summary>
-		/// <param name="creator"></param>
-		/// <param name="inputStream"></param>
-		/// <param name="type"></param>
-		/// <param name="location"></param>
+		
 		public MSNObject(string creator, Stream inputStream, MSNObjectType type, string location)
 		{						
 			this.creator = creator;
 			this.size	= (int)inputStream.Length;
 			this.type 	= type;
-			this.location = location;// + new Random().Next().ToString();
+			this.location = location;
 			
 			this.sha = GetStreamHash(inputStream);
 
@@ -111,8 +104,13 @@ namespace MSNPSharp
 
 		public string Creator
 		{
-			get { return creator; }
-			set { creator = value; UpdateInCollection(); }
+			get {
+				return creator;
+			}
+			set {
+				creator = value;
+				UpdateInCollection();
+			}
 		}
 
 		public string Friendly
@@ -120,67 +118,92 @@ namespace MSNPSharp
 			get {
 				return friendly;
 			}
-			set { friendly = value; UpdateInCollection(); }
+			set {
+				friendly = value;
+				UpdateInCollection();
+			}
 		}
 		
 		public string OriginalContext
 		{
-			get { return originalContext; }
+			get {
+				return originalContext;
+			}
 		}
 
 		public int Size
 		{
-			get { return size; }
-			set { size = value; UpdateInCollection(); }
+			get {
+				return size;
+			}
+			set {
+				size = value;
+				UpdateInCollection();
+			}
 		}
 
 		public MSNObjectType Type
 		{
-			get { return type; }
-			set { type = value; UpdateInCollection(); }
+			get {
+				return type;
+			}
+			set {
+				type = value; UpdateInCollection();
+			}
 		}
 
 		public string Location
 		{
-			get { return location; }
-			set { location = value; UpdateInCollection(); }
+			get {
+				return location;
+			}
+			set {
+				location = value; UpdateInCollection();
+			}
 		}
 
 		public string FileLocation
 		{
-			get { return fileLocation; }
+			get {
+				return fileLocation;
+			}
 			set 
 			{ 
-                this.LoadFile(value);
+				this.LoadFile(value);
 				fileLocation = value;
 			}
 		}
 
-        public void LoadFile(string fileName)
-        {
-            if (this.fileLocation == fileName) return;
-            this.fileLocation = fileName;
-            this.location = Path.GetRandomFileName();
+		public void LoadFile(string fileName)
+		{
+			if (this.fileLocation == fileName) return;
+			this.fileLocation = fileName;
+			this.location = Path.GetRandomFileName();
 
-            // copy the file
-            byte[] buffer = new byte[512];
-            Stream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-            int cnt = 0;
-            while ((cnt = fileStream.Read(buffer, 0, 512)) > 0)
-            {
-                DataStream.Write(buffer, 0, cnt);
-            }
+			// copy the file
+			byte[] buffer = new byte[512];
+			Stream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+			int cnt = 0;
+			
+			while ((cnt = fileStream.Read(buffer, 0, 512)) > 0)
+			{
+				DataStream.Write(buffer, 0, cnt);
+			}
 
-            this.size = (int)DataStream.Length;
-            this.sha = GetStreamHash(DataStream);
+			this.size = (int)DataStream.Length;
+			this.sha = GetStreamHash(DataStream);
 
-            UpdateInCollection();
-        }
+			UpdateInCollection();
+		}
 
 		public string Sha
 		{
-			get { return sha; }
-			set { sha = value; UpdateInCollection(); }
+			get {
+				return sha;
+			}
+			set {
+				sha = value; UpdateInCollection();
+			}
 		}
 
 		public void UpdateInCollection()
@@ -210,8 +233,6 @@ namespace MSNPSharp
 			return Convert.ToBase64String(hashBytes);
 		}
 				
-		private static Regex contextRe = new Regex("(?<Name>[^= ]+)=\"(?<Value>[^\"]+)\"");
-
 		public virtual void ParseContext(string context)
 		{
 			ParseContext(context, false);
@@ -222,7 +243,7 @@ namespace MSNPSharp
 			originalContext = context;
 
 			if(base64Encoded)
-				context = UTF8Encoding.UTF8.GetString(Convert.FromBase64String(context));
+				context = Encoding.Unicode.GetString(Convert.FromBase64String(context));
 			
 			string xmlString = System.Web.HttpUtility.UrlDecode(context);
 			MatchCollection matches  = contextRe.Matches(xmlString);
@@ -237,7 +258,7 @@ namespace MSNPSharp
 					case "creator": this.creator = val; break;
 					case "size"   : this.size = int.Parse(val, System.Globalization.CultureInfo.InvariantCulture); break;
 					case "type"   :
-					{						
+					{
 						switch(val)
 						{
 							case "2": type = MSNObjectType.Emoticon; break;
@@ -249,7 +270,7 @@ namespace MSNPSharp
 					}
 					case "location":this.location = val; break;
 					case "sha1d": this.sha = val; break;
-					case "friendly": this.friendly = UTF8Encoding.UTF8.GetString(Convert.FromBase64String (val)); break;
+					case "friendly": this.friendly = Encoding.Unicode.GetString(Convert.FromBase64String (val)); break;
 				}
 			}
 		}
@@ -265,13 +286,19 @@ namespace MSNPSharp
 
 		public string Context
 		{
-			get { return GetEncodedString(); }
-			set { ParseContext(value);  }
+			get {
+				return GetEncodedString();
+			}
+			set {
+				ParseContext(value);
+			}
 		}
 
 		public string ContextPlain
 		{
-			get { return GetXmlString(); }			
+			get {
+				return GetXmlString();
+			}
 		}
 		
 		protected virtual string GetXmlString()
@@ -281,7 +308,7 @@ namespace MSNPSharp
 			                         Size,
 			                         (int)Type,
 			                         Location,
-			                         Convert.ToBase64String (Encoding.UTF8.GetBytes (Friendly)),
+			                         Convert.ToBase64String (Encoding.Unicode.GetBytes (Friendly)),
 			                         Sha.Replace (' ', '+'), //this is needed, it's not on the docs, but it has, trust me!
 			                         CalculateChecksum ());
 		}
@@ -291,113 +318,71 @@ namespace MSNPSharp
 			return HttpUtility.UrlPathEncode(GetXmlString());
 		}
 	}
-
-
-	/// <summary>
-	/// A collection of all available MSN objects. This class is implemented following the singleton pattern.
-	/// </summary>
-	/// <remarks>
-	/// In this collection all user display's, emoticons, etc for the entire application are stored.
-	/// This allows for easy retrieval of the corresponding msn object by passing in the encrypted hash.
-	/// Note: Use <see cref="GetInstance"/> to get a reference to the global MSNObjectCatalog object on which you can call methods.
-	/// </remarks>
+	
+	
 	[Serializable()]
-	public class MSNObjectCatalog : ICollection
+	public class MSNObjectCatalog : ICollection<MSNObject>
 	{
-		/// <summary>
-		/// The single instance
-		/// </summary>
 		[NonSerialized]
-		private static MSNObjectCatalog instance = new MSNObjectCatalog();
+		static MSNObjectCatalog instance = new MSNObjectCatalog();
 
-		/// <summary>
-		/// Collection of all msn objects
-		/// </summary>
-		private Hashtable	objectCollection = new Hashtable();
+		Dictionary<string, MSNObject> objectCollection;
 
-		/// <summary>
-		/// Returns the msn object with the supplied hash as checksum.
-		/// </summary>
-		/// <param name="hash"></param>
-		/// <returns></returns>
+		private MSNObjectCatalog()
+		{
+			objectCollection = new Dictionary<string, MSNObject> ();
+		}
+		
+		public static MSNObjectCatalog GetInstance()
+		{
+			return instance;
+		}
+		
 		public MSNObject Get(string hash)
 		{
-			object msnObject = objectCollection[hash];
-			if(msnObject == null)
+			if (!objectCollection.ContainsKey (hash))
 				return null;
-			else
-				return (MSNObject)msnObject;
+					
+			return objectCollection[hash];
 		}
 
-		/// <summary>
-		/// Removes the msn object with the specified checksum from the collection.
-		/// </summary>
-		/// <param name="checksum"></param>
-		public void	Remove(string checksum)
+		public bool Remove(string checksum)
 		{
-			objectCollection.Remove(checksum);
+			return objectCollection.Remove(checksum);
 		}
 
-		/// <summary>
-		/// Removes the specified msn object from the collection.
-		/// </summary>
-		/// <param name="msnObject"></param>
-		public void	Remove(MSNObject msnObject)
+		public bool Remove(MSNObject msnObject)
 		{
-			objectCollection.Remove(msnObject.CalculateChecksum());
+			return objectCollection.Remove(msnObject.CalculateChecksum());
 		}
 
-		/// <summary>
-		/// Adds the MSNObject (a user display, emoticon, etc) in the global collection.		
-		/// </summary>
-		/// <param name="msnObject"></param>
 		public void	Add(MSNObject msnObject)
 		{
-			string hash = msnObject.CalculateChecksum(); 
+			string hash = msnObject.CalculateChecksum();
 			Add(hash, msnObject);
 		}
 
-		/// <summary>
-		/// Adds the MSNObject (a user display, emoticon, etc) in the global collection, with the specified checksum as index.
-		/// </summary>
-		/// <param name="checksum"></param>
-		/// <param name="msnObject"></param>
 		public void	Add(string checksum, MSNObject msnObject)
 		{
 			objectCollection[checksum] = msnObject;
 		}
 
-		/// <summary>
-		/// Returns a reference to the global MSNObjectCatalog object.
-		/// </summary>
-		public static MSNObjectCatalog GetInstance()
-		{
-			return instance;
-		}
-
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		private MSNObjectCatalog()
-		{
-		}
-
 		#region ICollection Members
 
-		/// <summary>
-		/// Returns false,because ObjectCatalog is by default not synchronized.
-		/// </summary>
 		public bool IsSynchronized
 		{
-			get
-			{				
+			get {
+				return false;
+			}
+		}
+		
+		public bool IsReadOnly
+		{
+			get {
 				return false;
 			}
 		}
 
-		/// <summary>
-		/// The number of objects in the catalog.
-		/// </summary>
 		public int Count
 		{
 			get
@@ -406,17 +391,21 @@ namespace MSNPSharp
 			}
 		}
 
-		/// <summary>
-		/// </summary>
-		/// <param name="array"></param>
-		/// <param name="index"></param>
-		public void CopyTo(Array array, int index)
+		public void CopyTo(MSNObject[] array, int index)
 		{
-			objectCollection.CopyTo(array, index);
+			objectCollection.Values.CopyTo (array, index);
+		}
+		
+		public void Clear ()
+		{
+			objectCollection.Clear ();
+		}
+		
+		public bool Contains (MSNObject obj)
+		{
+			return objectCollection.ContainsValue (obj);
 		}
 
-		/// <summary>
-		/// </summary>
 		public object SyncRoot
 		{
 			get
@@ -428,15 +417,16 @@ namespace MSNPSharp
 		#endregion
 
 		#region IEnumerable Members
-
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
-		public IEnumerator GetEnumerator()
-		{			
-			return objectCollection.GetEnumerator();
+		
+		public IEnumerator<MSNObject> GetEnumerator()
+		{
+			return objectCollection.Values.GetEnumerator ();
 		}
 
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
 		#endregion
 	}
 }

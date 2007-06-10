@@ -1097,7 +1097,7 @@ namespace MSNPSharp
 		/// </summary>
 		protected virtual void SendInitialMessage()
 		{
-			MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP11", "CVR0" } ));
+			MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP11 MSNP9 MSNP8", "CVR0" } ));
 		}
 
 

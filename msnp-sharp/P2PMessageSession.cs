@@ -393,8 +393,8 @@ namespace MSNPSharp.DataTransfer
 		public void IncreaseRemoteIdentifier()
 		{
 			remoteIdentifier++;
-			if(remoteIdentifier == remoteBaseIdentifier)
-				remoteIdentifier++;
+			//if(remoteIdentifier == remoteBaseIdentifier)
+				//remoteIdentifier++;
 		}
 
 		/// <summary>

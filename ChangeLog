@@ -1,3 +1,10 @@
+2007-06-10  Thiago Milczarek Sayão <thiago.sayao@gmail.com> 
+
+	* msnp-sharp/NS11MessageHandler.cs: Login as MSNP8 MSNP9 MSNP11
+	* msnp-sharp/P2PMessageSession.cs: RemoteIdentifier can repeat
+	* msnp-sharp/MSNObject.cs: Fix bug #118791, cleanup
+	* msnp-sharp/enums.cs: New Capacity
+
 2007-06-05  Thiago Milczarek Sayão <thiago.sayao@gmail.com> 
 
 	* msnp-sharp/NS11MessageHandler.cs: Default enconding? Let's try UTF8
