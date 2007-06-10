@@ -1,5 +1,12 @@
 2007-06-10  Thiago Milczarek Sayão <thiago.sayao@gmail.com> 
 
+	* msnp-sharp/P2PTransferSession.cs, msnp-sharp/MSNSLPHandler.cs: Fix
+	  for MSN 7.0.. i feel cofused since WLM corrects the LocalIdentifier
+	  by -3 after invite and MSN 7 does not. Since we support 7 for now,
+	  don't correct -3
+
+2007-06-10  Thiago Milczarek Sayão <thiago.sayao@gmail.com> 
+
 	* msnp-sharp/NS11MessageHandler.cs: Login as MSNP8 MSNP9 MSNP11
 	* msnp-sharp/P2PMessageSession.cs: RemoteIdentifier can repeat
 	* msnp-sharp/MSNObject.cs: Fix bug #118791, cleanup

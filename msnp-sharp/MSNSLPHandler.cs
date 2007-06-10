@@ -1268,8 +1268,14 @@ namespace MSNPSharp.DataTransfer
 
 			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
 			{
-				MessageSession.CorrectLocalIdentifier(-4);
-				p2pTransfer.MessageFlag = 0x1000030;
+				/*
+				 * MSN Live messenger counts backwards (-3) on the negotiation process, so we need
+				 * to sum -4 since we already added one somewhere.
+				 * We are still supporting 7.0, uncomment this line for WLM
+				 */
+				
+				//MessageSession.CorrectLocalIdentifier(-4);
+				p2pTransfer.MessageFlag = (uint) P2PFlag.FileData;
 				p2pTransfer.IsSender = false;
 			}
 			
