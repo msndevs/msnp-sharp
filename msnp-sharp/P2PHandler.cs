@@ -205,7 +205,7 @@ namespace MSNPSharp.DataTransfer
 			session.ProcessorInvalid += new EventHandler(session_ProcessorInvalid);
 
 			// generate a local base identifier.
-			session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
+			session.LocalBaseIdentifier = (uint)System.Environment.TickCount;
 
 			// uses -1 because the first message must be the localbaseidentifier and the identifier
 			// is automatically increased
@@ -260,7 +260,7 @@ namespace MSNPSharp.DataTransfer
 
 			// generate a local base identifier. After the acknowledgement the locals client begins at
 			// identifier - 4 as identifiers in the following messages. (Weird)
-			session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
+			session.LocalBaseIdentifier = (uint)System.Environment.TickCount;
 			session.LocalIdentifier     = (uint)(session.LocalBaseIdentifier);// - (ulong)session.LocalInitialCorrection);
 
 			session.ProcessorInvalid += new EventHandler(session_ProcessorInvalid);
@@ -278,7 +278,7 @@ namespace MSNPSharp.DataTransfer
 		/// <param name="receivedMessage"></param>
 		protected P2PMessageSession SetSessionIdentifiersAfterAck(P2PMessage receivedMessage)
 		{
-			P2PMessageSession session = GetSessionFromLocal(receivedMessage.AckSessionId);
+			P2PMessageSession session = GetSessionFromLocal(receivedMessage.DW1);
             			
 			if(session == null)
 				throw new MSNPSharpException("P2PHandler: an acknowledgement for the creation of a P2P session was received, but no local created session could be found with the specified identifier.");

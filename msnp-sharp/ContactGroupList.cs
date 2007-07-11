@@ -102,6 +102,10 @@ namespace MSNPSharp
 		{			
 			return list.GetEnumerator();
 		}
-
+		
+		public void Clear ()
+		{
+			list.Clear ();
+		}
 	}
 }

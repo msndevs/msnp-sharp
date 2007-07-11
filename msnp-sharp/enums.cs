@@ -109,7 +109,8 @@ namespace MSNPSharp
 		/// <summary>
 		/// The contact is idle.
 		/// </summary>
-		Idle }
+		Idle 
+	}
 
 	/// <summary>
 	/// Specifies an error a MSN Server can send.
@@ -447,7 +448,7 @@ namespace MSNPSharp
 	
 				
 	[FlagsAttribute]
-	public enum ClientCapacities
+	public enum ClientCapacities : long
 	{
 		IsMobile = 0x01,
 		MsnExplorer8User = 0x02,

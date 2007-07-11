@@ -325,7 +325,7 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		public IMessageProcessor ListenForDirectConnection(IPAddress host, int port)
 		{
-			Console.WriteLine ("ListenForDirectConnection");
+			//Console.WriteLine ("ListenForDirectConnection");
 			P2PDirectProcessor processor = new P2PDirectProcessor();
 
 			// we want this session to listen to incoming messages
@@ -506,8 +506,8 @@ namespace MSNPSharp.DataTransfer
 			IncreaseLocalIdentifier();
 			HandshakeMessage.Identifier = LocalIdentifier;
 
-			HandshakeMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-			DCHandshakeAck = HandshakeMessage.AckSessionId;			
+			HandshakeMessage.DW1 = (uint)System.Environment.TickCount;
+			DCHandshakeAck = HandshakeMessage.DW1;			
 			
 			if(Settings.TraceSwitch.TraceInfo)
 				System.Diagnostics.Trace.WriteLine("Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), "P2PMessageSession");
@@ -649,7 +649,7 @@ namespace MSNPSharp.DataTransfer
 			// check whether it is an acknowledgement to data preparation message
 			if(p2pMessage.Flags == 0x100 && DCHandshakeAck != 0)
 			{
-				Console.WriteLine ("HANDSHAKE!");
+				//Console.WriteLine ("HANDSHAKE!");
 				OnHandshakeCompleted((P2PDirectProcessor)sender);		
 				return;
 			}
@@ -657,7 +657,7 @@ namespace MSNPSharp.DataTransfer
 			// check if it's a direct connection handshake
 			if(p2pMessage.Flags == 0x100 && AutoHandshake == true)
 			{
-				Console.WriteLine ("HANDSHAKE!");
+				//Console.WriteLine ("HANDSHAKE!");
 				// create a handshake message based on the incoming p2p message and send it				
 				P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage);				
 				sender.SendMessage(dcHsMessage.CreateAcknowledgement());				
@@ -736,8 +736,11 @@ namespace MSNPSharp.DataTransfer
 				p2pMessage.Identifier = LocalIdentifier;
 			}
 			
-			if(p2pMessage.AckSessionId == 0)
-				p2pMessage.AckSessionId = (UInt32)new Random().Next(50000, Int32.MaxValue);
+			if(p2pMessage.DW1 == 0)
+				p2pMessage.DW1 = (uint)System.Environment.TickCount;
+				
+				
+			//Console.WriteLine (p2pMessage.ToDebugString ());
 			
 			// split up large messages which go to the SB
 			if(p2pMessage.MessageSize > maxSize)
@@ -752,26 +755,26 @@ namespace MSNPSharp.DataTransfer
 
 				uint bytesSend = 0;
 				int cnt = ((int)(p2pMessage.MessageSize / maxSize)) + 1;
+				
 				for(int i = 0; i < cnt; i++)
 				{
 					P2PMessage chunkMessage = new P2PMessage();
 
 					// copy the values from the original message
-					chunkMessage.AckIdentifier = p2pMessage.AckIdentifier;
-					chunkMessage.AckTotalSize  = p2pMessage.AckTotalSize;
-					chunkMessage.Flags         = p2pMessage.Flags;
-					chunkMessage.Footer        = p2pMessage.Footer;
-					chunkMessage.Identifier    = p2pMessage.Identifier;
-					chunkMessage.MessageSize   = (uint)Math.Min((uint)maxSize, (uint)(p2pMessage.MessageSize - bytesSend));
-					chunkMessage.Offset        = bytesSend;
-					chunkMessage.SessionId     = p2pMessage.SessionId;
-					chunkMessage.TotalSize     = p2pMessage.MessageSize;
+					chunkMessage.DW2 = p2pMessage.DW2;
+					chunkMessage.QW1 = p2pMessage.QW1;
+					chunkMessage.Flags = p2pMessage.Flags;
+					chunkMessage.Footer = p2pMessage.Footer;
+					chunkMessage.Identifier = p2pMessage.Identifier;
+					chunkMessage.MessageSize = (uint)Math.Min((uint)maxSize, (uint)(p2pMessage.MessageSize - bytesSend));
+					chunkMessage.Offset = bytesSend;
+					chunkMessage.SessionId = p2pMessage.SessionId;
+					chunkMessage.TotalSize = p2pMessage.MessageSize;
 
 					chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
 					Array.Copy(totalMessage, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
 
-					
-					chunkMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);	
+					chunkMessage.DW1 = (uint)System.Environment.TickCount;	
 
 					chunkMessage.PrepareMessage();
 

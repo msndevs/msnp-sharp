@@ -10,7 +10,7 @@ using System.Globalization;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace MSNP11CHL 
+namespace MSNPSharp 
 {
 	public class clsQRYFactory 
 	{

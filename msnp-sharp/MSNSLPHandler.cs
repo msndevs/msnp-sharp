@@ -32,6 +32,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Text.RegularExpressions;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
@@ -181,7 +182,7 @@ namespace MSNPSharp.DataTransfer
 		/// <summary>
 		/// The checksum of the fields used in the context
 		/// </summary>
-		public string			Checksum
+		public string Checksum
 		{
 			get { return checksum; }
 			set { checksum = value;}
@@ -522,7 +523,7 @@ namespace MSNPSharp.DataTransfer
 		{
 			// set class variables
 			MSNSLPTransferProperties properties = new MSNSLPTransferProperties();
-			properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
+			properties.SessionId = (uint)System.Environment.TickCount;
 			
 			properties.LocalContact = localContact;
 			properties.RemoteContact = remoteContact;
@@ -538,7 +539,6 @@ namespace MSNPSharp.DataTransfer
 				properties.DataType = DataTransferType.Wink;
 				guid = MSNSLPHandler.WinkGuid;
 			}
-			
 						
 			MSNSLPMessage slpMessage = new MSNSLPMessage();
 			//byte[] contextArray  = System.Text.ASCIIEncoding.ASCII.GetBytes(System.Web.HttpUtility.UrlDecode(msnObject.OriginalContext));//GetEncodedString());
@@ -613,7 +613,7 @@ namespace MSNPSharp.DataTransfer
 			MSNSLPTransferProperties properties = new MSNSLPTransferProperties();			
 			do
 			{
-				properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
+				properties.SessionId = (uint)System.Environment.TickCount;
 			}
 			while(MessageSession.GetTransferSession(properties.SessionId) != null);		
 			
@@ -814,11 +814,14 @@ namespace MSNPSharp.DataTransfer
 
 			if(message.MessageValues.ContainsKey("EUF-GUID"))
 			{
-				if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
+				if(message.MessageValues["EUF-GUID"].ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
 				{
+					Console.WriteLine ("Got invitation");
 					// create a temporary msn object to extract the data type
 					MSNObject msnObject = new MSNObject();
-					msnObject.ParseContext(message.MessageValues["Context"].ToString(), true);
+					msnObject.ParseContext(message.MessageValues["Context"], true);
+					
+					Console.WriteLine (msnObject.Type);
 
 					if(msnObject.Type == MSNObjectType.UserDisplay)
 						properties.DataType = DataTransferType.DisplayImage;
@@ -828,15 +831,16 @@ namespace MSNPSharp.DataTransfer
 						properties.DataType = DataTransferType.Wink;
 					else
 						properties.DataType = DataTransferType.Unknown;
-
-					properties.Context  = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(message.MessageValues["Context"].ToString()));
+						
+						
+					properties.Context  = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(message.MessageValues["Context"]));
 					properties.Checksum = ExtractChecksum(properties.Context);					
 				}
-				else if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
+				else if(message.MessageValues["EUF-GUID"].ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
 				{
 					properties.DataType = DataTransferType.File;
 				}
-				else if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.WebCamShowGuid)
+				else if(message.MessageValues["EUF-GUID"].ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.WebCamShowGuid)
 				{
 					properties.DataType = DataTransferType.WebCam;
 				}
@@ -845,7 +849,7 @@ namespace MSNPSharp.DataTransfer
 				properties.LastBranch = new Guid(message.Branch);
 				properties.LastCSeq = message.CSeq;
 				properties.CallId = new Guid(message.CallId);
-				properties.SessionId = (uint)(uint.Parse(message.MessageValues["SessionID"].ToString(), System.Globalization.CultureInfo.InvariantCulture));
+				properties.SessionId = (uint)(uint.Parse(message.MessageValues["SessionID"], System.Globalization.CultureInfo.InvariantCulture));
 
 				// set the contacts who send and receive it				
 				properties.LocalContact = ExtractNameFromTag(message.To);
@@ -999,12 +1003,12 @@ namespace MSNPSharp.DataTransfer
 		/// <returns></returns>
 		private string ExtractChecksum(string context)
 		{
-			//FIXME: What about Sha1D?
 			Regex shaRe = new Regex("SHA1C=\"([^\"]+)\"");
 			Match match = shaRe.Match(context);
 			if(match.Success)
 			{
-				return match.Groups[1].Value;
+				string b64checksum = match.Groups[1].Value; 
+				return UTF8Encoding.UTF8.GetString (Convert.FromBase64String (b64checksum));
 			}
 			else
 				throw new MSNPSharpException("SHA1C field could not be extracted from the specified context: " + context);
@@ -1182,7 +1186,7 @@ namespace MSNPSharp.DataTransfer
 				{
 					// set the filetransfer values in the EventArgs object.
 					// see the SendInvitation(..) method for more info about the layout of the context string
-					byte[] data = Convert.FromBase64String(message.MessageValues["Context"].ToString());
+					byte[] data = Convert.FromBase64String(message.MessageValues["Context"]);
 					MemoryStream memStream = new MemoryStream(data);
 					BinaryReader reader = new BinaryReader(memStream);
 					int hdrsize = reader.ReadInt32();	// 4
@@ -1259,22 +1263,21 @@ namespace MSNPSharp.DataTransfer
 			p2pTransfer.DataStream = invitationArgs.TransferSession.DataStream;
 
 			// check for a msn object request
-			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
+			if(message.MessageValues["EUF-GUID"].ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
 			{
 				// for some kind of weird behavior, our local identifier must now subtract 4 ?
-				MessageSession.CorrectLocalIdentifier(-4);				
+				//MessageSession.CorrectLocalIdentifier(-4);				
 				p2pTransfer.IsSender = true;
 			}
 
-			if(message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
+			if(message.MessageValues["EUF-GUID"].ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
 			{
 				/*
 				 * MSN Live messenger counts backwards (-3) on the negotiation process, so we need
 				 * to sum -4 since we already added one somewhere.
-				 * We are still supporting 7.0, uncomment this line for WLM
 				 */
 				
-				//MessageSession.CorrectLocalIdentifier(-4);
+				MessageSession.CorrectLocalIdentifier(-4);
 				p2pTransfer.MessageFlag = (uint) P2PFlag.FileData;
 				p2pTransfer.IsSender = false;
 			}
@@ -1320,19 +1323,6 @@ namespace MSNPSharp.DataTransfer
 			throw new SocketException(10048);
 		}
 
-		/*protected virtual void SendDefaultAck(P2PMessage p2pMessage) 
-		{
-			MessageSession.SendMessage (p2pMessage.CreateAcknowledgement ());
-		}
-		
-		protected virtual void SendRemoteAck(P2PMessage p2pMessage) 
-		{
-			P2PMessage ack = p2pMessage.CreateAcknowledgement ();
-			ack.Identifier = MessageSession.RemoteIdentifier + 1;
-			
-			MessageSession.SendMessage (ack);
-		}*/
-		
 		/// <summary>
 		/// Called when the remote client sends a file and sends us it's direct-connect capabilities.
 		/// A reply will be send with the local client's connectivity.
@@ -1391,8 +1381,6 @@ namespace MSNPSharp.DataTransfer
 			MessageSession.ListenForDirectConnection(iphostentry.AddressList[0], port);
 			
 			MessageSession.SendMessage (p2pMessage);
-			
-			Console.WriteLine ("OnDCRequest");
 		}
 
 		/// <summary>

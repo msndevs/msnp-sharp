@@ -54,7 +54,7 @@ namespace MSNPSharp.DataTransfer
 		
 		public void Listen(IPAddress address, int port)
 		{
-			Console.WriteLine ("P2PDirectProcessor listening on {0} port {1}", address, port);
+			//Console.WriteLine ("P2PDirectProcessor listening on {0} port {1}", address, port);
 			ProxySocket socket = GetPreparedSocket();
 			
 			// begin waiting for the incoming connection			
@@ -76,7 +76,6 @@ namespace MSNPSharp.DataTransfer
 			
 		protected virtual void EndAcceptCallback(IAsyncResult ar)
 		{
-		
 			Console.WriteLine ("CONNECTED UHULLLL");
 
 			ProxySocket listenSocket = (ProxySocket)ar.AsyncState;

@@ -43,18 +43,20 @@ using MSNPSharp.DataTransfer;
 namespace MSNPSharp
 {
 	
-	public enum MSNObjectType
+	public enum MSNObjectType : uint
 	{
 		Unknown = 0,
 		Emoticon = 2,
 		UserDisplay = 3,
 		Background = 5,
-		Wink = 8
+		DinamicDisplayPic = 7,
+		Wink = 8,
+		VoiceClip = 11,
+		SavedState = 12,
+		Location = 14
 	}	 
 
-	/// <summary>
-	/// The MSNObject can hold an image, display, emoticon, etc.
-	/// </summary>
+	// The MSNObject can hold an image, display, emoticon, etc.
 	[Serializable()]
 	public class MSNObject
 	{
@@ -65,11 +67,12 @@ namespace MSNPSharp
 
 		string fileLocation = null;
 		string creator;
-		int	size;
+		long size;
 		MSNObjectType type;
 		string location;		 
 		string friendly = "\0";		 
 		string sha = String.Empty;
+		
 		static Regex contextRe = new Regex("(?<Name>[^= ]+)=\"(?<Value>[^\"]+)\"");
 
 		public MSNObject()
@@ -80,8 +83,8 @@ namespace MSNPSharp
 		public MSNObject(string creator, Stream inputStream, MSNObjectType type, string location)
 		{						
 			this.creator = creator;
-			this.size	= (int)inputStream.Length;
-			this.type 	= type;
+			this.size = inputStream.Length;
+			this.type = type;
 			this.location = location;
 			
 			this.sha = GetStreamHash(inputStream);
@@ -131,7 +134,7 @@ namespace MSNPSharp
 			}
 		}
 
-		public int Size
+		public long Size
 		{
 			get {
 				return size;
@@ -148,7 +151,8 @@ namespace MSNPSharp
 				return type;
 			}
 			set {
-				type = value; UpdateInCollection();
+				type = value; 
+				UpdateInCollection();
 			}
 		}
 
@@ -158,7 +162,8 @@ namespace MSNPSharp
 				return location;
 			}
 			set {
-				location = value; UpdateInCollection();
+				location = value; 
+				UpdateInCollection();
 			}
 		}
 
@@ -176,7 +181,6 @@ namespace MSNPSharp
 
 		public void LoadFile(string fileName)
 		{
-			if (this.fileLocation == fileName) return;
 			this.fileLocation = fileName;
 			this.location = Path.GetRandomFileName();
 
@@ -190,7 +194,7 @@ namespace MSNPSharp
 				DataStream.Write(buffer, 0, cnt);
 			}
 
-			this.size = (int)DataStream.Length;
+			this.size = DataStream.Length;
 			this.sha = GetStreamHash(DataStream);
 
 			UpdateInCollection();
@@ -202,7 +206,8 @@ namespace MSNPSharp
 				return sha;
 			}
 			set {
-				sha = value; UpdateInCollection();
+				sha = value; 
+				UpdateInCollection();
 			}
 		}
 
@@ -221,16 +226,16 @@ namespace MSNPSharp
 			stream.Seek(0, SeekOrigin.Begin);
 
 			// fet file hash
-			byte[] bytes=new byte[(int)stream.Length];
+			byte[] bytes = new byte[(int)stream.Length];
 
 			//put bytes into byte array
-			stream.Read(bytes,0, (int)stream.Length); 
+			stream.Read(bytes, 0, (int)stream.Length); 
 
 			//create SHA1 object 
 			HashAlgorithm hash = new SHA1Managed();			
 			byte[] hashBytes = hash.ComputeHash(bytes);
 
-			return Convert.ToBase64String(hashBytes);
+			return UTF8Encoding.UTF8.GetString (hashBytes);
 		}
 				
 		public virtual void ParseContext(string context)
@@ -243,9 +248,10 @@ namespace MSNPSharp
 			originalContext = context;
 
 			if(base64Encoded)
-				context = Encoding.Unicode.GetString(Convert.FromBase64String(context));
+				context = UTF8Encoding.UTF8.GetString(Convert.FromBase64String(context));
+				
+			string xmlString = HttpUtility.UrlDecode(context, Encoding.UTF8);
 			
-			string xmlString = System.Web.HttpUtility.UrlDecode(context);
 			MatchCollection matches  = contextRe.Matches(xmlString);
 			
 			foreach(Match match in matches)
@@ -256,32 +262,32 @@ namespace MSNPSharp
 				switch(name)
 				{
 					case "creator": this.creator = val; break;
-					case "size"   : this.size = int.Parse(val, System.Globalization.CultureInfo.InvariantCulture); break;
-					case "type"   :
-					{
-						switch(val)
+					case "size"   : this.size = long.Parse(val, System.Globalization.CultureInfo.InvariantCulture); break;
+					case "type"   : 
+						try
 						{
-							case "2": type = MSNObjectType.Emoticon; break;
-							case "3": type = MSNObjectType.UserDisplay; break;
-							case "5": type = MSNObjectType.Background; break;
-							case "8": type = MSNObjectType.Wink; break;
-						}
+							this.type = (MSNObjectType) uint.Parse (val);
+						} 
+						catch (Exception) {}
 						break;
-					}
 					case "location":this.location = val; break;
-					case "sha1d": this.sha = val; break;
-					case "friendly": this.friendly = Encoding.Unicode.GetString(Convert.FromBase64String (val)); break;
+					case "sha1d": this.sha = UTF8Encoding.UTF8.GetString (Convert.FromBase64String (val));; break;
+					case "friendly": this.friendly = Encoding.Unicode.GetString (Convert.FromBase64String (val)); break;
 				}
 			}
 		}
 		
 		public string CalculateChecksum()
 		{
-			string checksum = "Creator"+Creator+"Size"+Size+"Type"+(int)this.Type+"Location"+Location+"Friendly"+Friendly+"SHA1D"+Sha;
+			string checksum = "Creator"+Creator+"Size"+Size+"Type"+(int)Type+"Location"+Location;
+			checksum += "Friendly"+Convert.ToBase64String (Encoding.Unicode.GetBytes (Friendly));
+			checksum += "SHA1D"+Convert.ToBase64String (UTF8Encoding.UTF8.GetBytes (Sha));
 
-			HashAlgorithm shaAlg = new SHA1Managed();			
-			string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.ASCII.GetBytes(checksum)));
-			return baseEncChecksum;
+			HashAlgorithm shaAlg = new SHA1Managed();		
+			
+			byte[] hash = shaAlg.ComputeHash(Encoding.UTF8.GetBytes(checksum));
+			
+			return Convert.ToBase64String(hash);
 		}
 
 		public string Context
@@ -308,14 +314,14 @@ namespace MSNPSharp
 			                         Size,
 			                         (int)Type,
 			                         Location,
-			                         Convert.ToBase64String (Encoding.Unicode.GetBytes (Friendly)),
-			                         Sha.Replace (' ', '+'), //this is needed, it's not on the docs, but it has, trust me!
+			                         Convert.ToBase64String (Encoding.UTF8.GetBytes (Friendly)),
+			                         Convert.ToBase64String (UTF8Encoding.UTF8.GetBytes (Sha)), 
 			                         CalculateChecksum ());
 		}
 
 		protected virtual string GetEncodedString()
 		{			
-			return HttpUtility.UrlPathEncode(GetXmlString());
+			return HttpUtility.UrlEncode(GetXmlString(), Encoding.UTF8).Replace ("+", "%20");
 		}
 	}
 	
@@ -340,9 +346,6 @@ namespace MSNPSharp
 		
 		public MSNObject Get(string hash)
 		{
-			if (!objectCollection.ContainsKey (hash))
-				return null;
-					
 			return objectCollection[hash];
 		}
 

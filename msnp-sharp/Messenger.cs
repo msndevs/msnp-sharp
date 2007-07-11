@@ -32,6 +32,7 @@ using System;
 using System.Collections;
 using MSNPSharp.Core;
 using MSNPSharp.DataTransfer;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
@@ -117,12 +118,12 @@ namespace MSNPSharp
 
 		/// <summary>
 		/// </summary>
-		private ArrayList				conversations = new ArrayList();
+		private List<Conversation>		conversations = new List<Conversation>();
 		
 
 		/// <summary>
 		/// </summary>
-		private ArrayList				msnslpHandlers = new ArrayList();
+		private List<MSNSLPHandler>		msnslpHandlers = new List<MSNSLPHandler>();
 
 		#endregion
 
@@ -312,7 +313,6 @@ namespace MSNPSharp
 			p2pHandler.SessionCreated += new SessionChangedEventHandler(p2pHandler_SessionCreated);
 			p2pHandler.SessionClosed += new SessionChangedEventHandler(p2pHandler_SessionClosed);
 		}
-
 		
 		/// <summary>
 		/// Creates a conversation.
@@ -448,7 +448,7 @@ namespace MSNPSharp
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
 		private void msnslpHandler_TransferInvitationReceived(object sender, MSNSLPInvitationEventArgs e)
-		{			
+		{
 			if(e.TransferProperties.DataType == DataTransferType.DisplayImage)
 			{
 				e.TransferSession.DataStream = nsMessageHandler.Owner.DisplayImage.DataStream;				
@@ -527,10 +527,22 @@ namespace MSNPSharp
 		{
 			lock(conversations)
 			{
+				while (conversations.Count > 0)
+				{
+					conversations[0].Switchboard.Close();
+					// event handlers will remove this item from the collection.
+				}
+
+				// not necessary, but doesn't hurt to leave it in.
 				conversations.Clear();				
 			}
 			lock(msnslpHandlers)
 			{
+				// same thing for msnslpHandlers.
+				while(msnslpHandlers.Count > 0)
+				{
+					msnslpHandlers[0].Dispose();
+				}
 				msnslpHandlers.Clear();
 			}
 			if(p2pHandler != null)
@@ -568,7 +580,5 @@ namespace MSNPSharp
 				}
 			}
 		}
-
-		
 	}
 }

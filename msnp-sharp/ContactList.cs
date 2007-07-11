@@ -281,5 +281,10 @@ namespace MSNPSharp
 		{
 			contacts.Values.CopyTo (array, index);
 		}
+		
+		public void Clear ()
+		{
+			contacts.Clear ();
+		}
 	}
 }

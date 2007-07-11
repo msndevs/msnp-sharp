@@ -1,3 +1,17 @@
+2007-07-10  Thiago M. Sayão <thiago.sayao@gmail.com> 
+
+	* msnp-sharp/Util.cs, msnp-sharp/NS11MessageHandler.cs,
+	  msnp-sharp/MSNPSharp.mdp, msnp-sharp/Messenger.cs,
+	  msnp-sharp/Owner.cs, msnp-sharp/P2PDirectProcessor.cs,
+	  msnp-sharp/SocketMessageProcessor.cs, msnp-sharp/QRYFactory.cs,
+	  msnp-sharp/MSNSLPHandler.cs, msnp-sharp/P2PMessageSession.cs,
+	  msnp-sharp/P2PTransferSession.cs, msnp-sharp/MSNObject.cs,
+	  msnp-sharp/enums.cs, msnp-sharp/ContactList.cs,
+	  msnp-sharp/PersonalMessage.cs, msnp-sharp/Contact.cs,
+	  msnp-sharp/P2PHandler.cs, msnp-sharp/ContactGroupList.cs,
+	  msnp-sharp/P2PMessage.cs: Bug Fixing and code cleanup. Thanks for
+	  everybody that sent patches and bug reportings.
+
 2007-06-10  Thiago Milczarek Sayão <thiago.sayao@gmail.com> 
 
 	* msnp-sharp/P2PTransferSession.cs, msnp-sharp/MSNSLPHandler.cs: Fix

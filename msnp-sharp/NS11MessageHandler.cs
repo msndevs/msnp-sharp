@@ -408,10 +408,8 @@ namespace MSNPSharp
 		/// </remarks>
 		protected virtual void Clear()
 		{
-			contactList = new ContactList();						
-			contactGroups = new ContactGroupList(this);
-			owner = new Owner();
-			owner.NSMessageHandler = this;			
+			contactList.Clear ();
+			contactGroups.Clear ();
 
 			synSended = false;
 		}
@@ -672,6 +670,12 @@ namespace MSNPSharp
 		private NSMessageHandler()
 		{			
 			owner.NSMessageHandler = this;
+			
+			owner.ClientCapacities = ClientCapacities.CanHandleMSNC4
+									| ClientCapacities.CanMultiPacketMSG
+									| ClientCapacities.CanReceiveWinks;
+
+									
 			contactGroups = new ContactGroupList(this);
 		}
 
@@ -711,7 +715,7 @@ namespace MSNPSharp
 		/// <summary>
 		/// The owner of the contactlist. This is the identity that logged into the messenger network.
 		/// </summary>
-		public Owner	Owner
+		public Owner Owner
 		{
 			get { return owner; }
 		}
@@ -802,7 +806,7 @@ namespace MSNPSharp
 		/// <param name="contact"></param>
 		public virtual void RequestScreenName(Contact contact)
 		{
-			MessageProcessor.SendMessage(new NSMessage("SBP", new string[]{ contact.Guid, "MFN", System.Web.HttpUtility.UrlEncode(contact.Name, Encoding.UTF8) } ));			
+			MessageProcessor.SendMessage(new NSMessage("SBP", new string[]{ contact.Guid, "MFN", HttpUtility.UrlEncode (contact.Name) } ));			
 		}		
 
 		/// <summary>
@@ -853,7 +857,7 @@ namespace MSNPSharp
 			// > 128 bytes will fail and disconnect immediately
 			// >  61 bytes will give erro 229
 			// so as a safety margin we set out for 40 characters
-			string name = System.Web.HttpUtility.UrlEncode(groupName, Encoding.UTF8).Replace("+", "%20");
+			string name = HttpUtility.UrlEncode (groupName);
 
 			if(name.Length > 60)
 				throw new MSNPSharpException("Contactgroup name is too long.");
@@ -980,28 +984,19 @@ namespace MSNPSharp
 				throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
 			string context = "";
-			if(Owner.DisplayImage != null)
-				context = Owner.DisplayImage.Context;
+			
+			if(owner.DisplayImage != null)
+				context = owner.DisplayImage.Context;
 			
 			if (status == PresenceStatus.Offline)
 				messageProcessor.Disconnect ();
+				
 			//don't set the same status or it will result in disconnection
-			else if (status != Owner.Status)
+			else if (status != owner.Status)
 			{
-				//TODO: Setter for Capacities/ rename to Capabilities
-				int c = (int) ClientCapacities.CanHandleMSNC7;
+				string capacities = ((long) owner.ClientCapacities).ToString ();
 				
-				c += (int) ClientCapacities.CanVideoConference;
-				c += (int) ClientCapacities.CanMultiPacketMSG;
-				c += (int) ClientCapacities.CanDirectIM;
-				c += (int) ClientCapacities.CanReceiveWinks;
-				c += (int) ClientCapacities.CanReceiveVoiceClips;
-				c += (int) ClientCapacities.CanSecureChannel;
-				c += (int) ClientCapacities.CanSIP;
-				
-				string cap = Convert.ToString (c);
-				
-				MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), cap, context }));
+				MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
 			}
 		}
 
@@ -1013,7 +1008,7 @@ namespace MSNPSharp
 		{
 			if(owner == null) throw new MSNPSharpException("Not a valid owner");
 			
-			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", System.Web.HttpUtility.UrlEncode(newName, Encoding.UTF8).Replace("+", "%20") }));
+			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode (newName) }));
 		}
 		
 		public virtual void SetPersonalMessage (PersonalMessage pmsg)
@@ -1040,7 +1035,7 @@ namespace MSNPSharp
 			if(number.Length > 30)
 				throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
 			
-			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHH", System.Web.HttpUtility.UrlEncode(number, Encoding.UTF8).Replace("+", "%20") }));
+			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHH", HttpUtility.UrlEncode (number) }));
 		}
 		/// <summary>
 		/// Sets the telephonenumber for the contact list owner's workphone.
@@ -1050,7 +1045,7 @@ namespace MSNPSharp
 			if(owner == null) throw new MSNPSharpException("Not a valid owner");			
 			if(number.Length > 30)
 				throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", System.Web.HttpUtility.UrlEncode(number, Encoding.UTF8).Replace("+", "%20") }));
+			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", HttpUtility.UrlEncode(number) }));
 		}
 
 		/// <summary>
@@ -1061,7 +1056,7 @@ namespace MSNPSharp
 			if(owner == null) throw new MSNPSharpException("Not a valid owner");			
 			if(number.Length > 30)
 				throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", System.Web.HttpUtility.UrlEncode(number, Encoding.UTF8).Replace("+", "%20") }));
+			MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", HttpUtility.UrlEncode(number) }));
 		}
 
 		/// <summary>
@@ -1089,7 +1084,7 @@ namespace MSNPSharp
 		/// <param name="newGroupName">The new name</param>
 		public virtual void RenameGroup(ContactGroup group, string newGroupName)
 		{						
-			MessageProcessor.SendMessage(new NSMessage("REG", new string[] { group.Guid.ToString(System.Globalization.CultureInfo.InvariantCulture), System.Web.HttpUtility.UrlEncode(newGroupName, Encoding.UTF8).Replace("+", "%20"), "0" }));
+			MessageProcessor.SendMessage(new NSMessage("REG", new string[] { group.Guid.ToString(System.Globalization.CultureInfo.InvariantCulture), HttpUtility.UrlEncode(newGroupName), "0" }));
 		}
 
 		/// <summary>
@@ -1623,11 +1618,7 @@ namespace MSNPSharp
 			if(Credentials == null)
 				throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
 
-
-			//string md = MSNP11.ChallengeBuilder.CreateChallengeResponse (Credentials.ClientCode, message.CommandValues[1].ToString ());
-			//string md    = HashMD5(message.CommandValues[1] + Credentials.ClientCode);
-			
-			MSNP11CHL.clsQRYFactory qryfactory = new MSNP11CHL.clsQRYFactory ();
+			clsQRYFactory qryfactory = new clsQRYFactory ();
 			string md =  qryfactory.CreateQRY (Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString ());
 			MessageProcessor.SendMessage(new NSMessage("QRY", new string[] { " " + Credentials.ClientID, " 32\r\n", md }));
 		}
@@ -1652,7 +1643,7 @@ namespace MSNPSharp
 			
 			// set the client capabilities, if available
 			if(message.CommandValues.Count >= 5)
-				contact.ClientCapacities = (ClientCapacities)int.Parse(message.CommandValues[4].ToString());
+				contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString());
 
 			// check whether there is a msn object available
 			if(message.CommandValues.Count >= 6)
@@ -1689,7 +1680,7 @@ namespace MSNPSharp
 
 			// set the client capabilities, if available
 			if(message.CommandValues.Count >= 4)
-				contact.ClientCapacities = (ClientCapacities)int.Parse(message.CommandValues[3].ToString());
+				contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[3].ToString());
 					
 			// the contact changed status, fire event
 			if(ContactStatusChanged != null)

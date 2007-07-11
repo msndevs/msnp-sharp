@@ -33,7 +33,12 @@ namespace MSNPSharp
 		{
 			this.message = message;
 			mediatype = MediaType.None;
-			Handle ();		
+			
+			try
+			{
+				Handle ();
+			} 
+			catch (Exception) {}
 		}
 		
 		public NSMessage NSMessage
