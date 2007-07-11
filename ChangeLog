@@ -1,5 +1,11 @@
 2007-07-10  Thiago M. Sayão <thiago.sayao@gmail.com> 
 
+	* UnitTest/Makefile.am, Makefile.include, configure.ac,
+	  ProxyServer/Makefile.am, msnp-sharp/Makefile.am, Makefile.am,
+	  Example/Makefile.am: Regenerate make files
+
+2007-07-10  Thiago M. Sayão <thiago.sayao@gmail.com> 
+
 	* msnp-sharp/Util.cs, msnp-sharp/NS11MessageHandler.cs,
 	  msnp-sharp/MSNPSharp.mdp, msnp-sharp/Messenger.cs,
 	  msnp-sharp/Owner.cs, msnp-sharp/P2PDirectProcessor.cs,
