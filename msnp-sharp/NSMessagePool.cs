@@ -31,74 +31,96 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 using System;
 using System.IO;
 using System.Collections;
-using System.Collections.Generic;
 using MSNPSharp;
 using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp.Core
 {
-	// Buffers the incoming data from the notification server (NS).
-	// The main purpose of this class is to ensure that MSG, IPG and NOT payload commands are processed
-	// only when they are complete. Payload commands can be quite large and may be larger
-	// than the socket buffer. This pool
-	// will buffer the data and release the messages, or commands, when they are
-	// fully retrieved from the server.
+	/// <summary>
+	/// Buffers the incoming data from the notification server (NS).
+	/// </summary>
+	/// <remarks>
+	/// The main purpose of this class is to ensure that MSG, IPG and NOT payload commands are processed
+	/// only when they are complete. Payload commands can be quite large and may be larger
+	/// than the socket buffer. This pool
+	/// will buffer the data and release the messages, or commands, when they are
+	/// fully retrieved from the server.
+	/// </remarks>
 	public class NSMessagePool : MessagePool
 	{
-		Queue<MemoryStream> messageQueue;
-		MemoryStream bufferStream = null;
-		BinaryWriter bufferWriter = null;
-		int remainingBuffer = 0;
-		
+		/// <summary>
+		/// Constructor to instantiate a NSMessagePool object.
+		/// </summary>
 		public NSMessagePool()
 		{
-			messageQueue = new Queue <MemoryStream> ();
 			CreateNewBuffer();
 		}
 
-		protected Queue<MemoryStream> MessageQueue
+		/// <summary>
+		/// Contains all messages waiting to be released
+		/// </summary>
+		protected Queue	MessageQueue
 		{
-			get { 
-				return messageQueue; 
-			}
+			get { return messageQueue; }
 		}
 
-		// This points to the current message we are writing to
+		/// <summary>
+		/// </summary>
+		private Queue messageQueue = new Queue(8, 1.25f);
+
+		/// <summary>
+		/// This points to the current message we are writing to
+		/// </summary>
 		protected MemoryStream BufferStream
 		{
-			get { 
-				return bufferStream; 
-			}
-			set { 
-				bufferStream = value;
-			}
+			get { return bufferStream; }
+			set { bufferStream = value;}
 		}
 
-		// This is the interface to the bufferStream
+		/// <summary>
+		/// </summary>
+		private MemoryStream bufferStream = null;
+
+		/// <summary>
+		/// This is the interface to the bufferStream
+		/// </summary>
 		protected BinaryWriter BufferWriter
 		{
-			get { 
-				return bufferWriter; 
-			}
-			set { 
-				bufferWriter = value;
-			}
+			get { return bufferWriter; }
+			set { bufferWriter = value;}
 		}
 
-		// Creates a new memorystream to server as the buffer.
+		/// <summary>
+		/// </summary>
+		private BinaryWriter bufferWriter = null;
+		
+		/// <summary>
+		/// Indicates the number of bytes remaining for the current payload command
+		/// </summary>
+		private	  int remainingBuffer = 0;
+
+		/// <summary>
+		/// Creates a new memorystream to server as the buffer.
+		/// </summary>
 		private void CreateNewBuffer()
 		{
 			bufferStream = new MemoryStream(64);
 			bufferWriter = new BinaryWriter(bufferStream);
+			
 		}
 
-		// Enques the current buffer memorystem when a message is completely retrieved.
+		/// <summary>
+		/// Enques the current buffer memorystem when a message is completely retrieved.
+		/// </summary>
 		private void EnqueueCurrentBuffer()
 		{
 			messageQueue.Enqueue(bufferStream);
 		}
 
-		// Is true when there are message available to retrieve.
+
+		/// <summary>
+		/// Is true when there are message available to retrieve.
+		/// </summary>
 		public override bool MessageAvailable
 		{
 			get
@@ -107,16 +129,24 @@ namespace MSNPSharp.Core
 			}
 		}
 
-		// Get the next message as a byte array.
-		// The returned data includes all newlines which seperate the commands ("\r\n")
+
+		/// <summary>
+		/// Get the next message as a byte array.
+		/// The returned data includes all newlines which seperate the commands ("\r\n")
+		/// </summary>
+		/// <returns>Returns the raw message data</returns>
 		public override byte[] GetNextMessageData()
 		{
 			MemoryStream memStream = (MemoryStream)messageQueue.Dequeue();
 			return memStream.ToArray();
 		}
 
-		// Stores the raw data in a buffer. When a full message is detected it is inserted on the internal stack.
-		// You can retrieve these messages bij calling GetNextMessageData().
+
+		/// <summary>
+		/// Stores the raw data in a buffer. When a full message is detected it is inserted on the internal stack.
+		/// You can retrieve these messages bij calling GetNextMessageData().
+		/// </summary>
+		/// <param name="reader"></param>
 		public override void BufferData(BinaryReader reader)
 		{
 			int length = (int)(reader.BaseStream.Length - reader.BaseStream.Position);
@@ -202,5 +232,7 @@ namespace MSNPSharp.Core
 				}
 			}			
 		}
+
 	}
+
 }

@@ -35,15 +35,23 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp.Core
 {
-	// Buffers and releases the messages for a switchboard
+	/// <summary>
+	/// Buffers and releases the messages for a switchboard
+	/// </summary>
 	public class SBMessagePool : NSMessagePool
 	{
+		/// <summary>
+		/// Constructor.
+		/// </summary>
 		public SBMessagePool()
 		{
 			
 		}
 
-		// Buffers data.
+		/// <summary>
+		/// Buffers data.
+		/// </summary>
+		/// <param name="reader"></param>
 		public override void BufferData(BinaryReader reader)
 		{
 			if(Settings.TraceSwitch.TraceVerbose)
@@ -57,6 +65,7 @@ namespace MSNPSharp.Core
 				else
 					System.Diagnostics.Trace.Write("_niet_ beschikbaar", "SBMessagePool");
 			}
+
 		}
 	}
 }
