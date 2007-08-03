@@ -523,8 +523,7 @@ namespace MSNPSharp.DataTransfer
 		{
 			// set class variables
 			MSNSLPTransferProperties properties = new MSNSLPTransferProperties();
-			properties.SessionId = (uint)System.Environment.TickCount;
-			
+			properties.SessionId = (uint) (new Random().Next(50000, int.MaxValue));
 			properties.LocalContact = localContact;
 			properties.RemoteContact = remoteContact;
 			
@@ -561,7 +560,7 @@ namespace MSNPSharp.DataTransfer
 				"Context: " + base64Context + "\r\n\r\n";
 
 			P2PMessage p2pMessage = new P2PMessage();
-			p2pMessage.InnerMessage = slpMessage;			
+			p2pMessage.InnerMessage = slpMessage;
 
 			// set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
 			p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
@@ -582,12 +581,6 @@ namespace MSNPSharp.DataTransfer
 			session.CallId = properties.CallId;			
 
 			OnTransferSessionCreated(session);
-			
-			// setup the inital correction for this type of transfer
-			//((P2PMessageSession)MessageProcessor).RemoteInitialCorrection = -4;
-
-			// the local client is receiving the file
-			//((P2PMessageSession)MessageProcessor).IsSender = false;
 			
 			// send the invitation
 			MessageSession.SendMessage(p2pMessage);			
@@ -613,7 +606,7 @@ namespace MSNPSharp.DataTransfer
 			MSNSLPTransferProperties properties = new MSNSLPTransferProperties();			
 			do
 			{
-				properties.SessionId = (uint)System.Environment.TickCount;
+				properties.SessionId = (uint) (new Random().Next(50000, int.MaxValue));
 			}
 			while(MessageSession.GetTransferSession(properties.SessionId) != null);		
 			
@@ -1089,6 +1082,9 @@ namespace MSNPSharp.DataTransfer
 				return;
 			}
 			
+			Console.WriteLine ("---------------------------------- RECEIVED ----------------------------------- ");
+			Console.WriteLine (p2pMessage.ToString ());
+			
 			MSNSLPMessage slpMessage = new MSNSLPMessage();
 			slpMessage.CreateFromMessage(message);
 						
@@ -1099,17 +1095,21 @@ namespace MSNPSharp.DataTransfer
 			switch(slpMessage.ContentType)
 			{
 				case "application/x-msnmsgr-sessionreqbody":
+					Console.WriteLine ("Session Request");
 					OnSessionRequest(slpMessage);
 					break;
 				
 				case "application/x-msnmsgr-transreqbody":
+					Console.WriteLine ("DC Request");
 					OnDCRequest(slpMessage); 
 					break;
 				
 				case "application/x-msnmsgr-transrespbody":
+					Console.WriteLine ("DC Response");
 					OnDCResponse(slpMessage); 
 					break;				
 				case "application/x-msnmsgr-sessionclosebody":
+					Console.WriteLine ("Session Close");
 					OnSessionCloseRequest(slpMessage); 
 					break;
 					
@@ -1266,7 +1266,10 @@ namespace MSNPSharp.DataTransfer
 			if(message.MessageValues["EUF-GUID"].ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
 			{
 				// for some kind of weird behavior, our local identifier must now subtract 4 ?
-				//MessageSession.CorrectLocalIdentifier(-4);				
+				//MessageSession.CorrectLocalIdentifier(-4);
+				//FIXME:
+				//MessageSession.SendSeq = (uint) MessageSession.SendSeq - 4;
+				
 				p2pTransfer.IsSender = true;
 			}
 
@@ -1277,8 +1280,8 @@ namespace MSNPSharp.DataTransfer
 				 * to sum -4 since we already added one somewhere.
 				 */
 				
-				MessageSession.CorrectLocalIdentifier(-4);
-				p2pTransfer.MessageFlag = (uint) P2PFlag.FileData;
+				//MessageSession.CorrectLocalIdentifier(-4);
+				p2pTransfer.MessageFlag = (uint) P2PFlag.File;
 				p2pTransfer.IsSender = false;
 			}
 			

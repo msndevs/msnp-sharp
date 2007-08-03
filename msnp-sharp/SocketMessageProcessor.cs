@@ -135,10 +135,12 @@ namespace MSNPSharp.Core
 			else
 				socket.ProxyType = ProxyTypes.None;
 
-			// set socket options
 			//Send operations will timeout of confirmation is not received within 3000 milliseconds.
-			socket.SendTimeout = 3000;
-			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, new LingerOption (true, 0));
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 3000);
+
+			//Socket will linger for 2 seconds after close is called.
+			LingerOption lingerOption = new LingerOption(true, 2);
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lingerOption);
 			
 			return socket;
 		}

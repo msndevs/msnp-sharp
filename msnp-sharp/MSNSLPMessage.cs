@@ -198,7 +198,7 @@ namespace MSNPSharp.DataTransfer
 		}
 
 		public override byte[] GetBytes()
-		{			
+		{
 			StringBuilder builder = new StringBuilder(512);
 			
 			builder.Append(StartLine);

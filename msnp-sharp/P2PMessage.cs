@@ -37,15 +37,18 @@ namespace MSNPSharp.DataTransfer
 {
 	public enum P2PFlag
 	{
-		Normal = 0,
-		Acknowledgement = 0x02,
-		WaitingReply = 0x04,
-		BinaryError = 0x08,
-		MSNObject = 0x20,
-		FileData = 0x01000030
+		Nak = 0x1,
+		Ack = 0x2,
+		Rak = 0x4,
+		Rst = 0x8,
+		File = 0x10,
+		Each = 0x20,
+		Can = 0x40,
+		Err = 0x80,
+		Key = 0x100,
+		Crypt = 0x200
 	}
 	
-
 	[Serializable()]
 	public class P2PMessage : NetworkMessage
 	{
@@ -65,7 +68,7 @@ namespace MSNPSharp.DataTransfer
 
 		}
 		
-		public uint  SessionId
+		public uint SessionId
 		{
 			get { 
 				return sessionId; 
@@ -75,7 +78,7 @@ namespace MSNPSharp.DataTransfer
 			}
 		}
 
-		public uint  Identifier
+		public uint Identifier
 		{
 			get { 
 				return identifier; 
@@ -168,7 +171,7 @@ namespace MSNPSharp.DataTransfer
 		public bool IsAcknowledgement
 		{
 			get { 
-				return Flags == (uint) P2PFlag.Acknowledgement;
+				return ((Flags & (uint) P2PFlag.Ack) != 0);
 			}
 		}
 
@@ -177,11 +180,11 @@ namespace MSNPSharp.DataTransfer
 			P2PMessage ack = new P2PMessage();
 					
 			ack.TotalSize = TotalSize;
-			ack.Flags = (uint) P2PFlag.Acknowledgement;
+			ack.Flags = (uint) P2PFlag.Ack;
 
-			if ((Flags & (uint) P2PFlag.WaitingReply) != 0)
-				ack.Flags = 0x06;
-			
+			if ((Flags & 0x4) != 0)
+				ack.Flags = 0x6;
+				
 			ack.DW1 = Identifier;
 			ack.DW2 = DW1;
 			ack.QW1 = TotalSize;
@@ -202,6 +205,7 @@ namespace MSNPSharp.DataTransfer
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "DW2 : {1:x} ({0})\r\n", DW2.ToString(System.Globalization.CultureInfo.InvariantCulture), DW2) +
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "QW1  : {1:x} ({1})\r\n", QW1.ToString(System.Globalization.CultureInfo.InvariantCulture), QW1) +
 				String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+				
 			return "[P2PMessage]\r\n" + debugLine;
 		}
 

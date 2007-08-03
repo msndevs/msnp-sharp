@@ -30,37 +30,27 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using MSNPSharp.Core;
 using MSNPSharp;
 
 namespace MSNPSharp.DataTransfer
 {
-	/// <summary>
 	/// Buffers incomplete P2PMessage and releases them when the message is fully received.
-	/// </summary>
 	public class P2PMessagePool
 	{
-		/// <summary>
-		/// </summary>
-		private Hashtable messageStreams = new Hashtable();
+		Dictionary<uint, MemoryStream> messageStreams; 
+		Queue<P2PMessage> availableMessages;
 
-		/// <summary>
-		/// </summary>
-		private Queue availableMessages = new Queue(1);
-
-		/// <summary>
-		/// Constructor
-		/// </summary>
+		// Constructor
 		public P2PMessagePool()
 		{
-			
+			availableMessages = new Queue <P2PMessage> (4);
+			messageStreams = new Dictionary<uint, MemoryStream> ();
 		}
 
-		/// <summary>
-		/// Buffers the incoming raw data internal.This method is often used after receiving incoming data from a socket or another source.
-		/// </summary>		
-		/// <param name="message">The message to buffer.</param>
+		// Buffers the incoming raw data internal.This method is often used after receiving incoming data from a socket or another source.
 		public void BufferMessage(P2PMessage message)
 		{
 			// assume the start of a p2p message		
@@ -73,7 +63,7 @@ namespace MSNPSharp.DataTransfer
 				// if this message already exists in the buffer append the current p2p message to the buffer
 				if(messageStreams.ContainsKey(message.Identifier))
 				{
-					((MemoryStream)messageStreams[message.Identifier]).Write(message.InnerBody, 0, message.InnerBody.Length);
+					messageStreams[message.Identifier].Write(message.InnerBody, 0, message.InnerBody.Length);
 				}
 				else
 				{
@@ -88,7 +78,7 @@ namespace MSNPSharp.DataTransfer
 					// set the correct fields to match the whole message
 					message.Offset = 0;
 					message.MessageSize = (uint)message.TotalSize;
-					MemoryStream bufferStream = (MemoryStream)messageStreams[message.Identifier];
+					MemoryStream bufferStream = messageStreams[message.Identifier];
 
 					// set the inner body to the whole message
 					message.InnerBody = bufferStream.ToArray();					
@@ -103,23 +93,20 @@ namespace MSNPSharp.DataTransfer
 			}
 		}
 
-		/// <summary>
-		/// Defines whether there is a message available to retrieve
-		/// </summary>		
+		// Defines whether there is a message available to retrieve
 		public bool MessageAvailable
 		{
-			get { return availableMessages.Count > 0; }
+			get { 
+				return availableMessages.Count > 0; 
+			}
 		}
 
-		/// <summary>
-		/// Retrieves the next p2p message from the buffer.
-		/// </summary>
-		/// <returns></returns>
+		// Retrieves the next p2p message from the buffer.
 		public P2PMessage GetNextMessage()
 		{
 			System.Diagnostics.Debug.Assert(availableMessages.Count > 0, "No p2p messages available in queue");
 
-			return (P2PMessage)availableMessages.Dequeue();
+			return availableMessages.Dequeue();
 		}
 	}
 }

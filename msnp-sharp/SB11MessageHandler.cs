@@ -843,7 +843,7 @@ namespace MSNPSharp
 			&& NSMessageHandler.Owner.Mail.ToLower(System.Globalization.CultureInfo.InvariantCulture) == message.CommandValues[2].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture))
 			{				
 				// update the owner's name. Just to be sure.
-				NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
+				//NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
 
 				// we are now ready to invite other contacts. Notify the client of this.
 				OnSessionEstablished();
@@ -877,7 +877,7 @@ namespace MSNPSharp
 		{
 			// get the contact and update it's name
 			Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
-			contact.SetName(message.CommandValues[1].ToString());
+			//contact.SetName(message.CommandValues[1].ToString());
 
 			
 			if(Contacts.Contains(contact.Mail) == false)
@@ -927,7 +927,7 @@ namespace MSNPSharp
 		{
 			Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString());
 			// update the name to make sure we have it up-to-date
-			contact.SetName(message.CommandValues[4].ToString());
+			//contact.SetName(message.CommandValues[4].ToString());
 
 			if(Contacts.Contains(contact.Mail) == false)
 				Contacts.Add(contact.Mail, contact);
@@ -951,7 +951,7 @@ namespace MSNPSharp
 
 			Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
 			// update the name to make sure we have it up-to-date
-			contact.SetName(message.CommandValues[1].ToString());
+			//contact.SetName(message.CommandValues[1].ToString());
 			
 			// get the corresponding SBMSGMessage object
 			MSGMessage sbMSGMessage = new MSGMessage(message);

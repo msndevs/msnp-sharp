@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 using System;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 using System.Threading;
@@ -40,173 +41,173 @@ using MSNPSharp;
 
 namespace MSNPSharp.DataTransfer
 {
-	/// <summary>
-	/// P2PMessageSession routes all messages in the p2p framework between the local client and a single remote client.
-	/// </summary>
-	/// <remarks>
-	/// A single message session can hold multiple p2p transfer sessions. This for example occurs when a contact sends
-	/// two files directly after each other in the same switchboard session.
-	/// This class keeps track of the message identifiers, dispatches messages to registered message handlers and routes
-	/// data messages to the correct <see cref="P2PTransferSession"/> objects. Usually this class is a handler of a switchboard processor.
-	/// A common handler for this class is <see cref="MSNSLPHandler"/>.
-	/// </remarks>
+	// P2PMessageSession routes all messages in the p2p framework between the local client and a single remote client.
+	// A single message session can hold multiple p2p transfer sessions. This for example occurs when a contact sends
+	// two files directly after each other in the same switchboard session.
+	// This class keeps track of the message identifiers, dispatches messages to registered message handlers and routes
+	// data messages to the correct P2PTransferSession objects. Usually this class is a handler of a switchboard processor.
+	// A common handler for this class is MSNSLPHandler
 	public class P2PMessageSession : IMessageHandler, IMessageProcessor
 	{
-		#region Properties
-		/// <summary>
-		/// </summary>
-		private uint localBaseIdentifier;
-		/// <summary>
-		/// </summary>
-		private uint localIdentifier;
-		/// <summary>
-		/// </summary>
-		private uint remoteBaseIdentifier;
-		/// <summary>
-		/// </summary>
-		private uint remoteIdentifier;
+		uint remoteBaseIdentifier;
+		uint remoteIdentifier;
+		
+		int sendseqno = 0;
+		bool sendseqinitialized = false;
+		uint srtt; //session round trip time
 
-		/// <summary>
-		/// </summary>
-		private P2PDCHandshakeMessage handshakeMessage;
+		P2PDCHandshakeMessage handshakeMessage;
+		P2PMessagePool p2pMessagePool = new P2PMessagePool();
+		bool autoAcknowledgeHandshake = true;
+		bool directConnected = false;
+		bool directConnectionAttempt = false;
 
-		/// <summary>
-		/// The handshake message to send to the receiving client when a direct connection has been established
-		/// </summary>
-		/// <remarks>
-		/// If this property is set to null no handshake message is sent.
-		/// </remarks>
-		public P2PDCHandshakeMessage HandshakeMessage
-		{
-			get { return handshakeMessage; }
-			set { handshakeMessage = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private bool autoAcknowledgeHandshake = true;
-
-		/// <summary>
-		/// Defines whether a direct connection handshake is automatically send to the remote client, or replied with an acknowledgement.
-		/// Setting this to true means the remote client will start the transfer immediately.
-		/// Setting this to false means the client programmer must send a handhsake message and an acknowledgement message after which the transfer will begin.
-		/// </summary>
-		public bool AutoHandshake
-		{
-			get { return autoAcknowledgeHandshake; }
-			set { autoAcknowledgeHandshake = value;}
-		}
-
-		/// <summary>
-		/// </summary>		
-		private bool directConnected = false;
-
-		/// <summary>
-		/// Defines whether the message session runs over a direct session or is routed via the messaging server
-		/// </summary>
-		public bool DirectConnected
-		{
-			get { return directConnected; }			
-		}
-
-		/// <summary>
-		/// </summary>		
-		private bool directConnectionAttempt = false;
-
-		/// <summary>
-		/// Defines whether an attempt has been made to create a direct connection
-		/// </summary>
-		public bool DirectConnectionAttempt
-		{
-			get { return directConnectionAttempt; }			
-		}
-
-		/// <summary>
+		string remoteContact;
+		string localContact;
+		
+        // A list of all direct processors trying to establish a connection.
+        ArrayList pendingProcessors = new ArrayList();
+		List<IMessageHandler> handlers = new List<IMessageHandler> ();
+		// A collection of all transfersessions
+		Dictionary<uint, P2PTransferSession> transferSessions = new Dictionary<uint, P2PTransferSession> ();
+        
 		/// Occurs when a direct connection is succesfully established.
-		/// </summary>
 		public event EventHandler DirectConnectionEstablished;
-
-		/// <summary>
 		/// Occurs when a direct connection attempt has failed.
-		/// </summary>
 		public event EventHandler DirectConnectionFailed;
-
-
-		/// <summary>
-		/// The base identifier of the local client
-		/// </summary>
-		public uint LocalBaseIdentifier
-		{
-			get { return localBaseIdentifier; }
-			set { localBaseIdentifier = value;}
-		}
-
-		/// <summary>
-		/// The identifier of the local contact. This identifier is increased just before a message is send.
-		/// </summary>
-		public uint LocalIdentifier
-		{
-			get { return localIdentifier; }
-			set { localIdentifier = value;}	
-		}
-
-		/// <summary>
-		/// The base identifier of the remote client
-		/// </summary>
-		public uint RemoteBaseIdentifier
-		{
-			get { return remoteBaseIdentifier; }
-			set { remoteBaseIdentifier = value;}
-		}
-		/// <summary>
-		/// The expected identifier of the remote client for the next message.
-		/// </summary>
-		public uint RemoteIdentifier
-		{
-			get { return remoteIdentifier; }
-			set { remoteIdentifier = value;}
-		}
-
-		/// <summary>
-		/// </summary>
-		private string remoteContact;
-		/// <summary>
-		/// </summary>
-		private string localContact;
-
-		/// <summary>
-		/// The account of the local contact.
-		/// </summary>
-		public string LocalContact
-		{
-			get { return localContact; }
-			set { localContact = value;}
-		}
-
-		/// <summary>
-		/// The account of the remote contact.
-		/// </summary>
-		public string RemoteContact
-		{
-			get { return remoteContact;}
-			set { remoteContact = value;}
-		}
-
-		#endregion
-
-		#region Public
-		/// <summary>
-		/// Constructor.
-		/// </summary>
+        
 		public P2PMessageSession()
 		{
 			if(Settings.TraceSwitch.TraceInfo)
 				System.Diagnostics.Trace.WriteLine("Constructing object", "P2PMessageSession");
 		}
 
-		/// <summary>
-		/// Removes references to handlers and the messageprocessor. Also closes running transfer sessions and pending processors establishing connections.
-		/// </summary>
+		// The handshake message to send to the receiving client when a direct connection has been established
+		// If this property is set to null no handshake message is sent.
+		public P2PDCHandshakeMessage HandshakeMessage
+		{
+			get { 
+				return handshakeMessage; 
+			}
+			set { 
+				handshakeMessage = value;
+			}
+		}
+
+		// Defines whether a direct connection handshake is automatically send to the remote client, or replied with an acknowledgement.
+		// Setting this to true means the remote client will start the transfer immediately.
+		// Setting this to false means the client programmer must send a handhsake message and an acknowledgement message after which the transfer will begin.
+		public bool AutoHandshake
+		{
+			get { 
+				return autoAcknowledgeHandshake; 
+			}
+			set { 
+				autoAcknowledgeHandshake = value;
+			}
+		}
+
+		// Defines whether the message session runs over a direct session or is routed via the messaging server
+		public bool DirectConnected
+		{
+			get { 
+				return directConnected;
+			}
+		}
+
+		// Defines whether an attempt has been made to create a direct connection
+		public bool DirectConnectionAttempt
+		{
+			get { 
+				return directConnectionAttempt; 
+			}
+		}
+
+		// The base identifier of the remote client
+		public uint RemoteBaseIdentifier
+		{
+			get {
+				return remoteBaseIdentifier;
+			}
+			set {
+				remoteBaseIdentifier = value;
+			}
+		}
+		
+		// The expected identifier of the remote client for the next message.
+		public uint RemoteIdentifier
+		{
+			get {
+				return remoteIdentifier;
+			}
+			set {
+				remoteIdentifier = value;
+			}
+		}
+		
+		public uint SendSeq 
+		{
+			get {
+				return (uint) sendseqno;
+			}
+			set {
+				sendseqno = (int) value;
+			}
+		}
+		
+		public uint GetNextSendSeq ()
+		{
+			int seqno;		
+		
+			if (!sendseqinitialized)
+			{
+				sendseqinitialized = true;
+				
+				//make it always positive
+				seqno = System.Environment.TickCount & Int32.MaxValue;
+			}
+			else
+				seqno = sendseqno;
+			
+			if (seqno + 1 == 0)
+				seqno = 0;
+				
+			sendseqno = ++seqno;
+
+			return (uint) seqno;
+		}
+		
+		public uint RoundTripTime 
+		{
+			get {
+				return srtt;
+			}
+			set {
+				srtt = value;
+			}
+		}
+
+		public string LocalContact
+		{
+			get { 
+				return localContact; 
+			}
+			set { 
+				localContact = value;
+			}
+		}
+
+		public string RemoteContact
+		{
+			get { 
+				return remoteContact;
+			}
+			set { 
+				remoteContact = value;
+			}
+		}
+
+		// Removes references to handlers and the messageprocessor. Also closes running transfer sessions and pending processors establishing connections.
 		public virtual void CleanUp()
 		{						
             StopAllPendingProcessors();
@@ -219,14 +220,7 @@ namespace MSNPSharp.DataTransfer
 			transferSessions.Clear();
 		}
 
-		/// <summary>
-        /// A list of all direct processors trying to establish a connection.
-        /// </summary>
-        private ArrayList pendingProcessors = new ArrayList();
-     
-        /// <summary>
-        /// Disconnect all processors that are trying to establish a connection.
-        /// </summary>
+        // Disconnect all processors that are trying to establish a connection.
         protected void StopAllPendingProcessors()
         {
             lock (pendingProcessors)
@@ -236,14 +230,12 @@ namespace MSNPSharp.DataTransfer
                     processor.Disconnect();
                     processor.UnregisterHandler(this);                    
                 }
+                
                 pendingProcessors.Clear();
             }
         }
 
-        /// <summary>
-        /// Add the processor to the pending list.
-        /// </summary>
-        /// <param name="processor"></param>
+        // Add the processor to the pending list.
         protected void AddPendingProcessor(P2PDirectProcessor processor)
         {
             // we want to handle message from this processor			
@@ -260,10 +252,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// Use the given processor as the direct connection processor. And disconnect all other pending processors.
-        /// </summary>
-        /// <param name="processor"></param>
+        // Use the given processor as the direct connection processor. And disconnect all other pending processors.
         protected void UsePendingProcessor(P2PDirectProcessor processor)
         {
             lock (pendingProcessors)
@@ -290,12 +279,7 @@ namespace MSNPSharp.DataTransfer
                 DirectConnectionEstablished(this, new EventArgs());	
         }
 
-		/// <summary>
-		/// Creates a direct connection with the remote client.
-		/// </summary>
-		/// <param name="host"></param>
-		/// <param name="port"></param>
-		/// <returns></returns>
+		// Creates a direct connection with the remote client.
 		public IMessageProcessor CreateDirectConnection(string host, int port)
 		{			
 			// create the P2P Direct processor to handle the file data
@@ -316,16 +300,10 @@ namespace MSNPSharp.DataTransfer
 		}
 
 		
-		/// <summary>
-		/// Setups a P2PDirectProcessor to listen for incoming connections.
-		/// After a connection has been established the P2PDirectProcessor will become the main MessageProcessor to send messages.
-		/// </summary>
-		/// <param name="host"></param>
-		/// <param name="port"></param>
-		/// <returns></returns>
+		// Setups a P2PDirectProcessor to listen for incoming connections.
+		// After a connection has been established the P2PDirectProcessor will become the main MessageProcessor to send messages.
 		public IMessageProcessor ListenForDirectConnection(IPAddress host, int port)
 		{
-			//Console.WriteLine ("ListenForDirectConnection");
 			P2PDirectProcessor processor = new P2PDirectProcessor();
 
 			// we want this session to listen to incoming messages
@@ -340,18 +318,14 @@ namespace MSNPSharp.DataTransfer
 			return processor;
 		}
 
-		/// <summary>
-		/// Closes the direct connection with the remote client, if available. A closing p2p message will be send first.
-		/// The session will fallback to the previous (SB) message processor.
-		/// </summary>
+		// Closes the direct connection with the remote client, if available. A closing p2p message will be send first.
+		// The session will fallback to the previous (SB) message processor.
 		public void CloseDirectConnection()
 		{
 			if(DirectConnected == false)
 				return;
 			else
-			{
 				CleanUpDirectConnection();
-			}
 		}
 
 		/// <summary>
@@ -360,48 +334,17 @@ namespace MSNPSharp.DataTransfer
 		public virtual void AbortAllTransfers()
 		{
 			foreach(P2PTransferSession session in transferSessions.Values)
-			{
 				session.AbortTransfer();
-			}
 		}
 
-		/// <summary>
-		/// Corrects the local identifier with the specified correction.
-		/// </summary>
-		/// <param name="correction"></param>
-		public void CorrectLocalIdentifier(int correction)
-		{
-			if(correction < 0)
-				LocalIdentifier -= (uint)Math.Abs(correction);
-			else
-				LocalIdentifier += (uint)Math.Abs(correction);
-		}
-
-		/// <summary>
-		/// The identifier of the local client, increases with each message send
-		/// </summary>		
-		public void IncreaseLocalIdentifier()
-		{
-			localIdentifier++;
-			//if(localIdentifier == localBaseIdentifier)
-				//localIdentifier++;
-		}	
-
-		/// <summary>
-		/// The identifier of the remote client, increases with each message received
-		/// </summary>
+		// The identifier of the remote client, increases with each message received
 		public void IncreaseRemoteIdentifier()
 		{
 			remoteIdentifier++;
-			//if(remoteIdentifier == remoteBaseIdentifier)
-				//remoteIdentifier++;
 		}
 
-		/// <summary>
-		/// Adds the specified transfer session to the collection and sets the transfer session's message processor to be the
-		/// message processor of the p2p message session. This is usally a SB message processor. 
-		/// </summary>
-		/// <param name="session"></param>
+		// Adds the specified transfer session to the collection and sets the transfer session's message processor to be the
+		// message processor of the p2p message session. This is usally a SB message processor. 
 		public void AddTransferSession(P2PTransferSession session)
 		{
 			session.MessageProcessor = this;
@@ -417,29 +360,19 @@ namespace MSNPSharp.DataTransfer
 			transferSessions.Add(session.SessionId, session);
 		}
 
-		/// <summary>
-		/// Removes the specified transfer session from the collection.
-		/// </summary>
+		// Removes the specified transfer session from the collection.
 		public void RemoveTransferSession(P2PTransferSession session)
 		{			
-			transferSessions.Remove(session);			
+			transferSessions.Remove(session.SessionId);			
 		}
 
-		/// <summary>
-		/// Returns the transfer session associated with the specified session identifier.
-		/// </summary>
-		/// <param name="sessionId"></param>
-		/// <returns></returns>
+		// Returns the transfer session associated with the specified session identifier.
 		public P2PTransferSession GetTransferSession(uint sessionId)
 		{
-			return (P2PTransferSession)transferSessions[sessionId];			
+			return transferSessions[sessionId];			
 		}
 
-		/// <summary>
-		/// Searches through all handlers and returns the first object with the specified type, or null if not found.
-		/// </summary>
-		/// <param name="handlerType"></param>
-		/// <returns></returns>
+		// Searches through all handlers and returns the first object with the specified type, or null if not found.
 		public object GetHandler(Type handlerType)
 		{
 			foreach(IMessageHandler handler in handlers)
@@ -447,30 +380,26 @@ namespace MSNPSharp.DataTransfer
 				if(handler.GetType() == handlerType)
 					return handler;
 			}
+			
 			return null;
 		}
 
-		#endregion
 
 		#region Protected
 
-		/// <summary>
-		/// Keeps track of clustered p2p messages
-		/// </summary>
+		// Keeps track of clustered p2p messages
 		protected P2PMessagePool P2PMessagePool
 		{
-			get { return p2pMessagePool; }
-			set { p2pMessagePool = value;}
+			get { 
+				return p2pMessagePool;
+			}
+			set { 
+				p2pMessagePool = value;
+			}
 		}
 
-		/// <summary>
-		/// </summary>
-		private P2PMessagePool p2pMessagePool = new P2PMessagePool();
 
-		/// <summary>
-		/// Wraps a P2PMessage in a MSGMessage and SBMessage.
-		/// </summary>
-		/// <returns></returns>
+		// Wraps a P2PMessage in a MSGMessage and SBMessage.
 		protected SBMessage WrapMessage(NetworkMessage networkMessage)
 		{
 			MSGMessage msgWrapper = new MSGMessage();
@@ -484,9 +413,7 @@ namespace MSNPSharp.DataTransfer
 			return sbMessageWrapper;
 		}
 
-		/// <summary>
-		/// Sends the handshake message in a direct connection.
-		/// </summary>
+		// Sends the handshake message in a direct connection.
 		protected virtual void SendHandshakeMessage(IMessageProcessor processor)
 		{
 			if (Settings.TraceSwitch.TraceError)
@@ -503,30 +430,25 @@ namespace MSNPSharp.DataTransfer
 				return;	
 			}
 
-			IncreaseLocalIdentifier();
-			HandshakeMessage.Identifier = LocalIdentifier;
+			uint seq = GetNextSendSeq ();
+			
+			HandshakeMessage.Identifier = seq;
 
-			HandshakeMessage.DW1 = (uint)System.Environment.TickCount;
+			HandshakeMessage.DW1 = seq;
 			DCHandshakeAck = HandshakeMessage.DW1;			
 			
 			if(Settings.TraceSwitch.TraceInfo)
 				System.Diagnostics.Trace.WriteLine("Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), "P2PMessageSession");
 
-            ((SocketMessageProcessor)processor).SendMessage(HandshakeMessage);
+            processor.SendMessage(HandshakeMessage);
 		}
 		
 		#endregion		
 
 		#region Private
-		/// <summary>
-		/// A collection of all transfersessions
-		/// </summary>
-		private Hashtable transferSessions = new Hashtable();
 
-		/// <summary>
 		/// This is the processor used before a direct connection. Usually a SB processor.
 		/// It is a fallback variables in case a direct connection fails.
-		/// </summary>
 		private IMessageProcessor	preDCProcessor = null;		
 
 		/// <summary>
@@ -669,7 +591,7 @@ namespace MSNPSharp.DataTransfer
 			if(p2pMessage.SessionId > 0)
 			{				
 				// get the session to handle this message				
-				P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
+				P2PTransferSession session = transferSessions[p2pMessage.SessionId];
 				if(session != null)
 					session.HandleMessage(this, p2pMessage);
 				return;
@@ -732,15 +654,8 @@ namespace MSNPSharp.DataTransfer
 			//this is the most common identifier, so just set if not set
 			if(p2pMessage.Identifier == 0)
 			{
-				IncreaseLocalIdentifier();
-				p2pMessage.Identifier = LocalIdentifier;
+				p2pMessage.Identifier = GetNextSendSeq ();
 			}
-			
-			if(p2pMessage.DW1 == 0)
-				p2pMessage.DW1 = (uint)System.Environment.TickCount;
-				
-				
-			//Console.WriteLine (p2pMessage.ToDebugString ());
 			
 			// split up large messages which go to the SB
 			if(p2pMessage.MessageSize > maxSize)
@@ -773,8 +688,6 @@ namespace MSNPSharp.DataTransfer
 
 					chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
 					Array.Copy(totalMessage, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
-
-					chunkMessage.DW1 = (uint)System.Environment.TickCount;	
 
 					chunkMessage.PrepareMessage();
 
@@ -891,9 +804,6 @@ namespace MSNPSharp.DataTransfer
 		/// <param name="message"></param>
 		protected virtual void BufferMessage(NetworkMessage message)
 		{
-			if(sendMessages.Count >= 100)
-				System.Threading.Thread.Sleep(200);
-
 			sendMessages.Enqueue(message);
 		}
 
@@ -909,20 +819,28 @@ namespace MSNPSharp.DataTransfer
 			{
 				while(sendMessages.Count > 0)
 				{				
-					if(DirectConnected == true)					
-						MessageProcessor.SendMessage(new P2PDCMessage((P2PMessage)sendMessages.Dequeue()));
+					P2PMessage p2pmsg = (P2PMessage) sendMessages.Dequeue ();
+					
+					//I guess it should be set here, when it's sent
+					if ((p2pmsg.Flags & 0x1CB) == 0)
+						p2pmsg.DW1 = (uint) System.Environment.TickCount & Int32.MaxValue;
+					
+					if(DirectConnected)
+						MessageProcessor.SendMessage(new P2PDCMessage(p2pmsg));
 					else
-						MessageProcessor.SendMessage(WrapMessage((NetworkMessage)sendMessages.Dequeue()));
+						MessageProcessor.SendMessage(WrapMessage(p2pmsg));
+						
+					Console.WriteLine ("------------------------ SENT --------------------- ");
+					Console.WriteLine (p2pmsg.ToString ());
 				}
 			}
 			catch(System.Net.Sockets.SocketException)
 			{
+				Console.WriteLine ("ERROR SENDING P2P MESSAGE");
 				InvalidateProcessor();
 			}
 		}
 		
-		private ArrayList handlers = new ArrayList();
-
 		/// <summary>
 		/// Registers a message handler. After registering the handler will receive incoming messages.
 		/// </summary>
@@ -933,6 +851,7 @@ namespace MSNPSharp.DataTransfer
 			{
 				if(handlers.Contains(handler) == true)
 					return;
+					
 				handlers.Add(handler);
 			}
 		}
