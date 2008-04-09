@@ -45,6 +45,8 @@ namespace MSNPSharpClient
         private System.Windows.Forms.Button changeDisplayButton;
         private OpenFileDialog openImageDialog;
         private Timer tmrKeepOnLine;
+        private Button buttonOIM;
+        private TextBox txtMSG;
         private IContainer components;
 		#endregion
         
@@ -140,6 +142,8 @@ namespace MSNPSharpClient
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
+            this.txtMSG = new System.Windows.Forms.TextBox();
+            this.buttonOIM = new System.Windows.Forms.Button();
             this.ListPanel.SuspendLayout();
             this.OwnerPanel.SuspendLayout();
             this.ContactPanel.SuspendLayout();
@@ -153,9 +157,9 @@ namespace MSNPSharpClient
             this.ListPanel.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.ListPanel.Controls.Add(this.ContactListView);
             this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ListPanel.Location = new System.Drawing.Point(0, 103);
+            this.ListPanel.Location = new System.Drawing.Point(0, 96);
             this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(360, 385);
+            this.ListPanel.Size = new System.Drawing.Size(406, 400);
             this.ListPanel.TabIndex = 0;
             // 
             // ContactListView
@@ -164,7 +168,7 @@ namespace MSNPSharpClient
             this.ContactListView.Location = new System.Drawing.Point(0, 0);
             this.ContactListView.MultiSelect = false;
             this.ContactListView.Name = "ContactListView";
-            this.ContactListView.Size = new System.Drawing.Size(360, 385);
+            this.ContactListView.Size = new System.Drawing.Size(406, 400);
             this.ContactListView.TabIndex = 0;
             this.ContactListView.UseCompatibleStateImageBehavior = false;
             this.ContactListView.View = System.Windows.Forms.View.List;
@@ -182,74 +186,74 @@ namespace MSNPSharpClient
             this.OwnerPanel.Controls.Add(this.label1);
             this.OwnerPanel.Controls.Add(this.accountTextBox);
             this.OwnerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.OwnerPanel.Location = new System.Drawing.Point(0, 488);
+            this.OwnerPanel.Location = new System.Drawing.Point(0, 496);
             this.OwnerPanel.Name = "OwnerPanel";
-            this.OwnerPanel.Size = new System.Drawing.Size(638, 112);
+            this.OwnerPanel.Size = new System.Drawing.Size(638, 104);
             this.OwnerPanel.TabIndex = 1;
             // 
             // changeDisplayButton
             // 
-            this.changeDisplayButton.Location = new System.Drawing.Point(317, 43);
+            this.changeDisplayButton.Location = new System.Drawing.Point(264, 40);
             this.changeDisplayButton.Name = "changeDisplayButton";
-            this.changeDisplayButton.Size = new System.Drawing.Size(195, 25);
+            this.changeDisplayButton.Size = new System.Drawing.Size(163, 23);
             this.changeDisplayButton.TabIndex = 7;
             this.changeDisplayButton.Text = "Display image";
             this.changeDisplayButton.Click += new System.EventHandler(this.changeDisplayButton_Click);
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(422, 17);
+            this.button1.Location = new System.Drawing.Point(352, 16);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(90, 25);
+            this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 6;
             this.button1.Text = "Sign off >";
             this.button1.Click += new System.EventHandler(this.button1_Click_1);
             // 
             // statusBar
             // 
-            this.statusBar.Location = new System.Drawing.Point(0, 88);
+            this.statusBar.Location = new System.Drawing.Point(0, 82);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(638, 24);
+            this.statusBar.Size = new System.Drawing.Size(638, 22);
             this.statusBar.TabIndex = 5;
             // 
             // loginButton
             // 
-            this.loginButton.Location = new System.Drawing.Point(317, 17);
+            this.loginButton.Location = new System.Drawing.Point(264, 16);
             this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(90, 25);
+            this.loginButton.Size = new System.Drawing.Size(75, 23);
             this.loginButton.TabIndex = 4;
             this.loginButton.Text = "> Sign in";
             this.loginButton.Click += new System.EventHandler(this.button1_Click);
             // 
             // passwordTextBox
             // 
-            this.passwordTextBox.Location = new System.Drawing.Point(77, 43);
+            this.passwordTextBox.Location = new System.Drawing.Point(64, 40);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(221, 21);
+            this.passwordTextBox.Size = new System.Drawing.Size(184, 20);
             this.passwordTextBox.TabIndex = 3;
             // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(10, 43);
+            this.label2.Location = new System.Drawing.Point(8, 40);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(67, 25);
+            this.label2.Size = new System.Drawing.Size(56, 23);
             this.label2.TabIndex = 2;
             this.label2.Text = "Password";
             // 
             // label1
             // 
-            this.label1.Location = new System.Drawing.Point(10, 17);
+            this.label1.Location = new System.Drawing.Point(8, 16);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(67, 17);
+            this.label1.Size = new System.Drawing.Size(56, 16);
             this.label1.TabIndex = 1;
             this.label1.Text = "Account";
             // 
             // accountTextBox
             // 
-            this.accountTextBox.Location = new System.Drawing.Point(77, 17);
+            this.accountTextBox.Location = new System.Drawing.Point(64, 16);
             this.accountTextBox.Name = "accountTextBox";
-            this.accountTextBox.Size = new System.Drawing.Size(221, 21);
+            this.accountTextBox.Size = new System.Drawing.Size(184, 20);
             this.accountTextBox.TabIndex = 0;
             // 
             // ContactPanel
@@ -259,47 +263,49 @@ namespace MSNPSharpClient
             this.ContactPanel.Controls.Add(this.splitter2);
             this.ContactPanel.Controls.Add(this.propertyGrid);
             this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Right;
-            this.ContactPanel.Location = new System.Drawing.Point(360, 103);
+            this.ContactPanel.Location = new System.Drawing.Point(406, 96);
             this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(278, 385);
+            this.ContactPanel.Size = new System.Drawing.Size(232, 400);
             this.ContactPanel.TabIndex = 2;
             // 
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.panel1.Controls.Add(this.buttonOIM);
+            this.panel1.Controls.Add(this.txtMSG);
             this.panel1.Controls.Add(this.MobileMessageButton);
             this.panel1.Controls.Add(this.filetransferButton);
             this.panel1.Controls.Add(this.inviteButton);
             this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 262);
+            this.panel1.Location = new System.Drawing.Point(0, 243);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(278, 123);
+            this.panel1.Size = new System.Drawing.Size(232, 157);
             this.panel1.TabIndex = 2;
             // 
             // MobileMessageButton
             // 
-            this.MobileMessageButton.Location = new System.Drawing.Point(144, 78);
+            this.MobileMessageButton.Location = new System.Drawing.Point(52, 128);
             this.MobileMessageButton.Name = "MobileMessageButton";
-            this.MobileMessageButton.Size = new System.Drawing.Size(90, 24);
+            this.MobileMessageButton.Size = new System.Drawing.Size(75, 23);
             this.MobileMessageButton.TabIndex = 5;
             this.MobileMessageButton.Text = "Send mobile";
             this.MobileMessageButton.Click += new System.EventHandler(this.MobileMessageButton_Click);
             // 
             // filetransferButton
             // 
-            this.filetransferButton.Location = new System.Drawing.Point(144, 43);
+            this.filetransferButton.Location = new System.Drawing.Point(120, 40);
             this.filetransferButton.Name = "filetransferButton";
-            this.filetransferButton.Size = new System.Drawing.Size(90, 25);
+            this.filetransferButton.Size = new System.Drawing.Size(75, 23);
             this.filetransferButton.TabIndex = 4;
             this.filetransferButton.Text = "Send file";
             this.filetransferButton.Click += new System.EventHandler(this.filetransferButton_Click);
             // 
             // inviteButton
             // 
-            this.inviteButton.Location = new System.Drawing.Point(144, 9);
+            this.inviteButton.Location = new System.Drawing.Point(120, 8);
             this.inviteButton.Name = "inviteButton";
-            this.inviteButton.Size = new System.Drawing.Size(90, 24);
+            this.inviteButton.Size = new System.Drawing.Size(75, 23);
             this.inviteButton.TabIndex = 3;
             this.inviteButton.Text = "Chat";
             this.inviteButton.Click += new System.EventHandler(this.inviteButton_Click);
@@ -308,9 +314,9 @@ namespace MSNPSharpClient
             // 
             this.displayImageBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayImageBox.Location = new System.Drawing.Point(29, 9);
+            this.displayImageBox.Location = new System.Drawing.Point(24, 8);
             this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(96, 96);
+            this.displayImageBox.Size = new System.Drawing.Size(80, 89);
             this.displayImageBox.TabIndex = 2;
             this.displayImageBox.TabStop = false;
             // 
@@ -318,9 +324,9 @@ namespace MSNPSharpClient
             // 
             this.splitter2.BackColor = System.Drawing.SystemColors.Control;
             this.splitter2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.splitter2.Location = new System.Drawing.Point(0, 258);
+            this.splitter2.Location = new System.Drawing.Point(0, 240);
             this.splitter2.Name = "splitter2";
-            this.splitter2.Size = new System.Drawing.Size(278, 4);
+            this.splitter2.Size = new System.Drawing.Size(232, 3);
             this.splitter2.TabIndex = 1;
             this.splitter2.TabStop = false;
             // 
@@ -332,7 +338,7 @@ namespace MSNPSharpClient
             this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
             this.propertyGrid.Location = new System.Drawing.Point(0, 0);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(278, 258);
+            this.propertyGrid.Size = new System.Drawing.Size(232, 240);
             this.propertyGrid.TabIndex = 0;
             // 
             // pictureBox
@@ -342,16 +348,16 @@ namespace MSNPSharpClient
             this.pictureBox.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox.Image")));
             this.pictureBox.Location = new System.Drawing.Point(0, 0);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(638, 103);
+            this.pictureBox.Size = new System.Drawing.Size(638, 96);
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
             // 
             // splitter1
             // 
             this.splitter1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.splitter1.Location = new System.Drawing.Point(356, 103);
+            this.splitter1.Location = new System.Drawing.Point(403, 96);
             this.splitter1.Name = "splitter1";
-            this.splitter1.Size = new System.Drawing.Size(4, 385);
+            this.splitter1.Size = new System.Drawing.Size(3, 400);
             this.splitter1.TabIndex = 3;
             this.splitter1.TabStop = false;
             // 
@@ -370,9 +376,26 @@ namespace MSNPSharpClient
             this.tmrKeepOnLine.Interval = 1000;
             this.tmrKeepOnLine.Tick += new System.EventHandler(this.tmrKeepOnLine_Tick);
             // 
+            // txtMSG
+            // 
+            this.txtMSG.Location = new System.Drawing.Point(24, 103);
+            this.txtMSG.Name = "txtMSG";
+            this.txtMSG.Size = new System.Drawing.Size(184, 20);
+            this.txtMSG.TabIndex = 6;
+            this.txtMSG.Text = "MSNPSharp Message";
+            // 
+            // buttonOIM
+            // 
+            this.buttonOIM.Location = new System.Drawing.Point(133, 128);
+            this.buttonOIM.Name = "buttonOIM";
+            this.buttonOIM.Size = new System.Drawing.Size(75, 23);
+            this.buttonOIM.TabIndex = 7;
+            this.buttonOIM.Text = "Send OIM";
+            this.buttonOIM.Click += new System.EventHandler(this.buttonOIM_Click);
+            // 
             // ClientForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
+            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(638, 600);
             this.Controls.Add(this.splitter1);
             this.Controls.Add(this.ListPanel);
@@ -386,6 +409,7 @@ namespace MSNPSharpClient
             this.OwnerPanel.PerformLayout();
             this.ContactPanel.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);
@@ -721,7 +745,7 @@ namespace MSNPSharpClient
 			// open a dialog box to select the file
 			if(selectedContact.Online == false && selectedContact.MobileAccess == true)
 			{										
-				messenger.Nameserver.SendMobileMessage(selectedContact, "MSNPSharp client sms");
+				messenger.Nameserver.SendMobileMessage(selectedContact, txtMSG.Text);
 			}
 			else
 				MessageBox.Show("This contact is not able to receive mobile messages");
@@ -753,6 +777,17 @@ namespace MSNPSharpClient
                 nextPing--;
             if (nextPing == 0)
                 messenger.Nameserver.SendPing();
+        }
+
+        private void buttonOIM_Click(object sender, EventArgs e)
+        {
+            if (ContactListView.SelectedItems.Count == 0)
+                return;
+
+            Contact selectedContact = (Contact)ContactListView.SelectedItems[0].Tag;
+            this.propertyGrid.SelectedObject = selectedContact;
+
+            messenger.Nameserver.SendOIMMessage(selectedContact.Mail, txtMSG.Text);
         }
 	}
 }
