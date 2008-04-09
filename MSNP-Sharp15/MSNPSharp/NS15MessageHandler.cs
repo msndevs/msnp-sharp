@@ -970,11 +970,11 @@ namespace MSNPSharp
             SetPrivacyMode(PrivacyMode.AllExceptBlocked);
             //if (passportcount != 0)
             {
-                strreturn = ConstructADLString();
-
-                MessageProcessor.SendMessage(new NSMessage("ADL",
-                    new string[] { strreturn.Length.ToString() }));
-                MessageProcessor.SendMessage(new NSMessage(strreturn));
+                foreach (string str in ConstructADLString())
+                {
+                    MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { str.Length.ToString() }));
+                    MessageProcessor.SendMessage(new NSMessage(str));
+                }
             }
 
             string mydispName = GetMyDisplayName(xmlFL);
@@ -991,10 +991,11 @@ namespace MSNPSharp
 
         private void OnADLReceived(NSMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK" && synSended == false)
+            if (message.CommandValues[1].ToString() == "OK" && synSended == false && --adlcount <= 0)
             {
                 // set this so the user can set initial presence
                 synSended = true;
+                adlcount = 0;
 
                 if (AutoSynchronize == true)
                 {
@@ -1034,22 +1035,17 @@ namespace MSNPSharp
             return "";
         }
 
-
-        private string ConstructADLString()
+        private int adlcount = 0;
+        private string[] ConstructADLString()
         {
-            List<string> maillist = new List<string>();
-            List<string> userlist = new List<string>();
-            string domain = "";
-            string name = "";
-            string type = "";
-            string list = "";
+            Dictionary<String, List<String>> container = new Dictionary<String, List<String>>();
 
             foreach (Contact contact in ContactList.All)
             {
-                list = "";
-                domain = contact.Mail.Split('@')[1];
-                name = contact.Mail.Split('@')[0];
-                type = ((int)contact.ClientType).ToString();
+                String list = String.Empty;
+                String domain = contact.Mail.Split('@')[1];
+                String name = contact.Mail.Split('@')[0].Replace('ı', 'i'); // for Turkish
+                String type = ((int)contact.ClientType).ToString();
                 if (contact.OnForwardList)
                 {
                     list = "3";
@@ -1063,61 +1059,38 @@ namespace MSNPSharp
                     list = ((int)(MSNLists.AllowedList)).ToString();
                 }
 
-                if (maillist.Count > 0)
+                if (!container.ContainsKey(domain.ToLower()))
                 {
-                    int i = 0;
-                    for (i = 0; i < maillist.Count; i++)
+                    container[domain.ToLower()] = new List<string>();
+                }
+
+                container[domain.ToLower()].Add("<c n=\"" + name + "\" l=\"" + list + "\" t=\"" + type + "\"/>");
+            }
+
+            List<string> ret = new List<string>();
+            foreach (string domain in container.Keys)
+            {
+                adlcount++;
+                int cnt = 0;
+                String stmp = "<d n=\"" + domain + "\">";
+                foreach (string c in container[domain])
+                {
+                    stmp += c;
+
+                    if (++cnt == 150)
                     {
-                        if (maillist[i].ToLower() != domain.ToLower())
-                        {
-                            if (i == maillist.Count - 1)
-                            {
-                                maillist.Add(domain);
-                                userlist.Add(
-                                    "<c n=\"" + name + "\" l=\""
-                                    + list
-                                    + "\" t=\"" + type + "\"/>"
-                                );
-                                break;
-                            }
-                        }
-                        else
-                        {
-
-                            userlist[i] += (
-                                    "<c n=\"" + name + "\" l=\""
-                                    + list
-                                    + "\" t=\"" + type + "\"/>"
-                                );
-                            break;
-
-                        }
+                        stmp += "</d>";
+                        ret.Add("<ml l=\"1\">" + stmp + "</ml>");
+                        stmp = "<d n=\"" + domain + "\">";
+                        cnt = 0;
+                        adlcount++;
                     }
                 }
-                else
-                {
 
-                    maillist.Add(domain);
-                    userlist.Add(
-                        "<c n=\"" + name + "\" l=\""
-                        + list
-                        + "\" t=\"" + type + "\"/>"
-                    );
-
-                }
+                stmp += "</d>";
+                ret.Add("<ml l=\"1\">" + stmp + "</ml>");
             }
-
-            string strtmp = "";
-            if (maillist.Count > 0)
-            {
-
-                int i = 0;
-                for (i = 0; i < maillist.Count; i++)
-                {
-                    strtmp += "<d n=\"" + maillist[i] + "\">" + userlist[i] + "</d>";
-                }
-            }
-            return "<ml l=\"1\">" + strtmp + "</ml>";
+            return ret.ToArray();
         }
 
         private void GetContacts(MSNLists list, XmlDocument abdoc, XmlDocument fldoc)
