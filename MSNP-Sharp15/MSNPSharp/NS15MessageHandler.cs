@@ -967,7 +967,9 @@ namespace MSNPSharp
                 }
             }
 
-            SetPrivacyMode(PrivacyMode.AllExceptBlocked);
+            Dictionary<string, string> props = GetMyProperties(xmlFL);
+
+            SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
             //if (passportcount != 0)
             {
                 foreach (string str in ConstructADLString())
@@ -977,8 +979,7 @@ namespace MSNPSharp
                 }
             }
 
-            string mydispName = GetMyDisplayName(xmlFL);
-
+            string mydispName = props["displayname"];
             if (mydispName != "")
             {
                 owner.Name = mydispName;
@@ -1016,8 +1017,15 @@ namespace MSNPSharp
 
         }
 
-        private string GetMyDisplayName(XmlDocument fldoc)
+        private Dictionary<string, string> GetMyProperties(XmlDocument fldoc)
         {
+            Dictionary<string, string> props = new Dictionary<string, string>();
+            props["displayname"] = String.Empty;
+            props["mbea"] = "0";
+            props["gtc"] = "1";
+            props["blp"] = "0";
+            props["roamliveproperties"] = "1";
+
             XmlNodeList nodelst = fldoc.GetElementsByTagName("contactType");
             foreach (XmlNode nod in nodelst)
             {
@@ -1025,14 +1033,28 @@ namespace MSNPSharp
                 {
                     foreach (XmlNode namenode in nod.ParentNode.ChildNodes)
                     {
-                        if (namenode.Name.ToLower() == "displayname")
+                        switch (namenode.Name.ToLower())
                         {
-                            return namenode.InnerText;
+                            case "annotations":
+                                foreach (XmlNode annos in namenode)
+                                {
+                                    string name = annos.ChildNodes[0].InnerText;
+                                    string value = annos.ChildNodes[1].InnerText;
+                                    name = name.Substring(name.LastIndexOf(".") + 1).ToLower();
+                                    props[name] = value;
+                                }
+                                break;
+
+                            case "displayname":
+                                props["displayname"] = namenode.InnerText;
+                                goto DONE;
                         }
                     }
                 }
             }
-            return "";
+
+        DONE:
+            return props;
         }
 
         private int adlcount = 0;
