@@ -125,7 +125,7 @@ namespace MSNPSharp
 		string mobilePhone;
         int oimcount=1;
 		bool hasBlog;
-        ClientType clienttype;
+        ClientType clienttype = ClientType.MessengerUser;
 		
 		[NonSerialized]
 		IMessageHandler nsMessageHandler;
