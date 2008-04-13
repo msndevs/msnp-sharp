@@ -33,6 +33,7 @@ using System.Collections;
 using System.Collections.Generic;
 using MSNPSharp.Core;
 using MSNPSharp.DataTransfer;
+using System.Globalization;
 
 namespace MSNPSharp
 {
@@ -231,7 +232,7 @@ namespace MSNPSharp
 
 		public Contact GetContact(string account)
 		{
-            account = account.ToLower();
+            account = account.ToLower(CultureInfo.InvariantCulture);
             if (contacts.ContainsKey(account))
             {
                 return contacts[account];
@@ -251,7 +252,7 @@ namespace MSNPSharp
 
         public Contact GetContact(string account,string name)
         {
-            account = account.ToLower();
+            account = account.ToLower(CultureInfo.InvariantCulture);
             if (contacts.ContainsKey(account))
                 return contacts[account];
             else
@@ -282,7 +283,7 @@ namespace MSNPSharp
 		{
 			get
 			{
-                account = account.ToLower();
+                account = account.ToLower(CultureInfo.InvariantCulture);
 				if(contacts.ContainsKey(account))
 					return contacts[account];
 				
@@ -290,14 +291,14 @@ namespace MSNPSharp
 			}
 			set
 			{
-                account = account.ToLower();
+                account = account.ToLower(CultureInfo.InvariantCulture);
 				contacts[account] = value;
 			}
 		}
 		
 		public bool HasContact (string account)
 		{
-            account = account.ToLower();
+            account = account.ToLower(CultureInfo.InvariantCulture);
 			return contacts.ContainsKey (account);
 		}
 
@@ -313,7 +314,7 @@ namespace MSNPSharp
 
         public void RemoveContact(string account)
         {
-            account = account.ToLower();
+            account = account.ToLower(CultureInfo.InvariantCulture);
             if (HasContact(account))
             {
                 contacts.Remove(account);
