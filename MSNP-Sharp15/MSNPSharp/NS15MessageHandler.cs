@@ -53,6 +53,7 @@ namespace MSNPSharp
     using MSNPSharp.DataTransfer;
     using System.Security.Cryptography.X509Certificates;
     using System.Xml.XPath;
+    using System.Globalization;
 
     #region Event argument classes
     /// <summary>
@@ -1029,18 +1030,18 @@ namespace MSNPSharp
             XmlNodeList nodelst = fldoc.GetElementsByTagName("contactType");
             foreach (XmlNode nod in nodelst)
             {
-                if (nod.InnerText.ToLower() == "me")
+                if (nod.InnerText.ToLower(CultureInfo.InvariantCulture) == "me")
                 {
                     foreach (XmlNode namenode in nod.ParentNode.ChildNodes)
                     {
-                        switch (namenode.Name.ToLower())
+                        switch (namenode.Name.ToLower(CultureInfo.InvariantCulture))
                         {
                             case "annotations":
                                 foreach (XmlNode annos in namenode)
                                 {
                                     string name = annos.ChildNodes[0].InnerText;
                                     string value = annos.ChildNodes[1].InnerText;
-                                    name = name.Substring(name.LastIndexOf(".") + 1).ToLower();
+                                    name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
                                     props[name] = value;
                                 }
                                 break;
@@ -1066,7 +1067,7 @@ namespace MSNPSharp
             {
                 String list = String.Empty;
                 String domain = contact.Mail.Split('@')[1];
-                String name = contact.Mail.Split('@')[0].Replace('ı', 'i'); // for Turkish
+                String name = contact.Mail.Split('@')[0];
                 String type = ((int)contact.ClientType).ToString();
                 if (contact.OnForwardList)
                 {
@@ -1081,12 +1082,12 @@ namespace MSNPSharp
                     list = ((int)(MSNLists.AllowedList)).ToString();
                 }
 
-                if (!container.ContainsKey(domain.ToLower()))
+                if (!container.ContainsKey(domain.ToLower(CultureInfo.InvariantCulture)))
                 {
-                    container[domain.ToLower()] = new List<string>();
+                    container[domain.ToLower(CultureInfo.InvariantCulture)] = new List<string>();
                 }
 
-                container[domain.ToLower()].Add("<c n=\"" + name + "\" l=\"" + list + "\" t=\"" + type + "\"/>");
+                container[domain.ToLower(CultureInfo.InvariantCulture)].Add("<c n=\"" + name + "\" l=\"" + list + "\" t=\"" + type + "\"/>");
             }
 
             List<string> ret = new List<string>();
@@ -1139,13 +1140,13 @@ namespace MSNPSharp
             {
                 foreach (XmlNode mnode in pmnode)
                 {
-                    if (mnode.Name.ToLower() == "memberrole")
+                    if (mnode.Name.ToLower(CultureInfo.InvariantCulture) == "memberrole")
                     {
-                        if (mnode.InnerText.ToLower() == strlist)
+                        if (mnode.InnerText.ToLower(CultureInfo.InvariantCulture) == strlist)
                         {
                             foreach (XmlNode nnod in mnode.ParentNode.ChildNodes)
                             {
-                                if (nnod.Name.ToLower() == "members")
+                                if (nnod.Name.ToLower(CultureInfo.InvariantCulture) == "members")
                                 {
                                     foreach (XmlNode xnod in nnod.ChildNodes)
                                     {
@@ -1210,8 +1211,8 @@ namespace MSNPSharp
                 {
                     //Yahoo Messenger or other email contact type
                     regmail = new Regex("<email>(?<email>.+)</email>");
-                    if (regmail.Match(mnd.InnerXml, 0).Groups["email"].Value.ToLower() ==
-                        email.ToLower())
+                    if (regmail.Match(mnd.InnerXml, 0).Groups["email"].Value.ToLower(CultureInfo.InvariantCulture) ==
+                        email.ToLower(CultureInfo.InvariantCulture))
                     {
 
                         fetched = true;
@@ -1223,8 +1224,8 @@ namespace MSNPSharp
                 {
                     //a Windows Live Messenger user
                     regmail = new Regex("<passportName>(?<email>.+)</passportName>");
-                    if (regmail.Match(mnd.InnerXml, 0).Groups["email"].Value.ToLower() ==
-                        email.ToLower())
+                    if (regmail.Match(mnd.InnerXml, 0).Groups["email"].Value.ToLower(CultureInfo.InvariantCulture) ==
+                        email.ToLower(CultureInfo.InvariantCulture))
                     {
 
                         fetched = true;
@@ -1308,15 +1309,15 @@ namespace MSNPSharp
             {
                 foreach (XmlNode ndc in nd.ChildNodes)
                 {
-                    if (ndc.Name.ToLower() == "groupid")
+                    if (ndc.Name.ToLower(CultureInfo.InvariantCulture) == "groupid")
                     {
                         guid = ndc.InnerText;
                     }
-                    if (ndc.Name.ToLower() == "groupinfo")
+                    if (ndc.Name.ToLower(CultureInfo.InvariantCulture) == "groupinfo")
                     {
                         foreach (XmlNode ndcc in ndc.ChildNodes)
                         {
-                            if (ndcc.Name.ToLower() == "name")
+                            if (ndcc.Name.ToLower(CultureInfo.InvariantCulture) == "name")
                             {
                                 groupname = ndcc.InnerText;
                                 ContactGroups.AddGroup(new ContactGroup(groupname,
