@@ -40,6 +40,7 @@ using System.Xml;
 using System.Security.Cryptography;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Globalization;
 namespace MSNPSharp
 {
     /*
@@ -128,7 +129,7 @@ namespace MSNPSharp
 
             if (user.Split('@').Length > 1)
             {
-                if (user.Split('@')[1].ToLower() == "msn.com")
+                if (user.Split('@')[1].ToLower(CultureInfo.InvariantCulture) == "msn.com")
                 {
                     req = (HttpWebRequest)WebRequest.Create(@"https://msnia.login.live.com/pp550/RST.srf");
                 }
@@ -187,7 +188,7 @@ namespace MSNPSharp
                 
                 for (nodecnt = 0; nodecnt < nodes.Count; nodecnt++)
                 {
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower() == "compact1")
+                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "compact1")
                     {
                         ticket = nodes[nodecnt].InnerText;
 
@@ -195,17 +196,17 @@ namespace MSNPSharp
                         key = knodes[nodecnt + 1].InnerText;
                         //break;
                     }
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower() == "pptoken3")
+                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "pptoken3")
                     {
                         outticket = nodes[nodecnt].InnerText;
                     }
 
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower() == "pptoken2")
+                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "pptoken2")
                     {
                         dic.Add("web_ticket", nodes[nodecnt].InnerText);
                     }
 
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower() == "compact4")
+                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "compact4")
                     {
                         dic.Add("oim_ticket", nodes[nodecnt].InnerText);
                     }
