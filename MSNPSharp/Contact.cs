@@ -123,7 +123,8 @@ namespace MSNPSharp
 		string homePhone;
 		string workPhone;
 		string mobilePhone;
-        int oimcount=1;
+        int oimcount = 1;
+
 		bool hasBlog;
         ClientType clienttype = ClientType.MessengerUser;
 		
@@ -385,7 +386,7 @@ namespace MSNPSharp
 		{
 			workPhone = number;
 		}
-	
+
 		internal void SetStatus(PresenceStatus newStatus)
 		{
 			if(status != newStatus)
