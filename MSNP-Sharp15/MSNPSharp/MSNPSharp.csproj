@@ -31,6 +31,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml" />
@@ -43,6 +44,7 @@
     <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
+    <Compile Include="ContactPropertiesParser.cs" />
     <Compile Include="Conversation.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="DisplayImage.cs" />
@@ -53,6 +55,7 @@
     <Compile Include="EventArgs.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="IMessageHandler.cs" />
+    <Compile Include="IO.cs" />
     <Compile Include="MailEventArgs.cs" />
     <Compile Include="MessagePool.cs" />
     <Compile Include="MessageProcessor.cs" />
@@ -85,6 +88,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="ProxySocket\AuthMethod.cs" />
     <Compile Include="ProxySocket\AuthNone.cs" />
     <Compile Include="ProxySocket\AuthUserPass.cs" />
@@ -101,16 +109,74 @@
     <Compile Include="SBMessageProcessor.cs" />
     <Compile Include="SBMSGMessage.cs" />
     <Compile Include="SingleSignOn.cs" />
+    <Compile Include="SoapEnvelopeStrings.cs" />
     <Compile Include="SocketMessageProcessor.cs" />
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
+    <Compile Include="Web References\MSNSharingService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Wink.cs" />
+    <Compile Include="XMLContactList.cs" />
+    <Compile Include="XMLList.cs" />
+    <Compile Include="XMLNodeEnumrator.cs" />
     <Compile Include="YIMMessage.cs" />
     <Compile Include="YIMMessageHandler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="ClassDiagram1.cd" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNSharingService\ABContactAddResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\ABContactUpdateResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\ABFindAllResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\ABGroupAddResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\ABGroupContactAddResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\ABGroupContactDeleteResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\ABGroupDeleteResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\ABGroupUpdateResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\AddMemberResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\DeleteMemberResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\FindMembershipResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSharingService\msnab_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSharingService\msnab_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSharingService\msnab_sharingservice.wsdl" />
+    <None Include="Web References\MSNSharingService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -121,6 +187,22 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\owner.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferences Include="Web References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferenceUrl Include="D:\Documents and Settings\Administrator\桌面\MSNP资料\ABWS\msnab_sharingservice.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNSharingService\</RelPath>
+      <UpdateFromURL>D:\Documents and Settings\Administrator\桌面\MSNP资料\ABWS\msnab_sharingservice.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNSharingService_SharingService</CachedSettingsPropName>
+    </WebReferenceUrl>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

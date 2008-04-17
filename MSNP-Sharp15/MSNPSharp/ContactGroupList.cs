@@ -44,7 +44,10 @@ namespace MSNPSharp
 
 		internal void AddGroup(ContactGroup group)
 		{
-			list.Add(group);
+            if (this[group.Guid] == null)
+                list.Add(group);
+            else
+                this[group.Guid].SetName(group.Name);
 		}
 		internal void RemoveGroup(ContactGroup group)
 		{
