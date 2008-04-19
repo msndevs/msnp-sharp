@@ -27,9 +27,19 @@ namespace MSNPSharp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
         [global::System.Configuration.DefaultSettingValueAttribute("https://contacts.msn.com/abservice/SharingService.asmx")]
-        public string MSNPSharp_MSNSharingService_SharingService {
+        public string MSNPSharp_MSNP13SharingService_SharingService {
             get {
-                return ((string)(this["MSNPSharp_MSNSharingService_SharingService"]));
+                return ((string)(this["MSNPSharp_MSNP13SharingService_SharingService"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://contacts.msn.com/abservice/SharingService.asmx")]
+        public string MSNPSharp_MSNABSharingService_SharingService {
+            get {
+                return ((string)(this["MSNPSharp_MSNABSharingService_SharingService"]));
             }
         }
     }
