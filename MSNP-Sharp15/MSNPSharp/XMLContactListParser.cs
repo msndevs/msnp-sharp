@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
+using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
 
 namespace MSNPSharp
 {

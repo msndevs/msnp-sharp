@@ -4,6 +4,7 @@ using System.Xml;
 using System.IO;
 using MSNPSharp.IO;
 using System.Globalization;
+using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
 
 namespace MSNPSharp
 {
@@ -110,7 +111,7 @@ namespace MSNPSharp
             set { lastChange = value; }
         }
     }
-
+    /*
     internal enum MemberRole
     {
         Allow = 2,
@@ -127,6 +128,7 @@ namespace MSNPSharp
         OneWayRelationship
 
     }
+     * */
 
     /// <summary>
     /// XML Membership List file maintainer

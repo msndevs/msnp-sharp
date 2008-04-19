@@ -34,7 +34,7 @@
   </xsd:complexType>
   <xsd:complexType name="Membership">
     <xsd:sequence>
-      <xsd:element name="MemberRole" type="xsd:string" />
+      <xsd:element name="MemberRole" type="msnab:MemberRole" />
       <xsd:element name="Members">
         <xsd:complexType>
           <xsd:sequence>
@@ -126,11 +126,33 @@
       <xsd:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />
     </xsd:restriction>
   </xsd:simpleType>
-  <xsd:element name="MemberRole" type="xsd:string" />
-  <xsd:element name="MemberType" type="xsd:string" />
+  <xsd:simpleType name="MemberRole">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Allow" />
+      <xsd:enumeration value="Block" />
+      <xsd:enumeration value="Reverse" />
+      <xsd:enumeration value="Pending" />
+      <xsd:enumeration value="Contributor" />
+      <xsd:enumeration value="ProfileGeneral" />
+      <xsd:enumeration value="ProfilePersonalContact" />
+      <xsd:enumeration value="ProfileProfessionalContact" />
+      <xsd:enumeration value="ProfileSocial" />
+      <xsd:enumeration value="ProfileExpression" />
+      <xsd:enumeration value="TwoWayRelationship" />
+      <xsd:enumeration value="OneWayRelationship" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element name="MemberType">
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:enumeration value="Allow" />
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:element>
   <xsd:simpleType name="MemberState">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="Accepted" />
+      <xsd:enumeration value="Pending" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:complexType name="Annotation">
