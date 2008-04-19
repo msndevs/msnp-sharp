@@ -1135,12 +1135,18 @@ namespace MSNPSharp
         {
             Dictionary<String, List<String>> container = new Dictionary<String, List<String>>();
 
-            foreach (Contact contact in ContactList.All)
+            foreach (string contact in initialadl)
             {
                 String list = String.Empty;
-                String domain = contact.Mail.Split('@')[1];
-                String name = contact.Mail.Split('@')[0];
-                String type = ((int)contact.ClientType).ToString();
+                String domain = contact.Split('@')[1];
+                String name = contact.Split('@')[0];
+                list = "3";
+                String type = "1";
+                
+               
+                //String type = ((int)contact.ClientType).ToString();
+
+                /*
                 if (contact.OnForwardList)
                 {
                     list = "3";
@@ -1153,6 +1159,8 @@ namespace MSNPSharp
                 {
                     list = ((int)(MSNLists.AllowedList)).ToString();
                 }
+                 * 
+                 * */
 
                 if (!container.ContainsKey(domain.ToLower(CultureInfo.InvariantCulture)))
                 {
