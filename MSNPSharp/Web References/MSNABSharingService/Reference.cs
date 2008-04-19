@@ -3279,40 +3279,40 @@ namespace MSNPSharp.MSNABSharingService {
     public enum MemberRole {
         
         /// <remarks/>
-        Allow,
-        
-        /// <remarks/>
-        Block,
-        
-        /// <remarks/>
-        Reverse,
-        
-        /// <remarks/>
-        Pending,
-        
-        /// <remarks/>
-        Contributor,
+        ProfileSocial,
         
         /// <remarks/>
         ProfileGeneral,
         
         /// <remarks/>
+        Allow,
+        
+        /// <remarks/>
         ProfilePersonalContact,
+        
+        /// <remarks/>
+        Block,
+        
+        /// <remarks/>
+        Contributor,
         
         /// <remarks/>
         ProfileProfessionalContact,
         
         /// <remarks/>
-        ProfileSocial,
+        ProfileExpression,
         
         /// <remarks/>
-        ProfileExpression,
+        Reverse,
         
         /// <remarks/>
         TwoWayRelationship,
         
         /// <remarks/>
         OneWayRelationship,
+        
+        /// <remarks/>
+        Pending,
     }
     
     /// <remarks/>
