@@ -805,6 +805,7 @@ namespace MSNPSharp
             DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
+            sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
@@ -822,6 +823,8 @@ namespace MSNPSharp
 
         private void sharingService_FindMembershipCompleted(object sender, FindMembershipCompletedEventArgs e)
         {
+            Console.WriteLine("sharingService_FindMembershipCompleted");
+
             if (e.Cancelled)
                 return;
 
@@ -835,6 +838,7 @@ namespace MSNPSharp
             DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Timeout = Int32.MaxValue;
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
@@ -849,13 +853,10 @@ namespace MSNPSharp
 
         private void abService_ABFindAllCompleted(object sender, ABFindAllCompletedEventArgs e)
         {
-
             Console.WriteLine("abService_ABFindAllCompleted");
 
             if (e.Cancelled || e.Error != null)
                 return;
-
-
 
             ABServiceBinding abService = (ABServiceBinding)sender;
             FindMembershipResultType addressBook = (FindMembershipResultType)e.UserState;
@@ -903,19 +904,14 @@ namespace MSNPSharp
                         {
                             if (null != membership.Members)
                             {
-                                MemberRole lst = new MemberRole();
-                                if (Enum.IsDefined(typeof(MemberRole), membership.MemberRole))
+                                MemberRole lst = membership.MemberRole;
+                                if (!mShips.ContainsKey(lst))
                                 {
-                                    lst = (MemberRole)Enum.Parse(typeof(MemberRole), membership.MemberRole);  //Why membership.MemberRole is a string??
-                                    if (!mShips.ContainsKey(lst))
-                                    {
-                                        mShips[lst] = new Dictionary<string, ContactInfo>(0);
-                                    }
+                                    mShips[lst] = new Dictionary<string, ContactInfo>();
                                 }
 
                                 foreach (BaseMember bm in membership.Members)
                                 {
-                                    bool add = false;
                                     ContactInfo ci = new ContactInfo();
                                     ci.Type = ClientType.MessengerUser;
                                     ci.LastChanged = bm.LastChanged;
@@ -923,13 +919,16 @@ namespace MSNPSharp
 
                                     if (bm is PassportMember)
                                     {
-                                        add = true;
                                         PassportMember pm = (PassportMember)bm;
+                                        if (pm.IsPassportNameHidden)
+                                        {
+                                            // Occurs ArgumentNullException, PassportName = null
+                                            continue;
+                                        }
                                         ci.Account = pm.PassportName;
                                     }
                                     else if (bm is EmailMember)
                                     {
-                                        add = true;
                                         ci.Account = ((EmailMember)bm).Email;
 
                                         if (null != bm.Annotations)
@@ -950,15 +949,15 @@ namespace MSNPSharp
                                     else
                                         ci.DisplayName = ci.Account;
 
-                                    if (add && !mShips[lst].ContainsKey(ci.Account))
+                                    if (ci.Account != null && !mShips[lst].ContainsKey(ci.Account))
                                     {
                                         mShips[lst][ci.Account] = ci;
-                                        if (MemberShipList.ContainsKey(ci.Account))
-                                            if (MemberShipList[ci.Account].LastChanged.CompareTo(ci.LastChanged) > 0)  //Compare to get the latest profile
-                                                continue;
-                                        MemberShipList[ci.Account] = ci;
-                                    }
 
+                                        if (!MemberShipList.ContainsKey(ci.Account) || MemberShipList[ci.Account].LastChanged.CompareTo(ci.LastChanged) <= 0)
+                                        {
+                                            MemberShipList[ci.Account] = ci;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -976,7 +975,6 @@ namespace MSNPSharp
                 {
                     if (null != contactType.contactInfo)
                     {
-
                         string account = contactType.contactInfo.passportName;
                         if (contactType.contactInfo.emails != null && account == null)
                             account = contactType.contactInfo.emails[0].email;
@@ -1039,16 +1037,6 @@ namespace MSNPSharp
                 }
             }
 
-            foreach (MemberRole lst in mShips.Keys)
-            {
-                Dictionary<string, ContactInfo> ctt = mShips[lst];
-                Console.WriteLine(lst.ToString().ToUpper());
-                foreach (string account in ctt.Keys)
-                {
-                    Console.WriteLine(account + " = " + ctt[account].DisplayName);
-                }
-            }
-
             // 5: Combine all information and save them into a file.
             MemberShipList.CombineMemberRoles(mShips);
             MemberShipList.CombineService(services);
@@ -1086,8 +1074,7 @@ namespace MSNPSharp
 
             SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
-
-            // Initial ADL: FL, AL, BL
+            // Initial ADL --> Combine (FL+AL+BL) and send...
             List<string> initialadl = new List<string>();
             foreach (string account in diccontactList.Keys)
             {
@@ -1096,17 +1083,18 @@ namespace MSNPSharp
                         initialadl.Add(account);
             }
 
-
-
-
-            foreach (string str in ConstructADLString(initialadl))
-            {
-                MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { str.Length.ToString() }));
-                MessageProcessor.SendMessage(new NSMessage(str));
-            }
-
             if (initialadl.Count == 0)
+            {
                 OnADLReceived(new NSMessage("ADL", new string[] { "0", "OK" }));
+            }
+            else
+            {
+                foreach (string str in ConstructADLString(initialadl))
+                {
+                    MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { str.Length.ToString() }));
+                    MessageProcessor.SendMessage(new NSMessage(str));
+                }
+            }
 
             string mydispName = props["displayname"];
             if (mydispName != "")

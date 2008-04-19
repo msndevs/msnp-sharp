@@ -3221,7 +3221,7 @@ namespace MSNPSharp.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class Membership {
         
-        private string memberRoleField;
+        private MemberRole memberRoleField;
         
         private BaseMember[] membersField;
         
@@ -3230,7 +3230,7 @@ namespace MSNPSharp.MSNABSharingService {
         private bool membershipIsCompleteFieldSpecified;
         
         /// <remarks/>
-        public string MemberRole {
+        public MemberRole MemberRole {
             get {
                 return this.memberRoleField;
             }
@@ -3270,6 +3270,49 @@ namespace MSNPSharp.MSNABSharingService {
                 this.membershipIsCompleteFieldSpecified = value;
             }
         }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public enum MemberRole {
+        
+        /// <remarks/>
+        Allow,
+        
+        /// <remarks/>
+        Block,
+        
+        /// <remarks/>
+        Reverse,
+        
+        /// <remarks/>
+        Pending,
+        
+        /// <remarks/>
+        Contributor,
+        
+        /// <remarks/>
+        ProfileGeneral,
+        
+        /// <remarks/>
+        ProfilePersonalContact,
+        
+        /// <remarks/>
+        ProfileProfessionalContact,
+        
+        /// <remarks/>
+        ProfileSocial,
+        
+        /// <remarks/>
+        ProfileExpression,
+        
+        /// <remarks/>
+        TwoWayRelationship,
+        
+        /// <remarks/>
+        OneWayRelationship,
     }
     
     /// <remarks/>
@@ -3460,6 +3503,9 @@ namespace MSNPSharp.MSNABSharingService {
         
         /// <remarks/>
         Accepted,
+        
+        /// <remarks/>
+        Pending,
     }
     
     /// <remarks/>
