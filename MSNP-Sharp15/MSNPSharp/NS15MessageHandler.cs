@@ -1444,7 +1444,7 @@ namespace MSNPSharp
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { group.Guid };
-            request.contacts = new ContactType[1];
+            request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid;
 
             abService.ABGroupContactAdd(request);
@@ -1470,7 +1470,7 @@ namespace MSNPSharp
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { group.Guid };
-            request.contacts = new ContactType[1];
+            request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid;
 
             abService.ABGroupContactDelete(request);
@@ -1546,8 +1546,7 @@ namespace MSNPSharp
             request.groupInfo.GroupInfo.name = groupName;
             request.groupInfo.GroupInfo.fMessenger = false;
             request.groupInfo.GroupInfo.groupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
-            request.groupInfo.GroupInfo.annotations = new Annotation[1];
-            request.groupInfo.GroupInfo.annotations[0] = new Annotation();
+            request.groupInfo.GroupInfo.annotations = new Annotation[] { new Annotation() };
             request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
 
@@ -1691,7 +1690,7 @@ namespace MSNPSharp
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.options = new ABContactAddRequestTypeOptions();
             request.options.EnableAllowListManagement = true;
-            request.contacts = new ContactType[1];
+            request.contacts = new ContactType[1] { new ContactType() };
             request.contacts[0].contactInfo = new contactInfoType();
             request.contacts[0].contactInfo.isMessengerUser = true;
             request.contacts[0].contactInfo.passportName = account;
@@ -1737,7 +1736,7 @@ namespace MSNPSharp
 
             ABContactDeleteRequestType request = new ABContactDeleteRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
-            request.contacts = new ContactIdType[1];
+            request.contacts = new ContactIdType[] { new ContactIdType() };
             request.contacts[0].contactId = contact.Guid;
 
             abService.ABContactDelete(request);
@@ -1899,7 +1898,7 @@ namespace MSNPSharp
 
             ABGroupUpdateRequestType request = new ABGroupUpdateRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
-            request.groups = new GroupType[1];
+            request.groups = new GroupType[1] { new GroupType() };
             request.groups[0].groupId = group.Guid;
             request.groups[0].propertiesChanged = "GroupName";
             request.groups[0].groupInfo = new groupInfoType();
