@@ -9,10 +9,6 @@ namespace MSNPSharp
 {
     internal enum XMLContactListTags
     {
-        Allow = 2,
-        Block = 4,
-        Reverse = 8,
-        Pending = 16,
         ContactList,
         MembershipList,
         AddressBook,
@@ -21,15 +17,15 @@ namespace MSNPSharp
         Group,
         contacts,
         Contact,
-        groupIds,
-        Messenger,
         Settings,
         contactType,
         Name,
         Value,
         Me,
         Annotations,
-        Annotation
+        Annotation,
+        Service,
+        Membership
     }
 
 
@@ -106,7 +102,7 @@ namespace MSNPSharp
             {
                 if (this.ContainsKey(account))
                 {
-                    if (this[account].lastchanged.CompareTo(range[account].lastchanged) <= 0)
+                    if (this[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
                     {
                         this[account] = range[account];
                     }

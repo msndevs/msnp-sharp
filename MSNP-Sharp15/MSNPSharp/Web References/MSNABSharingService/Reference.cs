@@ -13,7 +13,7 @@
 // 
 #pragma warning disable 1591
 
-namespace MSNPSharp.MSNSharingService {
+namespace MSNPSharp.MSNABSharingService {
     using System.Diagnostics;
     using System.Web.Services;
     using System.ComponentModel;
@@ -47,7 +47,7 @@ namespace MSNPSharp.MSNSharingService {
         
         /// <remarks/>
         public SharingServiceBinding() {
-            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNSharingService_SharingService;
+            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNABSharingService_SharingService;
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
@@ -4273,6 +4273,8 @@ namespace MSNPSharp.MSNSharingService {
         
         private string partnerScenarioField;
         
+        private string cacheKeyField;
+        
         public ABApplicationHeader() {
             this.applicationIdField = "09607671-1C32-421F-A6A6-CBFAA51AB5F4";
             this.isMigrationField = false;
@@ -4306,6 +4308,17 @@ namespace MSNPSharp.MSNSharingService {
             }
             set {
                 this.partnerScenarioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="token")]
+        public string CacheKey {
+            get {
+                return this.cacheKeyField;
+            }
+            set {
+                this.cacheKeyField = value;
             }
         }
     }

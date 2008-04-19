@@ -9,28 +9,106 @@ namespace MSNPSharp
 {
     internal class ContactInfo
     {
-        public string account;
-        public string guid;
-        public int membershipId;
-        public bool isMessengerUser;
-        public ClientType type;
+        private string account;
+
+        public string Account
+        {
+            get { return account; }
+            set { account = value; }
+        }
+        private string guid;
+
+        public string Guid
+        {
+            get { return guid; }
+            set { guid = value; }
+        }
+        private int membershipId;
+
+        public int MembershipId
+        {
+            get { return membershipId; }
+            set { membershipId = value; }
+        }
+        private bool isMessengerUser;
+
+        public bool IsMessengerUser
+        {
+            get { return isMessengerUser; }
+            set { isMessengerUser = value; }
+        }
+        private ClientType type;
+
+        public ClientType Type
+        {
+            get { return type; }
+            set { type = value; }
+        }
         //public MSNLists msnlist;
-        public string displayname;
-        public DateTime lastchanged;
-        public List<string> groups = new List<string>(0);
+        private string displayname;
+
+        public string DisplayName
+        {
+            get { return displayname; }
+            set { displayname = value; }
+        }
+        private DateTime lastchanged;
+
+        public DateTime LastChanged
+        {
+            get { return lastchanged; }
+            set { lastchanged = value; }
+        }
+        private List<string> groups = new List<string>(0);
+
+        public List<string> Groups
+        {
+            get { return groups; }
+            set { groups = value; }
+        }
     }
 
     internal struct GroupInfo
     {
-        public string guid;
-        public string name;
+        private string guid;
+
+        public string Guid
+        {
+            get { return guid; }
+            set { guid = value; }
+        }
+        private string name;
+
+        public string Name
+        {
+            get { return name; }
+            set { name = value; }
+        }
     }
 
     internal struct Service
     {
-        public int Id;
-        public string Type;
-        public DateTime LastChange;
+        private int id;
+
+        public int Id
+        {
+            get { return id; }
+            set { id = value; }
+        }
+        private string type;
+
+        public string Type
+        {
+            get { return type; }
+            set { type = value; }
+        }
+        private DateTime lastChange;
+
+        public DateTime LastChange
+        {
+            get { return lastChange; }
+            set { lastChange = value; }
+        }
     }
 
     internal enum MemberRole
@@ -42,6 +120,7 @@ namespace MSNPSharp
         Contributor,
         ProfileGeneral,
         ProfilePersonalContact,
+        ProfileProfessionalContact,
         ProfileSocial,
         ProfileExpression,
         TwoWayRelationship,
@@ -55,7 +134,12 @@ namespace MSNPSharp
     internal class XMLMembershipList : XMLContactList
     {
         private string fileName = "";
-        private int serviceId = 0;
+        private Dictionary<int, Service> services = new Dictionary<int, Service>(0);
+
+        public Dictionary<int, Service> Services
+        {
+            get { return services; }
+        }
         private Dictionary<MemberRole, Dictionary<string, ContactInfo>> rolelists
             = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>(0);
 
@@ -81,7 +165,8 @@ namespace MSNPSharp
                 if (rolelists[MemberRole.Block].ContainsKey(account))
                 {
                     contactlists |= MSNLists.BlockedList;
-                    contactlists ^= MSNLists.AllowedList;
+                    if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
+                        contactlists ^= MSNLists.AllowedList;
                 }
 
             return contactlists;
@@ -113,6 +198,21 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Combine the new services with old ones and get Messenger service's lastchange property.
+        /// </summary>
+        /// <param name="serviceRange"></param>
+        public void CombineService(Dictionary<int, Service> serviceRange)
+        {
+            foreach (Service service in serviceRange.Values)
+                services[service.Id] = service;
+            foreach (Service innerService in Services.Values)
+                if (innerService.Type == "Messenger")
+                    if (lastChange.CompareTo(innerService.LastChange) < 0)
+                        lastChange = innerService.LastChange;
+
+        }
+
+        /// <summary>
         /// Load the contact list from a file.
         /// </summary>
         /// <param name="filename"></param>
@@ -120,12 +220,12 @@ namespace MSNPSharp
         {
             base.LoadFromFile(filename);
             this.Clear();
-            MembershipParser msrp = new MembershipParser(doc.GetElementsByTagName(XMLContactListTags.MembershipList.ToString())[0]);
-            msrp.Parse();
-            AddRange(msrp.ContactList);
-            lastChange = msrp.LastChange;
-            serviceId = msrp.MessengerServiceId;
-            rolelists = msrp.MemberRoles;
+            XMLContactListParser parser = new XMLContactListParser(doc);
+            parser.Parse();
+            AddRange(parser.ContactList);
+            lastChange = parser.MembershipLastChange;
+            services = parser.ServiceList;
+            rolelists = parser.MemberShips;
         }
 
         /// <summary>
@@ -139,18 +239,34 @@ namespace MSNPSharp
             if (membershipRoot == null)
                 membershipRoot = CreateNode(XMLContactListTags.MembershipList.ToString(), null);
             membershipRoot.RemoveAll();
+            membershipRoot.AppendChild(CreateNode(MembershipListChildNodes.LastChanged.ToString(), XmlConvert.ToString(
+                lastChange, XmlDateTimeSerializationMode.RoundtripKind)));
+
+            XmlNode serviceRoot = CreateNode(MembershipListChildNodes.Services.ToString(), null);
+            XmlNode membersRoot = null;
+            foreach (int serviceId in services.Keys)
+            {
+                XmlNode serviceNode = CreateNode(XMLContactListTags.Service.ToString(), null);
+                serviceNode.AppendChild(CreateNode(ServiceChildNodes.Id.ToString(),
+                    XmlConvert.ToString(serviceId)));
+                serviceNode.AppendChild(CreateNode(ServiceChildNodes.Type.ToString(), services[serviceId].Type));
+                serviceNode.AppendChild(CreateNode(ServiceChildNodes.LastChange.ToString(),
+                    XmlConvert.ToString(services[serviceId].LastChange,
+                    XmlDateTimeSerializationMode.RoundtripKind)));
+                XmlNode membersRootTmp = CreateNode(ServiceChildNodes.Memberships.ToString(), null);
+                serviceNode.AppendChild(membersRootTmp);
+                serviceRoot.AppendChild(serviceNode);
+                if (services[serviceId].Type == "Messenger")
+                    membersRoot = membersRootTmp;
+            }
+            membershipRoot.AppendChild(serviceRoot);
+
             int[] roleArray = (int[])Enum.GetValues(typeof(MemberRole));
             foreach (int role in roleArray)
             {
                 if (rolelists.ContainsKey((MemberRole)role))
-                    membershipRoot.AppendChild(GetList((MemberRole)role));
+                    membersRoot.AppendChild(GetList((MemberRole)role));
             }
-            XmlNode owner = CreateNode(msFSMInput.Info.ToString(), null);
-            owner.AppendChild(CreateNode(msFSMInput.Id.ToString(), serviceId.ToString()));
-            owner.AppendChild(CreateNode(msFSMInput.Type.ToString(), XMLContactListTags.Messenger.ToString()));
-            owner.AppendChild(CreateNode(msFSMInput.LastChange.ToString(), XmlConvert.ToString(
-                lastChange, XmlDateTimeSerializationMode.RoundtripKind)));
-            membershipRoot.AppendChild(owner);
 
             SaveToHiddenMCL(filename);
         }
@@ -163,41 +279,36 @@ namespace MSNPSharp
             Save(fileName);
         }
 
-        public int MessengerServiceId
-        {
-            get { return serviceId; }
-            set { serviceId = value; }
-        }
-
         public Dictionary<MemberRole, Dictionary<string, ContactInfo>> MemberRoles
         {
             get { return rolelists; }
-            set { rolelists = value; }
+            //set { rolelists = value; }
         }
 
         private XmlNode GetList(MemberRole memberrole)
         {
-            XmlNode listroot = CreateNode(XMLContactListTags.Members.ToString(), null);
+            XmlNode listroot = CreateNode(XMLContactListTags.Membership.ToString(), null);
 
-            listroot.AppendChild(CreateNode(msFSMInput.MemberRole.ToString(), memberrole.ToString()));
+            listroot.AppendChild(CreateNode(MembershipsChildNodes.MemberRole.ToString(), memberrole.ToString()));
+            XmlNode membersRoot = CreateNode(MembershipsChildNodes.Members.ToString(), null);
+            
             foreach (ContactInfo cinfo in rolelists[memberrole].Values)
             {
-                XmlNode contactNode = doc.CreateElement(msFSMInput.Member.ToString());
+                XmlNode memberNode = CreateNode(XMLContactListTags.Members.ToString(), null);
                 if (cinfo != null/* && (cinfo.msnlist & list) == list*/)
                 {
-                    contactNode.AppendChild(CreateNode(msFSMInput.MembershipId.ToString(), cinfo.membershipId.ToString()));
-                    if (cinfo.type == ClientType.MessengerUser)
-                        contactNode.AppendChild(CreateNode(msFSMInput.PassportName.ToString(), cinfo.account));
-                    else
-                        contactNode.AppendChild(CreateNode(msFSMInput.Email.ToString(), cinfo.account));
+                    memberNode.AppendChild(CreateNode(MemberChildNodes.MembershipId.ToString(), cinfo.MembershipId.ToString()));
+                    memberNode.AppendChild(CreateNode(MemberChildNodes.Account.ToString(), cinfo.Account));
+                    memberNode.AppendChild(CreateNode(MemberChildNodes.DisplayName.ToString(), cinfo.DisplayName));
+                    memberNode.AppendChild(CreateNode(MemberChildNodes.LastChanged.ToString(),
+                        XmlConvert.ToString(cinfo.LastChanged, XmlDateTimeSerializationMode.RoundtripKind)));
+                    memberNode.AppendChild(CreateNode(MemberChildNodes.Type.ToString(),
+                        XmlConvert.ToString((int)cinfo.Type)));
 
-                    contactNode.AppendChild(CreateNode(msFSMInput.DisplayName.ToString(), cinfo.displayname));
-                    contactNode.AppendChild(CreateNode(msFSMInput.LastChanged.ToString(),
-                        XmlConvert.ToString(cinfo.lastchanged, XmlDateTimeSerializationMode.RoundtripKind)));
-                    listroot.AppendChild(contactNode);
+                    membersRoot.AppendChild(memberNode);
                 }
             }
-
+            listroot.AppendChild(membersRoot);
             return listroot;
         }
     }
@@ -227,12 +338,12 @@ namespace MSNPSharp
             if (addressbookRoot == null)
                 addressbookRoot = CreateNode(XMLContactListTags.AddressBook.ToString(), null);
 
-            AddressBookParser abparser = new AddressBookParser(addressbookRoot);
-            abparser.Parse();
-            AddRange(abparser.ContactList);
-            LastChange = abparser.LastChange;
-            dynamicItemLastChange = abparser.DynamicItemLastChange;
-            groups = abparser.GroupList;
+            XMLContactListParser parser = new XMLContactListParser(doc);
+            parser.Parse();
+            AddRange(parser.ContactList);
+            LastChange = parser.AddressBookLastChange;
+            dynamicItemLastChange = parser.DynamicItemLastChange;
+            groups = parser.GroupList;
 
             XmlNodeList annos = doc.GetElementsByTagName(XMLContactListTags.Annotation.ToString());
             foreach (XmlNode node in annos)
@@ -251,16 +362,14 @@ namespace MSNPSharp
             if (addressbookRoot == null)
                 addressbookRoot = CreateNode(XMLContactListTags.AddressBook.ToString(), null);
             addressbookRoot.RemoveAll();
-            //Add a CacheKey node here so our parser will have the same behavior when parsing the addressbook
-            addressbookRoot.AppendChild(CreateNode(abFSMInput.CacheKey.ToString(), abFSMInput.CacheKey.ToString()));
+
+            addressbookRoot.AppendChild(CreateNode(AddressBookChildNodes.LastChanged.ToString(), XmlConvert.ToString
+                (lastChange, XmlDateTimeSerializationMode.RoundtripKind)));
+            addressbookRoot.AppendChild(CreateNode(AddressBookChildNodes.DynamicItemLastChange.ToString(), XmlConvert.ToString
+                (dynamicItemLastChange, XmlDateTimeSerializationMode.RoundtripKind)));
+
             addressbookRoot.AppendChild(GetGroups());
             addressbookRoot.AppendChild(GetContacts());
-            XmlNode abInfo = CreateNode(abFSMInput.ab.ToString(), null);
-            abInfo.AppendChild(CreateNode(abFSMInput.lastChange.ToString(), XmlConvert.ToString
-                (lastChange, XmlDateTimeSerializationMode.RoundtripKind)));
-            abInfo.AppendChild(CreateNode(abFSMInput.DynamicItemLastChanged.ToString(), XmlConvert.ToString
-                (dynamicItemLastChange, XmlDateTimeSerializationMode.RoundtripKind)));
-            addressbookRoot.AppendChild(abInfo);
 
             XmlNode settingsroot = CreateNode(XMLContactListTags.Settings.ToString(), null);
             settingsroot.AppendChild(CreateNode(XMLContactListTags.contactType.ToString(), XMLContactListTags.Me.ToString()));
@@ -286,13 +395,13 @@ namespace MSNPSharp
 
         public void AddGroup(GroupInfo group)
         {
-            if (groups.ContainsKey(group.guid))
+            if (groups.ContainsKey(group.Guid))
             {
-                groups[group.guid] = group;
+                groups[group.Guid] = group;
             }
             else
             {
-                groups.Add(group.guid, group);
+                groups.Add(group.Guid, group);
             }
         }
 
@@ -327,8 +436,8 @@ namespace MSNPSharp
             foreach (string groupId in groups.Keys)
             {
                 XmlNode groupNode = CreateNode(XMLContactListTags.Group.ToString(), null);
-                groupNode.AppendChild(CreateNode(abFSMInput.groupId.ToString(), groupId));
-                groupNode.AppendChild(CreateNode(abFSMInput.name.ToString(), groups[groupId].name));
+                groupNode.AppendChild(CreateNode(GroupChildNodes.Guid.ToString(), groupId));
+                groupNode.AppendChild(CreateNode(GroupChildNodes.Name.ToString(), groups[groupId].Name));
                 grouproot.AppendChild(groupNode);
             }
             return grouproot;
@@ -342,28 +451,20 @@ namespace MSNPSharp
                 XmlNode contactNode = CreateNode(XMLContactListTags.Contact.ToString(), null); //This node MUST comes first.
                 if (cinfo != null)
                 {
-                    contactNode.AppendChild(CreateNode(abFSMInput.contactId.ToString(), cinfo.guid));
-                    if (cinfo.type == ClientType.MessengerUser)
+                    contactNode.AppendChild(CreateNode(ContactChildNodes.ContactId.ToString(), cinfo.Guid));
+                    contactNode.AppendChild(CreateNode(ContactChildNodes.Account.ToString(), cinfo.Account));
+                    contactNode.AppendChild(CreateNode(ContactChildNodes.DisplayName.ToString(), cinfo.DisplayName));
+                    contactNode.AppendChild(CreateNode(ContactChildNodes.IsMessengerUser.ToString(),
+                        XmlConvert.ToString(cinfo.IsMessengerUser)));
+
+                    XmlNode groupIdRoot = CreateNode(ContactChildNodes.Groups.ToString(), null);
+                    foreach (string guid in cinfo.Groups)
                     {
-                        contactNode.AppendChild(CreateNode(abFSMInput.email.ToString(), cinfo.account));
-                        contactNode.AppendChild(CreateNode(abFSMInput.isMessengerEnabled.ToString(),
-                            XmlConvert.ToString(cinfo.isMessengerUser)));
-                    }
-                    else
-                    {
-                        contactNode.AppendChild(CreateNode(abFSMInput.passportName.ToString(), cinfo.account));
-                        contactNode.AppendChild(CreateNode(abFSMInput.isMessengerUser.ToString(),
-                            XmlConvert.ToString(cinfo.isMessengerUser)));
-                    }
-                    contactNode.AppendChild(CreateNode(abFSMInput.displayName.ToString(), cinfo.displayname));
-                    contactNode.AppendChild(CreateNode(abFSMInput.lastChange.ToString(),
-                        XmlConvert.ToString(cinfo.lastchanged, XmlDateTimeSerializationMode.RoundtripKind)));
-                    XmlNode groupIdRoot = CreateNode(XMLContactListTags.groupIds.ToString(), null);
-                    foreach (string guid in cinfo.groups)
-                    {
-                        groupIdRoot.AppendChild(CreateNode(abFSMInput.guid.ToString(), guid));
+                        groupIdRoot.AppendChild(CreateNode(XMLContactListTags.Group.ToString(), guid));
                     }
                     contactNode.AppendChild(groupIdRoot);
+                    contactNode.AppendChild(CreateNode(ContactChildNodes.LastChanged.ToString(),
+                        XmlConvert.ToString(cinfo.LastChanged, XmlDateTimeSerializationMode.RoundtripKind)));
                     contactRoot.AppendChild(contactNode);
                 }
             }

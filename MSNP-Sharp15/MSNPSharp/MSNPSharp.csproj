@@ -44,7 +44,6 @@
     <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
-    <Compile Include="ContactPropertiesParser.cs" />
     <Compile Include="Conversation.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="DisplayImage.cs" />
@@ -114,15 +113,15 @@
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
-    <Compile Include="Web References\MSNSharingService\Reference.cs">
+    <Compile Include="Web References\MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
     <Compile Include="Wink.cs" />
     <Compile Include="XMLContactList.cs" />
+    <Compile Include="XMLContactListParser.cs" />
     <Compile Include="XMLList.cs" />
-    <Compile Include="XMLNodeEnumrator.cs" />
     <Compile Include="YIMMessage.cs" />
     <Compile Include="YIMMessageHandler.cs" />
   </ItemGroup>
@@ -133,47 +132,47 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Web References\MSNSharingService\ABContactAddResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABContactAddResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\ABContactUpdateResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABContactUpdateResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\ABFindAllResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABFindAllResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\ABGroupAddResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABGroupAddResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\ABGroupContactAddResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABGroupContactAddResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\ABGroupContactDeleteResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABGroupContactDeleteResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\ABGroupDeleteResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABGroupDeleteResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\ABGroupUpdateResponse.datasource">
+    <None Include="Web References\MSNABSharingService\ABGroupUpdateResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\AddMemberResponse.datasource">
+    <None Include="Web References\MSNABSharingService\AddMemberResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\DeleteMemberResponse.datasource">
+    <None Include="Web References\MSNABSharingService\DeleteMemberResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\FindMembershipResponse.datasource">
+    <None Include="Web References\MSNABSharingService\FindMembershipResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNSharingService\msnab_datatypes.xsd">
+    <None Include="Web References\MSNABSharingService\msnab_datatypes.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Web References\MSNSharingService\msnab_servicetypes.xsd">
+    <None Include="Web References\MSNABSharingService\msnab_servicetypes.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Web References\MSNSharingService\msnab_sharingservice.wsdl" />
-    <None Include="Web References\MSNSharingService\Reference.map">
+    <None Include="Web References\MSNABSharingService\msnab_sharingservice.wsdl" />
+    <None Include="Web References\MSNABSharingService\Reference.map">
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
@@ -192,16 +191,16 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="D:\Documents and Settings\Administrator\桌面\MSNP资料\ABWS\msnab_sharingservice.wsdl">
+    <WebReferenceUrl Include="http://localhost/msnws/msnab_sharingservice.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNSharingService\</RelPath>
-      <UpdateFromURL>D:\Documents and Settings\Administrator\桌面\MSNP资料\ABWS\msnab_sharingservice.wsdl</UpdateFromURL>
+      <RelPath>Web References\MSNABSharingService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/msnab_sharingservice.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNSharingService_SharingService</CachedSettingsPropName>
+      <CachedSettingsPropName>MSNPSharp_MSNABSharingService_SharingService</CachedSettingsPropName>
     </WebReferenceUrl>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
