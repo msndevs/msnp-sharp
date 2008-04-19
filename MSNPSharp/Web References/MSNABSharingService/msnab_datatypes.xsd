@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns="http://www.msn.com/webservices/AddressBook" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns="http://www.msn.com/webservices/AddressBook" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:complexType name="HandleType">
     <xsd:sequence>
       <xsd:element name="Id" type="xsd:integer" />
@@ -234,6 +234,7 @@
       <xsd:element minOccurs="0" name="displayName" type="xsd:string" />
       <xsd:element minOccurs="0" name="puid" type="xsd:integer" />
       <xsd:element minOccurs="0" name="CID" type="xsd:integer" />
+      <xsd:element minOccurs="0" name="BrandIdList" type="xsd:anyType" />
       <xsd:element minOccurs="0" name="comment" type="xsd:string" />
       <xsd:element minOccurs="0" name="IsNotMobileVisible" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="isMobileIMEnabled" type="xsd:boolean" />

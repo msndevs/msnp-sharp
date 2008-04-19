@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns="http://www.msn.com/webservices/AddressBook" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns="http://www.msn.com/webservices/AddressBook" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:include schemaLocation="msnab_datatypes.xsd" />
   <xsd:element name="ABApplicationHeader">
     <xsd:complexType>
@@ -118,10 +118,10 @@
   <xsd:element name="ABFindAll" type="msnab:ABFindAllRequestType" />
   <xsd:complexType name="ABFindAllResultType">
     <xsd:sequence>
-      <xsd:element name="groups">
+      <xsd:element minOccurs="0" name="groups">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Group" type="msnab:GroupType" />
+            <xsd:element maxOccurs="unbounded" name="Group" type="msnab:GroupType" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
@@ -129,6 +129,13 @@
         <xsd:complexType>
           <xsd:sequence>
             <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="DynamicItems">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="DynamicItems" type="xsd:anyType" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
@@ -156,11 +163,13 @@
                   <xsd:element name="SubscribeExternalPartner" type="xsd:boolean" />
                   <xsd:element name="NotifyExternalPartner" type="xsd:boolean" />
                   <xsd:element name="AddressBookType" type="xsd:string" />
+                  <xsd:element name="MessengerApplicationServiceCreated" type="xsd:boolean" />
                 </xsd:sequence>
               </xsd:complexType>
             </xsd:element>
             <xsd:element name="lastChange" type="xsd:dateTime" />
             <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime" />
+            <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime" />
             <xsd:element name="createDate" type="xsd:dateTime" />
             <xsd:element name="propertiesChanged" type="xsd:string" />
           </xsd:sequence>
