@@ -403,9 +403,9 @@ namespace MSNPSharp
         private int syncContactsCount = 0;
 
         /// <summary>
-        /// Keep track whether a synchronization has been completed so we can warn the client programmer
+        /// Keep track whether a address book synchronization has been completed so we can warn the client programmer
         /// </summary>
-        private bool synSended = false;
+        private bool abSynchronized = false;
 
         /// <summary>
         /// Keeps track of the last received synchronization identifier
@@ -433,7 +433,7 @@ namespace MSNPSharp
         /// <param name="e"></param>
         private void NSMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
         {
-            synSended = false;
+            abSynchronized = false;
             IMessageProcessor processor = (IMessageProcessor)sender;
             OnProcessorConnectCallback(processor);
         }
@@ -471,7 +471,7 @@ namespace MSNPSharp
             contactList.Clear();
             contactGroups.Clear();
 
-            synSended = false;
+            abSynchronized = false;
         }
 
         /// <summary>
@@ -868,7 +868,7 @@ namespace MSNPSharp
         /// </remarks>
         public virtual void SynchronizeContactList()
         {
-            if (synSended)
+            if (abSynchronized)
             {
                 if (Settings.TraceSwitch.TraceWarning)
                     Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized. Make sure the AutoSynchronize property is set to false in order to manually synchronize the contact list.", "NS11MessageHandler");
@@ -983,7 +983,7 @@ namespace MSNPSharp
                         {
                             if (null != membership.Members)
                             {
-                                MemberRole lst = (MemberRole)Enum.Parse(typeof(MemberRole), membership.MemberRole.ToString());
+                                MemberRole lst = membership.MemberRole;
                                 if (!mShips.ContainsKey(lst))
                                 {
                                     mShips[lst] = new Dictionary<string, ContactInfo>();
@@ -1185,10 +1185,10 @@ namespace MSNPSharp
 
         private void OnADLReceived(NSMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK" && synSended == false && --adlcount <= 0)
+            if (message.CommandValues[1].ToString() == "OK" && abSynchronized == false && --adlcount <= 0)
             {
                 // set this so the user can set initial presence
-                synSended = true;
+                abSynchronized = true;
                 adlcount = 0;
 
                 if (AutoSynchronize == true)
@@ -1203,7 +1203,7 @@ namespace MSNPSharp
                 if (SynchronizationCompleted != null)
                 {
                     SynchronizationCompleted(this, new EventArgs());
-                    synSended = true;
+                    abSynchronized = true;
                 }
 
             }
@@ -1701,7 +1701,7 @@ namespace MSNPSharp
         public virtual void SetPresenceStatus(PresenceStatus status)
         {
             // check whether we are allowed to send a CHG command
-            if (synSended == false)
+            if (abSynchronized == false)
                 throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
             string context = "";
@@ -2676,7 +2676,7 @@ namespace MSNPSharp
             if (syncContactsCount <= 0)
             {
                 // set this so the user can set initial presence
-                synSended = true;
+                abSynchronized = true;
 
                 if (AutoSynchronize == true)
                     OnSignedIn();
@@ -2934,7 +2934,7 @@ namespace MSNPSharp
             {
                 syncContactsCount = 0;
                 // set this so the user can set initial presence
-                synSended = true;
+                abSynchronized = true;
 
                 if (AutoSynchronize == true)
                     OnSignedIn();
@@ -2945,7 +2945,7 @@ namespace MSNPSharp
                 if (SynchronizationCompleted != null)
                 {
                     SynchronizationCompleted(this, new EventArgs());
-                    synSended = true;
+                    abSynchronized = true;
                 }
             }
             else
