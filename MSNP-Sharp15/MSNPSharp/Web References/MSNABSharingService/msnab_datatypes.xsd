@@ -293,7 +293,7 @@
     <xsd:sequence>
       <xsd:element name="contactEmailType" type="msnab:ContactEmailTypeType" />
       <xsd:element name="email" type="xsd:string" />
-      <xsd:element name="IsMessengerEnabled" type="xsd:boolean" />
+      <xsd:element name="isMessengerEnabled" type="xsd:boolean" />
       <xsd:element name="Capability" type="xsd:integer" />
       <xsd:element name="MessengerEnabledExternally" type="xsd:boolean" />
       <xsd:element name="propertiesChanged" type="xsd:string" />

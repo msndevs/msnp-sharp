@@ -1067,7 +1067,7 @@ namespace MSNPSharp
                                 ci.Type = ClientType.YahooMessengerUser;
 
                             ci.Account = contactType.contactInfo.emails[0].email;
-                            ci.IsMessengerUser |= contactType.contactInfo.emails[0].IsMessengerEnabled;
+                            ci.IsMessengerUser |= contactType.contactInfo.emails[0].isMessengerEnabled;
                             ci.DisplayName = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? ci.Account : contactType.contactInfo.quickName;
                         }
 
