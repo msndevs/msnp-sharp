@@ -1496,7 +1496,7 @@ namespace MSNPSharp.MSNABSharingService {
         }
         
         /// <remarks/>
-        public bool IsMessengerEnabled {
+        public bool isMessengerEnabled {
             get {
                 return this.isMessengerEnabledField;
             }
