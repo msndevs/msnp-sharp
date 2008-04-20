@@ -4,6 +4,7 @@ using System.Xml;
 using System.IO;
 using MSNPSharp.IO;
 using System.Globalization;
+using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
 
 namespace MSNPSharp
 {
@@ -129,23 +130,6 @@ namespace MSNPSharp
         {
             return Type;
         }
-    }
-
-    internal enum MemberRole
-    {
-        Allow,
-        Block,
-        Reverse,
-        Pending,
-        Contributor,
-        ProfileGeneral,
-        ProfilePersonalContact,
-        ProfileProfessionalContact,
-        ProfileSocial,
-        ProfileExpression,
-        TwoWayRelationship,
-        OneWayRelationship
-
     }
 
     /// <summary>
