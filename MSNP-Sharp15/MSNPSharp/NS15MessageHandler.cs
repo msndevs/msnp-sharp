@@ -1,4 +1,4 @@
-#define TRACE
+﻿#define TRACE
 
 #region Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
 /*
@@ -904,7 +904,7 @@ namespace MSNPSharp
                         {
                             if (null != membership.Members)
                             {
-                                MemberRole lst = membership.MemberRole;
+                                MemberRole lst = (MemberRole)Enum.Parse(typeof(MemberRole),membership.MemberRole.ToString());
                                 if (!mShips.ContainsKey(lst))
                                 {
                                     mShips[lst] = new Dictionary<string, ContactInfo>();
@@ -1684,7 +1684,6 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15 MSNP14 MSNP13", "CVR0" }));
-            //MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15 MSNP14", "CVR0" }));
         }
 
 

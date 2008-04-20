@@ -4,7 +4,6 @@ using System.Xml;
 using System.IO;
 using MSNPSharp.IO;
 using System.Globalization;
-using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
 
 namespace MSNPSharp
 {
@@ -67,6 +66,16 @@ namespace MSNPSharp
             get { return groups; }
             set { groups = value; }
         }
+
+        public override string ToString()
+        {
+            string debugstr = "";
+            if (account != null)
+                debugstr += account + "  |  isMessengerUser:  " + IsMessengerUser.ToString();
+            if (displayname != null)
+                debugstr += "  |  diaplayName:  " + displayname;
+            return debugstr;
+        }
     }
 
     internal struct GroupInfo
@@ -84,6 +93,11 @@ namespace MSNPSharp
         {
             get { return name; }
             set { name = value; }
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
     }
 
@@ -110,14 +124,19 @@ namespace MSNPSharp
             get { return lastChange; }
             set { lastChange = value; }
         }
+
+        public override string ToString()
+        {
+            return Type;
+        }
     }
-    /*
+
     internal enum MemberRole
     {
-        Allow = 2,
-        Block = 4,
-        Reverse = 8,
-        Pending = 16,
+        Allow,
+        Block,
+        Reverse,
+        Pending,
         Contributor,
         ProfileGeneral,
         ProfilePersonalContact,
@@ -128,7 +147,6 @@ namespace MSNPSharp
         OneWayRelationship
 
     }
-     * */
 
     /// <summary>
     /// XML Membership List file maintainer
