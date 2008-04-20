@@ -73,8 +73,14 @@ namespace MSNPSharp
         /// </summary>
         public MSNLists AffectedList
         {
-            get { return affectedList; }
-            set { affectedList = value; }
+            get
+            {
+                return affectedList;
+            }
+            set
+            {
+                affectedList = value;
+            }
         }
 
         /// <summary>
@@ -102,8 +108,14 @@ namespace MSNPSharp
         /// </summary>
         public SignedOffReason SignedOffReason
         {
-            get { return signedOffReason; }
-            set { signedOffReason = value; }
+            get
+            {
+                return signedOffReason;
+            }
+            set
+            {
+                signedOffReason = value;
+            }
         }
 
         /// <summary>
@@ -132,8 +144,14 @@ namespace MSNPSharp
         /// </summary>
         public int SecondsToWait
         {
-            get { return secondsToWait; }
-            set { secondsToWait = value; }
+            get
+            {
+                return secondsToWait;
+            }
+            set
+            {
+                secondsToWait = value;
+            }
         }
 
         /// <summary>
@@ -166,8 +184,14 @@ namespace MSNPSharp
         /// </summary>
         public Contact Contact
         {
-            get { return contact; }
-            set { contact = value; }
+            get
+            {
+                return contact;
+            }
+            set
+            {
+                contact = value;
+            }
         }
 
         /// <summary>
@@ -179,8 +203,14 @@ namespace MSNPSharp
         /// </summary>
         public MSNLists AffectedList
         {
-            get { return affectedList; }
-            set { affectedList = value; }
+            get
+            {
+                return affectedList;
+            }
+            set
+            {
+                affectedList = value;
+            }
         }
 
         /// <summary>
@@ -211,8 +241,14 @@ namespace MSNPSharp
         /// </summary>
         public MSNError MSNError
         {
-            get { return msnError; }
-            set { msnError = value; }
+            get
+            {
+                return msnError;
+            }
+            set
+            {
+                msnError = value;
+            }
         }
 
 
@@ -447,11 +483,16 @@ namespace MSNPSharp
         {
             switch (name)
             {
-                case "AL": return MSNLists.AllowedList;
-                case "FL": return MSNLists.ForwardList;
-                case "BL": return MSNLists.BlockedList;
-                case "RL": return MSNLists.ReverseList;
-                case "PL": return MSNLists.PendingList;
+                case "AL":
+                    return MSNLists.AllowedList;
+                case "FL":
+                    return MSNLists.ForwardList;
+                case "BL":
+                    return MSNLists.BlockedList;
+                case "RL":
+                    return MSNLists.ReverseList;
+                case "PL":
+                    return MSNLists.PendingList;
             }
             throw new MSNPSharpException("Unknown MSNList type");
         }
@@ -465,11 +506,16 @@ namespace MSNPSharp
         {
             switch (list)
             {
-                case MSNLists.AllowedList: return "AL";
-                case MSNLists.ForwardList: return "FL";
-                case MSNLists.BlockedList: return "BL";
-                case MSNLists.ReverseList: return "RL";
-                case MSNLists.PendingList: return "PL";
+                case MSNLists.AllowedList:
+                    return "AL";
+                case MSNLists.ForwardList:
+                    return "FL";
+                case MSNLists.BlockedList:
+                    return "BL";
+                case MSNLists.ReverseList:
+                    return "RL";
+                case MSNLists.PendingList:
+                    return "PL";
             }
             throw new MSNPSharpException("Unknown MSNList type");
         }
@@ -713,8 +759,14 @@ namespace MSNPSharp
         /// </summary>
         public bool AutoSynchronize
         {
-            get { return autoSynchronize; }
-            set { autoSynchronize = value; }
+            get
+            {
+                return autoSynchronize;
+            }
+            set
+            {
+                autoSynchronize = value;
+            }
         }
 
         /// <summary>
@@ -722,7 +774,10 @@ namespace MSNPSharp
         /// </summary>
         public bool IsSignedIn
         {
-            get { return isSignedIn; }
+            get
+            {
+                return isSignedIn;
+            }
         }
 
         /// <summary>
@@ -730,7 +785,10 @@ namespace MSNPSharp
         /// </summary>
         public IPEndPoint ExternalEndPoint
         {
-            get { return externalEndPoint; }
+            get
+            {
+                return externalEndPoint;
+            }
         }
 
         /// <summary>
@@ -738,7 +796,10 @@ namespace MSNPSharp
         /// </summary>
         public ContactList ContactList
         {
-            get { return contactList; }
+            get
+            {
+                return contactList;
+            }
         }
 
         /// <summary>
@@ -746,7 +807,10 @@ namespace MSNPSharp
         /// </summary>
         public Owner Owner
         {
-            get { return owner; }
+            get
+            {
+                return owner;
+            }
         }
 
         /// <summary>
@@ -754,7 +818,10 @@ namespace MSNPSharp
         /// </summary>
         public ContactGroupList ContactGroups
         {
-            get { return contactGroups; }
+            get
+            {
+                return contactGroups;
+            }
         }
 
         /// <summary>
@@ -762,8 +829,14 @@ namespace MSNPSharp
         /// </summary>
         public Credentials Credentials
         {
-            get { return credentials; }
-            set { credentials = value; }
+            get
+            {
+                return credentials;
+            }
+            set
+            {
+                credentials = value;
+            }
         }
 
         /// <summary>
@@ -772,8 +845,14 @@ namespace MSNPSharp
         /// </summary>
         public ConnectivitySettings ConnectivitySettings
         {
-            get { return connectivitySettings; }
-            set { connectivitySettings = value; }
+            get
+            {
+                return connectivitySettings;
+            }
+            set
+            {
+                connectivitySettings = value;
+            }
         }
 
         #region Message sending methods
@@ -904,7 +983,7 @@ namespace MSNPSharp
                         {
                             if (null != membership.Members)
                             {
-                                MemberRole lst = (MemberRole)Enum.Parse(typeof(MemberRole),membership.MemberRole.ToString());
+                                MemberRole lst = (MemberRole)Enum.Parse(typeof(MemberRole), membership.MemberRole.ToString());
                                 if (!mShips.ContainsKey(lst))
                                 {
                                     mShips[lst] = new Dictionary<string, ContactInfo>();
@@ -975,21 +1054,22 @@ namespace MSNPSharp
                 {
                     if (null != contactType.contactInfo)
                     {
-                        string account = contactType.contactInfo.passportName;
-                        if (contactType.contactInfo.emails != null && account == null)
-                            account = contactType.contactInfo.emails[0].email;
-
-                        string CID = contactType.contactInfo.CID;
-
                         ContactInfo ci = new ContactInfo();
-                        ci.Account = account;
                         ci.Guid = contactType.contactId;
-
+                        ci.Account = contactType.contactInfo.passportName;
                         ci.DisplayName = contactType.contactInfo.displayName;
                         ci.LastChanged = contactType.lastChange;
                         ci.IsMessengerUser = contactType.contactInfo.isMessengerUser;
-                        if (contactType.contactInfo.emails != null)
+
+                        if (contactType.contactInfo.emails != null && ci.Account == null)
+                        {
+                            if (int.Parse(contactType.contactInfo.emails[0].Capability) == (int)ClientType.YahooMessengerUser)
+                                ci.Type = ClientType.YahooMessengerUser;
+
+                            ci.Account = contactType.contactInfo.emails[0].email;
                             ci.IsMessengerUser |= contactType.contactInfo.emails[0].IsMessengerEnabled;
+                            ci.DisplayName = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? ci.Account : contactType.contactInfo.quickName;
+                        }
 
                         if (null != contactType.contactInfo.annotations)
                         {
@@ -1032,7 +1112,6 @@ namespace MSNPSharp
                         }
                         ci.Groups = new List<string>(groupids);
                         diccontactList.Add(ci.Account, ci);
-
                     }
                 }
             }
@@ -1074,26 +1153,27 @@ namespace MSNPSharp
 
             SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
-            // Initial ADL --> Combine (FL+AL+BL) and send...
-            List<string> initialadl = new List<string>();
+           /*
             foreach (string account in diccontactList.Keys)
             {
                 if (MemberShipList.ContainsKey(account))
                     if (!initialadl.Contains(account))
                         initialadl.Add(account);
             }
+            */
 
-            if (initialadl.Count == 0)
+            if (MemberShipList.Keys.Count == 0)
             {
                 OnADLReceived(new NSMessage("ADL", new string[] { "0", "OK" }));
             }
             else
             {
-                foreach (string str in ConstructADLString(initialadl))
+                foreach (string str in ConstructADLString())
                 {
                     MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { str.Length.ToString() }));
                     MessageProcessor.SendMessage(new NSMessage(str));
                 }
+
             }
 
             string mydispName = props["displayname"];
@@ -1131,22 +1211,18 @@ namespace MSNPSharp
         }
 
         private int adlcount = 0;
-        private string[] ConstructADLString(List<string> initialadl)
+        private string[] ConstructADLString()
         {
             Dictionary<String, List<String>> container = new Dictionary<String, List<String>>();
 
-            foreach (string contact in initialadl)
+            foreach (Contact contact in ContactList.All)
             {
+                String[] usernameanddomain = contact.Mail.Split('@');
+                String type = ((int)contact.ClientType).ToString();
+                String domain = usernameanddomain[1];
+                String name = usernameanddomain[0];
                 String list = String.Empty;
-                String domain = contact.Split('@')[1];
-                String name = contact.Split('@')[0];
-                list = "3";
-                String type = "1";
-                
-               
-                //String type = ((int)contact.ClientType).ToString();
 
-                /*
                 if (contact.OnForwardList)
                 {
                     list = "3";
@@ -1159,13 +1235,14 @@ namespace MSNPSharp
                 {
                     list = ((int)(MSNLists.AllowedList)).ToString();
                 }
-                 * 
-                 * */
 
                 if (!container.ContainsKey(domain.ToLower(CultureInfo.InvariantCulture)))
                 {
                     container[domain.ToLower(CultureInfo.InvariantCulture)] = new List<string>();
                 }
+
+                Console.WriteLine(contact.Mail + " is a " + contact.ClientType.ToString() + " and list is " + list.ToString());
+
 
                 container[domain.ToLower(CultureInfo.InvariantCulture)].Add("<c n=\"" + name + "\" l=\"" + list + "\" t=\"" + type + "\"/>");
             }
@@ -1195,6 +1272,188 @@ namespace MSNPSharp
             }
             return ret.ToArray();
         }
+    
+
+
+        #region Async Contact & Group Operations
+
+        /// <summary>
+        /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
+        /// </summary>
+        /// <param name="account">An e-mail adress to add</param>
+        public virtual void AddNewContact(string account)
+        {
+            ABServiceBinding abService = new ABServiceBinding();
+            abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.IsMigration = false;
+            abService.ABApplicationHeaderValue.PartnerScenario = "ContactSave";
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+
+            abService.ABAuthHeaderValue = new ABAuthHeader();
+            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
+            abService.ABContactAddCompleted += delegate(object service, ABContactAddCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    Contact newcontact = ContactList.GetContact(account);
+                    newcontact.SetGuid(e.Result.ABContactAddResult.guid);
+                    newcontact.NSMessageHandler = this;
+                    if (ContactAdded != null)
+                    {
+                        ContactAdded(this, new ListMutateEventArgs(newcontact, MSNLists.AllowedList | MSNLists.ForwardList));
+                    }
+                    //Add the new contact to our allowed and forward list,or we can't see its state
+                    newcontact.OnAllowedList = true;
+                    newcontact.OnForwardList = true;
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
+
+            ABContactAddRequestType request = new ABContactAddRequestType();
+            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.options = new ABContactAddRequestTypeOptions();
+            request.options.EnableAllowListManagement = true;
+            request.contacts = new ContactType[1] { new ContactType() };
+            request.contacts[0].contactInfo = new contactInfoType();
+            request.contacts[0].contactInfo.isMessengerUser = true;
+            request.contacts[0].contactInfo.passportName = account;
+            request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
+            request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
+            request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = account;
+
+            abService.ABContactAddAsync(request, new object());
+        }
+
+        /// <summary>
+        /// Remove the specified contact from your forward and allow list. Note that remote contacts that are blocked remain blocked.
+        /// </summary>
+        /// <param name="contact">Contact to remove</param>
+        public virtual void RemoveContact(Contact contact)
+        {
+            ABServiceBinding abService = new ABServiceBinding();
+            abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.IsMigration = false;
+            abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+
+            abService.ABAuthHeaderValue = new ABAuthHeader();
+            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
+            abService.ABContactDeleteCompleted += delegate(object service, ABContactDeleteCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    contact.NSMessageHandler = null;
+                    ContactList.RemoveContact(contact.Mail);
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
+
+            ABContactDeleteRequestType request = new ABContactDeleteRequestType();
+            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.contacts = new ContactIdType[] { new ContactIdType() };
+            request.contacts[0].contactId = contact.Guid;
+
+            abService.ABContactDeleteAsync(request, new object());
+        }
+
+        /// <summary>
+        /// Send a request to the server to add a new contactgroup.
+        /// </summary>
+        /// <param name="groupName">The name of the group to add</param>
+        internal virtual void AddContactGroup(string groupName)
+        {
+            ABServiceBinding abService = new ABServiceBinding();
+            abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.IsMigration = false;
+            abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+
+            abService.ABAuthHeaderValue = new ABAuthHeader();
+            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
+            abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, this));
+                    if (ContactGroupAdded != null)
+                    {
+                        ContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)ContactGroups[e.Result.ABGroupAddResult.guid]));
+                    }
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
+
+            ABGroupAddRequestType request = new ABGroupAddRequestType();
+            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.groupAddOptions = new ABGroupAddRequestTypeGroupAddOptions();
+            request.groupAddOptions.fRenameOnMsgrConflict = false;
+            request.groupInfo = new ABGroupAddRequestTypeGroupInfo();
+            request.groupInfo.GroupInfo = new groupInfoType();
+            request.groupInfo.GroupInfo.name = groupName;
+            request.groupInfo.GroupInfo.fMessenger = false;
+            request.groupInfo.GroupInfo.groupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
+            request.groupInfo.GroupInfo.annotations = new Annotation[] { new Annotation() };
+            request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
+            request.groupInfo.GroupInfo.annotations[0].Value = "1";
+
+            abService.ABGroupAddAsync(request, new object());
+        }
+
+        /// <summary>
+        /// Send a request to the server to remove a contactgroup. Any contacts in the group will also be removed from the forward list.
+        /// </summary>
+        /// <param name="contactGroup">The group to remove</param>
+        internal virtual void RemoveContactGroup(ContactGroup contactGroup)
+        {
+            ABServiceBinding abService = new ABServiceBinding();
+            abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.IsMigration = false;
+            abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+
+            abService.ABAuthHeaderValue = new ABAuthHeader();
+            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
+            abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    foreach (Contact cnt in ContactList.All)
+                    {
+                        if (cnt.ContactGroups.Contains(contactGroup))
+                        {
+                            cnt.ContactGroups.Remove(contactGroup);
+                        }
+                    }
+
+                    ContactGroups.RemoveGroup(contactGroup);
+
+                    if (ContactGroupRemoved != null)
+                    {
+                        ContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
+                    }
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
+
+            ABGroupDeleteRequestType request = new ABGroupDeleteRequestType();
+            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.groupFilter = new groupFilterType();
+            request.groupFilter.groupIds = new string[] { contactGroup.Guid };
+
+            abService.ABGroupDeleteAsync(request, new object());
+        }
 
         public virtual void AddContactToGroup(Contact contact, ContactGroup group)
         {
@@ -1208,6 +1467,15 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
+            abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    contact.AddContactToGroup(group);
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
 
             ABGroupContactAddRequestType request = new ABGroupContactAddRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
@@ -1216,10 +1484,7 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid;
 
-            abService.ABGroupContactAdd(request);
-            abService.Dispose();
-
-            contact.AddContactToGroup(group);
+            abService.ABGroupContactAddAsync(request, new object());
         }
 
         public virtual void RemoveContactFromGroup(Contact contact, ContactGroup group)
@@ -1234,6 +1499,15 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
+            abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    contact.RemoveContactFromGroup(group);
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
 
             ABGroupContactDeleteRequestType request = new ABGroupContactDeleteRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
@@ -1242,11 +1516,47 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid;
 
-            abService.ABGroupContactDelete(request);
-            abService.Dispose();
-
-            contact.RemoveContactFromGroup(group);
+            abService.ABGroupContactDeleteAsync(request, new object());
         }
+
+        /// <summary>
+        /// Set the name of a contact group
+        /// </summary>
+        /// <param name="group">The contactgroup which name will be set</param>
+        /// <param name="newGroupName">The new name</param>
+        internal virtual void RenameGroup(ContactGroup group, string newGroupName)
+        {
+            ABServiceBinding abService = new ABServiceBinding();
+            abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.IsMigration = false;
+            abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+
+            abService.ABAuthHeaderValue = new ABAuthHeader();
+            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
+            abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    group.SetName(newGroupName);
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
+
+            ABGroupUpdateRequestType request = new ABGroupUpdateRequestType();
+            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.groups = new GroupType[1] { new GroupType() };
+            request.groups[0].groupId = group.Guid;
+            request.groups[0].propertiesChanged = "GroupName";
+            request.groups[0].groupInfo = new groupInfoType();
+
+            abService.ABGroupUpdateAsync(request, new object());
+        }
+
+        #endregion
 
         /// <summary>
         /// Send the server a request for the contact's screen name.
@@ -1273,10 +1583,14 @@ namespace MSNPSharp
                 return;
 
             // check whether the update is necessary
-            if (list == MSNLists.ForwardList && contact.OnForwardList) return;
-            if (list == MSNLists.BlockedList && contact.OnBlockedList) return;
-            if (list == MSNLists.AllowedList && contact.OnAllowedList) return;
-            if (list == MSNLists.ReverseList && contact.OnReverseList) return;
+            if (list == MSNLists.ForwardList && contact.OnForwardList)
+                return;
+            if (list == MSNLists.BlockedList && contact.OnBlockedList)
+                return;
+            if (list == MSNLists.AllowedList && contact.OnAllowedList)
+                return;
+            if (list == MSNLists.ReverseList && contact.OnReverseList)
+                return;
 
             string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
             payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
@@ -1287,94 +1601,6 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSMessage(payload));
         }
-
-
-        /// <summary>
-        /// Send a request to the server to add a new contactgroup.
-        /// </summary>
-        /// <param name="groupName">The name of the group to add</param>
-        internal virtual void AddContactGroup(string groupName)
-        {
-            ABServiceBinding abService = new ABServiceBinding();
-            abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABApplicationHeaderValue.IsMigration = false;
-            abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
-
-            abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
-            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
-
-            ABGroupAddRequestType request = new ABGroupAddRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
-            request.groupAddOptions = new ABGroupAddRequestTypeGroupAddOptions();
-            request.groupAddOptions.fRenameOnMsgrConflict = false;
-            request.groupInfo = new ABGroupAddRequestTypeGroupInfo();
-            request.groupInfo.GroupInfo = new groupInfoType();
-            request.groupInfo.GroupInfo.name = groupName;
-            request.groupInfo.GroupInfo.fMessenger = false;
-            request.groupInfo.GroupInfo.groupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
-            request.groupInfo.GroupInfo.annotations = new Annotation[] { new Annotation() };
-            request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
-            request.groupInfo.GroupInfo.annotations[0].Value = "1";
-
-            ABGroupAddResponse response = abService.ABGroupAdd(request);
-            abService.Dispose();
-
-            if (null != response.ABGroupAddResult)
-            {
-                ContactGroups.AddGroup(new ContactGroup(groupName, response.ABGroupAddResult.guid, this));
-                if (ContactGroupAdded != null)
-                {
-                    ContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)ContactGroups[response.ABGroupAddResult.guid]));
-                }
-            }
-        }
-
-
-
-        /// <summary>
-        /// Send a request to the server to remove a contactgroup. Any contacts in the group will also be removed from the forward list.
-        /// </summary>
-        /// <param name="contactGroup">The group to remove</param>
-        internal virtual void RemoveContactGroup(ContactGroup contactGroup)
-        {
-            ABServiceBinding abService = new ABServiceBinding();
-            abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABApplicationHeaderValue.IsMigration = false;
-            abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
-
-            abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
-            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
-
-            ABGroupDeleteRequestType request = new ABGroupDeleteRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
-            request.groupFilter = new groupFilterType();
-            request.groupFilter.groupIds = new string[] { contactGroup.Guid };
-
-            abService.ABGroupDelete(request);
-            abService.Dispose();
-
-            foreach (Contact cnt in ContactList.All)
-            {
-                if (cnt.ContactGroups.Contains(contactGroup))
-                {
-                    cnt.ContactGroups.Remove(contactGroup);
-                }
-            }
-
-            ContactGroups.RemoveGroup(contactGroup);
-
-            if (ContactGroupRemoved != null)
-            {
-                ContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
-            }
-        }
-
 
         /// <summary>
         /// Send a request to the server to remove a contact from a specific list.
@@ -1387,10 +1613,14 @@ namespace MSNPSharp
                 return;
 
             // check whether the update is necessary
-            if (list == MSNLists.ForwardList && !contact.OnForwardList) return;
-            if (list == MSNLists.BlockedList && !contact.OnBlockedList) return;
-            if (list == MSNLists.AllowedList && !contact.OnAllowedList) return;
-            if (list == MSNLists.PendingList && !contact.OnPendingList) return;
+            if (list == MSNLists.ForwardList && !contact.OnForwardList)
+                return;
+            if (list == MSNLists.BlockedList && !contact.OnBlockedList)
+                return;
+            if (list == MSNLists.AllowedList && !contact.OnAllowedList)
+                return;
+            if (list == MSNLists.PendingList && !contact.OnPendingList)
+                return;
 
             string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
             payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
@@ -1435,84 +1665,6 @@ namespace MSNPSharp
                 AddContactToList(contact, MSNLists.AllowedList);
                 RemoveContactFromList(contact, MSNLists.BlockedList);
             }
-        }
-
-
-        /// <summary>
-        /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
-        /// </summary>
-        /// <param name="account"></param>
-        public virtual void AddNewContact(string account)
-        {
-            ABServiceBinding abService = new ABServiceBinding();
-            abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABApplicationHeaderValue.IsMigration = false;
-            abService.ABApplicationHeaderValue.PartnerScenario = "ContactSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
-
-            abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
-            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
-
-            ABContactAddRequestType request = new ABContactAddRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
-            request.options = new ABContactAddRequestTypeOptions();
-            request.options.EnableAllowListManagement = true;
-            request.contacts = new ContactType[1] { new ContactType() };
-            request.contacts[0].contactInfo = new contactInfoType();
-            request.contacts[0].contactInfo.isMessengerUser = true;
-            request.contacts[0].contactInfo.passportName = account;
-            request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
-            request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
-            request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = account;
-
-            ABContactAddResponse response = abService.ABContactAdd(request);
-            abService.Dispose();
-
-            if (null != response.ABContactAddResult)
-            {
-                Contact newcontact = ContactList.GetContact(account);
-                newcontact.SetGuid(response.ABContactAddResult.guid);
-                newcontact.NSMessageHandler = this;
-                if (ContactAdded != null)
-                {
-                    ContactAdded(this, new ListMutateEventArgs(newcontact, MSNLists.AllowedList | MSNLists.ForwardList));
-                }
-                //Add the new contact to our allowed and forward list,or we can't see its state
-                newcontact.OnAllowedList = true;
-                newcontact.OnForwardList = true;
-            }
-        }
-
-
-        /// <summary>
-        /// Remove the specified contact from your forward and allow list. Note that remote contacts that are blocked remain blocked.
-        /// </summary>
-        /// <param name="contact">Contact to remove</param>
-        public virtual void RemoveContact(Contact contact)
-        {
-            ABServiceBinding abService = new ABServiceBinding();
-            abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABApplicationHeaderValue.IsMigration = false;
-            abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
-
-            abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
-            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
-
-            ABContactDeleteRequestType request = new ABContactDeleteRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
-            request.contacts = new ContactIdType[] { new ContactIdType() };
-            request.contacts[0].contactId = contact.Guid;
-
-            abService.ABContactDelete(request);
-            abService.Dispose();
-
-            contact.NSMessageHandler = null;
-            ContactList.RemoveContact(contact.Mail);
         }
 
         /// <summary>
@@ -1575,14 +1727,16 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetScreenName(string newName)
         {
-            if (owner == null) throw new MSNPSharpException("Not a valid owner");
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName) }));
         }
 
         public virtual void SetPersonalMessage(PersonalMessage pmsg)
         {
-            if (owner == null) throw new MSNPSharpException("Not a valid owner");
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
 
             MSNMessage msg = new MSNMessage();
 
@@ -1600,7 +1754,8 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetPhoneNumberHome(string number)
         {
-            if (owner == null) throw new MSNPSharpException("Not a valid owner");
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
 
@@ -1611,7 +1766,8 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetPhoneNumberWork(string number)
         {
-            if (owner == null) throw new MSNPSharpException("Not a valid owner");
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", HttpUtility.UrlEncode(number) }));
@@ -1622,7 +1778,8 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetPhoneNumberMobile(string number)
         {
-            if (owner == null) throw new MSNPSharpException("Not a valid owner");
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", HttpUtility.UrlEncode(number) }));
@@ -1633,7 +1790,8 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetMobileAccess(bool enabled)
         {
-            if (owner == null) throw new MSNPSharpException("Not a valid owner");
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MOB", enabled ? "Y" : "N" }));
         }
 
@@ -1642,40 +1800,9 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetMobileDevice(bool enabled)
         {
-            if (owner == null) throw new MSNPSharpException("Not a valid owner");
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
-        }
-
-
-        /// <summary>
-        /// Set the name of a contact group
-        /// </summary>
-        /// <param name="group">The contactgroup which name will be set</param>
-        /// <param name="newGroupName">The new name</param>
-        internal virtual void RenameGroup(ContactGroup group, string newGroupName)
-        {
-            ABServiceBinding abService = new ABServiceBinding();
-            abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABApplicationHeaderValue.IsMigration = false;
-            abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
-
-            abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
-            abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
-
-            ABGroupUpdateRequestType request = new ABGroupUpdateRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
-            request.groups = new GroupType[1] { new GroupType() };
-            request.groups[0].groupId = group.Guid;
-            request.groups[0].propertiesChanged = "GroupName";
-            request.groups[0].groupInfo = new groupInfoType();
-
-            abService.ABGroupUpdate(request);
-            abService.Dispose();
-
-            group.SetName(newGroupName);
         }
 
         /// <summary>
@@ -1837,35 +1964,89 @@ namespace MSNPSharp
 
                 switch (nsMessage.Command)
                 {
-                    case "ADC": OnADCReceived(nsMessage); break;
-                    case "ADG": OnADGReceived(nsMessage); break;
-                    case "ADL": OnADLReceived(nsMessage); break;
-                    case "BLP": OnBLPReceived(nsMessage); break;
-                    case "BPR": OnBPRReceived(nsMessage); break;
-                    case "CHG": OnCHGReceived(nsMessage); break;
-                    case "CHL": OnCHLReceived(nsMessage); break;
-                    case "CVR": OnCVRReceived(nsMessage); break;
-                    case "FLN": OnFLNReceived(nsMessage); break;
-                    case "GTC": OnGTCReceived(nsMessage); break;
-                    case "ILN": OnILNReceived(nsMessage); break;
-                    case "LSG": OnLSGReceived(nsMessage); break;
+                    case "ADC":
+                        OnADCReceived(nsMessage);
+                        break;
+                    case "ADG":
+                        OnADGReceived(nsMessage);
+                        break;
+                    case "ADL":
+                        OnADLReceived(nsMessage);
+                        break;
+                    case "BLP":
+                        OnBLPReceived(nsMessage);
+                        break;
+                    case "BPR":
+                        OnBPRReceived(nsMessage);
+                        break;
+                    case "CHG":
+                        OnCHGReceived(nsMessage);
+                        break;
+                    case "CHL":
+                        OnCHLReceived(nsMessage);
+                        break;
+                    case "CVR":
+                        OnCVRReceived(nsMessage);
+                        break;
+                    case "FLN":
+                        OnFLNReceived(nsMessage);
+                        break;
+                    case "GTC":
+                        OnGTCReceived(nsMessage);
+                        break;
+                    case "ILN":
+                        OnILNReceived(nsMessage);
+                        break;
+                    case "LSG":
+                        OnLSGReceived(nsMessage);
+                        break;
                     //case "LST":  OnLSTReceived(nsMessage); break;   //In MSNP15, LST no longer used
-                    case "MSG": OnMSGReceived(nsMessage); break;
-                    case "UBM": OnUBMReceived(nsMessage); break;
-                    case "NLN": OnNLNReceived(nsMessage); break;
-                    case "NOT": OnNOTReceived(nsMessage); break;
-                    case "OUT": OnOUTReceived(nsMessage); break;
-                    case "PRP": OnPRPReceived(nsMessage); break;
-                    case "QNG": OnQNGReceived(nsMessage); break;
-                    case "QRY": OnQRYReceived(nsMessage); break;
-                    case "RMG": OnRMGReceived(nsMessage); break;
-                    case "REM": OnREMReceived(nsMessage); break;
-                    case "RNG": OnRNGReceived(nsMessage); break;
+                    case "MSG":
+                        OnMSGReceived(nsMessage);
+                        break;
+                    case "UBM":
+                        OnUBMReceived(nsMessage);
+                        break;
+                    case "NLN":
+                        OnNLNReceived(nsMessage);
+                        break;
+                    case "NOT":
+                        OnNOTReceived(nsMessage);
+                        break;
+                    case "OUT":
+                        OnOUTReceived(nsMessage);
+                        break;
+                    case "PRP":
+                        OnPRPReceived(nsMessage);
+                        break;
+                    case "QNG":
+                        OnQNGReceived(nsMessage);
+                        break;
+                    case "QRY":
+                        OnQRYReceived(nsMessage);
+                        break;
+                    case "RMG":
+                        OnRMGReceived(nsMessage);
+                        break;
+                    case "REM":
+                        OnREMReceived(nsMessage);
+                        break;
+                    case "RNG":
+                        OnRNGReceived(nsMessage);
+                        break;
                     //case "SYN":  OnSYNReceived(nsMessage); break;   //In MSNP15, SYN no longer used
-                    case "USR": OnUSRReceived(nsMessage); break;
-                    case "VER": OnVERReceived(nsMessage); break;
-                    case "XFR": OnXFRReceived(nsMessage); break;
-                    case "UBX": OnUBXReceived(nsMessage); break;
+                    case "USR":
+                        OnUSRReceived(nsMessage);
+                        break;
+                    case "VER":
+                        OnVERReceived(nsMessage);
+                        break;
+                    case "XFR":
+                        OnXFRReceived(nsMessage);
+                        break;
+                    case "UBX":
+                        OnUBXReceived(nsMessage);
+                        break;
                     default:
                         // first check whether it is a numeric error command
                         if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
@@ -2082,7 +2263,8 @@ namespace MSNPSharp
                     return PresenceStatus.Offline;
                 case "HDN":
                     return PresenceStatus.Hidden;
-                default: break;
+                default:
+                    break;
             }
 
             // unknown status
@@ -2117,7 +2299,8 @@ namespace MSNPSharp
                     return "FLN";
                 case PresenceStatus.Hidden:
                     return "HDN";
-                default: break;
+                default:
+                    break;
             }
 
             // unknown status
@@ -2319,10 +2502,15 @@ namespace MSNPSharp
             {
                 switch (message.CommandValues[0].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
                 {
-                    case "OTH": OnSignedOff(SignedOffReason.OtherClient); break;
-                    case "SSD": OnSignedOff(SignedOffReason.ServerDown); break;
+                    case "OTH":
+                        OnSignedOff(SignedOffReason.OtherClient);
+                        break;
+                    case "SSD":
+                        OnSignedOff(SignedOffReason.ServerDown);
+                        break;
                     default:
-                        OnSignedOff(SignedOffReason.None); break;
+                        OnSignedOff(SignedOffReason.None);
+                        break;
                 }
             }
             else
@@ -2470,7 +2658,9 @@ namespace MSNPSharp
                     indexer++;
 
                 }
-                catch (System.FormatException) { }
+                catch (System.FormatException)
+                {
+                }
             }
 
             if (message.CommandValues.Count > indexer)
@@ -2682,12 +2872,24 @@ namespace MSNPSharp
             {
                 switch ((string)message.CommandValues[index - 1])
                 {
-                    case "PHH": contact.SetHomePhone(number); break;
-                    case "PHW": contact.SetWorkPhone(number); break;
-                    case "PHM": contact.SetMobilePhone(number); break;
-                    case "MOB": contact.SetMobileAccess((number == "Y")); break;
-                    case "MBE": contact.SetMobileDevice((number == "Y")); break;
-                    case "HSB": contact.SetHasBlog((number == "1")); break;
+                    case "PHH":
+                        contact.SetHomePhone(number);
+                        break;
+                    case "PHW":
+                        contact.SetWorkPhone(number);
+                        break;
+                    case "PHM":
+                        contact.SetMobilePhone(number);
+                        break;
+                    case "MOB":
+                        contact.SetMobileAccess((number == "Y"));
+                        break;
+                    case "MBE":
+                        contact.SetMobileDevice((number == "Y"));
+                        break;
+                    case "HSB":
+                        contact.SetHasBlog((number == "1"));
+                        break;
                 }
             }
             else
@@ -2863,7 +3065,8 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnBLPReceived(NSMessage message)
         {
-            if (Owner == null) return;
+            if (Owner == null)
+                return;
 
             string type = "";
 
@@ -2894,7 +3097,8 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnGTCReceived(NSMessage message)
         {
-            if (Owner == null) return;
+            if (Owner == null)
+                return;
 
             switch ((string)message.CommandValues[0])
             {
@@ -3405,7 +3609,7 @@ namespace MSNPSharp
                 clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
             }
 
-
+            IPAddress ip = hdr.ContainsKey("ClientIP") ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None;
             Owner.UpdateProfile(
                 hdr["LoginTime"],
                 (hdr.ContainsKey("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
@@ -3423,13 +3627,13 @@ namespace MSNPSharp
                 hdr["sid"],
                 hdr["kv"],
                 hdr["MSPAuth"],
-                (hdr.ContainsKey("ClientIP")) ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None,
+                ip,
                 clientPort);
 
-            if (hdr.ContainsKey("ClientIP"))
+            if (IPAddress.None != ip)
             {
                 // set the external end point. This can be used in file transfer connectivity determing
-                externalEndPoint = new IPEndPoint(IPAddress.Parse(hdr["ClientIP"]), clientPort);
+                externalEndPoint = new IPEndPoint(ip, clientPort);
             }
             //ADL
             if (AutoSynchronize)
@@ -3441,8 +3645,7 @@ namespace MSNPSharp
                 // notify the client programmer
                 OnSignedIn();
             }
-
-        }
+        }        
 
         /// <summary>
         /// Called when a QNG command has been received.

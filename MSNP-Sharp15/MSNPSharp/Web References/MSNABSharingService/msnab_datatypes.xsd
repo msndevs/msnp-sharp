@@ -128,18 +128,18 @@
   </xsd:simpleType>
   <xsd:simpleType name="MemberRole">
     <xsd:restriction base="xsd:string">
-      <xsd:enumeration value="ProfileSocial" />
-      <xsd:enumeration value="ProfileGeneral" />
       <xsd:enumeration value="Allow" />
-      <xsd:enumeration value="ProfilePersonalContact" />
       <xsd:enumeration value="Block" />
-      <xsd:enumeration value="Contributor" />
-      <xsd:enumeration value="ProfileProfessionalContact" />
-      <xsd:enumeration value="ProfileExpression" />
       <xsd:enumeration value="Reverse" />
+      <xsd:enumeration value="Pending" />
+      <xsd:enumeration value="Contributor" />
+      <xsd:enumeration value="ProfileGeneral" />
+      <xsd:enumeration value="ProfilePersonalContact" />
+      <xsd:enumeration value="ProfileProfessionalContact" />
+      <xsd:enumeration value="ProfileSocial" />
+      <xsd:enumeration value="ProfileExpression" />
       <xsd:enumeration value="TwoWayRelationship" />
       <xsd:enumeration value="OneWayRelationship" />
-      <xsd:enumeration value="Pending" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="MemberType">
