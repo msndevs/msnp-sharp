@@ -1313,7 +1313,7 @@ namespace MSNPSharp
 
             ABContactAddRequestType request = new ABContactAddRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
-            request.contacts = new ContactType[1] { new ContactType() };
+            request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactInfo = new contactInfoType();
             request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
             request.contacts[0].contactInfo.passportName = account;
@@ -1551,6 +1551,7 @@ namespace MSNPSharp
             request.groups[0].groupId = group.Guid;
             request.groups[0].propertiesChanged = "GroupName";
             request.groups[0].groupInfo = new groupInfoType();
+            request.groups[0].groupInfo.name = newGroupName;
 
             abService.ABGroupUpdateAsync(request, new object());
         }
