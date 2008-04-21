@@ -108,7 +108,6 @@
     <Compile Include="SBMessageProcessor.cs" />
     <Compile Include="SBMSGMessage.cs" />
     <Compile Include="SingleSignOn.cs" />
-    <Compile Include="SoapEnvelopeStrings.cs" />
     <Compile Include="SocketMessageProcessor.cs" />
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
