@@ -943,7 +943,7 @@ namespace MSNPSharp
 
 
             // 1: Cache key
-            _Tickets.Add("cache_key", abService.ABApplicationHeaderValue.CacheKey);
+            _Tickets.Add("cache_key", abService.ServiceHeaderValue.CacheKey);
 
             // 2: Groups
             Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0); //For saving.
@@ -1285,11 +1285,10 @@ namespace MSNPSharp
         {
             ABServiceBinding abService = new ABServiceBinding();
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "ContactSave";
             abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
-
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
@@ -1314,15 +1313,15 @@ namespace MSNPSharp
 
             ABContactAddRequestType request = new ABContactAddRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
-            request.options = new ABContactAddRequestTypeOptions();
-            request.options.EnableAllowListManagement = true;
             request.contacts = new ContactType[1] { new ContactType() };
             request.contacts[0].contactInfo = new contactInfoType();
-            request.contacts[0].contactInfo.isMessengerUser = true;
-            request.contacts[0].contactInfo.passportName = account;
             request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
+            request.contacts[0].contactInfo.passportName = account;
+            request.contacts[0].contactInfo.isMessengerUser = true;            
             request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
             request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = account;
+            request.options = new ABContactAddRequestTypeOptions();
+            request.options.EnableAllowListManagement = true;
 
             abService.ABContactAddAsync(request, new object());
         }
