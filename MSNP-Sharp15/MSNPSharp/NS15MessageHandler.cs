@@ -902,7 +902,7 @@ namespace MSNPSharp
 
         private void sharingService_FindMembershipCompleted(object sender, FindMembershipCompletedEventArgs e)
         {
-            Console.WriteLine("sharingService_FindMembershipCompleted");
+            handleCachekeyChange(((SharingServiceBinding)sender).ServiceHeaderValue);
 
             if (e.Cancelled)
                 return;
@@ -932,7 +932,6 @@ namespace MSNPSharp
 
         private void abService_ABFindAllCompleted(object sender, ABFindAllCompletedEventArgs e)
         {
-            Console.WriteLine("abService_ABFindAllCompleted");
 
             if (e.Cancelled || e.Error != null)
                 return;
@@ -941,9 +940,8 @@ namespace MSNPSharp
             FindMembershipResultType addressBook = (FindMembershipResultType)e.UserState;
             ABFindAllResultType forwardList = e.Result.ABFindAllResult;
 
-
             // 1: Cache key
-            _Tickets.Add("cache_key", abService.ServiceHeaderValue.CacheKey);
+            handleCachekeyChange(abService.ServiceHeaderValue);
 
             // 2: Groups
             Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0); //For saving.
@@ -958,7 +956,7 @@ namespace MSNPSharp
                 }
             }
 
-            // 3: Memberships...
+            // 3: Memberships
             Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
             Dictionary<int, Service> services = new Dictionary<int, Service>(0);
             Service currentService = new Service();
@@ -1151,6 +1149,7 @@ namespace MSNPSharp
                 }
             }
 
+            // 8: Set my Privacy
             SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
            /*
@@ -1162,6 +1161,7 @@ namespace MSNPSharp
             }
             */
 
+            // 9: Initial ADL
             if (MemberShipList.Keys.Count == 0)
             {
                 OnADLReceived(new NSMessage("ADL", new string[] { "0", "OK" }));
@@ -1176,6 +1176,7 @@ namespace MSNPSharp
 
             }
 
+            // 10: Set my display name
             string mydispName = props["displayname"];
             if (mydispName != "")
             {
@@ -1294,8 +1295,9 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABContactAddCompleted += delegate(object service, ABContactAddCompletedEventArgs e)
             {
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
                 if (!e.Cancelled && e.Error == null)
-                {
+                {                    
                     Contact newcontact = ContactList.GetContact(account);
                     newcontact.SetGuid(e.Result.ABContactAddResult.guid);
                     newcontact.NSMessageHandler = this;
@@ -1344,6 +1346,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABContactDeleteCompleted += delegate(object service, ABContactDeleteCompletedEventArgs e)
             {
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.NSMessageHandler = null;
@@ -1379,6 +1382,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
             {
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
                 if (!e.Cancelled && e.Error == null)
                 {
                     ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, this));
@@ -1425,6 +1429,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
             {
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
                 if (!e.Cancelled && e.Error == null)
                 {
                     foreach (Contact cnt in ContactList.All)
@@ -1468,6 +1473,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
             {
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.AddContactToGroup(group);
@@ -1500,6 +1506,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
             {
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.RemoveContactFromGroup(group);
@@ -1537,6 +1544,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
             {
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
                 if (!e.Cancelled && e.Error == null)
                 {
                     group.SetName(newGroupName);
@@ -1554,6 +1562,14 @@ namespace MSNPSharp
             request.groups[0].groupInfo.name = newGroupName;
 
             abService.ABGroupUpdateAsync(request, new object());
+        }
+
+        private void handleCachekeyChange(ServiceHeader sh)
+        {
+            if (null != sh && sh.CacheKeyChanged)
+            {
+                _Tickets["cache_key"] = sh.CacheKey;
+            }
         }
 
         #endregion
