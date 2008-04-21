@@ -2662,8 +2662,6 @@ namespace MSNPSharp.MSNABSharingService {
         
         private bool enableAllowListManagementField;
         
-        private bool enableAllowListManagementFieldSpecified;
-        
         /// <remarks/>
         public bool EnableAllowListManagement {
             get {
@@ -2671,17 +2669,6 @@ namespace MSNPSharp.MSNABSharingService {
             }
             set {
                 this.enableAllowListManagementField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool EnableAllowListManagementSpecified {
-            get {
-                return this.enableAllowListManagementFieldSpecified;
-            }
-            set {
-                this.enableAllowListManagementFieldSpecified = value;
             }
         }
     }

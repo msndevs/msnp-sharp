@@ -197,7 +197,7 @@
       <xsd:element minOccurs="0" name="options">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element minOccurs="0" name="EnableAllowListManagement" type="xsd:boolean" />
+            <xsd:element name="EnableAllowListManagement" type="xsd:boolean" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
