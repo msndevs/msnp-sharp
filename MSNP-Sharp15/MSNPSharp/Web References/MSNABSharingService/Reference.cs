@@ -871,8 +871,6 @@ namespace MSNPSharp.MSNABSharingService {
         
         private contactInfoTypeContactType contactTypeField;
         
-        private bool contactTypeFieldSpecified;
-        
         private string quickNameField;
         
         private string firstNameField;
@@ -906,8 +904,6 @@ namespace MSNPSharp.MSNABSharingService {
         private bool isMobileIMEnabledFieldSpecified;
         
         private bool isMessengerUserField;
-        
-        private bool isMessengerUserFieldSpecified;
         
         private bool isFavoriteField;
         
@@ -1035,17 +1031,6 @@ namespace MSNPSharp.MSNABSharingService {
             }
             set {
                 this.contactTypeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool contactTypeSpecified {
-            get {
-                return this.contactTypeFieldSpecified;
-            }
-            set {
-                this.contactTypeFieldSpecified = value;
             }
         }
         
@@ -1221,17 +1206,6 @@ namespace MSNPSharp.MSNABSharingService {
             }
             set {
                 this.isMessengerUserField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool isMessengerUserSpecified {
-            get {
-                return this.isMessengerUserFieldSpecified;
-            }
-            set {
-                this.isMessengerUserFieldSpecified = value;
             }
         }
         

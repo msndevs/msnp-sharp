@@ -235,7 +235,7 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element minOccurs="0" name="contactType">
+      <xsd:element name="contactType">
         <xsd:simpleType>
           <xsd:restriction base="xsd:string">
             <xsd:enumeration value="Me" />
@@ -260,7 +260,7 @@
       <xsd:element minOccurs="0" name="comment" type="xsd:string" />
       <xsd:element minOccurs="0" name="IsNotMobileVisible" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="isMobileIMEnabled" type="xsd:boolean" />
-      <xsd:element minOccurs="0" name="isMessengerUser" type="xsd:boolean" />
+      <xsd:element name="isMessengerUser" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="isFavorite" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="isSmtp" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="hasSpace" type="xsd:boolean">
