@@ -886,6 +886,7 @@ namespace MSNPSharp
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
+            // sharingService.ABApplicationHeaderValue.CacheKey = ""; // XXX TODO GET Saved Sharing Service "sh_cache_key" from Addressbok
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
 
@@ -902,7 +903,7 @@ namespace MSNPSharp
 
         private void sharingService_FindMembershipCompleted(object sender, FindMembershipCompletedEventArgs e)
         {
-            handleCachekeyChange(((SharingServiceBinding)sender).ServiceHeaderValue);
+            handleCachekeyChange(((SharingServiceBinding)sender).ServiceHeaderValue, false);
 
             if (e.Cancelled)
                 return;
@@ -919,6 +920,7 @@ namespace MSNPSharp
             ABServiceBinding abService = new ABServiceBinding();
             abService.Timeout = Int32.MaxValue;
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            // abService.ABApplicationHeaderValue.CacheKey = ""; // XXX TODO GET Saved Adressbook ab_cache_key from Addressbook
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
 
@@ -941,7 +943,7 @@ namespace MSNPSharp
             ABFindAllResultType forwardList = e.Result.ABFindAllResult;
 
             // 1: Cache key
-            handleCachekeyChange(abService.ServiceHeaderValue);
+            handleCachekeyChange(abService.ServiceHeaderValue, true);
 
             // 2: Groups
             Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0); //For saving.
@@ -1289,13 +1291,13 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "ContactSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["ab_cache_key"];
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABContactAddCompleted += delegate(object service, ABContactAddCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {                    
                     Contact newcontact = ContactList.GetContact(account);
@@ -1338,7 +1340,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["ab_cache_key"];
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1346,7 +1348,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABContactDeleteCompleted += delegate(object service, ABContactDeleteCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.NSMessageHandler = null;
@@ -1374,7 +1376,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["ab_cache_key"];
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1382,7 +1384,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, this));
@@ -1421,7 +1423,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["ab_cache_key"];
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1429,7 +1431,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     foreach (Contact cnt in ContactList.All)
@@ -1465,7 +1467,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["ab_cache_key"];
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1473,7 +1475,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.AddContactToGroup(group);
@@ -1498,7 +1500,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["ab_cache_key"];
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1506,7 +1508,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.RemoveContactFromGroup(group);
@@ -1536,7 +1538,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
-            abService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            abService.ABApplicationHeaderValue.CacheKey = _Tickets["ab_cache_key"];
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1544,7 +1546,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue);
+                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     group.SetName(newGroupName);
@@ -1564,11 +1566,18 @@ namespace MSNPSharp
             abService.ABGroupUpdateAsync(request, new object());
         }
 
-        private void handleCachekeyChange(ServiceHeader sh)
+        private void handleCachekeyChange(ServiceHeader sh, bool isABServiceBinding)
         {
             if (null != sh && sh.CacheKeyChanged)
             {
-                _Tickets["cache_key"] = sh.CacheKey;
+                if (isABServiceBinding)
+                {
+                    _Tickets["ab_cache_key"] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS ab_cache_key
+                }
+                else
+                {
+                    _Tickets["sh_cache_key"] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS sh_cache_key
+                }
             }
         }
 
