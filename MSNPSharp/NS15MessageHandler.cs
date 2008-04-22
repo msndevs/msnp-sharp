@@ -55,6 +55,7 @@ namespace MSNPSharp
 
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using MSNPSharp.OIMStoreService;
     using MSNPSharp.MSNABSharingService;
 
     #region Event argument classes
@@ -1154,14 +1155,14 @@ namespace MSNPSharp
             // 8: Set my Privacy
             SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
-           /*
-            foreach (string account in diccontactList.Keys)
-            {
-                if (MemberShipList.ContainsKey(account))
-                    if (!initialadl.Contains(account))
-                        initialadl.Add(account);
-            }
-            */
+            /*
+             foreach (string account in diccontactList.Keys)
+             {
+                 if (MemberShipList.ContainsKey(account))
+                     if (!initialadl.Contains(account))
+                         initialadl.Add(account);
+             }
+             */
 
             // 9: Initial ADL
             if (MemberShipList.Keys.Count == 0)
@@ -1275,7 +1276,7 @@ namespace MSNPSharp
             }
             return ret.ToArray();
         }
-    
+
 
 
         #region Async Contact & Group Operations
@@ -1299,7 +1300,7 @@ namespace MSNPSharp
             {
                 handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
-                {                    
+                {
                     Contact newcontact = ContactList.GetContact(account);
                     newcontact.SetGuid(e.Result.ABContactAddResult.guid);
                     newcontact.NSMessageHandler = this;
@@ -1321,7 +1322,7 @@ namespace MSNPSharp
             request.contacts[0].contactInfo = new contactInfoType();
             request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
             request.contacts[0].contactInfo.passportName = account;
-            request.contacts[0].contactInfo.isMessengerUser = true;            
+            request.contacts[0].contactInfo.isMessengerUser = true;
             request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
             request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = account;
             request.options = new ABContactAddRequestTypeOptions();
@@ -2409,8 +2410,7 @@ namespace MSNPSharp
             if (Credentials == null)
                 throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
 
-            clsQRYFactory qryfactory = new clsQRYFactory();
-            string md = qryfactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
+            string md = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
             _Tickets["lock_key"] = md;
             MessageProcessor.SendMessage(new NSMessage("QRY", new string[] { " " + Credentials.ClientID, " 32\r\n", md }));
         }
@@ -3452,113 +3452,64 @@ namespace MSNPSharp
 
 
         private string _RunGuid = Guid.NewGuid().ToString();
-
         public void SendOIMMessage(string account, string msg)
         {
             Contact contact = ContactList[account];
             if (contact != null && contact.OnAllowedList)
             {
-                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(@"https://ows.messenger.msn.com/OimWS/oim.asmx");
-                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+                string message = "MIME-Version: 1.0\r\n"
+                            + "Content-Type: text/plain; charset=UTF-8\r\n"
+                            + "Content-Transfer-Encoding: base64\r\n"
+                            + "X-OIM-Message-Type: OfflineMessage\r\n"
+                            + "X-OIM-Run-Id: {" + _RunGuid + "}\r\n"
+                            + "X-OIM-Sequence-Num: " + contact.OIMCount + "\r\n"
+                            + "\r\n"
+                            + Convert.ToBase64String(Encoding.UTF8.GetBytes(msg), Base64FormattingOptions.InsertLineBreaks)
+                            + "\r\n";
 
-                req.ContentType = "text/xml; charset=utf-8";
-                req.Headers["SOAPAction"] = @"http://messenger.live.com/ws/2006/09/oim/Store2";
-                req.ClientCertificates = store.Certificates;
+                OIMService oimService = new OIMService();
+                oimService.FromValue = new From();
+                oimService.FromValue.memberName = owner.Mail;
+                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(owner.Name)) + "?=";
+                oimService.FromValue.lang = System.Globalization.CultureInfo.CurrentCulture.Name;
+                oimService.FromValue.proxy = "MSNMSGR";
+                oimService.FromValue.msnpVer = "MSNP15";
+                oimService.FromValue.buildVer = "8.5.1288";
+                oimService.ToValue = new To();
+                oimService.ToValue.memberName = account;
+                oimService.TicketValue = new Ticket();
+                oimService.TicketValue.passport = _Tickets["oim_ticket"];
+                oimService.TicketValue.appid = Credentials.ClientID;
+                oimService.TicketValue.lockkey = _Tickets.ContainsKey("lock_key") ? _Tickets["lock_key"] : String.Empty;
+                oimService.Sequence = new SequenceType();
+                oimService.Sequence.Identifier = new AttributedURI();
+                oimService.Sequence.Identifier.Value = "http://messenger.msn.com";
+                oimService.Sequence.MessageNumber = 1;
 
-                #region Soap Envelope
-                StringBuilder reqsoap = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-                        + "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
-                        + "<soap:Header>"
-                        + "<From memberName=\"{from_account}\" friendlyName=\"=?utf-8?B?{base64_nick}?=\" xml:lang=\"{lang}\" proxy=\"MSNMSGR\" xmlns=\"http://messenger.msn.com/ws/2004/09/oim/\" msnpVer=\"MSNP15\" buildVer=\"8.5.1288\"/>"
-                        + "<To memberName=\"{to_account}\" xmlns=\"http://messenger.msn.com/ws/2004/09/oim/\"/>"
-                        + "<Ticket passport=\"{oim_ticket}\" appid=\"{clientid}\" lockkey=\"{lockkey}\" xmlns=\"http://messenger.msn.com/ws/2004/09/oim/\"/>"
-                        + "<Sequence xmlns=\"http://schemas.xmlsoap.org/ws/2003/03/rm\">"
-                        + "<Identifier xmlns=\"http://schemas.xmlsoap.org/ws/2002/07/utility\">http://messenger.msn.com</Identifier>"
-                        + "<MessageNumber>1</MessageNumber>"
-                        + "</Sequence>"
-                        + "</soap:Header>"
-                        + "<soap:Body>"
-                        + "<MessageType xmlns=\"http://messenger.msn.com/ws/2004/09/oim/\">text</MessageType>"
-                        + "<Content xmlns=\"http://messenger.msn.com/ws/2004/09/oim/\">MIME-Version: 1.0\r\n"
-                        + "Content-Type: text/plain; charset=UTF-8\r\n"
-                        + "Content-Transfer-Encoding: base64\r\n"
-                        + "X-OIM-Message-Type: OfflineMessage\r\n"
-                    //+ "X-OIM-Run-Id: {3A3BE82C-684D-4F4F-8005-CBE8D4F82BAD}\r\n"
-                        + "X-OIM-Run-Id: {{run_id}}\r\n"
-                        + "X-OIM-Sequence-Num: {seq-num}\r\n"
-                        + "\r\n"
-                        + "{base64_msg}\r\n"
-                        + "</Content>"
-                        + "</soap:Body>"
-                        + "</soap:Envelope>");
-                #endregion
-
-
-
-
-                reqsoap.Replace("{from_account}", owner.Mail);
-                reqsoap.Replace("{lang}", System.Globalization.CultureInfo.CurrentCulture.Name);
-                //reqsoap.Replace("{lang}", "zh-cn");
-                reqsoap.Replace("{to_account}", account);
-                reqsoap.Replace("{base64_nick}", Convert.ToBase64String(Encoding.UTF8.GetBytes(owner.Name)));
-                reqsoap.Replace("{oim_ticket}", HttpUtility.HtmlEncode(_Tickets["oim_ticket"]));
-                reqsoap.Replace("{clientid}", HttpUtility.HtmlEncode(this.Credentials.ClientID));
-                reqsoap.Replace("{lockkey}", _Tickets.ContainsKey("lock_key") ? HttpUtility.HtmlEncode(_Tickets["lock_key"]) : String.Empty);
-                reqsoap.Replace("{base64_msg}", Convert.ToBase64String(Encoding.UTF8.GetBytes(msg), Base64FormattingOptions.InsertLineBreaks));
-                reqsoap.Replace("{seq-num}", contact.OIMCount.ToString());
-                reqsoap.Replace("{run_id}", _RunGuid);
-
-                contact.OIMCount++;
-
-                byte[] dat = Encoding.UTF8.GetBytes(reqsoap.ToString());
-
-                req.ContentLength = dat.Length;
-                req.Method = "POST";
-                req.ProtocolVersion = HttpVersion.Version11;
-
-                Stream s = req.GetRequestStream();
-                s.Write(dat, 0, dat.Length);
-                s.Close();
-
-                HttpWebResponse rsp;
-                try
+                object userstate = new object();
+                oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
-                    rsp = (HttpWebResponse)req.GetResponse();
-                }
-                catch (WebException webex)
-                {
-                    string data = String.Empty;
-                    if (webex.Response != null)
+                    if (!e.Cancelled)
                     {
-                        StreamReader r = new StreamReader(webex.Response.GetResponseStream());
-                        data = r.ReadToEnd();
-                        r.Close();
-                        if (data.IndexOf("q0:AuthenticationFailed") != -1)
+                        if (e.Error != null && e.Error is SoapException)
                         {
-                            contact.OIMCount--;
-                            Regex reg = new Regex("<LockKeyChallenge.*>.*</LockKeyChallenge>");
-                            string xmlstr = reg.Match(data).Value;
-                            Regex valreg = new Regex(">.*<");
-                            string chdata = valreg.Match(xmlstr).Value;
-                            chdata = chdata.Substring(1, chdata.Length - 2);
-
-                            clsQRYFactory qryfac = new clsQRYFactory();
-                            _Tickets["lock_key"] = qryfac.CreateQRY(Credentials.ClientID, Credentials.ClientCode, chdata);
-                            SendOIMMessage(account, msg);
-                            return;
+                            SoapException se = e.Error as SoapException;
+                            if (se.Code.Name == "AuthenticationFailed")
+                            {
+                                string chdata = se.Detail.InnerText;
+                                _Tickets["lock_key"] = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, chdata);
+                                oimService.TicketValue.lockkey = _Tickets["lock_key"];
+                                oimService.StoreAsync(MessageType.text, message, userstate);
+                            }
+                        }
+                        else
+                        {
+                            Trace.WriteLine("An OIM has been sent. RunGuid is " + _RunGuid);
+                            contact.OIMCount++;
                         }
                     }
-
-                    throw new Exception("Send OIM Request error: " + webex.Message + "\r\n" + data);
-                }
-                XmlDocument xmlsoapRespon = new XmlDocument();
-                s = rsp.GetResponseStream();
-                xmlsoapRespon.Load(s);
-
-                s.Close();
-                rsp.Close();
-                Trace.WriteLine("An OIM has been sent. RunGuid is " + _RunGuid);
+                };
+                oimService.StoreAsync(MessageType.text, message, userstate);
             }
         }
 
@@ -3670,7 +3621,7 @@ namespace MSNPSharp
                 // notify the client programmer
                 OnSignedIn();
             }
-        }        
+        }
 
         /// <summary>
         /// Called when a QNG command has been received.
