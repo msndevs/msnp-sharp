@@ -8,5 +8,8 @@
     <Setting Name="MSNPSharp_MSNABSharingService_SharingService" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">https://contacts.msn.com/abservice/SharingService.asmx</Value>
     </Setting>
+    <Setting Name="MSNPSharp_OIMStoreService_OIMService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://ows.messenger.msn.com/OimWS/oim.asmx</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
