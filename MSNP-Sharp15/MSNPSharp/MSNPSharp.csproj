@@ -122,6 +122,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
+    <Compile Include="Web References\MSNRSIService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Wink.cs" />
     <Compile Include="XMLContactList.cs" />
     <Compile Include="XMLContactListParser.cs" />
@@ -197,6 +202,26 @@
     <None Include="Web References\MSNOIMStoreService\utility.xsd">
       <SubType>Designer</SubType>
     </None>
+    <None Include="Web References\MSNRSIService\DeleteMessagesResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNRSIService\GetMessageResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNRSIService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNRSIService\rsi_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNRSIService\rsi_faulttypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNRSIService\rsi_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNRSIService\rsi_ws.wsdl" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -233,6 +258,17 @@
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNOIMStoreService_OIMService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/rsi_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNRSIService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/rsi_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNRSIService_RSIService</CachedSettingsPropName>
     </WebReferenceUrl>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

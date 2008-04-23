@@ -79,7 +79,7 @@ namespace MSNPSharpClient
 			messenger.Nameserver.ServerErrorReceived += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
 			messenger.ConversationCreated += new ConversationCreatedEventHandler(messenger_ConversationCreated);			
 			messenger.TransferInvitationReceived += new MSNSLPInvitationReceivedEventHandler(messenger_TransferInvitationReceived);
-            messenger.Nameserver.OIMReceived += new OIMArrival(Nameserver_OIMReceived);
+            messenger.Nameserver.OIMReceived += new OIMReceivedEventHandler(Nameserver_OIMReceived);
             messenger.Nameserver.PingAnswer += new PingAnswerEventHandler(Nameserver_PingAnswer);
         }
 
@@ -88,9 +88,12 @@ namespace MSNPSharpClient
             nextPing = e.SecondsToWait;
         }
 
-        void Nameserver_OIMReceived(string sender, string message)
+        void Nameserver_OIMReceived(object sender, OIMReceivedEventArgs e)
         {
-            string msg = message;
+            if (MessageBox.Show(e.ReceivedTime + ": " + e.Email + "; " + e.Message + "\r\n\r\nDelete?", "Offline Message received", MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
+            {
+                e.DeleteMessage = true;
+            }
         }
 
 		/// <summary>

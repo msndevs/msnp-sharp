@@ -52,5 +52,15 @@ namespace MSNPSharp.Properties {
                 return ((string)(this["MSNPSharp_MSNOIMStoreService_OIMService"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://rsi.hotmail.com/rsi/rsi.asmx")]
+        public string MSNPSharp_MSNRSIService_RSIService {
+            get {
+                return ((string)(this["MSNPSharp_MSNRSIService_RSIService"]));
+            }
+        }
     }
 }
