@@ -435,6 +435,7 @@ namespace MSNPSharp
         private void NSMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
         {
             abSynchronized = false;
+            adlcount = 0;
             IMessageProcessor processor = (IMessageProcessor)sender;
             OnProcessorConnectCallback(processor);
         }
@@ -473,6 +474,7 @@ namespace MSNPSharp
             contactGroups.Clear();
 
             abSynchronized = false;
+            adlcount = 0;
         }
 
         /// <summary>
@@ -932,7 +934,8 @@ namespace MSNPSharp
 
         private void sharingService_FindMembershipCompleted(object sender, FindMembershipCompletedEventArgs e)
         {
-            Console.WriteLine("sharingService_FindMembershipCompleted");
+            // Cache key for Sharing service...
+            handleCachekeyChange(((SharingServiceBinding)sender).ServiceHeaderValue, false);
 
             if (e.Cancelled)
                 return;
@@ -962,7 +965,7 @@ namespace MSNPSharp
 
         private void abService_ABFindAllCompleted(object sender, ABFindAllCompletedEventArgs e)
         {
-            Console.WriteLine("abService_ABFindAllCompleted");
+            Trace.WriteLine("abService_ABFindAllCompleted");
 
             if (e.Cancelled || e.Error != null)
             {
@@ -975,9 +978,7 @@ namespace MSNPSharp
             FindMembershipResultType addressBook = (FindMembershipResultType)e.UserState;
             ABFindAllResultType forwardList = e.Result.ABFindAllResult;
 
-
-            // 1: Cache key
-            // 1: Cache key
+            // 1: Cache key for AdressBook service...
             handleCachekeyChange(abService.ServiceHeaderValue, true);
 
             // 2: Groups
@@ -993,7 +994,7 @@ namespace MSNPSharp
                 }
             }
 
-            // 3: Memberships...
+            // 3: Memberships
             Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
             Dictionary<int, Service> services = new Dictionary<int, Service>(0);
             Service currentService = new Service();
@@ -1216,19 +1217,19 @@ namespace MSNPSharp
             // 9: Set my Privacy
             SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
-           /*
-            * In fact, the follwing code is OK
-            * 
-            foreach (string account in diccontactList.Keys)
-            {
-                if (MemberShipList.ContainsKey(account))
-                    if (!initialadl.Contains(account))
-                        initialadl.Add(account);
-            }
-            */
+            /*
+             * In fact, the follwing code is OK
+             * 
+             foreach (string account in diccontactList.Keys)
+             {
+                 if (MemberShipList.ContainsKey(account))
+                     if (!initialadl.Contains(account))
+                         initialadl.Add(account);
+             }
+             */
 
             // 10: Initial ADL
-            if (MemberShipList.Keys.Count == 0)
+            if (diccontactList.Keys.Count == 0)
             {
                 OnADLReceived(new NSMessage("ADL", new string[] { "0", "OK" }));
             }
@@ -1244,7 +1245,7 @@ namespace MSNPSharp
 
             // 11: Set my display name
             string mydispName = props["displayname"];
-            if (mydispName != "")
+            if (mydispName != String.Empty)
             {
                 owner.Name = mydispName;
             }
@@ -1288,30 +1289,35 @@ namespace MSNPSharp
                 String type = ((int)contact.ClientType).ToString();
                 String domain = usernameanddomain[1];
                 String name = usernameanddomain[0];
-                String list = String.Empty;
+                MSNLists lists = new MSNLists();
 
                 if (contact.OnForwardList)
                 {
-                    list = "3";
+                    lists |= MSNLists.ForwardList;
                 }
-                if (contact.OnBlockedList)
+
+                if (contact.OnAllowedList)
                 {
-                    list = ((int)(MSNLists.BlockedList)).ToString();
+                    lists |= MSNLists.AllowedList;
                 }
-                if (contact.OnAllowedList && !contact.OnForwardList)
+                else if (contact.OnBlockedList)
                 {
-                    list = ((int)(MSNLists.AllowedList)).ToString();
+                    lists |= MSNLists.BlockedList;
                 }
 
-                if (!container.ContainsKey(domain.ToLower(CultureInfo.InvariantCulture)))
+                String list = ((int)lists).ToString();
+
+                if (list != "0" && type != "0")
                 {
-                    container[domain.ToLower(CultureInfo.InvariantCulture)] = new List<string>();
+                    if (!container.ContainsKey(domain.ToLower(CultureInfo.InvariantCulture)))
+                    {
+                        container[domain.ToLower(CultureInfo.InvariantCulture)] = new List<string>();
+                    }
+
+                    Console.WriteLine(contact.Mail + " is a " + contact.ClientType.ToString() + " and list is " + list.ToString());
+
+                    container[domain.ToLower(CultureInfo.InvariantCulture)].Add("<c n=\"" + name + "\" l=\"" + list + "\" t=\"" + type + "\"/>");
                 }
-
-                Console.WriteLine(contact.Mail + " is a " + contact.ClientType.ToString() + " and list is " + list.ToString());
-
-
-                container[domain.ToLower(CultureInfo.InvariantCulture)].Add("<c n=\"" + name + "\" l=\"" + list + "\" t=\"" + type + "\"/>");
             }
 
             List<string> ret = new List<string>();
@@ -1339,7 +1345,7 @@ namespace MSNPSharp
             }
             return ret.ToArray();
         }
-    
+
 
 
         #region Async Contact & Group Operations
@@ -1389,7 +1395,7 @@ namespace MSNPSharp
             request.contacts[0].contactInfo = new contactInfoType();
             request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
             request.contacts[0].contactInfo.passportName = account;
-            request.contacts[0].contactInfo.isMessengerUser = true;            
+            request.contacts[0].contactInfo.isMessengerUser = true;
             request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
             request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = account;
             request.options = new ABContactAddRequestTypeOptions();
@@ -1718,7 +1724,6 @@ namespace MSNPSharp
 
             payload = payload.Replace("{l}", ((int)list).ToString());
             MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
-
             MessageProcessor.SendMessage(new NSMessage(payload));
 
             if (list == MSNLists.ForwardList)
@@ -1726,6 +1731,7 @@ namespace MSNPSharp
                 contact.AddToList(list);
                 return;
             }
+
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -1770,6 +1776,8 @@ namespace MSNPSharp
             addMemberRequest.memberships = new Membership[] { memberShip };
             sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
             {
+                // Cache key for Sharing service...
+                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
                 if (!e.Cancelled && e.Error == null)
                 {
                     if (Settings.TraceSwitch.TraceVerbose)
@@ -1778,7 +1786,6 @@ namespace MSNPSharp
                     ContactInfo ci = MemberShipList[contact.Mail];
                     MemberShipList.MemberRoles[GetMemberRole(list)][ci.Account] = ci;
                     MemberShipList.Save();
-
                 }
                 else if (e.Error != null)
                 {
@@ -1787,8 +1794,7 @@ namespace MSNPSharp
                 ((IDisposable)service).Dispose();
                 return;
             };
-            sharingService.AddMemberAsync(addMemberRequest);
-
+            sharingService.AddMemberAsync(addMemberRequest, new object());
         }
 
         /// <summary>
@@ -1876,6 +1882,8 @@ namespace MSNPSharp
             deleteMemberRequest.memberships = new Membership[] { memberShip };
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
+                // Cache key for Sharing service...
+                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
                 if (!e.Cancelled && e.Error == null)
                 {
                     if (Settings.TraceSwitch.TraceVerbose)
@@ -1891,7 +1899,7 @@ namespace MSNPSharp
                 ((IDisposable)service).Dispose();
                 return;
             };
-            sharingService.DeleteMemberAsync(deleteMemberRequest);
+            sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
         }
 
         /// <summary>
@@ -3685,15 +3693,40 @@ namespace MSNPSharp
             rsp.Close();
         }
 
-
+        private class OIMUserState
+        {
+            public int RecursiveCall = 0;
+            private readonly int oimcount;
+            private readonly string account = String.Empty;
+            public OIMUserState(int oimCount, string account)
+            {
+                this.oimcount = oimCount;
+                this.account = account;
+            }
+        }
         private string _RunGuid = Guid.NewGuid().ToString();
-        private int recursiveCall = 0;
         public void SendOIMMessage(string account, string msg)
         {
             Contact contact = ContactList[account];
             if (contact != null && contact.OnAllowedList)
             {
-                contact.OIMCount++;
+                StringBuilder messageTemplate = new StringBuilder(
+                    "MIME-Version: 1.0\r\n"
+                  + "Content-Type: text/plain; charset=UTF-8\r\n"
+                  + "Content-Transfer-Encoding: base64\r\n"
+                  + "X-OIM-Message-Type: OfflineMessage\r\n"
+                  + "X-OIM-Run-Id: {{run_id}}\r\n"
+                  + "X-OIM-Sequence-Num: {seq-num}\r\n"
+                  + "\r\n"
+                  + "{base64_msg}\r\n"
+                );
+
+                messageTemplate.Replace("{base64_msg}", Convert.ToBase64String(Encoding.UTF8.GetBytes(msg), Base64FormattingOptions.InsertLineBreaks));
+                messageTemplate.Replace("{seq-num}", contact.OIMCount.ToString());
+                messageTemplate.Replace("{run_id}", _RunGuid);
+
+                string message = messageTemplate.ToString();
+
                 OIMStoreService oimService = new OIMStoreService();
 
                 oimService.FromValue = new From();
@@ -3717,48 +3750,32 @@ namespace MSNPSharp
                 oimService.Sequence.Identifier.Value = "http://messenger.msn.com";
                 oimService.Sequence.MessageNumber = 1;
 
-                oimService.StoreCompleted += delegate(object sender, StoreCompletedEventArgs e)
+                OIMUserState userstate = new OIMUserState(contact.OIMCount, account);
+                oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
                     if (e.Cancelled == false && e.Error == null)
                     {
+                        contact.OIMCount++; // Sent successfully.
+                        if (Settings.TraceSwitch.TraceVerbose)
+                            Trace.WriteLine("A OIM Messenger has been sent, runId = " + _RunGuid);
                     }
                     else if (e.Error != null)
                     {
-                        //string pointsc = e.Result.PointsConsumed;
                         SoapException soapexp = e.Error as SoapException;
-                        if (soapexp != null)
+                        if (soapexp != null && soapexp.Code.Name == "AuthenticationFailed")
                         {
                             _Tickets["lock_key"] = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, soapexp.Detail.InnerText);
+                            oimService.TicketValue.lockkey = _Tickets["lock_key"];
                         }
-                        if (recursiveCall < 5)
+                        if (userstate.RecursiveCall++ < 5)
                         {
-                            recursiveCall++;
-                            SendOIMMessage(account, msg);
+                            oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
                             return;
                         }
                         throw new MSNPSharpException(e.Error.Message, e.Error);
                     }
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("A OIM Messenger has been sent, runId = " + _RunGuid);
                 };
-
-                StringBuilder messageTemplate = new StringBuilder(
-                            "MIME-Version: 1.0\r\n"
-                            + "Content-Type: text/plain; charset=UTF-8\r\n"
-                            + "Content-Transfer-Encoding: base64\r\n"
-                            + "X-OIM-Message-Type: OfflineMessage\r\n"
-                            + "X-OIM-Run-Id: {{run_id}}\r\n"
-                            + "X-OIM-Sequence-Num: {seq-num}\r\n"
-                            + "\r\n"
-                            + "{base64_msg}\r\n"
-                            );
-                messageTemplate.Replace("{base64_msg}", Convert.ToBase64String(Encoding.UTF8.GetBytes(msg), Base64FormattingOptions.InsertLineBreaks));
-                messageTemplate.Replace("{seq-num}", contact.OIMCount.ToString());
-                messageTemplate.Replace("{run_id}", _RunGuid);
-
-                oimService.StoreAsync(MessageType.text, messageTemplate.ToString());
-
+                oimService.StoreAsync(MessageType.text, message, userstate);
             }
         }
 
@@ -3870,7 +3887,7 @@ namespace MSNPSharp
                 // notify the client programmer
                 OnSignedIn();
             }
-        }        
+        }
 
         /// <summary>
         /// Called when a QNG command has been received.
