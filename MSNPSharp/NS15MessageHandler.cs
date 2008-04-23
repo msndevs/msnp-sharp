@@ -57,6 +57,7 @@ namespace MSNPSharp
     using MSNPSharp.DataTransfer;
     using MSNPSharp.MSNABSharingService;
     using MSNPSharp.MSNOIMStoreService;
+    using MSNPSharp.MSNRSIService;
 
     #region Event argument classes
     /// <summary>
@@ -263,6 +264,22 @@ namespace MSNPSharp
         }
     }
 
+    [Serializable()]
+    public class OIMReceivedEventArgs : EventArgs
+    {
+        public readonly string ReceivedTime;
+        public readonly string Email;
+        public readonly string Message;
+        public bool DeleteMessage = true;
+
+        public OIMReceivedEventArgs(string receivedTime, string email, string message)
+        {
+            ReceivedTime = receivedTime;
+            Email = email;
+            Message = message;
+        }
+    }
+
     #endregion
 
     #region Enumeration
@@ -349,7 +366,7 @@ namespace MSNPSharp
     /// </summary>
     /// <param name="sender">The sender's email</param>
     /// <param name="message">Message</param>
-    public delegate void OIMArrival(string sender, string message);
+    public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
 
     #endregion
 
@@ -681,7 +698,7 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when receive an OIM.
         /// </summary>
-        public event OIMArrival OIMReceived;
+        public event OIMReceivedEventHandler OIMReceived;
 
 
         /// <summary>
@@ -3438,7 +3455,6 @@ namespace MSNPSharp
         protected virtual void OnMSGReceived(MSNMessage message)
         {
             MSGMessage msgMessage = new MSGMessage(message);
-
             string mime = msgMessage.MimeHeader["Content-Type"].ToString();
 
             if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
@@ -3449,10 +3465,9 @@ namespace MSNPSharp
                 OnMailChanged(msgMessage);
             else if (mime.IndexOf("x-msmsgsinitialemailnotification") >= 0)
                 OnMailboxStatusReceived(msgMessage);
-            else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0)
+            else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
             {
-                message.InnerBody = Encoding.UTF8.GetBytes(
-                    Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
+                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
                 msgMessage = new MSGMessage(message);
                 OnOIMReceived(msgMessage);
             }
@@ -3503,194 +3518,154 @@ namespace MSNPSharp
 
         protected virtual void OnOIMReceived(MSGMessage message)
         {
+            if (OIMReceived == null)
+                return; // nothing to do
+
             string xmlstr = message.MimeHeader["Mail-Data"];
-            XmlDocument xdoc = new XmlDocument();
-            xdoc.LoadXml(xmlstr);
-            XmlNodeList xnodlst = xdoc.GetElementsByTagName("M");
-            List<string> guids = new List<string>();
-
-            foreach (XmlNode nd in xnodlst)
+            if ("too-large" == xmlstr)
             {
-                if (nd.InnerXml.Split
-                    (new string[] { "<I>", "</I>" },
-                    StringSplitOptions.RemoveEmptyEntries).Length > 2)
+                string[] TandP = _Tickets["web_ticket"].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
+                RSIService rsiService = new RSIService();
+                rsiService.Timeout = Int32.MaxValue;
+                rsiService.PassportCookieValue = new PassportCookie();
+                rsiService.PassportCookieValue.t = TandP[1];
+                rsiService.PassportCookieValue.p = TandP[2];
+                rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
                 {
-                    guids.Add(nd.InnerXml.Split
-                    (new string[] { "<I>", "</I>" },
-                    StringSplitOptions.RemoveEmptyEntries)[1]);
-                }
-            }
-
-            if (guids.Count == 0)
-                return;
-
-            foreach (string guid in guids)
-            {
-
-                byte[] dat = null;
-                Stream s = null;
-
-                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(@"https://rsi.hotmail.com/rsi/rsi.asmx");
-                HttpWebResponse rsp;
-
-                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
-                //X509Certificate2Collection certs = X509Certificate2UI.SelectFromCollection(store.Certificates, "Certificates", "Please select certificate to use", X509SelectionFlag.SingleSelection); 
-
-
-                req.ContentType = "text/xml; charset=utf-8";
-                req.Headers["SOAPAction"] = @"http://www.hotmail.msn.com/ws/2004/09/oim/rsi/GetMessage";
-                req.ClientCertificates = store.Certificates;
-
-                #region Soap Envelope
-                string reqsoap = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-                                          + "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
-                                          + "<soap:Header>"
-                                          + "<PassportCookie xmlns=\"http://www.hotmail.msn.com/ws/2004/09/oim/rsi\">"
-                                          + "<t>{t}</t>"
-                                          + "<p>{p}</p>"
-                                          + "</PassportCookie>"
-                                          + "</soap:Header><soap:Body>"
-                                          + "<GetMessage xmlns=\"http://www.hotmail.msn.com/ws/2004/09/oim/rsi\">"
-                                          + "<messageId>{MessageID}</messageId>"
-                                          + "<alsoMarkAsRead>false</alsoMarkAsRead>"
-                                          + "</GetMessage></soap:Body></soap:Envelope>";
-                #endregion
-
-                reqsoap = reqsoap.Replace("{t}", HttpUtility.HtmlEncode(
-                    _Tickets["web_ticket"].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None)[1]));
-                reqsoap = reqsoap.Replace("{p}", HttpUtility.HtmlEncode(
-                    _Tickets["web_ticket"].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None)[2]));
-                reqsoap = reqsoap.Replace("{MessageID}", guid);
-                dat = Encoding.UTF8.GetBytes(reqsoap);
-
-                req.ContentLength = dat.Length;
-                req.Method = "POST";
-                req.ProtocolVersion = HttpVersion.Version11;
-
-                s = req.GetRequestStream();
-                s.Write(dat, 0, dat.Length);
-                s.Close();
-
-                //try the request
-                try
-                {
-                    rsp = (HttpWebResponse)req.GetResponse();
-                }
-                catch (WebException webex)
-                {
-                    string data = "";
-                    if (webex.Response != null)
+                    if (!e.Cancelled && e.Error == null)
                     {
-                        StreamReader r = new StreamReader(webex.Response.GetResponseStream());
-                        data = r.ReadToEnd();
-                        r.Close();
+                        if (Settings.TraceSwitch.TraceVerbose)
+                            Trace.WriteLine("GetMetadata completed.");
+
+                        processOIMS(e.Result);
                     }
-
-                    throw new Exception("OIM Request error: " + webex.Message + "\r\n" + data);
-                }
-                XmlDocument xmlsoapRespon = new XmlDocument();
-                s = rsp.GetResponseStream();
-                xmlsoapRespon.Load(s);
-
-                s.Close();
-                rsp.Close();
-
-                XmlNodeList msgresult = xmlsoapRespon.GetElementsByTagName("GetMessageResult");
-                Regex regsenderdata = new Regex("From:(?<encode>=.*=)<(?<mail>.+)>\r\n");
-                Match mch = regsenderdata.Match(msgresult[0].InnerText);
-                string strencoding = "utf-8";
-                if (mch.Groups["encode"].Value != "")
-                {
-                    strencoding = mch.Groups["encode"].Value.Split('?')[1];
-                }
-                Encoding encode = Encoding.GetEncoding(strencoding);
-
-                string sender = mch.Groups["mail"].Value; //senderdata.Split(new string[] { "<", ">" }, StringSplitOptions.RemoveEmptyEntries)[1];
-
-                Regex regmsg = new Regex("\r\n\r\n[^\r\n]+");
-                string base64msg = regmsg.Match(msgresult[0].InnerText).Value.Substring(4);
-                string msg = encode.GetString(Convert.FromBase64String(base64msg));
-                DeleteOIMMessage(guid);
-
-                if (OIMReceived != null)
-                    OIMReceived(sender, msg);
+                    else if (e.Error != null)
+                    {
+                        throw new MSNPSharpException(e.Error.Message, e.Error);
+                    }
+                    ((IDisposable)sender).Dispose();
+                    return;
+                };
+                rsiService.GetMetadataAsync(new GetMetadataRequestType(), new object());
+                return;
             }
-
+            processOIMS(xmlstr);
         }
 
-        private void DeleteOIMMessage(string msg_guid)
+        private void processOIMS(string xmldata)
         {
-            byte[] dat = null;
-            Stream s = null;
+            XmlDocument xdoc = new XmlDocument();
+            xdoc.LoadXml(xmldata);
+            XmlNodeList xnodlst = xdoc.GetElementsByTagName("M");
+            List<string> guidstodelete = new List<string>();
+            int oimdeletecount = xnodlst.Count;
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(@"https://rsi.hotmail.com/rsi/rsi.asmx");
-            HttpWebResponse rsp;
+            Regex regmsg = new Regex("\n\n[^\n]+");
+            Regex regsenderdata = new Regex("From:(?<encode>=.*=)<(?<mail>.+)>\n");
 
-            X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+            string[] TandP = _Tickets["web_ticket"].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
-            req.ContentType = "text/xml; charset=utf-8";
-            req.Headers["SOAPAction"] = @"http://www.hotmail.msn.com/ws/2004/09/oim/rsi/DeleteMessages";
-            req.ClientCertificates = store.Certificates;
-
-            #region Soap Envelope
-            string reqsoap = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-                                + "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
-                                + "<soap:Header>"
-                                + "<PassportCookie xmlns=\"http://www.hotmail.msn.com/ws/2004/09/oim/rsi\">"
-                                + "<t>{t}</t>"
-                                + "<p>{p}</p>"
-                                + "</PassportCookie>"
-                                + "</soap:Header><soap:Body>"
-                                + "<DeleteMessages xmlns=\"http://www.hotmail.msn.com/ws/2004/09/oim/rsi\">"
-                                + "<messageIds>"
-                                + "<messageId>{MessageID}</messageId>"
-                                + "</messageIds>"
-                                + "</DeleteMessages>"
-                                + "</soap:Body></soap:Envelope>";
-            #endregion
-
-
-
-            reqsoap = reqsoap.Replace("{t}", HttpUtility.HtmlEncode(
-                _Tickets["web_ticket"].Split(new string[] { "t=", "&p=" } , StringSplitOptions.None)[1]));
-            reqsoap = reqsoap.Replace("{p}", HttpUtility.HtmlEncode(
-                _Tickets["web_ticket"].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None)[2]));
-            reqsoap = reqsoap.Replace("{MessageID}", msg_guid);
-            dat = Encoding.UTF8.GetBytes(reqsoap);
-
-            req.ContentLength = dat.Length;
-            req.Method = "POST";
-            req.ProtocolVersion = HttpVersion.Version11;
-
-            s = req.GetRequestStream();
-            s.Write(dat, 0, dat.Length);
-            s.Close();
-
-            //try the request
-            try
+            foreach (XmlNode m in xnodlst)
             {
-                rsp = (HttpWebResponse)req.GetResponse();
-            }
-            catch (WebException webex)
-            {
-                string data = "";
-                if (webex.Response != null)
+                string rt = DateTime.Now.ToString();
+                Int32 size = 0;
+                String email = String.Empty;
+                String guid = String.Empty;
+                String message = String.Empty;
+
+                foreach (XmlNode a in m)
                 {
-                    StreamReader r = new StreamReader(webex.Response.GetResponseStream());
-                    data = r.ReadToEnd();
-                    r.Close();
+                    switch (a.Name)
+                    {
+                        case "RT":
+                            rt = a.InnerText;
+                            break;
+
+                        case "SZ":
+                            size = Convert.ToInt32(a.InnerText);
+                            break;
+
+                        case "E":
+                            email = a.InnerText;
+                            break;
+
+                        case "I":
+                            guid = a.InnerText;
+                            break;
+                    }
                 }
 
-                throw new Exception("OIM Delete Request error: " + webex.Message + "\r\n" + data);
-            }
-            XmlDocument xmlsoapRespon = new XmlDocument();
-            s = rsp.GetResponseStream();
-            xmlsoapRespon.Load(s);
+                RSIService rsiService = new RSIService();
+                rsiService.Timeout = Int32.MaxValue;
+                rsiService.PassportCookieValue = new PassportCookie();
+                rsiService.PassportCookieValue.t = TandP[1];
+                rsiService.PassportCookieValue.p = TandP[2];
+                rsiService.GetMessageCompleted += delegate(object service, GetMessageCompletedEventArgs e)
+                {
+                    if (!e.Cancelled && e.Error == null)
+                    {
+                        Match mch = regsenderdata.Match(e.Result.GetMessageResult);
 
-            s.Close();
-            rsp.Close();
+                        string strencoding = "utf-8";
+                        if (mch.Groups["encode"].Value != String.Empty)
+                        {
+                            strencoding = mch.Groups["encode"].Value.Split('?')[1];
+                        }
+                        Encoding encode = Encoding.GetEncoding(strencoding);
+                        message = encode.GetString(Convert.FromBase64String(regmsg.Match(e.Result.GetMessageResult).Value.Trim()));
+
+                        OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, email, message);
+                        OIMReceived(this, orea);
+                        if (orea.DeleteMessage)
+                        {                   
+                            guidstodelete.Add(guid);
+                        }
+                        if (0 == --oimdeletecount && guidstodelete.Count > 0)
+                        {
+                            DeleteOIMMessages(guidstodelete.ToArray());
+                        }
+                    }
+                    else if (e.Error != null)
+                    {
+                        throw new MSNPSharpException(e.Error.Message, e.Error);
+                    }
+                    return;
+                };
+
+                GetMessageRequestType request = new GetMessageRequestType();
+                request.messageId = guid;
+                request.alsoMarkAsRead = false;
+                rsiService.GetMessageAsync(request, new object());
+            }
+        }
+
+        private void DeleteOIMMessages(string[] guids)
+        {
+            string[] TandP = _Tickets["web_ticket"].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
+
+            RSIService rsiService = new RSIService();
+            rsiService.Timeout = Int32.MaxValue;
+            rsiService.PassportCookieValue = new PassportCookie();
+            rsiService.PassportCookieValue.t = TandP[1];
+            rsiService.PassportCookieValue.p = TandP[2];
+            rsiService.DeleteMessagesCompleted += delegate(object service, DeleteMessagesCompletedEventArgs e)
+            {
+                if (!e.Cancelled && e.Error == null)
+                {
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        Trace.WriteLine("DeleteMessages completed.");
+                }
+                else if (e.Error != null)
+                {
+                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
+
+            DeleteMessagesRequestType request = new DeleteMessagesRequestType();
+            request.messageIds = guids;
+            rsiService.DeleteMessagesAsync(request, new object());
         }
 
         private class OIMUserState
