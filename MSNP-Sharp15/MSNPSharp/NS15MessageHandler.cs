@@ -3755,11 +3755,15 @@ namespace MSNPSharp
                 {
                     if (e.Cancelled == false && e.Error == null)
                     {
-                        contact.OIMCount++; // Sent successfully.
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine("A OIM Messenger has been sent, runId = " + _RunGuid);
+                        SequenceAcknowledgmentAcknowledgmentRange range = oimService.SequenceAcknowledgmentValue.AcknowledgmentRange[0];
+                        if (range.Lower == 1 && range.Upper == 1)
+                        {
+                            contact.OIMCount++; // Sent successfully.
+                            if (Settings.TraceSwitch.TraceVerbose)
+                                Trace.WriteLine("A OIM Messenger has been sent, runId = " + _RunGuid);
+                        }
                     }
-                    else if (e.Error != null)
+                    else if (e.Error != null && e.Error is SoapException)
                     {
                         SoapException soapexp = e.Error as SoapException;
                         if (soapexp != null && soapexp.Code.Name == "AuthenticationFailed")
