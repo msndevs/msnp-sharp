@@ -8,6 +8,7 @@
         <xsd:element default="false" name="IsMigration" type="xsd:boolean" />
         <xsd:element default="Initial" name="PartnerScenario" type="xsd:string" />
         <xsd:element minOccurs="0" name="CacheKey" type="xsd:token" />
+        <xsd:element minOccurs="0" name="BrandId" />
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
