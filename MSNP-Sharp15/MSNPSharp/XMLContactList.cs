@@ -126,6 +126,14 @@ namespace MSNPSharp
             set { lastChange = value; }
         }
 
+        private string foreignId;
+
+        public string ForeignId
+        {
+            get { return foreignId; }
+            set { foreignId = value; }
+        }
+
         public override string ToString()
         {
             return Type;
