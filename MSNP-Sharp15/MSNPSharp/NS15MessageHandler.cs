@@ -3766,10 +3766,17 @@ namespace MSNPSharp
                     else if (e.Error != null && e.Error is SoapException)
                     {
                         SoapException soapexp = e.Error as SoapException;
-                        if (soapexp != null && soapexp.Code.Name == "AuthenticationFailed")
+                        if (soapexp.Code.Name == "AuthenticationFailed")
                         {
                             _Tickets["lock_key"] = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, soapexp.Detail.InnerText);
                             oimService.TicketValue.lockkey = _Tickets["lock_key"];
+                        }
+                        else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
+                        {
+                            if (Settings.TraceSwitch.TraceVerbose)
+                                Trace.WriteLine("OIM: SenderThrottleLimitExceeded. Waiting 11 seconds...");
+
+                            System.Threading.Thread.Sleep(11111); // wait 11 seconds.
                         }
                         if (userstate.RecursiveCall++ < 5)
                         {
