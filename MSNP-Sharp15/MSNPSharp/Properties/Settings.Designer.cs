@@ -47,9 +47,9 @@ namespace MSNPSharp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
         [global::System.Configuration.DefaultSettingValueAttribute("https://ows.messenger.msn.com/OimWS/oim.asmx")]
-        public string MSNPSharp_OIMStoreService_OIMService {
+        public string MSNPSharp_MSNOIMStoreService_OIMService {
             get {
-                return ((string)(this["MSNPSharp_OIMStoreService_OIMService"]));
+                return ((string)(this["MSNPSharp_MSNOIMStoreService_OIMService"]));
             }
         }
     }
