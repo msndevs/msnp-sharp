@@ -1,76 +1,123 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Xml;
-using System.IO;
-using MSNPSharp.IO;
-using System.Globalization;
-using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
-
-namespace MSNPSharp
+﻿namespace MSNPSharp
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Xml;
+    using System.IO;
+    using MSNPSharp.IO;
+    using System.Globalization;
+    using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
+
     internal class ContactInfo
     {
         private string account;
-
         public string Account
         {
-            get { return account; }
-            set { account = value; }
+            get
+            {
+                return account;
+            }
+            set
+            {
+                account = value;
+            }
         }
-        private string guid;
 
+        private string guid;
         public string Guid
         {
-            get { return guid; }
-            set { guid = value; }
+            get
+            {
+                return guid;
+            }
+            set
+            {
+                guid = value;
+            }
         }
-        private int membershipId;
 
+        private int membershipId;
         public int MembershipId
         {
-            get { return membershipId; }
-            set { membershipId = value; }
+            get
+            {
+                return membershipId;
+            }
+            set
+            {
+                membershipId = value;
+            }
         }
-        private bool isMessengerUser;
 
+        private bool isMessengerUser;
         public bool IsMessengerUser
         {
-            get { return isMessengerUser; }
-            set { isMessengerUser = value; }
+            get
+            {
+                return isMessengerUser;
+            }
+            set
+            {
+                isMessengerUser = value;
+            }
         }
-        private ClientType type;
 
+        private ClientType type = ClientType.MessengerUser;
         public ClientType Type
         {
-            get { return type; }
-            set { type = value; }
+            get
+            {
+                return type;
+            }
+            set
+            {
+                type = value;
+            }
         }
-        //public MSNLists msnlist;
-        private string displayname;
 
+
+        private string displayname;
         public string DisplayName
         {
-            get { return displayname; }
-            set { displayname = value; }
+            get
+            {
+                return displayname;
+            }
+            set
+            {
+                displayname = value;
+            }
         }
-        private DateTime lastchanged;
 
+        private DateTime lastchanged;
         public DateTime LastChanged
         {
-            get { return lastchanged; }
-            set { lastchanged = value; }
+            get
+            {
+                return lastchanged;
+            }
+            set
+            {
+                lastchanged = value;
+            }
         }
-        private List<string> groups = new List<string>(0);
 
+        private List<string> groups = new List<string>(0);
         public List<string> Groups
         {
-            get { return groups; }
-            set { groups = value; }
+            get
+            {
+                return groups;
+            }
+            set
+            {
+                groups = value;
+            }
         }
 
         public override string ToString()
         {
-            string debugstr = "";
+            string debugstr = String.Empty;
             if (account != null)
                 debugstr += account + "  |  isMessengerUser:  " + IsMessengerUser.ToString();
             if (displayname != null)
@@ -82,18 +129,29 @@ namespace MSNPSharp
     internal struct GroupInfo
     {
         private string guid;
-
         public string Guid
         {
-            get { return guid; }
-            set { guid = value; }
+            get
+            {
+                return guid;
+            }
+            set
+            {
+                guid = value;
+            }
         }
-        private string name;
 
+        private string name;
         public string Name
         {
-            get { return name; }
-            set { name = value; }
+            get
+            {
+                return name;
+            }
+            set
+            {
+                name = value;
+            }
         }
 
         public override string ToString()
@@ -105,33 +163,55 @@ namespace MSNPSharp
     internal struct Service
     {
         private int id;
-
         public int Id
         {
-            get { return id; }
-            set { id = value; }
+            get
+            {
+                return id;
+            }
+            set
+            {
+                id = value;
+            }
         }
-        private string type;
 
+        private string type;
         public string Type
         {
-            get { return type; }
-            set { type = value; }
+            get
+            {
+                return type;
+            }
+            set
+            {
+                type = value;
+            }
         }
-        private DateTime lastChange;
 
+        private DateTime lastChange;
         public DateTime LastChange
         {
-            get { return lastChange; }
-            set { lastChange = value; }
+            get
+            {
+                return lastChange;
+            }
+            set
+            {
+                lastChange = value;
+            }
         }
 
         private string foreignId;
-
         public string ForeignId
         {
-            get { return foreignId; }
-            set { foreignId = value; }
+            get
+            {
+                return foreignId;
+            }
+            set
+            {
+                foreignId = value;
+            }
         }
 
         public override string ToString()
@@ -145,12 +225,15 @@ namespace MSNPSharp
     /// </summary>
     internal class XMLMembershipList : XMLContactList
     {
-        private string fileName = "";
+        private string fileName = String.Empty;
         private Dictionary<int, Service> services = new Dictionary<int, Service>(0);
 
         public Dictionary<int, Service> Services
         {
-            get { return services; }
+            get
+            {
+                return services;
+            }
         }
         private Dictionary<MemberRole, Dictionary<string, ContactInfo>> rolelists
             = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>(0);
@@ -293,7 +376,10 @@ namespace MSNPSharp
 
         public Dictionary<MemberRole, Dictionary<string, ContactInfo>> MemberRoles
         {
-            get { return rolelists; }
+            get
+            {
+                return rolelists;
+            }
             //set { rolelists = value; }
         }
 
@@ -303,7 +389,7 @@ namespace MSNPSharp
 
             listroot.AppendChild(CreateNode(MembershipsChildNodes.MemberRole.ToString(), memberrole.ToString()));
             XmlNode membersRoot = CreateNode(MembershipsChildNodes.Members.ToString(), null);
-            
+
             foreach (ContactInfo cinfo in rolelists[memberrole].Values)
             {
                 XmlNode memberNode = CreateNode(XMLContactListTags.Members.ToString(), null);
@@ -331,7 +417,7 @@ namespace MSNPSharp
     /// </summary>
     internal class XMLAddressBook : XMLContactList
     {
-        string fileName = "";
+        string fileName = String.Empty;
         DateTime dynamicItemLastChange;
         Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
         Dictionary<string, string> myproperties = new Dictionary<string, string>(0);
@@ -427,19 +513,34 @@ namespace MSNPSharp
 
         public Dictionary<string, GroupInfo> Groups
         {
-            get { return groups; }
+            get
+            {
+                return groups;
+            }
         }
 
         public DateTime DynamicItemLastChange
         {
-            get { return dynamicItemLastChange; }
-            set { dynamicItemLastChange = value; }
+            get
+            {
+                return dynamicItemLastChange;
+            }
+            set
+            {
+                dynamicItemLastChange = value;
+            }
         }
 
         public Dictionary<string, string> MyProperties
         {
-            get { return myproperties; }
-            set { myproperties = value; }
+            get
+            {
+                return myproperties;
+            }
+            set
+            {
+                myproperties = value;
+            }
         }
 
         private XmlNode GetGroups()
@@ -483,4 +584,4 @@ namespace MSNPSharp
             return contactRoot;
         }
     }
-}
+};
