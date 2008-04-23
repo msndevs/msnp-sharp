@@ -2645,8 +2645,7 @@ namespace MSNPSharp
             if (Credentials == null)
                 throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
 
-            clsQRYFactory qryfactory = new clsQRYFactory();
-            string md = qryfactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
+            string md = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
             _Tickets["lock_key"] = md;
             MessageProcessor.SendMessage(new NSMessage("QRY", new string[] { " " + Credentials.ClientID, " 32\r\n", md }));
         }
@@ -3729,8 +3728,7 @@ namespace MSNPSharp
                         SoapException soapexp = e.Error as SoapException;
                         if (soapexp != null)
                         {
-                            clsQRYFactory qryfac = new clsQRYFactory();
-                            _Tickets["lock_key"] = qryfac.CreateQRY(Credentials.ClientID, Credentials.ClientCode, soapexp.Detail.InnerText);
+                            _Tickets["lock_key"] = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, soapexp.Detail.InnerText);
                         }
                         if (recursiveCall < 5)
                         {
@@ -3759,7 +3757,7 @@ namespace MSNPSharp
                 messageTemplate.Replace("{seq-num}", contact.OIMCount.ToString());
                 messageTemplate.Replace("{run_id}", _RunGuid);
 
-                oimService.StoreAsync(MessageTypeType.text, messageTemplate.ToString());
+                oimService.StoreAsync(MessageType.text, messageTemplate.ToString());
 
             }
         }
