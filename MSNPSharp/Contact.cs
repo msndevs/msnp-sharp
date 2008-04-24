@@ -501,10 +501,15 @@ namespace MSNPSharp
 			}
 		}
 		
-		public bool HasGroup (ContactGroup group)
+		public bool HasGroup(ContactGroup group)
 		{
 			return contactGroups.Contains (group);
 		}
+
+        internal bool HasLists(MSNLists msnlists)
+        {
+            return ((lists & msnlists) == msnlists);
+        }
 
 		public void UpdateScreenName()
 		{

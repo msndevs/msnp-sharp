@@ -267,16 +267,47 @@ namespace MSNPSharp
     [Serializable()]
     public class OIMReceivedEventArgs : EventArgs
     {
-        public readonly string TimeReceived;
-        public readonly string Email;
-        public readonly string Message;
-        public bool DeleteMessage = true;
+        private string receivedTime;
 
-        public OIMReceivedEventArgs(string receivedTime, string email, string message)
+        public string ReceivedTime
         {
-            TimeReceived = receivedTime;
-            Email = email;
-            Message = message;
+            get { return receivedTime; }
+        }
+        private string email;
+
+        /// <summary>
+        /// Sender account.
+        /// </summary>
+        public string Email
+        {
+            get { return email; }
+        }
+        private string message;
+
+        /// <summary>
+        /// Text message.
+        /// </summary>
+        public string Message
+        {
+            get { return message; }
+        }
+        private bool isRead = true;
+
+        /// <summary>
+        /// Set this to true if you don't want to receive this message
+        /// next time you login.
+        /// </summary>
+        public bool IsRead
+        {
+            get { return isRead; }
+            set { isRead = value; }
+        }
+
+        public OIMReceivedEventArgs(string rcvTime, string account, string msg)
+        {
+            receivedTime = rcvTime;
+            email = account;
+            message = msg;
         }
     }
 
@@ -365,7 +396,7 @@ namespace MSNPSharp
     /// This delegate is used when an OIM was received.
     /// </summary>
     /// <param name="sender">The sender's email</param>
-    /// <param name="message">Message</param>
+    /// <param name="e">OIMReceivedEventArgs</param>
     public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
 
     #endregion
@@ -747,6 +778,26 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Fires the <see cref="ReverseRemoved"/> event.
+        /// </summary>
+        /// <param name="contact"></param>
+        protected virtual void OnReverseRemoved(Contact contact)
+        {
+            if (ReverseRemoved != null)
+                ReverseRemoved(this, new ContactEventArgs(contact));
+        }
+
+        /// <summary>
+        ///  Fires the <see cref="ReverseAdded"/> event.
+        /// </summary>
+        /// <param name="contact"></param>
+        protected virtual void OnReverseAdded(Contact contact)
+        {
+            if (ReverseAdded != null)
+                ReverseAdded(this, new ContactEventArgs(contact));
+        }
+
+        /// <summary>
         /// Fires the <see cref="AuthenticationError"/> event.
         /// </summary>
         /// <param name="e">The exception which was thrown</param>
@@ -1064,18 +1115,20 @@ namespace MSNPSharp
                                     else if (bm is EmailMember)
                                     {
                                         ci.Account = ((EmailMember)bm).Email;
+                                        ci.Type = ClientType.YahooMessengerUser;
 
-                                        if (null != bm.Annotations)
-                                        {
-                                            foreach (Annotation anno in bm.Annotations)
-                                            {
-                                                if (anno.Name == "MSN.IM.BuddyType" && anno.Value != null && anno.Value == "32:")
-                                                {
-                                                    ci.Type = ClientType.YahooMessengerUser;
-                                                    break;
-                                                }
-                                            }
-                                        }
+                                        //NOT necessary,sometimes it leads to bug
+                                        //if (null != bm.Annotations)
+                                        //{
+                                        //    foreach (Annotation anno in bm.Annotations)
+                                        //    {
+                                        //        if (anno.Name == "MSN.IM.BuddyType" && anno.Value != null && anno.Value == "32:")
+                                        //        {
+                                        //            ci.Type = ClientType.YahooMessengerUser;
+                                        //            break;
+                                        //        }
+                                        //    }
+                                        //}
                                     }
 
                                     if (!String.IsNullOrEmpty(bm.DisplayName))
@@ -1087,7 +1140,7 @@ namespace MSNPSharp
                                     {
                                         mShips[lst][ci.Account] = ci;
 
-                                        if (!MemberShipList.ContainsKey(ci.Account) || MemberShipList[ci.Account].LastChanged.CompareTo(ci.LastChanged) <= 0)
+                                        if (!MemberShipList.ContainsKey(ci.Account) || MemberShipList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
                                         {
                                             MemberShipList[ci.Account] = ci;
                                         }
@@ -1168,7 +1221,7 @@ namespace MSNPSharp
                         ci.Groups = new List<string>(groupids);
                         if (diccontactList.ContainsKey(ci.Account))
                         {
-                            if (diccontactList[ci.Account].LastChanged.CompareTo(ci.LastChanged) <= 0)
+                            if (diccontactList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
                             {
                                 diccontactList[ci.Account] = ci;
                             }
@@ -1227,8 +1280,7 @@ namespace MSNPSharp
                     contact.SetName(ci.DisplayName);
                     contact.AddToList(MSNLists.PendingList);
                     contact.NSMessageHandler = this;
-                    if (ReverseAdded != null)
-                        ReverseAdded(this, new ContactEventArgs(contact));
+                    OnReverseAdded(contact);
                 }
             }
 
@@ -1293,7 +1345,59 @@ namespace MSNPSharp
                 }
 
             }
+            else
+            {
+                NetworkMessage networkMessage = message as NetworkMessage;
+                XmlDocument xmlDoc = new XmlDocument();
+                if (networkMessage.InnerBody != null)          //Payload ADL command.
+                {
+                    xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                    XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                    string domain = "";
+                    foreach (XmlNode domainNode in domains)
+                    {
+                        domain = domainNode.Attributes["n"].Value;
+                        XmlNode contactNode = domainNode.FirstChild;
+                        do
+                        {
+                            string account = contactNode.Attributes["n"].Value + "@" + domain;
+                            ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                            string displayName = account;
+                            try
+                            {
+                                displayName = contactNode.Attributes["f"].Value;
+                            }
+                            catch (Exception) { }
 
+                            MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                            account = account.ToLower(CultureInfo.InvariantCulture);
+                            if (contactList.HasContact(account))
+                            {
+                                Contact updateContact = contactList.GetContact(account);
+                                updateContact.SetName(displayName);
+                                if (!updateContact.HasLists(list))
+                                    updateContact.AddToList(list);
+                            }
+                            else
+                            {
+                                if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
+                                {
+                                    Contact newcontact = Factory.CreateContact();
+                                    newcontact.SetMail(account);
+                                    newcontact.SetName(displayName);
+                                    newcontact.SetClientType(type);
+                                    newcontact.SetLists(MSNLists.ReverseList);
+                                    OnReverseAdded(newcontact);
+                                }
+
+                            }
+                            if (Settings.TraceSwitch.TraceVerbose)
+                                Trace.WriteLine(account + " was added to your " + list.ToString());
+
+                        } while (contactNode.NextSibling != null);
+                    }
+                }
+            }
         }
 
         private int adlcount = 0;
@@ -1691,11 +1795,11 @@ namespace MSNPSharp
             {
                 if (isABServiceBinding)
                 {
-                    _Tickets["ab_cache_key"] = sh.CacheKey;
+                    _Tickets["ab_cache_key"] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS ab_cache_key
                 }
                 else
                 {
-                    _Tickets["sh_cache_key"] = sh.CacheKey;
+                    _Tickets["sh_cache_key"] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS sh_cache_key
                 }
             }
         }
@@ -1727,13 +1831,7 @@ namespace MSNPSharp
                 return;
 
             // check whether the update is necessary
-            if (list == MSNLists.ForwardList && contact.OnForwardList)
-                return;
-            if (list == MSNLists.BlockedList && contact.OnBlockedList)
-                return;
-            if (list == MSNLists.AllowedList && contact.OnAllowedList)
-                return;
-            if (list == MSNLists.ReverseList && contact.OnReverseList)
+            if (contact.HasLists(list))
                 return;
 
             string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
@@ -1826,13 +1924,7 @@ namespace MSNPSharp
                 return;
 
             // check whether the update is necessary
-            if (list == MSNLists.ForwardList && !contact.OnForwardList)
-                return;
-            if (list == MSNLists.BlockedList && !contact.OnBlockedList)
-                return;
-            if (list == MSNLists.AllowedList && !contact.OnAllowedList)
-                return;
-            if (list == MSNLists.PendingList && !contact.OnPendingList)
+            if (!contact.HasLists(list))
                 return;
 
             string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
@@ -1991,7 +2083,7 @@ namespace MSNPSharp
             if (abSynchronized == false)
                 throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
-            string context = String.Empty;
+            string context = "";
 
             if (owner.DisplayImage != null)
                 context = owner.DisplayImage.Context;
@@ -2133,7 +2225,7 @@ namespace MSNPSharp
         /// <param name="text"></param>
         public virtual void SendMobileMessage(Contact receiver, string text)
         {
-            SendMobileMessage(receiver, text, String.Empty, String.Empty);
+            SendMobileMessage(receiver, text, "", "");
         }
 
         /// <summary>
@@ -2314,6 +2406,9 @@ namespace MSNPSharp
                         break;
                     case "RMG":
                         OnRMGReceived(nsMessage);
+                        break;
+                    case "RML":
+                        OnRMLReceived(nsMessage);
                         break;
                     case "REM":
                         OnREMReceived(nsMessage);
@@ -2813,14 +2908,14 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnPRPReceived(NSMessage message)
         {
-            string number = String.Empty;
-            string type = String.Empty;
+            string number = "";
+            string type = "";
             if (message.CommandValues.Count >= 4)
             {
                 if (message.CommandValues.Count >= 4)
                     number = HttpUtility.UrlDecode((string)message.CommandValues[3]);
                 else
-                    number = String.Empty;
+                    number = "";
                 type = message.CommandValues[1].ToString();
             }
             else
@@ -3354,7 +3449,7 @@ namespace MSNPSharp
             if (Owner == null)
                 return;
 
-            string type = String.Empty;
+            string type = "";
 
             if (message.CommandValues.Count == 1)
                 type = message.CommandValues[0].ToString();
@@ -3446,6 +3541,48 @@ namespace MSNPSharp
 
 
         /// <summary>
+        /// Called when a RML command has been received.
+        /// </summary>
+        /// <remarks>Indicates that someone was removed from a list by local user (RML [Trans-ID] OK)
+        /// or local user was removed from someone's reverse list (RML 0 [Trans-ID]\r\n[payload]).</remarks>
+        /// <param name="nsMessage"></param>
+        protected virtual void OnRMLReceived(NSMessage nsMessage)
+        {
+            NetworkMessage networkMessage = nsMessage as NetworkMessage;
+            XmlDocument xmlDoc = new XmlDocument();
+            if (networkMessage.InnerBody != null)   //Payload RML command.
+            {
+                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                string domain = "";
+                foreach (XmlNode domainNode in domains)
+                {
+                    domain = domainNode.Attributes["n"].Value;
+                    XmlNode contactNode = domainNode.FirstChild;
+                    do
+                    {
+                        string account = contactNode.Attributes["n"].Value + "@" + domain;
+                        ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                        string displayName = contactNode.Attributes["f"].Value;
+                        MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                        account = account.ToLower(CultureInfo.InvariantCulture);
+                        if (contactList.HasContact(account))
+                        {
+                            Contact contact = contactList.GetContact(account);
+                            if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
+                            {
+                                OnReverseRemoved(contact);
+                            }
+                        }
+                        if (Settings.TraceSwitch.TraceVerbose)
+                            Trace.WriteLine(account + " has removed you from his/her " + list.ToString());
+
+                    } while (contactNode.NextSibling != null);
+                }
+            }
+        }
+
+        /// <summary>
         /// Called when a MSG command has been received.
         /// </summary>
         /// <remarks>
@@ -3516,8 +3653,6 @@ namespace MSNPSharp
             }
 
         }
-
-        #region OIM Related Functions
 
         protected virtual void OnOIMReceived(MSGMessage message)
         {
@@ -3619,8 +3754,8 @@ namespace MSNPSharp
 
                         OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, email, message);
                         OIMReceived(this, orea);
-                        if (orea.DeleteMessage)
-                        {
+                        if (orea.IsRead)
+                        {                   
                             guidstodelete.Add(guid);
                         }
                         if (0 == --oimdeletecount && guidstodelete.Count > 0)
@@ -3767,8 +3902,6 @@ namespace MSNPSharp
                 oimService.StoreAsync(MessageType.text, message, userstate);
             }
         }
-
-        #endregion
 
         /// <summary>
         /// Called when the owner has removed or moved e-mail.

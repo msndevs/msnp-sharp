@@ -147,58 +147,60 @@ namespace MSNPSharp.Core
 				{
 					// read until we come across a newline
 					byte val = reader.ReadByte();
-					
-					if(val != '\n')
-						bufferWriter.Write(val);
-					else
-					{
-						// write the last newline
-						bufferWriter.Write(val);				
-						
-						// check if it's a payload command
-						bufferStream.Position = 0;
-						byte[] cmd = new byte[3];
-						cmd[0] = (byte)bufferStream.ReadByte();
-						cmd[1] = (byte)bufferStream.ReadByte();
-						cmd[2] = (byte)bufferStream.ReadByte();
-						
-						if((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||		// MSG payload command
-						   (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||		// IPG pager command
-						   (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||
-						   (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||
-						   (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M'))	// NOT notification command
-						{
-							bufferStream.Seek(-3, SeekOrigin.End);
 
-							// calculate the length by reading backwards from the end
-							remainingBuffer = 0;
-							int size = 0;
-							int iter = 0;
+                    if (val != '\n')
+                        bufferWriter.Write(val);
+                    else
+                    {
+                        // write the last newline
+                        bufferWriter.Write(val);
 
-							while((size = bufferStream.ReadByte())>0 && size >= '0' && size <= '9')
-							{
-								remainingBuffer += (int)((size-'0') * Math.Pow(10, iter));
-								bufferStream.Seek(-2, SeekOrigin.Current);
-								iter++;
-							}
-							
-							// move to the end of the stream before we are going to write
-							bufferStream.Seek(0, SeekOrigin.End);
-							
-							if (remainingBuffer == 0)
-							{
-								EnqueueCurrentBuffer ();
-								CreateNewBuffer ();	
-							}
-						}
-						else
-						{
-							// it was just a plain command start a new message
-							EnqueueCurrentBuffer();
-							CreateNewBuffer();							
-						}
-					}
+                        // check if it's a payload command
+                        bufferStream.Position = 0;
+                        byte[] cmd = new byte[3];
+                        cmd[0] = (byte)bufferStream.ReadByte();
+                        cmd[1] = (byte)bufferStream.ReadByte();
+                        cmd[2] = (byte)bufferStream.ReadByte();
+
+                        if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||		// MSG payload command
+                           (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||		// IPG pager command
+                           (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||
+                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||
+                           (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||
+                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||	// NOT notification command
+                           (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||
+                           (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L'))
+                        {
+                            bufferStream.Seek(-3, SeekOrigin.End);
+
+                            // calculate the length by reading backwards from the end
+                            remainingBuffer = 0;
+                            int size = 0;
+                            int iter = 0;
+
+                            while ((size = bufferStream.ReadByte()) > 0 && size >= '0' && size <= '9')
+                            {
+                                remainingBuffer += (int)((size - '0') * Math.Pow(10, iter));
+                                bufferStream.Seek(-2, SeekOrigin.Current);
+                                iter++;
+                            }
+
+                            // move to the end of the stream before we are going to write
+                            bufferStream.Seek(0, SeekOrigin.End);
+
+                            if (remainingBuffer == 0)
+                            {
+                                EnqueueCurrentBuffer();
+                                CreateNewBuffer();
+                            }
+                        }
+                        else
+                        {
+                            // it was just a plain command start a new message
+                            EnqueueCurrentBuffer();
+                            CreateNewBuffer();
+                        }
+                    }
 					length--;
 				}
 			}			
