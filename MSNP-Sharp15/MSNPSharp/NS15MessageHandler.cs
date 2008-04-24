@@ -1353,7 +1353,7 @@ namespace MSNPSharp
                 {
                     xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
                     XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                    string domain = "";
+                    string domain = String.Empty;
                     foreach (XmlNode domainNode in domains)
                     {
                         domain = domainNode.Attributes["n"].Value;
@@ -1850,6 +1850,12 @@ namespace MSNPSharp
                 return;
             }
 
+            return;
+
+            // Following code is not required and the best way of the adding an user to the list is ADL.
+            // Soap request always fails. "Member already exists."
+
+            /*
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -1915,6 +1921,7 @@ namespace MSNPSharp
             addMemberRequest.memberships = new Membership[] { memberShip };
 
             sharingService.AddMemberAsync(addMemberRequest, new object());
+             * */
         }
 
         /// <summary>
@@ -1934,7 +1941,6 @@ namespace MSNPSharp
             string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
             payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
             payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-
             payload = payload.Replace("{l}", ((int)list).ToString());
 
             MessageProcessor.SendMessage(new NSMessage("RML", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
@@ -1946,6 +1952,12 @@ namespace MSNPSharp
                 return;
             }
 
+            return;
+
+            // Following code is not required and the best way of the removing an user from the list is RML.
+            // Soap request always fails. "Member doesn't exist."
+
+            /*
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -1992,13 +2004,14 @@ namespace MSNPSharp
             Membership memberShip = new Membership();
             memberShip.MemberRole = GetMemberRole(list);
             BaseMember member = new BaseMember();
-
+            */
             /* If you cannot determind the client type, just use a BaseMember and specify the membershipId.
              * The offical client just do so. But once the contact is removed and added to another rolelist,its membershipId also changed.
              * Unless you get your contactlist again, you have to use the account if you wanted to delete that contact once more.
              * To avoid this,we have to ensure the client type we've got is correct at the very beginning.
              * */
 
+            /*
             if (contact.ClientType == ClientType.MessengerUser)
             {
                 member = new PassportMember();
@@ -2014,6 +2027,7 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
+             * */           
         }
 
         /// <summary>
@@ -2087,7 +2101,7 @@ namespace MSNPSharp
             if (abSynchronized == false)
                 throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
-            string context = "";
+            string context = String.Empty;
 
             if (owner.DisplayImage != null)
                 context = owner.DisplayImage.Context;
@@ -2229,7 +2243,7 @@ namespace MSNPSharp
         /// <param name="text"></param>
         public virtual void SendMobileMessage(Contact receiver, string text)
         {
-            SendMobileMessage(receiver, text, "", "");
+            SendMobileMessage(receiver, text, String.Empty, String.Empty);
         }
 
         /// <summary>
@@ -2912,14 +2926,14 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnPRPReceived(NSMessage message)
         {
-            string number = "";
-            string type = "";
+            string number = String.Empty;
+            string type = String.Empty;
             if (message.CommandValues.Count >= 4)
             {
                 if (message.CommandValues.Count >= 4)
                     number = HttpUtility.UrlDecode((string)message.CommandValues[3]);
                 else
-                    number = "";
+                    number = String.Empty;
                 type = message.CommandValues[1].ToString();
             }
             else
@@ -3453,7 +3467,7 @@ namespace MSNPSharp
             if (Owner == null)
                 return;
 
-            string type = "";
+            string type = String.Empty;
 
             if (message.CommandValues.Count == 1)
                 type = message.CommandValues[0].ToString();
@@ -3558,7 +3572,7 @@ namespace MSNPSharp
             {
                 xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
                 XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                string domain = "";
+                string domain = String.Empty;
                 foreach (XmlNode domainNode in domains)
                 {
                     domain = domainNode.Attributes["n"].Value;
