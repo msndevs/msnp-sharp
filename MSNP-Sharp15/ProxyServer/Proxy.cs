@@ -37,6 +37,7 @@ using System.Reflection;
 using System.Collections;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Globalization;
 using Org.Mentalis.Proxy;
 using Org.Mentalis.Proxy.Ftp;
 using Org.Mentalis.Proxy.Http;

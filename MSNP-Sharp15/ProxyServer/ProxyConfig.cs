@@ -40,6 +40,7 @@ using System.Reflection.Emit;
 using System.Net;
 using Org.Mentalis.Proxy;
 using Org.Mentalis.Proxy.Socks.Authentication;
+using System.Globalization;
 
 namespace Org.Mentalis.Proxy {
 	/// <summary>
