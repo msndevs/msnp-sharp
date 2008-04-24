@@ -244,6 +244,7 @@
             <xsd:enumeration value="Live" />
             <xsd:enumeration value="LivePending" />
             <xsd:enumeration value="LiveRejected" />
+            <xsd:enumeration value="LiveDropped" />
           </xsd:restriction>
         </xsd:simpleType>
       </xsd:element>
