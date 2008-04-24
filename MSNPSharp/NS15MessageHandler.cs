@@ -3567,7 +3567,6 @@ namespace MSNPSharp
                     {
                         string account = contactNode.Attributes["n"].Value + "@" + domain;
                         ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                        string displayName = contactNode.Attributes["f"].Value;
                         MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                         account = account.ToLower(CultureInfo.InvariantCulture);
                         if (contactList.HasContact(account))
@@ -3870,6 +3869,7 @@ namespace MSNPSharp
                 OIMUserState userstate = new OIMUserState(contact.OIMCount, account);
                 oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
+                    oimService = service as OIMStoreService;
                     if (e.Cancelled == false && e.Error == null)
                     {
                         SequenceAcknowledgmentAcknowledgmentRange range = oimService.SequenceAcknowledgmentValue.AcknowledgmentRange[0];
