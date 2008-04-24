@@ -1,5 +1,5 @@
 /*
-    Copyright © 2002, The KPD-Team
+    Copyright ?2002, The KPD-Team
     All rights reserved.
     http://www.mentalis.org/
 
@@ -194,7 +194,7 @@ namespace Org.Mentalis.Proxy {
 		public void SaveUserPass(string username, string password, bool saveData) {
 			if (username == null || password == null)
 				throw new ArgumentNullException();
-			if (username.ToLower() == "users" || username == "")
+			if (username.ToLower(CultureInfo.InvariantCulture) == "users" || username == "")
 				throw new ArgumentException();
 			if (UserList.IsUserPresent(username))
 				UserList.RemoveItem(username);
@@ -225,7 +225,7 @@ namespace Org.Mentalis.Proxy {
 		public void SaveUserHash(string username, string passHash, bool saveData) {
 			if (username == null || passHash == null)
 				throw new ArgumentNullException();
-			if (username.ToLower() == "users" || username == "")
+			if (username.ToLower(CultureInfo.InvariantCulture) == "users" || username == "")
 				throw new ArgumentException();
 			UserList.AddHash(username, passHash);
 			if (saveData)
@@ -346,11 +346,11 @@ namespace Org.Mentalis.Proxy {
 			try {
 				reader = new XmlTextReader(File);
 				// Read until we reach the MentalisProxy element
-				while (reader.Read() && reader.Name.ToLower() != "mentalisproxy") {}
+				while (reader.Read() && reader.Name.ToLower(CultureInfo.InvariantCulture) != "mentalisproxy") {}
 				// Read until we reach the MentalisProxy element again (the end tag)
-				while (reader.Read() && reader.Name.ToLower() != "mentalisproxy") {
+				while (reader.Read() && reader.Name.ToLower(CultureInfo.InvariantCulture) != "mentalisproxy") {
 					if (!reader.IsEmptyElement) {
-						switch(reader.Name.ToLower()) {
+						switch(reader.Name.ToLower(CultureInfo.InvariantCulture)) {
 							case "settings":
 								Settings.Clear();
 								LoadSettings(reader);
@@ -378,7 +378,7 @@ namespace Org.Mentalis.Proxy {
 		/// <param name="reader">The XML reader to read the settings from.</param>
 		private void LoadSettings(XmlTextReader reader) {
 			// Read until we reach the Settings element end tag
-			while (reader.Read() && reader.Name.ToLower() != "settings") {
+			while (reader.Read() && reader.Name.ToLower(CultureInfo.InvariantCulture) != "settings") {
 				if (reader.Name != null && reader["value"] != null)
 					SaveSetting(reader.Name, reader["value"], false);
 			}
@@ -389,7 +389,7 @@ namespace Org.Mentalis.Proxy {
 		/// <param name="reader">The XML reader to read the users from.</param>
 		private void LoadUsers(XmlTextReader reader) {
 			// Read until we reach the Settings element end tag
-			while (reader.Read() && reader.Name.ToLower() != "users") {
+			while (reader.Read() && reader.Name.ToLower(CultureInfo.InvariantCulture) != "users") {
 				if (reader.Name != null && reader["value"] != null)
 					SaveUserHash(reader.Name, reader["value"], false);
 			}
@@ -401,7 +401,7 @@ namespace Org.Mentalis.Proxy {
 		private void LoadListeners(XmlTextReader reader) {
 			// Read until we reach the Listeners element end tag
 			Listener listener = null;
-			while (reader.Read() && reader.Name.ToLower() != "listeners") {
+			while (reader.Read() && reader.Name.ToLower(CultureInfo.InvariantCulture) != "listeners") {
 				if (reader.Name != null && reader["value"] != null && reader["type"] != null) {
 					listener = Parent.CreateListener(reader["type"], reader["value"]);
 					if (listener != null) {

@@ -175,7 +175,7 @@ public sealed class HttpClient : Client {
 		try {
 			IPEndPoint DestinationEndPoint = new IPEndPoint(Dns.GetHostEntry(Host).AddressList[0], Port);
 			DestinationSocket = new Socket(DestinationEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-			if (HeaderFields.ContainsKey("Proxy-Connection") && HeaderFields["Proxy-Connection"].ToLower().Equals("keep-alive"))
+			if (HeaderFields.ContainsKey("Proxy-Connection") && HeaderFields["Proxy-Connection"].ToLower(CultureInfo.InvariantCulture).Equals("keep-alive"))
 				DestinationSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, 1);
 			DestinationSocket.BeginConnect(DestinationEndPoint, new AsyncCallback(this.OnConnected), DestinationSocket);
 		} catch {
@@ -208,7 +208,7 @@ public sealed class HttpClient : Client {
 				RequestedPath = Lines[0];
 			}
 			//Remove http:// if present
-			if (RequestedPath.Length >= 7 && RequestedPath.Substring(0, 7).ToLower().Equals("http://")) {
+			if (RequestedPath.Length >= 7 && RequestedPath.Substring(0, 7).ToLower(CultureInfo.InvariantCulture).Equals("http://")) {
 				Ret = RequestedPath.IndexOf('/', 7);
 				if (Ret == -1)
 					RequestedPath = "/";
