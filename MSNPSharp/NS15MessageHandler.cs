@@ -267,14 +267,14 @@ namespace MSNPSharp
     [Serializable()]
     public class OIMReceivedEventArgs : EventArgs
     {
-        public readonly string ReceivedTime;
+        public readonly string TimeReceived;
         public readonly string Email;
         public readonly string Message;
         public bool DeleteMessage = true;
 
         public OIMReceivedEventArgs(string receivedTime, string email, string message)
         {
-            ReceivedTime = receivedTime;
+            TimeReceived = receivedTime;
             Email = email;
             Message = message;
         }
@@ -1691,11 +1691,11 @@ namespace MSNPSharp
             {
                 if (isABServiceBinding)
                 {
-                    _Tickets["ab_cache_key"] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS ab_cache_key
+                    _Tickets["ab_cache_key"] = sh.CacheKey;
                 }
                 else
                 {
-                    _Tickets["sh_cache_key"] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS sh_cache_key
+                    _Tickets["sh_cache_key"] = sh.CacheKey;
                 }
             }
         }
@@ -1756,7 +1756,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
-            sharingService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            sharingService.ABApplicationHeaderValue.CacheKey = _Tickets["sh_cache_key"];
             sharingService.ABApplicationHeaderValue.BrandId = "MSFT";
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
@@ -1856,7 +1856,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
-            sharingService.ABApplicationHeaderValue.CacheKey = _Tickets["cache_key"];
+            sharingService.ABApplicationHeaderValue.CacheKey = _Tickets["sh_cache_key"];
             sharingService.ABApplicationHeaderValue.BrandId = "MSFT";
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
@@ -1991,7 +1991,7 @@ namespace MSNPSharp
             if (abSynchronized == false)
                 throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
-            string context = "";
+            string context = String.Empty;
 
             if (owner.DisplayImage != null)
                 context = owner.DisplayImage.Context;
@@ -2133,7 +2133,7 @@ namespace MSNPSharp
         /// <param name="text"></param>
         public virtual void SendMobileMessage(Contact receiver, string text)
         {
-            SendMobileMessage(receiver, text, "", "");
+            SendMobileMessage(receiver, text, String.Empty, String.Empty);
         }
 
         /// <summary>
@@ -2813,14 +2813,14 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnPRPReceived(NSMessage message)
         {
-            string number = "";
-            string type = "";
+            string number = String.Empty;
+            string type = String.Empty;
             if (message.CommandValues.Count >= 4)
             {
                 if (message.CommandValues.Count >= 4)
                     number = HttpUtility.UrlDecode((string)message.CommandValues[3]);
                 else
-                    number = "";
+                    number = String.Empty;
                 type = message.CommandValues[1].ToString();
             }
             else
@@ -3354,7 +3354,7 @@ namespace MSNPSharp
             if (Owner == null)
                 return;
 
-            string type = "";
+            string type = String.Empty;
 
             if (message.CommandValues.Count == 1)
                 type = message.CommandValues[0].ToString();
@@ -3517,6 +3517,8 @@ namespace MSNPSharp
 
         }
 
+        #region OIM Related Functions
+
         protected virtual void OnOIMReceived(MSGMessage message)
         {
             if (OIMReceived == null)
@@ -3618,7 +3620,7 @@ namespace MSNPSharp
                         OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, email, message);
                         OIMReceived(this, orea);
                         if (orea.DeleteMessage)
-                        {                   
+                        {
                             guidstodelete.Add(guid);
                         }
                         if (0 == --oimdeletecount && guidstodelete.Count > 0)
@@ -3765,6 +3767,8 @@ namespace MSNPSharp
                 oimService.StoreAsync(MessageType.text, message, userstate);
             }
         }
+
+        #endregion
 
         /// <summary>
         /// Called when the owner has removed or moved e-mail.

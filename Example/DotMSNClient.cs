@@ -90,9 +90,9 @@ namespace MSNPSharpClient
 
         void Nameserver_OIMReceived(object sender, OIMReceivedEventArgs e)
         {
-            if (MessageBox.Show(e.ReceivedTime + ": " + e.Email + "; " + e.Message + "\r\n\r\nDelete?", "Offline Message received", MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
+            if (MessageBox.Show(e.TimeReceived + ": " + e.Message + "\r\n\r\n\r\nSave message?", "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
             {
-                e.DeleteMessage = true;
+                e.DeleteMessage = false;
             }
         }
 

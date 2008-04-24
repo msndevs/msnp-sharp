@@ -35,6 +35,7 @@ using System.Net.Sockets;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Threading;
+using System.Globalization;
 using Org.Mentalis.Proxy;
 
 namespace Org.Mentalis.Proxy.Http {
