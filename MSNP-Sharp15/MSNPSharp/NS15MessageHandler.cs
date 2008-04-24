@@ -1605,10 +1605,12 @@ namespace MSNPSharp
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.groupAddOptions = new ABGroupAddRequestTypeGroupAddOptions();
             request.groupAddOptions.fRenameOnMsgrConflict = false;
+            request.groupAddOptions.fRenameOnMsgrConflictSpecified = true;
             request.groupInfo = new ABGroupAddRequestTypeGroupInfo();
             request.groupInfo.GroupInfo = new groupInfoType();
             request.groupInfo.GroupInfo.name = groupName;
             request.groupInfo.GroupInfo.fMessenger = false;
+            request.groupInfo.GroupInfo.fMessengerSpecified = true;
             request.groupInfo.GroupInfo.groupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
             request.groupInfo.GroupInfo.annotations = new Annotation[] { new Annotation() };
             request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
@@ -1859,6 +1861,27 @@ namespace MSNPSharp
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
+            {
+                // Cache key for Sharing service...
+                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
+                if (!e.Cancelled && e.Error == null)
+                {
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        Trace.WriteLine("AddMember completed.");
+
+                    contact.AddToList(list);
+                    ContactInfo ci = MemberShipList[contact.Mail];
+                    MemberShipList.MemberRoles[GetMemberRole(list)][ci.Account] = ci;
+                    MemberShipList.Save();
+                }
+                else if (e.Error != null)
+                {
+                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
 
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
@@ -1890,26 +1913,7 @@ namespace MSNPSharp
             }
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
-            sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
-            {
-                // Cache key for Sharing service...
-                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
-                if (!e.Cancelled && e.Error == null)
-                {
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("AddMember completed.");
-                    contact.AddToList(list);
-                    ContactInfo ci = MemberShipList[contact.Mail];
-                    MemberShipList.MemberRoles[GetMemberRole(list)][ci.Account] = ci;
-                    MemberShipList.Save();
-                }
-                else if (e.Error != null)
-                {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
-                }
-                ((IDisposable)service).Dispose();
-                return;
-            };
+
             sharingService.AddMemberAsync(addMemberRequest, new object());
         }
 
@@ -1953,6 +1957,25 @@ namespace MSNPSharp
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets["contact_ticket"];
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
+            {
+                // Cache key for Sharing service...
+                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
+                if (!e.Cancelled && e.Error == null)
+                {
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        Trace.WriteLine("DeleteMember completed.");
+                    contact.RemoveFromList(list);
+                    MemberShipList.MemberRoles[GetMemberRole(list)].Remove(contact.Mail);
+                    MemberShipList.Save();
+                }
+                else if (e.Error != null)
+                {
+                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
 
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
             deleteMemberRequest.serviceHandle = new HandleType();
@@ -1990,25 +2013,6 @@ namespace MSNPSharp
             }
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
-            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
-            {
-                // Cache key for Sharing service...
-                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
-                if (!e.Cancelled && e.Error == null)
-                {
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMember completed.");
-                    contact.RemoveFromList(list);
-                    MemberShipList.MemberRoles[GetMemberRole(list)].Remove(contact.Mail);
-                    MemberShipList.Save();
-                }
-                else if (e.Error != null)
-                {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
-                }
-                ((IDisposable)service).Dispose();
-                return;
-            };
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
         }
 
