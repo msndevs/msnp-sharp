@@ -90,9 +90,11 @@ namespace MSNPSharpClient
 
         void Nameserver_OIMReceived(object sender, OIMReceivedEventArgs e)
         {
-            if (MessageBox.Show(e.TimeReceived + ": " + e.Message + "\r\n\r\n\r\nSave message?", "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
+
+
+            if (MessageBox.Show(e.ReceivedTime + ": " + e.Message + "\r\n\r\n\r\nClick yes, if you want to receive this message next time you login.", "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
             {
-                e.DeleteMessage = false;
+                e.IsRead = false;
             }
         }
 
@@ -133,6 +135,8 @@ namespace MSNPSharpClient
             this.accountTextBox = new System.Windows.Forms.TextBox();
             this.ContactPanel = new System.Windows.Forms.Panel();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.buttonOIM = new System.Windows.Forms.Button();
+            this.txtMSG = new System.Windows.Forms.TextBox();
             this.MobileMessageButton = new System.Windows.Forms.Button();
             this.filetransferButton = new System.Windows.Forms.Button();
             this.inviteButton = new System.Windows.Forms.Button();
@@ -145,8 +149,6 @@ namespace MSNPSharpClient
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
-            this.txtMSG = new System.Windows.Forms.TextBox();
-            this.buttonOIM = new System.Windows.Forms.Button();
             this.ListPanel.SuspendLayout();
             this.OwnerPanel.SuspendLayout();
             this.ContactPanel.SuspendLayout();
@@ -286,6 +288,23 @@ namespace MSNPSharpClient
             this.panel1.Size = new System.Drawing.Size(232, 157);
             this.panel1.TabIndex = 2;
             // 
+            // buttonOIM
+            // 
+            this.buttonOIM.Location = new System.Drawing.Point(133, 128);
+            this.buttonOIM.Name = "buttonOIM";
+            this.buttonOIM.Size = new System.Drawing.Size(75, 23);
+            this.buttonOIM.TabIndex = 7;
+            this.buttonOIM.Text = "Send OIM";
+            this.buttonOIM.Click += new System.EventHandler(this.buttonOIM_Click);
+            // 
+            // txtMSG
+            // 
+            this.txtMSG.Location = new System.Drawing.Point(24, 103);
+            this.txtMSG.Name = "txtMSG";
+            this.txtMSG.Size = new System.Drawing.Size(184, 20);
+            this.txtMSG.TabIndex = 6;
+            this.txtMSG.Text = "MSNPSharp Message";
+            // 
             // MobileMessageButton
             // 
             this.MobileMessageButton.Location = new System.Drawing.Point(52, 128);
@@ -378,23 +397,6 @@ namespace MSNPSharpClient
             // 
             this.tmrKeepOnLine.Interval = 1000;
             this.tmrKeepOnLine.Tick += new System.EventHandler(this.tmrKeepOnLine_Tick);
-            // 
-            // txtMSG
-            // 
-            this.txtMSG.Location = new System.Drawing.Point(24, 103);
-            this.txtMSG.Name = "txtMSG";
-            this.txtMSG.Size = new System.Drawing.Size(184, 20);
-            this.txtMSG.TabIndex = 6;
-            this.txtMSG.Text = "MSNPSharp Message";
-            // 
-            // buttonOIM
-            // 
-            this.buttonOIM.Location = new System.Drawing.Point(133, 128);
-            this.buttonOIM.Name = "buttonOIM";
-            this.buttonOIM.Size = new System.Drawing.Size(75, 23);
-            this.buttonOIM.TabIndex = 7;
-            this.buttonOIM.Text = "Send OIM";
-            this.buttonOIM.Click += new System.EventHandler(this.buttonOIM_Click);
             // 
             // ClientForm
             // 
@@ -792,5 +794,6 @@ namespace MSNPSharpClient
 
             messenger.Nameserver.SendOIMMessage(selectedContact.Mail, txtMSG.Text);
         }
+
 	}
 }
