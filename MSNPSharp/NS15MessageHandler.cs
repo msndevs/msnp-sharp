@@ -992,7 +992,14 @@ namespace MSNPSharp
 
             FindMembershipRequestType request = new FindMembershipRequestType();
             request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
-            request.serviceFilter.Types = new string[] { "Messenger", "Invitation", "SocialNetwork", "Space", "Profile" };
+            request.serviceFilter.Types = new ServiceFilterType[]
+            { 
+                ServiceFilterType.Messenger,
+                ServiceFilterType.Invitation,
+                ServiceFilterType.SocialNetwork,
+                ServiceFilterType.Space,
+                ServiceFilterType.Profile
+            };
             request.deltasOnly = msdeltasOnly;
             request.lastChange = serviceLastChange;
 
@@ -1078,7 +1085,7 @@ namespace MSNPSharp
                     currentService.Type = serviceType.Info.Handle.Type;
                     currentService.ForeignId = serviceType.Info.Handle.ForeignId;
                     services[currentService.Id] = currentService;
-                    if (serviceType.Info.Handle.Type == "Messsenger")
+                    if (serviceType.Info.Handle.Type == ServiceFilterType.Messenger)
                         messengerServiceId = int.Parse(serviceType.Info.Handle.Id);
 
                     DateTime serviceLastChange = serviceType.LastChange;

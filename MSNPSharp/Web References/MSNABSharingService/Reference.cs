@@ -1557,6 +1557,9 @@ namespace MSNPSharp.MSNABSharingService {
         
         /// <remarks/>
         Messenger2,
+        
+        /// <remarks/>
+        Passport,
     }
     
     /// <remarks/>
@@ -3163,12 +3166,12 @@ namespace MSNPSharp.MSNABSharingService {
         
         private string idField;
         
-        private string typeField;
+        private ServiceFilterType typeField;
         
         private string foreignIdField;
         
         public HandleType() {
-            this.typeField = "Messenger";
+            this.typeField = ServiceFilterType.Messenger;
         }
         
         /// <remarks/>
@@ -3183,7 +3186,7 @@ namespace MSNPSharp.MSNABSharingService {
         }
         
         /// <remarks/>
-        public string Type {
+        public ServiceFilterType Type {
             get {
                 return this.typeField;
             }
@@ -3201,6 +3204,28 @@ namespace MSNPSharp.MSNABSharingService {
                 this.foreignIdField = value;
             }
         }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public enum ServiceFilterType {
+        
+        /// <remarks/>
+        Messenger,
+        
+        /// <remarks/>
+        Invitation,
+        
+        /// <remarks/>
+        SocialNetwork,
+        
+        /// <remarks/>
+        Space,
+        
+        /// <remarks/>
+        Profile,
     }
     
     /// <remarks/>
@@ -4276,11 +4301,11 @@ namespace MSNPSharp.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class FindMembershipRequestTypeServiceFilter {
         
-        private string[] typesField;
+        private ServiceFilterType[] typesField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ServiceType", IsNullable=false)]
-        public string[] Types {
+        public ServiceFilterType[] Types {
             get {
                 return this.typesField;
             }
