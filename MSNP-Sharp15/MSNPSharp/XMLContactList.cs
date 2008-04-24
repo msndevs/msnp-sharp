@@ -7,6 +7,7 @@
     using MSNPSharp.IO;
     using System.Globalization;
     using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
+    using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
 
     internal class ContactInfo
     {
@@ -175,8 +176,8 @@
             }
         }
 
-        private string type;
-        public string Type
+        private ServiceFilterType type;
+        public ServiceFilterType Type
         {
             get
             {
@@ -216,7 +217,7 @@
 
         public override string ToString()
         {
-            return Type;
+            return Convert.ToString(Type);
         }
     }
 
@@ -301,7 +302,7 @@
             foreach (Service service in serviceRange.Values)
                 services[service.Id] = service;
             foreach (Service innerService in Services.Values)
-                if (innerService.Type == "Messenger")
+                if (innerService.Type == ServiceFilterType.Messenger)
                     if (lastChange.CompareTo(innerService.LastChange) < 0)
                         lastChange = innerService.LastChange;
 
@@ -344,14 +345,14 @@
                 XmlNode serviceNode = CreateNode(XMLContactListTags.Service.ToString(), null);
                 serviceNode.AppendChild(CreateNode(ServiceChildNodes.Id.ToString(),
                     XmlConvert.ToString(serviceId)));
-                serviceNode.AppendChild(CreateNode(ServiceChildNodes.Type.ToString(), services[serviceId].Type));
+                serviceNode.AppendChild(CreateNode(ServiceChildNodes.Type.ToString(), Convert.ToString(services[serviceId].Type)));
                 serviceNode.AppendChild(CreateNode(ServiceChildNodes.LastChange.ToString(),
                     XmlConvert.ToString(services[serviceId].LastChange,
                     XmlDateTimeSerializationMode.RoundtripKind)));
                 XmlNode membersRootTmp = CreateNode(ServiceChildNodes.Memberships.ToString(), null);
                 serviceNode.AppendChild(membersRootTmp);
                 serviceRoot.AppendChild(serviceNode);
-                if (services[serviceId].Type == "Messenger")
+                if (services[serviceId].Type == ServiceFilterType.Messenger)
                     membersRoot = membersRootTmp;
             }
             membershipRoot.AppendChild(serviceRoot);

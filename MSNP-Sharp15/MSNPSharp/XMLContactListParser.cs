@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
-
-namespace MSNPSharp
+﻿namespace MSNPSharp
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Xml;
+    using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
+    using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
+
     internal enum MembershipListChildNodes
     {
         LastChanged = 0,
@@ -72,7 +73,10 @@ namespace MSNPSharp
 
         public Dictionary<MemberRole, Dictionary<string, ContactInfo>> MemberShips
         {
-            get { return memberShips; }
+            get
+            {
+                return memberShips;
+            }
             //set { memberShips = value; }
         }
 
@@ -80,7 +84,10 @@ namespace MSNPSharp
 
         public Dictionary<string, ContactInfo> ContactList
         {
-            get { return contactList; }
+            get
+            {
+                return contactList;
+            }
             //set { contactList = value; }
         }
 
@@ -88,7 +95,10 @@ namespace MSNPSharp
 
         public Dictionary<string, GroupInfo> GroupList
         {
-            get { return groupList; }
+            get
+            {
+                return groupList;
+            }
             //set { groupList = value; }
         }
 
@@ -96,7 +106,10 @@ namespace MSNPSharp
 
         public Dictionary<int, Service> ServiceList
         {
-            get { return serviceList; }
+            get
+            {
+                return serviceList;
+            }
             //set { serviceList = value; }
         }
 
@@ -104,7 +117,10 @@ namespace MSNPSharp
 
         public DateTime MembershipLastChange
         {
-            get { return membershipLastChange; }
+            get
+            {
+                return membershipLastChange;
+            }
             //set { membershipLastChange = value; }
         }
 
@@ -112,7 +128,10 @@ namespace MSNPSharp
 
         public DateTime AddressBookLastChange
         {
-            get { return addressBookLastChange; }
+            get
+            {
+                return addressBookLastChange;
+            }
             //set { addressBookLastChange = value; }
         }
 
@@ -120,7 +139,10 @@ namespace MSNPSharp
 
         public DateTime DynamicItemLastChange
         {
-            get { return dynamicItemLastChange; }
+            get
+            {
+                return dynamicItemLastChange;
+            }
         }
 
         protected XMLContactListParser()
@@ -174,7 +196,7 @@ namespace MSNPSharp
                 currentService.Id = int.Parse(currentServiceNode.ChildNodes[(int)ServiceChildNodes.Id].InnerText);
                 currentService.LastChange = XmlConvert.ToDateTime(
                     currentServiceNode.ChildNodes[(int)ServiceChildNodes.LastChange].InnerText, XmlDateTimeSerializationMode.RoundtripKind);
-                currentService.Type = currentServiceNode.ChildNodes[(int)ServiceChildNodes.Type].InnerText;
+                currentService.Type = (ServiceFilterType)Enum.Parse(typeof(ServiceFilterType), currentServiceNode.ChildNodes[(int)ServiceChildNodes.Type].InnerText);
                 serviceList.Add(currentService.Id, currentService);
                 GetMemberRoles(currentServiceNode.ChildNodes[(int)ServiceChildNodes.Memberships].FirstChild);
                 currentServiceNode = currentServiceNode.NextSibling;
@@ -268,4 +290,4 @@ namespace MSNPSharp
         }
         #endregion
     }
-}
+};

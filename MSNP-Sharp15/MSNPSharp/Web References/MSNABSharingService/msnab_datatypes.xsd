@@ -3,7 +3,7 @@
   <xsd:complexType name="HandleType">
     <xsd:sequence>
       <xsd:element name="Id" type="xsd:integer" />
-      <xsd:element default="Messenger" name="Type" type="xsd:string" />
+      <xsd:element default="Messenger" name="Type" type="msnab:ServiceFilterType" />
       <xsd:element name="ForeignId" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
@@ -307,6 +307,7 @@
       <xsd:enumeration value="ContactEmailOther" />
       <xsd:enumeration value="ContactEmailMessenger" />
       <xsd:enumeration value="Messenger2" />
+      <xsd:enumeration value="Passport" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:complexType name="contactPhoneType">
@@ -422,4 +423,13 @@
       <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
+  <xsd:simpleType name="ServiceFilterType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Messenger" />
+      <xsd:enumeration value="Invitation" />
+      <xsd:enumeration value="SocialNetwork" />
+      <xsd:enumeration value="Space" />
+      <xsd:enumeration value="Profile" />
+    </xsd:restriction>
+  </xsd:simpleType>
 </xsd:schema>
