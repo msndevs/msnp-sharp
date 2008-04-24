@@ -113,7 +113,7 @@ namespace Org.Mentalis.Proxy {
 			string command;
 			Console.WriteLine("\r\n  Mentalis.org Proxy\r\n  ~~~~~~~~~~~~~~~~~~\r\n\r\n (type 'help' for the command list)");
 			Console.Write("\r\n>");
-			command = Console.ReadLine().ToLower();
+			command = Console.ReadLine().ToLower(CultureInfo.InvariantCulture);
 			while (!command.Equals("exit")) {
 				switch(command) {
 					case "help":
@@ -148,7 +148,7 @@ namespace Org.Mentalis.Proxy {
 						break;
 				}
 				Console.Write("\r\n>");
-				command = Console.ReadLine().ToLower();
+				command = Console.ReadLine().ToLower(CultureInfo.InvariantCulture);
 			}
 			Stop();
 			Console.WriteLine("Goodbye...");
@@ -337,7 +337,7 @@ namespace Org.Mentalis.Proxy {
 					} else {
 						otype = parts[i];
 					}
-					switch (otype.ToLower()) {
+					switch (otype.ToLower(CultureInfo.InvariantCulture)) {
 						case "int":
 							pars[i] = int.Parse(oval);
 							break;
