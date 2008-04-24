@@ -1517,7 +1517,7 @@ namespace MSNPSharp
             request.contacts[0].contactInfo = new contactInfoType();
             request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
             request.contacts[0].contactInfo.passportName = account;
-            request.contacts[0].contactInfo.isMessengerUser = true;
+            request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
             request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
             request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = account;
             request.options = new ABContactAddRequestTypeOptions();
