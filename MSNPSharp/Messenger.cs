@@ -289,8 +289,12 @@ namespace MSNPSharp
 		/// </summary>
 		public virtual void Disconnect()
 		{
-			if(nsMessageProcessor.Connected)
-				nsMessageProcessor.Disconnect();		
+            if (nsMessageProcessor.Connected)
+            {
+                if (nsMessageHandler != null)
+                    nsMessageHandler.Owner.SetStatus(PresenceStatus.Offline);
+                nsMessageProcessor.Disconnect();
+            }
 		}
 
 		#endregion

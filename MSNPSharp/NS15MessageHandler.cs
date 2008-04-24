@@ -728,6 +728,7 @@ namespace MSNPSharp
         {
             isSignedIn = false;
             SwitchBoards.Clear();
+            owner.SetStatus(PresenceStatus.Offline);
             if (SignedOff != null)
                 SignedOff(this, new SignedOffEventArgs(reason));
         }

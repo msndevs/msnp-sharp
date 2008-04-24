@@ -203,12 +203,12 @@ namespace MSNPSharp
 
                     if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "pptoken2")
                     {
-                        dic.Add("web_ticket", nodes[nodecnt].InnerText);
+                        dic["web_ticket"] = nodes[nodecnt].InnerText;
                     }
 
                     if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "compact4")
                     {
-                        dic.Add("oim_ticket", nodes[nodecnt].InnerText);
+                        dic["oim_ticket"] = nodes[nodecnt].InnerText;
                     }
                 }
             }
@@ -220,9 +220,13 @@ namespace MSNPSharp
             MBI mbi = new MBI();
 
  
-            dic.Add("contact_ticket", outticket);
-            dic.Add("ticket", ticket);
-            dic.Add("BinarySecret", key);
+            //dic.Add("contact_ticket", outticket);
+            //dic.Add("ticket", ticket);
+            //dic.Add("BinarySecret", key);
+
+            dic["contact_ticket"] = outticket;
+            dic["ticket"] = ticket;
+            dic["BinarySecret"] = key;
 
             tickets = dic;
 
