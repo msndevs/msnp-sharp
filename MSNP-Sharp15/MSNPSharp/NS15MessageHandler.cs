@@ -1843,26 +1843,12 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
-            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
-            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-
-            payload = payload.Replace("{l}", ((int)list).ToString());
-            MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
-            MessageProcessor.SendMessage(new NSMessage(payload));
-
             if (list == MSNLists.ForwardList)
             {
                 contact.AddToList(list);
                 return;
             }
 
-            return;
-
-            // Following code is not required and the best way of the adding an user to the list is ADL.
-            // Soap request always fails. "Member already exists."
-
-            /*
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -1890,6 +1876,16 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
+                    /*
+                    string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
+                    payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
+                    payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
+
+                    payload = payload.Replace("{l}", ((int)list).ToString());
+                    MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                    MessageProcessor.SendMessage(new NSMessage(payload));
+                    */
+
                     throw new MSNPSharpException(e.Error.Message, e.Error);
                 }
                 ((IDisposable)service).Dispose();
@@ -1902,11 +1898,11 @@ namespace MSNPSharp
             Service messengerService = new Service();
             foreach (Service srv in MemberShipList.Services.Values)
             {
-                if (srv.Type == "Messenger")
+                if (srv.Type == ServiceFilterType.Messenger)
                     messengerService = srv;
             }
             addMemberRequest.serviceHandle.Id = messengerService.Id.ToString();
-            addMemberRequest.serviceHandle.Type = "Messenger";
+            addMemberRequest.serviceHandle.Type =  ServiceFilterType.Messenger;
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = GetMemberRole(list);
@@ -1928,7 +1924,6 @@ namespace MSNPSharp
             addMemberRequest.memberships = new Membership[] { memberShip };
 
             sharingService.AddMemberAsync(addMemberRequest, new object());
-             * */
         }
 
         /// <summary>
@@ -1945,26 +1940,12 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
-            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
-            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
-            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-            payload = payload.Replace("{l}", ((int)list).ToString());
-
-            MessageProcessor.SendMessage(new NSMessage("RML", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
-            MessageProcessor.SendMessage(new NSMessage(payload));
-
             if (list == MSNLists.ForwardList)
             {
                 contact.RemoveFromList(list);
                 return;
             }
 
-            return;
-
-            // Following code is not required and the best way of the removing an user from the list is RML.
-            // Soap request always fails. "Member doesn't exist."
-
-            /*
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -1984,12 +1965,22 @@ namespace MSNPSharp
                 {
                     if (Settings.TraceSwitch.TraceVerbose)
                         Trace.WriteLine("DeleteMember completed.");
+
                     contact.RemoveFromList(list);
                     MemberShipList.MemberRoles[GetMemberRole(list)].Remove(contact.Mail);
                     MemberShipList.Save();
                 }
                 else if (e.Error != null)
                 {
+                    /*
+                    string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
+                    payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
+                    payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
+                    payload = payload.Replace("{l}", ((int)list).ToString());
+
+                    MessageProcessor.SendMessage(new NSMessage("RML", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                    MessageProcessor.SendMessage(new NSMessage(payload));
+                    */
                     throw new MSNPSharpException(e.Error.Message, e.Error);
                 }
                 ((IDisposable)service).Dispose();
@@ -2002,23 +1993,23 @@ namespace MSNPSharp
             Service messengerService = new Service();
             foreach (Service srv in MemberShipList.Services.Values)
             {
-                if (srv.Type == "Messenger")
+                if (srv.Type == ServiceFilterType.Messenger)
                     messengerService = srv;
             }
             deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();   //Always set to 0 ??
-            deleteMemberRequest.serviceHandle.Type = "Messenger";
+            deleteMemberRequest.serviceHandle.Type = ServiceFilterType.Messenger;
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = GetMemberRole(list);
             BaseMember member = new BaseMember();
-            */
+
+
             /* If you cannot determind the client type, just use a BaseMember and specify the membershipId.
              * The offical client just do so. But once the contact is removed and added to another rolelist,its membershipId also changed.
              * Unless you get your contactlist again, you have to use the account if you wanted to delete that contact once more.
              * To avoid this,we have to ensure the client type we've got is correct at the very beginning.
              * */
 
-            /*
             if (contact.ClientType == ClientType.MessengerUser)
             {
                 member = new PassportMember();
@@ -2033,8 +2024,7 @@ namespace MSNPSharp
             }
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
-            sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
-             * */           
+            sharingService.DeleteMemberAsync(deleteMemberRequest, new object());      
         }
 
         /// <summary>
