@@ -1294,19 +1294,8 @@ namespace MSNPSharp
             // 9: Set my Privacy
             SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
-            /*
-             * In fact, the follwing code is OK
-             * 
-             foreach (string account in diccontactList.Keys)
-             {
-                 if (MemberShipList.ContainsKey(account))
-                     if (!initialadl.Contains(account))
-                         initialadl.Add(account);
-             }
-             */
-
-            // 10: Initial ADL
-            if (diccontactList.Keys.Count == 0)
+            // 10: Initial ADL: Combine (FL+BL+AL)
+            if (MemberShipList.Keys.Count == 0)
             {
                 OnADLReceived(new NSMessage("ADL", new string[] { "0", "OK" }));
             }
@@ -1411,41 +1400,36 @@ namespace MSNPSharp
         private string[] ConstructADLString()
         {
             Dictionary<String, List<String>> container = new Dictionary<String, List<String>>();
-
-            foreach (Contact contact in ContactList.All)
+            foreach (ContactInfo account in MemberShipList.Values)
             {
-                String[] usernameanddomain = contact.Mail.Split('@');
-                String type = ((int)contact.ClientType).ToString();
+                MSNLists lists = MemberShipList.GetMSNLists(account.Account);
+                String[] usernameanddomain = account.Account.Split('@');
+                String type = ((int)account.Type).ToString();
                 String domain = usernameanddomain[1];
                 String name = usernameanddomain[0];
-                MSNLists lists = new MSNLists();
 
-                if (contact.OnForwardList)
-                {
-                    lists |= MSNLists.ForwardList;
-                }
+                MSNLists sendlist = new MSNLists();
 
-                if (contact.OnAllowedList)
-                {
-                    lists |= MSNLists.AllowedList;
-                }
-                else if (contact.OnBlockedList)
-                {
-                    lists |= MSNLists.BlockedList;
-                }
+                if (AddressBook.ContainsKey(account.Account))
+                    sendlist |= MSNLists.ForwardList;
 
-                String list = ((int)lists).ToString();
+                if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
+                    sendlist |= MSNLists.AllowedList;
+                else if ((lists & MSNLists.BlockedList) == MSNLists.BlockedList)
+                    sendlist |= MSNLists.BlockedList;
 
-                if (list != "0" && type != "0")
+                String strlist = ((int)sendlist).ToString();
+
+                if (strlist != "0" && type != "0")
                 {
                     if (!container.ContainsKey(domain.ToLower(CultureInfo.InvariantCulture)))
                     {
                         container[domain.ToLower(CultureInfo.InvariantCulture)] = new List<string>();
                     }
 
-                    Console.WriteLine(contact.Mail + " is a " + contact.ClientType.ToString() + " and list is " + list.ToString());
+                    Console.WriteLine(account.Account + " is a " + type + " and list is " + strlist);
 
-                    container[domain.ToLower(CultureInfo.InvariantCulture)].Add("<c n=\"" + name + "\" l=\"" + list + "\" t=\"" + type + "\"/>");
+                    container[domain.ToLower(CultureInfo.InvariantCulture)].Add("<c n=\"" + name + "\" l=\"" + strlist + "\" t=\"" + type + "\"/>");
                 }
             }
 
@@ -1472,6 +1456,7 @@ namespace MSNPSharp
                 stmp += "</d>";
                 ret.Add("<ml l=\"1\">" + stmp + "</ml>");
             }
+
             return ret.ToArray();
         }
 
