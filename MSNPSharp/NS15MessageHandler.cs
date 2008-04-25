@@ -1843,8 +1843,15 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
+            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
+            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
+            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
+            payload = payload.Replace("{l}", ((int)list).ToString());
+
             if (list == MSNLists.ForwardList)
             {
+                MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                MessageProcessor.SendMessage(new NSMessage(payload));
                 contact.AddToList(list);
                 return;
             }
@@ -1873,19 +1880,12 @@ namespace MSNPSharp
                     ContactInfo ci = MemberShipList[contact.Mail];
                     MemberShipList.MemberRoles[GetMemberRole(list)][ci.Account] = ci;
                     MemberShipList.Save();
+
+                    MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                    MessageProcessor.SendMessage(new NSMessage(payload));
                 }
                 else if (e.Error != null)
                 {
-                    /*
-                    string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
-                    payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
-                    payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-
-                    payload = payload.Replace("{l}", ((int)list).ToString());
-                    MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
-                    MessageProcessor.SendMessage(new NSMessage(payload));
-                    */
-
                     throw new MSNPSharpException(e.Error.Message, e.Error);
                 }
                 ((IDisposable)service).Dispose();
@@ -1940,8 +1940,15 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
+            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
+            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
+            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
+            payload = payload.Replace("{l}", ((int)list).ToString());
+
             if (list == MSNLists.ForwardList)
             {
+                MessageProcessor.SendMessage(new NSMessage("RML", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                MessageProcessor.SendMessage(new NSMessage(payload));
                 contact.RemoveFromList(list);
                 return;
             }
@@ -1969,18 +1976,13 @@ namespace MSNPSharp
                     contact.RemoveFromList(list);
                     MemberShipList.MemberRoles[GetMemberRole(list)].Remove(contact.Mail);
                     MemberShipList.Save();
-                }
-                else if (e.Error != null)
-                {
-                    /*
-                    string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
-                    payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
-                    payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-                    payload = payload.Replace("{l}", ((int)list).ToString());
 
                     MessageProcessor.SendMessage(new NSMessage("RML", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
                     MessageProcessor.SendMessage(new NSMessage(payload));
-                    */
+
+                }
+                else if (e.Error != null)
+                {
                     throw new MSNPSharpException(e.Error.Message, e.Error);
                 }
                 ((IDisposable)service).Dispose();
