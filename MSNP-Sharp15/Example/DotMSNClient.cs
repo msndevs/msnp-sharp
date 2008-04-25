@@ -22,22 +22,15 @@ namespace MSNPSharpClient
         #region Form controls
         private Panel ListPanel;
         private Panel ContactPanel;
-        private Label label1;
-        private Label label2;
-        private Button loginButton;
-        private TextBox accountTextBox;
-        private TextBox passwordTextBox;
-        private Button button1;
         private PictureBox pictureBox;
         private PictureBox displayImageBox;
-        private Panel panel1;
         private OpenFileDialog openFileDialog;
         private SaveFileDialog saveFileDialog;
         private Button changeDisplayButton;
         private OpenFileDialog openImageDialog;
         private Timer tmrKeepOnLine;
         private TreeView treeViewFavoriteList;
-        private ImageList ýmageList1;
+        private ImageList ImageList1;
         private ContextMenuStrip userMenuStrip;
         private ToolStripMenuItem sendIMMenuItem;
         private ToolStripMenuItem blockMenuItem;
@@ -49,8 +42,15 @@ namespace MSNPSharpClient
         private ToolStripMenuItem sendMIMMenuItem;
         private StatusBar statusBar;
         private Panel OwnerPanel;
+        private Splitter splitter2;
+        private Panel panel1;
+        private Label label1;
+        private Button button1;
+        private TextBox accountTextBox;
+        private Label label2;
+        private Button loginButton;
+        private TextBox passwordTextBox;
         private PropertyGrid propertyGrid;
-        private Splitter splitter1;
         private IContainer components;
         #endregion
 
@@ -134,15 +134,15 @@ namespace MSNPSharpClient
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unblockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.changeDisplayButton = new System.Windows.Forms.Button();
+            this.ContactPanel = new System.Windows.Forms.Panel();
+            this.splitter2 = new System.Windows.Forms.Splitter();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
+            this.accountTextBox = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.loginButton = new System.Windows.Forms.Button();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.accountTextBox = new System.Windows.Forms.TextBox();
-            this.ContactPanel = new System.Windows.Forms.Panel();
-            this.splitter1 = new System.Windows.Forms.Splitter();
-            this.panel1 = new System.Windows.Forms.Panel();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.pictureBox = new System.Windows.Forms.PictureBox();
@@ -150,7 +150,7 @@ namespace MSNPSharpClient
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
-            this.ýmageList1 = new System.Windows.Forms.ImageList(this.components);
+            this.ImageList1 = new System.Windows.Forms.ImageList(this.components);
             this.statusBar = new System.Windows.Forms.StatusBar();
             this.OwnerPanel = new System.Windows.Forms.Panel();
             this.ListPanel.SuspendLayout();
@@ -167,26 +167,27 @@ namespace MSNPSharpClient
             this.ListPanel.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.ListPanel.Controls.Add(this.treeViewFavoriteList);
             this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ListPanel.Location = new System.Drawing.Point(232, 88);
+            this.ListPanel.Location = new System.Drawing.Point(287, 95);
             this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(235, 517);
+            this.ListPanel.Size = new System.Drawing.Size(280, 563);
             this.ListPanel.TabIndex = 0;
             // 
             // treeViewFavoriteList
             // 
             this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
             this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeViewFavoriteList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.treeViewFavoriteList.FullRowSelect = true;
             this.treeViewFavoriteList.HideSelection = false;
             this.treeViewFavoriteList.Indent = 20;
             this.treeViewFavoriteList.ItemHeight = 20;
-            this.treeViewFavoriteList.Location = new System.Drawing.Point(6, 0);
+            this.treeViewFavoriteList.Location = new System.Drawing.Point(0, 0);
             this.treeViewFavoriteList.Name = "treeViewFavoriteList";
             this.treeViewFavoriteList.ShowLines = false;
             this.treeViewFavoriteList.ShowPlusMinus = false;
             this.treeViewFavoriteList.ShowRootLines = false;
-            this.treeViewFavoriteList.Size = new System.Drawing.Size(226, 511);
+            this.treeViewFavoriteList.Size = new System.Drawing.Size(280, 563);
             this.treeViewFavoriteList.TabIndex = 0;
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
@@ -203,13 +204,13 @@ namespace MSNPSharpClient
             this.blockMenuItem,
             this.unblockMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(212, 148);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 148);
             // 
             // sendIMMenuItem
             // 
             this.sendIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendIMMenuItem.Name = "sendIMMenuItem";
-            this.sendIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendIMMenuItem.Text = "Send Instant Message";
             this.sendIMMenuItem.Click += new System.EventHandler(this.sendMessageToolStripMenuItem_Click);
             // 
@@ -217,7 +218,7 @@ namespace MSNPSharpClient
             // 
             this.sendOIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendOIMMenuItem.Name = "sendOIMMenuItem";
-            this.sendOIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendOIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendOIMMenuItem.Text = "Send Offline Message";
             this.sendOIMMenuItem.Click += new System.EventHandler(this.sendOfflineMessageToolStripMenuItem_Click);
             // 
@@ -225,120 +226,72 @@ namespace MSNPSharpClient
             // 
             this.sendMIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendMIMMenuItem.Name = "sendMIMMenuItem";
-            this.sendMIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendMIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendMIMMenuItem.Text = "Send Mobile Message";
             this.sendMIMMenuItem.Click += new System.EventHandler(this.sendMIMMenuItem_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(208, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(197, 6);
             // 
             // sendFileMenuItem
             // 
             this.sendFileMenuItem.Name = "sendFileMenuItem";
-            this.sendFileMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendFileMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendFileMenuItem.Text = "Send File";
             this.sendFileMenuItem.Click += new System.EventHandler(this.sendFileMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(208, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(197, 6);
             // 
             // blockMenuItem
             // 
             this.blockMenuItem.Name = "blockMenuItem";
-            this.blockMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.blockMenuItem.Size = new System.Drawing.Size(200, 22);
             this.blockMenuItem.Text = "Block";
             this.blockMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
             // 
             // unblockMenuItem
             // 
             this.unblockMenuItem.Name = "unblockMenuItem";
-            this.unblockMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.unblockMenuItem.Size = new System.Drawing.Size(200, 22);
             this.unblockMenuItem.Text = "Unblock";
             this.unblockMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
             // 
             // changeDisplayButton
             // 
-            this.changeDisplayButton.Location = new System.Drawing.Point(292, 59);
+            this.changeDisplayButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.changeDisplayButton.Location = new System.Drawing.Point(349, 64);
             this.changeDisplayButton.Name = "changeDisplayButton";
-            this.changeDisplayButton.Size = new System.Drawing.Size(86, 23);
+            this.changeDisplayButton.Size = new System.Drawing.Size(104, 24);
             this.changeDisplayButton.TabIndex = 7;
             this.changeDisplayButton.Text = "Display image";
             this.changeDisplayButton.Click += new System.EventHandler(this.changeDisplayButton_Click);
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(145, 61);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 6;
-            this.button1.Text = "Sign off >";
-            this.button1.Click += new System.EventHandler(this.button1_Click_1);
-            // 
-            // loginButton
-            // 
-            this.loginButton.Location = new System.Drawing.Point(64, 61);
-            this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(75, 23);
-            this.loginButton.TabIndex = 4;
-            this.loginButton.Text = "> Sign in";
-            this.loginButton.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // passwordTextBox
-            // 
-            this.passwordTextBox.Location = new System.Drawing.Point(64, 38);
-            this.passwordTextBox.Name = "passwordTextBox";
-            this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(156, 20);
-            this.passwordTextBox.TabIndex = 3;
-            // 
-            // label2
-            // 
-            this.label2.Location = new System.Drawing.Point(6, 35);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(56, 23);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "Password";
-            // 
-            // label1
-            // 
-            this.label1.Location = new System.Drawing.Point(6, 12);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(56, 16);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Account";
-            // 
-            // accountTextBox
-            // 
-            this.accountTextBox.Location = new System.Drawing.Point(64, 12);
-            this.accountTextBox.Name = "accountTextBox";
-            this.accountTextBox.Size = new System.Drawing.Size(156, 20);
-            this.accountTextBox.TabIndex = 0;
-            // 
             // ContactPanel
             // 
             this.ContactPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            this.ContactPanel.Controls.Add(this.splitter1);
+            this.ContactPanel.Controls.Add(this.splitter2);
             this.ContactPanel.Controls.Add(this.panel1);
             this.ContactPanel.Controls.Add(this.propertyGrid);
             this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Left;
-            this.ContactPanel.Location = new System.Drawing.Point(0, 88);
+            this.ContactPanel.Location = new System.Drawing.Point(0, 95);
             this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(232, 517);
+            this.ContactPanel.Size = new System.Drawing.Size(287, 563);
             this.ContactPanel.TabIndex = 2;
             // 
-            // splitter1
+            // splitter2
             // 
-            this.splitter1.BackColor = System.Drawing.SystemColors.Control;
-            this.splitter1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.splitter1.Location = new System.Drawing.Point(0, 428);
-            this.splitter1.Name = "splitter1";
-            this.splitter1.Size = new System.Drawing.Size(232, 10);
-            this.splitter1.TabIndex = 3;
-            this.splitter1.TabStop = false;
+            this.splitter2.BackColor = System.Drawing.SystemColors.Control;
+            this.splitter2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.splitter2.Location = new System.Drawing.Point(0, 461);
+            this.splitter2.Name = "splitter2";
+            this.splitter2.Size = new System.Drawing.Size(287, 11);
+            this.splitter2.TabIndex = 6;
+            this.splitter2.TabStop = false;
             // 
             // panel1
             // 
@@ -350,10 +303,59 @@ namespace MSNPSharpClient
             this.panel1.Controls.Add(this.loginButton);
             this.panel1.Controls.Add(this.passwordTextBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 428);
+            this.panel1.Location = new System.Drawing.Point(0, 461);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(232, 89);
-            this.panel1.TabIndex = 2;
+            this.panel1.Size = new System.Drawing.Size(287, 102);
+            this.panel1.TabIndex = 5;
+            // 
+            // label1
+            // 
+            this.label1.Location = new System.Drawing.Point(7, 13);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(67, 17);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "Account";
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(174, 66);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(90, 24);
+            this.button1.TabIndex = 6;
+            this.button1.Text = "Sign off >";
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // accountTextBox
+            // 
+            this.accountTextBox.Location = new System.Drawing.Point(77, 13);
+            this.accountTextBox.Name = "accountTextBox";
+            this.accountTextBox.Size = new System.Drawing.Size(187, 21);
+            this.accountTextBox.TabIndex = 0;
+            // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(7, 38);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(67, 24);
+            this.label2.TabIndex = 2;
+            this.label2.Text = "Password";
+            // 
+            // loginButton
+            // 
+            this.loginButton.Location = new System.Drawing.Point(77, 66);
+            this.loginButton.Name = "loginButton";
+            this.loginButton.Size = new System.Drawing.Size(90, 24);
+            this.loginButton.TabIndex = 4;
+            this.loginButton.Text = "> Sign in";
+            this.loginButton.Click += new System.EventHandler(this.loginButton_Click);
+            // 
+            // passwordTextBox
+            // 
+            this.passwordTextBox.Location = new System.Drawing.Point(77, 41);
+            this.passwordTextBox.Name = "passwordTextBox";
+            this.passwordTextBox.PasswordChar = '*';
+            this.passwordTextBox.Size = new System.Drawing.Size(187, 21);
+            this.passwordTextBox.TabIndex = 3;
             // 
             // propertyGrid
             // 
@@ -363,16 +365,17 @@ namespace MSNPSharpClient
             this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
             this.propertyGrid.Location = new System.Drawing.Point(0, 0);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(232, 428);
-            this.propertyGrid.TabIndex = 0;
+            this.propertyGrid.Size = new System.Drawing.Size(287, 461);
+            this.propertyGrid.TabIndex = 4;
             // 
             // displayImageBox
             // 
+            this.displayImageBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.displayImageBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayImageBox.Location = new System.Drawing.Point(384, 6);
+            this.displayImageBox.Location = new System.Drawing.Point(460, 6);
             this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(80, 76);
+            this.displayImageBox.Size = new System.Drawing.Size(96, 82);
             this.displayImageBox.TabIndex = 2;
             this.displayImageBox.TabStop = false;
             // 
@@ -383,7 +386,7 @@ namespace MSNPSharpClient
             this.pictureBox.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox.Image")));
             this.pictureBox.Location = new System.Drawing.Point(0, 0);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(467, 88);
+            this.pictureBox.Size = new System.Drawing.Size(567, 95);
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
             // 
@@ -402,17 +405,17 @@ namespace MSNPSharpClient
             this.tmrKeepOnLine.Interval = 1000;
             this.tmrKeepOnLine.Tick += new System.EventHandler(this.tmrKeepOnLine_Tick);
             // 
-            // ýmageList1
+            // ImageList1
             // 
-            this.ýmageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-            this.ýmageList1.ImageSize = new System.Drawing.Size(16, 16);
-            this.ýmageList1.TransparentColor = System.Drawing.Color.Transparent;
+            this.ImageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+            this.ImageList1.ImageSize = new System.Drawing.Size(16, 16);
+            this.ImageList1.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // statusBar
             // 
-            this.statusBar.Location = new System.Drawing.Point(0, 3);
+            this.statusBar.Location = new System.Drawing.Point(0, 2);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(467, 22);
+            this.statusBar.Size = new System.Drawing.Size(567, 24);
             this.statusBar.TabIndex = 5;
             // 
             // OwnerPanel
@@ -420,15 +423,15 @@ namespace MSNPSharpClient
             this.OwnerPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.OwnerPanel.Controls.Add(this.statusBar);
             this.OwnerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.OwnerPanel.Location = new System.Drawing.Point(0, 605);
+            this.OwnerPanel.Location = new System.Drawing.Point(0, 658);
             this.OwnerPanel.Name = "OwnerPanel";
-            this.OwnerPanel.Size = new System.Drawing.Size(467, 25);
+            this.OwnerPanel.Size = new System.Drawing.Size(567, 26);
             this.OwnerPanel.TabIndex = 1;
             // 
             // ClientForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(467, 630);
+            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
+            this.ClientSize = new System.Drawing.Size(567, 684);
             this.Controls.Add(this.changeDisplayButton);
             this.Controls.Add(this.ListPanel);
             this.Controls.Add(this.displayImageBox);
@@ -526,7 +529,7 @@ namespace MSNPSharpClient
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button1_Click(object sender, System.EventArgs e)
+        private void loginButton_Click(object sender, System.EventArgs e)
         {
             if (messenger.Connected)
             {
@@ -595,7 +598,7 @@ namespace MSNPSharpClient
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button1_Click_1(object sender, System.EventArgs e)
+        private void button1_Click(object sender, System.EventArgs e)
         {
             if (messenger.Connected)
                 messenger.Disconnect();
@@ -962,5 +965,6 @@ namespace MSNPSharpClient
             else
                 MessageBox.Show("This contact is not able to receive mobile messages");
         }
+
     }
 };
