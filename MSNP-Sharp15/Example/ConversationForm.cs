@@ -79,9 +79,9 @@ namespace MSNPSharpClient
 		{
             this.conversationTextBox = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.sendnudgeButton = new System.Windows.Forms.Button();
             this.sendButton = new System.Windows.Forms.Button();
             this.inputTextBox = new System.Windows.Forms.TextBox();
-            this.sendnudgeButton = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -101,41 +101,41 @@ namespace MSNPSharpClient
             this.panel1.Controls.Add(this.sendButton);
             this.panel1.Controls.Add(this.inputTextBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 256);
+            this.panel1.Location = new System.Drawing.Point(0, 262);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(555, 78);
+            this.panel1.Size = new System.Drawing.Size(555, 72);
             this.panel1.TabIndex = 1;
+            // 
+            // sendnudgeButton
+            // 
+            this.sendnudgeButton.Location = new System.Drawing.Point(377, 38);
+            this.sendnudgeButton.Name = "sendnudgeButton";
+            this.sendnudgeButton.Size = new System.Drawing.Size(75, 23);
+            this.sendnudgeButton.TabIndex = 2;
+            this.sendnudgeButton.Text = "Send Nudge";
+            this.sendnudgeButton.Click += new System.EventHandler(this.sendnudgeButton_Click);
             // 
             // sendButton
             // 
-            this.sendButton.Location = new System.Drawing.Point(453, 9);
+            this.sendButton.Location = new System.Drawing.Point(377, 8);
             this.sendButton.Name = "sendButton";
-            this.sendButton.Size = new System.Drawing.Size(90, 25);
+            this.sendButton.Size = new System.Drawing.Size(75, 24);
             this.sendButton.TabIndex = 1;
             this.sendButton.Text = "Send";
             this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
             // 
             // inputTextBox
             // 
-            this.inputTextBox.Location = new System.Drawing.Point(10, 9);
+            this.inputTextBox.Location = new System.Drawing.Point(8, 8);
             this.inputTextBox.Multiline = true;
             this.inputTextBox.Name = "inputTextBox";
-            this.inputTextBox.Size = new System.Drawing.Size(412, 60);
+            this.inputTextBox.Size = new System.Drawing.Size(344, 56);
             this.inputTextBox.TabIndex = 0;
             this.inputTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.inputTextBox_KeyDown);
             // 
-            // sendnudgeButton
-            // 
-            this.sendnudgeButton.Location = new System.Drawing.Point(453, 41);
-            this.sendnudgeButton.Name = "sendnudgeButton";
-            this.sendnudgeButton.Size = new System.Drawing.Size(90, 25);
-            this.sendnudgeButton.TabIndex = 2;
-            this.sendnudgeButton.Text = "Send Nudge";
-            this.sendnudgeButton.Click += new System.EventHandler(this.sendnudgeButton_Click);
-            // 
             // ConversationForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
+            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(555, 334);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.conversationTextBox);
@@ -180,7 +180,7 @@ namespace MSNPSharpClient
 			
 			Conversation.Switchboard.SendTextMessage(message);
 			_typingMessageSended = false;
-			inputTextBox.Text = "";
+			inputTextBox.Text = String.Empty;
 			conversationTextBox.Text += "You say: " + message.Text + "\r\n";
 		}
 
