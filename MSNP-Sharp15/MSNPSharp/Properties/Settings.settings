@@ -2,9 +2,6 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MSNPSharp.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="MSNPSharp_MSNP13SharingService_SharingService" Type="(Web Service URL)" Scope="Application">
-      <Value Profile="(Default)">https://contacts.msn.com/abservice/SharingService.asmx</Value>
-    </Setting>
     <Setting Name="MSNPSharp_MSNABSharingService_SharingService" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">https://contacts.msn.com/abservice/SharingService.asmx</Value>
     </Setting>
@@ -13,6 +10,9 @@
     </Setting>
     <Setting Name="MSNPSharp_MSNRSIService_RSIService" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">https://rsi.hotmail.com/rsi/rsi.asmx</Value>
+    </Setting>
+    <Setting Name="MSNPSharp_MSNSecurityTokenService_SecurityTokenService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://login.live.com/RST.srf</Value>
     </Setting>
   </Settings>
 </SettingsFile>

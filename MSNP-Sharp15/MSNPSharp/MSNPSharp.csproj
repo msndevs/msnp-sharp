@@ -63,6 +63,7 @@
     <Compile Include="MSNMessage.cs" />
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
+    <Compile Include="MSNSecurityServiceSoapClient.cs" />
     <Compile Include="MSNSLPHandler.cs" />
     <Compile Include="MSNSLPMessage.cs" />
     <Compile Include="NetworkMessage.cs" />
@@ -123,6 +124,11 @@
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
     <Compile Include="Web References\MSNRSIService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\MSNSecurityTokenService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
@@ -222,6 +228,41 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNRSIService\rsi_ws.wsdl" />
+    <None Include="Web References\MSNSecurityTokenService\addressing.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\ps-fault.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\ps.wsdl" />
+    <None Include="Web References\MSNSecurityTokenService\ps.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\RequestSecurityTokenResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\ws-policy.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\ws-secext.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\ws-trust.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\wss-utility.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\xenc-schema.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSecurityTokenService\xmldsig-core-schema.xsd">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -258,6 +299,17 @@
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNOIMStoreService_OIMService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/ps.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNSecurityTokenService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/ps.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://localhost/msnws/rsi_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>

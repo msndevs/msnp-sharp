@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xs:schema xmlns:wsrm="http://schemas.xmlsoap.org/ws/2003/03/rm" xmlns:wsu="http://schemas.xmlsoap.org/ws/2002/07/utility" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://schemas.xmlsoap.org/ws/2003/03/rm" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <xs:import schemaLocation="http://schemas.xmlsoap.org/ws/2002/07/utility/utility.xsd" namespace="http://schemas.xmlsoap.org/ws/2002/07/utility" />
+  <xs:import schemaLocation="utility.xsd" namespace="http://schemas.xmlsoap.org/ws/2002/07/utility" />
   <xs:complexType name="SequenceType">
     <xs:sequence>
       <xs:element ref="wsu:Identifier" />
