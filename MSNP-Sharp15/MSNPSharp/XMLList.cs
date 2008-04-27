@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define TRACE
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
@@ -67,7 +69,8 @@ namespace MSNPSharp
         {
             MemoryStream ms = new MemoryStream();
             doc.Save(ms);
-            MCLFile file = new MCLFile(filename);
+            MCLFile file = new MCLFile(filename,true);  //Debug ONLY!!
+            //MCLFile file = new MCLFile(filename);
             file.Content = ms.ToArray();
             file.SaveAndHide();
         }

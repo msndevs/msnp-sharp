@@ -100,7 +100,7 @@ namespace MSNPSharp
             AuthenticationAdd(@"http://Passport.NET/tb", null);
             AuthenticationAdd("messengerclear.live.com", policy);
             AuthenticationAdd("messenger.msn.com", "?id=507");
-            AuthenticationAdd("contacts.msn.com", ("?fs=1&id=24000&kv=9&rn=93S9SWWw&tw=0&ver=2.1.6000.1").Replace(@"&", @"&amp;"));
+            AuthenticationAdd("contacts.msn.com", "?fs=1&id=24000&kv=9&rn=93S9SWWw&tw=0&ver=2.1.6000.1");//("?fs=1&id=24000&kv=9&rn=93S9SWWw&tw=0&ver=2.1.6000.1").Replace(@"&", @"&amp;"));
             AuthenticationAdd("messengersecure.live.com", "MBI_SSL");
             AuthenticationAdd("livecontacts.live.com", "MBI");
         }
@@ -143,6 +143,8 @@ namespace MSNPSharp
             try
             {
                 result = securService.RequestMultipleSecurityTokens(mulToken);
+                if (securService.pp.reqstatus != "0x0")   //This is error code
+                    throw new MSNPSharpException("Authentication error, error code: " + securService.pp.reqstatus);
             }
             catch (Exception ex)
             {

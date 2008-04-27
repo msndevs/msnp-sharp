@@ -56,7 +56,7 @@ namespace MSNPSharp
 		/// </summary>
 		static Settings()
 		{
-			TraceSwitch.Level = TraceLevel.Error;
+			TraceSwitch.Level = TraceLevel.Verbose;
 		}
 	}
 }
