@@ -26,7 +26,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
-
+//#define TRACE
 
 using System;
 using System.Collections.Generic;
@@ -48,16 +48,19 @@ namespace MSNPSharp.IO
         string fileName = "";
         int length = 0;
         byte[] uncompressData;
+        bool noCompression = false;
+
+        public MCLFile(string filename, bool nocompress)
+        {
+            noCompression = nocompress;
+            fileName = filename;
+            IniData(filename);
+        }
 
         public MCLFile(string filename)
         {
             fileName = filename;
-            MCLFileStruct file = GetStruct(filename);
-            if (file.content != null)
-            {
-                length = file.len;
-                uncompressData = Decompress(file.content, length);
-            }
+            IniData(filename);
         }
 
         #region Public method
@@ -112,17 +115,42 @@ namespace MSNPSharp.IO
         #endregion
 
         #region Private
+
+        private void IniData(string filename)
+        {
+            MCLFileStruct file = GetStruct(filename);
+            if (file.content != null)
+            {
+                length = file.len;
+                if (noCompression)
+                {
+                    uncompressData = file.content;
+                }
+                else
+                {
+                    uncompressData = Decompress(file.content, length);
+                }
+            }
+        }
+
         private void SaveImpl(string filename, byte[] content)
         {
             if (content == null)
                 return;
             if (File.Exists(filename))
                 File.SetAttributes(filename, FileAttributes.Normal);
-            byte[] ext = new byte[3] { (byte)'m', (byte)'c', (byte)'l' };
-            byte[] byt = new byte[content.Length + 3];
-            Array.Copy(ext, byt, 3);
-            Array.Copy(content, 0, byt, 3, content.Length);
-            File.WriteAllBytes(filename, byt);
+            if (!noCompression)
+            {
+                byte[] ext = new byte[3] { (byte)'m', (byte)'c', (byte)'l' };
+                byte[] byt = new byte[content.Length + 3];
+                Array.Copy(ext, byt, 3);
+                Array.Copy(content, 0, byt, 3, content.Length);
+                File.WriteAllBytes(filename, byt);
+            }
+            else
+            {
+                File.WriteAllBytes(filename, content);
+            }
         }
 
 
@@ -159,6 +187,9 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         private byte[] FillFileStruct(byte[] content)
         {
+            if (noCompression)
+                return content;
+
             MCLFileStruct mclstruct;
             mclstruct.len = content.Length;
             mclstruct.content = Compress(content);
@@ -185,14 +216,21 @@ namespace MSNPSharp.IO
             MCLFileStruct mclfile = new MCLFileStruct();
             try
             {
-
-                IntPtr structPtr = Marshal.AllocHGlobal(Marshal.SizeOf(mclfile.len));
-                Marshal.Copy(bytstruct, 3, structPtr, Marshal.SizeOf(mclfile.len));
-                mclfile.len = Marshal.ReadInt32(structPtr);
-                byte[] content = new byte[bytstruct.Length - 3 - Marshal.SizeOf(mclfile.len)];
-                Array.Copy(bytstruct, 3 + Marshal.SizeOf(mclfile.len), content, 0, content.Length);
-                Marshal.FreeHGlobal(structPtr);
-                mclfile.content = content;
+                if (!noCompression)
+                {
+                    IntPtr structPtr = Marshal.AllocHGlobal(Marshal.SizeOf(mclfile.len));
+                    Marshal.Copy(bytstruct, 3, structPtr, Marshal.SizeOf(mclfile.len));
+                    mclfile.len = Marshal.ReadInt32(structPtr);
+                    byte[] content = new byte[bytstruct.Length - 3 - Marshal.SizeOf(mclfile.len)];
+                    Array.Copy(bytstruct, 3 + Marshal.SizeOf(mclfile.len), content, 0, content.Length);
+                    Marshal.FreeHGlobal(structPtr);
+                    mclfile.content = content;
+                }
+                else
+                {
+                    mclfile.len = bytstruct.Length;
+                    mclfile.content = bytstruct;
+                }
             }
             catch (Exception)
             {
