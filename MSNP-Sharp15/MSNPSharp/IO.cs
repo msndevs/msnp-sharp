@@ -28,15 +28,15 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 //#define TRACE
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.IO.Compression;
-
 namespace MSNPSharp.IO
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.IO;
+    using System.Runtime.InteropServices;
+    using System.IO.Compression;
+
     internal struct MCLFileStruct
     {
         public Int32 len;
@@ -45,8 +45,9 @@ namespace MSNPSharp.IO
 
     public sealed class MCLFile
     {
-        string fileName = "";
         int length = 0;
+        string fileName = String.Empty;
+        
         byte[] uncompressData;
         bool noCompression = false;
 
@@ -57,11 +58,6 @@ namespace MSNPSharp.IO
             IniData(filename);
         }
 
-        public MCLFile(string filename)
-        {
-            fileName = filename;
-            IniData(filename);
-        }
 
         #region Public method
         public void Save(string filename)
@@ -82,7 +78,6 @@ namespace MSNPSharp.IO
         {
             SaveImpl(filename, FillFileStruct(uncompressData));
             File.SetAttributes(filename, FileAttributes.Hidden);
-
         }
 
         /// <summary>
@@ -91,7 +86,7 @@ namespace MSNPSharp.IO
         public void SaveAndHide()
         {
             SaveAndHide(fileName);
-        } 
+        }
         #endregion
 
         #region Properties
@@ -101,7 +96,10 @@ namespace MSNPSharp.IO
         /// </summary>
         public int Length
         {
-            get { return length; }
+            get
+            {
+                return length;
+            }
         }
 
         /// <summary>
@@ -109,9 +107,15 @@ namespace MSNPSharp.IO
         /// </summary>
         public byte[] Content
         {
-            get { return uncompressData; }
-            set { uncompressData = value; }
-        } 
+            get
+            {
+                return uncompressData;
+            }
+            set
+            {
+                uncompressData = value;
+            }
+        }
         #endregion
 
         #region Private
@@ -122,6 +126,7 @@ namespace MSNPSharp.IO
             if (file.content != null)
             {
                 length = file.len;
+
                 if (noCompression)
                 {
                     uncompressData = file.content;
@@ -137,8 +142,10 @@ namespace MSNPSharp.IO
         {
             if (content == null)
                 return;
+
             if (File.Exists(filename))
                 File.SetAttributes(filename, FileAttributes.Normal);
+
             if (!noCompression)
             {
                 byte[] ext = new byte[3] { (byte)'m', (byte)'c', (byte)'l' };
@@ -162,7 +169,7 @@ namespace MSNPSharp.IO
             zipsm.Write(buffer, 0, buffer.Length);
             zipsm.Close();
             byte[] byt = destms.ToArray();
-            
+
             return byt;
         }
 
@@ -172,7 +179,7 @@ namespace MSNPSharp.IO
             MemoryStream ms = new MemoryStream(compresseddata);
             ms.Position = 0;
             GZipStream zipsm = new GZipStream(ms, CompressionMode.Decompress);
-            int re=1;
+            int re = 1;
 
             re = zipsm.Read(decompressdata, 0, originallength);
 
@@ -212,11 +219,13 @@ namespace MSNPSharp.IO
         {
             if (!File.Exists(fileName))
                 return new MCLFileStruct();
+
             byte[] bytstruct = File.ReadAllBytes(fileName);
             MCLFileStruct mclfile = new MCLFileStruct();
+
             try
             {
-                if (!noCompression)
+                 if (!noCompression)
                 {
                     IntPtr structPtr = Marshal.AllocHGlobal(Marshal.SizeOf(mclfile.len));
                     Marshal.Copy(bytstruct, 3, structPtr, Marshal.SizeOf(mclfile.len));
@@ -237,7 +246,7 @@ namespace MSNPSharp.IO
                 return new MCLFileStruct();
             }
             return mclfile;
-        } 
+        }
         #endregion
     }
-}
+};
