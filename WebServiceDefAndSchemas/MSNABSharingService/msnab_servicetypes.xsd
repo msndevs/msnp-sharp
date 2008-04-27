@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns="http://www.msn.com/webservices/AddressBook" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:include schemaLocation="msnab_datatypes.xsd" />
+  <xsd:element name="ABApplicationHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element fixed="09607671-1C32-421F-A6A6-CBFAA51AB5F4" name="ApplicationId" type="msnab:Guid" />
+        <xsd:element default="false" name="IsMigration" type="xsd:boolean" />
+        <xsd:element default="Initial" name="PartnerScenario" type="xsd:string" />
+        <xsd:element minOccurs="0" name="CacheKey" type="xsd:token" />
+        <xsd:element minOccurs="0" name="BrandId" type="xsd:string" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="ABAuthHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element default="false" name="ManagedGroupRequest" type="xsd:boolean" />
+        <xsd:element name="TicketToken" type="xsd:string" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="ServiceHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="Version" type="xsd:token" />
+        <xsd:element minOccurs="0" name="CacheKey" type="xsd:token" />
+        <xsd:element minOccurs="0" name="CacheKeyChanged" type="xsd:boolean" />
+        <xsd:element minOccurs="0" name="PreferredHostName" type="xsd:string" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="FindMembershipRequestType">
+    <xsd:sequence>
+      <xsd:element name="serviceFilter">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Types">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element maxOccurs="unbounded" default="Messenger" name="ServiceType" type="msnab:ServiceFilterType" />
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" default="Full" name="View" type="xsd:string" />
+      <xsd:element minOccurs="0" default="false" name="deltasOnly" type="xsd:boolean" />
+      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:dateTime" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="FindMembership" type="msnab:FindMembershipRequestType" />
+  <xsd:complexType name="FindMembershipResultType">
+    <xsd:sequence>
+      <xsd:element name="Services">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Service" type="msnab:ServiceType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="OwnerNamespace">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Info">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="Handle">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="Id" type="xsd:string" />
+                        <xsd:element name="IsPassportNameHidden" type="xsd:boolean" />
+                        <xsd:element name="CID" type="xsd:integer" />
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                  <xsd:element name="CreatorPuid" type="xsd:integer" />
+                  <xsd:element name="CreatorCID" type="xsd:integer" />
+                  <xsd:element name="CreatorPassportName" type="xsd:string" />
+                  <xsd:element name="CircleAttributes">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="IsPresenceEnabled" type="xsd:boolean" />
+                        <xsd:element minOccurs="0" name="IsEvent" type="xsd:boolean" />
+                        <xsd:element name="Domain" type="xsd:string" />
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                  <xsd:element minOccurs="0" name="MessengerApplicationServiceCreated" type="xsd:boolean" />
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="Changes" type="xsd:string" />
+            <xsd:element name="CreateDate" type="xsd:dateTime" />
+            <xsd:element name="LastChange" type="xsd:dateTime" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="FindMembershipResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="FindMembershipResult" type="msnab:FindMembershipResultType" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ABFindAllRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element minOccurs="0" default="Full" name="abView" type="xsd:string" />
+      <xsd:element minOccurs="0" default="false" name="deltasOnly" type="xsd:boolean" />
+      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" fixed="Gleam" name="dynamicItemView" type="xsd:string" />
+      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="dynamicItemLastChange" type="xsd:dateTime" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABFindAll" type="msnab:ABFindAllRequestType" />
+  <xsd:complexType name="ABFindAllResultType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="groups">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="Group" type="msnab:GroupType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="contacts">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="DynamicItems">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="DynamicItems" type="xsd:anyType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="CircleResult">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="CircleTicket" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ab">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="abId" type="msnab:Guid" />
+            <xsd:element name="abInfo">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="ownerPuid" type="xsd:integer" />
+                  <xsd:element name="OwnerCID" type="xsd:integer" />
+                  <xsd:element name="ownerEmail" type="xsd:string" />
+                  <xsd:element name="fDefault" type="xsd:boolean" />
+                  <xsd:element name="joinedNamespace" type="xsd:boolean" />
+                  <xsd:element name="IsBot" type="xsd:boolean" />
+                  <xsd:element name="IsParentManaged" type="xsd:boolean" />
+                  <xsd:element name="SubscribeExternalPartner" type="xsd:boolean" />
+                  <xsd:element name="NotifyExternalPartner" type="xsd:boolean" />
+                  <xsd:element name="AddressBookType" type="xsd:string" />
+                  <xsd:element name="MessengerApplicationServiceCreated" type="xsd:boolean" />
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="lastChange" type="xsd:dateTime" />
+            <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime" />
+            <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime" />
+            <xsd:element name="createDate" type="xsd:dateTime" />
+            <xsd:element name="propertiesChanged" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABFindAllResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="ABFindAllResult" type="msnab:ABFindAllResultType" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ABContactAddRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="contacts">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="options">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="EnableAllowListManagement" type="xsd:boolean" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABContactAdd" type="msnab:ABContactAddRequestType" />
+  <xsd:complexType name="ABContactAddResultType">
+    <xsd:sequence>
+      <xsd:element name="guid" type="msnab:Guid" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABContactAddResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element minOccurs="0" name="ABContactAddResult" type="msnab:ABContactAddResultType" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ABContactDeleteRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="contacts">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactIdType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABContactDelete" type="msnab:ABContactDeleteRequestType" />
+  <xsd:element name="ABContactDeleteResponse" />
+  <xsd:complexType name="ABGroupContactAddRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="groupFilter" type="msnab:groupFilterType" />
+      <xsd:element name="contacts">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="groupContactAddOptions">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" name="fGenerateMissingQuickName" type="xsd:boolean" />
+            <xsd:element minOccurs="0" name="EnableAllowListManagement" type="xsd:boolean" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABGroupContactAdd" type="msnab:ABGroupContactAddRequestType" />
+  <xsd:complexType name="ABGroupContactAddResultType">
+    <xsd:sequence>
+      <xsd:element name="guid" type="msnab:Guid" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABGroupContactAddResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element minOccurs="0" name="ABGroupContactAddResult" type="msnab:ABGroupContactAddResultType" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ABGroupAddRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="groupAddOptions">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" name="fRenameOnMsgrConflict" type="xsd:boolean" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="groupInfo">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="GroupInfo" type="msnab:groupInfoType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABGroupAdd" type="msnab:ABGroupAddRequestType" />
+  <xsd:complexType name="ABGroupAddResultType">
+    <xsd:sequence>
+      <xsd:element name="guid" type="msnab:Guid" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABGroupAddResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element minOccurs="0" name="ABGroupAddResult" type="msnab:ABGroupAddResultType" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ABGroupUpdateRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="groups">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Group" type="msnab:GroupType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABGroupUpdate" type="msnab:ABGroupUpdateRequestType" />
+  <xsd:element name="ABGroupUpdateResponse">
+    <xsd:complexType />
+  </xsd:element>
+  <xsd:complexType name="ABGroupDeleteRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="groupFilter" type="msnab:groupFilterType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABGroupDelete" type="msnab:ABGroupDeleteRequestType" />
+  <xsd:element name="ABGroupDeleteResponse">
+    <xsd:complexType />
+  </xsd:element>
+  <xsd:complexType name="ABGroupContactDeleteRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="contacts">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="groupFilter" type="msnab:groupFilterType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABGroupContactDelete" type="msnab:ABGroupContactDeleteRequestType" />
+  <xsd:element name="ABGroupContactDeleteResponse">
+    <xsd:complexType />
+  </xsd:element>
+  <xsd:complexType name="AddMemberRequestType">
+    <xsd:sequence>
+      <xsd:element name="serviceHandle" type="msnab:HandleType" />
+      <xsd:element name="memberships">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Membership" type="msnab:Membership" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ABContactUpdateRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="contacts">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABContactUpdate" type="msnab:ABContactUpdateRequestType" />
+  <xsd:element name="ABContactUpdateResponse">
+    <xsd:complexType />
+  </xsd:element>
+  <xsd:element name="AddMember" type="msnab:AddMemberRequestType" />
+  <xsd:element name="AddMemberResponse">
+    <xsd:complexType />
+  </xsd:element>
+  <xsd:complexType name="DeleteMemberRequestType">
+    <xsd:sequence>
+      <xsd:element name="serviceHandle" type="msnab:HandleType" />
+      <xsd:element name="memberships">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Membership" type="msnab:Membership" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="DeleteMember" type="msnab:DeleteMemberRequestType" />
+  <xsd:element name="DeleteMemberResponse">
+    <xsd:complexType />
+  </xsd:element>
+</xsd:schema>
