@@ -1,14 +1,14 @@
 ﻿#define TRACE
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using System.IO;
-using MSNPSharp.IO;
-
 namespace MSNPSharp
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Xml;
+    using System.IO;
+    using MSNPSharp.IO;
+
     internal enum XMLContactListTags
     {
         ContactList,
@@ -31,8 +31,9 @@ namespace MSNPSharp
     }
 
 
-    internal abstract class XMLContactList:Dictionary<string,ContactInfo>
+    internal abstract class XMLContactList : Dictionary<string, ContactInfo>
     {
+        protected bool noCompress;
         protected XmlDocument doc;
         protected DateTime lastChange;
 
@@ -48,9 +49,10 @@ namespace MSNPSharp
             root.AppendChild(CreateNode(XMLContactListTags.AddressBook.ToString(), null));
         }
 
-        protected XMLContactList()
+        protected XMLContactList(bool nocompress)
             : base(0)
         {
+            noCompress = nocompress;
         }
 
         protected virtual XmlNode CreateNode(string name, string innerText)
@@ -69,8 +71,7 @@ namespace MSNPSharp
         {
             MemoryStream ms = new MemoryStream();
             doc.Save(ms);
-            MCLFile file = new MCLFile(filename,true);  //Debug ONLY!!
-            //MCLFile file = new MCLFile(filename);
+            MCLFile file = new MCLFile(filename, noCompress);
             file.Content = ms.ToArray();
             file.SaveAndHide();
         }
@@ -81,12 +82,10 @@ namespace MSNPSharp
             if (File.Exists(filename))
             {
                 CreateDoc();
-                MCLFile file = new MCLFile(filename);
+                MCLFile file = new MCLFile(filename, noCompress);
                 if (file.Content != null)
                 {
-                    MemoryStream ms = new MemoryStream(file.Content);
-                    //string str = Encoding.UTF8.GetString(ms.ToArray());  //Just for test
-                    doc.Load(ms);
+                    doc.Load(new MemoryStream(file.Content));
                 }
             }
             else
@@ -119,8 +118,14 @@ namespace MSNPSharp
 
         public DateTime LastChange
         {
-            set { lastChange = value; }
-            get { return lastChange; }
+            set
+            {
+                lastChange = value;
+            }
+            get
+            {
+                return lastChange;
+            }
         }
     }
-}
+};

@@ -240,6 +240,11 @@
             = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>(0);
 
         public XMLMembershipList(string filename)
+            : this(filename, false)
+        {
+        }
+
+        public XMLMembershipList(string filename, bool nocompress) : base(nocompress)
         {
             fileName = filename;
             LoadFromFile(filename);
@@ -423,7 +428,13 @@
         Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
         Dictionary<string, string> myproperties = new Dictionary<string, string>(0);
 
+
         public XMLAddressBook(string filename)
+            : this(filename, false)
+        {
+        }
+
+        public XMLAddressBook(string filename, bool nocompress) : base(nocompress)
         {
             fileName = filename;
             LoadFromFile(filename);
