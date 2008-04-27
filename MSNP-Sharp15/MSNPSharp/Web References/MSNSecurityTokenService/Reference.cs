@@ -39,7 +39,7 @@ namespace MSNPSharp.MSNSecurityTokenService {
         
         private AuthInfoType authInfoField;
         
-        private ppHeaderType ppHeaderField;
+        private ppHeaderType ppField;
         
         private System.Threading.SendOrPostCallback RequestMultipleSecurityTokensOperationCompleted;
         
@@ -75,12 +75,12 @@ namespace MSNPSharp.MSNSecurityTokenService {
             }
         }
         
-        public ppHeaderType ppHeader {
+        public ppHeaderType pp {
             get {
-                return this.ppHeaderField;
+                return this.ppField;
             }
             set {
-                this.ppHeaderField = value;
+                this.ppField = value;
             }
         }
         
@@ -112,8 +112,8 @@ namespace MSNPSharp.MSNSecurityTokenService {
         public event RequestMultipleSecurityTokensCompletedEventHandler RequestMultipleSecurityTokensCompleted;
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("pp", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
         [System.Web.Services.Protocols.SoapHeaderAttribute("Security")]
-        [System.Web.Services.Protocols.SoapHeaderAttribute("ppHeader", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
         [System.Web.Services.Protocols.SoapHeaderAttribute("AuthInfo")]
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
         [return: System.Xml.Serialization.XmlArrayAttribute("RequestSecurityTokenResponseCollection", Namespace="http://schemas.xmlsoap.org/ws/2004/04/trust")]
@@ -169,19 +169,157 @@ namespace MSNPSharp.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext")]
-    [System.Xml.Serialization.XmlRootAttribute("Security", Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext", IsNullable=false)]
-    public partial class SecurityHeaderType : System.Web.Services.Protocols.SoapHeader {
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault")]
+    [System.Xml.Serialization.XmlRootAttribute("pp", Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault", IsNullable=false)]
+    public partial class ppHeaderType : System.Web.Services.Protocols.SoapHeader {
         
-        private UsernameTokenType usernameTokenField;
+        private string serverVersionField;
+        
+        private string pUIDField;
+        
+        private string configVersionField;
+        
+        private string uiVersionField;
+        
+        private string authstateField;
+        
+        private string reqstatusField;
+        
+        private serverInfoType serverInfoField;
+        
+        private object cookiesField;
+        
+        private browserCookieType[] browserCookiesField;
+        
+        private credPropertyType[] credPropertiesField;
+        
+        private extPropertyType[] extPropertiesField;
+        
+        private object responseField;
         
         /// <remarks/>
-        public UsernameTokenType UsernameToken {
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string serverVersion {
             get {
-                return this.usernameTokenField;
+                return this.serverVersionField;
             }
             set {
-                this.usernameTokenField = value;
+                this.serverVersionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string PUID {
+            get {
+                return this.pUIDField;
+            }
+            set {
+                this.pUIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string configVersion {
+            get {
+                return this.configVersionField;
+            }
+            set {
+                this.configVersionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string uiVersion {
+            get {
+                return this.uiVersionField;
+            }
+            set {
+                this.uiVersionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string authstate {
+            get {
+                return this.authstateField;
+            }
+            set {
+                this.authstateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string reqstatus {
+            get {
+                return this.reqstatusField;
+            }
+            set {
+                this.reqstatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public serverInfoType serverInfo {
+            get {
+                return this.serverInfoField;
+            }
+            set {
+                this.serverInfoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object cookies {
+            get {
+                return this.cookiesField;
+            }
+            set {
+                this.cookiesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("browserCookie", IsNullable=false)]
+        public browserCookieType[] browserCookies {
+            get {
+                return this.browserCookiesField;
+            }
+            set {
+                this.browserCookiesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("credProperty", IsNullable=false)]
+        public credPropertyType[] credProperties {
+            get {
+                return this.credPropertiesField;
+            }
+            set {
+                this.credPropertiesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("extProperty", IsNullable=false)]
+        public extPropertyType[] extProperties {
+            get {
+                return this.extPropertiesField;
+            }
+            set {
+                this.extPropertiesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object response {
+            get {
+                return this.responseField;
+            }
+            set {
+                this.responseField = value;
             }
         }
     }
@@ -191,71 +329,73 @@ namespace MSNPSharp.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext")]
-    public partial class UsernameTokenType {
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault")]
+    public partial class serverInfoType {
         
-        private AttributedString usernameField;
+        private System.DateTime serverTimeField;
         
-        private PasswordString passwordField;
+        private bool serverTimeFieldSpecified;
         
-        private string idField;
+        private string locVersionField;
         
-        /// <remarks/>
-        public AttributedString Username {
-            get {
-                return this.usernameField;
-            }
-            set {
-                this.usernameField = value;
-            }
-        }
+        private string rollingUpgradeStateField;
         
-        /// <remarks/>
-        public PasswordString Password {
-            get {
-                return this.passwordField;
-            }
-            set {
-                this.passwordField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EncodedString))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(BinarySecurityTokenType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(KeyIdentifierType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PasswordString))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext")]
-    public partial class AttributedString {
-        
-        private string idField;
+        private string pathField;
         
         private string valueField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
-        public string Id {
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime ServerTime {
             get {
-                return this.idField;
+                return this.serverTimeField;
             }
             set {
-                this.idField = value;
+                this.serverTimeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ServerTimeSpecified {
+            get {
+                return this.serverTimeFieldSpecified;
+            }
+            set {
+                this.serverTimeFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="integer")]
+        public string LocVersion {
+            get {
+                return this.locVersionField;
+            }
+            set {
+                this.locVersionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string RollingUpgradeState {
+            get {
+                return this.rollingUpgradeStateField;
+            }
+            set {
+                this.rollingUpgradeStateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Path {
+            get {
+                return this.pathField;
+            }
+            set {
+                this.pathField = value;
             }
         }
         
@@ -1991,9 +2131,7 @@ namespace MSNPSharp.MSNSecurityTokenService {
         
         private string domainsField;
         
-        private System.DateTime expiryField;
-        
-        private bool expiryFieldSpecified;
+        private string expiryField;
         
         private string nameField;
         
@@ -2034,23 +2172,12 @@ namespace MSNPSharp.MSNSecurityTokenService {
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.DateTime Expiry {
+        public string Expiry {
             get {
                 return this.expiryField;
             }
             set {
                 this.expiryField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ExpirySpecified {
-            get {
-                return this.expiryFieldSpecified;
-            }
-            set {
-                this.expiryFieldSpecified = value;
             }
         }
         
@@ -2120,7 +2247,33 @@ namespace MSNPSharp.MSNSecurityTokenService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault")]
     public partial class browserCookieType {
         
+        private string nameField;
+        
+        private string uRLField;
+        
         private string valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
+        public string URL {
+            get {
+                return this.uRLField;
+            }
+            set {
+                this.uRLField = value;
+            }
+        }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlTextAttribute()]
@@ -2428,6 +2581,54 @@ namespace MSNPSharp.MSNSecurityTokenService {
     }
     
     /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EncodedString))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(BinarySecurityTokenType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(KeyIdentifierType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PasswordString))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext")]
+    public partial class AttributedString {
+        
+        private string idField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute()]
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext")]
+    public partial class PasswordString : AttributedString {
+    }
+    
+    /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -2730,19 +2931,43 @@ namespace MSNPSharp.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault")]
-    public partial class serverInfoType {
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext")]
+    public partial class UsernameTokenType {
         
-        private string valueField;
+        private AttributedString usernameField;
+        
+        private PasswordString passwordField;
+        
+        private string idField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlTextAttribute()]
-        public string Value {
+        public AttributedString Username {
             get {
-                return this.valueField;
+                return this.usernameField;
             }
             set {
-                this.valueField = value;
+                this.usernameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public PasswordString Password {
+            get {
+                return this.passwordField;
+            }
+            set {
+                this.passwordField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
             }
         }
     }
@@ -2753,166 +2978,18 @@ namespace MSNPSharp.MSNSecurityTokenService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext")]
-    public partial class PasswordString : AttributedString {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault")]
-    [System.Xml.Serialization.XmlRootAttribute("ppHeader", Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault", IsNullable=false)]
-    public partial class ppHeaderType : System.Web.Services.Protocols.SoapHeader {
+    [System.Xml.Serialization.XmlRootAttribute("Security", Namespace="http://schemas.xmlsoap.org/ws/2003/06/secext", IsNullable=false)]
+    public partial class SecurityHeaderType : System.Web.Services.Protocols.SoapHeader {
         
-        private string serverVersionField;
-        
-        private byte[] pUIDField;
-        
-        private string configVersionField;
-        
-        private string uiVersionField;
-        
-        private byte[] authstateField;
-        
-        private byte[] reqstatusField;
-        
-        private serverInfoType serverInfoField;
-        
-        private object cookiesField;
-        
-        private browserCookieType[] browserCookieCollectionField;
-        
-        private credPropertyType[] credPropertyCollectionField;
-        
-        private extPropertyType[] extPropertyCollectionField;
-        
-        private object responseField;
+        private UsernameTokenType usernameTokenField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string serverVersion {
+        public UsernameTokenType UsernameToken {
             get {
-                return this.serverVersionField;
+                return this.usernameTokenField;
             }
             set {
-                this.serverVersionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
-        public byte[] PUID {
-            get {
-                return this.pUIDField;
-            }
-            set {
-                this.pUIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string configVersion {
-            get {
-                return this.configVersionField;
-            }
-            set {
-                this.configVersionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string uiVersion {
-            get {
-                return this.uiVersionField;
-            }
-            set {
-                this.uiVersionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="hexBinary")]
-        public byte[] authstate {
-            get {
-                return this.authstateField;
-            }
-            set {
-                this.authstateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="hexBinary")]
-        public byte[] reqstatus {
-            get {
-                return this.reqstatusField;
-            }
-            set {
-                this.reqstatusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public serverInfoType serverInfo {
-            get {
-                return this.serverInfoField;
-            }
-            set {
-                this.serverInfoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public object cookies {
-            get {
-                return this.cookiesField;
-            }
-            set {
-                this.cookiesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("browserCookie", IsNullable=false)]
-        public browserCookieType[] browserCookieCollection {
-            get {
-                return this.browserCookieCollectionField;
-            }
-            set {
-                this.browserCookieCollectionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("credProperty", IsNullable=false)]
-        public credPropertyType[] credPropertyCollection {
-            get {
-                return this.credPropertyCollectionField;
-            }
-            set {
-                this.credPropertyCollectionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("extProperty", IsNullable=false)]
-        public extPropertyType[] extPropertyCollection {
-            get {
-                return this.extPropertyCollectionField;
-            }
-            set {
-                this.extPropertyCollectionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public object response {
-            get {
-                return this.responseField;
-            }
-            set {
-                this.responseField = value;
+                this.usernameTokenField = value;
             }
         }
     }
