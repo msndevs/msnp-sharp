@@ -41,20 +41,19 @@ using System.Security.Cryptography;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Globalization;
+using MSNPSharp.MSNSecurityTokenService;
+using MSNPSharp.SOAP;
+using System.Web.Services.Protocols;
+
 namespace MSNPSharp
 {
-    /*
-     * I know.. using text sux.. i tried to use proxy classes to send the soap request, but the server just accepts this format..
-     * Not my fault, blame M$ :)
-     */
     public class SingleSignOn
     {
         string user;
         string pass;
         string policy;
-        int auth_count = 1;
-
-        List<string> auths;
+        int authId = 0;
+        List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
 
         public SingleSignOn(string username, string password, string policy)
         {
@@ -62,30 +61,30 @@ namespace MSNPSharp
             this.pass = password;
             this.policy = policy;
 
-            auths = new List<string>();
         }
 
         public void AuthenticationAdd(string domain, string policyref)
         {
-            string soapenvelop = "<wst:RequestSecurityToken Id=\"RST{0}\">"
-                                + "<wst:RequestType>http://schemas.xmlsoap.org/ws/2004/04/security/trust/Issue</wst:RequestType>"
-                                + "<wsp:AppliesTo>"
-                                + "<wsa:EndpointReference>"
-                                + "<wsa:Address>{1}</wsa:Address>"
-                                + "</wsa:EndpointReference>"
-                                + "</wsp:AppliesTo>"
-                                + "<wsse:PolicyReference URI=\"{2}\"></wsse:PolicyReference></wst:RequestSecurityToken>";
+            RequestSecurityTokenType requestToken = new RequestSecurityTokenType();
+            requestToken.Id = "RST" + authId.ToString();
+            requestToken.RequestType = RequestTypeOpenEnum.httpschemasxmlsoaporgws200404securitytrustIssue;
+            requestToken.AppliesTo = new AppliesTo();
+            requestToken.AppliesTo.EndpointReference = new EndpointReferenceType();
+            requestToken.AppliesTo.EndpointReference.Address = domain;
+            if (policyref != null)
+            {
+                requestToken.PolicyReference = new PolicyReference();
+                requestToken.PolicyReference.URI = policyref;
+            }
 
+            auths.Add(requestToken);
 
-            string auth = String.Format(soapenvelop, auth_count, domain, policyref);
-
-            auths.Add(auth);
-
-            auth_count++;
+            authId++;
         }
 
         public void AddDefaultAuths()
         {
+            AuthenticationAdd(@"http://Passport.NET/tb", null);
             AuthenticationAdd("messengerclear.live.com", policy);
             AuthenticationAdd("messenger.msn.com", "?id=507");
             AuthenticationAdd("contacts.msn.com", ("?fs=1&id=24000&kv=9&rn=93S9SWWw&tw=0&ver=2.1.6000.1").Replace(@"&", @"&amp;"));
@@ -95,47 +94,28 @@ namespace MSNPSharp
 
         public string Authenticate(string nonce, out Dictionary<string, string> tickets)
         {
-            string soapenvelop = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                                + "<Envelope xmlns=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:wsse=\"http://schemas.xmlsoap.org/ws/2003/06/secext\" xmlns:saml=\"urn:oasis:names:tc:SAML:1.0:assertion\" xmlns:wsp=\"http://schemas.xmlsoap.org/ws/2002/12/policy\" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\" xmlns:wsa=\"http://schemas.xmlsoap.org/ws/2004/03/addressing\" xmlns:wssc=\"http://schemas.xmlsoap.org/ws/2004/04/sc\" xmlns:wst=\"http://schemas.xmlsoap.org/ws/2004/04/trust\">"
-                                + "<Header>"
-                                + "<ps:AuthInfo xmlns:ps=\"http://schemas.microsoft.com/Passport/SoapServices/PPCRL\" Id=\"PPAuthInfo\">"
-                                + "<ps:HostingApp>{{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}}</ps:HostingApp>"
-                                + "<ps:BinaryVersion>4</ps:BinaryVersion>"
-                                + "<ps:UIVersion>1</ps:UIVersion>"
-                                + "<ps:Cookies></ps:Cookies>"
-                                + "<ps:RequestParams>AQAAAAIAAABsYwQAAAAxMDMz</ps:RequestParams>"
-                                + "</ps:AuthInfo>"
-                                + "<wsse:Security><wsse:UsernameToken Id=\"user\">"
-                                + "<wsse:Username>{0}</wsse:Username>"
-                                + "<wsse:Password>{1}</wsse:Password>"
-                                + "</wsse:UsernameToken></wsse:Security>"
-                                + "</Header><Body>"
-                                + "<ps:RequestMultipleSecurityTokens xmlns:ps=\"http://schemas.microsoft.com/Passport/SoapServices/PPCRL\" Id=\"RSTS\">"
-                                + "<wst:RequestSecurityToken Id=\"RST0\">"
-                                + "<wst:RequestType>http://schemas.xmlsoap.org/ws/2004/04/security/trust/Issue</wst:RequestType>"
-                                + "<wsp:AppliesTo><wsa:EndpointReference>"
-                                + "<wsa:Address>http://Passport.NET/tb</wsa:Address>"
-                                + "</wsa:EndpointReference>"
-                                + "</wsp:AppliesTo>"
-                                + "</wst:RequestSecurityToken>{2}</ps:RequestMultipleSecurityTokens>"
-                                + "</Body></Envelope>";
+            MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
+            securService.AuthInfo = new AuthInfoType();
+            securService.AuthInfo.Id = "PPAuthInfo";
+            securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
+            securService.AuthInfo.BinaryVersion = "4";
+            securService.AuthInfo.Cookies = string.Empty;
+            securService.AuthInfo.UIVersion = "1";
+            securService.AuthInfo.RequestParams = "AQAAAAIAAABsYwQAAAAxMDMz";
 
-
-            string reqs = String.Join("", auths.ToArray());
-            string env = String.Format(soapenvelop, user, pass, reqs);
-
-            HttpWebRequest req;
-            HttpWebResponse rsp;
+            securService.Security = new SecurityHeaderType();
+            securService.Security.UsernameToken = new UsernameTokenType();
+            securService.Security.UsernameToken.Id = "user";
+            securService.Security.UsernameToken.Username = new AttributedString();
+            securService.Security.UsernameToken.Username.Value = user;
+            securService.Security.UsernameToken.Password = new PasswordString();
+            securService.Security.UsernameToken.Password.Value = pass;
 
             if (user.Split('@').Length > 1)
             {
                 if (user.Split('@')[1].ToLower(CultureInfo.InvariantCulture) == "msn.com")
                 {
-                    req = (HttpWebRequest)WebRequest.Create(@"https://msnia.login.live.com/pp550/RST.srf");
-                }
-                else
-                {
-                    req = (HttpWebRequest)WebRequest.Create("https://login.live.com/RST.srf");
+                    securService.Url = @"https://msnia.login.live.com/pp550/RST.srf";
                 }
             }
             else
@@ -143,95 +123,44 @@ namespace MSNPSharp
                 throw new AuthenticationException("Invalid account");
             }
 
-            req.Accept = "text/*";
-            req.UserAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)";
-            req.KeepAlive = true;
-
-            byte[] dat = Encoding.UTF8.GetBytes(env);
-
-            req.ContentLength = dat.LongLength;
-            req.Method = "POST";
-            req.ProtocolVersion = HttpVersion.Version11;
-
-            Stream s = req.GetRequestStream();
-            s.Write(dat, 0, dat.Length);
-            s.Close();
-
-            //try the request
+            RequestMultipleSecurityTokensType mulToken = new RequestMultipleSecurityTokensType();
+            mulToken.Id = "RSTS";
+            mulToken.RequestSecurityToken = auths.ToArray();
+            RequestSecurityTokenResponseType[] result = null;
             try
             {
-                rsp = (HttpWebResponse)req.GetResponse();
+                result = securService.RequestMultipleSecurityTokens(mulToken);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new AuthenticationException("Request error");
+                throw ex;
             }
-
-            //load the xml
-            XmlDocument xml = new XmlDocument();
-            s = rsp.GetResponseStream();
-            xml.Load(s);
-
-            s.Close();
-            rsp.Close();
-
-            if (xml.InnerText.IndexOf("Invalid Request") != -1)
-                throw new AuthenticationException("Invalid Request");
-
-            string ticket = "", key = "", outticket = "";
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            try
+            finally
             {
-                XmlNodeList nodes = xml.GetElementsByTagName("wsse:BinarySecurityToken");
-                XmlNodeList knodes = null;
-                int nodecnt = 0;
-                
-                for (nodecnt = 0; nodecnt < nodes.Count; nodecnt++)
+            }
+            tickets = new Dictionary<string, string>(0);
+            foreach (RequestSecurityTokenResponseType token in result)
+            {
+                switch (token.AppliesTo.EndpointReference.Address)
                 {
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "compact1")
-                    {
-                        ticket = nodes[nodecnt].InnerText;
-
-                        knodes = xml.GetElementsByTagName("wst:BinarySecret");
-                        key = knodes[nodecnt + 1].InnerText;
-                        //break;
-                    }
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "pptoken3")
-                    {
-                        outticket = nodes[nodecnt].InnerText;
-                    }
-
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "pptoken2")
-                    {
-                        dic["web_ticket"] = nodes[nodecnt].InnerText;
-                    }
-
-                    if (nodes[nodecnt].Attributes[0].Value.ToLower(CultureInfo.InvariantCulture) == "compact4")
-                    {
-                        dic["oim_ticket"] = nodes[nodecnt].InnerText;
-                    }
+                    case "messenger.msn.com":
+                        tickets["web_ticket"] = token.RequestedSecurityToken.InnerText;
+                        break;
+                    case "messengersecure.live.com":
+                        tickets["oim_ticket"] = token.RequestedSecurityToken.InnerText;
+                        break;
+                    case "contacts.msn.com":
+                        tickets["contact_ticket"] = token.RequestedSecurityToken.InnerText;
+                        break;
+                    case "messengerclear.live.com":
+                        tickets["ticket"] = token.RequestedSecurityToken.InnerText;
+                        tickets["BinarySecret"] = token.RequestedProofToken.BinarySecret.Value;
+                        break;
                 }
-            }
-            catch
-            {
-                throw new AuthenticationException("Invalid Response");
             }
 
             MBI mbi = new MBI();
-
- 
-            //dic.Add("contact_ticket", outticket);
-            //dic.Add("ticket", ticket);
-            //dic.Add("BinarySecret", key);
-
-            dic["contact_ticket"] = outticket;
-            dic["ticket"] = ticket;
-            dic["BinarySecret"] = key;
-
-            tickets = dic;
-
-            return ticket + " " + mbi.Encrypt(key, nonce);
-
+            return tickets["ticket"] + " " + mbi.Encrypt(tickets["BinarySecret"], nonce); 
         }
     }
 

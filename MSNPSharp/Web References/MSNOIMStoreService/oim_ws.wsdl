@@ -2,7 +2,7 @@
 <definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:oim="http://messenger.msn.com/ws/2004/09/oim/" xmlns:wsrm="http://schemas.xmlsoap.org/ws/2003/03/rm" xmlns:ns2="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:ns1="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://messenger.msn.com/ws/2004/09/oim/" xmlns="http://schemas.xmlsoap.org/wsdl/">
   <types>
     <ns:schema xmlns="http://www.w3.org/2001/XMLSchema">
-      <ns:import schemaLocation="http://schemas.xmlsoap.org/ws/2003/03/rm/default.xsd" namespace="http://schemas.xmlsoap.org/ws/2003/03/rm" />
+      <ns:import schemaLocation="default.xsd" namespace="http://schemas.xmlsoap.org/ws/2003/03/rm" />
       <ns:import schemaLocation="oim_servicetypes.xsd" namespace="http://messenger.msn.com/ws/2004/09/oim/" />
     </ns:schema>
   </types>
