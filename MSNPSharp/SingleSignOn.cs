@@ -47,6 +47,19 @@ using System.Web.Services.Protocols;
 
 namespace MSNPSharp
 {
+    public enum Iniproperties
+    {
+        BrandID,
+        OIMTicket,
+        BinarySecret,
+        Ticket,
+        WebTicket,
+        ContactTicket,
+        LockKey,
+        AddressBookCacheKey,
+        SharingServiceCacheKey
+    }
+
     public class SingleSignOn
     {
         string user;
@@ -92,7 +105,7 @@ namespace MSNPSharp
             AuthenticationAdd("livecontacts.live.com", "MBI");
         }
 
-        public string Authenticate(string nonce, out Dictionary<string, string> tickets)
+        public string Authenticate(string nonce, out Dictionary<Iniproperties, string> tickets)
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
             securService.AuthInfo = new AuthInfoType();
@@ -135,32 +148,41 @@ namespace MSNPSharp
             {
                 throw ex;
             }
-            finally
+
+            tickets = new Dictionary<Iniproperties, string>(0);
+            if (securService.pp != null && securService.pp.credProperties != null)
             {
+                foreach (credPropertyType credproperty in securService.pp.credProperties)
+                {
+                    if (credproperty.Name == "MainBrandID")
+                    {
+                        tickets[Iniproperties.BrandID] = credproperty.Value;
+                        break;
+                    }
+                }
             }
-            tickets = new Dictionary<string, string>(0);
             foreach (RequestSecurityTokenResponseType token in result)
             {
                 switch (token.AppliesTo.EndpointReference.Address)
                 {
                     case "messenger.msn.com":
-                        tickets["web_ticket"] = token.RequestedSecurityToken.InnerText;
+                        tickets[Iniproperties.WebTicket] = token.RequestedSecurityToken.InnerText;
                         break;
                     case "messengersecure.live.com":
-                        tickets["oim_ticket"] = token.RequestedSecurityToken.InnerText;
+                        tickets[Iniproperties.OIMTicket] = token.RequestedSecurityToken.InnerText;
                         break;
                     case "contacts.msn.com":
-                        tickets["contact_ticket"] = token.RequestedSecurityToken.InnerText;
+                        tickets[Iniproperties.ContactTicket] = token.RequestedSecurityToken.InnerText;
                         break;
                     case "messengerclear.live.com":
-                        tickets["ticket"] = token.RequestedSecurityToken.InnerText;
-                        tickets["BinarySecret"] = token.RequestedProofToken.BinarySecret.Value;
+                        tickets[Iniproperties.Ticket] = token.RequestedSecurityToken.InnerText;
+                        tickets[Iniproperties.BinarySecret] = token.RequestedProofToken.BinarySecret.Value;
                         break;
                 }
             }
 
             MBI mbi = new MBI();
-            return tickets["ticket"] + " " + mbi.Encrypt(tickets["BinarySecret"], nonce); 
+            return tickets[Iniproperties.Ticket] + " " + mbi.Encrypt(tickets[Iniproperties.BinarySecret], nonce);
         }
     }
 

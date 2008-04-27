@@ -191,9 +191,6 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <None Include="Web References\MSNOIMStoreService\default.xsd">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Web References\MSNOIMStoreService\oim_servicetypes.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -206,6 +203,9 @@
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\MSNOIMStoreService\utility.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNOIMStoreService\wsrm.xsd">
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNRSIService\DeleteMessagesResponseType.datasource">
@@ -278,10 +278,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/msnws/msnab_sharingservice.wsdl">
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNABSharingService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/msnab_sharingservice.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -289,10 +289,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNABSharingService_SharingService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/oim_ws.wsdl">
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNOIMStoreService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/oim_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -300,10 +300,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNOIMStoreService_OIMService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/ps.wsdl">
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNSecurityTokenService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/ps.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -311,10 +311,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/rsi_ws.wsdl">
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNRSIService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/rsi_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
