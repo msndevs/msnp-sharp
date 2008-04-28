@@ -243,9 +243,13 @@ namespace MSNPSharp
 
 		new public string Name
 		{
-			get { 
-				return base.Name; 
-			}
+            get
+            {
+                if (base.Name == null)
+                    return base.Mail;
+                else
+                    return base.Name;
+            }
 			set 
 			{
 				if(NSMessageHandler != null)

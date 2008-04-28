@@ -1258,7 +1258,7 @@ namespace MSNPSharp
                 contact.NSMessageHandler = this;
                 contact.SetClientType(MemberShipList[ci.Account].Type);
 
-                if (AddressBook.ContainsKey(ci.Account) && AddressBook[ci.Account].IsMessengerUser)  //IsMessengerUser is only valid in AddressBook member
+                if (AddressBook.ContainsKey(ci.Account))  //IsMessengerUser is only valid in AddressBook member
                 {
                     ContactInfo abci = AddressBook[ci.Account];
                     if (abci.Type == ClientType.EmailMember)
@@ -1269,7 +1269,10 @@ namespace MSNPSharp
                         contact.SetName(MemberShipList[abci.Account].DisplayName);
                     else
                         contact.SetName(abci.DisplayName);
-                    contact.AddToList(MSNLists.ForwardList);
+
+                    if (AddressBook[ci.Account].IsMessengerUser)
+                        contact.AddToList(MSNLists.ForwardList);
+
                     foreach (string groupId in abci.Groups)
                         contact.ContactGroups.Add(contactGroups[groupId]);
                 }
@@ -1285,7 +1288,8 @@ namespace MSNPSharp
                         contact.ClientCapacities = ci.Capability;
                     contact.NSMessageHandler = this;
                     contact.SetClientType(ci.Type);
-                    contact.SetLists(MSNLists.ForwardList);
+                    if (ci.IsMessengerUser)
+                        contact.SetLists(MSNLists.ForwardList);
                 }
             }
 
