@@ -483,7 +483,8 @@ namespace MSNPSharp
         private void NSMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
         {
             abSynchronized = false;
-            adlcount = 0;
+            initialadlcount = 0;
+            initialadls.Clear();
             IMessageProcessor processor = (IMessageProcessor)sender;
             OnProcessorConnectCallback(processor);
         }
@@ -522,7 +523,8 @@ namespace MSNPSharp
             contactGroups.Clear();
 
             abSynchronized = false;
-            adlcount = 0;
+            initialadlcount = 0;
+            initialadls.Clear();
         }
 
         /// <summary>
@@ -1310,37 +1312,39 @@ namespace MSNPSharp
             // 9: Set my Privacy
             SetPrivacyMode((props["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
-            // 10: Initial ADL: Combine (FL+BL+AL)
-            if (MemberShipList.Keys.Count == 0)
+            // 10: Initial ADL
+            string[] adls = ConstructADLString(MemberShipList.Values, true, new MSNLists());
+            initialadlcount = adls.Length;
+            foreach (string str in adls)
             {
-                OnADLReceived(new NSMessage("ADL", new string[] { "0", "OK" }));
-            }
-            else
-            {
-                foreach (string str in ConstructADLString())
-                {
-                    MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { str.Length.ToString() }));
-                    MessageProcessor.SendMessage(new NSMessage(str));
-                }
-
-            }
-
-            // 11: Set my display name
-            string mydispName = props["displayname"];
-            if (mydispName != String.Empty)
-            {
-                owner.Name = mydispName;
+                NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
+                MessageProcessor.SendMessage(message);
+                initialadls.Add(message.TransactionID);
+                MessageProcessor.SendMessage(new NSMessage(str));
             }
         }
 
         private void OnADLReceived(NSMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK" && abSynchronized == false && --adlcount <= 0)
+            if (message.CommandValues[1].ToString() == "OK" &&
+                message.TransactionID == 0 &&
+                initialadls.Contains(Convert.ToInt32(message.CommandValues[0])))
             {
+                initialadls.Remove(Convert.ToInt32(message.CommandValues[0]));
+                if (--initialadlcount > 0)
+                    return;
+
                 // set this so the user can set initial presence
                 abSynchronized = true;
-                adlcount = 0;
 
+                // 11: Set my display name
+                string mydispName = AddressBook.MyProperties["displayname"];
+                if (mydispName != String.Empty)
+                {
+                    owner.Name = mydispName;
+                }
+
+                
                 if (AutoSynchronize == true)
                 {
                     OnSignedIn();
@@ -1355,7 +1359,6 @@ namespace MSNPSharp
                     SynchronizationCompleted(this, new EventArgs());
                     abSynchronized = true;
                 }
-
             }
             else
             {
@@ -1412,68 +1415,99 @@ namespace MSNPSharp
             }
         }
 
-        private int adlcount = 0;
-        private string[] ConstructADLString()
-        {
-            Dictionary<String, List<String>> container = new Dictionary<String, List<String>>();
-            foreach (ContactInfo account in MemberShipList.Values)
+        private class DomainNameComparer : IComparer<ContactInfo>
+        {            
+            private DomainNameComparer()
             {
-                MSNLists lists = MemberShipList.GetMSNLists(account.Account);
-                String[] usernameanddomain = account.Account.Split('@');
-                String type = ((int)account.Type).ToString();
+            }
+
+            public static IComparer<ContactInfo> Default = new DomainNameComparer();
+            public int Compare(ContactInfo x, ContactInfo y)
+            {
+                if (x.Account == null)
+                    return 1;
+                else if (y.Account == null)
+                    return -1;
+
+                string xDomainName = x.Account.Substring(x.Account.IndexOf("@") + 1);
+                string yDomainName = y.Account.Substring(y.Account.IndexOf("@") + 1);
+                return String.Compare(xDomainName, yDomainName, true, CultureInfo.InvariantCulture);
+            }
+        }
+
+        private int initialadlcount = 0;
+        private List<int> initialadls = new List<int>();
+        private string[] ConstructADLString(Dictionary<string, ContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
+        {
+            List<string> mls = new List<string>();
+
+            StringBuilder ml = new StringBuilder();
+            ml.Append("<ml" + (initial ? " l=\"1\">" : ">"));
+
+            if (contacts == null || contacts.Count == 0)
+            {
+                ml.Append("</ml>");
+                mls.Add(ml.ToString());
+                return mls.ToArray();
+            }
+
+            List<ContactInfo> sortedContacts = new List<ContactInfo>(contacts);
+            sortedContacts.Sort(DomainNameComparer.Default);
+            string currentDomain = null;
+            int contactcount = 0;
+
+            foreach (ContactInfo contact in sortedContacts)
+            {
+                MSNLists sendlist = lists;
+                String[] usernameanddomain = contact.Account.Split('@');
+                String type = ((int)contact.Type).ToString();
                 String domain = usernameanddomain[1];
                 String name = usernameanddomain[0];
 
-                MSNLists sendlist = new MSNLists();
+                if (initial)
+                {
+                    sendlist = 0;
+                    lists = MemberShipList.GetMSNLists(contact.Account);
+                    if (AddressBook.ContainsKey(contact.Account))
+                        sendlist |= MSNLists.ForwardList;
 
-                if (AddressBook.ContainsKey(account.Account))
-                    sendlist |= MSNLists.ForwardList;
-
-                if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
-                    sendlist |= MSNLists.AllowedList;
-                else if ((lists & MSNLists.BlockedList) == MSNLists.BlockedList)
-                    sendlist |= MSNLists.BlockedList;
+                    if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
+                        sendlist |= MSNLists.AllowedList;
+                    else if ((lists & MSNLists.BlockedList) == MSNLists.BlockedList)
+                        sendlist |= MSNLists.BlockedList;
+                }
 
                 String strlist = ((int)sendlist).ToString();
 
+                if (currentDomain != domain)
+                {
+                    currentDomain = domain;
+                    if (contactcount > 0)
+                        ml.Append("</d>");
+
+                    ml.Append("<d n=\"" + currentDomain + "\">");
+                }
+
                 if (strlist != "0" && type != "0")
                 {
-                    if (!container.ContainsKey(domain.ToLower(CultureInfo.InvariantCulture)))
-                    {
-                        container[domain.ToLower(CultureInfo.InvariantCulture)] = new List<string>();
-                    }
-
-                    Console.WriteLine(account.Account + " is a " + type + " and list is " + strlist);
-
-                    container[domain.ToLower(CultureInfo.InvariantCulture)].Add("<c n=\"" + name + "\" l=\"" + strlist + "\" t=\"" + type + "\"/>");
+                    ml.Append("<c n=\"" + name + "\" l=\"" + strlist + "\" t=\"" + type + "\"/>");
+                    contactcount++;
                 }
-            }
 
-            List<string> ret = new List<string>();
-            foreach (string domain in container.Keys)
-            {
-                adlcount++;
-                int cnt = 0;
-                String stmp = "<d n=\"" + domain + "\">";
-                foreach (string c in container[domain])
+                if (ml.Length > 7300)
                 {
-                    stmp += c;
-
-                    if (++cnt == 150)
-                    {
-                        stmp += "</d>";
-                        ret.Add("<ml l=\"1\">" + stmp + "</ml>");
-                        stmp = "<d n=\"" + domain + "\">";
-                        cnt = 0;
-                        adlcount++;
-                    }
+                    // Payload data is ~7500b
+                    ml.Append("</d></ml>");
+                    mls.Add(ml.ToString());
+                    ml.Length = 0;
+                    ml.Append("<ml" + (initial ? " l=\"1\">" : ">"));
+                    currentDomain = null;
+                    contactcount = 0;
                 }
-
-                stmp += "</d>";
-                ret.Add("<ml l=\"1\">" + stmp + "</ml>");
             }
-
-            return ret.ToArray();
+            ml.Append("</d></ml>");
+            mls.Add(ml.ToString());
+            return mls.ToArray();
         }
 
 
