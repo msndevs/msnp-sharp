@@ -63,7 +63,7 @@
             }
         }
 
-        private ClientType type = ClientType.MessengerUser;
+        private ClientType type = ClientType.PassportMember;
         public ClientType Type
         {
             get
@@ -101,6 +101,13 @@
             {
                 lastchanged = value;
             }
+        }
+
+        private ClientCapacities capability = 0;
+        public ClientCapacities Capability
+        {
+            get { return capability; }
+            set { capability = value; }
         }
 
         private List<string> groups = new List<string>(0);
@@ -323,7 +330,7 @@
             this.Clear();
             XMLContactListParser parser = new XMLContactListParser(doc);
             parser.Parse();
-            AddRange(parser.ContactList);
+            AddRange(parser.MembershipContactList);
             lastChange = parser.MembershipLastChange;
             services = parser.ServiceList;
             rolelists = parser.MemberShips;
@@ -450,7 +457,7 @@
 
             XMLContactListParser parser = new XMLContactListParser(doc);
             parser.Parse();
-            AddRange(parser.ContactList);
+            AddRange(parser.AddressBookContactList);
             LastChange = parser.AddressBookLastChange;
             dynamicItemLastChange = parser.DynamicItemLastChange;
             groups = parser.GroupList;
@@ -590,6 +597,9 @@
                     contactNode.AppendChild(groupIdRoot);
                     contactNode.AppendChild(CreateNode(ContactChildNodes.LastChanged.ToString(),
                         XmlConvert.ToString(cinfo.LastChanged, XmlDateTimeSerializationMode.RoundtripKind)));
+                    contactNode.AppendChild(CreateNode(ContactChildNodes.Type.ToString(), XmlConvert.ToString((int)cinfo.Type)));
+                    contactNode.AppendChild(CreateNode(ContactChildNodes.Capability.ToString(),
+                        XmlConvert.ToString((long)cinfo.Capability)));
                     contactRoot.AppendChild(contactNode);
                 }
             }

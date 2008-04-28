@@ -118,7 +118,6 @@ namespace MSNPSharp
 		public	IMessageHandler	NSMessageHandler
 		{
 			get { return nsMessageHandler; }
-			set { nsMessageHandler = value;}
 		}
 
 

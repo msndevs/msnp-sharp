@@ -59,7 +59,9 @@
         DisplayName = 2,
         IsMessengerUser = 3,
         Groups = 4,
-        LastChanged = 5
+        LastChanged = 5,
+        Type = 6,
+        Capability = 7
     }
 
     /// <summary>
@@ -80,15 +82,27 @@
             //set { memberShips = value; }
         }
 
-        private Dictionary<string, ContactInfo> contactList = new Dictionary<string, ContactInfo>(0);
+        private Dictionary<string, ContactInfo> addressBookContactList = new Dictionary<string, ContactInfo>(0);
 
-        public Dictionary<string, ContactInfo> ContactList
+        /// <summary>
+        /// Contacts on your addressbook list (forward list)
+        /// </summary>
+        public Dictionary<string, ContactInfo> AddressBookContactList
         {
             get
             {
-                return contactList;
+                return addressBookContactList;
             }
-            //set { contactList = value; }
+        }
+
+        private Dictionary<string, ContactInfo> membershipContactList = new Dictionary<string, ContactInfo>(0);
+
+        /// <summary>
+        /// Contacts on your membership list
+        /// </summary>
+        public Dictionary<string, ContactInfo> MembershipContactList
+        {
+            get { return membershipContactList; }
         }
 
         private Dictionary<string, GroupInfo> groupList = new Dictionary<string, GroupInfo>(0);
@@ -99,7 +113,6 @@
             {
                 return groupList;
             }
-            //set { groupList = value; }
         }
 
         private Dictionary<int, Service> serviceList = new Dictionary<int, Service>(0);
@@ -110,7 +123,6 @@
             {
                 return serviceList;
             }
-            //set { serviceList = value; }
         }
 
         private DateTime membershipLastChange;
@@ -121,7 +133,6 @@
             {
                 return membershipLastChange;
             }
-            //set { membershipLastChange = value; }
         }
 
         private DateTime addressBookLastChange;
@@ -132,7 +143,6 @@
             {
                 return addressBookLastChange;
             }
-            //set { addressBookLastChange = value; }
         }
 
         private DateTime dynamicItemLastChange;
@@ -240,6 +250,16 @@
                     currentMemberNode.ChildNodes[(int)MemberChildNodes.LastChanged].InnerText,
                     XmlDateTimeSerializationMode.RoundtripKind);
                 MemberShips[role].Add(contact.Account, contact);
+                if (membershipContactList.ContainsKey(contact.Account))
+                {
+                    if (membershipContactList[contact.Account].LastChanged.CompareTo(contact.LastChanged) < 0)
+                        membershipContactList[contact.Account] = contact;
+                }
+                else
+                {
+                    membershipContactList[contact.Account] = contact;
+                }
+
                 currentMemberNode = currentMemberNode.NextSibling;
             }
             while (true);
@@ -274,6 +294,9 @@
                 contact.DisplayName = currentContactNode.ChildNodes[(int)ContactChildNodes.DisplayName].InnerText;
                 contact.Guid = currentContactNode.ChildNodes[(int)ContactChildNodes.ContactId].InnerText;
                 contact.IsMessengerUser = bool.Parse(currentContactNode.ChildNodes[(int)ContactChildNodes.IsMessengerUser].InnerText);
+                contact.Capability = (ClientCapacities)(long.Parse(currentContactNode.ChildNodes[(int)ContactChildNodes.Capability].InnerText));
+                contact.Type = (ClientType)(int.Parse(currentContactNode.ChildNodes[(int)ContactChildNodes.Type].InnerText));
+
                 XmlNode groupsRoot = currentContactNode.ChildNodes[(int)ContactChildNodes.Groups];
                 if (groupsRoot.HasChildNodes)
                     foreach (XmlNode group in groupsRoot.ChildNodes)
@@ -283,7 +306,7 @@
                 contact.LastChanged = XmlConvert.ToDateTime(
                     currentContactNode.ChildNodes[(int)ContactChildNodes.LastChanged].InnerText,
                     XmlDateTimeSerializationMode.RoundtripKind);
-                contactList.Add(contact.Account, contact);
+                addressBookContactList.Add(contact.Account, contact);
                 currentContactNode = currentContactNode.NextSibling;
             }
             while (true);
