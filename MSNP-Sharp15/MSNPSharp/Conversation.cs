@@ -132,7 +132,7 @@ namespace MSNPSharp
         {
             if (Switchboard != null)
             {
-                if (Messenger.Nameserver.ContactList[contactMail].ClientType == ClientType.YahooMessengerUser)
+                if (Messenger.Nameserver.ContactList[contactMail].ClientType == ClientType.EmailMember)
                 {
                     Switchboard.SessionClosed -= Messenger.Switchboard_SessionClosed;
                     SBMessageHandler tmpsb = Switchboard;

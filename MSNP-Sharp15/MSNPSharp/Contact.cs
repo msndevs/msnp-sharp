@@ -126,7 +126,7 @@ namespace MSNPSharp
         int oimcount = 1;
 
 		bool hasBlog;
-        ClientType clienttype = ClientType.MessengerUser;
+        ClientType clienttype = ClientType.PassportMember;
 		
 		[NonSerialized]
 		IMessageHandler nsMessageHandler;

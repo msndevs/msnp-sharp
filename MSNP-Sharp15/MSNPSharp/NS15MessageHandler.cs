@@ -976,8 +976,8 @@ namespace MSNPSharp
             }
 
             string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(owner.Mail)).Replace("\\", "-") + ".mcl";
-            MemberShipList = new XMLMembershipList(contactfile);
-            AddressBook = new XMLAddressBook(contactfile);
+            MemberShipList = new XMLMembershipList(contactfile,true);
+            AddressBook = new XMLAddressBook(contactfile,true);
 
 
             bool msdeltasOnly = false;
@@ -1105,7 +1105,7 @@ namespace MSNPSharp
                                 foreach (BaseMember bm in membership.Members)
                                 {
                                     ContactInfo ci = new ContactInfo();
-                                    ci.Type = ClientType.MessengerUser;
+                                    ci.Type = ClientType.PassportMember;
                                     ci.LastChanged = bm.LastChanged;
                                     ci.MembershipId = Convert.ToInt32(bm.MembershipId);
 
@@ -1122,20 +1122,8 @@ namespace MSNPSharp
                                     else if (bm is EmailMember)
                                     {
                                         ci.Account = ((EmailMember)bm).Email;
-                                        ci.Type = ClientType.YahooMessengerUser;
+                                        ci.Type = ClientType.EmailMember;
 
-                                        //NOT necessary,sometimes it leads to bug
-                                        //if (null != bm.Annotations)
-                                        //{
-                                        //    foreach (Annotation anno in bm.Annotations)
-                                        //    {
-                                        //        if (anno.Name == "MSN.IM.BuddyType" && anno.Value != null && anno.Value == "32:")
-                                        //        {
-                                        //            ci.Type = ClientType.YahooMessengerUser;
-                                        //            break;
-                                        //        }
-                                        //    }
-                                        //}
                                     }
 
                                     if (!String.IsNullOrEmpty(bm.DisplayName))
@@ -1178,8 +1166,11 @@ namespace MSNPSharp
 
                         if (contactType.contactInfo.emails != null && ci.Account == null)
                         {
-                            if (int.Parse(contactType.contactInfo.emails[0].Capability) == (int)ClientType.YahooMessengerUser)
-                                ci.Type = ClientType.YahooMessengerUser;
+                            if (Enum.IsDefined(typeof(ClientCapacities), long.Parse(contactType.contactInfo.emails[0].Capability)))
+                            {
+                                ci.Capability = (ClientCapacities)long.Parse(contactType.contactInfo.emails[0].Capability);
+                            }
+                            ci.Type = ClientType.EmailMember;
 
                             ci.Account = contactType.contactInfo.emails[0].email;
                             ci.IsMessengerUser |= contactType.contactInfo.emails[0].isMessengerEnabled;
@@ -1255,25 +1246,46 @@ namespace MSNPSharp
 
             // 6: Create Groups
             foreach (GroupInfo group in AddressBook.Groups.Values)
+            {
                 contactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, this));
+            }
 
             // 7: Add Contacts
-            foreach (ContactInfo ci in AddressBook.Values)
+            foreach (ContactInfo ci in MemberShipList.Values)
             {
-                if (MemberShipList.ContainsKey(ci.Account) && ci.IsMessengerUser)
+                Contact contact = contactList.GetContact(ci.Account);
+                contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
+                contact.NSMessageHandler = this;
+                contact.SetClientType(MemberShipList[ci.Account].Type);
+
+                if (AddressBook.ContainsKey(ci.Account) && AddressBook[ci.Account].IsMessengerUser)  //IsMessengerUser is only valid in AddressBook member
+                {
+                    ContactInfo abci = AddressBook[ci.Account];
+                    if (abci.Type == ClientType.EmailMember)
+                        contact.ClientCapacities = abci.Capability;
+
+                    contact.SetGuid(abci.Guid);
+                    if (abci.LastChanged.CompareTo(MemberShipList[abci.Account].LastChanged) < 0)
+                        contact.SetName(MemberShipList[abci.Account].DisplayName);
+                    else
+                        contact.SetName(abci.DisplayName);
+                    contact.AddToList(MSNLists.ForwardList);
+                    foreach (string groupId in abci.Groups)
+                        contact.ContactGroups.Add(contactGroups[groupId]);
+                }
+            }
+
+            foreach (ContactInfo ci in AddressBook.Values)  //The mail contact on your forwar list
+            {
+                if (!MemberShipList.ContainsKey(ci.Account) && ci.Account != owner.Mail)
                 {
                     Contact contact = contactList.GetContact(ci.Account);
-                    contact.SetClientType(MemberShipList[ci.Account].Type);
-                    contact.SetGuid(ci.Guid);
-                    if (ci.LastChanged.CompareTo(MemberShipList[ci.Account].LastChanged) < 0)
-                        contact.SetName(MemberShipList[ci.Account].DisplayName);
-                    else
-                        contact.SetName(ci.DisplayName);
                     contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
-                    contact.AddToList(MSNLists.ForwardList);
+                    if (ci.Type == ClientType.EmailMember)
+                        contact.ClientCapacities = ci.Capability;
                     contact.NSMessageHandler = this;
-                    foreach (string groupId in ci.Groups)
-                        contact.ContactGroups.Add(contactGroups[groupId]);
+                    contact.SetClientType(ci.Type);
+                    contact.SetLists(MSNLists.ForwardList);
                 }
             }
 
@@ -1524,6 +1536,9 @@ namespace MSNPSharp
         /// <param name="contact">Contact to remove</param>
         public virtual void RemoveContact(Contact contact)
         {
+            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
             ABServiceBinding abService = new ABServiceBinding();
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -1665,8 +1680,8 @@ namespace MSNPSharp
 
         public virtual void AddContactToGroup(Contact contact, ContactGroup group)
         {
-            if (contact.Guid == null)
-                throw new MSNPSharpException("ContactId is null, you CANNOT add this contact to a group.");
+            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -1705,6 +1720,9 @@ namespace MSNPSharp
 
         public virtual void RemoveContactFromGroup(Contact contact, ContactGroup group)
         {
+            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
             ABServiceBinding abService = new ABServiceBinding();
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -1810,6 +1828,9 @@ namespace MSNPSharp
         /// <param name="contact"></param>
         public virtual void RequestScreenName(Contact contact)
         {
+            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
             MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid, "MFN", HttpUtility.UrlEncode(contact.Name) }));
         }
 
@@ -1848,7 +1869,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
             sharingService.ABApplicationHeaderValue.CacheKey = _Tickets[Iniproperties.SharingServiceCacheKey];
-            sharingService.ABApplicationHeaderValue.BrandId = "MSFT";
+            sharingService.ABApplicationHeaderValue.BrandId = _Tickets[Iniproperties.BrandID];
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets[Iniproperties.ContactTicket];
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -1893,7 +1914,7 @@ namespace MSNPSharp
             memberShip.MemberRole = GetMemberRole(list);
             BaseMember member = new BaseMember();
 
-            if (contact.ClientType == ClientType.MessengerUser)
+            if (contact.ClientType == ClientType.PassportMember)
             {
                 member = new PassportMember();
                 PassportMember passportMember = member as PassportMember;
@@ -1945,7 +1966,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
             sharingService.ABApplicationHeaderValue.CacheKey = _Tickets[Iniproperties.SharingServiceCacheKey];
-            sharingService.ABApplicationHeaderValue.BrandId = "MSFT";
+            sharingService.ABApplicationHeaderValue.BrandId = _Tickets[Iniproperties.BrandID];
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = _Tickets[Iniproperties.ContactTicket];
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -1997,7 +2018,7 @@ namespace MSNPSharp
              * To avoid this,we have to ensure the client type we've got is correct at the very beginning.
              * */
 
-            if (contact.ClientType == ClientType.MessengerUser)
+            if (contact.ClientType == ClientType.PassportMember)
             {
                 member = new PassportMember();
                 PassportMember passportMember = member as PassportMember;
