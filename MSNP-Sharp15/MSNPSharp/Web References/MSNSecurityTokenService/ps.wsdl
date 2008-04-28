@@ -5,6 +5,7 @@
       <xs:import schemaLocation="ps.xsd" namespace="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" />
       <xs:import schemaLocation="ps-fault.xsd" namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault" />
       <xs:import schemaLocation="ws-secext.xsd" namespace="http://schemas.xmlsoap.org/ws/2003/06/secext" />
+      <xs:import schemaLocation="soap-env.xsd" namespace="http://schemas.xmlsoap.org/soap/envelope/" />
       <xs:import schemaLocation="ws-trust.xsd" namespace="http://schemas.xmlsoap.org/ws/2004/04/trust" />
     </xs:schema>
   </wsdl:types>
@@ -23,12 +24,14 @@
   <wsdl:message name="ppResponseHeader">
     <wsdl:part name="pp" element="psf:pp" />
   </wsdl:message>
-  <wsdl:message name="FaultMessage" />
+  <wsdl:message name="FaultMessage">
+    <wsdl:part name="fault" element="Fault" />
+  </wsdl:message>
   <wsdl:portType name="SecurityTokenServicePortType">
     <wsdl:operation name="RequestMultipleSecurityTokens">
       <wsdl:input message="ps:RequestMultipleSecurityTokensMsg" />
       <wsdl:output message="ps:RequestSecurityTokenResponseCollectionMsg" />
-      <wsdl:fault name="InvalidOperationException" message="ps:FaultMessage" />
+      <wsdl:fault name="FailedAuthentication" message="ps:FaultMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="SecurityTokenServicePortBinding" type="ps:SecurityTokenServicePortType">
@@ -44,8 +47,8 @@
         <soap:body use="literal" />
         <soap:header message="ps:ppResponseHeader" part="pp" use="literal" />
       </wsdl:output>
-      <wsdl:fault name="InvalidOperationException">
-        <soap:fault use="literal" name="InvalidOperationException" namespace="" />
+      <wsdl:fault name="FailedAuthentication">
+        <soap:fault use="literal" name="wsse:FailedAuthentication" namespace="" />
       </wsdl:fault>
     </wsdl:operation>
   </wsdl:binding>

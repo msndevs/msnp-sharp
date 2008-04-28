@@ -143,12 +143,12 @@ namespace MSNPSharp
             try
             {
                 result = securService.RequestMultipleSecurityTokens(mulToken);
-                if (securService.pp.reqstatus != "0x0")   //This is error code
-                    throw new MSNPSharpException("Authentication error, error code: " + securService.pp.reqstatus);
             }
             catch (Exception ex)
             {
-                throw ex;
+                MSNPSharpException sexp= new MSNPSharpException(ex.Message + ". See innerexception for detail.",ex);
+                sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
+                throw sexp;
             }
 
             tickets = new Dictionary<Iniproperties, string>(0);
