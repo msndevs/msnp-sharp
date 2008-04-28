@@ -38,11 +38,11 @@
   </xs:simpleType>
   <xs:element name="uiVersion" type="psf:uiVersionType" />
   <xs:simpleType name="authstateType">
-    <xs:restriction base="xs:integer" />
+    <xs:restriction base="xs:string" />
   </xs:simpleType>
   <xs:element name="authstate" type="psf:authstateType" />
   <xs:simpleType name="reqstatusType">
-    <xs:restriction base="xs:integer" />
+    <xs:restriction base="xs:string" />
   </xs:simpleType>
   <xs:element name="reqstatus" type="psf:reqstatusType" />
   <xs:element name="serverInfo" type="psf:serverInfoType" />

@@ -245,6 +245,9 @@
     <None Include="Web References\MSNSecurityTokenService\RequestSecurityTokenResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNSecurityTokenService\soap-env.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Web References\MSNSecurityTokenService\ws-policy.xsd">
       <SubType>Designer</SubType>
     </None>

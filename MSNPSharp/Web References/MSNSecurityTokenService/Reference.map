@@ -4,6 +4,7 @@
     <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/addressing.xsd" filename="addressing.xsd" />
     <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl" filename="ps.wsdl" />
     <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps-fault.xsd" filename="ps-fault.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/soap-env.xsd" filename="soap-env.xsd" />
     <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.xsd" filename="ps.xsd" />
     <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ws-trust.xsd" filename="ws-trust.xsd" />
     <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/wss-utility.xsd" filename="wss-utility.xsd" />
