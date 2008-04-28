@@ -449,15 +449,19 @@ namespace MSNPSharp.DataTransfer
 		/// <param name="remoteContact"></param>
 		protected virtual SBMessageHandler RequestSwitchboard(string remoteContact)
 		{
-			SBMessageHandler handler = Factory.CreateSwitchboardHandler();
-			
-			if(NSMessageHandler == null)
-                throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
-            
-			NSMessageHandler.RequestSwitchboard(handler, this);
-            handler.NSMessageHandler = NSMessageHandler;
-			handler.Invite(((Contact)NSMessageHandler.ContactList[remoteContact]).Mail);
-            NSMessageHandler.SwitchBoards.Remove(handler);
+            Contact contact = NSMessageHandler.ContactList[remoteContact];
+            SBMessageHandler handler = null;
+            if (contact.ClientType != ClientType.EmailMember)
+            {
+                handler = Factory.CreateSwitchboardHandler();
+                if (NSMessageHandler == null)
+                    throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
+
+                NSMessageHandler.RequestSwitchboard(handler, this);
+                handler.NSMessageHandler = NSMessageHandler;
+                handler.Invite(((Contact)NSMessageHandler.ContactList[remoteContact]).Mail);
+            }
+
 			return handler;
 		}
 
@@ -488,7 +492,6 @@ namespace MSNPSharp.DataTransfer
 		private void nsMessageHandler_SBCreated(object sender, SBCreatedEventArgs e)
 		{
             
-
 			SBMessageHandler sbHandler = e.Switchboard;
 			sbHandler.MessageProcessor.RegisterHandler(this);
 

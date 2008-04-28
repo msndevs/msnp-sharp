@@ -29,13 +29,10 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
 using System;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Collections;
-using Org.Mentalis.Network.ProxySocket;
 using MSNPSharp.Core;
-using MSNPSharp;
+using Org.Mentalis.Network.ProxySocket;
 
 namespace MSNPSharp.DataTransfer
 {
@@ -131,17 +128,19 @@ namespace MSNPSharp.DataTransfer
 		/// </summary>
 		/// <param name="data"></param>
 		protected override void OnMessageReceived(byte[] data)
-		{			
-			System.Diagnostics.Trace.WriteLine("analyzing message", "P2PDirect In");
+		{
+            if (Settings.TraceSwitch.TraceVerbose)
+                System.Diagnostics.Trace.WriteLine("analyzing message", "P2PDirect In");
 			// check if it is the 'foo' message
 			if(data.Length == 4)
 				return;
 
 			// convert to a p2pdc message
 			P2PDCMessage dcMessage = new P2PDCMessage();
-			dcMessage.ParseBytes(data);			
+			dcMessage.ParseBytes(data);
 
-			System.Diagnostics.Trace.WriteLine(dcMessage.ToDebugString(), "P2PDirect In");
+            if (Settings.TraceSwitch.TraceVerbose)
+                System.Diagnostics.Trace.WriteLine(dcMessage.ToDebugString(), "P2PDirect In");
 			lock(MessageHandlers)
 			{
 				foreach(IMessageHandler handler in MessageHandlers)
@@ -171,7 +170,8 @@ namespace MSNPSharp.DataTransfer
 			if(Settings.TraceSwitch.TraceVerbose)
 			{				
 				// this is very bloated!
-				System.Diagnostics.Trace.WriteLine("Outgoing message:\r\n" + message.ToDebugString(), "P2PDirectProcessor");			
+                if (Settings.TraceSwitch.TraceVerbose)
+                    System.Diagnostics.Trace.WriteLine("Outgoing message:\r\n" + message.ToDebugString(), "P2PDirectProcessor");			
 			}
 
 			if(dcSocket != null)

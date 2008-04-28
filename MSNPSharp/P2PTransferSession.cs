@@ -282,15 +282,16 @@ namespace MSNPSharp.DataTransfer
 
 			P2PMessage p2pMessage = (P2PMessage)message;									
 
-			/*// close connection flag
-			if(p2pMessage.Flags == 0x40)
-			{				
-				CloseDirectConnection();
-			}*/
+			// close connection flag
+            //if(p2pMessage.Flags == 0x40)
+            //{				
+            //    CloseDirectConnection();
+            //}
 
 			if(p2pMessage.Flags == 0x80)
 			{				
 				AbortTransfer();
+                return;
 			}
 
 			// check to see if our session data has been transferred correctly

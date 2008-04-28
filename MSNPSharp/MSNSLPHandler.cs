@@ -387,6 +387,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="transferProperties"></param>
         /// <param name="invitationMessage"></param>
         /// <param name="transferSession"></param>
+        /// <param name="handler"></param>
         public MSNSLPInvitationEventArgs
             (MSNSLPTransferProperties transferProperties, 
             MSNSLPMessage invitationMessage, 
