@@ -28,6 +28,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+#define TRACE
+
 namespace MSNPSharp
 {
     using System;
@@ -46,7 +48,6 @@ namespace MSNPSharp
     [Serializable()]
     public class ContactList
     {
-        private bool abSynchronized = false;
         private NSMessageHandler nsHandler = null;
         internal XMLAddressBook AddressBook = null;
         internal XMLMembershipList MemberShipList = null;
@@ -373,19 +374,11 @@ namespace MSNPSharp
         /// You <b>must</b> call this function before setting your initial status, otherwise you won't received online notifications of other clients.
         /// Please note that you can only synchronize a single time per session! (this is limited by the the msn-servers)
         /// </remarks>
-        public virtual void SynchronizeContactList()
+        internal virtual void Synchronize()
         {
-            if (abSynchronized)
-            {
-                if (Settings.TraceSwitch.TraceWarning)
-                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized. Make sure the AutoSynchronize property is set to false in order to manually synchronize the contact list.", "NS11MessageHandler");
-                return;
-            }
-
             string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsHandler.owner.Mail)).Replace("\\", "-") + ".mcl";
             MemberShipList = new XMLMembershipList(contactfile, true);
             AddressBook = new XMLAddressBook(contactfile, true);
-
 
             bool msdeltasOnly = false;
             DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
@@ -712,6 +705,18 @@ namespace MSNPSharp
                     contact.NSMessageHandler = nsHandler;
                     nsHandler.OnReverseAdded(contact);
                 }
+            }
+
+            nsHandler.SetPrivacyMode((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+
+            string[] adls = nsHandler.ConstructADLString(MemberShipList.Values, true, new MSNLists());
+            nsHandler.initialadlcount = adls.Length;
+            foreach (string str in adls)
+            {
+                NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
+                nsHandler.MessageProcessor.SendMessage(message);
+                nsHandler.initialadls.Add(message.TransactionID);
+                nsHandler.MessageProcessor.SendMessage(new NSMessage(str));
             }
 
             

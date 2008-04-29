@@ -919,7 +919,6 @@ namespace MSNPSharp
         /// You <b>must</b> call this function before setting your initial status, otherwise you won't received online notifications of other clients.
         /// Please note that you can only synchronize a single time per session! (this is limited by the the msn-servers)
         /// </remarks>
-        [Obsolete("Use ContactList.SynchronizeContactList")]
         public virtual void SynchronizeContactList()
         {
             if (abSynchronized)
@@ -929,23 +928,10 @@ namespace MSNPSharp
                 return;
             }
 
-            ContactList.SynchronizeContactList();
-
-            SetPrivacyMode((ContactList.AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-
-            // 10: Initial ADL
-            string[] adls = ConstructADLString(ContactList.MemberShipList.Values, true, new MSNLists());
-            initialadlcount = adls.Length;
-            foreach (string str in adls)
-            {
-                NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
-                MessageProcessor.SendMessage(message);
-                initialadls.Add(message.TransactionID);
-                MessageProcessor.SendMessage(new NSMessage(str));
-            }
+            ContactList.Synchronize();            
         }
 
-        private string[] ConstructADLString(Dictionary<string, ContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
+        internal string[] ConstructADLString(Dictionary<string, ContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
         {
             List<string> mls = new List<string>();
 
@@ -1038,8 +1024,8 @@ namespace MSNPSharp
             }
         }
 
-        private int initialadlcount = 0;
-        private List<int> initialadls = new List<int>();
+        internal int initialadlcount = 0;
+        internal List<int> initialadls = new List<int>();
         private void OnADLReceived(NSMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK" &&
@@ -3167,7 +3153,7 @@ namespace MSNPSharp
             //ADL
             if (AutoSynchronize)
             {
-                ContactList.SynchronizeContactList();
+                SynchronizeContactList();
             }
             else
             {
