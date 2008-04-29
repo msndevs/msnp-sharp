@@ -981,6 +981,14 @@ namespace MSNPSharp
         /// <param name="contactGroup">The group to remove</param>
         internal virtual void RemoveContactGroup(ContactGroup contactGroup)
         {
+            foreach (Contact cnt in All)
+            {
+                if (cnt.ContactGroups.Contains(contactGroup))
+                {
+                    throw new InvalidOperationException("Target group not empty, please remove all contacts form the group first.");
+                }
+            }
+
             ABServiceBinding abService = new ABServiceBinding();
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -996,15 +1004,6 @@ namespace MSNPSharp
                 handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
-                    foreach (Contact cnt in All)
-                    {
-                        if (cnt.ContactGroups.Contains(contactGroup))
-                        {
-                            throw new InvalidOperationException("Target group not empty, please remove all contacts form the group first.");
-                            return;
-                            //cnt.ContactGroups.Remove(contactGroup);
-                        }
-                    }
                     nsHandler.ContactGroups.RemoveGroup(contactGroup);
                     AddressBook.Groups.Remove(contactGroup.Guid);
                     AddressBook.Save();
