@@ -658,27 +658,31 @@ namespace MSNPSharp
                 contact.NSMessageHandler = nsHandler;
                 contact.SetClientType(MemberShipList[ci.Account].Type);
 
-                if (AddressBook.ContainsKey(ci.Account))  //IsMessengerUser is only valid in AddressBook member
+                if (AddressBook.ContainsKey(ci.Account))
                 {
                     ContactInfo abci = AddressBook[ci.Account];
-                    if (abci.Type == ClientType.EmailMember)
-                        contact.ClientCapacities = abci.Capability;
-
                     contact.SetGuid(abci.Guid);
-                    if (abci.LastChanged.CompareTo(MemberShipList[abci.Account].LastChanged) < 0)
-                        contact.SetName(MemberShipList[abci.Account].DisplayName);
-                    else
-                        contact.SetName(abci.DisplayName);
-
-                    if (AddressBook[ci.Account].IsMessengerUser)
-                        contact.AddToList(MSNLists.ForwardList);
 
                     foreach (string groupId in abci.Groups)
+                    {
                         contact.ContactGroups.Add(nsHandler.contactGroups[groupId]);
+                    }
+
+                    if (abci.Type == ClientType.EmailMember)
+                    {
+                        contact.ClientCapacities = abci.Capability;
+                    }
+
+                    contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0) ? ci.DisplayName : abci.DisplayName);
+
+                    if (abci.IsMessengerUser)
+                    {
+                        contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+                    }
                 }
             }
 
-            foreach (ContactInfo ci in AddressBook.Values)  //The mail contact on your forwar list
+            foreach (ContactInfo ci in AddressBook.Values)  //The mail contact on your forward list
             {
                 if (!MemberShipList.ContainsKey(ci.Account) && ci.Account != nsHandler.owner.Mail)
                 {
