@@ -49,6 +49,15 @@
     <xsd:sequence>
       <xsd:element minOccurs="0" name="MembershipId" type="xsd:positiveInteger" />
       <xsd:element name="Type" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Location">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Id" type="msnab:Guid" />
+            <xsd:element name="IsPassportNameHidden" type="xsd:boolean" />
+            <xsd:element name="CID" type="xsd:integer" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
       <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
       <xsd:element name="State" type="msnab:MemberState" />
       <xsd:element minOccurs="0" name="Annotations">
@@ -117,6 +126,23 @@
       <xsd:extension base="msnab:BaseMember">
         <xsd:sequence>
           <xsd:element name="PhoneNumber" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ServiceMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="Service">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="ID" type="msnab:Guid" />
+                <xsd:element name="Type" type="xsd:string" />
+                <xsd:element name="ForeignId" type="xsd:string" />
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
         </xsd:sequence>
       </xsd:extension>
     </xsd:complexContent>
