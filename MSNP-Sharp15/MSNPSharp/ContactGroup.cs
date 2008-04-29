@@ -145,7 +145,7 @@ namespace MSNPSharp
 			{ 
 				if(NSMessageHandler != null)
 				{
-					((NSMessageHandler)NSMessageHandler).RenameGroup(this, value);
+					((NSMessageHandler)NSMessageHandler).ContactList.RenameGroup(this, value);
 				}
 			}
 		}

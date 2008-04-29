@@ -28,15 +28,15 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.Net;
-using System.Reflection;
-using System.Collections;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp
 {
+    using System;
+    using System.Net;
+    using System.Reflection;
+    using System.Collections;
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
+
 	[Serializable()]
 	public class ContactStatusChangeEventArgs : EventArgs
 	{
@@ -531,9 +531,9 @@ namespace MSNPSharp
 				if(NSMessageHandler != null)
 				{
 					if(value == true)
-						NSMessageHandler.BlockContact(this);
+						NSMessageHandler.ContactList.BlockContact(this);
 					else 
-						NSMessageHandler.UnBlockContact(this);
+						NSMessageHandler.ContactList.UnBlockContact(this);
 				}
 			}
 		}
@@ -556,12 +556,12 @@ namespace MSNPSharp
 				{
                     if (value)
                     {
-                        NSMessageHandler.AddContactToList(this, MSNLists.ForwardList);
+                        NSMessageHandler.ContactList.AddContactToList(this, MSNLists.ForwardList);
                         AddToList(MSNLists.ForwardList);
                     }
                     else
                     {
-                        NSMessageHandler.RemoveContactFromList(this, MSNLists.ForwardList);
+                        NSMessageHandler.ContactList.RemoveContactFromList(this, MSNLists.ForwardList);
                         RemoveFromList(MSNLists.ForwardList);
                     }
 				}					
@@ -579,12 +579,12 @@ namespace MSNPSharp
 				{
                     if (value)
                     {
-                        NSMessageHandler.AddContactToList(this, MSNLists.AllowedList);
+                        NSMessageHandler.ContactList.AddContactToList(this, MSNLists.AllowedList);
                         AddToList(MSNLists.AllowedList);
                     }
                     else
                     {
-                        NSMessageHandler.RemoveContactFromList(this, MSNLists.AllowedList);
+                        NSMessageHandler.ContactList.RemoveContactFromList(this, MSNLists.AllowedList);
                         RemoveFromList(MSNLists.AllowedList);
                     }
 				}					
