@@ -74,7 +74,7 @@ namespace MSNPSharp
 		#region Private
 
 		[NonSerialized]
-		private IMessageHandler	nsMessageHandler = null;
+		private NSMessageHandler nsMessageHandler = null;
 
 		/// <summary>
 		/// </summary>
@@ -93,7 +93,7 @@ namespace MSNPSharp
 		/// <param name="name"></param>
 		/// <param name="id"></param>
 		/// <param name="nsMessageHandler"></param>
-		internal ContactGroup(string name, string guid, IMessageHandler nsMessageHandler)
+		internal ContactGroup(string name, string guid, NSMessageHandler nsMessageHandler)
 		{
 			this.name = name;
 			this.guid   = guid;
@@ -115,7 +115,7 @@ namespace MSNPSharp
 		/// <summary>
 		/// The notification message handler which controls this contact object
 		/// </summary>
-		public	IMessageHandler	NSMessageHandler
+		public	NSMessageHandler NSMessageHandler
 		{
 			get { return nsMessageHandler; }
 		}
@@ -145,7 +145,7 @@ namespace MSNPSharp
 			{ 
 				if(NSMessageHandler != null)
 				{
-					((NSMessageHandler)NSMessageHandler).ContactList.RenameGroup(this, value);
+					NSMessageHandler.ContactList.RenameGroup(this, value);
 				}
 			}
 		}

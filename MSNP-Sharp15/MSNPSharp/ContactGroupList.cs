@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace MSNPSharp
 {
@@ -88,18 +89,18 @@ namespace MSNPSharp
 			
 			return null;		}
 
-		public ContactGroup this[string guid]
-		{
-			get 
-			{
-				foreach(ContactGroup group in list)
-				{
-					if(group.Guid == guid)
-						return group;
-				}
-				return null;
-			}
-		}
+        public ContactGroup this[string guid]
+        {
+            get
+            {
+                foreach (ContactGroup group in list)
+                {
+                    if (group.Guid.ToLower(CultureInfo.InvariantCulture) == guid.ToLower(CultureInfo.InvariantCulture))
+                        return group;
+                }
+                return null;
+            }
+        }
 		
 		public IEnumerator GetEnumerator()
 		{			

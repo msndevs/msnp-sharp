@@ -80,6 +80,17 @@ namespace MSNPSharp
             if (HasContact(account))
             {
                 contacts.Remove(account);
+                AddressBook.Remove(account);
+                AddressBook.Save();
+                if (MemberShipList.ContainsKey(account))
+                {
+                    MSNLists list = MemberShipList.GetMSNLists(account);
+                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList)
+                    {
+                        MemberShipList.MemberRoles[MemberRole.Allow].Remove(account);
+                        MemberShipList.Save();
+                    }
+                }
             }
         }
 
@@ -989,10 +1000,14 @@ namespace MSNPSharp
                     {
                         if (cnt.ContactGroups.Contains(contactGroup))
                         {
-                            cnt.ContactGroups.Remove(contactGroup);
+                            throw new InvalidOperationException("Target group not empty, please remove all contacts form the group first.");
+                            return;
+                            //cnt.ContactGroups.Remove(contactGroup);
                         }
                     }
                     nsHandler.ContactGroups.RemoveGroup(contactGroup);
+                    AddressBook.Groups.Remove(contactGroup.Guid);
+                    AddressBook.Save();
                     nsHandler.OnContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
                 }
                 else if (e.Error != null)
