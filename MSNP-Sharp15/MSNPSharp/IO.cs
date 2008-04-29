@@ -46,8 +46,7 @@ namespace MSNPSharp.IO
     public sealed class MCLFile
     {
         int length = 0;
-        string fileName = String.Empty;
-        
+        string fileName = String.Empty; 
         byte[] uncompressData;
         bool noCompression = false;
 
@@ -91,6 +90,12 @@ namespace MSNPSharp.IO
 
         #region Properties
 
+        public string FileName
+        {
+            get { return fileName; }
+            set { fileName = value; }
+        }
+
         /// <summary>
         /// The length of data before it was compressed
         /// </summary>
@@ -116,6 +121,12 @@ namespace MSNPSharp.IO
                 uncompressData = value;
             }
         }
+
+        public bool NoCompression
+        {
+            get { return noCompression; }
+        }
+
         #endregion
 
         #region Private
@@ -140,6 +151,7 @@ namespace MSNPSharp.IO
 
         private void SaveImpl(string filename, byte[] content)
         {
+            fileName = filename;
             if (content == null)
                 return;
 

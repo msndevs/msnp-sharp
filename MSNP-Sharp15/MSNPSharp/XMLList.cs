@@ -71,9 +71,9 @@ namespace MSNPSharp
         {
             MemoryStream ms = new MemoryStream();
             doc.Save(ms);
-            MCLFile file = new MCLFile(filename, noCompress);
+            MCLFile file = MCLFileManager.GetFile(filename, noCompress);
             file.Content = ms.ToArray();
-            file.SaveAndHide();
+            MCLFileManager.Save(file, true);
         }
 
 
@@ -82,7 +82,7 @@ namespace MSNPSharp
             if (File.Exists(filename))
             {
                 CreateDoc();
-                MCLFile file = new MCLFile(filename, noCompress);
+                MCLFile file = MCLFileManager.GetFile(filename, noCompress);
                 if (file.Content != null)
                 {
                     doc.Load(new MemoryStream(file.Content));
