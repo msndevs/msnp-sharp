@@ -56,6 +56,7 @@
     <Compile Include="IMessageHandler.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="MailEventArgs.cs" />
+    <Compile Include="MCLFileManager.cs" />
     <Compile Include="MessagePool.cs" />
     <Compile Include="MessageProcessor.cs" />
     <Compile Include="Messenger.cs" />
