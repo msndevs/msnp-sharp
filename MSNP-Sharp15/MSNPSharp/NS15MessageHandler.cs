@@ -436,10 +436,6 @@ namespace MSNPSharp
         internal ContactGroupList contactGroups = null;
 
         /// <summary>
-        /// </summary>
-        internal Owner owner = new Owner();
-
-        /// <summary>
         /// Keep track whether a address book synchronization has been completed so we can warn the client programmer
         /// </summary>
         private bool abSynchronized = false;
@@ -679,7 +675,7 @@ namespace MSNPSharp
         {
             isSignedIn = false;
             SwitchBoards.Clear();
-            owner.SetStatus(PresenceStatus.Offline);
+            ContactList.Owner.SetStatus(PresenceStatus.Offline);
             if (SignedOff != null)
                 SignedOff(this, new SignedOffEventArgs(reason));
         }
@@ -752,12 +748,6 @@ namespace MSNPSharp
         /// </summary>
         private NSMessageHandler()
         {
-            owner.NSMessageHandler = this;
-
-            owner.ClientCapacities = ClientCapacities.CanHandleMSNC7
-                                    | ClientCapacities.CanMultiPacketMSG
-                                    | ClientCapacities.CanReceiveWinks;
-
             cl = new ContactList(this);
             contactGroups = new ContactGroupList(this);
         }
@@ -810,15 +800,15 @@ namespace MSNPSharp
             }
         }
 
-        /// XXXXXXXXXXXXXXXXXXXXXXXXXX
         /// <summary>
         /// The owner of the contactlist. This is the identity that logged into the messenger network.
         /// </summary>
+        [Obsolete("Use ContactList.Owner")]
         public Owner Owner
         {
             get
             {
-                return owner;
+                return ContactList.Owner;
             }
         }
 
@@ -931,7 +921,7 @@ namespace MSNPSharp
                 string mydispName = ContactList.AddressBook.MyProperties["displayname"];
                 if (mydispName != String.Empty)
                 {
-                    owner.Name = mydispName;
+                    ContactList.Owner.Name = mydispName;
                 }
 
                 
@@ -1060,16 +1050,16 @@ namespace MSNPSharp
 
             string context = String.Empty;
 
-            if (owner.DisplayImage != null)
-                context = owner.DisplayImage.Context;
+            if (ContactList.Owner.DisplayImage != null)
+                context = ContactList.Owner.DisplayImage.Context;
 
             if (status == PresenceStatus.Offline)
                 messageProcessor.Disconnect();
 
             //don't set the same status or it will result in disconnection
-            else if (status != owner.Status)
+            else if (status != ContactList.Owner.Status)
             {
-                string capacities = ((long)owner.ClientCapacities).ToString();
+                string capacities = ((long)ContactList.Owner.ClientCapacities).ToString();
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
@@ -1081,7 +1071,7 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetScreenName(string newName)
         {
-            if (owner == null)
+            if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName) }));
@@ -1089,7 +1079,7 @@ namespace MSNPSharp
 
         public virtual void SetPersonalMessage(PersonalMessage pmsg)
         {
-            if (owner == null)
+            if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
             MSNMessage msg = new MSNMessage();
@@ -1108,8 +1098,9 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetPhoneNumberHome(string number)
         {
-            if (owner == null)
+            if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
 
@@ -1120,10 +1111,12 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetPhoneNumberWork(string number)
         {
-            if (owner == null)
+            if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", HttpUtility.UrlEncode(number) }));
         }
 
@@ -1132,10 +1125,12 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetPhoneNumberMobile(string number)
         {
-            if (owner == null)
+            if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", HttpUtility.UrlEncode(number) }));
         }
 
@@ -1144,8 +1139,9 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetMobileAccess(bool enabled)
         {
-            if (owner == null)
+            if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MOB", enabled ? "Y" : "N" }));
         }
 
@@ -1154,8 +1150,9 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SetMobileDevice(bool enabled)
         {
-            if (owner == null)
+            if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
         }
 
@@ -2306,10 +2303,10 @@ namespace MSNPSharp
             switch (type)
             {
                 case "AL":
-                    Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
+                    ContactList.Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
                     break;
                 case "BL":
-                    owner.SetPrivacy(PrivacyMode.NoneButAllowed);
+                    ContactList.Owner.SetPrivacy(PrivacyMode.NoneButAllowed);
                     break;
             }
         }
@@ -2331,10 +2328,10 @@ namespace MSNPSharp
             switch ((string)message.CommandValues[0])
             {
                 case "A":
-                    owner.SetNotifyPrivacy(NotifyPrivacy.PromptOnAdd);
+                    ContactList.Owner.SetNotifyPrivacy(NotifyPrivacy.PromptOnAdd);
                     break;
                 case "N":
-                    owner.SetNotifyPrivacy(NotifyPrivacy.AutomaticAdd);
+                    ContactList.Owner.SetNotifyPrivacy(NotifyPrivacy.AutomaticAdd);
                     break;
             }
         }
@@ -2689,8 +2686,8 @@ namespace MSNPSharp
                 OIMStoreService oimService = new OIMStoreService();
 
                 oimService.FromValue = new From();
-                oimService.FromValue.memberName = owner.Mail;
-                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(owner.Name)) + "?=";
+                oimService.FromValue.memberName = ContactList.Owner.Mail;
+                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(ContactList.Owner.Name)) + "?=";
                 oimService.FromValue.buildVer = "8.5.1288";
                 oimService.FromValue.msnpVer = "MSNP15";
                 oimService.FromValue.lang = System.Globalization.CultureInfo.CurrentCulture.Name;
