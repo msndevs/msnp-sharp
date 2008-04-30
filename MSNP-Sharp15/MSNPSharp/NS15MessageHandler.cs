@@ -271,7 +271,10 @@ namespace MSNPSharp
 
         public string ReceivedTime
         {
-            get { return receivedTime; }
+            get
+            {
+                return receivedTime;
+            }
         }
         private string email;
 
@@ -280,7 +283,10 @@ namespace MSNPSharp
         /// </summary>
         public string Email
         {
-            get { return email; }
+            get
+            {
+                return email;
+            }
         }
         private string message;
 
@@ -289,7 +295,10 @@ namespace MSNPSharp
         /// </summary>
         public string Message
         {
-            get { return message; }
+            get
+            {
+                return message;
+            }
         }
         private bool isRead = true;
 
@@ -299,8 +308,14 @@ namespace MSNPSharp
         /// </summary>
         public bool IsRead
         {
-            get { return isRead; }
-            set { isRead = value; }
+            get
+            {
+                return isRead;
+            }
+            set
+            {
+                isRead = value;
+            }
         }
 
         public OIMReceivedEventArgs(string rcvTime, string account, string msg)
@@ -449,7 +464,7 @@ namespace MSNPSharp
         /// A collection of all switchboard handlers waiting for a connection
         /// </summary>
         private Queue pendingSwitchboards = new Queue();
-        
+
 
         /// <summary>
         /// Event handler.
@@ -879,8 +894,8 @@ namespace MSNPSharp
             {
                 ContactGroupRemoved(this, e);
             }
-        }       
-        
+        }
+
 
         /// <summary>
         /// Send the synchronize command to the server. This will rebuild the contactlist with the most recent data.
@@ -899,9 +914,9 @@ namespace MSNPSharp
                 return;
             }
 
-            ContactList.Synchronize();            
+            ContactList.Synchronize();
         }
-        
+
         internal int initialadlcount = 0;
         internal List<int> initialadls = new List<int>();
         private void OnADLReceived(NSMessage message)
@@ -924,7 +939,7 @@ namespace MSNPSharp
                     ContactList.Owner.Name = mydispName;
                 }
 
-                
+
                 if (AutoSynchronize == true)
                 {
                     OnSignedIn();
@@ -962,7 +977,9 @@ namespace MSNPSharp
                             {
                                 displayName = contactNode.Attributes["f"].Value;
                             }
-                            catch (Exception) { }
+                            catch (Exception)
+                            {
+                            }
 
                             MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
@@ -1718,8 +1735,8 @@ namespace MSNPSharp
             else if ((string)message.CommandValues[1] == "OK")
             {
                 // we sucesfully logged in, set the owner's name
-                Owner.SetMail(message.CommandValues[2].ToString());
-                Owner.SetPassportVerified(message.CommandValues[3].Equals("1"));
+                ContactList.Owner.SetMail(message.CommandValues[2].ToString());
+                ContactList.Owner.SetPassportVerified(message.CommandValues[3].Equals("1"));
 
 
             }
@@ -1899,22 +1916,22 @@ namespace MSNPSharp
             switch (type)
             {
                 case "PHH":
-                    Owner.SetHomePhone(number);
+                    ContactList.Owner.SetHomePhone(number);
                     break;
                 case "PHW":
-                    Owner.SetWorkPhone(number);
+                    ContactList.Owner.SetWorkPhone(number);
                     break;
                 case "PHM":
-                    Owner.SetMobilePhone(number);
+                    ContactList.Owner.SetMobilePhone(number);
                     break;
                 case "MBE":
-                    Owner.SetMobileDevice((number == "Y") ? true : false);
+                    ContactList.Owner.SetMobileDevice((number == "Y") ? true : false);
                     break;
                 case "MOB":
-                    Owner.SetMobileAccess((number == "Y") ? true : false);
+                    ContactList.Owner.SetMobileAccess((number == "Y") ? true : false);
                     break;
                 case "MFN":
-                    Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
+                    ContactList.Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
                     break;
             }
         }
@@ -1930,7 +1947,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnCHGReceived(NSMessage message)
         {
-            Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
+            ContactList.Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
         }
 
 
@@ -1958,7 +1975,7 @@ namespace MSNPSharp
         }
 
 
-        
+
 
         /// <summary>
         /// Gets a new switchboard handler object. Called when a remote client initiated the switchboard.
@@ -2014,7 +2031,7 @@ namespace MSNPSharp
                 if (pendingSwitchboards.Count > 0)
                 {
 
-                    if (Owner.Status == PresenceStatus.Offline)
+                    if (ContactList.Owner.Status == PresenceStatus.Offline)
                         System.Diagnostics.Trace.WriteLine("Owner not yet online!", "NS15MessageHandler");
 
                     SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
@@ -2290,7 +2307,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnBLPReceived(NSMessage message)
         {
-            if (Owner == null)
+            if (ContactList.Owner == null)
                 return;
 
             string type = String.Empty;
@@ -2322,7 +2339,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnGTCReceived(NSMessage message)
         {
-            if (Owner == null)
+            if (ContactList.Owner == null)
                 return;
 
             switch ((string)message.CommandValues[0])
@@ -2598,7 +2615,7 @@ namespace MSNPSharp
                         OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, email, message);
                         OIMReceived(this, orea);
                         if (orea.IsRead)
-                        {                   
+                        {
                             guidstodelete.Add(guid);
                         }
                         if (0 == --oimdeletecount && guidstodelete.Count > 0)
@@ -2820,7 +2837,7 @@ namespace MSNPSharp
             }
 
             IPAddress ip = hdr.ContainsKey("ClientIP") ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None;
-            Owner.UpdateProfile(
+            ContactList.Owner.UpdateProfile(
                 hdr["LoginTime"],
                 (hdr.ContainsKey("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
                 hdr["MemberIdHigh"],

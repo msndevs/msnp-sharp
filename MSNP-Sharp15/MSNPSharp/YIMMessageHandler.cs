@@ -98,7 +98,7 @@ namespace MSNPSharp
             MSGMessage msgMessage = new MSGMessage();
 
             msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail;
+            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.ContactList.Owner.Mail;
 
             nsMessage.InnerMessage = msgMessage;
             // send it over the network
