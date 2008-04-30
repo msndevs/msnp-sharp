@@ -588,6 +588,9 @@ namespace MSNPSharp
                             ci.DisplayName = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? ci.Account : contactType.contactInfo.quickName;
                         }
 
+                        if (ci.Account == null)
+                            continue; // PassportnameHidden... Nothing to do...
+
                         if (null != contactType.contactInfo.annotations)
                         {
                             foreach (Annotation anno in contactType.contactInfo.annotations)
@@ -754,7 +757,7 @@ namespace MSNPSharp
             List<ContactInfo> sortedContacts = new List<ContactInfo>(contacts);
             sortedContacts.Sort(DomainNameComparer.Default);
             string currentDomain = null;
-            int contactcount = 0;
+            int domaincontactcount = 0;
 
             foreach (ContactInfo contact in sortedContacts)
             {
@@ -779,33 +782,42 @@ namespace MSNPSharp
 
                 String strlist = ((int)sendlist).ToString();
 
-                if (currentDomain != domain)
-                {
-                    currentDomain = domain;
-                    if (contactcount > 0)
-                        ml.Append("</d>");
-
-                    ml.Append("<d n=\"" + currentDomain + "\">");
-                }
-
                 if (strlist != "0" && type != "0")
                 {
+                    if (currentDomain != domain)
+                    {
+                        currentDomain = domain;
+
+                        if (domaincontactcount > 0)
+                            ml.Append("</d>");
+
+                        ml.Append("<d n=\"" + currentDomain + "\">");
+                        domaincontactcount = 0;
+                    }
+
                     ml.Append("<c n=\"" + name + "\" l=\"" + strlist + "\" t=\"" + type + "\"/>");
-                    contactcount++;
+                    domaincontactcount++;
                 }
 
                 if (ml.Length > 7300)
                 {
-                    // Payload data is ~7500b
-                    ml.Append("</d></ml>");
+                    if (domaincontactcount > 0)
+                        ml.Append("</d>");
+
+                    ml.Append("</ml>");
                     mls.Add(ml.ToString());
                     ml.Length = 0;
                     ml.Append("<ml" + (initial ? " l=\"1\">" : ">"));
+
                     currentDomain = null;
-                    contactcount = 0;
+                    domaincontactcount = 0;
                 }
             }
-            ml.Append("</d></ml>");
+
+            if (domaincontactcount > 0)
+                ml.Append("</d>");
+
+            ml.Append("</ml>");
             mls.Add(ml.ToString());
             return mls.ToArray();
         }
