@@ -29,129 +29,105 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System.IO;
+using MSNPSharp.Core;
+using MSNPSharp.DataTransfer;
+
 namespace MSNPSharp
 {
-    using System.IO;
-    using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+	/// <summary>
+	/// A facade to the underlying switchboard session.
+	/// </summary>
+	/// <remarks>
+	/// Conversation implements a few features for the ease of the application programmer. It provides
+	/// directly basic common functionality. However, if you need to perform more advanced actions, or catch
+	/// other events you have to directly use the underlying switchboard handler, or switchboard processor.
+	/// 
+	/// Conversation automatically requests emoticons used by remote contacts.
+	/// </remarks>
+	public class Conversation
+	{
+		#region Private
+		/// <summary>
+		/// </summary>
+		private Messenger			_messenger = null;
+		
+		/// <summary>
+		/// </summary>
+		private SBMessageHandler	_switchboard = null;
 
-    /// <summary>
-    /// A facade to the underlying switchboard session.
-    /// </summary>
-    /// <remarks>
-    /// Conversation implements a few features for the ease of the application programmer. It provides
-    /// directly basic common functionality. However, if you need to perform more advanced actions, or catch
-    /// other events you have to directly use the underlying switchboard handler, or switchboard processor.
-    /// 
-    /// Conversation automatically requests emoticons used by remote contacts.
-    /// </remarks>
-    public class Conversation
-    {
-        #region Private
-        /// <summary>
-        /// </summary>
-        private Messenger _messenger = null;
+		/// <summary>
+		/// </summary>
+		private bool autoRequestEmoticons = true;
 
-        /// <summary>
-        /// </summary>
-        private SBMessageHandler _switchboard = null;
+		/// <summary>
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void transferSession_TransferFinished(object sender, EventArgs e)
+		{
+			if(Settings.TraceSwitch.TraceInfo)			
+				System.Diagnostics.Trace.WriteLine("Emoticon received", "Conversation");			
+		}
 
-        /// <summary>
-        /// </summary>
-        private bool autoRequestEmoticons = true;
+		#endregion
 
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void transferSession_TransferFinished(object sender, EventArgs e)
-        {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Emoticon received", "Conversation");
-        }
+		#region Public
 
-        #endregion
+		/// <summary>
+		/// Indicates whether emoticons from remote contacts are automatically retrieved
+		/// </summary>
+		public bool AutoRequestEmoticons
+		{
+			get { return autoRequestEmoticons; }
+			set { autoRequestEmoticons = value;}
+		}
 
-        #region Public
+		/// <summary>
+		/// Messenger that created the conversation
+		/// </summary>
+		public Messenger Messenger
+		{
+			get { return _messenger; }
+			set { _messenger = value;}
+		}
 
-        /// <summary>
-        /// Indicates whether emoticons from remote contacts are automatically retrieved
-        /// </summary>
-        public bool AutoRequestEmoticons
-        {
-            get
-            {
-                return autoRequestEmoticons;
-            }
-            set
-            {
-                autoRequestEmoticons = value;
-            }
-        }
+		/// <summary>
+		/// The switchboard processor. Sends and receives messages over the switchboard connection
+		/// </summary>
+		public SocketMessageProcessor SwitchboardProcessor
+		{
+            get { return (SocketMessageProcessor)_switchboard.MessageProcessor; }
+			set { _switchboard.MessageProcessor = value;}
+		}
 
-        /// <summary>
-        /// Messenger that created the conversation
-        /// </summary>
-        public Messenger Messenger
-        {
-            get
-            {
-                return _messenger;
-            }
-            set
-            {
-                _messenger = value;
-            }
-        }
-
-        /// <summary>
-        /// The switchboard processor. Sends and receives messages over the switchboard connection
-        /// </summary>
-        public SocketMessageProcessor SwitchboardProcessor
-        {
-            get
-            {
-                return (SocketMessageProcessor)_switchboard.MessageProcessor;
-            }
-            set
-            {
-                _switchboard.MessageProcessor = value;
-            }
-        }
-
-        /// <summary>
-        /// The switchboard handler. Handles incoming/outgoing messages.
-        /// </summary>
-        public SBMessageHandler Switchboard
-        {
-            get
-            {
-                return _switchboard;
-            }
-            set
-            {
-                _switchboard = value;
-            }
-        }
+		/// <summary>
+		/// The switchboard handler. Handles incoming/outgoing messages.
+		/// </summary>
+		public SBMessageHandler Switchboard
+		{
+			get { return _switchboard; }
+			set { _switchboard = value;}
+		}
 
 
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="parent">The messenger object that requests the conversation.</param>
-        /// <param name="sbHandler">The switchboard to interface to.</param>		
-        public Conversation(Messenger parent, SBMessageHandler sbHandler)
-        {
-            _switchboard = sbHandler;
-            _messenger = parent;
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="parent">The messenger object that requests the conversation.</param>
+		/// <param name="sbHandler">The switchboard to interface to.</param>		
+		public Conversation(Messenger parent, SBMessageHandler sbHandler)
+		{
+			_switchboard   = sbHandler;
+			_messenger		   = parent;
+			
+			sbHandler.EmoticonDefinitionReceived += new EmoticonDefinitionReceivedEventHandler(sbHandler_EmoticonDefinitionReceived);			
+		}
 
-            sbHandler.EmoticonDefinitionReceived += new EmoticonDefinitionReceivedEventHandler(sbHandler_EmoticonDefinitionReceived);
-        }
-
-        /// <summary>
-        /// Invite a remote contact to join the conversation.
-        /// </summary>
-        /// <param name="contactMail"></param>
+		/// <summary>
+		/// Invite a remote contact to join the conversation.
+		/// </summary>
+		/// <param name="contactMail"></param>
         public void Invite(string contactMail)
         {
             if (Switchboard != null)
@@ -173,55 +149,54 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Invite a remote contact to join the conversation.
-        /// </summary>
-        /// <param name="contact">The remote contact to invite.</param>
-        public void Invite(Contact contact)
-        {
-            Invite(contact.Mail);
-        }
+		/// <summary>
+		/// Invite a remote contact to join the conversation.
+		/// </summary>
+		/// <param name="contact">The remote contact to invite.</param>
+		public void Invite(Contact contact)
+		{
+			Invite(contact.Mail);
+		}
 
-        #endregion
+		#endregion
 
-        /// <summary>
-        /// Automatically requests emoticons used.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void sbHandler_EmoticonDefinitionReceived(object sender, EmoticonDefinitionEventArgs e)
-        {
-            if (AutoRequestEmoticons == false)
-                return;
+		/// <summary>
+		/// Automatically requests emoticons used.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void sbHandler_EmoticonDefinitionReceived(object sender, EmoticonDefinitionEventArgs e)
+		{			
+			if(AutoRequestEmoticons == false) return;
 
-            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
-            if (existing == null)
-            {
-                e.Sender.Emoticons[e.Emoticon.Shortcut] = e.Emoticon;
+			MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
+			if(existing == null)
+			{				
+				e.Sender.Emoticons[e.Emoticon.Shortcut] = e.Emoticon;
 
-                // create a session and send the invitation
-                P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.Nameserver.ContactList.Owner.Mail, e.Sender.Mail);
-
-                object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
-                if (handlerObject != null)
-                {
-                    MSNSLPHandler msnslpHandler = (MSNSLPHandler)handlerObject;
-
-                    P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalContact, session.RemoteContact, e.Emoticon);
+				// create a session and send the invitation
+				P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.Nameserver.Owner.Mail, e.Sender.Mail);
+				
+				object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
+				if(handlerObject != null)
+				{
+					MSNSLPHandler msnslpHandler = (MSNSLPHandler)handlerObject;					
+					
+					P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalContact, session.RemoteContact, e.Emoticon);
                     transferSession.DataStream = e.Emoticon.OpenStream();
-                    transferSession.ClientData = e.Emoticon;
+					transferSession.ClientData = e.Emoticon;					
 
-                    transferSession.TransferAborted += new EventHandler(transferSession_TransferFinished);
-                    transferSession.TransferFinished += new EventHandler(transferSession_TransferFinished);
+					transferSession.TransferAborted += new EventHandler(transferSession_TransferFinished);					
+					transferSession.TransferFinished += new EventHandler(transferSession_TransferFinished);
+					
+					MSNObjectCatalog.GetInstance().Add(e.Emoticon);
+				}
+				else
+					throw new MSNPSharpException("No MSNSLPHandler was attached to the p2p message session. An emoticon invitation message could not be send.");
+			}
+		}
 
-                    MSNObjectCatalog.GetInstance().Add(e.Emoticon);
-                }
-                else
-                    throw new MSNPSharpException("No MSNSLPHandler was attached to the p2p message session. An emoticon invitation message could not be send.");
-            }
-        }
 
-
-
-    }
-};
+		
+	}
+}
