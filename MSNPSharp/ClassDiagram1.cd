@@ -47,7 +47,7 @@
     <Position X="10.5" Y="11.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Contact.cs</FileName>
-      <HashCode>UFVJQQAEoQAVgSAgALBEVBSFQURcFOkBUADAQZFAAEU=</HashCode>
+      <HashCode>UFVJQQAEoQAVgSAgALBkVBSFQURcFOkBUADAQZFAAEU=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.ContactGroupEventArgs" Collapsed="true">
@@ -76,7 +76,7 @@
     <Position X="33.75" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>ContactList.cs</FileName>
-      <HashCode>AAAAAAQACAAAAAAAKAAAAAAAAAABAAAAgoACIABIIAI=</HashCode>
+      <HashCode>iAhAAAYSCCIgIAAgKAAAAAAAAEABAAAAooAiJgjIIAI=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.Conversation" Collapsed="true">
@@ -245,7 +245,7 @@
     <Position X="32" Y="3.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>NS15MessageHandler.cs</FileName>
-      <HashCode>nhrnBUTCG2IprQGggUBgISgmEGBEfPwGlAL5JsLdnPU=</HashCode>
+      <HashCode>Hh7nBUbCG0AprQGggWBgoSgmEGBEXfQClALxZsJ/nPU=</HashCode>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
   </Class>
@@ -270,7 +270,7 @@
       <HashCode>ACACAAAAAAAAAAgEAEAYCAAAQAiAAAIAAQAAIABAACA=</HashCode>
     </TypeIdentifier>
   </Class>
-  <Class Name="MSNPSharp.clsQRYFactory" Collapsed="true">
+  <Class Name="MSNPSharp.QRYFactory" Collapsed="true">
     <Position X="23.25" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>QRYFactory.cs</FileName>
@@ -295,7 +295,7 @@
     <Position X="1.5" Y="14.75" Width="2" />
     <TypeIdentifier>
       <FileName>SB11MessageHandler.cs</FileName>
-      <HashCode>FGABzAZCGIBACAAosUggIDGaFgAAeBSQlAAAIBGEYBA=</HashCode>
+      <HashCode>FGABzAZCGIBACAAosUggIDGbFgAAeBSQlAAAIBGEYBA=</HashCode>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
   </Class>
@@ -335,6 +335,14 @@
       <FileName>UnauthorizedException.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
+    <InheritanceLine Type="MSNPSharp.MSNPSharpException" ManuallyRouted="true">
+      <Path>
+        <Point X="7.5" Y="11.13" />
+        <Point X="7.5" Y="11.71" />
+        <Point X="8.5" Y="11.71" />
+        <Point X="8.5" Y="12" />
+      </Path>
+    </InheritanceLine>
   </Class>
   <Class Name="MSNPSharp.Wink" Collapsed="true">
     <Position X="12.75" Y="8.75" Width="1.5" />

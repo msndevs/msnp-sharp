@@ -429,7 +429,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// </summary>
-        private ContactList cl = null;
+        private ContactList contactList = new ContactList();
 
         /// <summary>
         /// </summary>
@@ -437,7 +437,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// </summary>
-        internal Owner owner = new Owner();
+        private Owner owner = new Owner();
 
         /// <summary>
         /// Keep track whether a address book synchronization has been completed so we can warn the client programmer
@@ -453,6 +453,9 @@ namespace MSNPSharp
         /// A collection of all switchboard handlers waiting for a connection
         /// </summary>
         private Queue pendingSwitchboards = new Queue();
+
+        private ContactService contactService = null;
+        private OIMService oimService = null;
         
 
         /// <summary>
@@ -505,6 +508,29 @@ namespace MSNPSharp
             abSynchronized = false;
             initialadlcount = 0;
             initialadls.Clear();
+        }
+
+        /// <summary>
+        /// Translates the codes used by the MSN server to a MSNList object.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        protected virtual MSNLists GetMSNList(string name)
+        {
+            switch (name)
+            {
+                case "AL":
+                    return MSNLists.AllowedList;
+                case "FL":
+                    return MSNLists.ForwardList;
+                case "BL":
+                    return MSNLists.BlockedList;
+                case "RL":
+                    return MSNLists.ReverseList;
+                case "PL":
+                    return MSNLists.PendingList;
+            }
+            throw new MSNPSharpException("Unknown MSNList type");
         }
 
         /// <summary>
@@ -758,8 +784,9 @@ namespace MSNPSharp
                                     | ClientCapacities.CanMultiPacketMSG
                                     | ClientCapacities.CanReceiveWinks;
 
-            cl = new ContactList(this);
             contactGroups = new ContactGroupList(this);
+            contactService = new ContactService(this);
+            oimService = new OIMService(this);
         }
 
         /// <summary>
@@ -789,6 +816,17 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Keep track whether a address book synchronization has been completed so we can warn the client programmer
+        /// </summary>
+        public bool AddressBookSynchronized
+        {
+            get
+            {
+                return abSynchronized;
+            }
+        }
+
+        /// <summary>
         /// The end point as perceived by the server. This is set after the owner's profile is received.
         /// </summary>
         public IPEndPoint ExternalEndPoint
@@ -806,7 +844,7 @@ namespace MSNPSharp
         {
             get
             {
-                return cl;
+                return contactList;
             }
         }
 
@@ -865,6 +903,20 @@ namespace MSNPSharp
             }
         }
 
+
+        public ContactService ContactService
+        {
+            get { return contactService; }
+        }
+
+        public OIMService OIMService
+        {
+            get
+            {
+                return oimService;
+            }
+        }
+
         #region Message sending methods
 
         protected internal void OnContactGroupAdded(object sender, ContactGroupEventArgs e)
@@ -889,29 +941,16 @@ namespace MSNPSharp
             {
                 ContactGroupRemoved(this, e);
             }
-        }       
-        
-
-        /// <summary>
-        /// Send the synchronize command to the server. This will rebuild the contactlist with the most recent data.
-        /// </summary>
-        /// <remarks>
-        /// Synchronizing is the most complete way to retrieve data about groups, contacts, privacy settings, etc.
-        /// You <b>must</b> call this function before setting your initial status, otherwise you won't received online notifications of other clients.
-        /// Please note that you can only synchronize a single time per session! (this is limited by the the msn-servers)
-        /// </remarks>
-        public virtual void SynchronizeContactList()
-        {
-            if (abSynchronized)
-            {
-                if (Settings.TraceSwitch.TraceWarning)
-                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized. Make sure the AutoSynchronize property is set to false in order to manually synchronize the contact list.", "NS11MessageHandler");
-                return;
-            }
-
-            ContactList.Synchronize();            
         }
-        
+
+        protected internal void OnOIMReceived(object sender,OIMReceivedEventArgs e)
+        {
+            if (OIMReceived != null)
+            {
+                OIMReceived(sender, e);
+            }
+        }
+ 
         internal int initialadlcount = 0;
         internal List<int> initialadls = new List<int>();
         private void OnADLReceived(NSMessage message)
@@ -928,7 +967,7 @@ namespace MSNPSharp
                 abSynchronized = true;
 
                 // 11: Set my display name
-                string mydispName = ContactList.AddressBook.MyProperties["displayname"];
+                string mydispName = contactService.AddressBook.MyProperties["displayname"];
                 if (mydispName != String.Empty)
                 {
                     owner.Name = mydispName;
@@ -1703,7 +1742,13 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
-        internal Dictionary<Iniproperties, string> _Tickets = new Dictionary<Iniproperties, string>();
+        private Dictionary<Iniproperties, string> _Tickets = new Dictionary<Iniproperties, string>();
+
+        internal Dictionary<Iniproperties, string> Tickets
+        {
+            get { return _Tickets; }
+        }
+
         protected virtual void OnUSRReceived(NSMessage message)
         {
             //single-sign-on stuff
@@ -2208,7 +2253,7 @@ namespace MSNPSharp
                 return;
             }
 
-            MSNLists Type = ContactList.GetMSNList((string)message.CommandValues[1]);
+            MSNLists Type = GetMSNList((string)message.CommandValues[1]);
             Contact contact = ContactList.GetContact(message.CommandValues[2].ToString().Remove(0, 2));
 
             contact.NSMessageHandler = this;
@@ -2249,7 +2294,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnREMReceived(NSMessage message)
         {
-            MSNLists list = ContactList.GetMSNList((string)message.CommandValues[1]);
+            MSNLists list = GetMSNList((string)message.CommandValues[1]);
 
             Contact contact = null;
             if (list == MSNLists.ForwardList)
@@ -2451,9 +2496,12 @@ namespace MSNPSharp
                 OnMailboxStatusReceived(msgMessage);
             else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
             {
+                if (OIMReceived == null)
+                    return;
+
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
                 msgMessage = new MSGMessage(message);
-                OnOIMReceived(msgMessage);
+                oimService.ProcessOIM(msgMessage);
             }
         }
 
@@ -2498,256 +2546,6 @@ namespace MSNPSharp
                 switchboard.HandleMessage(MessageProcessor, msg);
             }
 
-        }
-
-        protected virtual void OnOIMReceived(MSGMessage message)
-        {
-            if (OIMReceived == null)
-                return; // nothing to do
-
-            string xmlstr = message.MimeHeader["Mail-Data"];
-            if ("too-large" == xmlstr)
-            {
-                string[] TandP = _Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
-                RSIService rsiService = new RSIService();
-                rsiService.Timeout = Int32.MaxValue;
-                rsiService.PassportCookieValue = new PassportCookie();
-                rsiService.PassportCookieValue.t = TandP[1];
-                rsiService.PassportCookieValue.p = TandP[2];
-                rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
-                {
-                    if (!e.Cancelled && e.Error == null)
-                    {
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine("GetMetadata completed.");
-
-                        processOIMS(e.Result);
-                    }
-                    else if (e.Error != null)
-                    {
-                        throw new MSNPSharpException(e.Error.Message, e.Error);
-                    }
-                    ((IDisposable)sender).Dispose();
-                    return;
-                };
-                rsiService.GetMetadataAsync(new GetMetadataRequestType(), new object());
-                return;
-            }
-            processOIMS(xmlstr);
-        }
-
-        private void processOIMS(string xmldata)
-        {
-            XmlDocument xdoc = new XmlDocument();
-            xdoc.LoadXml(xmldata);
-            XmlNodeList xnodlst = xdoc.GetElementsByTagName("M");
-            List<string> guidstodelete = new List<string>();
-            int oimdeletecount = xnodlst.Count;
-
-            Regex regmsg = new Regex("\n\n[^\n]+");
-            Regex regsenderdata = new Regex("From:(?<encode>=.*=)<(?<mail>.+)>\n");
-
-            string[] TandP = _Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
-
-            foreach (XmlNode m in xnodlst)
-            {
-                string rt = DateTime.Now.ToString();
-                Int32 size = 0;
-                String email = String.Empty;
-                String guid = String.Empty;
-                String message = String.Empty;
-
-                foreach (XmlNode a in m)
-                {
-                    switch (a.Name)
-                    {
-                        case "RT":
-                            rt = a.InnerText;
-                            break;
-
-                        case "SZ":
-                            size = Convert.ToInt32(a.InnerText);
-                            break;
-
-                        case "E":
-                            email = a.InnerText;
-                            break;
-
-                        case "I":
-                            guid = a.InnerText;
-                            break;
-                    }
-                }
-
-                RSIService rsiService = new RSIService();
-                rsiService.Timeout = Int32.MaxValue;
-                rsiService.PassportCookieValue = new PassportCookie();
-                rsiService.PassportCookieValue.t = TandP[1];
-                rsiService.PassportCookieValue.p = TandP[2];
-                rsiService.GetMessageCompleted += delegate(object service, GetMessageCompletedEventArgs e)
-                {
-                    if (!e.Cancelled && e.Error == null)
-                    {
-                        Match mch = regsenderdata.Match(e.Result.GetMessageResult);
-
-                        string strencoding = "utf-8";
-                        if (mch.Groups["encode"].Value != String.Empty)
-                        {
-                            strencoding = mch.Groups["encode"].Value.Split('?')[1];
-                        }
-                        Encoding encode = Encoding.GetEncoding(strencoding);
-                        message = encode.GetString(Convert.FromBase64String(regmsg.Match(e.Result.GetMessageResult).Value.Trim()));
-
-                        OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, email, message);
-                        OIMReceived(this, orea);
-                        if (orea.IsRead)
-                        {                   
-                            guidstodelete.Add(guid);
-                        }
-                        if (0 == --oimdeletecount && guidstodelete.Count > 0)
-                        {
-                            DeleteOIMMessages(guidstodelete.ToArray());
-                        }
-                    }
-                    else if (e.Error != null)
-                    {
-                        throw new MSNPSharpException(e.Error.Message, e.Error);
-                    }
-                    return;
-                };
-
-                GetMessageRequestType request = new GetMessageRequestType();
-                request.messageId = guid;
-                request.alsoMarkAsRead = false;
-                rsiService.GetMessageAsync(request, new object());
-            }
-        }
-
-        private void DeleteOIMMessages(string[] guids)
-        {
-            string[] TandP = _Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
-
-            RSIService rsiService = new RSIService();
-            rsiService.Timeout = Int32.MaxValue;
-            rsiService.PassportCookieValue = new PassportCookie();
-            rsiService.PassportCookieValue.t = TandP[1];
-            rsiService.PassportCookieValue.p = TandP[2];
-            rsiService.DeleteMessagesCompleted += delegate(object service, DeleteMessagesCompletedEventArgs e)
-            {
-                if (!e.Cancelled && e.Error == null)
-                {
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMessages completed.");
-                }
-                else if (e.Error != null)
-                {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
-                }
-                ((IDisposable)service).Dispose();
-                return;
-            };
-
-            DeleteMessagesRequestType request = new DeleteMessagesRequestType();
-            request.messageIds = guids;
-            rsiService.DeleteMessagesAsync(request, new object());
-        }
-
-        private class OIMUserState
-        {
-            public int RecursiveCall = 0;
-            private readonly int oimcount;
-            private readonly string account = String.Empty;
-            public OIMUserState(int oimCount, string account)
-            {
-                this.oimcount = oimCount;
-                this.account = account;
-            }
-        }
-        private string _RunGuid = Guid.NewGuid().ToString();
-        public void SendOIMMessage(string account, string msg)
-        {
-            Contact contact = ContactList[account];
-            if (contact != null && contact.OnAllowedList)
-            {
-                StringBuilder messageTemplate = new StringBuilder(
-                    "MIME-Version: 1.0\r\n"
-                  + "Content-Type: text/plain; charset=UTF-8\r\n"
-                  + "Content-Transfer-Encoding: base64\r\n"
-                  + "X-OIM-Message-Type: OfflineMessage\r\n"
-                  + "X-OIM-Run-Id: {{run_id}}\r\n"
-                  + "X-OIM-Sequence-Num: {seq-num}\r\n"
-                  + "\r\n"
-                  + "{base64_msg}\r\n"
-                );
-
-                messageTemplate.Replace("{base64_msg}", Convert.ToBase64String(Encoding.UTF8.GetBytes(msg), Base64FormattingOptions.InsertLineBreaks));
-                messageTemplate.Replace("{seq-num}", contact.OIMCount.ToString());
-                messageTemplate.Replace("{run_id}", _RunGuid);
-
-                string message = messageTemplate.ToString();
-
-                OIMStoreService oimService = new OIMStoreService();
-
-                oimService.FromValue = new From();
-                oimService.FromValue.memberName = owner.Mail;
-                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(owner.Name)) + "?=";
-                oimService.FromValue.buildVer = "8.5.1288";
-                oimService.FromValue.msnpVer = "MSNP15";
-                oimService.FromValue.lang = System.Globalization.CultureInfo.CurrentCulture.Name;
-                oimService.FromValue.proxy = "MSNMSGR";
-
-                oimService.ToValue = new To();
-                oimService.ToValue.memberName = account;
-
-                oimService.TicketValue = new Ticket();
-                oimService.TicketValue.passport = _Tickets[Iniproperties.OIMTicket];
-                oimService.TicketValue.lockkey = _Tickets.ContainsKey(Iniproperties.LockKey) ? _Tickets[Iniproperties.LockKey] : String.Empty;
-                oimService.TicketValue.appid = Credentials.ClientID;
-
-                oimService.Sequence = new SequenceType();
-                oimService.Sequence.Identifier = new AttributedURI();
-                oimService.Sequence.Identifier.Value = "http://messenger.msn.com";
-                oimService.Sequence.MessageNumber = 1;
-
-                OIMUserState userstate = new OIMUserState(contact.OIMCount, account);
-                oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
-                {
-                    oimService = service as OIMStoreService;
-                    if (e.Cancelled == false && e.Error == null)
-                    {
-                        SequenceAcknowledgmentAcknowledgmentRange range = oimService.SequenceAcknowledgmentValue.AcknowledgmentRange[0];
-                        if (range.Lower == 1 && range.Upper == 1)
-                        {
-                            contact.OIMCount++; // Sent successfully.
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("A OIM Messenger has been sent, runId = " + _RunGuid);
-                        }
-                    }
-                    else if (e.Error != null && e.Error is SoapException)
-                    {
-                        SoapException soapexp = e.Error as SoapException;
-                        if (soapexp.Code.Name == "AuthenticationFailed")
-                        {
-                            _Tickets[Iniproperties.LockKey] = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, soapexp.Detail.InnerText);
-                            oimService.TicketValue.lockkey = _Tickets[Iniproperties.LockKey];
-                        }
-                        else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
-                        {
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("OIM: SenderThrottleLimitExceeded. Waiting 11 seconds...");
-
-                            System.Threading.Thread.Sleep(11111); // wait 11 seconds.
-                        }
-                        if (userstate.RecursiveCall++ < 5)
-                        {
-                            oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
-                            return;
-                        }
-                        throw new MSNPSharpException(e.Error.Message, e.Error);
-                    }
-                };
-                oimService.StoreAsync(MessageType.text, message, userstate);
-            }
         }
 
         /// <summary>
@@ -2851,7 +2649,7 @@ namespace MSNPSharp
             //ADL
             if (AutoSynchronize)
             {
-                SynchronizeContactList();
+                contactService.SynchronizeContactList();
             }
             else
             {
@@ -2888,35 +2686,49 @@ namespace MSNPSharp
         #region [[[Obsolete]]]
 
         /// <summary>
+        /// Send the synchronize command to the server. This will rebuild the contactlist with the most recent data.
+        /// </summary>
+        /// <remarks>
+        /// Synchronizing is the most complete way to retrieve data about groups, contacts, privacy settings, etc.
+        /// You <b>must</b> call this function before setting your initial status, otherwise you won't received online notifications of other clients.
+        /// Please note that you can only synchronize a single time per session! (this is limited by the the msn-servers)
+        /// </remarks>
+        [Obsolete("Use NSMessageHandler.ContactService.SynchronizeContactList")]
+        public virtual void SynchronizeContactList()
+        {
+            contactService.SynchronizeContactList();
+        }
+
+        /// <summary>
         /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
         /// </summary>
         /// <param name="account">An e-mail adress to add</param>
-        [Obsolete("Use ContactList.AddNewContact")]
+        [Obsolete("Use NSMessageHandler.ContactService.AddNewContact")]
         public virtual void AddNewContact(string account)
         {
-            ContactList.AddNewContact(account);
+            ContactService.AddNewContact(account);
         }
 
         /// <summary>
         /// Remove the specified contact from your forward and allow list. Note that remote contacts that are blocked remain blocked.
         /// </summary>
         /// <param name="contact">Contact to remove</param>
-        [Obsolete("Use ContactList.RemoveContact")]
+        [Obsolete("Use NSMessageHandler.ContactService.RemoveContact")]
         public virtual void RemoveContact(Contact contact)
         {
-            ContactList.RemoveContact(contact);
+            ContactService.RemoveContact(contact);
         }
 
-        [Obsolete("Use ContactList.AddContactToGroup")]
+        [Obsolete("Use NSMessageHandler.ContactService.AddContactToGroup")]
         public virtual void AddContactToGroup(Contact contact, ContactGroup group)
         {
-            ContactList.AddContactToGroup(contact, group);
+            ContactService.AddContactToGroup(contact, group);
         }
 
-        [Obsolete("Use ContactList.RemoveContactFromGroup")]
+        [Obsolete("Use NSMessageHandler.ContactService.RemoveContactFromGroup")]
         public virtual void RemoveContactFromGroup(Contact contact, ContactGroup group)
         {
-            ContactList.RemoveContactFromGroup(contact, group);
+            ContactService.RemoveContactFromGroup(contact, group);
         }
 
         /// <summary>
@@ -2924,10 +2736,10 @@ namespace MSNPSharp
         /// will be removed from your allow list and placed in your blocked list.
         /// </summary>
         /// <param name="contact">Contact to block</param>
-        [Obsolete("Use ContactList.BlockContact")]
+        [Obsolete("Use NSMessageHandler.ContactService.BlockContact")]
         public virtual void BlockContact(Contact contact)
         {
-            ContactList.BlockContact(contact);
+            ContactService.BlockContact(contact);
         }
 
         /// <summary>
@@ -2935,11 +2747,23 @@ namespace MSNPSharp
         /// will be removed from your blocked list and placed in your allowed list.
         /// </summary>
         /// <param name="contact">Contact to unblock</param>
-        [Obsolete("Use ContactList.UnBlockContact")]
+        [Obsolete("Use NSMessageHandler.ContactService.UnBlockContact")]
         public virtual void UnBlockContact(Contact contact)
         {
-            ContactList.UnBlockContact(contact);
+            ContactService.UnBlockContact(contact);
         }
+
+        /// <summary>
+        /// Send an offline message to a contact.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="msg"></param>
+        [Obsolete("Use NSMessageHandler.OIMService.SendOIMMessage")]
+        public virtual void SendOIMMessage(string account, string msg)
+        {
+            oimService.SendOIMMessage(account, msg);
+        }
+
         /// <summary>
         /// Tracks the last contact object which has been synchronized. Used for BPR commands.
         /// </summary>

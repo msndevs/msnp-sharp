@@ -65,7 +65,7 @@ namespace MSNPSharp
 			if(nsMessageHandler == null)
 				throw new MSNPSharpException("No nameserver handler defined");
 
-            nsMessageHandler.ContactList.AddContactGroup(name);
+            nsMessageHandler.ContactService.AddContactGroup(name);
 		}
 
 		public virtual void Remove(ContactGroup group)
@@ -74,7 +74,7 @@ namespace MSNPSharp
 				throw new MSNPSharpException("No nameserver handler defined");
 			
 			if(this[group.Guid] != null)
-                nsMessageHandler.ContactList.RemoveContactGroup(group);
+                nsMessageHandler.ContactService.RemoveContactGroup(group);
 			else
 				throw new MSNPSharpException("Contactgroup not defined in this list");
 		}

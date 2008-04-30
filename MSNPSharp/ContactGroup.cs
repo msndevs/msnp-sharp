@@ -141,13 +141,13 @@ namespace MSNPSharp
 		public string Name
 		{
 			get { return name; }
-			set 
-			{ 
-				if(NSMessageHandler != null)
-				{
-					NSMessageHandler.ContactList.RenameGroup(this, value);
-				}
-			}
+            set
+            {
+                if (NSMessageHandler != null)
+                {
+                    NSMessageHandler.ContactService.RenameGroup(this, value);
+                }
+            }
 		}
 
 		/// <summary>

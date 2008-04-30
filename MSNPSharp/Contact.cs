@@ -531,9 +531,9 @@ namespace MSNPSharp
 				if(NSMessageHandler != null)
 				{
 					if(value == true)
-						NSMessageHandler.ContactList.BlockContact(this);
-					else 
-						NSMessageHandler.ContactList.UnBlockContact(this);
+						NSMessageHandler.ContactService.BlockContact(this);
+					else
+                        NSMessageHandler.ContactService.UnBlockContact(this);
 				}
 			}
 		}
@@ -556,12 +556,12 @@ namespace MSNPSharp
 				{
                     if (value)
                     {
-                        NSMessageHandler.ContactList.AddContactToList(this, MSNLists.ForwardList);
+                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.ForwardList);
                         AddToList(MSNLists.ForwardList);
                     }
                     else
                     {
-                        NSMessageHandler.ContactList.RemoveContactFromList(this, MSNLists.ForwardList);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.ForwardList);
                         RemoveFromList(MSNLists.ForwardList);
                     }
 				}					
@@ -579,12 +579,12 @@ namespace MSNPSharp
 				{
                     if (value)
                     {
-                        NSMessageHandler.ContactList.AddContactToList(this, MSNLists.AllowedList);
+                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.AllowedList);
                         AddToList(MSNLists.AllowedList);
                     }
                     else
                     {
-                        NSMessageHandler.ContactList.RemoveContactFromList(this, MSNLists.AllowedList);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.AllowedList);
                         RemoveFromList(MSNLists.AllowedList);
                     }
 				}					

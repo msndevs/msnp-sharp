@@ -73,6 +73,7 @@
     <Compile Include="NSMessage.cs" />
     <Compile Include="NSMessagePool.cs" />
     <Compile Include="NSMessageProcessor.cs" />
+    <Compile Include="OIMService.cs" />
     <Compile Include="Owner.cs" />
     <Compile Include="P2PDCPool.cs" />
     <Compile Include="P2PDirectProcessor.cs" />
@@ -134,6 +135,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
+    <Compile Include="ContactService.cs" />
     <Compile Include="Wink.cs" />
     <Compile Include="XMLContactList.cs" />
     <Compile Include="XMLContactListParser.cs" />
