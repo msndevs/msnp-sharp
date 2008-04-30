@@ -327,7 +327,7 @@ namespace MSNPSharp
             // 6: Create Groups
             foreach (GroupInfo group in AddressBook.Groups.Values)
             {
-                nsMessageHandler.contactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
+                nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
             }
 
             // 7: Add Contacts
@@ -345,7 +345,7 @@ namespace MSNPSharp
 
                     foreach (string groupId in abci.Groups)
                     {
-                        contact.ContactGroups.Add(nsMessageHandler.contactGroups[groupId]);
+                        contact.ContactGroups.Add(nsMessageHandler.ContactGroups[groupId]);
                     }
 
                     if (abci.Type == ClientType.EmailMember)
@@ -624,8 +624,8 @@ namespace MSNPSharp
                 handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
-                    nsMessageHandler.contactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, nsMessageHandler));
-                    nsMessageHandler.OnContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)nsMessageHandler.contactGroups[e.Result.ABGroupAddResult.guid]));
+                    nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, nsMessageHandler));
+                    nsMessageHandler.OnContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)nsMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
                 }
                 else if (e.Error != null)
                 {
