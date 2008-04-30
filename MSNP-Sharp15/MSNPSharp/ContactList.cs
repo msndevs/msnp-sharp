@@ -51,22 +51,11 @@ namespace MSNPSharp
         private NSMessageHandler nsHandler = null;
         internal XMLAddressBook AddressBook = null;
         private XMLMembershipList MemberShipList = null;
-        private Owner owner = new Owner();
         private Dictionary<string, Contact> contacts = new Dictionary<string, Contact>(10);
-
-        public Owner Owner
-        {
-            get
-            {
-                return owner;
-            }
-        }
 
         public ContactList(NSMessageHandler ns)
         {
             nsHandler = ns;
-            Owner.NSMessageHandler = ns;
-            Owner.ClientCapacities = ClientCapacities.CanHandleMSNC7 | ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
         }
 
         public bool HasContact(string account)
@@ -398,7 +387,7 @@ namespace MSNPSharp
         /// </remarks>
         internal virtual void Synchronize()
         {
-            string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(Owner.Mail)).Replace("\\", "-") + ".mcl";
+            string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsHandler.owner.Mail)).Replace("\\", "-") + ".mcl";
             MemberShipList = new XMLMembershipList(contactfile, true);
             AddressBook = new XMLAddressBook(contactfile, true);
 
@@ -709,7 +698,7 @@ namespace MSNPSharp
 
             foreach (ContactInfo ci in AddressBook.Values)  //The mail contact on your forward list
             {
-                if (!MemberShipList.ContainsKey(ci.Account) && ci.Account != Owner.Mail)
+                if (!MemberShipList.ContainsKey(ci.Account) && ci.Account != nsHandler.owner.Mail)
                 {
                     Contact contact = GetContact(ci.Account);
                     contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
@@ -1418,9 +1407,9 @@ namespace MSNPSharp
 
         public virtual void DeleteRecordFile()
         {
-            if (Owner != null && Owner.Mail != null)
+            if (nsHandler.owner != null && nsHandler.owner.Mail != null)
             {
-                string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(Owner.Mail)).Replace("\\", "-") + ".mcl";
+                string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsHandler.owner.Mail)).Replace("\\", "-") + ".mcl";
                 if (File.Exists(contactfile))
                 {
                     File.SetAttributes(contactfile, FileAttributes.Normal);  //By default, the file is hidden.
