@@ -433,7 +433,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// </summary>
-        internal ContactGroupList contactGroups = null;
+        private ContactGroupList contactGroups = null;
 
         /// <summary>
         /// </summary>
@@ -919,7 +919,7 @@ namespace MSNPSharp
 
         #region Message sending methods
 
-        protected internal void OnContactGroupAdded(object sender, ContactGroupEventArgs e)
+        protected internal virtual void OnContactGroupAdded(object sender, ContactGroupEventArgs e)
         {
             if (ContactGroupAdded != null)
             {
@@ -927,7 +927,7 @@ namespace MSNPSharp
             }
         }
 
-        protected internal void OnContactAdded(object sender, ListMutateEventArgs e)
+        protected internal virtual void OnContactAdded(object sender, ListMutateEventArgs e)
         {
             if (ContactAdded != null)
             {
@@ -935,7 +935,7 @@ namespace MSNPSharp
             }
         }
 
-        protected internal void OnContactGroupRemoved(object sender, ContactGroupEventArgs e)
+        protected internal virtual void OnContactGroupRemoved(object sender, ContactGroupEventArgs e)
         {
             if (ContactGroupRemoved != null)
             {
@@ -943,14 +943,14 @@ namespace MSNPSharp
             }
         }
 
-        protected internal void OnOIMReceived(object sender,OIMReceivedEventArgs e)
+        protected internal virtual void OnOIMReceived(object sender,OIMReceivedEventArgs e)
         {
             if (OIMReceived != null)
             {
                 OIMReceived(sender, e);
             }
         }
- 
+
         internal int initialadlcount = 0;
         internal List<int> initialadls = new List<int>();
         private void OnADLReceived(NSMessage message)
