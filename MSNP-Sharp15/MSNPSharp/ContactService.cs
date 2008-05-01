@@ -100,66 +100,16 @@ namespace MSNPSharp
                         new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
             }
 
-            bool deltasOnly = false;
-            DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
-
-            ABServiceBinding abService = new ABServiceBinding();
-            abService.Timeout = Int32.MaxValue;
-            abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
-
-            ABFindAllRequestType request = new ABFindAllRequestType();
-            request.deltasOnly = deltasOnly;
-            request.lastChange = lastChange;
-
-            abService.ABFindAllCompleted += new ABFindAllCompletedEventHandler(abService_ABFindAllCompleted);
-            abService.ABFindAllAsync(request, e.Result.FindMembershipResult);
-        }
-
-        private void abService_ABFindAllCompleted(object sender, ABFindAllCompletedEventArgs e)
-        {
-            Trace.WriteLine("abService_ABFindAllCompleted");
-
-            if (e.Cancelled || e.Error != null)
-            {
-                if (e.Error != null)
-                {
-                    OnServiceOperationFailed(sender,
-                        new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
-                }
-                return;
-            }
-
-            ABServiceBinding abService = (ABServiceBinding)sender;
-            FindMembershipResultType addressBook = (FindMembershipResultType)e.UserState;
-            ABFindAllResultType forwardList = e.Result.ABFindAllResult;
-
-            // 1: Cache key for AdressBook service...
-            handleCachekeyChange(abService.ServiceHeaderValue, true);
-
-            // 2: Groups
-            Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0); //For saving.
-            if (null != forwardList.groups)
-            {
-                foreach (GroupType groupType in forwardList.groups)
-                {
-                    GroupInfo group = new GroupInfo();
-                    group.Name = groupType.groupInfo.name;
-                    group.Guid = groupType.groupId;
-                    groups[group.Guid] = group;
-                }
-            }
-
-            // 3: Memberships
+            // 1: Memberships (deltasOnly)
+            FindMembershipResultType findMembership = e.Result.FindMembershipResult;            
             Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
             Dictionary<int, Service> services = new Dictionary<int, Service>(0);
             Service currentService = new Service();
             int messengerServiceId = 0;
 
-            if (null != addressBook.Services)
+            if (null != findMembership.Services)
             {
-                foreach (ServiceType serviceType in addressBook.Services)
+                foreach (ServiceType serviceType in findMembership.Services)
                 {
                     currentService.LastChange = serviceType.LastChange;
                     currentService.Id = int.Parse(serviceType.Info.Handle.Id);
@@ -228,7 +178,50 @@ namespace MSNPSharp
                 }
             }
 
-            // 4: Contact List
+            // 3: Combine all membership information and save them into a file.
+            MemberShipList.CombineMemberRoles(mShips);
+            MemberShipList.CombineService(services);
+            MemberShipList.Save();
+
+            // 4: Request address book
+            bool deltasOnly = false;
+            DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+
+            ABServiceBinding abService = new ABServiceBinding();
+            abService.Timeout = Int32.MaxValue;
+            abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABAuthHeaderValue = new ABAuthHeader();
+            abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
+
+            ABFindAllRequestType request = new ABFindAllRequestType();
+            request.deltasOnly = deltasOnly;
+            request.lastChange = lastChange;
+
+            abService.ABFindAllCompleted += new ABFindAllCompletedEventHandler(abService_ABFindAllCompleted);
+            abService.ABFindAllAsync(request, new object());
+        }
+
+        private void abService_ABFindAllCompleted(object sender, ABFindAllCompletedEventArgs e)
+        {
+            Trace.WriteLine("abService_ABFindAllCompleted");
+
+            if (e.Cancelled || e.Error != null)
+            {
+                if (e.Error != null)
+                {
+                    OnServiceOperationFailed(sender,
+                        new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
+                }
+                return;
+            }
+
+            // Cache key for AdressBook service...
+            ABServiceBinding abService = (ABServiceBinding)sender;
+            handleCachekeyChange(abService.ServiceHeaderValue, true);
+
+            ABFindAllResultType forwardList = e.Result.ABFindAllResult;
+
+            // 5: Contact List (deltasOnly)
             Dictionary<string, ContactInfo> diccontactList = new Dictionary<string, ContactInfo>(0);
             Dictionary<string, string> props = AddressBook.MyProperties;
 
@@ -316,25 +309,33 @@ namespace MSNPSharp
                 }
             }
 
-            // 5: Combine all information and save them into a file.
-            MemberShipList.CombineMemberRoles(mShips);
-            MemberShipList.CombineService(services);
+            // 6: Groups (deltasOnly)
+            Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
+            if (null != forwardList.groups)
+            {
+                foreach (GroupType groupType in forwardList.groups)
+                {
+                    GroupInfo group = new GroupInfo();
+                    group.Name = groupType.groupInfo.name;
+                    group.Guid = groupType.groupId;
+                    groups[group.Guid] = group;
+                }
+            }
 
+            // 7: Save Address Book
             AddressBook.LastChange = forwardList.ab.lastChange;
             AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
             AddressBook.AddGroupRange(groups);
-            AddressBook.AddRange(diccontactList);
-
-            MemberShipList.Save();
+            AddressBook.AddRange(diccontactList);            
             AddressBook.Save();
 
-            // 6: Create Groups
+            // 7: Create Groups
             foreach (GroupInfo group in AddressBook.Groups.Values)
             {
                 nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
             }
 
-            // 7: Add Contacts
+            // 8: Add Contacts
             foreach (ContactInfo ci in MemberShipList.Values)
             {
                 Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
