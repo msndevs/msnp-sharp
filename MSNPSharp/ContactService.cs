@@ -10,13 +10,13 @@ using System.Diagnostics;
 
 namespace MSNPSharp
 {
-    public class ContactService
+    public class ContactService : MSNService
     {
         #region Fields
 
         private NSMessageHandler nsMessageHandler = null;
         internal XMLAddressBook AddressBook = null;
-        private XMLMembershipList MemberShipList = null; 
+        private XMLMembershipList MemberShipList = null;
 
         #endregion
 
@@ -30,7 +30,7 @@ namespace MSNPSharp
         public NSMessageHandler NSMessageHandler
         {
             get { return nsMessageHandler; }
-        } 
+        }
 
         #endregion
 
@@ -96,7 +96,8 @@ namespace MSNPSharp
             if (e.Error != null)
             {
                 int findMembershipErrorCount = 1 + Convert.ToInt32(e.UserState);
-                throw new MSNPSharpException(e.Error.Message, e.Error);
+                OnServiceOperationFailed(sender,
+                        new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
             }
 
             bool deltasOnly = false;
@@ -123,7 +124,10 @@ namespace MSNPSharp
             if (e.Cancelled || e.Error != null)
             {
                 if (e.Error != null)
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                {
+                    OnServiceOperationFailed(sender,
+                        new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
+                }
                 return;
             }
 
@@ -529,7 +533,7 @@ namespace MSNPSharp
                 handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
-                    Contact newcontact =  nsMessageHandler.ContactList.GetContact(account);
+                    Contact newcontact = nsMessageHandler.ContactList.GetContact(account);
                     newcontact.SetGuid(e.Result.ABContactAddResult.guid);
                     newcontact.NSMessageHandler = nsMessageHandler;
                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(newcontact, MSNLists.AllowedList | MSNLists.ForwardList));
@@ -539,7 +543,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("AddNewContact", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -589,7 +594,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("RemoveContact", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -629,7 +635,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("AddContactGroup", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -659,7 +666,7 @@ namespace MSNPSharp
         /// <param name="contactGroup">The group to remove</param>
         internal virtual void RemoveContactGroup(ContactGroup contactGroup)
         {
-            foreach (Contact cnt in  nsMessageHandler.ContactList.All)
+            foreach (Contact cnt in nsMessageHandler.ContactList.All)
             {
                 if (cnt.ContactGroups.Contains(contactGroup))
                 {
@@ -689,7 +696,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("ContactGroupList.Remove", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -727,7 +735,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("AddContactToGroup", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -767,7 +776,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("RemoveContactFromGroup", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -809,7 +819,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("RenameGroup", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -883,7 +894,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(sharingService,
+                        new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -980,7 +992,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(sharingService,
+                        new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;

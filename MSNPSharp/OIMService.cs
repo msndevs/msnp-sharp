@@ -23,7 +23,7 @@ namespace MSNPSharp
         }
     }
 
-    public class OIMService
+    public class OIMService : MSNService
     {
         NSMessageHandler nsMessageHandler = null;
 
@@ -59,7 +59,8 @@ namespace MSNPSharp
                     }
                     else if (e.Error != null)
                     {
-                        throw new MSNPSharpException(e.Error.Message, e.Error);
+                        OnServiceOperationFailed(sender,
+                            new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
                     }
                     ((IDisposable)sender).Dispose();
                     return;
@@ -145,7 +146,8 @@ namespace MSNPSharp
                     }
                     else if (e.Error != null)
                     {
-                        throw new MSNPSharpException(e.Error.Message, e.Error);
+                        OnServiceOperationFailed(rsiService,
+                            new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
                     }
                     return;
                 };
@@ -175,7 +177,8 @@ namespace MSNPSharp
                 }
                 else if (e.Error != null)
                 {
-                    throw new MSNPSharpException(e.Error.Message, e.Error);
+                    OnServiceOperationFailed(rsiService,
+                            new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
                 }
                 ((IDisposable)service).Dispose();
                 return;
@@ -272,7 +275,8 @@ namespace MSNPSharp
                             oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
                             return;
                         }
-                        throw new MSNPSharpException(e.Error.Message, e.Error);
+                        OnServiceOperationFailed(oimService,
+                            new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
                     }
                 };
                 oimService.StoreAsync(MessageType.text, message, userstate);

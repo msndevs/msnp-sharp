@@ -398,7 +398,6 @@ namespace MSNPSharp
     /// <param name="sender">The sender's email</param>
     /// <param name="e">OIMReceivedEventArgs</param>
     public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
-
     #endregion
 
     /// <summary>
@@ -903,7 +902,9 @@ namespace MSNPSharp
             }
         }
 
-
+        /// <summary>
+        /// A service that provide contact operations.
+        /// </summary>
         public ContactService ContactService
         {
             get { return contactService; }
