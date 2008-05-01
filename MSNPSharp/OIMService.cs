@@ -37,7 +37,7 @@ namespace MSNPSharp
             get { return nsMessageHandler; }
         }
 
-        public void ProcessOIM(MSGMessage message)
+        internal void ProcessOIM(MSGMessage message)
         {
             string xmlstr = message.MimeHeader["Mail-Data"];
             if ("too-large" == xmlstr)
