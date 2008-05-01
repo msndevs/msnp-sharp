@@ -65,6 +65,7 @@
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
     <Compile Include="MSNSecurityServiceSoapClient.cs" />
+    <Compile Include="MSNService.cs" />
     <Compile Include="MSNSLPHandler.cs" />
     <Compile Include="MSNSLPMessage.cs" />
     <Compile Include="NetworkMessage.cs" />
