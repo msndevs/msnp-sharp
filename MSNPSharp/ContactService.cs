@@ -7,6 +7,7 @@ using System.Xml;
 using System.Globalization;
 using MSNPSharp.Core;
 using System.Diagnostics;
+using System.Net;
 
 namespace MSNPSharp
 {
@@ -14,22 +15,31 @@ namespace MSNPSharp
     {
         #region Fields
 
+        private string preferredHost = "contacts.msn.com";
         private NSMessageHandler nsMessageHandler = null;
-        internal XMLAddressBook AddressBook = null;
         private XMLMembershipList MemberShipList = null;
+
+        internal XMLAddressBook AddressBook = null;
 
         #endregion
 
         public ContactService(NSMessageHandler nsHandler)
         {
             nsMessageHandler = nsHandler;
+            ServicePointManager.ServerCertificateValidationCallback = delegate
+            {
+                return true;
+            };
         }
 
         #region Properties
 
         public NSMessageHandler NSMessageHandler
         {
-            get { return nsMessageHandler; }
+            get
+            {
+                return nsMessageHandler;
+            }
         }
 
         #endregion
@@ -61,6 +71,7 @@ namespace MSNPSharp
             DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
+            sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             // sharingService.ABApplicationHeaderValue.CacheKey = ""; // XXX TODO GET Saved Sharing Service Iniproperties.SharingServiceCacheKey from Addressbok
@@ -88,7 +99,7 @@ namespace MSNPSharp
         private void sharingService_FindMembershipCompleted(object sender, FindMembershipCompletedEventArgs e)
         {
             // Cache key for Sharing service...
-            handleCachekeyChange(((SharingServiceBinding)sender).ServiceHeaderValue, false);
+            handleServiceHeader(((SharingServiceBinding)sender).ServiceHeaderValue, false);
 
             if (e.Cancelled)
                 return;
@@ -101,7 +112,7 @@ namespace MSNPSharp
             }
 
             // 1: Memberships (deltasOnly)
-            FindMembershipResultType findMembership = e.Result.FindMembershipResult;            
+            FindMembershipResultType findMembership = e.Result.FindMembershipResult;
             Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
             Dictionary<int, Service> services = new Dictionary<int, Service>(0);
             Service currentService = new Service();
@@ -188,6 +199,7 @@ namespace MSNPSharp
             DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.Timeout = Int32.MaxValue;
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -217,7 +229,7 @@ namespace MSNPSharp
 
             // Cache key for AdressBook service...
             ABServiceBinding abService = (ABServiceBinding)sender;
-            handleCachekeyChange(abService.ServiceHeaderValue, true);
+            handleServiceHeader(abService.ServiceHeaderValue, true);
 
             ABFindAllResultType forwardList = e.Result.ABFindAllResult;
 
@@ -326,7 +338,7 @@ namespace MSNPSharp
             AddressBook.LastChange = forwardList.ab.lastChange;
             AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
             AddressBook.AddGroupRange(groups);
-            AddressBook.AddRange(diccontactList);            
+            AddressBook.AddRange(diccontactList);
             AddressBook.Save();
 
             // 7: Create Groups
@@ -521,6 +533,7 @@ namespace MSNPSharp
         public virtual void AddNewContact(string account)
         {
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -531,7 +544,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABContactAddCompleted += delegate(object service, ABContactAddCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     Contact newcontact = nsMessageHandler.ContactList.GetContact(account);
@@ -576,6 +589,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
@@ -587,7 +601,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABContactDeleteCompleted += delegate(object service, ABContactDeleteCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.NSMessageHandler = null;
@@ -617,6 +631,7 @@ namespace MSNPSharp
         internal virtual void AddContactGroup(string groupName)
         {
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -628,7 +643,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, nsMessageHandler));
@@ -676,6 +691,7 @@ namespace MSNPSharp
             }
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
@@ -687,7 +703,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     nsMessageHandler.ContactGroups.RemoveGroup(contactGroup);
@@ -718,6 +734,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -729,7 +746,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.AddContactToGroup(group);
@@ -759,6 +776,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -770,7 +788,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.RemoveContactFromGroup(group);
@@ -802,6 +820,7 @@ namespace MSNPSharp
         public virtual void RenameGroup(ContactGroup group, string newGroupName)
         {
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -813,7 +832,7 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
             {
-                handleCachekeyChange(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
                     group.SetName(newGroupName);
@@ -866,6 +885,7 @@ namespace MSNPSharp
             }
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
+            sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
@@ -879,7 +899,7 @@ namespace MSNPSharp
             sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
             {
                 // Cache key for Sharing service...
-                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
+                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, false);
                 if (!e.Cancelled && e.Error == null)
                 {
                     if (Settings.TraceSwitch.TraceVerbose)
@@ -964,6 +984,7 @@ namespace MSNPSharp
             }
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
+            sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
@@ -977,7 +998,7 @@ namespace MSNPSharp
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
                 // Cache key for Sharing service...
-                handleCachekeyChange(((SharingServiceBinding)service).ServiceHeaderValue, false);
+                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, false);
                 if (!e.Cancelled && e.Error == null)
                 {
                     if (Settings.TraceSwitch.TraceVerbose)
@@ -1041,17 +1062,25 @@ namespace MSNPSharp
         }
 
 
-        private void handleCachekeyChange(ServiceHeader sh, bool isABServiceBinding)
+        private void handleServiceHeader(ServiceHeader sh, bool isABServiceBinding)
         {
-            if (null != sh && sh.CacheKeyChanged)
+            if (null != sh)
             {
-                if (isABServiceBinding)
+                if (sh.CacheKeyChanged)
                 {
-                    nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS ab_cache_key
+                    if (isABServiceBinding)
+                    {
+                        nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS ab_cache_key
+                    }
+                    else
+                    {
+                        nsMessageHandler.Tickets[Iniproperties.SharingServiceCacheKey] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS sh_cache_key
+                    }
                 }
-                else
+
+                if (!String.IsNullOrEmpty(sh.PreferredHostName))
                 {
-                    nsMessageHandler.Tickets[Iniproperties.SharingServiceCacheKey] = sh.CacheKey; // SAVE TO ADDRESS BOOK AS sh_cache_key
+                    preferredHost = sh.PreferredHostName;
                 }
             }
         }
