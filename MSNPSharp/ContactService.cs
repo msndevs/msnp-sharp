@@ -15,6 +15,7 @@ namespace MSNPSharp
     {
         #region Fields
 
+        private int recursiveCall = 0;
         private string preferredHost = "contacts.msn.com";
         private NSMessageHandler nsMessageHandler = null;
         private XMLMembershipList MemberShipList = null;
@@ -64,11 +65,23 @@ namespace MSNPSharp
             }
 
             string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
+            
+            if (recursiveCall != 0)
+            {
+                DeleteRecordFile();
+            }
+
             MemberShipList = new XMLMembershipList(contactfile, true);
             AddressBook = new XMLAddressBook(contactfile, true);
 
             bool msdeltasOnly = false;
             DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+
+            if (MemberShipList.LastChange != DateTime.MinValue)
+            {
+                msdeltasOnly = true;
+                serviceLastChange = MemberShipList.LastChange;
+            }
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
@@ -106,13 +119,25 @@ namespace MSNPSharp
 
             if (e.Error != null)
             {
-                int findMembershipErrorCount = 1 + Convert.ToInt32(e.UserState);
-                OnServiceOperationFailed(sender,
-                        new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
+                if (recursiveCall == 0)
+                {
+                    recursiveCall++;
+                    SynchronizeContactList();
+                    return;
+                }
+                else
+                {
+                    int findMembershipErrorCount = 1 + Convert.ToInt32(e.UserState);
+                    OnServiceOperationFailed(sender,
+                            new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
+                    return;
+                }
             }
 
+            recursiveCall = 0;  //reset
+
             // 1: Memberships (deltasOnly)
-            FindMembershipResultType findMembership = e.Result.FindMembershipResult;
+            FindMembershipResultType findMembership = e.Result.FindMembershipResult == null ? new FindMembershipResultType() : e.Result.FindMembershipResult;
             Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
             Dictionary<int, Service> services = new Dictionary<int, Service>(0);
             Service currentService = new Service();
@@ -192,11 +217,17 @@ namespace MSNPSharp
             // 3: Combine all membership information and save them into a file.
             MemberShipList.CombineMemberRoles(mShips);
             MemberShipList.CombineService(services);
-            MemberShipList.Save();
 
             // 4: Request address book
             bool deltasOnly = false;
             DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+            DateTime dynamicItemLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+            if (AddressBook.LastChange != DateTime.MinValue)
+            {
+                lastChange = AddressBook.LastChange;
+                dynamicItemLastChange = AddressBook.DynamicItemLastChange;
+                deltasOnly = true;
+            }
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
@@ -208,6 +239,8 @@ namespace MSNPSharp
             ABFindAllRequestType request = new ABFindAllRequestType();
             request.deltasOnly = deltasOnly;
             request.lastChange = lastChange;
+            request.dynamicItemLastChange = dynamicItemLastChange;
+            request.dynamicItemView = "Gleam";
 
             abService.ABFindAllCompleted += new ABFindAllCompletedEventHandler(abService_ABFindAllCompleted);
             abService.ABFindAllAsync(request, new object());
@@ -221,8 +254,18 @@ namespace MSNPSharp
             {
                 if (e.Error != null)
                 {
-                    OnServiceOperationFailed(sender,
-                        new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
+                    if (recursiveCall == 0)
+                    {
+                        recursiveCall++;
+                        SynchronizeContactList();
+                        return;
+                    }
+                    else
+                    {
+                        OnServiceOperationFailed(sender,
+                            new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
+                        return;
+                    }
                 }
                 return;
             }
@@ -231,7 +274,7 @@ namespace MSNPSharp
             ABServiceBinding abService = (ABServiceBinding)sender;
             handleServiceHeader(abService.ServiceHeaderValue, true);
 
-            ABFindAllResultType forwardList = e.Result.ABFindAllResult;
+            ABFindAllResultType forwardList = e.Result.ABFindAllResult == null ? new ABFindAllResultType() : e.Result.ABFindAllResult;
 
             // 5: Contact List (deltasOnly)
             Dictionary<string, ContactInfo> diccontactList = new Dictionary<string, ContactInfo>(0);
@@ -327,10 +370,13 @@ namespace MSNPSharp
             {
                 foreach (GroupType groupType in forwardList.groups)
                 {
-                    GroupInfo group = new GroupInfo();
-                    group.Name = groupType.groupInfo.name;
-                    group.Guid = groupType.groupId;
-                    groups[group.Guid] = group;
+                    if (groupType.fDeleted == false)
+                    {
+                        GroupInfo group = new GroupInfo();
+                        group.Name = groupType.groupInfo.name;
+                        group.Guid = groupType.groupId;
+                        groups[group.Guid] = group;
+                    }
                 }
             }
 
@@ -339,15 +385,14 @@ namespace MSNPSharp
             AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
             AddressBook.AddGroupRange(groups);
             AddressBook.AddRange(diccontactList);
-            AddressBook.Save();
 
-            // 7: Create Groups
+            // 8: Create Groups
             foreach (GroupInfo group in AddressBook.Groups.Values)
             {
                 nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
             }
 
-            // 8: Add Contacts
+            // 9: Add Contacts
             foreach (ContactInfo ci in MemberShipList.Values)
             {
                 Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
@@ -394,7 +439,7 @@ namespace MSNPSharp
                 }
             }
 
-            // 8: Fire the ReverseAdd event
+            // 10: Fire the ReverseAdd event
             if (MemberShipList.MemberRoles.ContainsKey(MemberRole.Pending))
             {
                 foreach (ContactInfo ci in MemberShipList.MemberRoles[MemberRole.Pending].Values)
@@ -420,6 +465,10 @@ namespace MSNPSharp
                 nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(str));
             }
 
+            //11: Save MembershipList and AddressBook
+            //Actually AddressBook.Save is ok, only the latest Save() will write data to disk..
+            MemberShipList.Save();
+            AddressBook.Save();
 
         }
 
