@@ -62,11 +62,18 @@ namespace MSNPSharp
 
     public class SingleSignOn
     {
-        string user;
-        string pass;
-        string policy;
-        int authId = 0;
-        List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
+        private string user;
+        private string pass;
+        private string policy;
+        private int authId = 0;
+        private List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
+        private WebProxy webProxy = null;
+
+        public WebProxy WebProxy
+        {
+            get { return webProxy; }
+            set { webProxy = value; }
+        }
 
         public SingleSignOn(string username, string password, string policy)
         {
@@ -108,6 +115,7 @@ namespace MSNPSharp
         public string Authenticate(string nonce, out Dictionary<Iniproperties, string> tickets)
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
+            securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
             securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
