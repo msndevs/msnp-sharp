@@ -1759,6 +1759,10 @@ namespace MSNPSharp
                 string nonce = (string)message.CommandValues[4];
 
                 SingleSignOn sso = new SingleSignOn(Credentials.Account, Credentials.Password, policy);
+                if (ConnectivitySettings != null && ConnectivitySettings.WebProxy != null)
+                {
+                    sso.WebProxy = ConnectivitySettings.WebProxy;
+                }
                 sso.AddDefaultAuths();
                 string response = sso.Authenticate(nonce, out _Tickets);
                 //_Ticket = response;

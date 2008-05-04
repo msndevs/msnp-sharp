@@ -19,7 +19,7 @@ namespace MSNPSharp
         private string preferredHost = "contacts.msn.com";
         private NSMessageHandler nsMessageHandler = null;
         private XMLMembershipList MemberShipList = null;
-
+        private WebProxy webProxy = null;
         internal XMLAddressBook AddressBook = null;
 
         #endregion
@@ -27,6 +27,11 @@ namespace MSNPSharp
         public ContactService(NSMessageHandler nsHandler)
         {
             nsMessageHandler = nsHandler;
+            if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
+            {
+                webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+            }
+
             ServicePointManager.ServerCertificateValidationCallback = delegate
             {
                 return true;
@@ -84,6 +89,7 @@ namespace MSNPSharp
             }
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
+            sharingService.Proxy = webProxy;
             sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -230,6 +236,7 @@ namespace MSNPSharp
             }
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.Timeout = Int32.MaxValue;
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -582,6 +589,7 @@ namespace MSNPSharp
         public virtual void AddNewContact(string account)
         {
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
@@ -638,6 +646,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -680,6 +689,7 @@ namespace MSNPSharp
         internal virtual void AddContactGroup(string groupName)
         {
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -740,6 +750,7 @@ namespace MSNPSharp
             }
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -783,6 +794,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -825,6 +837,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -869,6 +882,7 @@ namespace MSNPSharp
         public virtual void RenameGroup(ContactGroup group, string newGroupName)
         {
             ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
             abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -934,6 +948,7 @@ namespace MSNPSharp
             }
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
+            sharingService.Proxy = webProxy;
             sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -1033,6 +1048,7 @@ namespace MSNPSharp
             }
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
+            sharingService.Proxy = webProxy;
             sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();

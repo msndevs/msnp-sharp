@@ -8,6 +8,7 @@ using MSNPSharp.MSNOIMStoreService;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Web.Services.Protocols;
+using System.Net;
 
 namespace MSNPSharp
 {
@@ -26,10 +27,15 @@ namespace MSNPSharp
     public class OIMService : MSNService
     {
         NSMessageHandler nsMessageHandler = null;
+        WebProxy webProxy = null;
 
         public OIMService(NSMessageHandler nsHandler)
         {
             nsMessageHandler = nsHandler;
+            if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
+            {
+                webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+            }
         }
 
         public NSMessageHandler NSMessageHandler
@@ -44,6 +50,7 @@ namespace MSNPSharp
             {
                 string[] TandP = nsMessageHandler.Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
                 RSIService rsiService = new RSIService();
+                rsiService.Proxy = webProxy;
                 rsiService.Timeout = Int32.MaxValue;
                 rsiService.PassportCookieValue = new PassportCookie();
                 rsiService.PassportCookieValue.t = TandP[1];
@@ -115,6 +122,7 @@ namespace MSNPSharp
                 }
 
                 RSIService rsiService = new RSIService();
+                rsiService.Proxy = webProxy;
                 rsiService.Timeout = Int32.MaxValue;
                 rsiService.PassportCookieValue = new PassportCookie();
                 rsiService.PassportCookieValue.t = TandP[1];
@@ -164,6 +172,7 @@ namespace MSNPSharp
             string[] TandP = nsMessageHandler.Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
+            rsiService.Proxy = webProxy;
             rsiService.Timeout = Int32.MaxValue;
             rsiService.PassportCookieValue = new PassportCookie();
             rsiService.PassportCookieValue.t = TandP[1];
@@ -219,7 +228,7 @@ namespace MSNPSharp
                 string message = messageTemplate.ToString();
 
                 OIMStoreService oimService = new OIMStoreService();
-
+                oimService.Proxy = webProxy;
                 oimService.FromValue = new From();
                 oimService.FromValue.memberName = nsMessageHandler.Owner.Mail;
                 oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(nsMessageHandler.Owner.Name)) + "?=";
