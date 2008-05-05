@@ -448,11 +448,12 @@ namespace MSNPSharp
                 if (!MemberShipList.ContainsKey(ci.Account) && ci.Account != nsMessageHandler.Owner.Mail)
                 {
                     Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
-                    contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
-                    if (ci.Type == ClientType.EmailMember)
-                        contact.ClientCapacities = ci.Capability;
-                    contact.NSMessageHandler = nsMessageHandler;
                     contact.SetClientType(ci.Type);
+                    contact.NSMessageHandler = nsMessageHandler;
+
+                    if (ci.Type == ClientType.EmailMember)
+                        contact.ClientCapacities = ci.Capability;                    
+                    
                     if (ci.IsMessengerUser)
                         contact.SetLists(MSNLists.ForwardList);
                 }
