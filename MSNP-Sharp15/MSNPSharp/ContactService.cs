@@ -88,8 +88,9 @@ namespace MSNPSharp
                 DeleteRecordFile();
             }
 
-            MemberShipList = new XMLMembershipList(contactfile, true);
-            AddressBook = new XMLAddressBook(contactfile, true);
+            bool nocompress = Settings.TraceSwitch.Level == TraceLevel.Verbose;
+            MemberShipList = new XMLMembershipList(contactfile, nocompress);
+            AddressBook = new XMLAddressBook(contactfile, nocompress);
 
             bool msdeltasOnly = false;
             DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
