@@ -14,9 +14,8 @@ namespace MSNPSharp
     public class ContactService : MSNService
     {
         #region Fields
-
+        
         private int recursiveCall = 0;
-        private string preferredHost = "contacts.msn.com";
         private NSMessageHandler nsMessageHandler = null;
         private XMLMembershipList MemberShipList = null;
         private WebProxy webProxy = null;
@@ -47,6 +46,19 @@ namespace MSNPSharp
                 return nsMessageHandler;
             }
         }
+
+        private string PreferredHost
+        {
+            get
+            {
+                if (AddressBook != null && AddressBook.MyProperties != null && AddressBook.MyProperties.ContainsKey("preferredhost") && !String.IsNullOrEmpty(AddressBook.MyProperties["preferredhost"]))
+                {
+                    return AddressBook.MyProperties["preferredhost"];
+                }
+                return "contacts.msn.com";
+            }
+        }
+
 
         #endregion
 
@@ -90,7 +102,7 @@ namespace MSNPSharp
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = webProxy;
-            sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
+            sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             // sharingService.ABApplicationHeaderValue.CacheKey = ""; // XXX TODO GET Saved Sharing Service Iniproperties.SharingServiceCacheKey from Addressbok
@@ -237,7 +249,7 @@ namespace MSNPSharp
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.Timeout = Int32.MaxValue;
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABAuthHeaderValue = new ABAuthHeader();
@@ -590,7 +602,7 @@ namespace MSNPSharp
         {
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
             abService.ABApplicationHeaderValue.IsMigration = false;
@@ -647,7 +659,7 @@ namespace MSNPSharp
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
@@ -690,7 +702,7 @@ namespace MSNPSharp
         {
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -751,7 +763,7 @@ namespace MSNPSharp
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
@@ -795,7 +807,7 @@ namespace MSNPSharp
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -838,7 +850,7 @@ namespace MSNPSharp
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -883,7 +895,7 @@ namespace MSNPSharp
         {
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + preferredHost + "/abservice/abservice.asmx";
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
@@ -949,7 +961,7 @@ namespace MSNPSharp
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = webProxy;
-            sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
+            sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
@@ -1049,7 +1061,7 @@ namespace MSNPSharp
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = webProxy;
-            sharingService.Url = "https://" + preferredHost + "/abservice/SharingService.asmx";
+            sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
@@ -1145,7 +1157,7 @@ namespace MSNPSharp
 
                 if (!String.IsNullOrEmpty(sh.PreferredHostName))
                 {
-                    preferredHost = sh.PreferredHostName;
+                    AddressBook.MyProperties["preferredhost"] = sh.PreferredHostName;
                 }
             }
         }
