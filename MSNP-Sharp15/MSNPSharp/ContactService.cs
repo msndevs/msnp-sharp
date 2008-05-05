@@ -88,7 +88,7 @@ namespace MSNPSharp
                 DeleteRecordFile();
             }
 
-            bool nocompress = Settings.TraceSwitch.Level == TraceLevel.Verbose;
+            bool nocompress = false;// Settings.TraceSwitch.Level == TraceLevel.Verbose;
             MemberShipList = new XMLMembershipList(contactfile, nocompress);
             AddressBook = new XMLAddressBook(contactfile, nocompress);
 
