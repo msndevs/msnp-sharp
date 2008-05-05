@@ -446,6 +446,7 @@
   </xsd:element>
   <xsd:complexType name="MessengerMemberInfo">
     <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PendingAnnotations" type="msnab:Annotation" />
       <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
