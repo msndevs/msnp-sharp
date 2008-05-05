@@ -1880,7 +1880,20 @@ namespace MSNPSharp.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class MessengerMemberInfo {
         
+        private Annotation[] pendingAnnotationsField;
+        
         private string displayNameField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("PendingAnnotations")]
+        public Annotation[] PendingAnnotations {
+            get {
+                return this.pendingAnnotationsField;
+            }
+            set {
+                this.pendingAnnotationsField = value;
+            }
+        }
         
         /// <remarks/>
         public string DisplayName {

@@ -596,11 +596,20 @@ namespace MSNPSharp
         }
 
 
-        /// <summary>
+                /// <summary>
         /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
         /// </summary>
         /// <param name="account">An e-mail adress to add</param>
         public virtual void AddNewContact(string account)
+        {
+            AddNewContact(account, String.Empty);
+        }
+
+        /// <summary>
+        /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
+        /// </summary>
+        /// <param name="account">An e-mail adress to add</param>
+        public virtual void AddNewContact(string account, string invitation)
         {
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
@@ -643,7 +652,11 @@ namespace MSNPSharp
             request.contacts[0].contactInfo.passportName = account;
             request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
             request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
-            request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = account;
+            request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = nsMessageHandler.Owner.Name;
+            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
+            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
+            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = String.IsNullOrEmpty(invitation) ? nsMessageHandler.Owner.Name : invitation;
+
             request.options = new ABContactAddRequestTypeOptions();
             request.options.EnableAllowListManagement = true;
 
