@@ -1727,7 +1727,7 @@ namespace MSNPSharp
 
 
             // send client information back
-            MessageProcessor.SendMessage(new NSMessage("CVR", new string[] { "0x040c", "winnt", "5.1", "i386", "MSNMSGR", "8.5.1288", "msmsgs", Credentials.Account }));
+            MessageProcessor.SendMessage(new NSMessage("CVR", new string[] { "0x040c", "winnt", "5.1", "i386", "MSNMSGR", "8.5.1302", "msmsgs", Credentials.Account }));
         }
 
         /// <summary>
