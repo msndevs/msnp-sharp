@@ -631,9 +631,12 @@ namespace MSNPSharp
                     newcontact.SetGuid(e.Result.ABContactAddResult.guid);
                     newcontact.NSMessageHandler = nsMessageHandler;
                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(newcontact, MSNLists.AllowedList | MSNLists.ForwardList));
+
                     //Add the new contact to our allowed and forward list,or we can't see its state
                     newcontact.OnAllowedList = true;
                     newcontact.OnForwardList = true;
+                    if (newcontact.OnPendingList)
+                        newcontact.OnPendingList = false;
                 }
                 else if (e.Error != null)
                 {

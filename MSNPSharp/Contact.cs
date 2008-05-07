@@ -37,192 +37,209 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
 
-	[Serializable()]
-	public class ContactStatusChangeEventArgs : EventArgs
-	{
-		Contact contact;
-		PresenceStatus oldStatus;
+    [Serializable()]
+    public class ContactStatusChangeEventArgs : EventArgs
+    {
+        Contact contact;
+        PresenceStatus oldStatus;
 
-		public Contact Contact
-		{
-			get { 
-				return contact; 
-			}
-			set { 
-				contact = value;
-			}
-		}
+        public Contact Contact
+        {
+            get
+            {
+                return contact;
+            }
+            set
+            {
+                contact = value;
+            }
+        }
 
-		public PresenceStatus OldStatus
-		{
-			get { 
-				return oldStatus; 
-			}
-			set { 
-				oldStatus = value;
-			}
-		}
+        public PresenceStatus OldStatus
+        {
+            get
+            {
+                return oldStatus;
+            }
+            set
+            {
+                oldStatus = value;
+            }
+        }
 
-		public ContactStatusChangeEventArgs(Contact contact, 
-		                                    PresenceStatus oldStatus)
-		{
-			Contact = contact;
-			OldStatus = oldStatus;
-		}
-	}
+        public ContactStatusChangeEventArgs(Contact contact,
+                                            PresenceStatus oldStatus)
+        {
+            Contact = contact;
+            OldStatus = oldStatus;
+        }
+    }
 
 
-	[Serializable()]
-	public class ContactEventArgs : System.EventArgs
-	{
-		Contact contact;
-		
-		public Contact Contact
-		{
-			get { 
-				return contact ; 
-			}
-			set { 
-				contact = value; 
-			}
-		}
+    [Serializable()]
+    public class ContactEventArgs : System.EventArgs
+    {
+        Contact contact;
 
-		public ContactEventArgs(Contact contact)
-		{
-			Contact = contact;
-		}
-	}
+        public Contact Contact
+        {
+            get
+            {
+                return contact;
+            }
+            set
+            {
+                contact = value;
+            }
+        }
 
-	[Serializable()]
-	public class StatusChangeEventArgs : EventArgs
-	{
-		private PresenceStatus oldStatus;
+        public ContactEventArgs(Contact contact)
+        {
+            Contact = contact;
+        }
+    }
 
-		public PresenceStatus OldStatus
-		{
-			get { 
-				return oldStatus; 
-			}
-			set { 
-				oldStatus = value;
-			}
-		}
+    [Serializable()]
+    public class StatusChangeEventArgs : EventArgs
+    {
+        private PresenceStatus oldStatus;
 
-		public StatusChangeEventArgs(PresenceStatus oldStatus)
-		{
-			OldStatus = oldStatus;
-		}
-	}
+        public PresenceStatus OldStatus
+        {
+            get
+            {
+                return oldStatus;
+            }
+            set
+            {
+                oldStatus = value;
+            }
+        }
 
-	[Serializable()]
-	public class Contact
-	{
-		string guid;
-		string mail;
-		string name;
-		string homePhone;
-		string workPhone;
-		string mobilePhone;
+        public StatusChangeEventArgs(PresenceStatus oldStatus)
+        {
+            OldStatus = oldStatus;
+        }
+    }
+
+    [Serializable()]
+    public class Contact
+    {
+        string guid;
+        string mail;
+        string name;
+        string homePhone;
+        string workPhone;
+        string mobilePhone;
         int oimcount = 1;
 
-		bool hasBlog;
+        bool hasBlog;
         ClientType clienttype = ClientType.PassportMember;
-		
-		[NonSerialized]
-		IMessageHandler nsMessageHandler;
 
-		ArrayList contactGroups = new ArrayList ();
-		MSNLists lists;	
-		PresenceStatus status = PresenceStatus.Offline;	
+        [NonSerialized]
+        IMessageHandler nsMessageHandler;
 
-		DisplayImage displayImage = null;
-		
-		PersonalMessage personalMessage;
+        ArrayList contactGroups = new ArrayList();
+        MSNLists lists;
+        PresenceStatus status = PresenceStatus.Offline;
 
-		Hashtable emoticons = null;
+        DisplayImage displayImage = null;
 
-		ClientCapacities clientCapacities = 0;
+        PersonalMessage personalMessage;
 
-		bool mobileDevice = false;
-		bool mobileAccess = false;
+        Hashtable emoticons = null;
 
-		object clientData;
+        ClientCapacities clientCapacities = 0;
 
-		public delegate void ContactChangedEventHandler(object sender, EventArgs e);
-		public delegate void StatusChangedEventHandler(object sender, StatusChangeEventArgs e);
-		public event ContactChangedEventHandler ScreenNameChanged;
-		public event ContactChangedEventHandler PersonalMessageChanged;
-		public event ContactGroupChangedEventHandler ContactGroupAdded;
-		public event ContactGroupChangedEventHandler ContactGroupRemoved;
-		public event ContactChangedEventHandler ContactBlocked;
-		public event ContactChangedEventHandler ContactUnBlocked;
-		public event ContactChangedEventHandler ContactOnline;
-		public event StatusChangedEventHandler ContactOffline;
-		public event StatusChangedEventHandler StatusChanged;
+        bool mobileDevice = false;
+        bool mobileAccess = false;
+
+        object clientData;
+
+        public delegate void ContactChangedEventHandler(object sender, EventArgs e);
+        public delegate void StatusChangedEventHandler(object sender, StatusChangeEventArgs e);
+        public event ContactChangedEventHandler ScreenNameChanged;
+        public event ContactChangedEventHandler PersonalMessageChanged;
+        public event ContactGroupChangedEventHandler ContactGroupAdded;
+        public event ContactGroupChangedEventHandler ContactGroupRemoved;
+        public event ContactChangedEventHandler ContactBlocked;
+        public event ContactChangedEventHandler ContactUnBlocked;
+        public event ContactChangedEventHandler ContactOnline;
+        public event StatusChangedEventHandler ContactOffline;
+        public event StatusChangedEventHandler StatusChanged;
 
 
-		protected Contact()
-		{
-		}
-		
-		public bool	MobileDevice
-		{
-			get { 
-				return mobileDevice; 
-			}
-		}
+        protected Contact()
+        {
+        }
 
-		public bool	MobileAccess
-		{
-			get { 
-				return mobileAccess; 
-			}
-		}
+        public bool MobileDevice
+        {
+            get
+            {
+                return mobileDevice;
+            }
+        }
 
-		public string HomePhone 
-		{ 
-			get { 
-				return homePhone; 
-			} 
-		}
-		
-		public string WorkPhone 
-		{ 
-			get { 
-				return workPhone; 
-			} 
-		}
-		
-		public string MobilePhone 
-		{ 
-			get { 
-				return mobilePhone; 
-			} 
-		}
+        public bool MobileAccess
+        {
+            get
+            {
+                return mobileAccess;
+            }
+        }
 
-		public ClientCapacities ClientCapacities
-		{
-			get { 
-				return clientCapacities; 
-			}
-			set { 
-				clientCapacities = value;
-			}
-		}
+        public string HomePhone
+        {
+            get
+            {
+                return homePhone;
+            }
+        }
 
-		public string Mail
-		{
-			get { 
-				return mail;  
-			}
-		}
+        public string WorkPhone
+        {
+            get
+            {
+                return workPhone;
+            }
+        }
 
-		public string Name
-		{
-			get { 
-				return name;  
-			}
-		}
+        public string MobilePhone
+        {
+            get
+            {
+                return mobilePhone;
+            }
+        }
+
+        public ClientCapacities ClientCapacities
+        {
+            get
+            {
+                return clientCapacities;
+            }
+            set
+            {
+                clientCapacities = value;
+            }
+        }
+
+        public string Mail
+        {
+            get
+            {
+                return mail;
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return name;
+            }
+        }
 
         internal int OIMCount
         {
@@ -243,238 +260,251 @@ namespace MSNPSharp
 
         public ClientType ClientType
         {
-            get { return clienttype; }
+            get
+            {
+                return clienttype;
+            }
         }
-		
-		public PersonalMessage PersonalMessage
-		{
-			get { 
-				return personalMessage; 
-			}
-		}
-		
-		public string Guid
-		{
-			get { 
-				return guid; 
-			}
-		}
-		
-		public PresenceStatus Status
-		{
-			get { 
-				return status; 
-			}
-		}
 
-		public bool Online
-		{
-			get { 
-				return status != PresenceStatus.Offline; 
-			}
-		}
+        public PersonalMessage PersonalMessage
+        {
+            get
+            {
+                return personalMessage;
+            }
+        }
 
-		public bool HasBlog
-		{
-			get { 
-				return hasBlog; 
-			}
-		}
+        public string Guid
+        {
+            get
+            {
+                return guid;
+            }
+        }
 
-		public NSMessageHandler NSMessageHandler
-		{
-			get { 
-				return (NSMessageHandler)nsMessageHandler; 
-			}
-			set { 
-				nsMessageHandler = value;
-			}
-		}
+        public PresenceStatus Status
+        {
+            get
+            {
+                return status;
+            }
+        }
 
-		public DisplayImage DisplayImage
-		{
-			get { 
-				return displayImage; 
-			}
-		}
+        public bool Online
+        {
+            get
+            {
+                return status != PresenceStatus.Offline;
+            }
+        }
 
-		public Hashtable Emoticons
-		{
-			get 
-			{ 
-				if(emoticons == null)
-					emoticons = new Hashtable();
+        public bool HasBlog
+        {
+            get
+            {
+                return hasBlog;
+            }
+        }
 
-				return emoticons; 
-			}
-		}
+        public NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return (NSMessageHandler)nsMessageHandler;
+            }
+            set
+            {
+                nsMessageHandler = value;
+            }
+        }
 
-		public object ClientData
-		{
-			get { 
-				return clientData; 
-			}
-			set { 
-				clientData = value;
-			}
-		}
+        public DisplayImage DisplayImage
+        {
+            get
+            {
+                return displayImage;
+            }
+        }
+
+        public Hashtable Emoticons
+        {
+            get
+            {
+                if (emoticons == null)
+                    emoticons = new Hashtable();
+
+                return emoticons;
+            }
+        }
+
+        public object ClientData
+        {
+            get
+            {
+                return clientData;
+            }
+            set
+            {
+                clientData = value;
+            }
+        }
 
 
-		#region Internal setters
-		internal void SetName(string newName)
-		{
-			if(name != newName)
-			{			
-				name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);
-				if(ScreenNameChanged != null)
-				{
-					// notify the user we changed our name
-					ScreenNameChanged(this, new EventArgs());
-				}
-			}
-		}
-		
-		internal void SetPersonalMessage(PersonalMessage newpmessage)
-		{
-			if(personalMessage != newpmessage)
-			{
-				personalMessage = newpmessage;
-				if(PersonalMessageChanged != null)
-				{
-					// notify the user we changed our display message
-					PersonalMessageChanged(this, new EventArgs());
-				}
-			}
-		}
-		
-		internal void SetHasBlog (bool hasblog)
-		{
-			this.hasBlog = hasblog;
-		}
-		
-		internal void SetGuid (string guid)
-		{
-			this.guid = guid;
-		}
+        #region Internal setters
+        internal void SetName(string newName)
+        {
+            if (name != newName)
+            {
+                name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);
+                if (ScreenNameChanged != null)
+                {
+                    // notify the user we changed our name
+                    ScreenNameChanged(this, new EventArgs());
+                }
+            }
+        }
 
-		internal void SetLists(MSNLists lists)
-		{
-			this.lists = lists;
-		}
+        internal void SetPersonalMessage(PersonalMessage newpmessage)
+        {
+            if (personalMessage != newpmessage)
+            {
+                personalMessage = newpmessage;
+                if (PersonalMessageChanged != null)
+                {
+                    // notify the user we changed our display message
+                    PersonalMessageChanged(this, new EventArgs());
+                }
+            }
+        }
 
-		internal void SetMobileDevice(bool enabled)
-		{
-			mobileDevice = enabled;
-		}
+        internal void SetHasBlog(bool hasblog)
+        {
+            this.hasBlog = hasblog;
+        }
 
-		internal void SetMobileAccess(bool enabled)
-		{
-			mobileAccess = enabled;
-		}
+        internal void SetGuid(string guid)
+        {
+            this.guid = guid;
+        }
 
-		internal void SetHomePhone(string number)
-		{
-			homePhone = number;
-		}
+        internal void SetLists(MSNLists lists)
+        {
+            this.lists = lists;
+        }
 
-		internal void SetMobilePhone(string number)
-		{
-			mobilePhone = number;
-		}
+        internal void SetMobileDevice(bool enabled)
+        {
+            mobileDevice = enabled;
+        }
 
-		internal void SetWorkPhone(string number)
-		{
-			workPhone = number;
-		}
+        internal void SetMobileAccess(bool enabled)
+        {
+            mobileAccess = enabled;
+        }
 
-		internal void SetStatus(PresenceStatus newStatus)
-		{
-			if(status != newStatus)
-			{
-				PresenceStatus oldStatus = this.status;
-				status = newStatus;
+        internal void SetHomePhone(string number)
+        {
+            homePhone = number;
+        }
 
-				// raise an event									
-				if(StatusChanged != null)
-					StatusChanged(this, new StatusChangeEventArgs(oldStatus));
+        internal void SetMobilePhone(string number)
+        {
+            mobilePhone = number;
+        }
 
-				// raise the online/offline events
-				if(oldStatus == PresenceStatus.Offline && ContactOnline != null)
-					ContactOnline(this, new EventArgs());
-				
-				if(newStatus == PresenceStatus.Offline && ContactOffline != null)
-					ContactOffline(this, new StatusChangeEventArgs(oldStatus));
-			}
-		}
+        internal void SetWorkPhone(string number)
+        {
+            workPhone = number;
+        }
 
-		internal void AddContactToGroup(ContactGroup group)
-		{
-			if(contactGroups.Contains(group))
-		    	return;
+        internal void SetStatus(PresenceStatus newStatus)
+        {
+            if (status != newStatus)
+            {
+                PresenceStatus oldStatus = this.status;
+                status = newStatus;
 
-			contactGroups.Add(group);
+                // raise an event									
+                if (StatusChanged != null)
+                    StatusChanged(this, new StatusChangeEventArgs(oldStatus));
 
-			if(ContactGroupAdded != null)
-				ContactGroupAdded (this, new ContactGroupEventArgs (group));
-		}
+                // raise the online/offline events
+                if (oldStatus == PresenceStatus.Offline && ContactOnline != null)
+                    ContactOnline(this, new EventArgs());
 
-		internal void RemoveContactFromGroup(ContactGroup group)
-		{
-			if(contactGroups.Contains(group))
-			{
-				contactGroups.Remove(group);
+                if (newStatus == PresenceStatus.Offline && ContactOffline != null)
+                    ContactOffline(this, new StatusChangeEventArgs(oldStatus));
+            }
+        }
 
-				if(ContactGroupRemoved != null)
-					ContactGroupRemoved (this, new ContactGroupEventArgs (group));
-			}
-		}
-		
-		internal void AddToList(MSNLists list)
-		{
-			if(list == MSNLists.BlockedList && !Blocked)
-			{
-				lists |= MSNLists.BlockedList;
-				if(ContactBlocked != null)
-					ContactBlocked(this, new EventArgs());
-				
-			}
-			else
-			{
-				lists |= list;
-			}
-		}
+        internal void AddContactToGroup(ContactGroup group)
+        {
+            if (contactGroups.Contains(group))
+                return;
 
-		internal void RemoveFromList(MSNLists list)
-		{
-			if(list == MSNLists.BlockedList && Blocked)
-			{
-				lists ^= MSNLists.BlockedList;
-				if(ContactUnBlocked != null)
-					ContactUnBlocked(this, new EventArgs());
-			}
-			else
-			{				
-				lists ^= list;
+            contactGroups.Add(group);
 
-				// set this contact to offline when it is neither on the allow list or on the forward list
-				if(OnForwardList == false && OnAllowedList == false)
-				{
-					status = PresenceStatus.Offline;
-					//also clear the groups, becase msn loose them when removed from the two lists
-					contactGroups.Clear ();	
-				}
-			}
-		}
+            if (ContactGroupAdded != null)
+                ContactGroupAdded(this, new ContactGroupEventArgs(group));
+        }
 
-		internal void SetMail(string account)
-		{
-			mail = account;
-		}
+        internal void RemoveContactFromGroup(ContactGroup group)
+        {
+            if (contactGroups.Contains(group))
+            {
+                contactGroups.Remove(group);
 
-		internal void SetUserDisplay(DisplayImage userDisplay)
-		{
-			displayImage = userDisplay;
-		}
+                if (ContactGroupRemoved != null)
+                    ContactGroupRemoved(this, new ContactGroupEventArgs(group));
+            }
+        }
+
+        internal void AddToList(MSNLists list)
+        {
+            if (list == MSNLists.BlockedList && !Blocked)
+            {
+                lists |= MSNLists.BlockedList;
+                if (ContactBlocked != null)
+                    ContactBlocked(this, new EventArgs());
+
+            }
+            else
+            {
+                lists |= list;
+            }
+        }
+
+        internal void RemoveFromList(MSNLists list)
+        {
+            if (list == MSNLists.BlockedList && Blocked)
+            {
+                lists ^= MSNLists.BlockedList;
+                if (ContactUnBlocked != null)
+                    ContactUnBlocked(this, new EventArgs());
+            }
+            else
+            {
+                lists ^= list;
+
+                // set this contact to offline when it is neither on the allow list or on the forward list
+                if (OnForwardList == false && OnAllowedList == false)
+                {
+                    status = PresenceStatus.Offline;
+                    //also clear the groups, becase msn loose them when removed from the two lists
+                    contactGroups.Clear();
+                }
+            }
+        }
+
+        internal void SetMail(string account)
+        {
+            mail = account;
+        }
+
+        internal void SetUserDisplay(DisplayImage userDisplay)
+        {
+            displayImage = userDisplay;
+        }
 
         internal void RemoveFromList()
         {
@@ -490,70 +520,74 @@ namespace MSNPSharp
             clienttype = type;
         }
 
-		#endregion
+        #endregion
 
-		#region Public setters
+        #region Public setters
 
-		public ArrayList ContactGroups
-		{
-			get {
-				return contactGroups;
-			}
-		}
-		
-		public bool HasGroup(ContactGroup group)
-		{
-			return contactGroups.Contains (group);
-		}
+        public ArrayList ContactGroups
+        {
+            get
+            {
+                return contactGroups;
+            }
+        }
+
+        public bool HasGroup(ContactGroup group)
+        {
+            return contactGroups.Contains(group);
+        }
 
         internal bool HasLists(MSNLists msnlists)
         {
             return ((lists & msnlists) == msnlists);
         }
 
-		public void UpdateScreenName()
-		{
-			if(NSMessageHandler != null)
-			{
-				NSMessageHandler.RequestScreenName(this);
-			}
-			else
-				throw new MSNPSharpException("No valid message handler object");
-		}
+        public void UpdateScreenName()
+        {
+            if (NSMessageHandler != null)
+            {
+                NSMessageHandler.RequestScreenName(this);
+            }
+            else
+                throw new MSNPSharpException("No valid message handler object");
+        }
 
-		public bool Blocked
-		{
-			get { 
-				return (lists & MSNLists.BlockedList) > 0; 
-			}
-			set 
-			{ 
-				if(NSMessageHandler != null)
-				{
-					if(value == true)
-						NSMessageHandler.ContactService.BlockContact(this);
-					else
+        public bool Blocked
+        {
+            get
+            {
+                return (lists & MSNLists.BlockedList) > 0;
+            }
+            set
+            {
+                if (NSMessageHandler != null)
+                {
+                    if (value == true)
+                        NSMessageHandler.ContactService.BlockContact(this);
+                    else
                         NSMessageHandler.ContactService.UnBlockContact(this);
-				}
-			}
-		}
+                }
+            }
+        }
 
-		public bool OnBlockedList
-		{
-			get { 
-				return ((lists & MSNLists.BlockedList) == MSNLists.BlockedList); 
-			}			
-		}
+        public bool OnBlockedList
+        {
+            get
+            {
+                return ((lists & MSNLists.BlockedList) == MSNLists.BlockedList);
+            }
+        }
 
-		public bool OnForwardList
-		{
-			get { 
-				return ((lists & MSNLists.ForwardList) == MSNLists.ForwardList); 
-			}
-			set 
-			{ 
-				if(value != OnForwardList)
-				{
+        public bool OnForwardList
+        {
+            get
+            {
+                return ((lists & MSNLists.ForwardList) == MSNLists.ForwardList);
+            }
+            set
+            {
+                if (value != OnForwardList)
+                {
                     if (value)
                     {
                         NSMessageHandler.ContactService.AddContactToList(this, MSNLists.ForwardList);
@@ -564,19 +598,20 @@ namespace MSNPSharp
                         NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.ForwardList);
                         RemoveFromList(MSNLists.ForwardList);
                     }
-				}					
-			}
-		}
+                }
+            }
+        }
 
-		public bool OnAllowedList
-		{
-			get { 
-				return ((lists & MSNLists.AllowedList) == MSNLists.AllowedList); 
-			}
-			set 
-			{ 
-				if(value != OnAllowedList)
-				{
+        public bool OnAllowedList
+        {
+            get
+            {
+                return ((lists & MSNLists.AllowedList) == MSNLists.AllowedList);
+            }
+            set
+            {
+                if (value != OnAllowedList)
+                {
                     if (value)
                     {
                         NSMessageHandler.ContactService.AddContactToList(this, MSNLists.AllowedList);
@@ -587,30 +622,40 @@ namespace MSNPSharp
                         NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.AllowedList);
                         RemoveFromList(MSNLists.AllowedList);
                     }
-				}					
-			}
-		}
+                }
+            }
+        }
 
-		public bool OnReverseList
-		{
-			get { 
-				return ((lists & MSNLists.ReverseList) == MSNLists.ReverseList); 
-			}
-		}
-		
-		
-		public bool OnPendingList
-		{
-			get { 
-				return ((lists & MSNLists.PendingList) == MSNLists.PendingList); 
-			}
-		}
+        public bool OnReverseList
+        {
+            get
+            {
+                return ((lists & MSNLists.ReverseList) == MSNLists.ReverseList);
+            }
+        }
 
-		#endregion
 
-		override public int GetHashCode()
-		{
-			return mail.GetHashCode();
-		}
-	}
+        public bool OnPendingList
+        {
+            get
+            {
+                return ((lists & MSNLists.PendingList) == MSNLists.PendingList);
+            }
+            set
+            {
+                if (value != OnPendingList && value == false)
+                {
+                    NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.PendingList);
+                    RemoveFromList(MSNLists.PendingList);
+                }
+            }
+        }
+
+        #endregion
+
+        override public int GetHashCode()
+        {
+            return mail.GetHashCode();
+        }
+    }
 }

@@ -96,6 +96,8 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline += new ContactChangedEventHandler(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new ContactChangedEventHandler(Nameserver_ContactOffline);
 
+            messenger.Nameserver.ReverseAdded += new ContactChangedEventHandler(Nameserver_ReverseAdded);
+
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             if (toolStripSortByStatus.Checked)
@@ -600,10 +602,60 @@ namespace MSNPSharpClient
 
         void Nameserver_OIMReceived(object sender, OIMReceivedEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                Invoke(new OIMReceivedEventHandler(Nameserver_OIMReceived), sender, e);
+                return;
+            }
+
             if (DialogResult.Yes == MessageBox.Show(e.ReceivedTime + ":\r\n" + e.Message + "\r\n\r\n\r\nClick yes, if you want to receive this message next time you login.", "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel))
             {
                 e.IsRead = false;
             }
+        }
+
+        void Nameserver_ReverseAdded(object sender, ContactEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new ContactChangedEventHandler(Nameserver_ReverseAdded), sender, e);
+                return;
+            }
+
+            Contact contact = e.Contact;
+            ReverseAddedForm form = new ReverseAddedForm(contact);
+            form.FormClosed += delegate(object f, FormClosedEventArgs fce)
+            {
+                form = f as ReverseAddedForm;
+                if (DialogResult.OK == form.DialogResult)
+                {
+                    if (form.AddToContactList)
+                    {
+                        contact.NSMessageHandler.ContactService.AddNewContact(contact.Mail);
+                        if (form.Blocked)
+                        {
+                            contact.Blocked = true;
+                        }
+                        contact.OnPendingList = false;
+                    }
+                    /*
+                else if (form.Blocked)
+                {
+                    contact.Blocked = true;
+                    contact.OnPendingList = false;
+                }
+                else
+                {
+                    contact.OnAllowedList = true;
+                    contact.OnPendingList = false;
+                }
+                * */
+
+
+                }
+                return;
+            };
+            form.Show(this);
         }
 
 

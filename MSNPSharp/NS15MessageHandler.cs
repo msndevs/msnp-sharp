@@ -1032,6 +1032,7 @@ namespace MSNPSharp
                                     newcontact.SetName(displayName);
                                     newcontact.SetClientType(type);
                                     newcontact.SetLists(MSNLists.ReverseList);
+                                    newcontact.NSMessageHandler = this;
                                     OnReverseAdded(newcontact);
                                 }
 
