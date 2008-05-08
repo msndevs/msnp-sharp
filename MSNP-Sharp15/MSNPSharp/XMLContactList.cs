@@ -106,8 +106,14 @@
         private ClientCapacities capability = 0;
         public ClientCapacities Capability
         {
-            get { return capability; }
-            set { capability = value; }
+            get
+            {
+                return capability;
+            }
+            set
+            {
+                capability = value;
+            }
         }
 
         private List<string> groups = new List<string>(0);
@@ -251,7 +257,8 @@
         {
         }
 
-        public XMLMembershipList(string filename, bool nocompress) : base(nocompress)
+        public XMLMembershipList(string filename, bool nocompress)
+            : base(nocompress)
         {
             fileName = filename;
             LoadFromFile(filename);
@@ -369,11 +376,16 @@
             }
             membershipRoot.AppendChild(serviceRoot);
 
-            int[] roleArray = (int[])Enum.GetValues(typeof(MemberRole));
-            foreach (int role in roleArray)
+            if (membersRoot != null)
             {
-                if (rolelists.ContainsKey((MemberRole)role))
-                    membersRoot.AppendChild(GetList((MemberRole)role));
+                int[] roleArray = (int[])Enum.GetValues(typeof(MemberRole));
+                foreach (int role in roleArray)
+                {
+                    if (rolelists.ContainsKey((MemberRole)role))
+                    {
+                        membersRoot.AppendChild(GetList((MemberRole)role));
+                    }
+                }
             }
 
             SaveToHiddenMCL(filename);
@@ -399,13 +411,11 @@
         private XmlNode GetList(MemberRole memberrole)
         {
             XmlNode listroot = CreateNode(XMLContactListTags.Membership.ToString(), null);
-
             listroot.AppendChild(CreateNode(MembershipsChildNodes.MemberRole.ToString(), memberrole.ToString()));
             XmlNode membersRoot = CreateNode(MembershipsChildNodes.Members.ToString(), null);
-
             foreach (ContactInfo cinfo in rolelists[memberrole].Values)
             {
-                XmlNode memberNode = CreateNode(XMLContactListTags.Members.ToString(), null);
+                XmlNode memberNode = CreateNode(XMLContactListTags.Member.ToString(), null);
                 if (cinfo != null/* && (cinfo.msnlist & list) == list*/)
                 {
                     memberNode.AppendChild(CreateNode(MemberChildNodes.MembershipId.ToString(), cinfo.MembershipId.ToString()));
@@ -420,6 +430,7 @@
                 }
             }
             listroot.AppendChild(membersRoot);
+
             return listroot;
         }
     }
@@ -441,7 +452,8 @@
         {
         }
 
-        public XMLAddressBook(string filename, bool nocompress) : base(nocompress)
+        public XMLAddressBook(string filename, bool nocompress)
+            : base(nocompress)
         {
             fileName = filename;
             LoadFromFile(filename);

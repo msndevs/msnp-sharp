@@ -2645,7 +2645,9 @@ namespace MSNPSharp
                 hdr["kv"],
                 hdr["MSPAuth"],
                 ip,
-                clientPort);
+                clientPort,
+                hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
+            );
 
             if (IPAddress.None != ip)
             {
