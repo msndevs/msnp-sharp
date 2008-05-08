@@ -343,13 +343,11 @@ namespace MSNPSharp
 
                         if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
                         {
-                            if (props.Count == 0)   //The first time login, no settings saved
+                            if (ci.DisplayName == nsMessageHandler.Owner.Mail && nsMessageHandler.Owner.Name != String.Empty)
                             {
-                                props["mbea"] = "0";
-                                props["gtc"] = "1";
-                                props["blp"] = "0";
-                                props["roamliveproperties"] = "1";
+                                ci.DisplayName = nsMessageHandler.Owner.Name;
                             }
+
                             props["displayname"] = ci.DisplayName;
                             if (null != contactType.contactInfo.annotations)
                             {
@@ -361,6 +359,18 @@ namespace MSNPSharp
                                     props[name] = value;
                                 }
                             }
+
+                            if (!props.ContainsKey("mbea"))
+                                props["mbea"] = "0";
+
+                            if (!props.ContainsKey("gtc"))
+                                props["gtc"] = "1";
+
+                            if (!props.ContainsKey("blp"))
+                                props["blp"] = "0";
+
+                            if (!props.ContainsKey("roamliveproperties"))
+                                props["roamliveproperties"] = "1";
                         }
 
                         string[] groupids = new string[0];
@@ -413,33 +423,36 @@ namespace MSNPSharp
             }
 
             // 9: Add Contacts
-            foreach (ContactInfo ci in MemberShipList.Values)
+            if (MemberShipList.Count > 0)
             {
-                Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
-                contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
-                contact.NSMessageHandler = nsMessageHandler;
-                contact.SetClientType(MemberShipList[ci.Account].Type);
-
-                if (AddressBook.ContainsKey(ci.Account))
+                foreach (ContactInfo ci in MemberShipList.Values)
                 {
-                    ContactInfo abci = AddressBook[ci.Account];
-                    contact.SetGuid(abci.Guid);
+                    Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
+                    contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
+                    contact.NSMessageHandler = nsMessageHandler;
+                    contact.SetClientType(MemberShipList[ci.Account].Type);
 
-                    foreach (string groupId in abci.Groups)
+                    if (AddressBook.ContainsKey(ci.Account))
                     {
-                        contact.ContactGroups.Add(nsMessageHandler.ContactGroups[groupId]);
-                    }
+                        ContactInfo abci = AddressBook[ci.Account];
+                        contact.SetGuid(abci.Guid);
 
-                    if (abci.Type == ClientType.EmailMember)
-                    {
-                        contact.ClientCapacities = abci.Capability;
-                    }
+                        foreach (string groupId in abci.Groups)
+                        {
+                            contact.ContactGroups.Add(nsMessageHandler.ContactGroups[groupId]);
+                        }
 
-                    contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0) ? ci.DisplayName : abci.DisplayName);
+                        if (abci.Type == ClientType.EmailMember)
+                        {
+                            contact.ClientCapacities = abci.Capability;
+                        }
 
-                    if (abci.IsMessengerUser)
-                    {
-                        contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+                        contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0) ? ci.DisplayName : abci.DisplayName);
+
+                        if (abci.IsMessengerUser)
+                        {
+                            contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+                        }
                     }
                 }
             }
@@ -490,7 +503,6 @@ namespace MSNPSharp
             //Actually AddressBook.Save is ok, only the latest Save() will write data to disk..
             MemberShipList.Save();
             AddressBook.Save();
-
         }
 
         internal string[] ConstructADLString(Dictionary<string, ContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)

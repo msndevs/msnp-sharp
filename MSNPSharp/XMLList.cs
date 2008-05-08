@@ -15,6 +15,7 @@ namespace MSNPSharp
         MembershipList,
         AddressBook,
         Members,
+        Member,
         groups,
         Group,
         contacts,
