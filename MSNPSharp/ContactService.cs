@@ -14,7 +14,7 @@ namespace MSNPSharp
     public class ContactService : MSNService
     {
         #region Fields
-        
+
         private int recursiveCall = 0;
         private NSMessageHandler nsMessageHandler = null;
         private XMLMembershipList MemberShipList = null;
@@ -82,7 +82,7 @@ namespace MSNPSharp
             }
 
             string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
-            
+
             if (recursiveCall != 0)
             {
                 DeleteRecordFile();
@@ -466,8 +466,8 @@ namespace MSNPSharp
                     contact.NSMessageHandler = nsMessageHandler;
 
                     if (ci.Type == ClientType.EmailMember)
-                        contact.ClientCapacities = ci.Capability;                    
-                    
+                        contact.ClientCapacities = ci.Capability;
+
                     if (ci.IsMessengerUser)
                         contact.SetLists(MSNLists.ForwardList);
                 }
@@ -608,7 +608,7 @@ namespace MSNPSharp
         }
 
 
-                /// <summary>
+        /// <summary>
         /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
         /// </summary>
         /// <param name="account">An e-mail adress to add</param>
@@ -646,6 +646,8 @@ namespace MSNPSharp
                     //Add the new contact to our allowed and forward list,or we can't see its state
                     newcontact.OnAllowedList = true;
                     newcontact.OnForwardList = true;
+                    if (newcontact.OnPendingList)
+                        newcontact.OnPendingList = false;
                 }
                 else if (e.Error != null)
                 {
