@@ -114,11 +114,14 @@ namespace MSNPSharp
             request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
             request.serviceFilter.Types = new ServiceFilterType[]
             { 
-                ServiceFilterType.Messenger,
+                ServiceFilterType.Messenger
+            /*
                 ServiceFilterType.Invitation,
                 ServiceFilterType.SocialNetwork,
                 ServiceFilterType.Space,
                 ServiceFilterType.Profile
+             * */
+
             };
             request.deltasOnly = msdeltasOnly;
             request.lastChange = serviceLastChange;
@@ -636,13 +639,50 @@ namespace MSNPSharp
         /// <param name="account">An e-mail adress to add</param>
         public virtual void AddNewContact(string account, string invitation)
         {
+
+            // THE FIRST TIME ADDING
+            /* 1- contact add with ContactSave
+             * 2- Send ADL AL command without membership request
+             * 3- Send ADL FL command
+             * 4- Send FQY command
+             * 5- abRequest("ContactSave")
+             */
+
+            // FOR PENDING
+            /* 1- ADL AL
+             * 2- contact add with ContactMsgrAPI
+             * 3- adl fl
+             * 4- delete membership pending ContactMsgrAPI
+             * 5- AddMember, ContactMsgrAPI, Reverse
+             * 6- abrequest(ContactMsgrAPI)
+             */
+
+            account = account.ToLower(CultureInfo.InvariantCulture);
+            bool pendinguser = MSNLists.PendingList == (MemberShipList.GetMSNLists(account) & MSNLists.PendingList);
+
+            if (pendinguser)
+            {
+                string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
+                payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
+            }
+
+            if (false && AddressBook.ContainsKey(account))
+            {
+                Contact newcontact = nsMessageHandler.ContactList.GetContact(account);
+                newcontact.OnPendingList = false;
+                return;
+            }
+
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
             abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
             abService.ABApplicationHeaderValue.IsMigration = false;
-            abService.ABApplicationHeaderValue.PartnerScenario = "ContactSave";
+            abService.ABApplicationHeaderValue.PartnerScenario = pendinguser ? "ContactMsgrAPI" : "ContactSave";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -657,30 +697,40 @@ namespace MSNPSharp
                     newcontact.NSMessageHandler = nsMessageHandler;
                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(newcontact, MSNLists.AllowedList | MSNLists.ForwardList));
 
-                    // 1: Send ADL AL command without membership request...
-                    string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
-                    payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                    payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
-                    newcontact.AddToList(MSNLists.AllowedList);
+                    if (pendinguser)
+                    {
+                        newcontact.AddToList(MSNLists.AllowedList);
+                    }
+                    else
+                    {
+                        // 1: Send ADL AL command without membership request...
+                        string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
+                        payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                        payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
+                        newcontact.AddToList(MSNLists.AllowedList);
+                    }
 
-                    // 2: Send ADL FL command...
+                    // Send ADL FL command...
                     newcontact.OnForwardList = true;
 
-                    // 3: Send FQY command
-                    payload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
-                    payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                    payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("FQY", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
-
-                    // 4: ContactSave request
-                    abRequest("ContactSave");
-
-                    // 5: If user is pending, we accept invitation, delete from Pending list.
-                    if (newcontact.OnPendingList)
+                    if (pendinguser)
+                    {
                         newcontact.OnPendingList = false;
+                        AddContactToList(newcontact, MSNLists.ReverseList);
+                        abRequest("ContactMsgrAPI");
+                    }
+                    else
+                    {
+                        // 3: Send FQY command
+                        string payload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
+                        payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                        payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("FQY", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
+                        abRequest("ContactSave");
+                    }
                 }
                 else if (e.Error != null)
                 {
@@ -700,10 +750,13 @@ namespace MSNPSharp
             request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
             request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
             request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = nsMessageHandler.Owner.Name;
-            // request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
-            // request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
-            // request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = String.IsNullOrEmpty(invitation) ? nsMessageHandler.Owner.Name : invitation;
 
+            if (pendinguser == false)
+            {
+                request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
+                request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
+                request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = String.IsNullOrEmpty(invitation) ? nsMessageHandler.Owner.Name : invitation;
+            }
             request.options = new ABContactAddRequestTypeOptions();
             request.options.EnableAllowListManagement = true;
 
@@ -1028,7 +1081,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
             sharingService.ABApplicationHeaderValue.IsMigration = false;
-            sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
+            sharingService.ABApplicationHeaderValue.PartnerScenario = (list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock";
             sharingService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.SharingServiceCacheKey];
             sharingService.ABApplicationHeaderValue.BrandId = nsMessageHandler.Tickets[Iniproperties.BrandID];
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1128,7 +1181,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
             sharingService.ABApplicationHeaderValue.IsMigration = false;
-            sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
+            sharingService.ABApplicationHeaderValue.PartnerScenario = (list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock";
             sharingService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.SharingServiceCacheKey];
             sharingService.ABApplicationHeaderValue.BrandId = nsMessageHandler.Tickets[Iniproperties.BrandID];
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
@@ -1174,8 +1227,8 @@ namespace MSNPSharp
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = GetMemberRole(list);
-            BaseMember member = new BaseMember();
 
+            BaseMember member = new BaseMember();
 
             /* If you cannot determind the client type, just use a BaseMember and specify the membershipId.
              * The offical client just do so. But once the contact is removed and added to another rolelist,its membershipId also changed.
@@ -1195,6 +1248,8 @@ namespace MSNPSharp
                 EmailMember emailMember = member as EmailMember;
                 emailMember.Email = contact.Mail;
             }
+            //member.MembershipId = MemberShipList.MemberRoles[memberShip.MemberRole][contact.Mail].MembershipId.ToString();
+
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
