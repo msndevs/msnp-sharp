@@ -279,7 +279,7 @@ namespace MSNPSharp
             request.dynamicItemView = "Gleam";
 
             abService.ABFindAllCompleted += new ABFindAllCompletedEventHandler(abService_ABFindAllCompleted);
-            abService.ABFindAllAsync(request, new object());
+            abService.ABFindAllAsync(request, partnerScenario);
         }
 
         private void abService_ABFindAllCompleted(object sender, ABFindAllCompletedEventArgs e)
@@ -309,6 +309,7 @@ namespace MSNPSharp
             // Cache key for AdressBook service...
             ABServiceBinding abService = (ABServiceBinding)sender;
             handleServiceHeader(abService.ServiceHeaderValue, true);
+            string partnerScenario = e.UserState.ToString();
 
             ABFindAllResultType forwardList = e.Result.ABFindAllResult == null ? new ABFindAllResultType() : e.Result.ABFindAllResult;
 
@@ -503,16 +504,19 @@ namespace MSNPSharp
                 }
             }
 
-            nsMessageHandler.SetPrivacyMode((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-
-            string[] adls = ConstructADLString(MemberShipList.Values, true, new MSNLists());
-            nsMessageHandler.initialadlcount = adls.Length;
-            foreach (string str in adls)
+            if (partnerScenario == "Initial")
             {
-                NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
-                nsMessageHandler.MessageProcessor.SendMessage(message);
-                nsMessageHandler.initialadls.Add(message.TransactionID);
-                nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(str));
+                nsMessageHandler.SetPrivacyMode((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+
+                string[] adls = ConstructADLString(MemberShipList.Values, true, new MSNLists());
+                nsMessageHandler.initialadlcount = adls.Length;
+                foreach (string str in adls)
+                {
+                    NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
+                    nsMessageHandler.MessageProcessor.SendMessage(message);
+                    nsMessageHandler.initialadls.Add(message.TransactionID);
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(str));
+                }
             }
 
             //11: Save MembershipList and AddressBook
