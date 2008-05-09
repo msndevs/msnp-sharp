@@ -59,6 +59,8 @@ namespace MSNPSharpClient
         private ToolStripMenuItem toolStripSortBygroup;
         private ToolStripMenuItem toolStripDeleteGroup;
         private ContextMenuStrip groupContextMenu;
+        private TextBox txtAddNew;
+        private Button btnAddNew;
         private IContainer components;
         #endregion
 
@@ -133,6 +135,8 @@ namespace MSNPSharpClient
             this.treeViewPanel = new System.Windows.Forms.Panel();
             this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
             this.SortPanel = new System.Windows.Forms.Panel();
+            this.txtAddNew = new System.Windows.Forms.TextBox();
+            this.btnAddNew = new System.Windows.Forms.Button();
             this.btnSortBy = new System.Windows.Forms.Button();
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sendIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -228,12 +232,33 @@ namespace MSNPSharpClient
             // SortPanel
             // 
             this.SortPanel.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+            this.SortPanel.Controls.Add(this.txtAddNew);
+            this.SortPanel.Controls.Add(this.btnAddNew);
             this.SortPanel.Controls.Add(this.btnSortBy);
             this.SortPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.SortPanel.Location = new System.Drawing.Point(0, 0);
             this.SortPanel.Name = "SortPanel";
             this.SortPanel.Size = new System.Drawing.Size(328, 27);
             this.SortPanel.TabIndex = 1;
+            // 
+            // txtAddNew
+            // 
+            this.txtAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtAddNew.Location = new System.Drawing.Point(95, 5);
+            this.txtAddNew.Name = "txtAddNew";
+            this.txtAddNew.Size = new System.Drawing.Size(156, 20);
+            this.txtAddNew.TabIndex = 8;
+            // 
+            // btnAddNew
+            // 
+            this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAddNew.Location = new System.Drawing.Point(257, 2);
+            this.btnAddNew.Name = "btnAddNew";
+            this.btnAddNew.Size = new System.Drawing.Size(59, 23);
+            this.btnAddNew.TabIndex = 7;
+            this.btnAddNew.Text = "add new";
+            this.btnAddNew.UseVisualStyleBackColor = true;
+            this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
             // 
             // btnSortBy
             // 
@@ -551,6 +576,7 @@ namespace MSNPSharpClient
             this.ListPanel.ResumeLayout(false);
             this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
+            this.SortPanel.PerformLayout();
             this.userMenuStrip.ResumeLayout(false);
             this.ContactPanel.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
@@ -1283,6 +1309,11 @@ namespace MSNPSharpClient
             System.Threading.Thread.Sleep(500);
 
             SortByGroup();            
+        }
+
+        private void btnAddNew_Click(object sender, EventArgs e)
+        {
+            messenger.Nameserver.ContactService.AddNewContact(txtAddNew.Text);
         }
 
     }

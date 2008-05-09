@@ -238,9 +238,15 @@ namespace MSNPSharp
             MemberShipList.CombineService(services);
 
             // 4: Request address book
+            abRequest("Initial");
+        }
+
+        private void abRequest(string partnerScenario)
+        {
             bool deltasOnly = false;
             DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
             DateTime dynamicItemLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+
             if (AddressBook.LastChange != DateTime.MinValue)
             {
                 lastChange = AddressBook.LastChange;
@@ -250,9 +256,16 @@ namespace MSNPSharp
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
-            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.Timeout = Int32.MaxValue;
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
+            abService.ABApplicationHeaderValue.IsMigration = false;
+            abService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
+            if (nsMessageHandler.Tickets.ContainsKey(Iniproperties.AddressBookCacheKey))
+            {
+                abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
+            }
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
 
@@ -627,7 +640,7 @@ namespace MSNPSharp
             abService.Proxy = webProxy;
             abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "ContactSave";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
@@ -643,9 +656,29 @@ namespace MSNPSharp
                     newcontact.SetGuid(e.Result.ABContactAddResult.guid);
                     newcontact.NSMessageHandler = nsMessageHandler;
                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(newcontact, MSNLists.AllowedList | MSNLists.ForwardList));
-                    //Add the new contact to our allowed and forward list,or we can't see its state
-                    newcontact.OnAllowedList = true;
+
+                    // 1: Send ADL AL command without membership request...
+                    string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
+                    payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                    payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
+                    newcontact.AddToList(MSNLists.AllowedList);
+
+                    // 2: Send ADL FL command...
                     newcontact.OnForwardList = true;
+
+                    // 3: Send FQY command
+                    payload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
+                    payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                    payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("FQY", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
+
+                    // 4: ContactSave request
+                    abRequest("ContactSave");
+
+                    // 5: If user is pending, we accept invitation, delete from Pending list.
                     if (newcontact.OnPendingList)
                         newcontact.OnPendingList = false;
                 }
@@ -667,9 +700,9 @@ namespace MSNPSharp
             request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
             request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
             request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = nsMessageHandler.Owner.Name;
-            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
-            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
-            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = String.IsNullOrEmpty(invitation) ? nsMessageHandler.Owner.Name : invitation;
+            // request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
+            // request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
+            // request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = String.IsNullOrEmpty(invitation) ? nsMessageHandler.Owner.Name : invitation;
 
             request.options = new ABContactAddRequestTypeOptions();
             request.options.EnableAllowListManagement = true;
@@ -693,7 +726,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -736,7 +769,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -797,7 +830,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "Timer";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -841,7 +874,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -884,7 +917,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -929,7 +962,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = "GroupSave";
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
-            abService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            abService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
 
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -993,7 +1026,7 @@ namespace MSNPSharp
             sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
-            sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            sharingService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
             sharingService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.SharingServiceCacheKey];
@@ -1093,7 +1126,7 @@ namespace MSNPSharp
             sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
-            sharingService.ABApplicationHeaderValue.ApplicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";
+            sharingService.ABApplicationHeaderValue.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = "BlockUnblock";
             sharingService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.SharingServiceCacheKey];
