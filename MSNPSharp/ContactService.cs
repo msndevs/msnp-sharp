@@ -96,35 +96,16 @@ namespace MSNPSharp
                 "Initial",
                 delegate(object mssender, FindMembershipCompletedEventArgs fme)
                 {
-                    #region onSuccess
-
                     recursiveCall = 0;  //reset
-
-                    if (null != fme.Result.FindMembershipResult)
-                    {
-                        refreshMS(fme.Result.FindMembershipResult);
-                    }
-
                     abRequest("Initial",
                         delegate(object absender, ABFindAllCompletedEventArgs abe)
                         {
-                            #region onSuccess
-
-                            if (null != abe.Result.ABFindAllResult)
-                            {
-                                refreshAB(abe.Result.ABFindAllResult);
-                            }
-
                             if ("Initial" == abe.UserState.ToString())
                             {
                                 nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Values, true, new MSNLists()));
                             }
-
-                            #endregion
                         }
                     );
-
-                    #endregion
                 }
             );
         }
@@ -181,6 +162,11 @@ namespace MSNPSharp
                                 new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
                         return;
                     }
+                }
+
+                if (null != e.Result.FindMembershipResult)
+                {
+                    refreshMS(e.Result.FindMembershipResult);
                 }
 
                 if (onSuccess != null)
@@ -266,6 +252,11 @@ namespace MSNPSharp
                         }
                     }
                     return;
+                }
+
+                if (null != e.Result.ABFindAllResult)
+                {
+                    refreshAB(e.Result.ABFindAllResult);
                 }
 
                 if (onSuccess != null)
@@ -357,9 +348,10 @@ namespace MSNPSharp
                 }
             }
 
-            // 3: Combine all membership information and save them into a file.
+            // Combine all membership information and save them into a file.
             MemberShipList.CombineMemberRoles(mShips);
             MemberShipList.CombineService(services);
+            MemberShipList.Save();
         }
 
         internal void refreshAB(ABFindAllResultType forwardList)
@@ -728,12 +720,9 @@ namespace MSNPSharp
                             // 6: abrequest(ContactMsgrAPI)
                             abRequest(
                                 "ContactMsgrAPI",
-                                delegate(object abservice, ABFindAllCompletedEventArgs fae)
+                                delegate
                                 {
-                                    if (null != fae.Result.ABFindAllResult)
-                                    {
-                                        refreshAB(fae.Result.ABFindAllResult);
-                                    }
+                                    contact = nsMessageHandler.ContactList.GetContact(account);
                                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 });
                         }

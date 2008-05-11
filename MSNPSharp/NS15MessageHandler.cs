@@ -982,7 +982,7 @@ namespace MSNPSharp
                 MessageProcessor.SendMessage(new NSMessage(str));
             }
         }
-        
+
         private void OnADLReceived(NSMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK" &&
@@ -1068,8 +1068,14 @@ namespace MSNPSharp
                                     newcontact.SetClientType(type);
                                     newcontact.SetLists(MSNLists.PendingList);
                                     newcontact.NSMessageHandler = this;
-                                    OnReverseAdded(newcontact);
-                                    //ContactService.msRequest("MessengerPendingList", null);
+                                    ContactService.msRequest(
+                                        "MessengerPendingList",
+                                        delegate
+                                        {
+                                            newcontact = ContactList.GetContact(account);
+                                            OnReverseAdded(newcontact);
+                                        }
+                                    );
                                 }
                             }
                             if (Settings.TraceSwitch.TraceVerbose)
@@ -2318,9 +2324,16 @@ namespace MSNPSharp
 
             // only fire the event if >=4 because name is just sent when other user add you to her/his contact list
             // msnp11 allows you to add someone to the reverse list.
-            if (Type == MSNLists.ReverseList && ReverseAdded != null && message.CommandValues.Count >= 4)
+            if (Type == MSNLists.ReverseList && message.CommandValues.Count >= 4)
             {
-                ReverseAdded(this, new ContactEventArgs(contact));
+                ContactService.msRequest(
+                    "MessengerPendingList",
+                     delegate
+                     {
+                         contact = ContactList.GetContact(contact.Mail);
+                         OnReverseAdded(contact);
+                     }
+                );
             }
 
             // send a list mutation event
@@ -2750,10 +2763,6 @@ namespace MSNPSharp
                                 "ContactSave",
                                 delegate(object abservice, ABFindAllCompletedEventArgs fae)
                                 {
-                                    if (null != fae.Result.ABFindAllResult)
-                                    {
-                                        ContactService.refreshAB(fae.Result.ABFindAllResult);
-                                    }
                                     Contact contact = ContactList.GetContact(account);
                                     OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 }
