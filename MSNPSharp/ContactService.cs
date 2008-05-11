@@ -87,23 +87,20 @@ namespace MSNPSharp
                 DeleteRecordFile();
             }
 
-            bool nocompress = false; // Settings.TraceSwitch.Level == TraceLevel.Verbose;
+            bool nocompress = false;
             string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
             MemberShipList = new XMLMembershipList(contactfile, nocompress);
             AddressBook = new XMLAddressBook(contactfile, nocompress);
 
             msRequest(
                 "Initial",
-                delegate(object mssender, FindMembershipCompletedEventArgs fme)
+                delegate
                 {
                     recursiveCall = 0;  //reset
                     abRequest("Initial",
-                        delegate(object absender, ABFindAllCompletedEventArgs abe)
+                        delegate
                         {
-                            if ("Initial" == abe.UserState.ToString())
-                            {
-                                nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Values, true, new MSNLists()));
-                            }
+                            nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Values, true, new MSNLists()));
                         }
                     );
                 }
@@ -228,8 +225,6 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
             abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
             {
-                Trace.WriteLine("abService_ABFindAllCompleted");
-
                 abService = sender as ABServiceBinding;
                 handleServiceHeader(abService.ServiceHeaderValue, true);
                 string abpartnerScenario = e.UserState.ToString();
@@ -274,22 +269,19 @@ namespace MSNPSharp
 
         private void refreshMS(FindMembershipResultType findMembership)
         {
-            Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
-            Dictionary<int, Service> services = new Dictionary<int, Service>(0);
-            Service currentService = new Service();
-            int messengerServiceId = 0;
-
-            if (null != findMembership.Services)
+            if (null != findMembership && null != findMembership.Services)
             {
+                Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
+                Dictionary<int, Service> services = new Dictionary<int, Service>(0);
+
                 foreach (ServiceType serviceType in findMembership.Services)
                 {
+                    Service currentService = new Service();
                     currentService.LastChange = serviceType.LastChange;
                     currentService.Id = int.Parse(serviceType.Info.Handle.Id);
                     currentService.Type = serviceType.Info.Handle.Type;
                     currentService.ForeignId = serviceType.Info.Handle.ForeignId;
                     services[currentService.Id] = currentService;
-                    if (serviceType.Info.Handle.Type == ServiceFilterType.Messenger)
-                        messengerServiceId = int.Parse(serviceType.Info.Handle.Id);
 
                     if (null != serviceType.Memberships)
                     {
@@ -306,12 +298,17 @@ namespace MSNPSharp
                                 foreach (BaseMember bm in membership.Members)
                                 {
                                     ContactInfo ci = new ContactInfo();
-                                    ci.Type = ClientType.PassportMember;
-                                    ci.LastChanged = bm.LastChanged;
                                     ci.MembershipId = Convert.ToInt32(bm.MembershipId);
+                                    ci.LastChanged = bm.LastChanged;
+
+                                    if (!String.IsNullOrEmpty(bm.DisplayName))
+                                        ci.DisplayName = bm.DisplayName;
+                                    else
+                                        ci.DisplayName = ci.Account;
 
                                     if (bm is PassportMember)
                                     {
+                                        ci.Type = ClientType.PassportMember;
                                         PassportMember pm = (PassportMember)bm;
                                         if (pm.IsPassportNameHidden)
                                         {
@@ -322,15 +319,14 @@ namespace MSNPSharp
                                     }
                                     else if (bm is EmailMember)
                                     {
-                                        ci.Account = ((EmailMember)bm).Email;
                                         ci.Type = ClientType.EmailMember;
-
+                                        ci.Account = ((EmailMember)bm).Email;
                                     }
-
-                                    if (!String.IsNullOrEmpty(bm.DisplayName))
-                                        ci.DisplayName = bm.DisplayName;
-                                    else
-                                        ci.DisplayName = ci.Account;
+                                    // else if (bm is PhoneMember)
+                                    // {
+                                    //     ci.Account = ((PhoneMember)bm).PhoneNumber;
+                                    //     ci.Type = ClientType.PhoneMember;
+                                    // }
 
                                     if (ci.Account != null && !mShips[lst].ContainsKey(ci.Account))
                                     {
@@ -346,22 +342,19 @@ namespace MSNPSharp
                         }
                     }
                 }
-            }
 
-            // Combine all membership information and save them into a file.
-            MemberShipList.CombineMemberRoles(mShips);
-            MemberShipList.CombineService(services);
-            MemberShipList.Save();
+                // Combine all membership information and save them into a file.
+                MemberShipList.CombineMemberRoles(mShips);
+                MemberShipList.CombineService(services);
+                MemberShipList.Save();
+            }
         }
 
         internal void refreshAB(ABFindAllResultType forwardList)
-        {
-            // Contact List
-            Dictionary<string, ContactInfo> diccontactList = new Dictionary<string, ContactInfo>(0);
-            Dictionary<string, string> props = AddressBook.MyProperties;
-
+        {            
             if (null != forwardList.contacts)
             {
+                Dictionary<string, ContactInfo> diccontactList = new Dictionary<string, ContactInfo>(0);
                 foreach (ContactType contactType in forwardList.contacts)
                 {
                     if (null != contactType.contactInfo)
@@ -408,7 +401,7 @@ namespace MSNPSharp
                                 ci.DisplayName = nsMessageHandler.Owner.Name;
                             }
 
-                            props["displayname"] = ci.DisplayName;
+                            AddressBook.MyProperties["displayname"] = ci.DisplayName;
                             if (null != contactType.contactInfo.annotations)
                             {
                                 foreach (Annotation anno in contactType.contactInfo.annotations)
@@ -416,21 +409,21 @@ namespace MSNPSharp
                                     string name = anno.Name;
                                     string value = anno.Value;
                                     name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                                    props[name] = value;
+                                    AddressBook.MyProperties[name] = value;
                                 }
                             }
 
-                            if (!props.ContainsKey("mbea"))
-                                props["mbea"] = "0";
+                            if (!AddressBook.MyProperties.ContainsKey("mbea"))
+                                AddressBook.MyProperties["mbea"] = "0";
 
-                            if (!props.ContainsKey("gtc"))
-                                props["gtc"] = "1";
+                            if (!AddressBook.MyProperties.ContainsKey("gtc"))
+                                AddressBook.MyProperties["gtc"] = "1";
 
-                            if (!props.ContainsKey("blp"))
-                                props["blp"] = "0";
+                            if (!AddressBook.MyProperties.ContainsKey("blp"))
+                                AddressBook.MyProperties["blp"] = "0";
 
-                            if (!props.ContainsKey("roamliveproperties"))
-                                props["roamliveproperties"] = "1";
+                            if (!AddressBook.MyProperties.ContainsKey("roamliveproperties"))
+                                AddressBook.MyProperties["roamliveproperties"] = "1";
                         }
 
                         if (contactType.contactInfo.groupIds != null)
@@ -451,12 +444,12 @@ namespace MSNPSharp
                         }
                     }
                 }
+                AddressBook.AddRange(diccontactList);
             }
 
-            // Groups
-            Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
             if (null != forwardList.groups)
             {
+                Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
                 foreach (GroupType groupType in forwardList.groups)
                 {
                     if (groupType.fDeleted == false)
@@ -467,13 +460,12 @@ namespace MSNPSharp
                         groups[group.Guid] = group;
                     }
                 }
+                AddressBook.AddGroupRange(groups);
             }
 
             // Save Address Book
             AddressBook.LastChange = forwardList.ab.lastChange;
-            AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
-            AddressBook.AddGroupRange(groups);
-            AddressBook.AddRange(diccontactList);
+            AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;            
 
             // Create Groups
             foreach (GroupInfo group in AddressBook.Groups.Values)
@@ -481,7 +473,7 @@ namespace MSNPSharp
                 nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
             }
 
-            // Add Contacts
+            // Create Contacts
             if (MemberShipList.Count > 0)
             {
                 foreach (ContactInfo ci in MemberShipList.Values)
@@ -516,7 +508,8 @@ namespace MSNPSharp
                 }
             }
 
-            foreach (ContactInfo ci in AddressBook.Values)  //The mail contact on your forward list
+            //Create the mail contacts on your forward list
+            foreach (ContactInfo ci in AddressBook.Values)  
             {
                 if (!MemberShipList.ContainsKey(ci.Account) && ci.Account != nsMessageHandler.Owner.Mail)
                 {
