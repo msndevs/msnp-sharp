@@ -590,12 +590,12 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.ForwardList);
+                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.ForwardList, null);
                         AddToList(MSNLists.ForwardList);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.ForwardList);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.ForwardList, null);
                         RemoveFromList(MSNLists.ForwardList);
                     }
                 }
@@ -614,12 +614,12 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.AllowedList);
+                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.AllowedList, null);
                         AddToList(MSNLists.AllowedList);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.AllowedList);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.AllowedList, null);
                         RemoveFromList(MSNLists.AllowedList);
                     }
                 }
@@ -645,7 +645,7 @@ namespace MSNPSharp
             {
                 if (value != OnPendingList && value == false)
                 {
-                    NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.PendingList);
+                    NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.PendingList, null);
                     RemoveFromList(MSNLists.PendingList);
                 }
             }

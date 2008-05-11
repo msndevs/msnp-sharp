@@ -861,7 +861,6 @@ namespace MSNPSharp
             }
         }
 
-        /// XXXXXXXXXXXXXXXXXXXXXXXXXX
         /// <summary>
         /// The owner of the contactlist. This is the identity that logged into the messenger network.
         /// </summary>
@@ -873,7 +872,6 @@ namespace MSNPSharp
             }
         }
 
-        /// XXXXXXXXXXXXXXXXXXXXXXXXXX
         /// <summary>
         /// A collection of all contactgroups which are defined by the user who logged into the messenger network.\
         /// </summary>
@@ -968,9 +966,23 @@ namespace MSNPSharp
                 OIMReceived(sender, e);
             }
         }
+        
+        private int initialadlcount = 0;
+        private List<int> initialadls = new List<int>();
+        internal void OnInitialSyncDone(string[] stradls)
+        {
+            SetPrivacyMode((ContactService.AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
-        internal int initialadlcount = 0;
-        internal List<int> initialadls = new List<int>();
+            initialadlcount = stradls.Length;
+            foreach (string str in stradls)
+            {
+                NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
+                MessageProcessor.SendMessage(message);
+                initialadls.Add(message.TransactionID);
+                MessageProcessor.SendMessage(new NSMessage(str));
+            }
+        }
+        
         private void OnADLReceived(NSMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK" &&
@@ -983,14 +995,14 @@ namespace MSNPSharp
 
                 // set this so the user can set initial presence
                 abSynchronized = true;
+                initialadlcount = 0;
 
-                // 11: Set my display name
+                // Set my display name
                 string mydispName = contactService.AddressBook.MyProperties["displayname"];
                 if (mydispName != String.Empty)
                 {
                     owner.Name = mydispName;
                 }
-
 
                 if (AutoSynchronize == true)
                 {
@@ -1005,6 +1017,12 @@ namespace MSNPSharp
                 {
                     SynchronizationCompleted(this, new EventArgs());
                     abSynchronized = true;
+                }
+
+                // Fire the ReverseAdded event
+                foreach (Contact pendingContact in ContactList.Pending)
+                {
+                    OnReverseAdded(pendingContact);
                 }
             }
             else
@@ -1046,15 +1064,13 @@ namespace MSNPSharp
                             {
                                 if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                                 {
-                                    Contact newcontact = Factory.CreateContact();
-                                    newcontact.SetMail(account);
-                                    newcontact.SetName(displayName);
+                                    Contact newcontact = ContactList.GetContact(account, displayName);
                                     newcontact.SetClientType(type);
-                                    newcontact.SetLists(MSNLists.ReverseList);
+                                    newcontact.SetLists(MSNLists.PendingList);
                                     newcontact.NSMessageHandler = this;
                                     OnReverseAdded(newcontact);
+                                    //ContactService.msRequest("MessengerPendingList", null);
                                 }
-
                             }
                             if (Settings.TraceSwitch.TraceVerbose)
                                 Trace.WriteLine(account + " was added to your " + list.ToString());
@@ -1463,6 +1479,9 @@ namespace MSNPSharp
                         break;
                     case "UBX":
                         OnUBXReceived(nsMessage);
+                        break;
+                    case "FQY":
+                        OnFQYReceived(nsMessage);
                         break;
                     default:
                         // first check whether it is a numeric error command
@@ -2293,7 +2312,7 @@ namespace MSNPSharp
                 contact.SetGuid(message.CommandValues[4].ToString().Remove(0, 2));
 
             // add the list to this contact						
-            contact.AddToList(Type);
+            contact.AddToList(MSNLists.PendingList);
 
             // check whether another user added us .The client programmer can then act on it.
 
@@ -2704,6 +2723,48 @@ namespace MSNPSharp
                 // with the correct parameters.
                 int seconds = int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture);
                 PingAnswer(this, new PingAnswerEventArgs(seconds));
+            }
+        }
+
+        protected virtual void OnFQYReceived(NSMessage message)
+        {
+            // <ml><d n="domain"><c n="username" /></d></ml>
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (networkMessage.InnerBody != null) //Payload FQY command. Forward Query What? :)
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                string domain = String.Empty;
+                foreach (XmlNode domainNode in domains)
+                {
+                    domain = domainNode.Attributes["n"].Value;
+                    XmlNode contactNode = domainNode.FirstChild;
+                    do
+                    {
+                        string account = contactNode.Attributes["n"].Value + "@" + domain;
+                        account = account.ToLower(CultureInfo.InvariantCulture);
+                        if (ContactList.HasContact(account))
+                        {
+                            ContactService.abRequest(
+                                "ContactSave",
+                                delegate(object abservice, ABFindAllCompletedEventArgs fae)
+                                {
+                                    if (null != fae.Result.ABFindAllResult)
+                                    {
+                                        ContactService.refreshAB(fae.Result.ABFindAllResult);
+                                    }
+                                    Contact contact = ContactList.GetContact(account);
+                                    OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                                }
+                            );
+                        }
+
+                        if (Settings.TraceSwitch.TraceVerbose)
+                            Trace.WriteLine(" FQY command: " + xmlDoc.OuterXml);
+
+                    } while (contactNode.NextSibling != null);
+                }
             }
         }
 
