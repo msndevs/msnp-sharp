@@ -37,116 +37,121 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp.Core
 {
-	// Buffers the incoming data from the notification server (NS).
-	// The main purpose of this class is to ensure that MSG, IPG and NOT payload commands are processed
-	// only when they are complete. Payload commands can be quite large and may be larger
-	// than the socket buffer. This pool
-	// will buffer the data and release the messages, or commands, when they are
-	// fully retrieved from the server.
-	public class NSMessagePool : MessagePool
-	{
-		Queue<MemoryStream> messageQueue;
-		MemoryStream bufferStream = null;
-		BinaryWriter bufferWriter = null;
-		int remainingBuffer = 0;
-		
-		public NSMessagePool()
-		{
-			messageQueue = new Queue <MemoryStream> ();
-			CreateNewBuffer();
-		}
+    // Buffers the incoming data from the notification server (NS).
+    // The main purpose of this class is to ensure that MSG, IPG and NOT payload commands are processed
+    // only when they are complete. Payload commands can be quite large and may be larger
+    // than the socket buffer. This pool
+    // will buffer the data and release the messages, or commands, when they are
+    // fully retrieved from the server.
+    public class NSMessagePool : MessagePool
+    {
+        Queue<MemoryStream> messageQueue;
+        MemoryStream bufferStream = null;
+        BinaryWriter bufferWriter = null;
+        int remainingBuffer = 0;
 
-		protected Queue<MemoryStream> MessageQueue
-		{
-			get { 
-				return messageQueue; 
-			}
-		}
+        public NSMessagePool()
+        {
+            messageQueue = new Queue<MemoryStream>();
+            CreateNewBuffer();
+        }
 
-		// This points to the current message we are writing to
-		protected MemoryStream BufferStream
-		{
-			get { 
-				return bufferStream; 
-			}
-			set { 
-				bufferStream = value;
-			}
-		}
+        protected Queue<MemoryStream> MessageQueue
+        {
+            get
+            {
+                return messageQueue;
+            }
+        }
 
-		// This is the interface to the bufferStream
-		protected BinaryWriter BufferWriter
-		{
-			get { 
-				return bufferWriter; 
-			}
-			set { 
-				bufferWriter = value;
-			}
-		}
+        // This points to the current message we are writing to
+        protected MemoryStream BufferStream
+        {
+            get
+            {
+                return bufferStream;
+            }
+            set
+            {
+                bufferStream = value;
+            }
+        }
 
-		// Creates a new memorystream to server as the buffer.
-		private void CreateNewBuffer()
-		{
-			bufferStream = new MemoryStream(64);
-			bufferWriter = new BinaryWriter(bufferStream);
-		}
+        // This is the interface to the bufferStream
+        protected BinaryWriter BufferWriter
+        {
+            get
+            {
+                return bufferWriter;
+            }
+            set
+            {
+                bufferWriter = value;
+            }
+        }
 
-		// Enques the current buffer memorystem when a message is completely retrieved.
-		private void EnqueueCurrentBuffer()
-		{
-			messageQueue.Enqueue(bufferStream);
-		}
+        // Creates a new memorystream to server as the buffer.
+        private void CreateNewBuffer()
+        {
+            bufferStream = new MemoryStream(64);
+            bufferWriter = new BinaryWriter(bufferStream);
+        }
 
-		// Is true when there are message available to retrieve.
-		public override bool MessageAvailable
-		{
-			get
-			{
-				return messageQueue.Count > 0;
-			}
-		}
+        // Enques the current buffer memorystem when a message is completely retrieved.
+        private void EnqueueCurrentBuffer()
+        {
+            messageQueue.Enqueue(bufferStream);
+        }
 
-		// Get the next message as a byte array.
-		// The returned data includes all newlines which seperate the commands ("\r\n")
-		public override byte[] GetNextMessageData()
-		{
-			MemoryStream memStream = (MemoryStream)messageQueue.Dequeue();
-			return memStream.ToArray();
-		}
+        // Is true when there are message available to retrieve.
+        public override bool MessageAvailable
+        {
+            get
+            {
+                return messageQueue.Count > 0;
+            }
+        }
 
-		// Stores the raw data in a buffer. When a full message is detected it is inserted on the internal stack.
-		// You can retrieve these messages bij calling GetNextMessageData().
-		public override void BufferData(BinaryReader reader)
-		{
-			int length = (int)(reader.BaseStream.Length - reader.BaseStream.Position);
-					
-			// there is nothing in the bufferstream so we expect a command right away
-			while(length > 0)
-			{
-				// should we buffer the current message
-				if(remainingBuffer > 0)
-				{
-					// read as much as possible in the current message stream
-					int readLength = Math.Min(remainingBuffer, length);
-					byte[] msgBuffer = reader.ReadBytes(readLength);
-					bufferStream.Write(msgBuffer, 0, msgBuffer.Length);
+        // Get the next message as a byte array.
+        // The returned data includes all newlines which seperate the commands ("\r\n")
+        public override byte[] GetNextMessageData()
+        {
+            MemoryStream memStream = (MemoryStream)messageQueue.Dequeue();
+            return memStream.ToArray();
+        }
 
-					// subtract what we have read from the total length
-					remainingBuffer -= readLength;
-					length = (int)(reader.BaseStream.Length - reader.BaseStream.Position);
+        // Stores the raw data in a buffer. When a full message is detected it is inserted on the internal stack.
+        // You can retrieve these messages bij calling GetNextMessageData().
+        public override void BufferData(BinaryReader reader)
+        {
+            int length = (int)(reader.BaseStream.Length - reader.BaseStream.Position);
 
-					// when we have read everything we can start a new message
-					if(remainingBuffer == 0)
-					{
-						EnqueueCurrentBuffer();
-						CreateNewBuffer();
-					}
-				}
-				else
-				{
-					// read until we come across a newline
-					byte val = reader.ReadByte();
+            // there is nothing in the bufferstream so we expect a command right away
+            while (length > 0)
+            {
+                // should we buffer the current message
+                if (remainingBuffer > 0)
+                {
+                    // read as much as possible in the current message stream
+                    int readLength = Math.Min(remainingBuffer, length);
+                    byte[] msgBuffer = reader.ReadBytes(readLength);
+                    bufferStream.Write(msgBuffer, 0, msgBuffer.Length);
+
+                    // subtract what we have read from the total length
+                    remainingBuffer -= readLength;
+                    length = (int)(reader.BaseStream.Length - reader.BaseStream.Position);
+
+                    // when we have read everything we can start a new message
+                    if (remainingBuffer == 0)
+                    {
+                        EnqueueCurrentBuffer();
+                        CreateNewBuffer();
+                    }
+                }
+                else
+                {
+                    // read until we come across a newline
+                    byte val = reader.ReadByte();
 
                     if (val != '\n')
                         bufferWriter.Write(val);
@@ -162,14 +167,15 @@ namespace MSNPSharp.Core
                         cmd[1] = (byte)bufferStream.ReadByte();
                         cmd[2] = (byte)bufferStream.ReadByte();
 
-                        if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||		// MSG payload command
+                        if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||	// MSG payload command
                            (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||		// IPG pager command
-                           (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||
-                           (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||	// NOT notification command
-                           (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||
-                           (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L'))
+                           (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||     // NOT notification command
+                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||     // UBX personal message
+                           (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||     // GCF
+                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||	    // UBM Yahoo messenger message
+                           (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||     // ADL Add List command
+                           (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L') ||     // RML Remove List command
+                           (cmd[0] == 'F' && cmd[1] == 'Q' && cmd[2] == 'Y'))       // FQY command
                         {
                             bufferStream.Seek(-3, SeekOrigin.End);
 
@@ -201,9 +207,9 @@ namespace MSNPSharp.Core
                             CreateNewBuffer();
                         }
                     }
-					length--;
-				}
-			}			
-		}
-	}
+                    length--;
+                }
+            }
+        }
+    }
 }
