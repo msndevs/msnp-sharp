@@ -72,7 +72,7 @@
     <Compile Include="NotificationMessage.cs" />
     <Compile Include="NS15MessageHandler.cs" />
     <Compile Include="NS15MessageHandler.Obsolete.cs">
-        <DependentUpon>NS15MessageHandler.cs</DependentUpon>
+      <DependentUpon>NS15MessageHandler.cs</DependentUpon>
     </Compile>
     <Compile Include="NSMessage.cs" />
     <Compile Include="NSMessagePool.cs" />
