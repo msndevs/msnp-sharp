@@ -644,6 +644,7 @@ namespace MSNPSharp
                 account,
                 false,
                 invitation,
+                ClientType.PassportMember,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     Contact contact = nsMessageHandler.ContactList.GetContact(account);
@@ -678,9 +679,10 @@ namespace MSNPSharp
             Contact contact = nsMessageHandler.ContactList.GetContact(account);
 
             // 1: ADL AL without membership, so the user can see our status...
-            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
+            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"{t}\" /></d></ml>";
             payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
             payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+            payload = payload.Replace("{t}", ((int)contact.ClientType).ToString());
             nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
             nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
             contact.AddToList(MSNLists.AllowedList);
@@ -692,6 +694,7 @@ namespace MSNPSharp
                 account,
                 true,
                 String.Empty,
+                contact.ClientType,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     contact.SetGuid(e.Result.ABContactAddResult.guid);
@@ -710,7 +713,14 @@ namespace MSNPSharp
                         MSNLists.ReverseList,
                         delegate
                         {
-                            // 6: abrequest(ContactMsgrAPI)
+                            // 6: Extra work for EmailMember: Add allow membership
+                            if (ClientType.EmailMember == contact.ClientType)
+                            {
+                                AddContactToList(contact, MSNLists.AllowedList, null);
+                                System.Threading.Thread.Sleep(100);
+                            }
+
+                            // 7: abrequest(ContactMsgrAPI)
                             abRequest(
                                 "ContactMsgrAPI",
                                 delegate
@@ -724,7 +734,7 @@ namespace MSNPSharp
            );
         }
 
-        private void AddNewOrPendingContact(string account, bool pending, string invitation, ABContactAddCompletedEventHandler onSuccess)
+        private void AddNewOrPendingContact(string account, bool pending, string invitation, ClientType network, ABContactAddCompletedEventHandler onSuccess)
         {
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
@@ -759,21 +769,34 @@ namespace MSNPSharp
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactInfo = new contactInfoType();
-            request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
-            request.contacts[0].contactInfo.passportName = account;
-            request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
-            request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
-            request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = nsMessageHandler.Owner.Name;
 
-            if (pending == false && !String.IsNullOrEmpty(invitation))
+            switch (network)
             {
-                request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
-                request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
-                request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = invitation;
-            }
+                case ClientType.PassportMember:
+                    request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
+                    request.contacts[0].contactInfo.passportName = account;
+                    request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
+                    request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
+                    if (pending == false && !String.IsNullOrEmpty(invitation))
+                    {
+                        request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
+                        request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
+                        request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = invitation;
+                    }
+                    request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = nsMessageHandler.Owner.Name;
+                    request.options = new ABContactAddRequestTypeOptions();
+                    request.options.EnableAllowListManagement = true;
+                    break;
 
-            request.options = new ABContactAddRequestTypeOptions();
-            request.options.EnableAllowListManagement = true;
+                case ClientType.EmailMember:
+                    request.contacts[0].contactInfo.emails = new contactEmailType[] { new contactEmailType() };
+                    request.contacts[0].contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
+                    request.contacts[0].contactInfo.emails[0].email = account;
+                    request.contacts[0].contactInfo.emails[0].isMessengerEnabled = true;
+                    request.contacts[0].contactInfo.emails[0].Capability = "32";
+                    request.contacts[0].contactInfo.emails[0].propertiesChanged = "Email IsMessengerEnabled Capability";
+                    break;
+            }
 
             abService.ABContactAddAsync(request, new object());
         }
@@ -1212,11 +1235,15 @@ namespace MSNPSharp
                 PassportMember passportMember = member as PassportMember;
                 passportMember.PassportName = contact.Mail;
             }
-            else
+            else if (contact.ClientType == ClientType.EmailMember)
             {
                 member = new EmailMember();
                 EmailMember emailMember = member as EmailMember;
+                emailMember.State = MemberState.Accepted;
                 emailMember.Email = contact.Mail;
+                emailMember.Annotations = new Annotation[] { new Annotation() };
+                emailMember.Annotations[0].Name = "MSN.IM.BuddyType";
+                emailMember.Annotations[0].Value = "32:";
             }
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };

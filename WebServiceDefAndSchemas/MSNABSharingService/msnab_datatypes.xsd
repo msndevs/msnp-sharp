@@ -87,6 +87,24 @@
       </xsd:extension>
     </xsd:complexContent>
   </xsd:complexType>
+  <xsd:complexType name="EmailMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="Email" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="PhoneMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="PhoneNumber" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
   <xsd:complexType name="RoleMember">
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnab:BaseMember">
@@ -107,29 +125,6 @@
       </xsd:extension>
     </xsd:complexContent>
   </xsd:complexType>
-  <xsd:complexType name="EveryoneMember">
-    <xsd:complexContent mixed="false">
-      <xsd:extension base="msnab:BaseMember" />
-    </xsd:complexContent>
-  </xsd:complexType>
-  <xsd:complexType name="EmailMember">
-    <xsd:complexContent mixed="false">
-      <xsd:extension base="msnab:BaseMember">
-        <xsd:sequence>
-          <xsd:element name="Email" type="xsd:string" />
-        </xsd:sequence>
-      </xsd:extension>
-    </xsd:complexContent>
-  </xsd:complexType>
-  <xsd:complexType name="PhoneMember">
-    <xsd:complexContent mixed="false">
-      <xsd:extension base="msnab:BaseMember">
-        <xsd:sequence>
-          <xsd:element name="PhoneNumber" type="xsd:string" />
-        </xsd:sequence>
-      </xsd:extension>
-    </xsd:complexContent>
-  </xsd:complexType>
   <xsd:complexType name="ServiceMember">
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnab:BaseMember">
@@ -145,6 +140,11 @@
           </xsd:element>
         </xsd:sequence>
       </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="EveryoneMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember" />
     </xsd:complexContent>
   </xsd:complexType>
   <xsd:simpleType name="Guid">
@@ -429,6 +429,15 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
+  <xsd:simpleType name="ServiceFilterType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Messenger" />
+      <xsd:enumeration value="Invitation" />
+      <xsd:enumeration value="SocialNetwork" />
+      <xsd:enumeration value="Space" />
+      <xsd:enumeration value="Profile" />
+    </xsd:restriction>
+  </xsd:simpleType>
   <xsd:element name="InvalidPassportUser">
     <xsd:complexType>
       <xsd:sequence>
@@ -446,17 +455,14 @@
   </xsd:element>
   <xsd:complexType name="MessengerMemberInfo">
     <xsd:sequence>
-      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PendingAnnotations" type="msnab:Annotation" />
+      <xsd:element minOccurs="0" name="PendingAnnotations">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="Annotation" type="msnab:Annotation" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
       <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:simpleType name="ServiceFilterType">
-    <xsd:restriction base="xsd:string">
-      <xsd:enumeration value="Messenger" />
-      <xsd:enumeration value="Invitation" />
-      <xsd:enumeration value="SocialNetwork" />
-      <xsd:enumeration value="Space" />
-      <xsd:enumeration value="Profile" />
-    </xsd:restriction>
-  </xsd:simpleType>
 </xsd:schema>
