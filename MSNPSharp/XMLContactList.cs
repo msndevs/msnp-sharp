@@ -349,7 +349,6 @@
         /// <param name="filename"></param>
         public override void Save(string filename)
         {
-            base.LoadFromFile(filename);
             XmlNode membershipRoot = doc.GetElementsByTagName(XMLContactListTags.MembershipList.ToString())[0];
             if (membershipRoot == null)
                 membershipRoot = CreateNode(XMLContactListTags.MembershipList.ToString(), null);
