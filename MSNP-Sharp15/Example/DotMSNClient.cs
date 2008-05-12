@@ -193,18 +193,18 @@ namespace MSNPSharpClient
             this.ListPanel.Controls.Add(this.treeViewPanel);
             this.ListPanel.Controls.Add(this.SortPanel);
             this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ListPanel.Location = new System.Drawing.Point(239, 88);
+            this.ListPanel.Location = new System.Drawing.Point(287, 95);
             this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(328, 572);
+            this.ListPanel.Size = new System.Drawing.Size(280, 563);
             this.ListPanel.TabIndex = 0;
             // 
             // treeViewPanel
             // 
             this.treeViewPanel.Controls.Add(this.treeViewFavoriteList);
             this.treeViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
+            this.treeViewPanel.Location = new System.Drawing.Point(0, 29);
             this.treeViewPanel.Name = "treeViewPanel";
-            this.treeViewPanel.Size = new System.Drawing.Size(328, 545);
+            this.treeViewPanel.Size = new System.Drawing.Size(280, 534);
             this.treeViewPanel.TabIndex = 2;
             // 
             // treeViewFavoriteList
@@ -222,7 +222,7 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.ShowLines = false;
             this.treeViewFavoriteList.ShowPlusMinus = false;
             this.treeViewFavoriteList.ShowRootLines = false;
-            this.treeViewFavoriteList.Size = new System.Drawing.Size(328, 545);
+            this.treeViewFavoriteList.Size = new System.Drawing.Size(280, 534);
             this.treeViewFavoriteList.TabIndex = 0;
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
@@ -240,23 +240,23 @@ namespace MSNPSharpClient
             this.SortPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.SortPanel.Location = new System.Drawing.Point(0, 0);
             this.SortPanel.Name = "SortPanel";
-            this.SortPanel.Size = new System.Drawing.Size(328, 27);
+            this.SortPanel.Size = new System.Drawing.Size(280, 29);
             this.SortPanel.TabIndex = 1;
             // 
             // txtAddNew
             // 
             this.txtAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtAddNew.Location = new System.Drawing.Point(95, 5);
+            this.txtAddNew.Location = new System.Drawing.Point(0, 5);
             this.txtAddNew.Name = "txtAddNew";
-            this.txtAddNew.Size = new System.Drawing.Size(156, 20);
+            this.txtAddNew.Size = new System.Drawing.Size(187, 21);
             this.txtAddNew.TabIndex = 8;
             // 
             // btnAddNew
             // 
             this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddNew.Location = new System.Drawing.Point(257, 2);
+            this.btnAddNew.Location = new System.Drawing.Point(194, 2);
             this.btnAddNew.Name = "btnAddNew";
-            this.btnAddNew.Size = new System.Drawing.Size(59, 23);
+            this.btnAddNew.Size = new System.Drawing.Size(71, 25);
             this.btnAddNew.TabIndex = 7;
             this.btnAddNew.Text = "add new";
             this.btnAddNew.UseVisualStyleBackColor = true;
@@ -267,9 +267,9 @@ namespace MSNPSharpClient
             this.btnSortBy.BackColor = System.Drawing.SystemColors.Control;
             this.btnSortBy.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnSortBy.Location = new System.Drawing.Point(8, 3);
+            this.btnSortBy.Location = new System.Drawing.Point(10, 3);
             this.btnSortBy.Name = "btnSortBy";
-            this.btnSortBy.Size = new System.Drawing.Size(38, 21);
+            this.btnSortBy.Size = new System.Drawing.Size(45, 23);
             this.btnSortBy.TabIndex = 1;
             this.btnSortBy.Text = "sort";
             this.btnSortBy.UseVisualStyleBackColor = true;
@@ -287,13 +287,13 @@ namespace MSNPSharpClient
             this.blockMenuItem,
             this.unblockMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(212, 148);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 148);
             // 
             // sendIMMenuItem
             // 
             this.sendIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendIMMenuItem.Name = "sendIMMenuItem";
-            this.sendIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendIMMenuItem.Text = "Send Instant Message";
             this.sendIMMenuItem.Click += new System.EventHandler(this.sendMessageToolStripMenuItem_Click);
             // 
@@ -301,7 +301,7 @@ namespace MSNPSharpClient
             // 
             this.sendOIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendOIMMenuItem.Name = "sendOIMMenuItem";
-            this.sendOIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendOIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendOIMMenuItem.Text = "Send Offline Message";
             this.sendOIMMenuItem.Click += new System.EventHandler(this.sendOfflineMessageToolStripMenuItem_Click);
             // 
@@ -309,38 +309,38 @@ namespace MSNPSharpClient
             // 
             this.sendMIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendMIMMenuItem.Name = "sendMIMMenuItem";
-            this.sendMIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendMIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendMIMMenuItem.Text = "Send Mobile Message";
             this.sendMIMMenuItem.Click += new System.EventHandler(this.sendMIMMenuItem_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(208, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(197, 6);
             // 
             // sendFileMenuItem
             // 
             this.sendFileMenuItem.Name = "sendFileMenuItem";
-            this.sendFileMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendFileMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendFileMenuItem.Text = "Send File";
             this.sendFileMenuItem.Click += new System.EventHandler(this.sendFileMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(208, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(197, 6);
             // 
             // blockMenuItem
             // 
             this.blockMenuItem.Name = "blockMenuItem";
-            this.blockMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.blockMenuItem.Size = new System.Drawing.Size(200, 22);
             this.blockMenuItem.Text = "Block";
             this.blockMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
             // 
             // unblockMenuItem
             // 
             this.unblockMenuItem.Name = "unblockMenuItem";
-            this.unblockMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.unblockMenuItem.Size = new System.Drawing.Size(200, 22);
             this.unblockMenuItem.Text = "Unblock";
             this.unblockMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
             // 
@@ -348,9 +348,9 @@ namespace MSNPSharpClient
             // 
             this.changeDisplayButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.changeDisplayButton.BackColor = System.Drawing.SystemColors.Control;
-            this.changeDisplayButton.Location = new System.Drawing.Point(387, 59);
+            this.changeDisplayButton.Location = new System.Drawing.Point(351, 64);
             this.changeDisplayButton.Name = "changeDisplayButton";
-            this.changeDisplayButton.Size = new System.Drawing.Size(85, 23);
+            this.changeDisplayButton.Size = new System.Drawing.Size(102, 24);
             this.changeDisplayButton.TabIndex = 7;
             this.changeDisplayButton.Text = "Display image";
             this.changeDisplayButton.UseVisualStyleBackColor = true;
@@ -363,18 +363,18 @@ namespace MSNPSharpClient
             this.ContactPanel.Controls.Add(this.panel1);
             this.ContactPanel.Controls.Add(this.propertyGrid);
             this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Left;
-            this.ContactPanel.Location = new System.Drawing.Point(0, 88);
+            this.ContactPanel.Location = new System.Drawing.Point(0, 95);
             this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(239, 572);
+            this.ContactPanel.Size = new System.Drawing.Size(287, 563);
             this.ContactPanel.TabIndex = 2;
             // 
             // splitter2
             // 
             this.splitter2.BackColor = System.Drawing.SystemColors.Control;
             this.splitter2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.splitter2.Location = new System.Drawing.Point(0, 428);
+            this.splitter2.Location = new System.Drawing.Point(0, 461);
             this.splitter2.Name = "splitter2";
-            this.splitter2.Size = new System.Drawing.Size(239, 10);
+            this.splitter2.Size = new System.Drawing.Size(287, 11);
             this.splitter2.TabIndex = 6;
             this.splitter2.TabStop = false;
             // 
@@ -388,24 +388,24 @@ namespace MSNPSharpClient
             this.panel1.Controls.Add(this.loginButton);
             this.panel1.Controls.Add(this.passwordTextBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 428);
+            this.panel1.Location = new System.Drawing.Point(0, 461);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(239, 144);
+            this.panel1.Size = new System.Drawing.Size(287, 102);
             this.panel1.TabIndex = 5;
             // 
             // label1
             // 
-            this.label1.Location = new System.Drawing.Point(6, 12);
+            this.label1.Location = new System.Drawing.Point(7, 13);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(56, 16);
+            this.label1.Size = new System.Drawing.Size(67, 17);
             this.label1.TabIndex = 1;
             this.label1.Text = "Account";
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(145, 61);
+            this.button1.Location = new System.Drawing.Point(174, 66);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.Size = new System.Drawing.Size(90, 24);
             this.button1.TabIndex = 6;
             this.button1.Text = "Sign off >";
             this.button1.UseVisualStyleBackColor = true;
@@ -413,24 +413,25 @@ namespace MSNPSharpClient
             // 
             // accountTextBox
             // 
-            this.accountTextBox.Location = new System.Drawing.Point(64, 12);
+            this.accountTextBox.Location = new System.Drawing.Point(77, 13);
             this.accountTextBox.Name = "accountTextBox";
-            this.accountTextBox.Size = new System.Drawing.Size(156, 20);
+            this.accountTextBox.Size = new System.Drawing.Size(187, 21);
             this.accountTextBox.TabIndex = 0;
+            this.accountTextBox.Text = "msnpsharp@live.cn";
             // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(6, 35);
+            this.label2.Location = new System.Drawing.Point(7, 38);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(56, 23);
+            this.label2.Size = new System.Drawing.Size(67, 24);
             this.label2.TabIndex = 2;
             this.label2.Text = "Password";
             // 
             // loginButton
             // 
-            this.loginButton.Location = new System.Drawing.Point(64, 61);
+            this.loginButton.Location = new System.Drawing.Point(77, 66);
             this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(75, 23);
+            this.loginButton.Size = new System.Drawing.Size(90, 24);
             this.loginButton.TabIndex = 4;
             this.loginButton.Text = "> Sign in";
             this.loginButton.UseVisualStyleBackColor = true;
@@ -438,11 +439,12 @@ namespace MSNPSharpClient
             // 
             // passwordTextBox
             // 
-            this.passwordTextBox.Location = new System.Drawing.Point(64, 38);
+            this.passwordTextBox.Location = new System.Drawing.Point(77, 41);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(156, 20);
+            this.passwordTextBox.Size = new System.Drawing.Size(187, 21);
             this.passwordTextBox.TabIndex = 3;
+            this.passwordTextBox.Text = "123456";
             // 
             // propertyGrid
             // 
@@ -452,7 +454,7 @@ namespace MSNPSharpClient
             this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
             this.propertyGrid.Location = new System.Drawing.Point(0, 0);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(239, 428);
+            this.propertyGrid.Size = new System.Drawing.Size(287, 461);
             this.propertyGrid.TabIndex = 4;
             // 
             // displayImageBox
@@ -460,9 +462,9 @@ namespace MSNPSharpClient
             this.displayImageBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.displayImageBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayImageBox.Location = new System.Drawing.Point(479, 6);
+            this.displayImageBox.Location = new System.Drawing.Point(462, 6);
             this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(80, 76);
+            this.displayImageBox.Size = new System.Drawing.Size(96, 82);
             this.displayImageBox.TabIndex = 2;
             this.displayImageBox.TabStop = false;
             // 
@@ -473,7 +475,7 @@ namespace MSNPSharpClient
             this.pictureBox.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox.Image")));
             this.pictureBox.Location = new System.Drawing.Point(0, 0);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(567, 88);
+            this.pictureBox.Size = new System.Drawing.Size(567, 95);
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
             // 
@@ -502,7 +504,7 @@ namespace MSNPSharpClient
             // 
             this.statusBar.Location = new System.Drawing.Point(0, 2);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(567, 22);
+            this.statusBar.Size = new System.Drawing.Size(567, 24);
             this.statusBar.TabIndex = 5;
             // 
             // OwnerPanel
@@ -510,9 +512,9 @@ namespace MSNPSharpClient
             this.OwnerPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.OwnerPanel.Controls.Add(this.statusBar);
             this.OwnerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.OwnerPanel.Location = new System.Drawing.Point(0, 660);
+            this.OwnerPanel.Location = new System.Drawing.Point(0, 658);
             this.OwnerPanel.Name = "OwnerPanel";
-            this.OwnerPanel.Size = new System.Drawing.Size(567, 24);
+            this.OwnerPanel.Size = new System.Drawing.Size(567, 26);
             this.OwnerPanel.TabIndex = 1;
             // 
             // sortContextMenu
@@ -549,7 +551,7 @@ namespace MSNPSharpClient
             // toolStripDeleteGroup
             // 
             this.toolStripDeleteGroup.Name = "toolStripDeleteGroup";
-            this.toolStripDeleteGroup.Size = new System.Drawing.Size(147, 22);
+            this.toolStripDeleteGroup.Size = new System.Drawing.Size(136, 22);
             this.toolStripDeleteGroup.Text = "Delete group";
             this.toolStripDeleteGroup.Click += new System.EventHandler(this.toolStripDeleteGroup_Click);
             // 
@@ -561,11 +563,11 @@ namespace MSNPSharpClient
             this.groupContextMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
             this.groupContextMenu.ShowCheckMargin = true;
             this.groupContextMenu.ShowImageMargin = false;
-            this.groupContextMenu.Size = new System.Drawing.Size(148, 26);
+            this.groupContextMenu.Size = new System.Drawing.Size(137, 26);
             // 
             // ClientForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
+            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
             this.ClientSize = new System.Drawing.Size(567, 684);
             this.Controls.Add(this.ListPanel);
             this.Controls.Add(this.displayImageBox);
