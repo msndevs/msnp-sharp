@@ -30,6 +30,7 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="FindMembership" type="msnab:FindMembershipRequestType" />
   <xsd:complexType name="FindMembershipRequestType">
     <xsd:sequence>
       <xsd:element name="serviceFilter">
@@ -50,7 +51,6 @@
       <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:dateTime" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="FindMembership" type="msnab:FindMembershipRequestType" />
   <xsd:complexType name="FindMembershipResultType">
     <xsd:sequence>
       <xsd:element name="Services">
@@ -106,6 +106,7 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="ABFindAll" type="msnab:ABFindAllRequestType" />
   <xsd:complexType name="ABFindAllRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
@@ -116,7 +117,6 @@
       <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="dynamicItemLastChange" type="xsd:dateTime" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABFindAll" type="msnab:ABFindAllRequestType" />
   <xsd:complexType name="ABFindAllResultType">
     <xsd:sequence>
       <xsd:element minOccurs="0" name="groups">
@@ -185,6 +185,7 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="ABContactAdd" type="msnab:ABContactAddRequestType" />
   <xsd:complexType name="ABContactAddRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
@@ -204,7 +205,6 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABContactAdd" type="msnab:ABContactAddRequestType" />
   <xsd:complexType name="ABContactAddResultType">
     <xsd:sequence>
       <xsd:element name="guid" type="msnab:Guid" />
@@ -217,6 +217,7 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="ABContactDelete" type="msnab:ABContactDeleteRequestType" />
   <xsd:complexType name="ABContactDeleteRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
@@ -229,8 +230,8 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABContactDelete" type="msnab:ABContactDeleteRequestType" />
   <xsd:element name="ABContactDeleteResponse" />
+  <xsd:element name="ABGroupContactAdd" type="msnab:ABGroupContactAddRequestType" />
   <xsd:complexType name="ABGroupContactAddRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
@@ -252,7 +253,6 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABGroupContactAdd" type="msnab:ABGroupContactAddRequestType" />
   <xsd:complexType name="ABGroupContactAddResultType">
     <xsd:sequence>
       <xsd:element name="guid" type="msnab:Guid" />
@@ -265,6 +265,7 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="ABGroupAdd" type="msnab:ABGroupAddRequestType" />
   <xsd:complexType name="ABGroupAddRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
@@ -284,7 +285,6 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABGroupAdd" type="msnab:ABGroupAddRequestType" />
   <xsd:complexType name="ABGroupAddResultType">
     <xsd:sequence>
       <xsd:element name="guid" type="msnab:Guid" />
@@ -297,6 +297,7 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="ABGroupUpdate" type="msnab:ABGroupUpdateRequestType" />
   <xsd:complexType name="ABGroupUpdateRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
@@ -309,20 +310,36 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABGroupUpdate" type="msnab:ABGroupUpdateRequestType" />
   <xsd:element name="ABGroupUpdateResponse">
     <xsd:complexType />
   </xsd:element>
+  <xsd:element name="ABGroupDelete" type="msnab:ABGroupDeleteRequestType" />
   <xsd:complexType name="ABGroupDeleteRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
       <xsd:element name="groupFilter" type="msnab:groupFilterType" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABGroupDelete" type="msnab:ABGroupDeleteRequestType" />
   <xsd:element name="ABGroupDeleteResponse">
     <xsd:complexType />
   </xsd:element>
+  <xsd:element name="ABContactUpdate" type="msnab:ABContactUpdateRequestType" />
+  <xsd:complexType name="ABContactUpdateRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
+      <xsd:element name="contacts">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABContactUpdateResponse">
+    <xsd:complexType />
+  </xsd:element>
+  <xsd:element name="ABGroupContactDelete" type="msnab:ABGroupContactDeleteRequestType" />
   <xsd:complexType name="ABGroupContactDeleteRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
@@ -336,10 +353,10 @@
       <xsd:element name="groupFilter" type="msnab:groupFilterType" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="ABGroupContactDelete" type="msnab:ABGroupContactDeleteRequestType" />
   <xsd:element name="ABGroupContactDeleteResponse">
     <xsd:complexType />
   </xsd:element>
+  <xsd:element name="AddMember" type="msnab:AddMemberRequestType" />
   <xsd:complexType name="AddMemberRequestType">
     <xsd:sequence>
       <xsd:element name="serviceHandle" type="msnab:HandleType" />
@@ -352,26 +369,10 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:complexType name="ABContactUpdateRequestType">
-    <xsd:sequence>
-      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
-    </xsd:sequence>
-  </xsd:complexType>
-  <xsd:element name="ABContactUpdate" type="msnab:ABContactUpdateRequestType" />
-  <xsd:element name="ABContactUpdateResponse">
-    <xsd:complexType />
-  </xsd:element>
-  <xsd:element name="AddMember" type="msnab:AddMemberRequestType" />
   <xsd:element name="AddMemberResponse">
     <xsd:complexType />
   </xsd:element>
+  <xsd:element name="DeleteMember" type="msnab:DeleteMemberRequestType" />
   <xsd:complexType name="DeleteMemberRequestType">
     <xsd:sequence>
       <xsd:element name="serviceHandle" type="msnab:HandleType" />
@@ -384,7 +385,6 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="DeleteMember" type="msnab:DeleteMemberRequestType" />
   <xsd:element name="DeleteMemberResponse">
     <xsd:complexType />
   </xsd:element>

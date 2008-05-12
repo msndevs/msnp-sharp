@@ -720,13 +720,15 @@ namespace MSNPSharp.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class ABContactUpdateRequestType {
+    public partial class ABGroupContactDeleteRequestType {
         
         private string abIdField;
         
         private ContactType[] contactsField;
         
-        public ABContactUpdateRequestType() {
+        private groupFilterType groupFilterField;
+        
+        public ABGroupContactDeleteRequestType() {
             this.abIdField = "00000000-0000-0000-0000-000000000000";
         }
         
@@ -748,6 +750,16 @@ namespace MSNPSharp.MSNABSharingService {
             }
             set {
                 this.contactsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public groupFilterType groupFilter {
+            get {
+                return this.groupFilterField;
+            }
+            set {
+                this.groupFilterField = value;
             }
         }
     }
@@ -1885,7 +1897,7 @@ namespace MSNPSharp.MSNABSharingService {
         private string displayNameField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("PendingAnnotations")]
+        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
         public Annotation[] PendingAnnotations {
             get {
                 return this.pendingAnnotationsField;
@@ -1912,15 +1924,35 @@ namespace MSNPSharp.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class ABGroupContactDeleteRequestType {
+    public partial class groupFilterType {
+        
+        private string[] groupIdsField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("guid", IsNullable=false)]
+        public string[] groupIds {
+            get {
+                return this.groupIdsField;
+            }
+            set {
+                this.groupIdsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ABContactUpdateRequestType {
         
         private string abIdField;
         
         private ContactType[] contactsField;
         
-        private groupFilterType groupFilterField;
-        
-        public ABGroupContactDeleteRequestType() {
+        public ABContactUpdateRequestType() {
             this.abIdField = "00000000-0000-0000-0000-000000000000";
         }
         
@@ -1942,38 +1974,6 @@ namespace MSNPSharp.MSNABSharingService {
             }
             set {
                 this.contactsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public groupFilterType groupFilter {
-            get {
-                return this.groupFilterField;
-            }
-            set {
-                this.groupFilterField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class groupFilterType {
-        
-        private string[] groupIdsField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("guid", IsNullable=false)]
-        public string[] groupIds {
-            get {
-                return this.groupIdsField;
-            }
-            set {
-                this.groupIdsField = value;
             }
         }
     }
@@ -3344,11 +3344,11 @@ namespace MSNPSharp.MSNABSharingService {
     }
     
     /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EveryoneMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(ServiceMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(RoleMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(PhoneMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(EmailMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EveryoneMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(RoleMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(PassportMember))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
     [System.SerializableAttribute()]
@@ -3601,6 +3601,15 @@ namespace MSNPSharp.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class EveryoneMember : BaseMember {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class ServiceMember : BaseMember {
         
         private ServiceMemberService serviceField;
@@ -3659,57 +3668,6 @@ namespace MSNPSharp.MSNABSharingService {
                 this.foreignIdField = value;
             }
         }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class PhoneMember : BaseMember {
-        
-        private string phoneNumberField;
-        
-        /// <remarks/>
-        public string PhoneNumber {
-            get {
-                return this.phoneNumberField;
-            }
-            set {
-                this.phoneNumberField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class EmailMember : BaseMember {
-        
-        private string emailField;
-        
-        /// <remarks/>
-        public string Email {
-            get {
-                return this.emailField;
-            }
-            set {
-                this.emailField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class EveryoneMember : BaseMember {
     }
     
     /// <remarks/>
@@ -3813,6 +3771,48 @@ namespace MSNPSharp.MSNABSharingService {
             }
             set {
                 this.foreignIdField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class PhoneMember : BaseMember {
+        
+        private string phoneNumberField;
+        
+        /// <remarks/>
+        public string PhoneNumber {
+            get {
+                return this.phoneNumberField;
+            }
+            set {
+                this.phoneNumberField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class EmailMember : BaseMember {
+        
+        private string emailField;
+        
+        /// <remarks/>
+        public string Email {
+            get {
+                return this.emailField;
+            }
+            set {
+                this.emailField = value;
             }
         }
     }
