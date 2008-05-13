@@ -796,6 +796,14 @@ namespace MSNPSharp
                     request.contacts[0].contactInfo.emails[0].Capability = "32";
                     request.contacts[0].contactInfo.emails[0].propertiesChanged = "Email IsMessengerEnabled Capability";
                     break;
+
+                case ClientType.PhoneMember:
+                    request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
+                    request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
+                    request.contacts[0].contactInfo.phones[0].number = account;
+                    request.contacts[0].contactInfo.phones[0].isMessengerEnabled = true;
+                    request.contacts[0].contactInfo.phones[0].propertiesChanged = "Number IsMessengerEnabled";
+                    break;
             }
 
             abService.ABContactAddAsync(request, new object());
