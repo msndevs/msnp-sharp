@@ -375,7 +375,10 @@ namespace MSNPSharp
     [FlagsAttribute]
     public enum MSNLists
     {
-
+        /// <summary>
+        /// No msn list
+        /// </summary>
+        None = 0,
         /// <summary>
         /// All contacts in your contactlist.
         /// </summary>

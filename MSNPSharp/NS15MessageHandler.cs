@@ -66,7 +66,7 @@ namespace MSNPSharp
     {
         /// <summary>
         /// </summary>
-        private MSNLists affectedList;
+        private MSNLists affectedList = MSNLists.None;
 
         /// <summary>
         /// The list which was send by the server
@@ -196,7 +196,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// </summary>
-        private MSNLists affectedList;
+        private MSNLists affectedList = MSNLists.None;
 
         /// <summary>
         /// The list which mutated.

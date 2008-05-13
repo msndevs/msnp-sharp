@@ -9,6 +9,7 @@
     using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
 
+    #region ContactInfo
     internal class ContactInfo
     {
         private string account;
@@ -140,6 +141,9 @@
         }
     }
 
+    #endregion
+
+    #region GroupInfo
     internal struct GroupInfo
     {
         private string guid;
@@ -174,6 +178,9 @@
         }
     }
 
+    #endregion
+
+    #region Service
     internal struct Service
     {
         private int id;
@@ -234,6 +241,10 @@
         }
     }
 
+    #endregion
+
+    #region XMLMembershipList
+
     /// <summary>
     /// XML Membership List file maintainer
     /// </summary>
@@ -241,16 +252,7 @@
     {
         private string fileName = String.Empty;
         private Dictionary<int, Service> services = new Dictionary<int, Service>(0);
-
-        public Dictionary<int, Service> Services
-        {
-            get
-            {
-                return services;
-            }
-        }
-        private Dictionary<MemberRole, Dictionary<string, ContactInfo>> rolelists
-            = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>(0);
+        private Dictionary<MemberRole, Dictionary<string, ContactInfo>> rolelists = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>(0);
 
         public XMLMembershipList(string filename)
             : this(filename, false)
@@ -264,25 +266,41 @@
             LoadFromFile(filename);
         }
 
+        public Dictionary<int, Service> Services
+        {
+            get
+            {
+                return services;
+            }
+        }
+
+        public Dictionary<MemberRole, Dictionary<string, ContactInfo>> MemberRoles
+        {
+            get
+            {
+                return rolelists;
+            }
+        }
+
         public MSNLists GetMSNLists(string account)
         {
-            MSNLists contactlists = new MSNLists();
-            if (rolelists.ContainsKey(MemberRole.Allow))
-                if (rolelists[MemberRole.Allow].ContainsKey(account))
-                    contactlists |= MSNLists.AllowedList;
-            if (rolelists.ContainsKey(MemberRole.Pending))
-                if (rolelists[MemberRole.Pending].ContainsKey(account))
-                    contactlists |= MSNLists.PendingList;
-            if (rolelists.ContainsKey(MemberRole.Reverse))
-                if (rolelists[MemberRole.Reverse].ContainsKey(account))
-                    contactlists |= MSNLists.ReverseList;
-            if (rolelists.ContainsKey(MemberRole.Block))
-                if (rolelists[MemberRole.Block].ContainsKey(account))
-                {
-                    contactlists |= MSNLists.BlockedList;
-                    if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
-                        contactlists ^= MSNLists.AllowedList;
-                }
+            MSNLists contactlists = MSNLists.None;
+
+            if (rolelists.ContainsKey(MemberRole.Allow) && rolelists[MemberRole.Allow].ContainsKey(account))
+                contactlists |= MSNLists.AllowedList;
+
+            if (rolelists.ContainsKey(MemberRole.Pending) && rolelists[MemberRole.Pending].ContainsKey(account))
+                contactlists |= MSNLists.PendingList;
+
+            if (rolelists.ContainsKey(MemberRole.Reverse) && rolelists[MemberRole.Reverse].ContainsKey(account))
+                contactlists |= MSNLists.ReverseList;
+
+            if (rolelists.ContainsKey(MemberRole.Block) && rolelists[MemberRole.Block].ContainsKey(account))
+            {
+                contactlists |= MSNLists.BlockedList;
+                if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
+                    contactlists ^= MSNLists.AllowedList;
+            }
 
             return contactlists;
         }
@@ -320,6 +338,7 @@
         {
             foreach (Service service in serviceRange.Values)
                 services[service.Id] = service;
+
             foreach (Service innerService in Services.Values)
                 if (innerService.Type == ServiceFilterType.Messenger)
                     if (lastChange.CompareTo(innerService.LastChange) < 0)
@@ -337,7 +356,7 @@
             this.Clear();
             XMLContactListParser parser = new XMLContactListParser(doc);
             parser.Parse();
-            AddRange(parser.MembershipContactList);
+            Add(parser.MembershipContactList);
             lastChange = parser.MembershipLastChange;
             services = parser.ServiceList;
             rolelists = parser.MemberShips;
@@ -352,6 +371,7 @@
             XmlNode membershipRoot = doc.GetElementsByTagName(XMLContactListTags.MembershipList.ToString())[0];
             if (membershipRoot == null)
                 membershipRoot = CreateNode(XMLContactListTags.MembershipList.ToString(), null);
+
             membershipRoot.RemoveAll();
             membershipRoot.AppendChild(CreateNode(MembershipListChildNodes.LastChanged.ToString(), XmlConvert.ToString(
                 lastChange, XmlDateTimeSerializationMode.RoundtripKind)));
@@ -398,15 +418,6 @@
             Save(fileName);
         }
 
-        public Dictionary<MemberRole, Dictionary<string, ContactInfo>> MemberRoles
-        {
-            get
-            {
-                return rolelists;
-            }
-            //set { rolelists = value; }
-        }
-
         private XmlNode GetList(MemberRole memberrole)
         {
             XmlNode listroot = CreateNode(XMLContactListTags.Membership.ToString(), null);
@@ -434,6 +445,9 @@
         }
     }
 
+    #endregion
+
+    #region XMLAddressBook
 
     /// <summary>
     /// XML ForwardList file maintainer
@@ -444,7 +458,6 @@
         DateTime dynamicItemLastChange;
         Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
         Dictionary<string, string> myproperties = new Dictionary<string, string>(0);
-
 
         public XMLAddressBook(string filename)
             : this(filename, false)
@@ -458,6 +471,38 @@
             LoadFromFile(filename);
         }
 
+        public DateTime DynamicItemLastChange
+        {
+            get
+            {
+                return dynamicItemLastChange;
+            }
+            set
+            {
+                dynamicItemLastChange = value;
+            }
+        }
+
+        public Dictionary<string, GroupInfo> Groups
+        {
+            get
+            {
+                return groups;
+            }
+        }
+
+        public Dictionary<string, string> MyProperties
+        {
+            get
+            {
+                return myproperties;
+            }
+            set
+            {
+                myproperties = value;
+            }
+        }
+
         public override void LoadFromFile(string filename)
         {
             base.LoadFromFile(filename);
@@ -468,7 +513,7 @@
 
             XMLContactListParser parser = new XMLContactListParser(doc);
             parser.Parse();
-            AddRange(parser.AddressBookContactList);
+            Add(parser.AddressBookContactList);
             LastChange = parser.AddressBookLastChange;
             dynamicItemLastChange = parser.DynamicItemLastChange;
             groups = parser.GroupList;
@@ -485,7 +530,6 @@
 
         public override void Save(string filename)
         {
-            base.LoadFromFile(filename);
             XmlNode addressbookRoot = doc.GetElementsByTagName(XMLContactListTags.AddressBook.ToString())[0];
             if (addressbookRoot == null)
                 addressbookRoot = CreateNode(XMLContactListTags.AddressBook.ToString(), null);
@@ -533,43 +577,11 @@
             }
         }
 
-        public void AddGroupRange(Dictionary<string, GroupInfo> range)
+        public void AddGroup(Dictionary<string, GroupInfo> range)
         {
             foreach (GroupInfo group in range.Values)
             {
                 AddGroup(group);
-            }
-        }
-
-        public Dictionary<string, GroupInfo> Groups
-        {
-            get
-            {
-                return groups;
-            }
-        }
-
-        public DateTime DynamicItemLastChange
-        {
-            get
-            {
-                return dynamicItemLastChange;
-            }
-            set
-            {
-                dynamicItemLastChange = value;
-            }
-        }
-
-        public Dictionary<string, string> MyProperties
-        {
-            get
-            {
-                return myproperties;
-            }
-            set
-            {
-                myproperties = value;
             }
         }
 
@@ -617,4 +629,5 @@
             return contactRoot;
         }
     }
+    #endregion
 };
