@@ -31,24 +31,11 @@ namespace MSNPSharp
         Membership
     }
 
-
     internal abstract class XMLContactList : Dictionary<string, ContactInfo>
     {
         protected bool noCompress;
         protected XmlDocument doc;
         protected DateTime lastChange;
-
-        protected void CreateDoc()
-        {
-            doc = new XmlDocument();
-            XmlDeclaration xmldecl;
-            xmldecl = doc.CreateXmlDeclaration("1.0", "utf-8", null);
-            doc.AppendChild(xmldecl);
-            XmlNode root = CreateNode(XMLContactListTags.ContactList.ToString(), null);
-            doc.AppendChild(root);
-            root.AppendChild(CreateNode(XMLContactListTags.MembershipList.ToString(), null));
-            root.AppendChild(CreateNode(XMLContactListTags.AddressBook.ToString(), null));
-        }
 
         protected XMLContactList(bool nocompress)
             : base(0)
@@ -56,17 +43,40 @@ namespace MSNPSharp
             noCompress = nocompress;
         }
 
+        public DateTime LastChange
+        {
+            get
+            {
+                return lastChange;
+            }
+            set
+            {
+                lastChange = value;
+            }
+        }
+
+        protected void CreateDoc()
+        {
+            doc = new XmlDocument();
+            doc.AppendChild(doc.CreateXmlDeclaration("1.0", "utf-8", null));
+            XmlNode root = CreateNode(XMLContactListTags.ContactList.ToString(), null);
+            doc.AppendChild(root);
+            root.AppendChild(CreateNode(XMLContactListTags.MembershipList.ToString(), null));
+            root.AppendChild(CreateNode(XMLContactListTags.AddressBook.ToString(), null));
+        }
+
         protected virtual XmlNode CreateNode(string name, string innerText)
         {
-            if (doc != null)
-            {
-                XmlNode rtn = doc.CreateElement(name);
-                rtn.InnerText = innerText;
-                return rtn;
-            }
-            CreateDoc();
-            return CreateNode(name, innerText);
+            if (null == doc)
+                CreateDoc();
+
+            XmlNode rtn = doc.CreateElement(name);
+            rtn.InnerText = innerText;
+            return rtn;
         }
+
+        public abstract void Save(string filename);
+        public abstract void Save();
 
         protected virtual void SaveToHiddenMCL(string filename)
         {
@@ -76,7 +86,6 @@ namespace MSNPSharp
             file.Content = ms.ToArray();
             MCLFileManager.Save(file, true);
         }
-
 
         public virtual void LoadFromFile(string filename)
         {
@@ -96,14 +105,11 @@ namespace MSNPSharp
             }
         }
 
-        public abstract void Save(string filename);
-        public abstract void Save();
-
-        public virtual void AddRange(Dictionary<string, ContactInfo> range)
+        public virtual void Add(Dictionary<string, ContactInfo> range)
         {
             foreach (string account in range.Keys)
             {
-                if (this.ContainsKey(account))
+                if (ContainsKey(account))
                 {
                     if (this[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
                     {
@@ -114,18 +120,6 @@ namespace MSNPSharp
                 {
                     Add(account, range[account]);
                 }
-            }
-        }
-
-        public DateTime LastChange
-        {
-            set
-            {
-                lastChange = value;
-            }
-            get
-            {
-                return lastChange;
             }
         }
     }

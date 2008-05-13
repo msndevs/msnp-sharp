@@ -444,7 +444,7 @@ namespace MSNPSharp
                         }
                     }
                 }
-                AddressBook.AddRange(diccontactList);
+                AddressBook.Add(diccontactList);
             }
 
             if (null != forwardList.groups)
@@ -460,7 +460,7 @@ namespace MSNPSharp
                         groups[group.Guid] = group;
                     }
                 }
-                AddressBook.AddGroupRange(groups);
+                AddressBook.AddGroup(groups);
             }
 
             // Save Address Book

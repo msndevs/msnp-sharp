@@ -140,7 +140,7 @@ namespace MSNPSharp
         IMessageHandler nsMessageHandler;
 
         ArrayList contactGroups = new ArrayList();
-        MSNLists lists;
+        MSNLists lists = MSNLists.None;
         PresenceStatus status = PresenceStatus.Offline;
 
         DisplayImage displayImage = null;
