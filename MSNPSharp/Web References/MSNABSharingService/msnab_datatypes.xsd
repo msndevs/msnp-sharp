@@ -340,7 +340,7 @@
     <xsd:sequence>
       <xsd:element name="contactPhoneType" type="msnab:ContactPhoneTypeType" />
       <xsd:element name="number" type="xsd:string" />
-      <xsd:element name="IsMessengerEnabled" type="xsd:boolean" />
+      <xsd:element name="isMessengerEnabled" type="xsd:boolean" />
       <xsd:element name="propertiesChanged" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
