@@ -134,6 +134,8 @@ namespace MSNPSharp
         int oimcount = 1;
 
         bool hasBlog;
+        bool isMessengerUser = false;
+
         ClientType clienttype = ClientType.PassportMember;
 
         [NonSerialized]
@@ -349,6 +351,23 @@ namespace MSNPSharp
             }
         }
 
+        public bool IsMessengerUser
+        {
+            get
+            {
+                return isMessengerUser;
+            }
+            set
+            {
+                if (NSMessageHandler != null && String.IsNullOrEmpty(guid) == false)
+                {
+                    if (IsMessengerUser != value)
+                    {
+                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, value);
+                    }
+                }
+            }
+        }
 
         #region Internal setters
         internal void SetName(string newName)
@@ -518,6 +537,11 @@ namespace MSNPSharp
         internal void SetClientType(ClientType type)
         {
             clienttype = type;
+        }
+
+        internal void SetIsMessengerUser(bool isMessengerEnabled)
+        {
+            isMessengerUser = isMessengerEnabled;
         }
 
         #endregion
