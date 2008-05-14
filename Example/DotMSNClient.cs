@@ -63,6 +63,8 @@ namespace MSNPSharpClient
         private ToolStripMenuItem importContactsMenuItem;
         private TreeView treeViewFilterList;
         private TextBox txtSearch;
+        private ToolStripMenuItem deleteMenuItem;
+        private ToolStripSeparator toolStripMenuItem4;
         private IContainer components;
         #endregion
 
@@ -178,6 +180,8 @@ namespace MSNPSharpClient
             this.toolStripSortBygroup = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDeleteGroup = new System.Windows.Forms.ToolStripMenuItem();
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
+            this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ListPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
@@ -317,9 +321,11 @@ namespace MSNPSharpClient
             this.importContactsMenuItem,
             this.toolStripMenuItem2,
             this.blockMenuItem,
-            this.unblockMenuItem});
+            this.unblockMenuItem,
+            this.deleteMenuItem,
+            this.toolStripMenuItem4});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(212, 170);
+            this.userMenuStrip.Size = new System.Drawing.Size(212, 220);
             // 
             // sendIMMenuItem
             // 
@@ -603,6 +609,18 @@ namespace MSNPSharpClient
             this.groupContextMenu.ShowCheckMargin = true;
             this.groupContextMenu.ShowImageMargin = false;
             this.groupContextMenu.Size = new System.Drawing.Size(148, 26);
+            // 
+            // toolStripMenuItem4
+            // 
+            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(208, 6);
+            // 
+            // deleteMenuItem
+            // 
+            this.deleteMenuItem.Name = "deleteMenuItem";
+            this.deleteMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.deleteMenuItem.Text = "Delete";
+            this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
             // 
             // ClientForm
             // 
@@ -1112,6 +1130,8 @@ namespace MSNPSharpClient
                         toolStripMenuItem2.Visible = false;
                     }
 
+                    deleteMenuItem.Visible = !String.IsNullOrEmpty(contact.Guid);
+
                     Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
                     userMenuStrip.Show(point.X - userMenuStrip.Width, point.Y);
                 }
@@ -1136,6 +1156,33 @@ namespace MSNPSharpClient
         {
             ((Contact)treeViewFavoriteList.SelectedNode.Tag).Blocked = false;
             treeViewFavoriteList.SelectedNode.NodeFont = USER_NODE_FONT;
+        }
+
+        private void deleteMenuItem_Click(object sender, EventArgs e)
+        {
+            Contact contact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
+            RemoveContactForm form = new RemoveContactForm();
+            form.FormClosed += delegate(object f, FormClosedEventArgs fce)
+            {
+                form = f as RemoveContactForm;
+                if (DialogResult.OK == form.DialogResult)
+                {
+                    if (form.Block)
+                    {
+                        contact.Blocked = true;
+                    }
+
+                    if (form.RemoveFromAddressBook)
+                    {
+                        messenger.Nameserver.ContactService.RemoveContact(contact);
+                    }
+                    else
+                    {
+                        contact.IsMessengerUser = false;                        
+                    }
+                }
+            };
+            form.ShowDialog(this);
         }
 
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
