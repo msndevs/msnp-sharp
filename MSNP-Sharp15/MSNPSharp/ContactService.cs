@@ -637,14 +637,14 @@ namespace MSNPSharp
 
         #region Add Contact
 
-        private void AddNonPendingContact(string account, string invitation)
+        private void AddNonPendingContact(string account, ClientType ct, string invitation)
         {
             //1: Add contact to address book with "ContactSave"
             AddNewOrPendingContact(
                 account,
                 false,
                 invitation,
-                ClientType.PassportMember,
+                ct,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     Contact contact = nsMessageHandler.ContactList.GetContact(account);
@@ -674,14 +674,12 @@ namespace MSNPSharp
             );
         }
 
-        private void AddPendingContact(string account)
+        private void AddPendingContact(Contact contact)
         {
-            Contact contact = nsMessageHandler.ContactList.GetContact(account);
-
             // 1: ADL AL without membership, so the user can see our status...
             string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"{t}\" /></d></ml>";
-            payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-            payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
+            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
             payload = payload.Replace("{t}", ((int)contact.ClientType).ToString());
             nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
             nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
@@ -691,7 +689,7 @@ namespace MSNPSharp
 
             // 2: ADD contact to AB with "ContactMsgrAPI"
             AddNewOrPendingContact(
-                account,
+                contact.Mail,
                 true,
                 String.Empty,
                 contact.ClientType,
@@ -725,7 +723,7 @@ namespace MSNPSharp
                                 "ContactMsgrAPI",
                                 delegate
                                 {
-                                    contact = nsMessageHandler.ContactList.GetContact(account);
+                                    contact = nsMessageHandler.ContactList.GetContact(contact.Mail);
                                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 });
                         }
@@ -815,14 +813,14 @@ namespace MSNPSharp
         /// <param name="account">An e-mail adress to add</param>
         public virtual void AddNewContact(string account)
         {
-            AddNewContact(account, String.Empty);
+            AddNewContact(account, ClientType.PassportMember, String.Empty);
         }
 
         /// <summary>
         /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
         /// </summary>
         /// <param name="account">An e-mail adress to add</param>
-        public void AddNewContact(string account, string invitation)
+        public void AddNewContact(string account, ClientType network, string invitation)
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
 
@@ -836,11 +834,11 @@ namespace MSNPSharp
 
             if (MSNLists.PendingList == (MemberShipList.GetMSNLists(account) & MSNLists.PendingList))
             {
-                AddPendingContact(account);
+                AddPendingContact(nsMessageHandler.ContactList.GetContact(account));
             }
             else
             {
-                AddNonPendingContact(account, invitation);
+                AddNonPendingContact(account, network, invitation);
             }
         }
 

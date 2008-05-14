@@ -59,9 +59,10 @@ namespace MSNPSharpClient
         private ToolStripMenuItem toolStripSortBygroup;
         private ToolStripMenuItem toolStripDeleteGroup;
         private ContextMenuStrip groupContextMenu;
-        private TextBox txtAddNew;
         private Button btnAddNew;
         private ToolStripMenuItem importContactsMenuItem;
+        private TreeView treeViewFilterList;
+        private TextBox txtSearch;
         private IContainer components;
         #endregion
 
@@ -137,8 +138,9 @@ namespace MSNPSharpClient
             this.ListPanel = new System.Windows.Forms.Panel();
             this.treeViewPanel = new System.Windows.Forms.Panel();
             this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
+            this.treeViewFilterList = new System.Windows.Forms.TreeView();
             this.SortPanel = new System.Windows.Forms.Panel();
-            this.txtAddNew = new System.Windows.Forms.TextBox();
+            this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnAddNew = new System.Windows.Forms.Button();
             this.btnSortBy = new System.Windows.Forms.Button();
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -147,6 +149,7 @@ namespace MSNPSharpClient
             this.sendMIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.sendFileMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unblockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -175,7 +178,6 @@ namespace MSNPSharpClient
             this.toolStripSortBygroup = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDeleteGroup = new System.Windows.Forms.ToolStripMenuItem();
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ListPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
@@ -203,6 +205,7 @@ namespace MSNPSharpClient
             // treeViewPanel
             // 
             this.treeViewPanel.Controls.Add(this.treeViewFavoriteList);
+            this.treeViewPanel.Controls.Add(this.treeViewFilterList);
             this.treeViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
             this.treeViewPanel.Name = "treeViewPanel";
@@ -233,10 +236,31 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
             this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
             // 
+            // treeViewFilterList
+            // 
+            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
+            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.treeViewFilterList.FullRowSelect = true;
+            this.treeViewFilterList.HideSelection = false;
+            this.treeViewFilterList.Indent = 20;
+            this.treeViewFilterList.ItemHeight = 20;
+            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
+            this.treeViewFilterList.Name = "treeViewFilterList";
+            this.treeViewFilterList.ShowLines = false;
+            this.treeViewFilterList.ShowPlusMinus = false;
+            this.treeViewFilterList.ShowRootLines = false;
+            this.treeViewFilterList.Size = new System.Drawing.Size(328, 545);
+            this.treeViewFilterList.TabIndex = 0;
+            this.treeViewFilterList.Visible = false;
+            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            // 
             // SortPanel
             // 
             this.SortPanel.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.SortPanel.Controls.Add(this.txtAddNew);
+            this.SortPanel.Controls.Add(this.txtSearch);
             this.SortPanel.Controls.Add(this.btnAddNew);
             this.SortPanel.Controls.Add(this.btnSortBy);
             this.SortPanel.Dock = System.Windows.Forms.DockStyle.Top;
@@ -245,22 +269,27 @@ namespace MSNPSharpClient
             this.SortPanel.Size = new System.Drawing.Size(328, 27);
             this.SortPanel.TabIndex = 1;
             // 
-            // txtAddNew
+            // txtSearch
             // 
-            this.txtAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtAddNew.Location = new System.Drawing.Point(95, 5);
-            this.txtAddNew.Name = "txtAddNew";
-            this.txtAddNew.Size = new System.Drawing.Size(156, 20);
-            this.txtAddNew.TabIndex = 8;
+            this.txtSearch.ForeColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtSearch.Location = new System.Drawing.Point(6, 3);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(227, 20);
+            this.txtSearch.TabIndex = 9;
+            this.txtSearch.Text = "Search contacts";
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
+            this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
+            this.txtSearch.Enter += new System.EventHandler(this.txtSearch_Enter);
             // 
             // btnAddNew
             // 
             this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddNew.Location = new System.Drawing.Point(257, 2);
+            this.btnAddNew.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnAddNew.Location = new System.Drawing.Point(287, 3);
             this.btnAddNew.Name = "btnAddNew";
-            this.btnAddNew.Size = new System.Drawing.Size(59, 23);
+            this.btnAddNew.Size = new System.Drawing.Size(34, 21);
             this.btnAddNew.TabIndex = 7;
-            this.btnAddNew.Text = "add new";
+            this.btnAddNew.Text = "+";
             this.btnAddNew.UseVisualStyleBackColor = true;
             this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
             // 
@@ -268,8 +297,8 @@ namespace MSNPSharpClient
             // 
             this.btnSortBy.BackColor = System.Drawing.SystemColors.Control;
             this.btnSortBy.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnSortBy.Location = new System.Drawing.Point(8, 3);
+            this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnSortBy.Location = new System.Drawing.Point(241, 3);
             this.btnSortBy.Name = "btnSortBy";
             this.btnSortBy.Size = new System.Drawing.Size(38, 21);
             this.btnSortBy.TabIndex = 1;
@@ -290,7 +319,7 @@ namespace MSNPSharpClient
             this.blockMenuItem,
             this.unblockMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(212, 192);
+            this.userMenuStrip.Size = new System.Drawing.Size(212, 170);
             // 
             // sendIMMenuItem
             // 
@@ -327,6 +356,13 @@ namespace MSNPSharpClient
             this.sendFileMenuItem.Size = new System.Drawing.Size(211, 22);
             this.sendFileMenuItem.Text = "Send File";
             this.sendFileMenuItem.Click += new System.EventHandler(this.sendFileMenuItem_Click);
+            // 
+            // importContactsMenuItem
+            // 
+            this.importContactsMenuItem.Name = "importContactsMenuItem";
+            this.importContactsMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.importContactsMenuItem.Text = "Import Contacts";
+            this.importContactsMenuItem.Click += new System.EventHandler(this.importContactsMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
@@ -419,7 +455,7 @@ namespace MSNPSharpClient
             this.accountTextBox.Location = new System.Drawing.Point(64, 12);
             this.accountTextBox.Name = "accountTextBox";
             this.accountTextBox.Size = new System.Drawing.Size(156, 20);
-            this.accountTextBox.TabIndex = 0;
+            this.accountTextBox.TabIndex = 1;
             this.accountTextBox.Text = "msnpsharp@live.cn";
             // 
             // label2
@@ -567,13 +603,6 @@ namespace MSNPSharpClient
             this.groupContextMenu.ShowCheckMargin = true;
             this.groupContextMenu.ShowImageMargin = false;
             this.groupContextMenu.Size = new System.Drawing.Size(148, 26);
-            // 
-            // importContactsMenuItem
-            // 
-            this.importContactsMenuItem.Name = "importContactsMenuItem";
-            this.importContactsMenuItem.Size = new System.Drawing.Size(211, 22);
-            this.importContactsMenuItem.Text = "Import Contacts";
-            this.importContactsMenuItem.Click += new System.EventHandler(this.importContactsMenuItem_Click);
             // 
             // ClientForm
             // 
@@ -1377,7 +1406,14 @@ namespace MSNPSharpClient
 
         private void btnAddNew_Click(object sender, EventArgs e)
         {
-            messenger.Nameserver.ContactService.AddNewContact(txtAddNew.Text);
+            AddContactForm acf = new AddContactForm();
+            if (DialogResult.OK == acf.ShowDialog(this) && acf.Account != String.Empty)
+            {
+                messenger.Nameserver.ContactService.AddNewContact(
+                    acf.Account,
+                    acf.IsYahooUser ? ClientType.EmailMember : ClientType.PassportMember,
+                    acf.InvitationMessage);
+            }
         }
 
         private void importContactsMenuItem_Click(object sender, EventArgs e)
@@ -1388,10 +1424,55 @@ namespace MSNPSharpClient
                 string invitation = ic.InvitationMessage;
                 foreach (String account in ic.Contacts)
                 {
-                    messenger.Nameserver.ContactService.AddNewContact(account, invitation);
+                    messenger.Nameserver.ContactService.AddNewContact(account, ClientType.PassportMember, invitation);
                 }
             }
         }
 
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == String.Empty || txtSearch.Text == "Search contacts")
+            {
+                treeViewFilterList.Nodes.Clear();
+                treeViewFavoriteList.Visible = true;
+                treeViewFilterList.Visible = false;
+            }
+            else
+            {
+                treeViewFilterList.Nodes.Clear();
+                treeViewFavoriteList.Visible = false;
+                treeViewFilterList.Visible = true;
+                TreeNode foundnode = treeViewFilterList.Nodes.Add("0", "Search Results:");
+
+                foreach (Contact contact in messenger.ContactList.All)
+                {
+                    if (contact.Mail.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1
+                        ||
+                        contact.Name.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1)
+                    {
+                        TreeNode newnode = foundnode.Nodes.Add(contact.Mail, contact.Name);
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.Tag = contact;
+                    }
+                }
+                foundnode.Text = "Search Results: " + foundnode.Nodes.Count;
+            }
+        }
+
+        private void txtSearch_Enter(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == "Search contacts")
+            {
+                txtSearch.Text = String.Empty;
+            }
+        }
+
+        private void txtSearch_Leave(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == String.Empty)
+            {
+                txtSearch.Text = "Search contacts";
+            }
+        }
     }
 }

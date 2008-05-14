@@ -41,6 +41,7 @@ namespace MSNPSharpClient
         {
             if (DialogResult.OK == openFileDialog.ShowDialog(this))
             {
+                Contacts.Clear();
                 invitationMessage = txtInvitation.Text;
                 try
                 {
