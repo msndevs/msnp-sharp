@@ -499,6 +499,7 @@ namespace MSNPSharp
                         }
 
                         contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0 && String.IsNullOrEmpty(abci.DisplayName)) ? ci.DisplayName : abci.DisplayName);
+                        contact.SetIsMessengerUser(abci.IsMessengerUser);
 
                         if (abci.IsMessengerUser)
                         {
@@ -874,6 +875,8 @@ namespace MSNPSharp
                 {
                     contact.NSMessageHandler = null;
                     nsMessageHandler.ContactList.Remove(contact.Mail);
+                    AddressBook.Remove(contact.Mail);
+                    AddressBook.Save();
                 }
                 else if (e.Error != null)
                 {
@@ -890,6 +893,92 @@ namespace MSNPSharp
             request.contacts[0].contactId = contact.Guid;
 
             abService.ABContactDeleteAsync(request, new object());
+        }
+
+        #endregion
+
+        #region UpdateContact
+
+        internal void UpdateContact(Contact contact, string displayName, bool isMessengerUser)
+        {
+            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
+            ABServiceBinding abService = new ABServiceBinding();
+            abService.Proxy = webProxy;
+            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
+            abService.ABApplicationHeaderValue = new ABApplicationHeader();
+            abService.ABApplicationHeaderValue.IsMigration = false;
+            abService.ABApplicationHeaderValue.PartnerScenario = isMessengerUser ? "ContactSave" : "Timer";
+            abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
+            abService.ABApplicationHeaderValue.ApplicationId = applicationId;
+
+            abService.ABAuthHeaderValue = new ABAuthHeader();
+            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+            abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
+            abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
+            {
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                if (!e.Cancelled && e.Error == null)
+                {
+                    contact.SetIsMessengerUser(isMessengerUser);
+                    AddressBook[contact.Mail].IsMessengerUser = contact.IsMessengerUser;
+                    if (!String.IsNullOrEmpty(displayName))
+                    {
+                        contact.SetName(displayName);
+                        AddressBook[contact.Mail].DisplayName = displayName;
+                    }                    
+                    AddressBook.Save();
+                }
+                else if (e.Error != null)
+                {
+                    OnServiceOperationFailed(abService,
+                        new ServiceOperationFailedEventArgs("UpdateContact", e.Error));
+                }
+                ((IDisposable)service).Dispose();
+                return;
+            };
+
+            List<string> propertiesChanged = new List<string>();
+            ABContactUpdateRequestType request = new ABContactUpdateRequestType();
+            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.contacts = new ContactType[] { new ContactType() };
+            request.contacts[0].contactId = contact.Guid;
+            request.contacts[0].contactInfo = new contactInfoType();
+
+            if (isMessengerUser != contact.IsMessengerUser)
+            {
+                switch (contact.ClientType)
+                {
+                    case ClientType.PassportMember:
+                        propertiesChanged.Add("IsMessengerUser");
+                        request.contacts[0].contactInfo.isMessengerUser = isMessengerUser;
+                        request.contacts[0].contactInfo.isMessengerUserSpecified = true;
+                        break;
+
+                    case ClientType.EmailMember:
+                        propertiesChanged.Add("ContactEmail");
+                        request.contacts[0].contactInfo.emails = new contactEmailType[] { new contactEmailType() };
+                        request.contacts[0].contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
+                        request.contacts[0].contactInfo.emails[0].isMessengerEnabled = isMessengerUser;
+                        request.contacts[0].contactInfo.emails[0].propertiesChanged = "IsMessengerEnabled";
+                        break;
+                }
+            }
+
+            if (displayName != String.Empty && displayName != contact.Name)
+            {
+                propertiesChanged.Add("Annotation");
+                request.contacts[0].contactInfo.annotations = new Annotation[] { new Annotation() };
+                request.contacts[0].contactInfo.annotations[0].Name = "AB.NickName";
+                request.contacts[0].contactInfo.annotations[0].Value = displayName;
+            }
+
+            if (propertiesChanged.Count > 0)
+            {
+                request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+                abService.ABContactUpdateAsync(request, new object());
+            }
         }
 
         #endregion
