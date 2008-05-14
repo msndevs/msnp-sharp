@@ -498,7 +498,7 @@ namespace MSNPSharp
                             contact.ClientCapacities = abci.Capability;
                         }
 
-                        contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0) ? ci.DisplayName : abci.DisplayName);
+                        contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0 && String.IsNullOrEmpty(abci.DisplayName)) ? ci.DisplayName : abci.DisplayName);
 
                         if (abci.IsMessengerUser)
                         {
