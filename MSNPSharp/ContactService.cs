@@ -1191,7 +1191,12 @@ namespace MSNPSharp
     
                     contact.AddToList(list);
                     ContactInfo ci = MemberShipList[contact.Mail];
-                    MemberShipList.MemberRoles[GetMemberRole(list)][ci.Account] = ci;
+                    MemberRole memberrole = GetMemberRole(list);
+                    if (!MemberShipList.MemberRoles.ContainsKey(memberrole))
+                    {
+                        MemberShipList.MemberRoles[memberrole] = new Dictionary<string, ContactInfo>();
+                    }
+                    MemberShipList.MemberRoles[memberrole][ci.Account] = ci;         
                     MemberShipList.Save();
 
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
