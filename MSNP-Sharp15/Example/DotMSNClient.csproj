@@ -113,6 +113,11 @@
     <Compile Include="ImportContacts.Designer.cs">
       <DependentUpon>ImportContacts.cs</DependentUpon>
     </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="RemoveContactForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -141,7 +146,11 @@
       <SubType>Designer</SubType>
       <DependentUpon>ImportContacts.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="listbg.png" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="RemoveContactForm.resx">
       <SubType>Designer</SubType>
       <DependentUpon>RemoveContactForm.cs</DependentUpon>
