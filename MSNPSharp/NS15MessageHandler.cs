@@ -1100,7 +1100,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid, "MFN", HttpUtility.UrlEncode(contact.Name) }));
+            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid, "MFN", HttpUtility.UrlEncode(contact.Name).Replace("+", "%20") }));
         }
 
         /// <summary>
@@ -1166,7 +1166,7 @@ namespace MSNPSharp
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName) }));
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
         }
 
         public virtual void SetPersonalMessage(PersonalMessage pmsg)
