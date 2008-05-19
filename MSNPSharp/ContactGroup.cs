@@ -91,7 +91,7 @@ namespace MSNPSharp
 		/// Constructor, used internally by the library.
 		/// </summary>
 		/// <param name="name"></param>
-		/// <param name="id"></param>
+        /// <param name="guid"></param>
 		/// <param name="nsMessageHandler"></param>
 		internal ContactGroup(string name, string guid, NSMessageHandler nsMessageHandler)
 		{
