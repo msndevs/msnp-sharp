@@ -28,42 +28,55 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using MSNPSharp;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp.Core
-{	
-	/// <summary>
-	/// </summary>
-	public delegate void ProcessorExceptionEventHandler(object sender, ExceptionEventArgs e);
+{
+    using System;
+    using System.IO;
+    using MSNPSharp;
+    using MSNPSharp.DataTransfer;
 
-	/// <summary>
-	/// Defines methods to send network messages.
-	/// </summary>
-	/// <remarks>
-	/// IMessageProcessor is the abstraction of an object which can send network messages.
-	/// Network messages can be any kind of messages: text messages, data messages.
-	/// By using this interface a de-coupling is established between the handling of messages
-	/// and the I/O of messages.
-	/// IMessageProcessor is mostly used internal.
-	/// </remarks>
-	public interface IMessageProcessor
-	{		
-		/// <summary>
-		/// Sends a message to be processed by the processor.
-		/// </summary>
-		/// <param name="message"></param>
-		void		SendMessage(NetworkMessage message);
-		/// <summary>
-		/// Registers a handler that wants to receive incoming messages.
-		/// </summary>
-		/// <param name="handler"></param>
-		void		RegisterHandler(IMessageHandler handler);
-		/// <summary>
-		/// Unregisters (removes) a handler that no lange wants to receive incoming messages.
-		/// </summary>
-		/// <param name="handler"></param>
-		void		UnregisterHandler(IMessageHandler handler);
-	}
-}
+    /// <summary>
+    /// Stores incoming messages in a buffer and releases them only when all contents are received.
+    /// </summary>
+    /// <remarks>
+    ///	MessagePool buffers incoming raw byte data and releases this data only when the message is fully retrieved. 
+    ///	This supports when a single message is send in multiple packets.
+    ///	The descendants of this class have simple knowledge of the used protocol to identify whether a message is fully retrieved or not.
+    ///	</remarks>
+    public abstract class MessagePool
+    {
+        /// <summary>
+        /// Constructor to instantiate a message pool.
+        /// </summary>
+        protected MessagePool()
+        {
+        }
+
+        /// <summary>
+        /// Buffers the incoming raw data internal.This method is often used after receiving incoming data from a socket or another source.
+        /// </summary>		
+        /// <param name="reader"></param>
+        public virtual void BufferData(BinaryReader reader)
+        {
+        }
+
+        /// <summary>
+        /// Defines whether there is a message available to retrieve.
+        /// </summary>		
+        public virtual bool MessageAvailable
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the next message data from the buffer.
+        /// </summary>
+        /// <returns></returns>
+        public abstract byte[] GetNextMessageData();
+
+
+    }
+};

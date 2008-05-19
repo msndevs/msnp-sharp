@@ -28,51 +28,30 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.IO;
-using MSNPSharp;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp.Core
 {
-	/// <summary>
-	/// Stores incoming messages in a buffer and releases them only when all contents are received.
-	/// </summary>
-	/// <remarks>
-	///	MessagePool buffers incoming raw byte data and releases this data only when the message is fully retrieved. 
-	///	This supports when a single message is send in multiple packets.
-	///	The descendants of this class have simple knowledge of the used protocol to identify whether a message is fully retrieved or not.
-	///	</remarks>
-	public abstract class MessagePool
-	{
-		/// <summary>
-		/// Constructor to instantiate a message pool.
-		/// </summary>
-		protected MessagePool()
-		{			
-		}
+    using System;
+    using System.IO;
+    using System.Text;
+    using System.Collections;
+    using MSNPSharp;
+    using MSNPSharp.DataTransfer;
 
-		/// <summary>
-		/// Buffers the incoming raw data internal.This method is often used after receiving incoming data from a socket or another source.
-		/// </summary>		
-		/// <param name="reader"></param>
-		public virtual void BufferData(BinaryReader reader)
-		{}
+    [Serializable()]
+    public class SBMessage : MSNMessage
+    {
+        public SBMessage()
+        {
+        }
 
-		/// <summary>
-		/// Defines whether there is a message available to retrieve.
-		/// </summary>		
-		public virtual bool MessageAvailable
-		{
-			get { return false; }
-		}
+        public SBMessage(string command, string[] commandValues)
+            : base(command, new ArrayList(commandValues))
+        {
+        }
 
-		/// <summary>
-		/// Retrieves the next message data from the buffer.
-		/// </summary>
-		/// <returns></returns>
-		public abstract byte[] GetNextMessageData();
-
-
-	}
-}
+        public SBMessage(string command, ArrayList commandValues)
+            : base(command, commandValues)
+        {
+        }
+    }
+};
