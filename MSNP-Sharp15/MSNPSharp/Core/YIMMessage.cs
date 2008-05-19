@@ -27,23 +27,23 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Collections;
-using System.Globalization;
-
 namespace MSNPSharp.Core
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Collections;
+    using System.Globalization;
+
     /// <summary>
     /// Yahoo Messenger Message
     /// </summary>
     [Serializable()]
-    public class YIMMessage :MSNMessage
+    public class YIMMessage : MSNMessage
     {
         string _user = "";
         string _msgtype = "1";
- 
+
         public YIMMessage(NSMessage message)
             : base("UBM", (ArrayList)message.CommandValues.Clone())
         {
@@ -89,6 +89,7 @@ namespace MSNPSharp.Core
                 {
                     if (Command != "UBM")
                         CommandValues.Add(TransactionID.ToString());
+
                     CommandValues.Add(_user);
                     CommandValues.Add("32");
                     CommandValues.Add(_msgtype);
@@ -157,26 +158,50 @@ namespace MSNPSharp.Core
 
         public new ArrayList CommandValues
         {
-            get { return base.CommandValues; }
-            set { base.CommandValues = value; }
+            get
+            {
+                return base.CommandValues;
+            }
+            set
+            {
+                base.CommandValues = value;
+            }
         }
 
         public new string Command
         {
-            get { return base.Command; }
-            set { base.Command = value; }
+            get
+            {
+                return base.Command;
+            }
+            set
+            {
+                base.Command = value;
+            }
         }
 
         public new MSGMessage InnerMessage
         {
-            get { return (MSGMessage)base.InnerMessage; }
-            set { base.InnerMessage = value; }
+            get
+            {
+                return (MSGMessage)base.InnerMessage;
+            }
+            set
+            {
+                base.InnerMessage = value;
+            }
         }
 
         public new int TransactionID
         {
-            get { return base.TransactionID; }
-            set { base.TransactionID = value; }
+            get
+            {
+                return base.TransactionID;
+            }
+            set
+            {
+                base.TransactionID = value;
+            }
         }
     }
-}
+};

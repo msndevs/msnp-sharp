@@ -1,4 +1,4 @@
-﻿namespace MSNPSharp
+﻿namespace MSNPSharp.IO
 {
     using System;
     using System.Collections.Generic;
@@ -102,7 +102,10 @@
         /// </summary>
         public Dictionary<string, ContactInfo> MembershipContactList
         {
-            get { return membershipContactList; }
+            get
+            {
+                return membershipContactList;
+            }
         }
 
         private Dictionary<string, GroupInfo> groupList = new Dictionary<string, GroupInfo>(0);

@@ -28,30 +28,36 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.IO;
-using System.Text;
-using System.Collections;
-using MSNPSharp;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp.Core
 {
-	[Serializable()]
-	public class SBMessage : MSNMessage
-	{
-		public SBMessage()
-		{
-		}
+    using System;
+    using System.IO;
+    using MSNPSharp;
+    using MSNPSharp.DataTransfer;
 
-		public SBMessage(string command, string[] commandValues)
-			: base(command, new ArrayList(commandValues))
-		{
-		}
+    /// <summary>
+    /// Buffers and releases the messages for a switchboard
+    /// </summary>
+    public class SBMessagePool : NSMessagePool
+    {
+        public SBMessagePool()
+        {
+        }
 
-		public SBMessage(string command, ArrayList commandValues)
-			: base(command, commandValues)
-		{
-		}
-	}
-}
+        // Buffers data.
+        public override void BufferData(BinaryReader reader)
+        {
+            if (Settings.TraceSwitch.TraceVerbose)
+                System.Diagnostics.Trace.Write("Buffering data .. ", "SBMessagePool");
+
+            base.BufferData(reader);
+            if (Settings.TraceSwitch.TraceVerbose)
+            {
+                if (this.MessageAvailable)
+                    System.Diagnostics.Trace.Write("beschikbaar", "SBMessagePool");
+                else
+                    System.Diagnostics.Trace.Write("_niet_ beschikbaar", "SBMessagePool");
+            }
+        }
+    }
+};

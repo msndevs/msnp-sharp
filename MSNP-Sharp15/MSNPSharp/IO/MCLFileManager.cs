@@ -1,12 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using IOFile = System.IO.File;
-using System.Diagnostics;
-
 namespace MSNPSharp.IO
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Threading;
+    using IOFile = System.IO.File;
+    using System.Diagnostics;
+
     internal class MCLInfo
     {
         private MCLFile file;
@@ -45,7 +45,10 @@ namespace MSNPSharp.IO
         /// </summary>
         public MCLFile File
         {
-            get { return file; }
+            get
+            {
+                return file;
+            }
         }
 
         /// <summary>
@@ -53,7 +56,10 @@ namespace MSNPSharp.IO
         /// </summary>
         public DateTime LastChange
         {
-            get { return lastChange; }
+            get
+            {
+                return lastChange;
+            }
         }
     }
 
@@ -81,7 +87,7 @@ namespace MSNPSharp.IO
         {
             if (storage.Count == 0)
                 return;
-            
+
             try
             {
                 foreach (MCLInfo mclinfo in storage.Values)
@@ -127,4 +133,4 @@ namespace MSNPSharp.IO
             return storage[filePath].File;
         }
     }
-}
+};

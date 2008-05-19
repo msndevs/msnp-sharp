@@ -28,15 +28,15 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.IO;
-using System.Collections;
-using System.Collections.Generic;
-using MSNPSharp;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp.Core
 {
+    using System;
+    using System.IO;
+    using System.Collections;
+    using System.Collections.Generic;
+    using MSNPSharp;
+    using MSNPSharp.DataTransfer;
+
     // Buffers the incoming data from the notification server (NS).
     // The main purpose of this class is to ensure that MSG, IPG and NOT payload commands are processed
     // only when they are complete. Payload commands can be quite large and may be larger
@@ -212,4 +212,4 @@ namespace MSNPSharp.Core
             }
         }
     }
-}
+};

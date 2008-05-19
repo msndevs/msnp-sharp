@@ -26,6 +26,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
+
 //#define TRACE
 
 namespace MSNPSharp.IO
@@ -46,7 +47,7 @@ namespace MSNPSharp.IO
     public sealed class MCLFile
     {
         int length = 0;
-        string fileName = String.Empty; 
+        string fileName = String.Empty;
         byte[] uncompressData;
         bool noCompression = false;
 
@@ -92,8 +93,14 @@ namespace MSNPSharp.IO
 
         public string FileName
         {
-            get { return fileName; }
-            set { fileName = value; }
+            get
+            {
+                return fileName;
+            }
+            set
+            {
+                fileName = value;
+            }
         }
 
         /// <summary>
@@ -124,7 +131,10 @@ namespace MSNPSharp.IO
 
         public bool NoCompression
         {
-            get { return noCompression; }
+            get
+            {
+                return noCompression;
+            }
         }
 
         #endregion
@@ -237,7 +247,7 @@ namespace MSNPSharp.IO
 
             try
             {
-                 if (!noCompression)
+                if (!noCompression)
                 {
                     IntPtr structPtr = Marshal.AllocHGlobal(Marshal.SizeOf(mclfile.len));
                     Marshal.Copy(bytstruct, 3, structPtr, Marshal.SizeOf(mclfile.len));
