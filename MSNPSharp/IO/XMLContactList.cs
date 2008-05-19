@@ -1,4 +1,4 @@
-﻿namespace MSNPSharp
+﻿namespace MSNPSharp.IO
 {
     using System;
     using System.Collections.Generic;

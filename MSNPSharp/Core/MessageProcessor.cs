@@ -28,58 +28,44 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.Collections;
-using System.Text;
-using MSNPSharp;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp.Core
 {
-	[Serializable()]
-	public class NSMessage : MSNMessage
-	{
-		public NSMessage() : base ()
-		{
-			
-		}
+    using System;
+    using MSNPSharp;
+    using MSNPSharp.DataTransfer;
 
-		public NSMessage(string command, ArrayList commandValues)
-			: base(command, commandValues)
-		{			
-		}
+    /// <summary>
+    /// </summary>
+    public delegate void ProcessorExceptionEventHandler(object sender, ExceptionEventArgs e);
 
-		public NSMessage(string command, string[] commandValues)
-			: base(command, new ArrayList(commandValues))
-		{			
-		}
-		
-		public NSMessage(string command) : base ()
-		{
-			Command = command;
-		}
-		
-		//this is only different for QRY response
-		public override byte[] GetBytes()
-		{
-			if (Command == "PNG")
-				return System.Text.Encoding.UTF8.GetBytes("PNG\r\n");
-			
-			if(Command != "QRY")
-				return base.GetBytes();
-			
-			StringBuilder builder = new StringBuilder(64);
-			builder.Append(Command);
-			
-			// for the exception do it ourselves
-			builder.Append(' ');
-			builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
-			foreach(string val in CommandValues)
-			{				
-				builder.Append(val);
-			}
-			
-			return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
-		}
-	}
-}
+    /// <summary>
+    /// Defines methods to send network messages.
+    /// </summary>
+    /// <remarks>
+    /// IMessageProcessor is the abstraction of an object which can send network messages.
+    /// Network messages can be any kind of messages: text messages, data messages.
+    /// By using this interface a de-coupling is established between the handling of messages
+    /// and the I/O of messages.
+    /// IMessageProcessor is mostly used internal.
+    /// </remarks>
+    public interface IMessageProcessor
+    {
+        /// <summary>
+        /// Sends a message to be processed by the processor.
+        /// </summary>
+        /// <param name="message"></param>
+        void SendMessage(NetworkMessage message);
+
+        /// <summary>
+        /// Registers a handler that wants to receive incoming messages.
+        /// </summary>
+        /// <param name="handler"></param>
+        void RegisterHandler(IMessageHandler handler);
+
+        /// <summary>
+        /// Unregisters (removes) a handler that no lange wants to receive incoming messages.
+        /// </summary>
+        /// <param name="handler"></param>
+        void UnregisterHandler(IMessageHandler handler);
+    }
+};

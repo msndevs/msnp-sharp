@@ -28,35 +28,49 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.IO;
-using MSNPSharp;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp.Core
 {
-	// Buffers and releases the messages for a switchboard
-	public class SBMessagePool : NSMessagePool
-	{
-		public SBMessagePool()
-		{
-			
-		}
+    using System;
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		// Buffers data.
-		public override void BufferData(BinaryReader reader)
-		{
-			if(Settings.TraceSwitch.TraceVerbose)
-				System.Diagnostics.Trace.Write("Buffering data .. ", "SBMessagePool");
+    #region MessageHandler Handlers
+    /// <summary>
+    /// This delegate is used when the server sends an error code. 
+    /// </summary>
+    public delegate void ErrorReceivedEventHandler(object sender, MSNErrorEventArgs e);
 
-			base.BufferData(reader);
-			if(Settings.TraceSwitch.TraceVerbose)
-			{
-				if(this.MessageAvailable)
-					System.Diagnostics.Trace.Write("beschikbaar", "SBMessagePool");
-				else
-					System.Diagnostics.Trace.Write("_niet_ beschikbaar", "SBMessagePool");
-			}
-		}
-	}
-}
+    /// <summary>
+    /// This delegate is used when an exception was thrown inside the message handler class.
+    /// </summary>
+    public delegate void HandlerExceptionEventHandler(object sender, ExceptionEventArgs e);
+    #endregion
+
+    /// <summary>
+    /// IMessageHandler defines the methods required to handle incoming network messages.
+    /// </summary>
+    public interface IMessageHandler
+    {
+        /// <summary>
+        /// Gets or sets the processor of network messages. 
+        /// Every message handler is associated with a single message processor.
+        /// This way the handler can initiate, or send, messages which are not a reply
+        /// on incoming messages.
+        /// </summary>
+        IMessageProcessor MessageProcessor
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// A IMessageProcessor calls this method. The handler can then process the
+        /// message.
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        /// <param name="message"></param>
+        /// <param name="sender"></param>
+        void HandleMessage(IMessageProcessor sender, NetworkMessage message);
+    }
+};

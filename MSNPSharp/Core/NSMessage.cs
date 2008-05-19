@@ -28,49 +28,60 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
-
 namespace MSNPSharp.Core
 {
-	#region MessageHandler Handlers
-	/// <summary>
-	/// This delegate is used when the server sends an error code. 
-	/// </summary>
-	public delegate void ErrorReceivedEventHandler(object sender, MSNErrorEventArgs e);
+    using System;
+    using System.Collections;
+    using System.Text;
+    using MSNPSharp;
+    using MSNPSharp.DataTransfer;
 
-	/// <summary>
-	/// This delegate is used when an exception was thrown inside the message handler class.
-	/// </summary>
-	public delegate void HandlerExceptionEventHandler(object sender, ExceptionEventArgs e);
-	#endregion
+    [Serializable()]
+    public class NSMessage : MSNMessage
+    {
+        public NSMessage()
+            : base()
+        {
 
-	/// <summary>
-	/// IMessageHandler defines the methods required to handle incoming network messages.
-	/// </summary>
-	public interface IMessageHandler
-	{
-		/// <summary>
-		/// Gets or sets the processor of network messages. 
-		/// Every message handler is associated with a single message processor.
-		/// This way the handler can initiate, or send, messages which are not a reply
-		/// on incoming messages.
-		/// </summary>
-		IMessageProcessor MessageProcessor
-		{
-			get;
-			set;
-		}
+        }
 
-		/// <summary>
-		/// A IMessageProcessor calls this method. The handler can then process the
-		/// message.
-		/// </summary>
-		/// <remarks>
-		/// </remarks>
-		/// <param name="message"></param>
-		/// <param name="sender"></param>
-		void HandleMessage(IMessageProcessor sender, NetworkMessage message);		
-	}
-}
+        public NSMessage(string command, ArrayList commandValues)
+            : base(command, commandValues)
+        {
+        }
+
+        public NSMessage(string command, string[] commandValues)
+            : base(command, new ArrayList(commandValues))
+        {
+        }
+
+        public NSMessage(string command)
+            : base()
+        {
+            Command = command;
+        }
+
+        //this is only different for QRY response
+        public override byte[] GetBytes()
+        {
+            if (Command == "PNG")
+                return System.Text.Encoding.UTF8.GetBytes("PNG\r\n");
+
+            if (Command != "QRY")
+                return base.GetBytes();
+
+            StringBuilder builder = new StringBuilder(64);
+            builder.Append(Command);
+
+            // for the exception do it ourselves
+            builder.Append(' ');
+            builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            foreach (string val in CommandValues)
+            {
+                builder.Append(val);
+            }
+
+            return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+        }
+    }
+};

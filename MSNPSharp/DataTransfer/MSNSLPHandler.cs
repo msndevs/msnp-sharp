@@ -29,20 +29,20 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Text.RegularExpressions;
-using System.Collections;
-using System.Net;
-using System.Net.Sockets;
-using System.Globalization;
-using System.Diagnostics;
-using MSNPSharp.Core;
-using MSNPSharp;
-
 namespace MSNPSharp.DataTransfer
 {
+    using System;
+    using System.IO;
+    using System.Threading;
+    using System.Text.RegularExpressions;
+    using System.Collections;
+    using System.Net;
+    using System.Net.Sockets;
+    using System.Globalization;
+    using System.Diagnostics;
+    using MSNPSharp.Core;
+    using MSNPSharp;
+
     /// <summary>
     /// Defines the type of datatransfer for a MSNSLPHandler
     /// </summary>	
@@ -77,8 +77,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public DataTransferType DataType
         {
-            get { return dataType; }
-            set { dataType = value; }
+            get
+            {
+                return dataType;
+            }
+            set
+            {
+                dataType = value;
+            }
         }
 
         /// <summary>
@@ -94,8 +100,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public bool RemoteInvited
         {
-            get { return remoteInvited; }
-            set { remoteInvited = value; }
+            get
+            {
+                return remoteInvited;
+            }
+            set
+            {
+                remoteInvited = value;
+            }
         }
 
         /// <summary>
@@ -103,8 +115,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public Guid Nonce
         {
-            get { return nonce; }
-            set { nonce = value; }
+            get
+            {
+                return nonce;
+            }
+            set
+            {
+                nonce = value;
+            }
         }
 
         /// <summary>
@@ -116,8 +134,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public Guid LastBranch
         {
-            get { return lastBranch; }
-            set { lastBranch = value; }
+            get
+            {
+                return lastBranch;
+            }
+            set
+            {
+                lastBranch = value;
+            }
         }
 
         /// <summary>
@@ -129,8 +153,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public Guid CallId
         {
-            get { return callId; }
-            set { callId = value; }
+            get
+            {
+                return callId;
+            }
+            set
+            {
+                callId = value;
+            }
         }
 
         /// <summary>
@@ -142,8 +172,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public uint SessionId
         {
-            get { return sessionId; }
-            set { sessionId = value; }
+            get
+            {
+                return sessionId;
+            }
+            set
+            {
+                sessionId = value;
+            }
         }
 
         /// <summary>
@@ -155,8 +191,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public uint DataSize
         {
-            get { return dataSize; }
-            set { dataSize = value; }
+            get
+            {
+                return dataSize;
+            }
+            set
+            {
+                dataSize = value;
+            }
         }
 
         /// <summary>
@@ -168,8 +210,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public string Context
         {
-            get { return context; }
-            set { context = value; }
+            get
+            {
+                return context;
+            }
+            set
+            {
+                context = value;
+            }
         }
 
         /// <summary>
@@ -181,8 +229,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public string Checksum
         {
-            get { return checksum; }
-            set { checksum = value; }
+            get
+            {
+                return checksum;
+            }
+            set
+            {
+                checksum = value;
+            }
         }
 
         /// <summary>
@@ -194,8 +248,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public int LastCSeq
         {
-            get { return lastCSeq; }
-            set { lastCSeq = value; }
+            get
+            {
+                return lastCSeq;
+            }
+            set
+            {
+                lastCSeq = value;
+            }
         }
 
         /// <summary>
@@ -207,8 +267,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public string LocalContact
         {
-            get { return localContact; }
-            set { localContact = value; }
+            get
+            {
+                return localContact;
+            }
+            set
+            {
+                localContact = value;
+            }
         }
 
         /// <summary>
@@ -220,8 +286,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public string RemoteContact
         {
-            get { return remoteContact; }
-            set { remoteContact = value; }
+            get
+            {
+                return remoteContact;
+            }
+            set
+            {
+                remoteContact = value;
+            }
         }
 
         /// <summary>
@@ -243,8 +315,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PTransferSession TransferSession
         {
-            get { return transferSession; }
-            set { transferSession = value; }
+            get
+            {
+                return transferSession;
+            }
+            set
+            {
+                transferSession = value;
+            }
         }
 
         /// <summary>
@@ -276,8 +354,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public MSNSLPTransferProperties TransferProperties
         {
-            get { return transferProperties; }
-            set { transferProperties = value; }
+            get
+            {
+                return transferProperties;
+            }
+            set
+            {
+                transferProperties = value;
+            }
         }
 
         /// <summary>
@@ -292,8 +376,14 @@ namespace MSNPSharp.DataTransfer
         /// </remarks>
         public MSNObject MSNObject
         {
-            get { return msnObject; }
-            set { msnObject = value; }
+            get
+            {
+                return msnObject;
+            }
+            set
+            {
+                msnObject = value;
+            }
         }
 
         /// <summary>
@@ -305,8 +395,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public string Filename
         {
-            get { return filename; }
-            set { filename = value; }
+            get
+            {
+                return filename;
+            }
+            set
+            {
+                filename = value;
+            }
         }
 
         /// <summary>
@@ -318,8 +414,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public long FileSize
         {
-            get { return fileSize; }
-            set { fileSize = value; }
+            get
+            {
+                return fileSize;
+            }
+            set
+            {
+                fileSize = value;
+            }
         }
 
         /// <summary>
@@ -331,8 +433,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public MSNSLPMessage InvitationMessage
         {
-            get { return invitationMessage; }
-            set { invitationMessage = value; }
+            get
+            {
+                return invitationMessage;
+            }
+            set
+            {
+                invitationMessage = value;
+            }
         }
 
         /// <summary>
@@ -345,8 +453,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PTransferSession TransferSession
         {
-            get { return transferSession; }
-            set { transferSession = value; }
+            get
+            {
+                return transferSession;
+            }
+            set
+            {
+                transferSession = value;
+            }
         }
 
         [NonSerialized]
@@ -354,7 +468,10 @@ namespace MSNPSharp.DataTransfer
 
         public MSNSLPHandler TransferHandler
         {
-            get { return transferhandler; }
+            get
+            {
+                return transferhandler;
+            }
         }
 
         /// <summary>
@@ -366,8 +483,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public bool Accept
         {
-            get { return accept; }
-            set { accept = value; }
+            get
+            {
+                return accept;
+            }
+            set
+            {
+                accept = value;
+            }
         }
 
         private bool delayprocess = false;
@@ -377,8 +500,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public bool DelayProcess
         {
-            get { return delayprocess; }
-            set { delayprocess = value; }
+            get
+            {
+                return delayprocess;
+            }
+            set
+            {
+                delayprocess = value;
+            }
         }
 
         /// <summary>
@@ -389,8 +518,8 @@ namespace MSNPSharp.DataTransfer
         /// <param name="transferSession"></param>
         /// <param name="handler"></param>
         public MSNSLPInvitationEventArgs
-            (MSNSLPTransferProperties transferProperties, 
-            MSNSLPMessage invitationMessage, 
+            (MSNSLPTransferProperties transferProperties,
+            MSNSLPMessage invitationMessage,
             P2PTransferSession transferSession,
             MSNSLPHandler handler)
         {
@@ -456,8 +585,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public IPEndPoint ExternalEndPoint
         {
-            get { return externalEndPoint; }
-            set { externalEndPoint = value; }
+            get
+            {
+                return externalEndPoint;
+            }
+            set
+            {
+                externalEndPoint = value;
+            }
         }
 
         /// <summary>
@@ -470,8 +605,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public IPEndPoint LocalEndPoint
         {
-            get { return localEndPoint; }
-            set { localEndPoint = value; }
+            get
+            {
+                return localEndPoint;
+            }
+            set
+            {
+                localEndPoint = value;
+            }
         }
 
         #endregion
@@ -501,7 +642,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PMessageSession MessageSession
         {
-            get { return (P2PMessageSession)MessageProcessor; }
+            get
+            {
+                return (P2PMessageSession)MessageProcessor;
+            }
         }
 
 
@@ -801,7 +945,7 @@ namespace MSNPSharp.DataTransfer
             if (session != null)
             {
                 session.AbortTransfer();
-            } 
+            }
         }
 
         #endregion
@@ -1176,10 +1320,18 @@ namespace MSNPSharp.DataTransfer
             // call the methods belonging to the content-type to handle the message
             switch (slpMessage.ContentType)
             {
-                case "application/x-msnmsgr-sessionreqbody": OnSessionRequest(slpMessage); break;
-                case "application/x-msnmsgr-transreqbody": OnDCRequest(slpMessage); break;
-                case "application/x-msnmsgr-transrespbody": OnDCResponse(slpMessage); break;
-                case "application/x-msnmsgr-sessionclosebody": OnSessionCloseRequest(slpMessage); break;
+                case "application/x-msnmsgr-sessionreqbody":
+                    OnSessionRequest(slpMessage);
+                    break;
+                case "application/x-msnmsgr-transreqbody":
+                    OnDCRequest(slpMessage);
+                    break;
+                case "application/x-msnmsgr-transrespbody":
+                    OnDCResponse(slpMessage);
+                    break;
+                case "application/x-msnmsgr-sessionclosebody":
+                    OnSessionCloseRequest(slpMessage);
+                    break;
                 default:
                     {
                         if (Settings.TraceSwitch.TraceWarning)
@@ -1209,7 +1361,7 @@ namespace MSNPSharp.DataTransfer
 
             // and close the connection
             //session.MessageSession.CloseDirectConnection();
-            
+
         }
 
         /// <summary>
@@ -1365,7 +1517,7 @@ namespace MSNPSharp.DataTransfer
                 if (Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC].AddressFamily == AddressFamily.InterNetwork)
                 {
                     iphostentry.AddressList[0] = Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC];
-                    
+
                     break;
                 }
             }
@@ -1474,4 +1626,4 @@ namespace MSNPSharp.DataTransfer
 
         #endregion
     }
-}
+};

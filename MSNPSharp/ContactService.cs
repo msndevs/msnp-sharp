@@ -5,6 +5,7 @@ using MSNPSharp.MSNABSharingService;
 using System.IO;
 using System.Xml;
 using System.Globalization;
+using MSNPSharp.IO;
 using MSNPSharp.Core;
 using System.Diagnostics;
 using System.Net;
