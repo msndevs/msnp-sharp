@@ -51,7 +51,7 @@ namespace MSNPSharp
         #region Message sending methods
 
         /// <summary>
-        /// Do nothing except fire OnContactJoined event and add the contact to the <see cref="Contacts"/> property.
+        /// Do nothing except fire OnContactJoined event and add the contact to the <see cref="Contact"/> property.
         /// </summary>
         /// <param name="contact"></param>
         public override void Invite(string contact)
