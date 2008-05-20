@@ -351,7 +351,7 @@
       <xsd:enumeration value="ContactPhoneMobile" />
       <xsd:enumeration value="ContactPhonePager" />
       <xsd:enumeration value="ContactPhoneOther" />
-      <xsd:enumeration value="BusinessFax" />
+      <xsd:enumeration value="ContactPhoneFax" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:complexType name="contactLocationType">
