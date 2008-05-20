@@ -1654,7 +1654,7 @@ namespace MSNPSharp.MSNABSharingService {
         ContactPhoneOther,
         
         /// <remarks/>
-        BusinessFax,
+        ContactPhoneFax,
     }
     
     /// <remarks/>
