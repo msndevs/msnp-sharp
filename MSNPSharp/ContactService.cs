@@ -89,9 +89,10 @@ namespace MSNPSharp
             }
 
             bool nocompress = false;
-            string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
-            MemberShipList = new XMLMembershipList(contactfile, nocompress);
-            AddressBook = new XMLAddressBook(contactfile, nocompress);
+            string membershipsFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "m")).Replace("\\", "-") + ".mcl";
+            string addressbookFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "a")).Replace("\\", "-") + ".mcl";
+            MemberShipList = new XMLMembershipList(membershipsFile, nocompress);
+            AddressBook = new XMLAddressBook(addressbookFile, nocompress);
 
             msRequest(
                 "Initial",
@@ -814,6 +815,8 @@ namespace MSNPSharp
         /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
         /// </summary>
         /// <param name="account">An e-mail adress to add</param>
+        /// <param name="network">The service type of target contact</param>
+        /// <param name="invitation"></param>
         public void AddNewContact(string account, ClientType network, string invitation)
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
@@ -1229,6 +1232,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="contact">The affected contact</param>
         /// <param name="list">The list to place the contact in</param>
+        /// <param name="onSuccess"></param>
         internal virtual void AddContactToList(Contact contact, MSNLists list, EventHandler onSuccess)
         {
             if (list == MSNLists.PendingList) //this causes disconnect 
@@ -1353,6 +1357,7 @@ namespace MSNPSharp
         /// </summary> 
         /// <param name="contact">The affected contact</param>
         /// <param name="list">The list to remove the contact from</param>
+        /// <param name="onSuccess"></param>
         internal virtual void RemoveContactFromList(Contact contact, MSNLists list, EventHandler onSuccess)
         {
             if (list == MSNLists.ReverseList) //this causes disconnect
@@ -1525,11 +1530,17 @@ namespace MSNPSharp
         {
             if (nsMessageHandler.Owner != null && nsMessageHandler.Owner.Mail != null)
             {
-                string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
-                if (File.Exists(contactfile))
+                string membershipsFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "m")).Replace("\\", "-") + ".mcl";
+                string addressbookFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "a")).Replace("\\", "-") + ".mcl";
+                if (File.Exists(membershipsFile))
                 {
-                    File.SetAttributes(contactfile, FileAttributes.Normal);  //By default, the file is hidden.
-                    File.Delete(contactfile);
+                    File.SetAttributes(membershipsFile, FileAttributes.Normal);  //By default, the file is hidden.
+                    File.Delete(membershipsFile);
+                }
+                if (File.Exists(addressbookFile))
+                {
+                    File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
+                    File.Delete(addressbookFile);
                 }
             }
         }

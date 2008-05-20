@@ -65,10 +65,6 @@ namespace MSNPSharp.IO
 
     public static class MCLFileManager
     {
-        /// <summary>
-        /// Fired when asynchronous saving was completed
-        /// </summary>
-        //public static event MCLFileSaveCompleted AsyncSaveCompleted;
         private static Dictionary<string, MCLInfo> storage = new Dictionary<string, MCLInfo>(0);
 
         private static bool _hiddenSave;
@@ -112,6 +108,7 @@ namespace MSNPSharp.IO
         /// Get the file from disk or from the storage cache, so the newest file is read only once from the disk.
         /// </summary>
         /// <param name="filePath"></param>
+        /// <param name="noCompress">Use file compression or not</param>
         /// <returns></returns>
         public static MCLFile GetFile(string filePath, bool noCompress)
         {
