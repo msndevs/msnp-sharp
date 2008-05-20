@@ -372,7 +372,6 @@
         /// <param name="filename"></param>
         public override void Save(string filename)
         {
-            base.LoadFromFile(filename);
             XmlNode membershipRoot = doc.GetElementsByTagName(XMLContactListTags.MembershipList.ToString())[0];
             if (membershipRoot == null)
                 membershipRoot = CreateNode(XMLContactListTags.MembershipList.ToString(), null);
@@ -535,7 +534,6 @@
 
         public override void Save(string filename)
         {
-            base.LoadFromFile(filename);
             XmlNode addressbookRoot = doc.GetElementsByTagName(XMLContactListTags.AddressBook.ToString())[0];
             if (addressbookRoot == null)
                 addressbookRoot = CreateNode(XMLContactListTags.AddressBook.ToString(), null);

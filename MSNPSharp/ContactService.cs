@@ -1538,11 +1538,17 @@ namespace MSNPSharp
         {
             if (nsMessageHandler.Owner != null && nsMessageHandler.Owner.Mail != null)
             {
-                string contactfile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
-                if (File.Exists(contactfile))
+                string membershipsFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "m")).Replace("\\", "-") + ".mcl";
+                string addressbookFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "a")).Replace("\\", "-") + ".mcl";
+                if (File.Exists(membershipsFile))
                 {
-                    File.SetAttributes(contactfile, FileAttributes.Normal);  //By default, the file is hidden.
-                    File.Delete(contactfile);
+                    File.SetAttributes(membershipsFile, FileAttributes.Normal);  //By default, the file is hidden.
+                    File.Delete(membershipsFile);
+                }
+                if (File.Exists(addressbookFile))
+                {
+                    File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
+                    File.Delete(addressbookFile);
                 }
             }
         }
