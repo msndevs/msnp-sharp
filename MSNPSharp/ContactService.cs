@@ -384,65 +384,72 @@ namespace MSNPSharp
                         if (ci.Account == null)
                             continue; // PassportnameHidden... Nothing to do...
 
-                        if (null != contactType.contactInfo.annotations)
+                        if (contactType.fDeleted)
                         {
-                            foreach (Annotation anno in contactType.contactInfo.annotations)
-                            {
-                                if (anno.Name == "AB.NickName" && anno.Value != null)
-                                {
-                                    ci.DisplayName = anno.Value;
-                                    break;
-                                }
-                            }
+                            AddressBook.Remove(ci.Account);
                         }
-
-                        if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
+                        else
                         {
-                            if (ci.DisplayName == nsMessageHandler.Owner.Mail && nsMessageHandler.Owner.Name != String.Empty)
-                            {
-                                ci.DisplayName = nsMessageHandler.Owner.Name;
-                            }
-
-                            AddressBook.MyProperties["displayname"] = ci.DisplayName;
                             if (null != contactType.contactInfo.annotations)
                             {
                                 foreach (Annotation anno in contactType.contactInfo.annotations)
                                 {
-                                    string name = anno.Name;
-                                    string value = anno.Value;
-                                    name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                                    AddressBook.MyProperties[name] = value;
+                                    if (anno.Name == "AB.NickName" && anno.Value != null)
+                                    {
+                                        ci.DisplayName = anno.Value;
+                                        break;
+                                    }
                                 }
                             }
 
-                            if (!AddressBook.MyProperties.ContainsKey("mbea"))
-                                AddressBook.MyProperties["mbea"] = "0";
-
-                            if (!AddressBook.MyProperties.ContainsKey("gtc"))
-                                AddressBook.MyProperties["gtc"] = "1";
-
-                            if (!AddressBook.MyProperties.ContainsKey("blp"))
-                                AddressBook.MyProperties["blp"] = "0";
-
-                            if (!AddressBook.MyProperties.ContainsKey("roamliveproperties"))
-                                AddressBook.MyProperties["roamliveproperties"] = "1";
-                        }
-
-                        if (contactType.contactInfo.groupIds != null)
-                        {
-                            ci.Groups = new List<string>(contactType.contactInfo.groupIds);
-                        }
-
-                        if (diccontactList.ContainsKey(ci.Account))
-                        {
-                            if (diccontactList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
+                            if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
                             {
-                                diccontactList[ci.Account] = ci;
+                                if (ci.DisplayName == nsMessageHandler.Owner.Mail && nsMessageHandler.Owner.Name != String.Empty)
+                                {
+                                    ci.DisplayName = nsMessageHandler.Owner.Name;
+                                }
+
+                                AddressBook.MyProperties["displayname"] = ci.DisplayName;
+                                if (null != contactType.contactInfo.annotations)
+                                {
+                                    foreach (Annotation anno in contactType.contactInfo.annotations)
+                                    {
+                                        string name = anno.Name;
+                                        string value = anno.Value;
+                                        name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
+                                        AddressBook.MyProperties[name] = value;
+                                    }
+                                }
+
+                                if (!AddressBook.MyProperties.ContainsKey("mbea"))
+                                    AddressBook.MyProperties["mbea"] = "0";
+
+                                if (!AddressBook.MyProperties.ContainsKey("gtc"))
+                                    AddressBook.MyProperties["gtc"] = "1";
+
+                                if (!AddressBook.MyProperties.ContainsKey("blp"))
+                                    AddressBook.MyProperties["blp"] = "0";
+
+                                if (!AddressBook.MyProperties.ContainsKey("roamliveproperties"))
+                                    AddressBook.MyProperties["roamliveproperties"] = "1";
                             }
-                        }
-                        else
-                        {
-                            diccontactList.Add(ci.Account, ci);
+
+                            if (contactType.contactInfo.groupIds != null)
+                            {
+                                ci.Groups = new List<string>(contactType.contactInfo.groupIds);
+                            }
+
+                            if (diccontactList.ContainsKey(ci.Account))
+                            {
+                                if (diccontactList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
+                                {
+                                    diccontactList[ci.Account] = ci;
+                                }
+                            }
+                            else
+                            {
+                                diccontactList.Add(ci.Account, ci);
+                            }
                         }
                     }
                 }
@@ -454,7 +461,11 @@ namespace MSNPSharp
                 Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
                 foreach (GroupType groupType in forwardList.groups)
                 {
-                    if (groupType.fDeleted == false)
+                    if (groupType.fDeleted)
+                    {
+                        AddressBook.Groups.Remove(groupType.groupId);
+                    }
+                    else
                     {
                         GroupInfo group = new GroupInfo();
                         group.Name = groupType.groupInfo.name;
@@ -563,7 +574,7 @@ namespace MSNPSharp
                 {
                     sendlist = 0;
                     lists = MemberShipList.GetMSNLists(contact.Account);
-                    if (AddressBook.ContainsKey(contact.Account))
+                    if (AddressBook.ContainsKey(contact.Account) && AddressBook[contact.Account].IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
 
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
