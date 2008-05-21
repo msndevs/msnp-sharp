@@ -21,7 +21,7 @@
         private SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
         private SerializableDictionary<MemberRole, SerializableDictionary<string, ContactInfo>> rolelists = new SerializableDictionary<MemberRole, SerializableDictionary<string, ContactInfo>>(0);
 
-        protected XMLMembershipList()
+        public XMLMembershipList()
             :base()
         {
         }
@@ -150,7 +150,7 @@
         SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
 
-        protected XMLAddressBook()
+        public XMLAddressBook()
             : base()
         {
         }
