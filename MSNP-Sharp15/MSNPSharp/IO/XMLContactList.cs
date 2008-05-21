@@ -173,6 +173,11 @@
             {
                 return groups;
             }
+
+            set
+            {
+                groups = value;   //property without set can't be serialized
+            }
         }
 
         public SerializableDictionary<string, string> MyProperties
