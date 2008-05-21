@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns="http://www.msn.com/webservices/storage/w10" xmlns:msnss="http://www.msn.com/webservices/storage/w10" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/storage/w10" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:include schemaLocation="msnstorage_datatypes.xsd" />
+  <xsd:element name="StorageApplicationHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element default="Messenger Client 8.5" name="ApplicationID" type="xsd:string" />
+        <xsd:element default="Initial" name="Scenario" type="xsd:string" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="StorageUserHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element default="0" name="Puid" type="xsd:int" />
+        <xsd:element minOccurs="0" default="0" name="Cid" type="xsd:int" />
+        <xsd:element name="TicketToken" type="xsd:token" />
+        <xsd:element minOccurs="0" default="false" name="IsAdmin" type="xsd:boolean" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="AffinityCacheHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element minOccurs="0" name="CacheKey" type="xsd:token" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="GetProfile" type="msnss:GetProfileRequestType" />
+  <xsd:complexType name="GetProfileRequestType">
+    <xsd:sequence>
+      <xsd:element name="profileHandle" type="msnss:profileHandle" />
+      <xsd:element name="profileAttributes" type="msnss:profileAttributes" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="GetProfileResultType">
+    <xsd:sequence>
+      <xsd:element name="ResourceID" type="xsd:string" />
+      <xsd:element name="DateModified" type="xsd:dateTime" />
+      <xsd:element name="ExpressionProfile">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="ResourceID" type="xsd:string" />
+            <xsd:element name="DateModified" type="xsd:dateTime" />
+            <xsd:element name="Flags" type="xsd:int" />
+            <xsd:element name="Photo" />
+            <xsd:element name="PersonalStatus" type="xsd:string" />
+            <xsd:element name="PersonalStatusLastModified" type="xsd:dateTime" />
+            <xsd:element name="DisplayName" type="xsd:string" />
+            <xsd:element name="DisplayNameLastModified" type="xsd:dateTime" />
+            <xsd:element name="StaticUserTilePublicURL" type="xsd:anyURI" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="GetProfileResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="GetProfileResult" type="msnss:GetProfileResultType" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
