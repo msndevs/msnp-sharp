@@ -57,6 +57,8 @@
     <Compile Include="Core\Factory.cs" />
     <Compile Include="Core\IMessageHandler.cs" />
     <Compile Include="IO\IO.cs" />
+    <Compile Include="IO\SerializableClasses.cs" />
+    <Compile Include="IO\SerializableDictionary.cs" />
     <Compile Include="MailEventArgs.cs" />
     <Compile Include="IO\MCLFileManager.cs" />
     <Compile Include="Core\MessagePool.cs" />
@@ -144,7 +146,6 @@
     <Compile Include="ContactService.cs" />
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
-    <Compile Include="IO\XMLContactListParser.cs" />
     <Compile Include="IO\XMLList.cs" />
     <Compile Include="Core\YIMMessage.cs" />
     <Compile Include="YIMMessageHandler.cs" />

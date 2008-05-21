@@ -91,8 +91,9 @@ namespace MSNPSharp
             bool nocompress = true;
             string membershipsFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "m")).Replace("\\", "-") + ".mcl";
             string addressbookFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "a")).Replace("\\", "-") + ".mcl";
-            MemberShipList = new XMLMembershipList(membershipsFile, nocompress);
-            AddressBook = new XMLAddressBook(addressbookFile, nocompress);
+            MemberShipList = XMLContactList.LoadFromFile(membershipsFile, typeof(XMLMembershipList), nocompress) as XMLMembershipList;
+            AddressBook = XMLContactList.LoadFromFile(addressbookFile, typeof(XMLAddressBook), nocompress) as XMLAddressBook;
+
 
             msRequest(
                 "Initial",
@@ -102,7 +103,7 @@ namespace MSNPSharp
                     abRequest("Initial",
                         delegate
                         {
-                            nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Values, true, new MSNLists()));
+                            nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Contacts.Values, true, new MSNLists()));
                         }
                     );
                 }
@@ -334,7 +335,7 @@ namespace MSNPSharp
                                     {
                                         mShips[lst][ci.Account] = ci;
 
-                                        if (!MemberShipList.ContainsKey(ci.Account) || MemberShipList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
+                                        if (!MemberShipList.Contacts.ContainsKey(ci.Account) || MemberShipList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
                                         {
                                             MemberShipList[ci.Account] = ci;
                                         }
@@ -386,7 +387,7 @@ namespace MSNPSharp
 
                         if (contactType.fDeleted)
                         {
-                            AddressBook.Remove(ci.Account);
+                            AddressBook.Contacts.Remove(ci.Account);
                         }
                         else
                         {
@@ -487,16 +488,16 @@ namespace MSNPSharp
             }
 
             // Create Contacts
-            if (MemberShipList.Count > 0)
+            if (MemberShipList.Contacts.Count > 0)
             {
-                foreach (ContactInfo ci in MemberShipList.Values)
+                foreach (ContactInfo ci in MemberShipList.Contacts.Values)
                 {
                     Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
                     contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
                     contact.NSMessageHandler = nsMessageHandler;
                     contact.SetClientType(MemberShipList[ci.Account].Type);
 
-                    if (AddressBook.ContainsKey(ci.Account))
+                    if (AddressBook.Contacts.ContainsKey(ci.Account))
                     {
                         ContactInfo abci = AddressBook[ci.Account];
                         contact.SetGuid(abci.Guid);
@@ -523,9 +524,9 @@ namespace MSNPSharp
             }
 
             //Create the mail contacts on your forward list
-            foreach (ContactInfo ci in AddressBook.Values)  
+            foreach (ContactInfo ci in AddressBook.Contacts.Values)  
             {
-                if (!MemberShipList.ContainsKey(ci.Account) && ci.Account != nsMessageHandler.Owner.Mail)
+                if (!MemberShipList.Contacts.ContainsKey(ci.Account) && ci.Account != nsMessageHandler.Owner.Mail)
                 {
                     Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
                     contact.SetClientType(ci.Type);
@@ -574,7 +575,7 @@ namespace MSNPSharp
                 {
                     sendlist = 0;
                     lists = MemberShipList.GetMSNLists(contact.Account);
-                    if (AddressBook.ContainsKey(contact.Account) && AddressBook[contact.Account].IsMessengerUser)
+                    if (AddressBook.Contacts.ContainsKey(contact.Account) && AddressBook[contact.Account].IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
 
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
@@ -840,7 +841,7 @@ namespace MSNPSharp
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
 
-            if (AddressBook.ContainsKey(account))
+            if (AddressBook.Contacts.ContainsKey(account))
             {
                 Contact contact = nsMessageHandler.ContactList.GetContact(account);
                 RemoveContactFromList(contact, MSNLists.PendingList, null);
@@ -890,7 +891,7 @@ namespace MSNPSharp
                 {
                     contact.NSMessageHandler = null;
                     nsMessageHandler.ContactList.Remove(contact.Mail);
-                    AddressBook.Remove(contact.Mail);
+                    AddressBook.Contacts.Remove(contact.Mail);
                     AddressBook.Save();
                 }
                 else if (e.Error != null)
@@ -1307,7 +1308,7 @@ namespace MSNPSharp
                     MemberRole memberrole = GetMemberRole(list);
                     if (!MemberShipList.MemberRoles.ContainsKey(memberrole))
                     {
-                        MemberShipList.MemberRoles[memberrole] = new Dictionary<string, ContactInfo>();
+                        MemberShipList.MemberRoles[memberrole] = new SerializableDictionary<string, ContactInfo>();
                     }
                     MemberShipList.MemberRoles[memberrole][ci.Account] = ci;         
                     MemberShipList.Save();
