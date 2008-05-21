@@ -57,7 +57,9 @@ namespace MSNPSharp
         ContactTicket,
         LockKey,
         AddressBookCacheKey,
-        SharingServiceCacheKey
+        SharingServiceCacheKey,
+        Spaces,
+        Storage
     }
 
     public class SingleSignOn
@@ -71,8 +73,14 @@ namespace MSNPSharp
 
         public WebProxy WebProxy
         {
-            get { return webProxy; }
-            set { webProxy = value; }
+            get
+            {
+                return webProxy;
+            }
+            set
+            {
+                webProxy = value;
+            }
         }
 
         public SingleSignOn(string username, string password, string policy)
@@ -107,9 +115,10 @@ namespace MSNPSharp
             AuthenticationAdd(@"http://Passport.NET/tb", null);
             AuthenticationAdd("messengerclear.live.com", policy);
             AuthenticationAdd("messenger.msn.com", "?id=507");
-            AuthenticationAdd("contacts.msn.com", "?fs=1&id=24000&kv=9&rn=93S9SWWw&tw=0&ver=2.1.6000.1");//("?fs=1&id=24000&kv=9&rn=93S9SWWw&tw=0&ver=2.1.6000.1").Replace(@"&", @"&amp;"));
+            AuthenticationAdd("contacts.msn.com", "MBI");
             AuthenticationAdd("messengersecure.live.com", "MBI_SSL");
-            AuthenticationAdd("livecontacts.live.com", "MBI");
+            AuthenticationAdd("spaces.live.com", "MBI");
+            AuthenticationAdd("storage.msn.com", "MBI");
         }
 
         public string Authenticate(string nonce, out Dictionary<Iniproperties, string> tickets)
@@ -122,7 +131,7 @@ namespace MSNPSharp
             securService.AuthInfo.BinaryVersion = "4";
             securService.AuthInfo.Cookies = string.Empty;
             securService.AuthInfo.UIVersion = "1";
-            securService.AuthInfo.RequestParams = "AQAAAAIAAABsYwQAAAAxMDMz";
+            securService.AuthInfo.RequestParams = "AQAAAAIAAABsYwQAAAAxMDU1";
 
             securService.Security = new SecurityHeaderType();
             securService.Security.UsernameToken = new UsernameTokenType();
@@ -154,7 +163,7 @@ namespace MSNPSharp
             }
             catch (Exception ex)
             {
-                MSNPSharpException sexp= new MSNPSharpException(ex.Message + ". See innerexception for detail.",ex);
+                MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
                 sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
                 throw sexp;
             }
@@ -171,6 +180,7 @@ namespace MSNPSharp
                     }
                 }
             }
+
             foreach (RequestSecurityTokenResponseType token in result)
             {
                 switch (token.AppliesTo.EndpointReference.Address)
@@ -187,6 +197,12 @@ namespace MSNPSharp
                     case "messengerclear.live.com":
                         tickets[Iniproperties.Ticket] = token.RequestedSecurityToken.InnerText;
                         tickets[Iniproperties.BinarySecret] = token.RequestedProofToken.BinarySecret.Value;
+                        break;
+                    case "spaces.live.com":
+                        tickets[Iniproperties.Spaces] = token.RequestedSecurityToken.InnerText;
+                        break;
+                    case "storage.msn.com":
+                        tickets[Iniproperties.Storage] = token.RequestedSecurityToken.InnerText;
                         break;
                 }
             }

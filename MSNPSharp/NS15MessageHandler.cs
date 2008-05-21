@@ -1007,7 +1007,10 @@ namespace MSNPSharp
                 if (AutoSynchronize == true)
                 {
                     OnSignedIn();
-                    SetPersonalMessage(new PersonalMessage(new NSMessage()));
+
+                    PersonalMessage pm = new PersonalMessage(contactService.AddressBook.MyProperties["personalmessage"], MediaType.None, null);
+                    SetPersonalMessage(pm);
+                    owner.PersonalMessage = pm;
                 }
 
                 // no contacts are sent so we are done synchronizing
@@ -2173,7 +2176,7 @@ namespace MSNPSharp
 
             Contact contact = ContactList.GetContact(message.CommandValues[0].ToString());
 
-            PersonalMessage pm = new PersonalMessage(message);
+            PersonalMessage pm = new PersonalMessage(message);            
             contact.SetPersonalMessage(pm);
         }
 

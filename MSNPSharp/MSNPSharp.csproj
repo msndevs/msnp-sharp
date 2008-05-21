@@ -144,6 +144,11 @@
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
     <Compile Include="ContactService.cs" />
+    <Compile Include="Web References\MSNStorageService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
     <Compile Include="IO\XMLList.cs" />
@@ -276,6 +281,20 @@
     <None Include="Web References\MSNSecurityTokenService\xmldsig-core-schema.xsd">
       <SubType>Designer</SubType>
     </None>
+    <None Include="Web References\MSNStorageService\GetProfileResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNStorageService\msnstorage_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNStorageService\msnstorage_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNStorageService\msnstorage_ws.wsdl" />
+    <None Include="Web References\MSNStorageService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -334,6 +353,17 @@
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNRSIService_RSIService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNStorageService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNStorageService_MSNStorageService</CachedSettingsPropName>
     </WebReferenceUrl>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

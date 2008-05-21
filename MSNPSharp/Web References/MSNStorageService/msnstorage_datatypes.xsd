@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns="http://www.msn.com/webservices/storage/w10" xmlns:msnss="http://www.msn.com/webservices/storage/w10" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/storage/w10" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="profileHandle">
+    <xsd:sequence>
+      <xsd:element name="Alias">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Name" type="xsd:string" />
+            <xsd:element name="NameSpace" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element default="MyProfile" name="RelationshipName" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="profileAttributes">
+    <xsd:sequence>
+      <xsd:element default="true" name="ResourceID" type="xsd:boolean" />
+      <xsd:element default="true" name="DateModified" type="xsd:boolean" />
+      <xsd:element name="ExpressionProfileAttributes">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element default="true" name="ResourceID" type="xsd:boolean" />
+            <xsd:element default="true" name="DateModified" type="xsd:boolean" />
+            <xsd:element default="true" name="DisplayName" type="xsd:boolean" />
+            <xsd:element default="true" name="DisplayNameLastModified" type="xsd:boolean" />
+            <xsd:element default="true" name="PersonalStatus" type="xsd:boolean" />
+            <xsd:element default="true" name="PersonalStatusLastModified" type="xsd:boolean" />
+            <xsd:element default="true" name="StaticUserTilePublicURL" type="xsd:boolean" />
+            <xsd:element default="true" name="Photo" type="xsd:boolean" />
+            <xsd:element default="true" name="Flag" type="xsd:boolean" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>

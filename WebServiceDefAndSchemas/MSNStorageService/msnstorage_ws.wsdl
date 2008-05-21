@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns="http://www.w3.org/2001/XMLSchema" xmlns:msnss="http://www.msn.com/webservices/storage/w10" xmlns:ns1="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://www.msn.com/webservices/storage/w10" xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <types>
+    <ns:schema xmlns="http://www.w3.org/2001/XMLSchema">
+      <ns:import schemaLocation="msnstorage_servicetypes.xsd" namespace="http://www.msn.com/webservices/storage/w10" />
+    </ns:schema>
+  </types>
+  <message name="SSHeader">
+    <part name="StorageApplicationHeader" element="msnss:StorageApplicationHeader" />
+    <part name="StorageUserHeader" element="msnss:StorageUserHeader" />
+    <part name="AffinityCacheHeader" element="msnss:AffinityCacheHeader" />
+  </message>
+  <message name="GetProfileMessage">
+    <part name="GetProfileRequest" element="msnss:GetProfile" />
+  </message>
+  <message name="GetProfileResponseMessage">
+    <part name="GetProfileResponse" element="msnss:GetProfileResponse" />
+  </message>
+  <portType name="MSNStorageServicePortType">
+    <operation name="GetProfile">
+      <input message="msnss:GetProfileMessage" />
+      <output message="msnss:GetProfileResponseMessage" />
+    </operation>
+  </portType>
+  <binding name="MSNStorageServiceBinding" type="msnss:MSNStorageServicePortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <operation name="GetProfile">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/GetProfile" />
+      <input>
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+        <soap:body use="literal" />
+      </output>
+    </operation>
+  </binding>
+  <service name="MSNStorageService">
+    <port name="GetProfilePort" binding="msnss:MSNStorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+  </service>
+</definitions>

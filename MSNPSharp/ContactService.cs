@@ -9,6 +9,7 @@ using MSNPSharp.IO;
 using MSNPSharp.Core;
 using System.Diagnostics;
 using System.Net;
+using MSNPSharp.MSNStorageService;
 
 namespace MSNPSharp
 {
@@ -103,7 +104,48 @@ namespace MSNPSharp
                     abRequest("Initial",
                         delegate
                         {
-                            nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Contacts.Values, true, new MSNLists()));
+                            // Get my profile (display name, personal status, photos etc.
+                            try
+                            {
+                                MSNStorageService.MSNStorageService storageService = new MSNPSharp.MSNStorageService.MSNStorageService();
+                                storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
+                                storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
+                                storageService.StorageApplicationHeaderValue.Scenario = "Initial";
+                                storageService.StorageUserHeaderValue = new StorageUserHeader();
+                                storageService.StorageUserHeaderValue.Puid = 0;
+                                storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.Storage];
+
+                                GetProfileRequestType request = new GetProfileRequestType();
+                                request.profileHandle = new profileHandle();
+                                request.profileHandle.Alias = new profileHandleAlias();
+                                request.profileHandle.Alias.Name = AddressBook.MyProperties["cid"];
+                                request.profileHandle.Alias.NameSpace = "MyCidStuff";
+                                request.profileHandle.RelationshipName = "MyProfile";
+                                request.profileAttributes = new profileAttributes();
+                                request.profileAttributes.ExpressionProfileAttributes = new profileAttributesExpressionProfileAttributes();
+
+                                GetProfileResponse response = storageService.GetProfile(request);
+
+                                // Display name
+                                if (!String.IsNullOrEmpty(response.GetProfileResult.ExpressionProfile.DisplayName))
+                                {
+                                    AddressBook.MyProperties["displayname"] = response.GetProfileResult.ExpressionProfile.DisplayName;
+                                }
+
+                                // Personal status
+                                if (!String.IsNullOrEmpty(response.GetProfileResult.ExpressionProfile.PersonalStatus))
+                                {
+                                    AddressBook.MyProperties["personalmessage"] = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+                                }
+                                AddressBook.Save();
+                            }
+                            catch
+                            {
+                            }
+                            finally
+                            {
+                                nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Contacts.Values, true, new MSNLists()));
+                            }
                         }
                     );
                 }
@@ -411,6 +453,8 @@ namespace MSNPSharp
                                 }
 
                                 AddressBook.MyProperties["displayname"] = ci.DisplayName;
+                                AddressBook.MyProperties["cid"] = contactType.contactInfo.CID;
+
                                 if (null != contactType.contactInfo.annotations)
                                 {
                                     foreach (Annotation anno in contactType.contactInfo.annotations)
@@ -433,6 +477,9 @@ namespace MSNPSharp
 
                                 if (!AddressBook.MyProperties.ContainsKey("roamliveproperties"))
                                     AddressBook.MyProperties["roamliveproperties"] = "1";
+
+                                if (!AddressBook.MyProperties.ContainsKey("personalmessage"))
+                                    AddressBook.MyProperties["personalmessage"] = AddressBook.MyProperties["displayname"];
                             }
 
                             if (contactType.contactInfo.groupIds != null)
