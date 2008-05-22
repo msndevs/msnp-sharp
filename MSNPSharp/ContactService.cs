@@ -107,17 +107,17 @@ namespace MSNPSharp
                             // Get my profile (display name, personal status, photos etc.
                             try
                             {
-                                MSNStorageService.MSNStorageService storageService = new MSNPSharp.MSNStorageService.MSNStorageService();
+                                StorageService storageService = new StorageService();
                                 storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
                                 storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
                                 storageService.StorageApplicationHeaderValue.Scenario = "Initial";
                                 storageService.StorageUserHeaderValue = new StorageUserHeader();
                                 storageService.StorageUserHeaderValue.Puid = 0;
-                                storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.Storage];
+                                storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.StorageTicket];
 
                                 GetProfileRequestType request = new GetProfileRequestType();
-                                request.profileHandle = new profileHandle();
-                                request.profileHandle.Alias = new profileHandleAlias();
+                                request.profileHandle = new Handle();
+                                request.profileHandle.Alias = new Alias();
                                 request.profileHandle.Alias.Name = AddressBook.MyProperties["cid"];
                                 request.profileHandle.Alias.NameSpace = "MyCidStuff";
                                 request.profileHandle.RelationshipName = "MyProfile";
@@ -137,7 +137,40 @@ namespace MSNPSharp
                                 {
                                     AddressBook.MyProperties["personalmessage"] = response.GetProfileResult.ExpressionProfile.PersonalStatus;
                                 }
+
                                 AddressBook.Save();
+
+                                // Display image
+                                /*
+                                if (null != response.GetProfileResult.ExpressionProfile.Photo)
+                                {
+                                    string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+                                    if (!url.StartsWith("http"))
+                                    {
+                                        url = "http://storage.live.com" + url;
+                                    }
+
+                                    Uri uri = new Uri(url + "?" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Split('&')[0]));
+
+                                    HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
+
+                                    Stream stream = fwr.GetResponse().GetResponseStream();
+                                    MemoryStream ms = new MemoryStream();
+                                    byte[] data = new byte[8192];
+                                    int read;
+                                    while ((read = stream.Read(data, 0, data.Length)) > 0)
+                                    {
+                                        ms.Write(data, 0, read);
+                                    }
+                                    stream.Close();
+
+                                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(ms);
+                                    DisplayImage displayImage = new DisplayImage();
+                                    displayImage.Image = fileImage;
+
+                                    nsMessageHandler.Owner.DisplayImage = displayImage;
+                                }
+                                */
                             }
                             catch
                             {

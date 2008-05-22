@@ -58,8 +58,8 @@ namespace MSNPSharp
         LockKey,
         AddressBookCacheKey,
         SharingServiceCacheKey,
-        Spaces,
-        Storage
+        SpacesTicket,
+        StorageTicket
     }
 
     public class SingleSignOn
@@ -199,10 +199,10 @@ namespace MSNPSharp
                         tickets[Iniproperties.BinarySecret] = token.RequestedProofToken.BinarySecret.Value;
                         break;
                     case "spaces.live.com":
-                        tickets[Iniproperties.Spaces] = token.RequestedSecurityToken.InnerText;
+                        tickets[Iniproperties.SpacesTicket] = token.RequestedSecurityToken.InnerText;
                         break;
                     case "storage.msn.com":
-                        tickets[Iniproperties.Storage] = token.RequestedSecurityToken.InnerText;
+                        tickets[Iniproperties.StorageTicket] = token.RequestedSecurityToken.InnerText;
                         break;
                 }
             }

@@ -26,21 +26,26 @@ namespace MSNPSharp.MSNStorageService {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Web.Services.WebServiceBindingAttribute(Name="MSNStorageServiceBinding", Namespace="http://www.msn.com/webservices/storage/w10")]
-    public partial class MSNStorageService : System.Web.Services.Protocols.SoapHttpClientProtocol {
+    [System.Web.Services.WebServiceBindingAttribute(Name="StorageServiceBinding", Namespace="http://www.msn.com/webservices/storage/w10")]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(DocumentStream))]
+    public partial class StorageService : System.Web.Services.Protocols.SoapHttpClientProtocol {
+        
+        private AffinityCacheHeader affinityCacheHeaderValueField;
         
         private StorageApplicationHeader storageApplicationHeaderValueField;
         
         private StorageUserHeader storageUserHeaderValueField;
         
-        private AffinityCacheHeader affinityCacheHeaderValueField;
-        
         private System.Threading.SendOrPostCallback GetProfileOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback UpdateProfileOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback FindDocumentsOperationCompleted;
         
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
-        public MSNStorageService() {
+        public StorageService() {
             this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNStorageService_MSNStorageService;
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
@@ -48,6 +53,15 @@ namespace MSNPSharp.MSNStorageService {
             }
             else {
                 this.useDefaultCredentialsSetExplicitly = true;
+            }
+        }
+        
+        public AffinityCacheHeader AffinityCacheHeaderValue {
+            get {
+                return this.affinityCacheHeaderValueField;
+            }
+            set {
+                this.affinityCacheHeaderValueField = value;
             }
         }
         
@@ -66,15 +80,6 @@ namespace MSNPSharp.MSNStorageService {
             }
             set {
                 this.storageUserHeaderValueField = value;
-            }
-        }
-        
-        public AffinityCacheHeader AffinityCacheHeaderValue {
-            get {
-                return this.affinityCacheHeaderValueField;
-            }
-            set {
-                this.affinityCacheHeaderValueField = value;
             }
         }
         
@@ -106,8 +111,14 @@ namespace MSNPSharp.MSNStorageService {
         public event GetProfileCompletedEventHandler GetProfileCompleted;
         
         /// <remarks/>
+        public event UpdateProfileCompletedEventHandler UpdateProfileCompleted;
+        
+        /// <remarks/>
+        public event FindDocumentsCompletedEventHandler FindDocumentsCompleted;
+        
+        /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("StorageUserHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
-        [System.Web.Services.Protocols.SoapHeaderAttribute("AffinityCacheHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("AffinityCacheHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
         [System.Web.Services.Protocols.SoapHeaderAttribute("StorageApplicationHeaderValue")]
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/storage/w10/GetProfile", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
         [return: System.Xml.Serialization.XmlElementAttribute("GetProfileResponse", Namespace="http://www.msn.com/webservices/storage/w10")]
@@ -135,6 +146,72 @@ namespace MSNPSharp.MSNStorageService {
             if ((this.GetProfileCompleted != null)) {
                 System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
                 this.GetProfileCompleted(this, new GetProfileCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("StorageUserHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("AffinityCacheHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("StorageApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/storage/w10/UpdateProfile", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("UpdateProfileResponse", Namespace="http://www.msn.com/webservices/storage/w10")]
+        public object UpdateProfile([System.Xml.Serialization.XmlElementAttribute("UpdateProfile", Namespace="http://www.msn.com/webservices/storage/w10")] UpdateProfileRequestType UpdateProfile1) {
+            object[] results = this.Invoke("UpdateProfile", new object[] {
+                        UpdateProfile1});
+            return ((object)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void UpdateProfileAsync(UpdateProfileRequestType UpdateProfile1) {
+            this.UpdateProfileAsync(UpdateProfile1, null);
+        }
+        
+        /// <remarks/>
+        public void UpdateProfileAsync(UpdateProfileRequestType UpdateProfile1, object userState) {
+            if ((this.UpdateProfileOperationCompleted == null)) {
+                this.UpdateProfileOperationCompleted = new System.Threading.SendOrPostCallback(this.OnUpdateProfileOperationCompleted);
+            }
+            this.InvokeAsync("UpdateProfile", new object[] {
+                        UpdateProfile1}, this.UpdateProfileOperationCompleted, userState);
+        }
+        
+        private void OnUpdateProfileOperationCompleted(object arg) {
+            if ((this.UpdateProfileCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.UpdateProfileCompleted(this, new UpdateProfileCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("StorageUserHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("AffinityCacheHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("StorageApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/storage/w10/FindDocuments", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("FindDocumentsResponse", Namespace="http://www.msn.com/webservices/storage/w10")]
+        public FindDocumentsResultType FindDocuments([System.Xml.Serialization.XmlElementAttribute("FindDocuments", Namespace="http://www.msn.com/webservices/storage/w10")] FindDocumentsRequestType FindDocuments1) {
+            object[] results = this.Invoke("FindDocuments", new object[] {
+                        FindDocuments1});
+            return ((FindDocumentsResultType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void FindDocumentsAsync(FindDocumentsRequestType FindDocuments1) {
+            this.FindDocumentsAsync(FindDocuments1, null);
+        }
+        
+        /// <remarks/>
+        public void FindDocumentsAsync(FindDocumentsRequestType FindDocuments1, object userState) {
+            if ((this.FindDocumentsOperationCompleted == null)) {
+                this.FindDocumentsOperationCompleted = new System.Threading.SendOrPostCallback(this.OnFindDocumentsOperationCompleted);
+            }
+            this.InvokeAsync("FindDocuments", new object[] {
+                        FindDocuments1}, this.FindDocumentsOperationCompleted, userState);
+        }
+        
+        private void OnFindDocumentsOperationCompleted(object arg) {
+            if ((this.FindDocumentsCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.FindDocumentsCompleted(this, new FindDocumentsCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
             }
         }
         
@@ -230,6 +307,583 @@ namespace MSNPSharp.MSNStorageService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class FindDocumentsResultType {
+        
+        private FindDocumentsResultTypeDocument documentField;
+        
+        /// <remarks/>
+        public FindDocumentsResultTypeDocument Document {
+            get {
+                return this.documentField;
+            }
+            set {
+                this.documentField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class FindDocumentsResultTypeDocument {
+        
+        private string resourceIDField;
+        
+        private string nameField;
+        
+        /// <remarks/>
+        public string ResourceID {
+            get {
+                return this.resourceIDField;
+            }
+            set {
+                this.resourceIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class FindDocumentsRequestType {
+        
+        private Handle objectHandleField;
+        
+        private FindDocumentsRequestTypeDocumentAttributes documentAttributesField;
+        
+        private FindDocumentsRequestTypeDocumentFilter documentFilterField;
+        
+        private FindDocumentsRequestTypeDocumentSort documentSortField;
+        
+        private FindDocumentsRequestTypeFindContext findContextField;
+        
+        /// <remarks/>
+        public Handle objectHandle {
+            get {
+                return this.objectHandleField;
+            }
+            set {
+                this.objectHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public FindDocumentsRequestTypeDocumentAttributes documentAttributes {
+            get {
+                return this.documentAttributesField;
+            }
+            set {
+                this.documentAttributesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public FindDocumentsRequestTypeDocumentFilter documentFilter {
+            get {
+                return this.documentFilterField;
+            }
+            set {
+                this.documentFilterField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public FindDocumentsRequestTypeDocumentSort documentSort {
+            get {
+                return this.documentSortField;
+            }
+            set {
+                this.documentSortField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public FindDocumentsRequestTypeFindContext findContext {
+            get {
+                return this.findContextField;
+            }
+            set {
+                this.findContextField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class Handle {
+        
+        private Alias aliasField;
+        
+        private string relationshipNameField;
+        
+        public Handle() {
+            this.relationshipNameField = "MyProfile";
+        }
+        
+        /// <remarks/>
+        public Alias Alias {
+            get {
+                return this.aliasField;
+            }
+            set {
+                this.aliasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string RelationshipName {
+            get {
+                return this.relationshipNameField;
+            }
+            set {
+                this.relationshipNameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class Alias {
+        
+        private string nameField;
+        
+        private string nameSpaceField;
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string NameSpace {
+            get {
+                return this.nameSpaceField;
+            }
+            set {
+                this.nameSpaceField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class FindDocumentsRequestTypeDocumentAttributes {
+        
+        private bool resourceIDField;
+        
+        private bool nameField;
+        
+        /// <remarks/>
+        public bool ResourceID {
+            get {
+                return this.resourceIDField;
+            }
+            set {
+                this.resourceIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class FindDocumentsRequestTypeDocumentFilter {
+        
+        private string filterAttributesField;
+        
+        public FindDocumentsRequestTypeDocumentFilter() {
+            this.filterAttributesField = "None";
+        }
+        
+        /// <remarks/>
+        public string FilterAttributes {
+            get {
+                return this.filterAttributesField;
+            }
+            set {
+                this.filterAttributesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class FindDocumentsRequestTypeDocumentSort {
+        
+        private string sortByField;
+        
+        public FindDocumentsRequestTypeDocumentSort() {
+            this.sortByField = "DateModified";
+        }
+        
+        /// <remarks/>
+        public string SortBy {
+            get {
+                return this.sortByField;
+            }
+            set {
+                this.sortByField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class FindDocumentsRequestTypeFindContext {
+        
+        private string findMethodField;
+        
+        private int chunkSizeField;
+        
+        public FindDocumentsRequestTypeFindContext() {
+            this.findMethodField = "Default";
+        }
+        
+        /// <remarks/>
+        public string FindMethod {
+            get {
+                return this.findMethodField;
+            }
+            set {
+                this.findMethodField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int ChunkSize {
+            get {
+                return this.chunkSizeField;
+            }
+            set {
+                this.chunkSizeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class UpdateProfileRequestType {
+        
+        private UpdateProfileRequestTypeProfile profileField;
+        
+        /// <remarks/>
+        public UpdateProfileRequestTypeProfile profile {
+            get {
+                return this.profileField;
+            }
+            set {
+                this.profileField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class UpdateProfileRequestTypeProfile {
+        
+        private string resourceIDField;
+        
+        private UpdateProfileRequestTypeProfileExpressionProfile expressionProfileField;
+        
+        /// <remarks/>
+        public string ResourceID {
+            get {
+                return this.resourceIDField;
+            }
+            set {
+                this.resourceIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public UpdateProfileRequestTypeProfileExpressionProfile ExpressionProfile {
+            get {
+                return this.expressionProfileField;
+            }
+            set {
+                this.expressionProfileField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class UpdateProfileRequestTypeProfileExpressionProfile {
+        
+        private string freeTextField;
+        
+        private string displayNameField;
+        
+        private string personalStatusField;
+        
+        private int flagsField;
+        
+        public UpdateProfileRequestTypeProfileExpressionProfile() {
+            this.freeTextField = "Update";
+            this.displayNameField = "Update";
+            this.personalStatusField = "Update";
+            this.flagsField = 0;
+        }
+        
+        /// <remarks/>
+        public string FreeText {
+            get {
+                return this.freeTextField;
+            }
+            set {
+                this.freeTextField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.ComponentModel.DefaultValueAttribute("Update")]
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.ComponentModel.DefaultValueAttribute("Update")]
+        public string PersonalStatus {
+            get {
+                return this.personalStatusField;
+            }
+            set {
+                this.personalStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int Flags {
+            get {
+                return this.flagsField;
+            }
+            set {
+                this.flagsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PhotoStream))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class DocumentStream {
+        
+        private string documentStreamTypeField;
+        
+        private string mimeTypeField;
+        
+        private byte[] dataField;
+        
+        private int dataSizeField;
+        
+        /// <remarks/>
+        public string DocumentStreamType {
+            get {
+                return this.documentStreamTypeField;
+            }
+            set {
+                this.documentStreamTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string MimeType {
+            get {
+                return this.mimeTypeField;
+            }
+            set {
+                this.mimeTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Data {
+            get {
+                return this.dataField;
+            }
+            set {
+                this.dataField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int DataSize {
+            get {
+                return this.dataSizeField;
+            }
+            set {
+                this.dataSizeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class PhotoStream : DocumentStream {
+        
+        private string preAuthURLField;
+        
+        private string preAuthURLPartnerField;
+        
+        private int sizeXField;
+        
+        private bool sizeXFieldSpecified;
+        
+        private int sizeYField;
+        
+        private bool sizeYFieldSpecified;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="anyURI")]
+        public string PreAuthURL {
+            get {
+                return this.preAuthURLField;
+            }
+            set {
+                this.preAuthURLField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="anyURI")]
+        public string PreAuthURLPartner {
+            get {
+                return this.preAuthURLPartnerField;
+            }
+            set {
+                this.preAuthURLPartnerField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int SizeX {
+            get {
+                return this.sizeXField;
+            }
+            set {
+                this.sizeXField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool SizeXSpecified {
+            get {
+                return this.sizeXFieldSpecified;
+            }
+            set {
+                this.sizeXFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int SizeY {
+            get {
+                return this.sizeYField;
+            }
+            set {
+                this.sizeYField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool SizeYSpecified {
+            get {
+                return this.sizeYFieldSpecified;
+            }
+            set {
+                this.sizeYFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
     public partial class GetProfileResultType {
         
         private string resourceIDField;
@@ -283,7 +937,7 @@ namespace MSNPSharp.MSNStorageService {
         
         private int flagsField;
         
-        private object photoField;
+        private GetProfileResultTypeExpressionProfilePhoto photoField;
         
         private string personalStatusField;
         
@@ -326,7 +980,7 @@ namespace MSNPSharp.MSNStorageService {
         }
         
         /// <remarks/>
-        public object Photo {
+        public GetProfileResultTypeExpressionProfilePhoto Photo {
             get {
                 return this.photoField;
             }
@@ -383,6 +1037,76 @@ namespace MSNPSharp.MSNStorageService {
             }
             set {
                 this.staticUserTilePublicURLField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class GetProfileResultTypeExpressionProfilePhoto {
+        
+        private string itemTypeField;
+        
+        private string resourceIDField;
+        
+        private System.DateTime dateModifiedField;
+        
+        private string nameField;
+        
+        private PhotoStream[] documentStreamsField;
+        
+        /// <remarks/>
+        public string ItemType {
+            get {
+                return this.itemTypeField;
+            }
+            set {
+                this.itemTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ResourceID {
+            get {
+                return this.resourceIDField;
+            }
+            set {
+                this.resourceIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime DateModified {
+            get {
+                return this.dateModifiedField;
+            }
+            set {
+                this.dateModifiedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("DocumentStream", IsNullable=false)]
+        public PhotoStream[] DocumentStreams {
+            get {
+                return this.documentStreamsField;
+            }
+            set {
+                this.documentStreamsField = value;
             }
         }
     }
@@ -572,84 +1296,14 @@ namespace MSNPSharp.MSNStorageService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
-    public partial class profileHandle {
-        
-        private profileHandleAlias aliasField;
-        
-        private string relationshipNameField;
-        
-        public profileHandle() {
-            this.relationshipNameField = "MyProfile";
-        }
-        
-        /// <remarks/>
-        public profileHandleAlias Alias {
-            get {
-                return this.aliasField;
-            }
-            set {
-                this.aliasField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string RelationshipName {
-            get {
-                return this.relationshipNameField;
-            }
-            set {
-                this.relationshipNameField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
-    public partial class profileHandleAlias {
-        
-        private string nameField;
-        
-        private string nameSpaceField;
-        
-        /// <remarks/>
-        public string Name {
-            get {
-                return this.nameField;
-            }
-            set {
-                this.nameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string NameSpace {
-            get {
-                return this.nameSpaceField;
-            }
-            set {
-                this.nameSpaceField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
     public partial class GetProfileRequestType {
         
-        private profileHandle profileHandleField;
+        private Handle profileHandleField;
         
         private profileAttributes profileAttributesField;
         
         /// <remarks/>
-        public profileHandle profileHandle {
+        public Handle profileHandle {
             get {
                 return this.profileHandleField;
             }
@@ -774,6 +1428,58 @@ namespace MSNPSharp.MSNStorageService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((GetProfileResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    public delegate void UpdateProfileCompletedEventHandler(object sender, UpdateProfileCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class UpdateProfileCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal UpdateProfileCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public object Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((object)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    public delegate void FindDocumentsCompletedEventHandler(object sender, FindDocumentsCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class FindDocumentsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal FindDocumentsCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public FindDocumentsResultType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((FindDocumentsResultType)(this.results[0]));
             }
         }
     }

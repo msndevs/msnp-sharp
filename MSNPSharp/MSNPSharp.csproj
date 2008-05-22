@@ -281,6 +281,9 @@
     <None Include="Web References\MSNSecurityTokenService\xmldsig-core-schema.xsd">
       <SubType>Designer</SubType>
     </None>
+    <None Include="Web References\MSNStorageService\FindDocumentsResultType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNStorageService\GetProfileResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
