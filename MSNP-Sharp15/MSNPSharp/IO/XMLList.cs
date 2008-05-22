@@ -110,27 +110,19 @@ namespace MSNPSharp.IO
 
         }
 
-        public static object LoadFromFile(string filename, Type targetType, bool noCompress)
+        public static XMLContactList LoadFromFile(string filename, Type targetType, bool noCompress)
         {
-            object rtnobj = new object();
+            XMLContactList rtnobj = (XMLContactList)Activator.CreateInstance(targetType);
             if (File.Exists(filename))
             {
-
                 MCLFile file = MCLFileManager.GetFile(filename, noCompress);
                 if (file.Content != null)
                 {
-                    //doc.Load(new MemoryStream(file.Content));
                     MemoryStream mem = new MemoryStream(file.Content);
-                    XmlSerializer ser = new XmlSerializer(targetType);
-                    rtnobj = ser.Deserialize(mem);
-                    ((XMLContactList)rtnobj).NoCompress = noCompress;
-                    ((XMLContactList)rtnobj).FileName = filename;
+                    rtnobj = (XMLContactList)new XmlSerializer(targetType).Deserialize(mem);
                     mem.Close();
-                    return rtnobj;
                 }
             }
-
-            rtnobj = Activator.CreateInstance(targetType);
             ((XMLContactList)rtnobj).NoCompress = noCompress;
             ((XMLContactList)rtnobj).FileName = filename;
             return rtnobj;

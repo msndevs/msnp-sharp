@@ -16,17 +16,66 @@
   <message name="GetProfileResponseMessage">
     <part name="GetProfileResponse" element="msnss:GetProfileResponse" />
   </message>
-  <portType name="MSNStorageServicePortType">
+  <message name="UpdateProfileMessage">
+    <part name="UpdateProfileRequest" element="msnss:UpdateProfile" />
+  </message>
+  <message name="UpdateProfileResponseMessage">
+    <part name="UpdateProfileResponse" element="msnss:UpdateProfileResponse" />
+  </message>
+  <message name="FindDocumentsMessage">
+    <part name="FindDocumentsRequest" element="msnss:FindDocuments" />
+  </message>
+  <message name="FindDocumentsResponseMessage">
+    <part name="FindDocumentsResponse" element="msnss:FindDocumentsResponse" />
+  </message>
+  <portType name="StorageServicePortType">
     <operation name="GetProfile">
       <input message="msnss:GetProfileMessage" />
       <output message="msnss:GetProfileResponseMessage" />
     </operation>
+    <operation name="UpdateProfile">
+      <input message="msnss:UpdateProfileMessage" />
+      <output message="msnss:UpdateProfileResponseMessage" />
+    </operation>
+    <operation name="FindDocuments">
+      <input message="msnss:FindDocumentsMessage" />
+      <output message="msnss:FindDocumentsResponseMessage" />
+    </operation>
   </portType>
-  <binding name="MSNStorageServiceBinding" type="msnss:MSNStorageServicePortType">
+  <binding name="StorageServiceBinding" type="msnss:StorageServicePortType">
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
     <operation name="GetProfile">
       <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/GetProfile" />
       <input>
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="UpdateProfile">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/UpdateProfile" />
+      <input>
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="FindDocuments">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/FindDocuments" />
+      <input>
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
         <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
         <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
         <soap:body use="literal" />
@@ -38,8 +87,14 @@
       </output>
     </operation>
   </binding>
-  <service name="MSNStorageService">
-    <port name="GetProfilePort" binding="msnss:MSNStorageServiceBinding">
+  <service name="StorageService">
+    <port name="GetProfilePort" binding="msnss:StorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+    <port name="UpdateProfilePort" binding="msnss:StorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+    <port name="FindDocumentsPort" binding="msnss:StorageServiceBinding">
       <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
     </port>
   </service>
