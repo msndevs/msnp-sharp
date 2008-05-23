@@ -408,9 +408,18 @@ namespace MSNPSharp
 
                                     if (account != null)
                                     {
-                                        AddressBook.AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
-                                        AddressBook.MembershipContacts[account].LastChanged = bm.LastChanged;
-                                        AddressBook.MembershipContacts[account].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
+                                        account = account.ToLower(CultureInfo.InvariantCulture);
+
+                                        if (bm.Deleted)
+                                        {
+                                            AddressBook.RemoveMemberhip(account, memberrole);
+                                        }
+                                        else
+                                        {
+                                            AddressBook.AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
+                                            AddressBook.MembershipContacts[account].LastChanged = bm.LastChanged;
+                                            AddressBook.MembershipContacts[account].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
+                                        }                                        
                                     }
                                 }
                             }
