@@ -151,7 +151,6 @@
     </Compile>
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
-    <Compile Include="IO\XMLList.cs" />
     <Compile Include="Core\YIMMessage.cs" />
     <Compile Include="YIMMessageHandler.cs" />
   </ItemGroup>
