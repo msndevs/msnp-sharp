@@ -268,7 +268,7 @@ namespace MSNPSharp
             }
         }
 		
-		public Contact GetContactByGuid (string guid)
+		public Contact GetContactByGuid(Guid guid)
 		{
 			foreach (Contact c in contacts.Values)
 			{
