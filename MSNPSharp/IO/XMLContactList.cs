@@ -10,22 +10,113 @@
     using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
 
-
-    #region XMLMembershipList
-
     /// <summary>
-    /// XML Membership List file maintainer
+    /// ContactList file maintainer
     /// </summary>
     [Serializable]
-    [XmlRoot("MembershipList")]
-    public class XMLMembershipList : XMLContactList
+    [XmlRoot("ContactList")]
+    public class XMLContactList
     {
-        SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
-        SerializableDictionary<string, MembershipContactInfo> contacts = new SerializableDictionary<string, MembershipContactInfo>(0);
+        #region Common
 
-        public XMLMembershipList()
-            : base()
+        [NonSerialized]
+        protected bool noCompress;
+
+        [NonSerialized]
+        private string fileName;
+
+        public XMLContactList()
         {
+        }
+
+        protected string FileName
+        {
+            get
+            {
+                return fileName;
+            }
+            set
+            {
+                fileName = value;
+            }
+        }
+
+        protected bool NoCompress
+        {
+            get
+            {
+                return noCompress;
+            }
+            set
+            {
+                noCompress = value;
+            }
+        }
+
+        public static XMLContactList LoadFromFile(string filename, bool noCompress)
+        {
+            XMLContactList rtnobj = (XMLContactList)Activator.CreateInstance(typeof(XMLContactList));
+            if (File.Exists(filename))
+            {
+                MCLFile file = MCLFileManager.GetFile(filename, noCompress);
+                if (file.Content != null)
+                {
+                    MemoryStream mem = new MemoryStream(file.Content);
+                    rtnobj = (XMLContactList)new XmlSerializer(typeof(XMLContactList)).Deserialize(mem);
+                    mem.Close();
+                }
+            }
+            rtnobj.NoCompress = noCompress;
+            rtnobj.FileName = filename;
+            return rtnobj;
+        }
+
+        /// <summary>
+        /// Save the contact list into a file.
+        /// </summary>
+        public void Save()
+        {
+            Save(FileName);
+        }
+
+        /// <summary>
+        /// Save the contact list into a file.
+        /// </summary>
+        /// <param name="filename"></param>
+        public void Save(string filename)
+        {
+            SaveToHiddenMCL(filename);
+        }
+
+        private void SaveToHiddenMCL(string filename)
+        {
+            XmlSerializer ser = new XmlSerializer(this.GetType());
+            MemoryStream ms = new MemoryStream();
+            ser.Serialize(ms, this);
+            MCLFile file = MCLFileManager.GetFile(filename, noCompress);
+            file.Content = ms.ToArray();
+            MCLFileManager.Save(file, true);
+            ms.Close();
+        }
+
+        #endregion
+
+        #region Membership
+
+        DateTime msLastChange;
+        SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
+        SerializableDictionary<string, MembershipContactInfo> mscontacts = new SerializableDictionary<string, MembershipContactInfo>(0);
+
+        public DateTime MembershipLastChange
+        {
+            get
+            {
+                return msLastChange;
+            }
+            set
+            {
+                msLastChange = value;
+            }
         }
 
         public SerializableDictionary<int, Service> Services
@@ -41,24 +132,24 @@
             }
         }
 
-        public SerializableDictionary<string, MembershipContactInfo> Contacts
+        public SerializableDictionary<string, MembershipContactInfo> MembershipContacts
         {
             get
             {
-                return contacts;
+                return mscontacts;
             }
             set
             {
-                contacts = value;
+                mscontacts = value;
             }
         }
 
         public MSNLists GetMSNLists(string account)
         {
             MSNLists contactlists = MSNLists.None;
-            if (Contacts.ContainsKey(account))
+            if (MembershipContacts.ContainsKey(account))
             {
-                MembershipContactInfo ci = Contacts[account];
+                MembershipContactInfo ci = MembershipContacts[account];
                 if (ci.Memberships.ContainsKey(MemberRole.Allow))
                     contactlists |= MSNLists.AllowedList;
 
@@ -84,21 +175,21 @@
 
         public void AddMemberhip(string account, ClientType type, MemberRole memberrole, int membershipid)
         {
-            if (!Contacts.ContainsKey(account))
-                Contacts.Add(account, new MembershipContactInfo(account, type));
+            if (!MembershipContacts.ContainsKey(account))
+                MembershipContacts.Add(account, new MembershipContactInfo(account, type));
 
-            Contacts[account].Type = type;
-            Contacts[account].Memberships[memberrole] = membershipid;
+            MembershipContacts[account].Type = type;
+            MembershipContacts[account].Memberships[memberrole] = membershipid;
         }
 
         public void RemoveMemberhip(string account, MemberRole memberrole)
         {
-            if (Contacts.ContainsKey(account))
+            if (MembershipContacts.ContainsKey(account))
             {
-                Contacts[account].Memberships.Remove(memberrole);
+                MembershipContacts[account].Memberships.Remove(memberrole);
 
-                if (0 == Contacts[account].Memberships.Count)
-                    Contacts.Remove(account);
+                if (0 == MembershipContacts[account].Memberships.Count)
+                    MembershipContacts.Remove(account);
             }
         }
 
@@ -106,16 +197,16 @@
         {
             foreach (string account in range.Keys)
             {
-                if (contacts.ContainsKey(account))
+                if (mscontacts.ContainsKey(account))
                 {
-                    if (contacts[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
+                    if (mscontacts[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
                     {
-                        contacts[account] = range[account];
+                        mscontacts[account] = range[account];
                     }
                 }
                 else
                 {
-                    contacts.Add(account, range[account]);
+                    mscontacts.Add(account, range[account]);
                 }
             }
         }
@@ -131,30 +222,31 @@
 
             foreach (Service innerService in Services.Values)
                 if (innerService.Type == ServiceFilterType.Messenger)
-                    if (lastChange.CompareTo(innerService.LastChange) < 0)
-                        lastChange = innerService.LastChange;
+                    if (msLastChange.CompareTo(innerService.LastChange) < 0)
+                        msLastChange = innerService.LastChange;
 
         }
-    }
 
-    #endregion
+        #endregion
 
-    #region XMLAddressBook
+        #region Addressbook
 
-    /// <summary>
-    /// XML ForwardList file maintainer
-    /// </summary>
-    [XmlRoot("AddressBook"), Serializable]
-    public class XMLAddressBook : XMLContactList
-    {
+        DateTime abLastChange;
         DateTime dynamicItemLastChange;
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
-        SerializableDictionary<Guid, AddressbookContactInfo> contacts = new SerializableDictionary<Guid, AddressbookContactInfo>(0);
+        SerializableDictionary<Guid, AddressbookContactInfo> abcontacts = new SerializableDictionary<Guid, AddressbookContactInfo>(0);
 
-        public XMLAddressBook()
-            : base()
+        public DateTime AddressbookLastChange
         {
+            get
+            {
+                return abLastChange;
+            }
+            set
+            {
+                abLastChange = value;
+            }
         }
 
         public DateTime DynamicItemLastChange
@@ -194,43 +286,15 @@
             }
         }
 
-        public SerializableDictionary<Guid, AddressbookContactInfo> Contacts
+        public SerializableDictionary<Guid, AddressbookContactInfo> AddressbookContacts
         {
             get
             {
-                return contacts;
+                return abcontacts;
             }
             set
             {
-                contacts = value;
-            }
-        }
-
-        public virtual AddressbookContactInfo Find(string email, ClientType type)
-        {
-            foreach (AddressbookContactInfo ci in Contacts.Values)
-            {
-                if (ci.Account == email && ci.Type == type)
-                    return ci;
-            }
-            return null;
-        }
-
-        public virtual void Add(Dictionary<Guid, AddressbookContactInfo> range)
-        {
-            foreach (Guid guid in range.Keys)
-            {
-                if (contacts.ContainsKey(guid))
-                {
-                    if (contacts[guid].LastChanged.CompareTo(range[guid].LastChanged) <= 0)
-                    {
-                        contacts[guid] = range[guid];
-                    }
-                }
-                else
-                {
-                    contacts.Add(guid, range[guid]);
-                }
+                abcontacts = value;
             }
         }
 
@@ -253,6 +317,35 @@
                 groups.Add(group.Guid, group);
             }
         }
+
+        public virtual void Add(Dictionary<Guid, AddressbookContactInfo> range)
+        {
+            foreach (Guid guid in range.Keys)
+            {
+                if (abcontacts.ContainsKey(guid))
+                {
+                    if (abcontacts[guid].LastChanged.CompareTo(range[guid].LastChanged) <= 0)
+                    {
+                        abcontacts[guid] = range[guid];
+                    }
+                }
+                else
+                {
+                    abcontacts.Add(guid, range[guid]);
+                }
+            }
+        }
+
+        public virtual AddressbookContactInfo Find(string email, ClientType type)
+        {
+            foreach (AddressbookContactInfo ci in AddressbookContacts.Values)
+            {
+                if (ci.Account == email && ci.Type == type)
+                    return ci;
+            }
+            return null;
+        }
+
+        #endregion
     }
-    #endregion
 };
