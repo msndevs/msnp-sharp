@@ -564,10 +564,15 @@ namespace MSNPSharp
                     contact.NSMessageHandler = nsMessageHandler;
                     contact.SetClientType(MemberShipList.Contacts[ci.Account].Type);
 
-                    if (AddressBook.Contacts.ContainsKey(ci.Guid))
+                    ContactInfo abci;
+                    if ((abci = AddressBook.Find(ci.Account, ci.Type)) != null)
                     {
-                        ContactInfo abci = AddressBook.Contacts[ci.Guid];
                         contact.SetGuid(abci.Guid);
+                        contact.SetIsMessengerUser(abci.IsMessengerUser);
+                        if (abci.IsMessengerUser)
+                        {
+                            contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+                        }
 
                         foreach (string groupId in abci.Groups)
                         {
@@ -580,12 +585,6 @@ namespace MSNPSharp
                         }
 
                         contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0 && String.IsNullOrEmpty(abci.DisplayName)) ? ci.DisplayName : abci.DisplayName);
-                        contact.SetIsMessengerUser(abci.IsMessengerUser);
-
-                        if (abci.IsMessengerUser)
-                        {
-                            contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
-                        }
                     }
                 }
             }
@@ -642,9 +641,9 @@ namespace MSNPSharp
                 {
                     sendlist = 0;
                     lists = MemberShipList.GetMSNLists(contact.Account);
-                    if (AddressBook.Contacts.ContainsKey(contact.Guid) && AddressBook.Contacts[contact.Guid].IsMessengerUser)
+                    ContactInfo abci = AddressBook.Find(contact.Account, contact.Type);
+                    if (abci != null && abci.IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
-
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
                         sendlist |= MSNLists.AllowedList;
                     else if ((lists & MSNLists.BlockedList) == MSNLists.BlockedList)
