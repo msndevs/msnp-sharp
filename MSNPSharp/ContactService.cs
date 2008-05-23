@@ -176,7 +176,7 @@ namespace MSNPSharp
                             }
                             finally
                             {
-                                nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Contacts.Values, true, new MSNLists()));
+                                nsMessageHandler.OnInitialSyncDone(ConstructADLString(MemberShipList.Contacts.Values, true, MSNLists.None));
                             }
                         }
                     );
@@ -395,11 +395,7 @@ namespace MSNPSharp
                                     {
                                         MemberShipList.AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
                                         MemberShipList.Contacts[account].LastChanged = bm.LastChanged;
-
-                                        if (memberrole == MemberRole.Reverse && !String.IsNullOrEmpty(bm.DisplayName))
-                                        {
-                                            MemberShipList.Contacts[account].DisplayName = bm.DisplayName;
-                                        }
+                                        MemberShipList.Contacts[account].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
                                     }
                                 }
                             }
@@ -410,7 +406,7 @@ namespace MSNPSharp
                 MemberShipList.CombineService(services);
                 MemberShipList.Save();
             }
-        }    
+        }
 
         internal void refreshAB(ABFindAllResultType forwardList)
         {
@@ -449,7 +445,7 @@ namespace MSNPSharp
                         }
                         else
                         {
-                            ContactInfo ci = new ContactInfo(account, type, new Guid(contactType.contactId));
+                            AddressbookContactInfo ci = new AddressbookContactInfo(account, type, new Guid(contactType.contactId));
                             ci.DisplayName = displayname;
                             ci.IsMessengerUser = ismessengeruser;
                             ci.LastChanged = contactType.lastChange;
@@ -526,7 +522,6 @@ namespace MSNPSharp
 
             if (null != forwardList.groups)
             {
-                Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
                 foreach (GroupType groupType in forwardList.groups)
                 {
                     if (groupType.fDeleted)
@@ -538,15 +533,15 @@ namespace MSNPSharp
                         GroupInfo group = new GroupInfo();
                         group.Name = groupType.groupInfo.name;
                         group.Guid = groupType.groupId;
-                        groups[group.Guid] = group;
+                        AddressBook.Groups[group.Guid] = group;
                     }
                 }
-                AddressBook.AddGroup(groups);
             }
 
             // Save Address Book
             AddressBook.LastChange = forwardList.ab.lastChange;
-            AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;            
+            AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
+            AddressBook.Save();
 
             // Create Groups
             foreach (GroupInfo group in AddressBook.Groups.Values)
@@ -554,18 +549,18 @@ namespace MSNPSharp
                 nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
             }
 
-            // Create Contacts
+            // Create the messenger contacts
             if (MemberShipList.Contacts.Count > 0)
             {
-                foreach (ContactInfo ci in MemberShipList.Contacts.Values)
+                foreach (MembershipContactInfo ci in MemberShipList.Contacts.Values)
                 {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
+                    Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account, ci.DisplayName);
                     contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
-                    contact.NSMessageHandler = nsMessageHandler;
                     contact.SetClientType(MemberShipList.Contacts[ci.Account].Type);
+                    contact.NSMessageHandler = nsMessageHandler;
 
-                    ContactInfo abci;
-                    if ((abci = AddressBook.Find(ci.Account, ci.Type)) != null)
+                    AddressbookContactInfo abci = AddressBook.Find(ci.Account, ci.Type);
+                    if (abci != null)
                     {
                         contact.SetGuid(abci.Guid);
                         contact.SetIsMessengerUser(abci.IsMessengerUser);
@@ -589,28 +584,31 @@ namespace MSNPSharp
                 }
             }
 
-            //Create the mail contacts on your forward list
-            foreach (ContactInfo ci in AddressBook.Contacts.Values)  
+            // Create the mail contacts on your forward list
+            foreach (AddressbookContactInfo abci in AddressBook.Contacts.Values)
             {
-                if (!MemberShipList.Contacts.ContainsKey(ci.Account) && ci.Account != nsMessageHandler.Owner.Mail)
+                if (!MemberShipList.Contacts.ContainsKey(abci.Account) && abci.Account != nsMessageHandler.Owner.Mail)
                 {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
-                    contact.SetClientType(ci.Type);
+                    Contact contact = nsMessageHandler.ContactList.GetContact(abci.Account, abci.DisplayName);
+                    contact.SetGuid(abci.Guid);
+                    contact.SetIsMessengerUser(abci.IsMessengerUser);
+                    contact.SetClientType(abci.Type);
                     contact.NSMessageHandler = nsMessageHandler;
 
-                    if (ci.Type == ClientType.EmailMember)
-                        contact.ClientCapacities = ci.Capability;
+                    foreach (string groupId in abci.Groups)
+                    {
+                        contact.ContactGroups.Add(nsMessageHandler.ContactGroups[groupId]);
+                    }
 
-                    if (ci.IsMessengerUser)
-                        contact.SetLists(MSNLists.ForwardList);
+                    if (abci.Type == ClientType.EmailMember)
+                    {
+                        contact.ClientCapacities = abci.Capability;
+                    }
                 }
             }
-
-            // Save AddressBook.
-            AddressBook.Save();
         }
 
-        internal string[] ConstructADLString(Dictionary<string, ContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
+        internal string[] ConstructADLString(Dictionary<string, MembershipContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
         {
             List<string> mls = new List<string>();
 
@@ -624,12 +622,12 @@ namespace MSNPSharp
                 return mls.ToArray();
             }
 
-            List<ContactInfo> sortedContacts = new List<ContactInfo>(contacts);
+            List<MembershipContactInfo> sortedContacts = new List<MembershipContactInfo>(contacts);
             sortedContacts.Sort(DomainNameComparer.Default);
             string currentDomain = null;
             int domaincontactcount = 0;
 
-            foreach (ContactInfo contact in sortedContacts)
+            foreach (MembershipContactInfo contact in sortedContacts)
             {
                 MSNLists sendlist = lists;
                 String[] usernameanddomain = contact.Account.Split('@');
@@ -641,7 +639,7 @@ namespace MSNPSharp
                 {
                     sendlist = 0;
                     lists = MemberShipList.GetMSNLists(contact.Account);
-                    ContactInfo abci = AddressBook.Find(contact.Account, contact.Type);
+                    AddressbookContactInfo abci = AddressBook.Find(contact.Account, contact.Type);
                     if (abci != null && abci.IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
@@ -692,14 +690,14 @@ namespace MSNPSharp
             return mls.ToArray();
         }
 
-        private class DomainNameComparer : IComparer<ContactInfo>
+        private class DomainNameComparer : IComparer<MembershipContactInfo>
         {
             private DomainNameComparer()
             {
             }
 
-            public static IComparer<ContactInfo> Default = new DomainNameComparer();
-            public int Compare(ContactInfo x, ContactInfo y)
+            public static IComparer<MembershipContactInfo> Default = new DomainNameComparer();
+            public int Compare(MembershipContactInfo x, MembershipContactInfo y)
             {
                 if (x.Account == null)
                     return 1;

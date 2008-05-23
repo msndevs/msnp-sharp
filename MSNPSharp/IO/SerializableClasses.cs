@@ -12,21 +12,8 @@ namespace MSNPSharp.IO
     [Serializable]
     public class ContactInfo
     {
-        private ContactInfo()
+        protected ContactInfo()
         {
-        }
-
-        public ContactInfo(string account, ClientType type)
-        {
-            this.account = account;
-            this.type = type;
-        }
-
-        public ContactInfo(string account, ClientType type, Guid guid)
-        {
-            this.account = account;
-            this.type = type;
-            this.guid = guid;
         }
 
         private string account;
@@ -42,45 +29,6 @@ namespace MSNPSharp.IO
             }
         }
 
-        private Guid guid;
-        public Guid Guid
-        {
-            get
-            {
-                return guid;
-            }
-            set
-            {
-                guid = value;
-            }
-        }
-
-        private SerializableDictionary<MemberRole, int> memberships = new SerializableDictionary<MemberRole, int>();
-        public SerializableDictionary<MemberRole, int> Memberships
-        {
-            get
-            {
-                return memberships;
-            }
-            set
-            {
-                memberships = value;
-            }
-        }
-
-        private bool isMessengerUser;
-        public bool IsMessengerUser
-        {
-            get
-            {
-                return isMessengerUser;
-            }
-            set
-            {
-                isMessengerUser = value;
-            }
-        }
-
         private ClientType type = ClientType.PassportMember;
         public ClientType Type
         {
@@ -93,7 +41,6 @@ namespace MSNPSharp.IO
                 type = value;
             }
         }
-
 
         private string displayname;
         public string DisplayName
@@ -134,19 +81,6 @@ namespace MSNPSharp.IO
             }
         }
 
-        private List<string> groups = new List<string>(0);
-        public List<string> Groups
-        {
-            get
-            {
-                return groups;
-            }
-            set
-            {
-                groups = value;
-            }
-        }
-
         private object tags;
 
         /// <summary>
@@ -173,16 +107,99 @@ namespace MSNPSharp.IO
             string debugstr = String.Empty;
 
             if (account != null)
-                debugstr += account + " | isMessengerUser:  " + IsMessengerUser.ToString();
+                debugstr += account + " | " + Type.ToString();
 
             if (displayname != null)
-                debugstr += " | displayName:  " + displayname;
+                debugstr += " | " + displayname;
 
             return debugstr;
         }
     }
 
     #endregion
+
+
+    [Serializable]
+    public class MembershipContactInfo : ContactInfo
+    {
+        protected MembershipContactInfo()
+        {
+        }
+
+        public MembershipContactInfo(string account, ClientType type)
+        {
+            Account = account;
+            Type = type;
+        }
+
+        private SerializableDictionary<MemberRole, int> memberships = new SerializableDictionary<MemberRole, int>();
+        public SerializableDictionary<MemberRole, int> Memberships
+        {
+            get
+            {
+                return memberships;
+            }
+            set
+            {
+                memberships = value;
+            }
+        }
+    }
+
+    [Serializable]
+    public class AddressbookContactInfo : ContactInfo
+    {
+        public AddressbookContactInfo()
+        {
+        }
+
+        public AddressbookContactInfo(string account, ClientType type, Guid guid)
+        {
+            Account = account;
+            Type = type;
+            Guid = guid;
+        }
+
+        private Guid guid;
+        public Guid Guid
+        {
+            get
+            {
+                return guid;
+            }
+            set
+            {
+                guid = value;
+            }
+        }
+
+        private bool isMessengerUser;
+        public bool IsMessengerUser
+        {
+            get
+            {
+                return isMessengerUser;
+            }
+            set
+            {
+                isMessengerUser = value;
+            }
+        }
+
+        private List<string> groups = new List<string>(0);
+        public List<string> Groups
+        {
+            get
+            {
+                return groups;
+            }
+            set
+            {
+                groups = value;
+            }
+        }
+    }
+
 
     #region GroupInfo
     [Serializable]
