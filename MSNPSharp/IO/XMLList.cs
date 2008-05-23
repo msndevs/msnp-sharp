@@ -3,13 +3,12 @@
 namespace MSNPSharp.IO
 {
     using System;
-    using System.Collections.Generic;
-    using System.Text;
-    using System.Xml;
     using System.IO;
-    using MSNPSharp.IO;
-    using System.Xml.Serialization;
+    using System.Xml;
+    using System.Text;    
     using System.Collections;
+    using System.Collections.Generic;
+    using System.Xml.Serialization;
 
     /// <summary>
     /// <remarks>This class can't inherit from SerializableDictionary ,
@@ -31,27 +30,44 @@ namespace MSNPSharp.IO
         protected XMLContactList()
             : base()
         {
-
         }
 
         public SerializableDictionary<string, ContactInfo> Contacts
         {
-            get { return contacts; }
-            set { contacts = value; }
+            get
+            {
+                return contacts;
+            }
+            set
+            {
+                contacts = value;
+            }
         }
 
-        protected string FileName        //Mark as protected so this property won't be serialized
+        protected string FileName
         {
-            get { return fileName; }
-            set { fileName = value; }
+            get
+            {
+                return fileName;
+            }
+            set
+            {
+                fileName = value;
+            }
         }
 
-        protected bool NoCompress       //Mark as protected so this property won't be serialized
+        protected bool NoCompress
         {
-            get { return noCompress; }
-            set { noCompress = value; }
+            get
+            {
+                return noCompress;
+            }
+            set
+            {
+                noCompress = value;
+            }
         }
-
+        /*
         public ContactInfo this[string key]
         {
             get
@@ -63,6 +79,7 @@ namespace MSNPSharp.IO
                 contacts[key] = value;
             }
         }
+         * */
 
         public DateTime LastChange
         {
@@ -82,9 +99,9 @@ namespace MSNPSharp.IO
             {
                 if (contacts.ContainsKey(account))
                 {
-                    if (this[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
+                    if (contacts[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
                     {
-                        this[account] = range[account];
+                        contacts[account] = range[account];
                     }
                 }
                 else

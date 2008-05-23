@@ -349,7 +349,6 @@ namespace MSNPSharp
         {
             if (null != findMembership && null != findMembership.Services)
             {
-                Dictionary<MemberRole, Dictionary<string, ContactInfo>> mShips = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>();
                 Dictionary<int, Service> services = new Dictionary<int, Service>(0);
 
                 foreach (ServiceType serviceType in findMembership.Services)
@@ -367,52 +366,40 @@ namespace MSNPSharp
                         {
                             if (null != membership.Members)
                             {
-                                MemberRole lst = membership.MemberRole;
-                                if (!mShips.ContainsKey(lst))
-                                {
-                                    mShips[lst] = new Dictionary<string, ContactInfo>();
-                                }
-
+                                MemberRole memberrole = membership.MemberRole;
                                 foreach (BaseMember bm in membership.Members)
                                 {
-                                    ContactInfo ci = new ContactInfo();
-                                    ci.MembershipId = Convert.ToInt32(bm.MembershipId);
-                                    ci.LastChanged = bm.LastChanged;
-
-                                    if (!String.IsNullOrEmpty(bm.DisplayName))
-                                        ci.DisplayName = bm.DisplayName;
-                                    else
-                                        ci.DisplayName = ci.Account;
+                                    string account = null;
+                                    ClientType type = ClientType.PassportMember;
 
                                     if (bm is PassportMember)
                                     {
-                                        ci.Type = ClientType.PassportMember;
+                                        type = ClientType.PassportMember;
                                         PassportMember pm = (PassportMember)bm;
-                                        if (pm.IsPassportNameHidden)
+                                        if (!pm.IsPassportNameHidden)
                                         {
-                                            // Occurs ArgumentNullException, PassportName = null
-                                            continue;
+                                            account = pm.PassportName;
                                         }
-                                        ci.Account = pm.PassportName;
                                     }
                                     else if (bm is EmailMember)
                                     {
-                                        ci.Type = ClientType.EmailMember;
-                                        ci.Account = ((EmailMember)bm).Email;
+                                        type = ClientType.EmailMember;
+                                        account = ((EmailMember)bm).Email;
                                     }
-                                    // else if (bm is PhoneMember)
-                                    // {
-                                    //     ci.Account = ((PhoneMember)bm).PhoneNumber;
-                                    //     ci.Type = ClientType.PhoneMember;
-                                    // }
-
-                                    if (ci.Account != null && !mShips[lst].ContainsKey(ci.Account))
+                                    else if (bm is PhoneMember)
                                     {
-                                        mShips[lst][ci.Account] = ci;
+                                        type = ClientType.PhoneMember;
+                                        account = ((PhoneMember)bm).PhoneNumber;
+                                    }
 
-                                        if (!MemberShipList.Contacts.ContainsKey(ci.Account) || MemberShipList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
+                                    if (account != null)
+                                    {
+                                        MemberShipList.AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
+                                        MemberShipList.Contacts[account].LastChanged = bm.LastChanged;
+
+                                        if (memberrole == MemberRole.Reverse && !String.IsNullOrEmpty(bm.DisplayName))
                                         {
-                                            MemberShipList[ci.Account] = ci;
+                                            MemberShipList.Contacts[account].DisplayName = bm.DisplayName;
                                         }
                                     }
                                 }
@@ -420,52 +407,56 @@ namespace MSNPSharp
                         }
                     }
                 }
-
-                // Combine all membership information and save them into a file.
-                MemberShipList.CombineMemberRoles(mShips);
+                // Combine all membership information.
                 MemberShipList.CombineService(services);
                 MemberShipList.Save();
             }
-        }
+        }    
 
         internal void refreshAB(ABFindAllResultType forwardList)
-        {            
+        {
             if (null != forwardList.contacts)
             {
-                Dictionary<string, ContactInfo> diccontactList = new Dictionary<string, ContactInfo>(0);
                 foreach (ContactType contactType in forwardList.contacts)
                 {
                     if (null != contactType.contactInfo)
                     {
-                        ContactInfo ci = new ContactInfo();
-                        ci.Guid = contactType.contactId;
-                        ci.Account = contactType.contactInfo.passportName;
-                        ci.DisplayName = contactType.contactInfo.displayName;
-                        ci.LastChanged = contactType.lastChange;
-                        ci.IsMessengerUser = contactType.contactInfo.isMessengerUser;
+                        ClientType type = ClientType.PassportMember;
+                        string account = contactType.contactInfo.passportName;
+                        string displayname = contactType.contactInfo.displayName;
+                        bool ismessengeruser = contactType.contactInfo.isMessengerUser;
 
-                        if (contactType.contactInfo.emails != null && ci.Account == null)
+                        if (contactType.contactInfo.emails != null && account == null)
                         {
+                            /* This is not related with ClientCapacities, I think :)
                             if (Enum.IsDefined(typeof(ClientCapacities), long.Parse(contactType.contactInfo.emails[0].Capability)))
                             {
                                 ci.Capability = (ClientCapacities)long.Parse(contactType.contactInfo.emails[0].Capability);
                             }
-                            ci.Type = ClientType.EmailMember;
+                             * */
 
-                            ci.Account = contactType.contactInfo.emails[0].email;
-                            ci.IsMessengerUser |= contactType.contactInfo.emails[0].isMessengerEnabled;
-                            ci.DisplayName = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? ci.Account : contactType.contactInfo.quickName;
+                            type = ClientType.EmailMember;
+                            account = contactType.contactInfo.emails[0].email;
+                            ismessengeruser |= contactType.contactInfo.emails[0].isMessengerEnabled;
+                            displayname = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? account : contactType.contactInfo.quickName;
                         }
 
-                        if (ci.Account == null)
+                        if (account == null)
                             continue; // PassportnameHidden... Nothing to do...
 
                         if (contactType.fDeleted)
                         {
-                            AddressBook.Contacts.Remove(ci.Account);
+                            AddressBook.Contacts.Remove(account);
                         }
                         else
                         {
+                            ContactInfo ci = new ContactInfo(account, type);
+                            ci.DisplayName = displayname;
+                            ci.IsMessengerUser = ismessengeruser;
+
+                            ci.Guid = contactType.contactId;
+                            ci.LastChanged = contactType.lastChange;
+
                             if (null != contactType.contactInfo.annotations)
                             {
                                 foreach (Annotation anno in contactType.contactInfo.annotations)
@@ -476,6 +467,11 @@ namespace MSNPSharp
                                         break;
                                     }
                                 }
+                            }
+
+                            if (contactType.contactInfo.groupIds != null)
+                            {
+                                ci.Groups = new List<string>(contactType.contactInfo.groupIds);
                             }
 
                             if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
@@ -515,26 +511,20 @@ namespace MSNPSharp
                                     AddressBook.MyProperties["personalmessage"] = AddressBook.MyProperties["displayname"];
                             }
 
-                            if (contactType.contactInfo.groupIds != null)
+                            if (AddressBook.Contacts.ContainsKey(ci.Account))
                             {
-                                ci.Groups = new List<string>(contactType.contactInfo.groupIds);
-                            }
-
-                            if (diccontactList.ContainsKey(ci.Account))
-                            {
-                                if (diccontactList[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
+                                if (AddressBook.Contacts[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
                                 {
-                                    diccontactList[ci.Account] = ci;
+                                    AddressBook.Contacts[ci.Account] = ci;
                                 }
                             }
                             else
                             {
-                                diccontactList.Add(ci.Account, ci);
+                                AddressBook.Contacts.Add(ci.Account, ci);
                             }
                         }
                     }
                 }
-                AddressBook.Add(diccontactList);
             }
 
             if (null != forwardList.groups)
@@ -575,11 +565,11 @@ namespace MSNPSharp
                     Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account);
                     contact.SetLists(MemberShipList.GetMSNLists(ci.Account));
                     contact.NSMessageHandler = nsMessageHandler;
-                    contact.SetClientType(MemberShipList[ci.Account].Type);
+                    contact.SetClientType(MemberShipList.Contacts[ci.Account].Type);
 
                     if (AddressBook.Contacts.ContainsKey(ci.Account))
                     {
-                        ContactInfo abci = AddressBook[ci.Account];
+                        ContactInfo abci = AddressBook.Contacts[ci.Account];
                         contact.SetGuid(abci.Guid);
 
                         foreach (string groupId in abci.Groups)
@@ -655,7 +645,7 @@ namespace MSNPSharp
                 {
                     sendlist = 0;
                     lists = MemberShipList.GetMSNLists(contact.Account);
-                    if (AddressBook.Contacts.ContainsKey(contact.Account) && AddressBook[contact.Account].IsMessengerUser)
+                    if (AddressBook.Contacts.ContainsKey(contact.Account) && AddressBook.Contacts[contact.Account].IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
 
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
@@ -1018,11 +1008,11 @@ namespace MSNPSharp
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.SetIsMessengerUser(isMessengerUser);
-                    AddressBook[contact.Mail].IsMessengerUser = contact.IsMessengerUser;
+                    AddressBook.Contacts[contact.Mail].IsMessengerUser = contact.IsMessengerUser;
                     if (!String.IsNullOrEmpty(displayName))
                     {
                         contact.SetName(displayName);
-                        AddressBook[contact.Mail].DisplayName = displayName;
+                        AddressBook.Contacts[contact.Mail].DisplayName = displayName;
                     }                    
                     AddressBook.Save();
                 }
@@ -1382,15 +1372,10 @@ namespace MSNPSharp
                 {
                     if (Settings.TraceSwitch.TraceVerbose)
                         Trace.WriteLine("AddMember completed.");
-    
+
                     contact.AddToList(list);
-                    ContactInfo ci = MemberShipList[contact.Mail];
-                    MemberRole memberrole = GetMemberRole(list);
-                    if (!MemberShipList.MemberRoles.ContainsKey(memberrole))
-                    {
-                        MemberShipList.MemberRoles[memberrole] = new SerializableDictionary<string, ContactInfo>();
-                    }
-                    MemberShipList.MemberRoles[memberrole][ci.Account] = ci;         
+
+                    MemberShipList.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
                     MemberShipList.Save();
 
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
@@ -1507,8 +1492,12 @@ namespace MSNPSharp
                         Trace.WriteLine("DeleteMember completed.");
 
                     contact.RemoveFromList(list);
-                    MemberShipList.MemberRoles[GetMemberRole(list)].Remove(contact.Mail);
-                    MemberShipList.Save();
+
+                    if (MemberShipList.Contacts.ContainsKey(contact.Mail))
+                    {
+                        MemberShipList.RemoveMemberhip(contact.Mail, GetMemberRole(list));
+                        MemberShipList.Save();
+                    }                    
 
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("RML", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));

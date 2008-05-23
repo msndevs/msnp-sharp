@@ -1,31 +1,31 @@
 ﻿namespace MSNPSharp.IO
 {
     using System;
-    using System.Collections.Generic;
-    using System.Xml;
     using System.IO;
-    using MSNPSharp.IO;
+    using System.Xml;
     using System.Globalization;
+    using System.Xml.Serialization;
+    using System.Collections.Generic;
+
     using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
-    using System.Xml.Serialization;
+
 
     #region XMLMembershipList
 
     /// <summary>
     /// XML Membership List file maintainer
     /// </summary>
-    [XmlRoot("MembershipList"), Serializable]
+    [Serializable]
+    [XmlRoot("MembershipList")]
     public class XMLMembershipList : XMLContactList
     {
         private SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
-        private SerializableDictionary<MemberRole, SerializableDictionary<string, ContactInfo>> rolelists = new SerializableDictionary<MemberRole, SerializableDictionary<string, ContactInfo>>(0);
 
         public XMLMembershipList()
-            :base()
+            : base()
         {
         }
-
 
         public SerializableDictionary<int, Service> Services
         {
@@ -40,64 +40,52 @@
             }
         }
 
-        public SerializableDictionary<MemberRole, SerializableDictionary<string, ContactInfo>> MemberRoles
-        {
-            get
-            {
-                return rolelists;
-            }
-
-            set
-            {
-                rolelists = value;
-            }
-        }
-
         public MSNLists GetMSNLists(string account)
         {
             MSNLists contactlists = MSNLists.None;
-
-            if (rolelists.ContainsKey(MemberRole.Allow) && rolelists[MemberRole.Allow].ContainsKey(account))
-                contactlists |= MSNLists.AllowedList;
-
-            if (rolelists.ContainsKey(MemberRole.Pending) && rolelists[MemberRole.Pending].ContainsKey(account))
-                contactlists |= MSNLists.PendingList;
-
-            if (rolelists.ContainsKey(MemberRole.Reverse) && rolelists[MemberRole.Reverse].ContainsKey(account))
-                contactlists |= MSNLists.ReverseList;
-
-            if (rolelists.ContainsKey(MemberRole.Block) && rolelists[MemberRole.Block].ContainsKey(account))
+            if (Contacts.ContainsKey(account))
             {
-                contactlists |= MSNLists.BlockedList;
-                if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
-                    contactlists ^= MSNLists.AllowedList;
-            }
+                ContactInfo ci = Contacts[account];
+                if (ci.Memberships.ContainsKey(MemberRole.Allow))
+                    contactlists |= MSNLists.AllowedList;
 
+                if (ci.Memberships.ContainsKey(MemberRole.Pending))
+                    contactlists |= MSNLists.PendingList;
+
+                if (ci.Memberships.ContainsKey(MemberRole.Reverse))
+                    contactlists |= MSNLists.ReverseList;
+
+                if (ci.Memberships.ContainsKey(MemberRole.Block))
+                {
+                    contactlists |= MSNLists.BlockedList;
+
+                    if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
+                    {
+                        contactlists ^= MSNLists.AllowedList;
+                        RemoveMemberhip(account, MemberRole.Allow);
+                    }
+                }
+            }
             return contactlists;
         }
 
-        public void CombineMemberRoles(Dictionary<MemberRole, Dictionary<string, ContactInfo>> memberroles)
+        public void AddMemberhip(string account, ClientType type, MemberRole memberrole, int membershipid)
         {
-            foreach (MemberRole role in memberroles.Keys)
+            if (!Contacts.ContainsKey(account))
+                Contacts.Add(account, new ContactInfo(account, type));
+
+            Contacts[account].Type = type;
+            Contacts[account].Memberships[memberrole] = membershipid;
+        }
+
+        public void RemoveMemberhip(string account, MemberRole memberrole)
+        {
+            if (Contacts.ContainsKey(account))
             {
-                if (rolelists.ContainsKey(role))
-                {
-                    foreach (string account in memberroles[role].Keys)
-                    {
-                        if (rolelists[role].ContainsKey(account))
-                        {
-                            rolelists[role][account] = memberroles[role][account];
-                        }
-                        else
-                        {
-                            rolelists[role].Add(account, memberroles[role][account]);
-                        }
-                    }
-                }
-                else
-                {
-                    rolelists.Add(role, new SerializableDictionary<string, ContactInfo>(memberroles[role]));
-                }
+                Contacts[account].Memberships.Remove(memberrole);
+
+                if (0 == Contacts[account].Memberships.Count)
+                    Contacts.Remove(account);
             }
         }
 
@@ -123,7 +111,6 @@
         /// <param name="filename"></param>
         public override void Save(string filename)
         {
-
             SaveToHiddenMCL(filename);
         }
 
@@ -176,7 +163,7 @@
 
             set
             {
-                groups = value;   //property without set can't be serialized
+                groups = value;
             }
         }
 
@@ -194,9 +181,7 @@
 
         public override void Save(string filename)
         {
-
             SaveToHiddenMCL(filename);
-
         }
 
         public override void Save()

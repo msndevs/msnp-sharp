@@ -1,9 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace MSNPSharp.IO
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+
+    using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
 
     #region ContactInfo
@@ -11,6 +12,18 @@ namespace MSNPSharp.IO
     [Serializable]
     public class ContactInfo
     {
+
+        private ContactInfo()
+        {
+        }
+
+        public ContactInfo(string account, ClientType type)
+        {
+            this.account = account;
+            this.type = type;
+        }
+
+
         private string account;
         public string Account
         {
@@ -37,16 +50,16 @@ namespace MSNPSharp.IO
             }
         }
 
-        private int membershipId;
-        public int MembershipId
+        private SerializableDictionary<MemberRole, int> memberships = new SerializableDictionary<MemberRole, int>();
+        public SerializableDictionary<MemberRole, int> Memberships
         {
             get
             {
-                return membershipId;
+                return memberships;
             }
             set
             {
-                membershipId = value;
+                memberships = value;
             }
         }
 
@@ -136,8 +149,14 @@ namespace MSNPSharp.IO
         /// </summary>
         public object Tags
         {
-            get { return tags; }
-            set { tags = value; }
+            get
+            {
+                return tags;
+            }
+            set
+            {
+                tags = value;
+            }
         }
 
         /// <summary>
@@ -147,10 +166,13 @@ namespace MSNPSharp.IO
         public override string ToString()
         {
             string debugstr = String.Empty;
+
             if (account != null)
-                debugstr += account + "  |  isMessengerUser:  " + IsMessengerUser.ToString();
+                debugstr += account + " | isMessengerUser:  " + IsMessengerUser.ToString();
+
             if (displayname != null)
-                debugstr += "  |  diaplayName:  " + displayname;
+                debugstr += " | displayName:  " + displayname;
+
             return debugstr;
         }
     }
