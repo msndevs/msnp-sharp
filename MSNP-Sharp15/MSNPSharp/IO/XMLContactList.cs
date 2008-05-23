@@ -21,7 +21,7 @@
     public class XMLMembershipList : XMLContactList
     {
         SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
-        SerializableDictionary<string, ContactInfo> contacts = new SerializableDictionary<string, ContactInfo>(0);
+        SerializableDictionary<string, MembershipContactInfo> contacts = new SerializableDictionary<string, MembershipContactInfo>(0);
 
         public XMLMembershipList()
             : base()
@@ -41,7 +41,7 @@
             }
         }
 
-        public SerializableDictionary<string, ContactInfo> Contacts
+        public SerializableDictionary<string, MembershipContactInfo> Contacts
         {
             get
             {
@@ -58,7 +58,7 @@
             MSNLists contactlists = MSNLists.None;
             if (Contacts.ContainsKey(account))
             {
-                ContactInfo ci = Contacts[account];
+                MembershipContactInfo ci = Contacts[account];
                 if (ci.Memberships.ContainsKey(MemberRole.Allow))
                     contactlists |= MSNLists.AllowedList;
 
@@ -85,7 +85,7 @@
         public void AddMemberhip(string account, ClientType type, MemberRole memberrole, int membershipid)
         {
             if (!Contacts.ContainsKey(account))
-                Contacts.Add(account, new ContactInfo(account, type));
+                Contacts.Add(account, new MembershipContactInfo(account, type));
 
             Contacts[account].Type = type;
             Contacts[account].Memberships[memberrole] = membershipid;
@@ -102,7 +102,7 @@
             }
         }
 
-        public virtual void Add(Dictionary<string, ContactInfo> range)
+        public virtual void Add(Dictionary<string, MembershipContactInfo> range)
         {
             foreach (string account in range.Keys)
             {
@@ -150,7 +150,7 @@
         DateTime dynamicItemLastChange;
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
-        SerializableDictionary<Guid, ContactInfo> contacts = new SerializableDictionary<Guid, ContactInfo>(0);
+        SerializableDictionary<Guid, AddressbookContactInfo> contacts = new SerializableDictionary<Guid, AddressbookContactInfo>(0);
 
         public XMLAddressBook()
             : base()
@@ -194,7 +194,7 @@
             }
         }
 
-        public SerializableDictionary<Guid, ContactInfo> Contacts
+        public SerializableDictionary<Guid, AddressbookContactInfo> Contacts
         {
             get
             {
@@ -206,9 +206,9 @@
             }
         }
 
-        public virtual ContactInfo Find(string email, ClientType type)
+        public virtual AddressbookContactInfo Find(string email, ClientType type)
         {
-            foreach (ContactInfo ci in Contacts.Values)
+            foreach (AddressbookContactInfo ci in Contacts.Values)
             {
                 if (ci.Account == email && ci.Type == type)
                     return ci;
@@ -216,7 +216,7 @@
             return null;
         }
 
-        public virtual void Add(Dictionary<Guid, ContactInfo> range)
+        public virtual void Add(Dictionary<Guid, AddressbookContactInfo> range)
         {
             foreach (Guid guid in range.Keys)
             {
