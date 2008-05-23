@@ -139,7 +139,7 @@ namespace MSNPSharp
             if (message.CommandValues.Count > indexer && message.CommandValues[indexer].ToString().Length > 2)
             {
                 string guid = message.CommandValues[indexer].ToString().Remove(0, 2);
-                contact.SetGuid(guid);
+                contact.SetGuid(new Guid(guid));
 
                 indexer++;
             }

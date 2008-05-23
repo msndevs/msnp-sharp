@@ -1250,7 +1250,7 @@ namespace MSNPSharpClient
                         toolStripMenuItem2.Visible = false;
                     }
 
-                    deleteMenuItem.Visible = !String.IsNullOrEmpty(contact.Guid);
+                    deleteMenuItem.Visible = contact.Guid != Guid.Empty;
 
                     Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
                     userMenuStrip.Show(point.X - userMenuStrip.Width, point.Y);

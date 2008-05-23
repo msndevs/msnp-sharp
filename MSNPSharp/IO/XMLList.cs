@@ -25,23 +25,9 @@ namespace MSNPSharp.IO
         private string fileName;
 
         protected DateTime lastChange;
-        private SerializableDictionary<string, ContactInfo> contacts = new SerializableDictionary<string, ContactInfo>(0);
 
         protected XMLContactList()
-            : base()
         {
-        }
-
-        public SerializableDictionary<string, ContactInfo> Contacts
-        {
-            get
-            {
-                return contacts;
-            }
-            set
-            {
-                contacts = value;
-            }
         }
 
         protected string FileName
@@ -93,29 +79,24 @@ namespace MSNPSharp.IO
             }
         }
 
-        public virtual void Add(Dictionary<string, ContactInfo> range)
+        /// <summary>
+        /// Save the contact list into a file.
+        /// </summary>
+        public void Save()
         {
-            foreach (string account in range.Keys)
-            {
-                if (contacts.ContainsKey(account))
-                {
-                    if (contacts[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
-                    {
-                        contacts[account] = range[account];
-                    }
-                }
-                else
-                {
-                    contacts.Add(account, range[account]);
-                }
-            }
+            Save(FileName);
         }
 
+        /// <summary>
+        /// Save the contact list into a file.
+        /// </summary>
+        /// <param name="filename"></param>
+        public void Save(string filename)
+        {
+            SaveToHiddenMCL(filename);
+        }
 
-        public abstract void Save(string filename);
-        public abstract void Save();
-
-        protected virtual void SaveToHiddenMCL(string filename)
+        private void SaveToHiddenMCL(string filename)
         {
             XmlSerializer ser = new XmlSerializer(this.GetType());
             MemoryStream ms = new MemoryStream();
@@ -124,7 +105,6 @@ namespace MSNPSharp.IO
             file.Content = ms.ToArray();
             MCLFileManager.Save(file, true);
             ms.Close();
-
         }
 
         public static XMLContactList LoadFromFile(string filename, Type targetType, bool noCompress)
@@ -140,10 +120,9 @@ namespace MSNPSharp.IO
                     mem.Close();
                 }
             }
-            ((XMLContactList)rtnobj).NoCompress = noCompress;
-            ((XMLContactList)rtnobj).FileName = filename;
+            rtnobj.NoCompress = noCompress;
+            rtnobj.FileName = filename;
             return rtnobj;
         }
-
     }
 };

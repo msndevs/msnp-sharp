@@ -20,7 +20,8 @@
     [XmlRoot("MembershipList")]
     public class XMLMembershipList : XMLContactList
     {
-        private SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
+        SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
+        SerializableDictionary<string, ContactInfo> contacts = new SerializableDictionary<string, ContactInfo>(0);
 
         public XMLMembershipList()
             : base()
@@ -37,6 +38,18 @@
             set
             {
                 services = value;
+            }
+        }
+
+        public SerializableDictionary<string, ContactInfo> Contacts
+        {
+            get
+            {
+                return contacts;
+            }
+            set
+            {
+                contacts = value;
             }
         }
 
@@ -89,6 +102,24 @@
             }
         }
 
+        public virtual void Add(Dictionary<string, ContactInfo> range)
+        {
+            foreach (string account in range.Keys)
+            {
+                if (contacts.ContainsKey(account))
+                {
+                    if (contacts[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
+                    {
+                        contacts[account] = range[account];
+                    }
+                }
+                else
+                {
+                    contacts.Add(account, range[account]);
+                }
+            }
+        }
+
         /// <summary>
         /// Combine the new services with old ones and get Messenger service's lastchange property.
         /// </summary>
@@ -104,23 +135,6 @@
                         lastChange = innerService.LastChange;
 
         }
-
-        /// <summary>
-        /// Save the contact list into a file.
-        /// </summary>
-        /// <param name="filename"></param>
-        public override void Save(string filename)
-        {
-            SaveToHiddenMCL(filename);
-        }
-
-        /// <summary>
-        /// Save the contact list into a file.
-        /// </summary>
-        public override void Save()
-        {
-            Save(FileName);
-        }
     }
 
     #endregion
@@ -134,8 +148,9 @@
     public class XMLAddressBook : XMLContactList
     {
         DateTime dynamicItemLastChange;
-        SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
+        SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
+        SerializableDictionary<Guid, ContactInfo> contacts = new SerializableDictionary<Guid, ContactInfo>(0);
 
         public XMLAddressBook()
             : base()
@@ -154,6 +169,18 @@
             }
         }
 
+        public SerializableDictionary<string, string> MyProperties
+        {
+            get
+            {
+                return myproperties;
+            }
+            set
+            {
+                myproperties = value;
+            }
+        }
+
         public SerializableDictionary<string, GroupInfo> Groups
         {
             get
@@ -167,26 +194,52 @@
             }
         }
 
-        public SerializableDictionary<string, string> MyProperties
+        public SerializableDictionary<Guid, ContactInfo> Contacts
         {
             get
             {
-                return myproperties;
+                return contacts;
             }
             set
             {
-                myproperties = value;
+                contacts = value;
             }
         }
 
-        public override void Save(string filename)
+        public virtual ContactInfo Find(string email, ClientType type)
         {
-            SaveToHiddenMCL(filename);
+            foreach (ContactInfo ci in Contacts.Values)
+            {
+                if (ci.Account == email && ci.Type == type)
+                    return ci;
+            }
+            return null;
         }
 
-        public override void Save()
+        public virtual void Add(Dictionary<Guid, ContactInfo> range)
         {
-            Save(FileName);
+            foreach (Guid guid in range.Keys)
+            {
+                if (contacts.ContainsKey(guid))
+                {
+                    if (contacts[guid].LastChanged.CompareTo(range[guid].LastChanged) <= 0)
+                    {
+                        contacts[guid] = range[guid];
+                    }
+                }
+                else
+                {
+                    contacts.Add(guid, range[guid]);
+                }
+            }
+        }
+
+        public void AddGroup(Dictionary<string, GroupInfo> range)
+        {
+            foreach (GroupInfo group in range.Values)
+            {
+                AddGroup(group);
+            }
         }
 
         public void AddGroup(GroupInfo group)
@@ -198,14 +251,6 @@
             else
             {
                 groups.Add(group.Guid, group);
-            }
-        }
-
-        public void AddGroup(Dictionary<string, GroupInfo> range)
-        {
-            foreach (GroupInfo group in range.Values)
-            {
-                AddGroup(group);
             }
         }
     }

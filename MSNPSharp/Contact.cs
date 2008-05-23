@@ -125,7 +125,7 @@ namespace MSNPSharp
     [Serializable()]
     public class Contact
     {
-        string guid;
+        Guid guid;
         string mail;
         string name;
         string homePhone;
@@ -276,7 +276,7 @@ namespace MSNPSharp
             }
         }
 
-        public string Guid
+        public Guid Guid
         {
             get
             {
@@ -359,7 +359,7 @@ namespace MSNPSharp
             }
             set
             {
-                if (NSMessageHandler != null && String.IsNullOrEmpty(guid) == false)
+                if (NSMessageHandler != null && Guid != Guid.Empty)
                 {
                     if (IsMessengerUser != value)
                     {
@@ -401,7 +401,7 @@ namespace MSNPSharp
             this.hasBlog = hasblog;
         }
 
-        internal void SetGuid(string guid)
+        internal void SetGuid(Guid guid)
         {
             this.guid = guid;
         }

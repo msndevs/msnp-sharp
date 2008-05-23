@@ -95,7 +95,6 @@ namespace MSNPSharp
             MemberShipList = XMLContactList.LoadFromFile(membershipsFile, typeof(XMLMembershipList), nocompress) as XMLMembershipList;
             AddressBook = XMLContactList.LoadFromFile(addressbookFile, typeof(XMLAddressBook), nocompress) as XMLAddressBook;
 
-
             msRequest(
                 "Initial",
                 delegate
@@ -446,15 +445,13 @@ namespace MSNPSharp
 
                         if (contactType.fDeleted)
                         {
-                            AddressBook.Contacts.Remove(account);
+                            AddressBook.Contacts.Remove(new Guid(contactType.contactId));
                         }
                         else
                         {
-                            ContactInfo ci = new ContactInfo(account, type);
+                            ContactInfo ci = new ContactInfo(account, type, new Guid(contactType.contactId));
                             ci.DisplayName = displayname;
                             ci.IsMessengerUser = ismessengeruser;
-
-                            ci.Guid = contactType.contactId;
                             ci.LastChanged = contactType.lastChange;
 
                             if (null != contactType.contactInfo.annotations)
@@ -511,16 +508,16 @@ namespace MSNPSharp
                                     AddressBook.MyProperties["personalmessage"] = AddressBook.MyProperties["displayname"];
                             }
 
-                            if (AddressBook.Contacts.ContainsKey(ci.Account))
+                            if (AddressBook.Contacts.ContainsKey(ci.Guid))
                             {
-                                if (AddressBook.Contacts[ci.Account].LastChanged.CompareTo(ci.LastChanged) < 0)
+                                if (AddressBook.Contacts[ci.Guid].LastChanged.CompareTo(ci.LastChanged) < 0)
                                 {
-                                    AddressBook.Contacts[ci.Account] = ci;
+                                    AddressBook.Contacts[ci.Guid] = ci;
                                 }
                             }
                             else
                             {
-                                AddressBook.Contacts.Add(ci.Account, ci);
+                                AddressBook.Contacts.Add(ci.Guid, ci);
                             }
                         }
                     }
@@ -567,9 +564,9 @@ namespace MSNPSharp
                     contact.NSMessageHandler = nsMessageHandler;
                     contact.SetClientType(MemberShipList.Contacts[ci.Account].Type);
 
-                    if (AddressBook.Contacts.ContainsKey(ci.Account))
+                    if (AddressBook.Contacts.ContainsKey(ci.Guid))
                     {
-                        ContactInfo abci = AddressBook.Contacts[ci.Account];
+                        ContactInfo abci = AddressBook.Contacts[ci.Guid];
                         contact.SetGuid(abci.Guid);
 
                         foreach (string groupId in abci.Groups)
@@ -645,7 +642,7 @@ namespace MSNPSharp
                 {
                     sendlist = 0;
                     lists = MemberShipList.GetMSNLists(contact.Account);
-                    if (AddressBook.Contacts.ContainsKey(contact.Account) && AddressBook.Contacts[contact.Account].IsMessengerUser)
+                    if (AddressBook.Contacts.ContainsKey(contact.Guid) && AddressBook.Contacts[contact.Guid].IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
 
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
@@ -733,7 +730,7 @@ namespace MSNPSharp
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     Contact contact = nsMessageHandler.ContactList.GetContact(account);
-                    contact.SetGuid(e.Result.ABContactAddResult.guid);
+                    contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
                     contact.NSMessageHandler = nsMessageHandler;
 
                     //2: ADL AL without membership, so the user can see our status...
@@ -780,7 +777,7 @@ namespace MSNPSharp
                 contact.ClientType,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
-                    contact.SetGuid(e.Result.ABContactAddResult.guid);
+                    contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
                     contact.NSMessageHandler = nsMessageHandler;
 
                     // 3: ADL FL
@@ -911,7 +908,7 @@ namespace MSNPSharp
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
 
-            if (AddressBook.Contacts.ContainsKey(account))
+            if (AddressBook.Find(account, network) != null)
             {
                 Contact contact = nsMessageHandler.ContactList.GetContact(account);
                 RemoveContactFromList(contact, MSNLists.PendingList, null);
@@ -939,7 +936,7 @@ namespace MSNPSharp
         /// <param name="contact">Contact to remove</param>
         public virtual void RemoveContact(Contact contact)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
@@ -961,7 +958,7 @@ namespace MSNPSharp
                 {
                     contact.NSMessageHandler = null;
                     nsMessageHandler.ContactList.Remove(contact.Mail);
-                    AddressBook.Contacts.Remove(contact.Mail);
+                    AddressBook.Contacts.Remove(contact.Guid);
                     AddressBook.Save();
                 }
                 else if (e.Error != null)
@@ -976,7 +973,7 @@ namespace MSNPSharp
             ABContactDeleteRequestType request = new ABContactDeleteRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.contacts = new ContactIdType[] { new ContactIdType() };
-            request.contacts[0].contactId = contact.Guid;
+            request.contacts[0].contactId = contact.Guid.ToString();
 
             abService.ABContactDeleteAsync(request, new object());
         }
@@ -987,7 +984,7 @@ namespace MSNPSharp
 
         internal void UpdateContact(Contact contact, string displayName, bool isMessengerUser)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
@@ -1008,11 +1005,11 @@ namespace MSNPSharp
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.SetIsMessengerUser(isMessengerUser);
-                    AddressBook.Contacts[contact.Mail].IsMessengerUser = contact.IsMessengerUser;
+                    AddressBook.Contacts[contact.Guid].IsMessengerUser = contact.IsMessengerUser;
                     if (!String.IsNullOrEmpty(displayName))
                     {
                         contact.SetName(displayName);
-                        AddressBook.Contacts[contact.Mail].DisplayName = displayName;
+                        AddressBook.Contacts[contact.Guid].DisplayName = displayName;
                     }                    
                     AddressBook.Save();
                 }
@@ -1029,7 +1026,7 @@ namespace MSNPSharp
             ABContactUpdateRequestType request = new ABContactUpdateRequestType();
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.contacts = new ContactType[] { new ContactType() };
-            request.contacts[0].contactId = contact.Guid;
+            request.contacts[0].contactId = contact.Guid.ToString();
             request.contacts[0].contactInfo = new contactInfoType();
 
             if (isMessengerUser != contact.IsMessengerUser)
@@ -1230,7 +1227,7 @@ namespace MSNPSharp
 
         public virtual void AddContactToGroup(Contact contact, ContactGroup group)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
@@ -1266,14 +1263,14 @@ namespace MSNPSharp
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { group.Guid };
             request.contacts = new ContactType[] { new ContactType() };
-            request.contacts[0].contactId = contact.Guid;
+            request.contacts[0].contactId = contact.Guid.ToString();
 
             abService.ABGroupContactAddAsync(request, new object());
         }
 
         public virtual void RemoveContactFromGroup(Contact contact, ContactGroup group)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABServiceBinding abService = new ABServiceBinding();
@@ -1309,7 +1306,7 @@ namespace MSNPSharp
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { group.Guid };
             request.contacts = new ContactType[] { new ContactType() };
-            request.contacts[0].contactId = contact.Guid;
+            request.contacts[0].contactId = contact.Guid.ToString();
 
             abService.ABGroupContactDeleteAsync(request, new object());
         }
@@ -1391,7 +1388,6 @@ namespace MSNPSharp
                     OnServiceOperationFailed(sharingService,
                         new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
                 }
-                ((IDisposable)service).Dispose();
                 return;
             };
 
@@ -1512,7 +1508,6 @@ namespace MSNPSharp
                     OnServiceOperationFailed(sharingService,
                         new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
                 }
-                ((IDisposable)service).Dispose();
                 return;
             };
 
@@ -1603,8 +1598,8 @@ namespace MSNPSharp
                     }
                 );
 
-                // System.Threading.Thread.Sleep(50);
-                // RemoveContactFromList(contact, MSNLists.BlockedList, null);
+                System.Threading.Thread.Sleep(100);
+                RemoveContactFromList(contact, MSNLists.BlockedList, null);
             }
         }
 

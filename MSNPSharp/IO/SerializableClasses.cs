@@ -12,7 +12,6 @@ namespace MSNPSharp.IO
     [Serializable]
     public class ContactInfo
     {
-
         private ContactInfo()
         {
         }
@@ -23,6 +22,12 @@ namespace MSNPSharp.IO
             this.type = type;
         }
 
+        public ContactInfo(string account, ClientType type, Guid guid)
+        {
+            this.account = account;
+            this.type = type;
+            this.guid = guid;
+        }
 
         private string account;
         public string Account
@@ -37,8 +42,8 @@ namespace MSNPSharp.IO
             }
         }
 
-        private string guid;
-        public string Guid
+        private Guid guid;
+        public Guid Guid
         {
             get
             {
