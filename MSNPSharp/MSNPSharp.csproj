@@ -56,7 +56,9 @@
     <Compile Include="EventArgs.cs" />
     <Compile Include="Core\Factory.cs" />
     <Compile Include="Core\IMessageHandler.cs" />
+    <Compile Include="IO\DeltasList.cs" />
     <Compile Include="IO\IO.cs" />
+    <Compile Include="IO\MCLSerializer.cs" />
     <Compile Include="IO\SerializableClasses.cs" />
     <Compile Include="IO\SerializableDictionary.cs" />
     <Compile Include="MailEventArgs.cs" />

@@ -21,7 +21,8 @@ namespace MSNPSharp
         private WebProxy webProxy = null;
         private NSMessageHandler nsMessageHandler = null;
         private const string applicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
-        internal XMLContactList AddressBook = null;        
+        internal XMLContactList AddressBook = null;
+        private DeltasList Deltas = null;
 
         #endregion
 
@@ -108,7 +109,22 @@ namespace MSNPSharp
 
             bool nocompress = true;
             string addressbookFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
+            string deltasResultsFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "_deltas")).Replace("\\", "-") + ".mcl";
             AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
+            Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
+
+            foreach (FindMembershipResultType membershipResult in Deltas.MembershipDeltasReplies)
+            {
+                AddressBook.Merge(membershipResult);
+            }
+
+            foreach (ABFindAllResultType abfindallResult in Deltas.AddressBookDeltasReplies)
+            {
+                AddressBook.Merge(abfindallResult,nsMessageHandler);
+            }
+
+            Deltas.Empty();
+            Deltas.Save();
 
             msRequest(
                 "Initial",
@@ -361,275 +377,16 @@ namespace MSNPSharp
 
         private void refreshMS(FindMembershipResultType findMembership)
         {
-            if (null != findMembership && null != findMembership.Services)
-            {
-                Dictionary<int, Service> services = new Dictionary<int, Service>(0);
-
-                foreach (ServiceType serviceType in findMembership.Services)
-                {
-                    Service currentService = new Service();
-                    currentService.LastChange = serviceType.LastChange;
-                    currentService.Id = int.Parse(serviceType.Info.Handle.Id);
-                    currentService.Type = serviceType.Info.Handle.Type;
-                    currentService.ForeignId = serviceType.Info.Handle.ForeignId;
-                    services[currentService.Id] = currentService;
-
-                    if (null != serviceType.Memberships)
-                    {
-                        foreach (Membership membership in serviceType.Memberships)
-                        {
-                            if (null != membership.Members)
-                            {
-                                MemberRole memberrole = membership.MemberRole;
-                                foreach (BaseMember bm in membership.Members)
-                                {
-                                    string account = null;
-                                    ClientType type = ClientType.PassportMember;
-
-                                    if (bm is PassportMember)
-                                    {
-                                        type = ClientType.PassportMember;
-                                        PassportMember pm = (PassportMember)bm;
-                                        if (!pm.IsPassportNameHidden)
-                                        {
-                                            account = pm.PassportName;
-                                        }
-                                    }
-                                    else if (bm is EmailMember)
-                                    {
-                                        type = ClientType.EmailMember;
-                                        account = ((EmailMember)bm).Email;
-                                    }
-                                    else if (bm is PhoneMember)
-                                    {
-                                        type = ClientType.PhoneMember;
-                                        account = ((PhoneMember)bm).PhoneNumber;
-                                    }
-
-                                    if (account != null)
-                                    {
-                                        account = account.ToLower(CultureInfo.InvariantCulture);
-
-                                        if (bm.Deleted)
-                                        {
-                                            AddressBook.RemoveMemberhip(account, memberrole);
-                                        }
-                                        else
-                                        {
-                                            AddressBook.AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
-                                            AddressBook.MembershipContacts[account].LastChanged = bm.LastChanged;
-                                            AddressBook.MembershipContacts[account].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
-                                        }                                        
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                // Combine all membership information.
-                AddressBook.CombineService(services);
-                AddressBook.Save();
-            }
+            AddressBook.Merge(findMembership);
+            Deltas.MembershipDeltasReplies.Add(findMembership);
+            Deltas.Save();
         }
 
         internal void refreshAB(ABFindAllResultType forwardList)
         {
-            if (null != forwardList.contacts)
-            {
-                foreach (ContactType contactType in forwardList.contacts)
-                {
-                    if (null != contactType.contactInfo)
-                    {
-                        ClientType type = ClientType.PassportMember;
-                        string account = contactType.contactInfo.passportName;
-                        string displayname = contactType.contactInfo.displayName;
-                        bool ismessengeruser = contactType.contactInfo.isMessengerUser;
-
-                        if (contactType.contactInfo.emails != null && account == null)
-                        {
-                            /* This is not related with ClientCapacities, I think :)
-                            if (Enum.IsDefined(typeof(ClientCapacities), long.Parse(contactType.contactInfo.emails[0].Capability)))
-                            {
-                                ci.Capability = (ClientCapacities)long.Parse(contactType.contactInfo.emails[0].Capability);
-                            }
-                             * */
-
-                            type = ClientType.EmailMember;
-                            account = contactType.contactInfo.emails[0].email;
-                            ismessengeruser |= contactType.contactInfo.emails[0].isMessengerEnabled;
-                            displayname = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? account : contactType.contactInfo.quickName;
-                        }
-
-                        if (account == null)
-                            continue; // PassportnameHidden... Nothing to do...
-
-                        if (contactType.fDeleted)
-                        {
-                            AddressBook.AddressbookContacts.Remove(new Guid(contactType.contactId));
-                        }
-                        else
-                        {
-                            AddressbookContactInfo ci = new AddressbookContactInfo(account, type, new Guid(contactType.contactId));
-                            ci.DisplayName = displayname;
-                            ci.IsMessengerUser = ismessengeruser;
-                            ci.LastChanged = contactType.lastChange;
-
-                            if (null != contactType.contactInfo.annotations)
-                            {
-                                foreach (Annotation anno in contactType.contactInfo.annotations)
-                                {
-                                    if (anno.Name == "AB.NickName" && anno.Value != null)
-                                    {
-                                        ci.DisplayName = anno.Value;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (contactType.contactInfo.groupIds != null)
-                            {
-                                ci.Groups = new List<string>(contactType.contactInfo.groupIds);
-                            }
-
-                            if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
-                            {
-                                if (ci.DisplayName == nsMessageHandler.Owner.Mail && nsMessageHandler.Owner.Name != String.Empty)
-                                {
-                                    ci.DisplayName = nsMessageHandler.Owner.Name;
-                                }
-
-                                AddressBook.MyProperties["displayname"] = ci.DisplayName;
-                                AddressBook.MyProperties["cid"] = contactType.contactInfo.CID;
-
-                                if (null != contactType.contactInfo.annotations)
-                                {
-                                    foreach (Annotation anno in contactType.contactInfo.annotations)
-                                    {
-                                        string name = anno.Name;
-                                        string value = anno.Value;
-                                        name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                                        AddressBook.MyProperties[name] = value;
-                                    }
-                                }
-
-                                if (!AddressBook.MyProperties.ContainsKey("mbea"))
-                                    AddressBook.MyProperties["mbea"] = "0";
-
-                                if (!AddressBook.MyProperties.ContainsKey("gtc"))
-                                    AddressBook.MyProperties["gtc"] = "1";
-
-                                if (!AddressBook.MyProperties.ContainsKey("blp"))
-                                    AddressBook.MyProperties["blp"] = "0";
-
-                                if (!AddressBook.MyProperties.ContainsKey("roamliveproperties"))
-                                    AddressBook.MyProperties["roamliveproperties"] = "1";
-
-                                if (!AddressBook.MyProperties.ContainsKey("personalmessage"))
-                                    AddressBook.MyProperties["personalmessage"] = AddressBook.MyProperties["displayname"];
-                            }
-
-                            if (AddressBook.AddressbookContacts.ContainsKey(ci.Guid))
-                            {
-                                if (AddressBook.AddressbookContacts[ci.Guid].LastChanged.CompareTo(ci.LastChanged) < 0)
-                                {
-                                    AddressBook.AddressbookContacts[ci.Guid] = ci;
-                                }
-                            }
-                            else
-                            {
-                                AddressBook.AddressbookContacts.Add(ci.Guid, ci);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (null != forwardList.groups)
-            {
-                foreach (GroupType groupType in forwardList.groups)
-                {
-                    if (groupType.fDeleted)
-                    {
-                        AddressBook.Groups.Remove(groupType.groupId);
-                    }
-                    else
-                    {
-                        GroupInfo group = new GroupInfo();
-                        group.Name = groupType.groupInfo.name;
-                        group.Guid = groupType.groupId;
-                        AddressBook.Groups[group.Guid] = group;
-                    }
-                }
-            }
-
-            // Save Address Book
-            AddressBook.AddressbookLastChange = forwardList.ab.lastChange;
-            AddressBook.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
-            AddressBook.Save();
-
-            // Create Groups
-            foreach (GroupInfo group in AddressBook.Groups.Values)
-            {
-                nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
-            }
-
-            // Create the messenger contacts
-            if (AddressBook.MembershipContacts.Count > 0)
-            {
-                foreach (MembershipContactInfo ci in AddressBook.MembershipContacts.Values)
-                {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(ci.Account, ci.DisplayName);
-                    contact.SetLists(AddressBook.GetMSNLists(ci.Account));
-                    contact.SetClientType(AddressBook.MembershipContacts[ci.Account].Type);
-                    contact.NSMessageHandler = nsMessageHandler;
-
-                    AddressbookContactInfo abci = AddressBook.Find(ci.Account, ci.Type);
-                    if (abci != null)
-                    {
-                        contact.SetGuid(abci.Guid);
-                        contact.SetIsMessengerUser(abci.IsMessengerUser);
-                        if (abci.IsMessengerUser)
-                        {
-                            contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
-                        }
-
-                        foreach (string groupId in abci.Groups)
-                        {
-                            contact.ContactGroups.Add(nsMessageHandler.ContactGroups[groupId]);
-                        }
-
-                        if (abci.Type == ClientType.EmailMember)
-                        {
-                            contact.ClientCapacities = abci.Capability;
-                        }
-
-                        contact.SetName((abci.LastChanged.CompareTo(ci.LastChanged) < 0 && String.IsNullOrEmpty(abci.DisplayName)) ? ci.DisplayName : abci.DisplayName);
-                    }
-                }
-            }
-
-            // Create the mail contacts on your forward list
-            foreach (AddressbookContactInfo abci in AddressBook.AddressbookContacts.Values)
-            {
-                if (!AddressBook.MembershipContacts.ContainsKey(abci.Account) && abci.Account != nsMessageHandler.Owner.Mail)
-                {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(abci.Account, abci.DisplayName);
-                    contact.SetGuid(abci.Guid);
-                    contact.SetIsMessengerUser(abci.IsMessengerUser);
-                    contact.SetClientType(abci.Type);
-                    contact.NSMessageHandler = nsMessageHandler;
-
-                    foreach (string groupId in abci.Groups)
-                    {
-                        contact.ContactGroups.Add(nsMessageHandler.ContactGroups[groupId]);
-                    }
-
-                    if (abci.Type == ClientType.EmailMember)
-                    {
-                        contact.ClientCapacities = abci.Capability;
-                    }
-                }
-            }
+            AddressBook.Merge(forwardList, nsMessageHandler);
+            Deltas.AddressBookDeltasReplies.Add(forwardList);
+            Deltas.Save();
         }
 
         internal string[] ConstructADLString(Dictionary<string, MembershipContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
@@ -1640,6 +1397,13 @@ namespace MSNPSharp
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
+                }
+
+                string deltasResultFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "_deltas")).Replace("\\", "-") + ".mcl";
+                if (File.Exists(deltasResultFile))
+                {
+                    File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
+                    File.Delete(deltasResultFile);
                 }
             }
         }

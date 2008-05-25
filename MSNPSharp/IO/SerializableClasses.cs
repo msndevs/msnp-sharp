@@ -7,6 +7,8 @@ namespace MSNPSharp.IO
     using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
 
+    #region Contact Types
+
     #region ContactInfo
 
     [Serializable]
@@ -116,9 +118,11 @@ namespace MSNPSharp.IO
         }
     }
 
-    #endregion
+        #endregion
 
-
+    /// <summary>
+    /// Contact type for membership list
+    /// </summary>
     [Serializable]
     public class MembershipContactInfo : ContactInfo
     {
@@ -146,6 +150,9 @@ namespace MSNPSharp.IO
         }
     }
 
+    /// <summary>
+    /// Contact type for addressbook
+    /// </summary>
     [Serializable]
     public class AddressbookContactInfo : ContactInfo
     {
@@ -198,8 +205,8 @@ namespace MSNPSharp.IO
                 groups = value;
             }
         }
-    }
-
+    } 
+    #endregion
 
     #region GroupInfo
     [Serializable]
