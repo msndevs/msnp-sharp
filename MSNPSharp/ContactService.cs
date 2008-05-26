@@ -83,25 +83,6 @@ namespace MSNPSharp
                 return;
             }
 
-            /* == T O D O ==
-             * MAIN.mcl is main big file...
-             * 
-             * 1) When connecting(in SynchronizeContactList):
-             *    If DELTA.mcl is exists, merge with MAINFILE and truncate delta...
-             *    If not exists create DELTA.mcl...
-             *    Now, DELTA.mcl have not any contact... Request "Initial" ms & ab and write to DELTA.mcl...
-             *    When finished don't truncate, don't merge...
-             * 
-             * 2) On connected(after SynchronizeContactList)
-             *    When we create a user or group write to DELTA.mcl. Don't truncate, don't merge...
-             * 
-             * 3) On disconnected: do nothing, When re-connected, go to step 1.
-             * 
-             * NOTE: DELTA.MCL can be serialized as array of FindMembershipResult & ABFindAllResult
-             *       So we can call refreshMS(FindMembershipResult) and refreshAB(ABFindAllResult)
-             */
-
-
             if (recursiveCall != 0)
             {
                 DeleteRecordFile();
