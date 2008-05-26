@@ -113,18 +113,7 @@ namespace MSNPSharp
             AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
             Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
 
-            foreach (FindMembershipResultType membershipResult in Deltas.MembershipDeltasReplies)
-            {
-                AddressBook.Merge(membershipResult);
-            }
-
-            foreach (ABFindAllResultType abfindallResult in Deltas.AddressBookDeltasReplies)
-            {
-                AddressBook.Merge(abfindallResult,nsMessageHandler);
-            }
-
-            Deltas.Empty();
-            Deltas.Save();
+            AddressBook.Merge(Deltas, nsMessageHandler);
 
             msRequest(
                 "Initial",
@@ -134,7 +123,7 @@ namespace MSNPSharp
                     abRequest("Initial",
                         delegate
                         {
-                            // Get my profile (display name, personal status, photos etc.
+                            #region Get my profile (display name, personal status, photos etc)
                             try
                             {
                                 StorageService storageService = new StorageService();
@@ -167,8 +156,6 @@ namespace MSNPSharp
                                 {
                                     AddressBook.MyProperties["personalmessage"] = response.GetProfileResult.ExpressionProfile.PersonalStatus;
                                 }
-
-                                AddressBook.Save();
 
                                 // Display image
                                 /*
@@ -205,11 +192,14 @@ namespace MSNPSharp
                             catch
                             {
                             }
-                            finally
-                            {
-                                nsMessageHandler.OnInitialSyncDone(ConstructADLString(AddressBook.MembershipContacts.Values, true, MSNLists.None));
-                            }
+                            #endregion
+
+                            AddressBook.Save(); // The first and the last AddressBook.Save()
+                            Deltas.Truncate();
+
+                            nsMessageHandler.OnInitialSyncDone(ConstructADLString(AddressBook.MembershipContacts.Values, true, MSNLists.None));
                         }
+
                     );
                 }
             );
@@ -378,14 +368,14 @@ namespace MSNPSharp
         private void refreshMS(FindMembershipResultType findMembership)
         {
             AddressBook.Merge(findMembership);
-            Deltas.MembershipDeltasReplies.Add(findMembership);
+            Deltas.MembershipDeltas.Add(findMembership);
             Deltas.Save();
         }
 
         internal void refreshAB(ABFindAllResultType forwardList)
         {
             AddressBook.Merge(forwardList, nsMessageHandler);
-            Deltas.AddressBookDeltasReplies.Add(forwardList);
+            Deltas.AddressBookDeltas.Add(forwardList);
             Deltas.Save();
         }
 
@@ -737,7 +727,6 @@ namespace MSNPSharp
                     contact.NSMessageHandler = null;
                     nsMessageHandler.ContactList.Remove(contact.Mail);
                     AddressBook.AddressbookContacts.Remove(contact.Guid);
-                    AddressBook.Save();
                 }
                 else if (e.Error != null)
                 {
@@ -788,8 +777,7 @@ namespace MSNPSharp
                     {
                         contact.SetName(displayName);
                         AddressBook.AddressbookContacts[contact.Guid].DisplayName = displayName;
-                    }                    
-                    AddressBook.Save();
+                    }
                 }
                 else if (e.Error != null)
                 {
@@ -932,7 +920,6 @@ namespace MSNPSharp
                 {
                     nsMessageHandler.ContactGroups.RemoveGroup(contactGroup);
                     AddressBook.Groups.Remove(contactGroup.Guid);
-                    AddressBook.Save();
                     nsMessageHandler.OnContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
                 }
                 else if (e.Error != null)
@@ -1149,9 +1136,7 @@ namespace MSNPSharp
                         Trace.WriteLine("AddMember completed.");
 
                     contact.AddToList(list);
-
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
-                    AddressBook.Save();
 
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));
@@ -1266,12 +1251,7 @@ namespace MSNPSharp
                         Trace.WriteLine("DeleteMember completed.");
 
                     contact.RemoveFromList(list);
-
-                    if (AddressBook.MembershipContacts.ContainsKey(contact.Mail))
-                    {
-                        AddressBook.RemoveMemberhip(contact.Mail, GetMemberRole(list));
-                        AddressBook.Save();
-                    }                    
+                    AddressBook.RemoveMemberhip(contact.Mail, GetMemberRole(list));
 
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("RML", new string[] { Encoding.UTF8.GetByteCount(payload).ToString() }));
                     nsMessageHandler.MessageProcessor.SendMessage(new NSMessage(payload));

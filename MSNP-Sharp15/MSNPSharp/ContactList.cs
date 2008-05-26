@@ -28,210 +28,264 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
-using System.Globalization;
-
 namespace MSNPSharp
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
+    using System.Globalization;
 
-	[Serializable()]
-	public class ContactList
-	{		
-		Dictionary<string, Contact> contacts 
-			= new Dictionary<string, Contact> (10);
+    [Serializable()]
+    public class ContactList
+    {
+        Dictionary<string, Contact> contacts = new Dictionary<string, Contact>(10);
 
-		public class ListEnumerator : IEnumerator
-		{
-			private IDictionaryEnumerator baseEnum;
+        public class ListEnumerator : IEnumerator
+        {
+            private IDictionaryEnumerator baseEnum;
+            protected IDictionaryEnumerator BaseEnum
+            {
+                get
+                {
+                    return baseEnum;
+                }
+                set
+                {
+                    baseEnum = value;
+                }
+            }
 
-			protected IDictionaryEnumerator BaseEnum
-			{
-				get { return baseEnum; }
-				set { baseEnum = value;}
-			}
+            public ListEnumerator(IDictionaryEnumerator listEnum)
+            {
+                baseEnum = listEnum;
+            }
 
-			public ListEnumerator(IDictionaryEnumerator listEnum)
-			{
-				baseEnum = listEnum;
-			}
+            public virtual bool MoveNext()
+            {
+                return baseEnum.MoveNext();
+            }
 
-			public virtual bool MoveNext()
-			{					
-				return baseEnum.MoveNext();
-			}
+            Object IEnumerator.Current
+            {
+                get
+                {
+                    return baseEnum.Value;
+                }
+            }
 
-			Object IEnumerator.Current 
-			{
-				get { return baseEnum.Value; }
-			}
+            public Contact Current
+            {
+                get
+                {
+                    return (Contact)baseEnum.Value;
+                }
+            }
 
-			public Contact Current 
-			{
-				get { 
-					return (Contact)baseEnum.Value; 
-				}
-			}
+            public void Reset()
+            {
+                baseEnum.Reset();
+            }
 
-			public void Reset()
-			{
-				baseEnum.Reset();
-			}
+            public IEnumerator GetEnumerator()
+            {
+                return this;
+            }
+        }
 
-			public IEnumerator GetEnumerator()
-			{			
-				return this;
-			}
-		}
+        /// <summary>
+        /// Filters the forward list contacts
+        /// </summary>
+        public class ForwardListEnumerator : ContactList.ListEnumerator
+        {
+            public ForwardListEnumerator(IDictionaryEnumerator listEnum)
+                : base(listEnum)
+            {
+            }
 
-		//filters the forward list contacts
-		public class ForwardListEnumerator : ContactList.ListEnumerator
-		{
-			public ForwardListEnumerator(IDictionaryEnumerator listEnum)
-				: base(listEnum)
-			{
-			}
+            public override bool MoveNext()
+            {
+                while (BaseEnum.MoveNext())
+                {
+                    // filter on the forward boolean
+                    if (((Contact)BaseEnum.Value).OnForwardList)
+                        return true;
+                }
 
-			public override bool MoveNext()
-			{					
-				while(BaseEnum.MoveNext())
-				{
-					// filter on the forward boolean
-					if(((Contact)BaseEnum.Value).OnForwardList)
-						return true;
-				}
-				
-				return false;
-			}
-		}
+                return false;
+            }
+        }
 
-		//filters the pending list contacts
-		public class PendingListEnumerator : ContactList.ListEnumerator
-		{
-			public PendingListEnumerator(IDictionaryEnumerator listEnum)
-				: base(listEnum)
-			{
-			}
+        /// <summary>
+        /// Filters the pending list contacts
+        /// </summary>
+        public class PendingListEnumerator : ContactList.ListEnumerator
+        {
+            public PendingListEnumerator(IDictionaryEnumerator listEnum)
+                : base(listEnum)
+            {
+            }
 
-			public override bool MoveNext()
-			{					
-				while(BaseEnum.MoveNext())
-				{
-					// filter on the forward boolean
-					if(((Contact)BaseEnum.Value).OnPendingList)
-						return true;
-				}
-				
-				return false;
-			}
-		}
+            public override bool MoveNext()
+            {
+                while (BaseEnum.MoveNext())
+                {
+                    // filter on the forward boolean
+                    if (((Contact)BaseEnum.Value).OnPendingList)
+                        return true;
+                }
 
-		//filter the reverse list contacts
-		public class ReverseListEnumerator : ContactList.ListEnumerator
-		{
-			public ReverseListEnumerator(IDictionaryEnumerator listEnum)
-				: base(listEnum)
-			{
-			}
+                return false;
+            }
+        }
 
-			public override bool MoveNext()
-			{					
-				while(BaseEnum.MoveNext())
-				{
-					// filter on the forward boolean
-					if(((Contact)BaseEnum.Value).OnReverseList)
-						return true;
-				}
-				return false;
-			}
-		}
+        /// <summary>
+        /// Filter the reverse list contacts
+        /// </summary>
+        public class ReverseListEnumerator : ContactList.ListEnumerator
+        {
+            public ReverseListEnumerator(IDictionaryEnumerator listEnum)
+                : base(listEnum)
+            {
+            }
 
-		//filters the blocked list contacts
-		public class BlockedListEnumerator : ContactList.ListEnumerator
-		{
-			public BlockedListEnumerator(IDictionaryEnumerator listEnum)
-				: base(listEnum)
-			{
-			}
+            public override bool MoveNext()
+            {
+                while (BaseEnum.MoveNext())
+                {
+                    // filter on the forward boolean
+                    if (((Contact)BaseEnum.Value).OnReverseList)
+                        return true;
+                }
+                return false;
+            }
+        }
 
-			public override bool MoveNext()
-			{					
-				while(BaseEnum.MoveNext())
-				{
-					if(((Contact)BaseEnum.Value).Blocked)
-						return true;
-				}
-				return false;
-			}
-		}
+        /// <summary>
+        /// Filters the blocked list contacts
+        /// </summary>
+        public class BlockedListEnumerator : ContactList.ListEnumerator
+        {
+            public BlockedListEnumerator(IDictionaryEnumerator listEnum)
+                : base(listEnum)
+            {
+            }
 
-		//filters the allowed list contacts
-		public class AllowedListEnumerator : ContactList.ListEnumerator
-		{
-			public AllowedListEnumerator(IDictionaryEnumerator listEnum)
-				: base(listEnum)
-			{
-			}
+            public override bool MoveNext()
+            {
+                while (BaseEnum.MoveNext())
+                {
+                    if (((Contact)BaseEnum.Value).Blocked)
+                        return true;
+                }
+                return false;
+            }
+        }
 
-			public override bool MoveNext()
-			{
-				while(BaseEnum.MoveNext())
-				{
-					// filter on the allowed list
-					if(((Contact)BaseEnum.Value).OnAllowedList)
-						return true;
-				}
-				return false;
-			}
-		}
+        /// <summary>
+        /// Filters the allowed list contacts
+        /// </summary>
+        public class AllowedListEnumerator : ContactList.ListEnumerator
+        {
+            public AllowedListEnumerator(IDictionaryEnumerator listEnum)
+                : base(listEnum)
+            {
+            }
 
-		public ContactList.ForwardListEnumerator Forward
-		{
-			get { 
-				return new ContactList.ForwardListEnumerator(contacts.GetEnumerator()); 
-			}
-		}
-		
-		public ContactList.PendingListEnumerator Pending
-		{
-			get { 
-				return new ContactList.PendingListEnumerator(contacts.GetEnumerator()); 
-			}
-		}
+            public override bool MoveNext()
+            {
+                while (BaseEnum.MoveNext())
+                {
+                    // filter on the allowed list
+                    if (((Contact)BaseEnum.Value).OnAllowedList)
+                        return true;
+                }
+                return false;
+            }
+        }
 
-		public ContactList.ReverseListEnumerator Reverse
-		{
-			get { 
-				return new ContactList.ReverseListEnumerator(contacts.GetEnumerator()); 
-			}
-		}
+        /// <summary>
+        /// Filters the email (not IM) contacts
+        /// </summary>
+        public class EmailListEnumerator : ContactList.ListEnumerator
+        {
+            public EmailListEnumerator(IDictionaryEnumerator listEnum)
+                : base(listEnum)
+            {
+            }
 
-		public ContactList.BlockedListEnumerator BlockedList
-		{
-			get { 
-				return new ContactList.BlockedListEnumerator(contacts.GetEnumerator()); 
-			}
-		}
+            public override bool MoveNext()
+            {
+                while (BaseEnum.MoveNext())
+                {
+                    // filter on the email list
+                    Contact c = (Contact)BaseEnum.Value;
+                    if (c.Guid != Guid.Empty && c.IsMessengerUser == false)
+                        return true;
+                }
+                return false;
+            }
+        }
 
-		public ContactList.AllowedListEnumerator Allowed
-		{
-			get { 
-				return new ContactList.AllowedListEnumerator(contacts.GetEnumerator()); 
-			}
-		}
+        public ContactList.ForwardListEnumerator Forward
+        {
+            get
+            {
+                return new ContactList.ForwardListEnumerator(contacts.GetEnumerator());
+            }
+        }
 
-		public ContactList.ListEnumerator All
-		{
-			get { 
-				return new ContactList.ListEnumerator(contacts.GetEnumerator()); 
-			}
-		}
+        public ContactList.PendingListEnumerator Pending
+        {
+            get
+            {
+                return new ContactList.PendingListEnumerator(contacts.GetEnumerator());
+            }
+        }
 
-		internal Contact GetContact(string account)
-		{
+        public ContactList.ReverseListEnumerator Reverse
+        {
+            get
+            {
+                return new ContactList.ReverseListEnumerator(contacts.GetEnumerator());
+            }
+        }
+
+        public ContactList.BlockedListEnumerator BlockedList
+        {
+            get
+            {
+                return new ContactList.BlockedListEnumerator(contacts.GetEnumerator());
+            }
+        }
+
+        public ContactList.AllowedListEnumerator Allowed
+        {
+            get
+            {
+                return new ContactList.AllowedListEnumerator(contacts.GetEnumerator());
+            }
+        }
+
+        public ContactList.EmailListEnumerator Email
+        {
+            get
+            {
+                return new ContactList.EmailListEnumerator(contacts.GetEnumerator());
+            }
+        }
+
+        public ContactList.ListEnumerator All
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(contacts.GetEnumerator());
+            }
+        }
+
+        internal Contact GetContact(string account)
+        {
             account = account.ToLower(CultureInfo.InvariantCulture);
             if (contacts.ContainsKey(account))
             {
@@ -247,8 +301,8 @@ namespace MSNPSharp
                 contacts.Add(account, tmpContact);
 
                 return contacts[account];
-            }			
-		}
+            }
+        }
 
         internal Contact GetContact(string account, string name)
         {
@@ -267,50 +321,50 @@ namespace MSNPSharp
                 return contacts[account];
             }
         }
-		
-		public Contact GetContactByGuid(Guid guid)
-		{
-			foreach (Contact c in contacts.Values)
-			{
-				if (c.Guid == guid)
-					return c;
-			}
-			
-			return null;
-		}
-		
-		public Contact this[string account]
-		{
-			get
-			{
-                account = account.ToLower(CultureInfo.InvariantCulture);
-				if(contacts.ContainsKey(account))
-					return contacts[account];
-				
-				return null;
-			}
-			set
-			{
-                account = account.ToLower(CultureInfo.InvariantCulture);
-				contacts[account] = value;
-			}
-		}
-		
-		public bool HasContact (string account)
-		{
-            account = account.ToLower(CultureInfo.InvariantCulture);
-			return contacts.ContainsKey (account);
-		}
 
-		public void CopyTo(Contact[] array, int index)
-		{
-			contacts.Values.CopyTo (array, index);
-		}
-		
-		internal void Clear()
-		{
-			contacts.Clear ();
-		}
+        public Contact GetContactByGuid(Guid guid)
+        {
+            foreach (Contact c in contacts.Values)
+            {
+                if (c.Guid == guid)
+                    return c;
+            }
+
+            return null;
+        }
+
+        public Contact this[string account]
+        {
+            get
+            {
+                account = account.ToLower(CultureInfo.InvariantCulture);
+                if (contacts.ContainsKey(account))
+                    return contacts[account];
+
+                return null;
+            }
+            set
+            {
+                account = account.ToLower(CultureInfo.InvariantCulture);
+                contacts[account] = value;
+            }
+        }
+
+        public bool HasContact(string account)
+        {
+            account = account.ToLower(CultureInfo.InvariantCulture);
+            return contacts.ContainsKey(account);
+        }
+
+        public void CopyTo(Contact[] array, int index)
+        {
+            contacts.Values.CopyTo(array, index);
+        }
+
+        internal void Clear()
+        {
+            contacts.Clear();
+        }
 
         internal void Remove(string account)
         {
@@ -320,5 +374,5 @@ namespace MSNPSharp
                 contacts.Remove(account);
             }
         }
-	}
-}
+    }
+};
