@@ -89,8 +89,8 @@ namespace MSNPSharp
             }
 
             bool nocompress = true;
-            string addressbookFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
-            string deltasResultsFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "_deltas")).Replace("\\", "-") + ".mcl";
+            string addressbookFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
+            string deltasResultsFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
             AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
             Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
 
@@ -1353,14 +1353,14 @@ namespace MSNPSharp
         {
             if (nsMessageHandler.Owner != null && nsMessageHandler.Owner.Mail != null)
             {
-                string addressbookFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail)).Replace("\\", "-") + ".mcl";
+                string addressbookFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
                 if (File.Exists(addressbookFile))
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
                 }
 
-                string deltasResultFile = Path.GetFullPath(@".\") + Convert.ToBase64String(Encoding.Unicode.GetBytes(nsMessageHandler.Owner.Mail + "_deltas")).Replace("\\", "-") + ".mcl";
+                string deltasResultFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
                 if (File.Exists(deltasResultFile))
                 {
                     File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
