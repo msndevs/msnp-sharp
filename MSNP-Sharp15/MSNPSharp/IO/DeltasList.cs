@@ -71,7 +71,7 @@ namespace MSNPSharp.IO
         {
             get
             {
-                membershipDeltas.Sort();
+                membershipDeltas.Sort(MembershipDeltasComparer.Default);
                 return membershipDeltas;
             }
             set
