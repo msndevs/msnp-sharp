@@ -75,7 +75,7 @@ namespace MSNPSharp.IO
             if (timer == null)
                 timer = new Timer(new TimerCallback(SaveImpl));
             timer.Change(2000, Timeout.Infinite);                     //Prevent user call this in a heigh frequency
-            storage[file.FileName.ToLower()] = new MCLInfo(file);
+            storage[file.FileName.ToLower(System.Globalization.CultureInfo.InvariantCulture)] = new MCLInfo(file);
             _hiddenSave = hiddensave;
         }
 
@@ -112,7 +112,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static MCLFile GetFile(string filePath, bool noCompress)
         {
-            filePath = filePath.ToLower();
+            filePath = filePath.ToLower(System.Globalization.CultureInfo.InvariantCulture);
             lock (storage)
             {
                 if (!storage.ContainsKey(filePath))
