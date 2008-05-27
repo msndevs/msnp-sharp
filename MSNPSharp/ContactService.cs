@@ -139,16 +139,16 @@ namespace MSNPSharp
                                 }
 
                                 // Display image
-                                /*
                                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                                 {
                                     string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
                                     if (!url.StartsWith("http"))
                                     {
-                                        url = "http://storage.live.com" + url;
+                                        url = "http://blufiles.storage.msn.com" + url;
                                     }
 
-                                    Uri uri = new Uri(url + "?" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Split('&')[0]));
+                                    // Ha ha... Don't urlencode t= :))
+                                    Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
 
                                     HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
 
@@ -168,7 +168,6 @@ namespace MSNPSharp
 
                                     nsMessageHandler.Owner.DisplayImage = displayImage;
                                 }
-                                */
                             }
                             catch
                             {
