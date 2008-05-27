@@ -915,7 +915,7 @@ namespace MSNPSharpClient
             }
 
             // set our presence status
-            displayImageBox.Image = null;
+            displayImageBox.Image = messenger.Owner.DisplayImage.Image;
             loginButton.Tag = 2;
             loginButton.Text = "Sign off";
             pnlNameAndPM.Visible = true;
