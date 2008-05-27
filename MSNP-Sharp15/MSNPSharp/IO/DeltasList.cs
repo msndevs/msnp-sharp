@@ -93,12 +93,18 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Truncate file. This is useful after calling of Addressbook.Save
         /// </summary>
-        internal void Truncate()
+        public void Truncate()
         {
             Empty();
             Save();
         }
 
+        /// <summary>
+        /// Load the serialized object from a file.
+        /// </summary>
+        /// <param name="filename">Path of file where the serialized object was saved.</param>
+        /// <param name="nocompress">If true, use gzip to decompress the file(The file must be compressed).</param>
+        /// <returns></returns>
         public static DeltasList LoadFromFile(string filename, bool nocompress)
         {
             return LoadFromFile(filename, nocompress, typeof(DeltasList)) as DeltasList;

@@ -14,6 +14,9 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.MSNWS.MSNStorageService;
 
+    /// <summary>
+    /// Provide webservice operations for contacts
+    /// </summary>
     public class ContactService : MSNService
     {
         #region Fields
@@ -51,6 +54,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Preferred host of the contact service.
+        /// </summary>
         private string PreferredHost
         {
             get
@@ -145,7 +151,7 @@ namespace MSNPSharp
                                     string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
                                     if (!url.StartsWith("http"))
                                     {
-                                        url = "http://blufiles.storage.msn.com" + url;
+                                        url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
                                     }
 
                                     // Ha ha... Don't urlencode t= :))
@@ -1349,6 +1355,9 @@ namespace MSNPSharp
 
         #region DeleteRecordFile & handleServiceHeader
 
+        /// <summary>
+        /// Delete the record file that contains the contactlist of owner.
+        /// </summary>
         public virtual void DeleteRecordFile()
         {
             if (nsMessageHandler.Owner != null && nsMessageHandler.Owner.Mail != null)

@@ -25,6 +25,9 @@ namespace MSNPSharp
         }
     }
 
+    /// <summary>
+    /// Provides webservice operation for offline messages
+    /// </summary>
     public class OIMService : MSNService
     {
         NSMessageHandler nsMessageHandler = null;
@@ -204,8 +207,8 @@ namespace MSNPSharp
         /// <summary>
         /// Send an offline message to a contact.
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="msg"></param>
+        /// <param name="account">Target user</param>
+        /// <param name="msg">Plain text message</param>
         public void SendOIMMessage(string account, string msg)
         {
             Contact contact = nsMessageHandler.ContactList[account];
