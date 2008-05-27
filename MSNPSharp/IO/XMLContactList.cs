@@ -1,478 +1,245 @@
 ﻿namespace MSNPSharp.IO
 {
     using System;
-    using System.Collections.Generic;
-    using System.Xml;
     using System.IO;
-    using MSNPSharp.IO;
+    using System.Xml;
     using System.Globalization;
-    using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
-    using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
-
-    #region ContactInfo
-    internal class ContactInfo
-    {
-        private string account;
-        public string Account
-        {
-            get
-            {
-                return account;
-            }
-            set
-            {
-                account = value;
-            }
-        }
-
-        private string guid;
-        public string Guid
-        {
-            get
-            {
-                return guid;
-            }
-            set
-            {
-                guid = value;
-            }
-        }
-
-        private int membershipId;
-        public int MembershipId
-        {
-            get
-            {
-                return membershipId;
-            }
-            set
-            {
-                membershipId = value;
-            }
-        }
-
-        private bool isMessengerUser;
-        public bool IsMessengerUser
-        {
-            get
-            {
-                return isMessengerUser;
-            }
-            set
-            {
-                isMessengerUser = value;
-            }
-        }
-
-        private ClientType type = ClientType.PassportMember;
-        public ClientType Type
-        {
-            get
-            {
-                return type;
-            }
-            set
-            {
-                type = value;
-            }
-        }
-
-
-        private string displayname;
-        public string DisplayName
-        {
-            get
-            {
-                return displayname;
-            }
-            set
-            {
-                displayname = value;
-            }
-        }
-
-        private DateTime lastchanged;
-        public DateTime LastChanged
-        {
-            get
-            {
-                return lastchanged;
-            }
-            set
-            {
-                lastchanged = value;
-            }
-        }
-
-        private ClientCapacities capability = 0;
-        public ClientCapacities Capability
-        {
-            get
-            {
-                return capability;
-            }
-            set
-            {
-                capability = value;
-            }
-        }
-
-        private List<string> groups = new List<string>(0);
-        public List<string> Groups
-        {
-            get
-            {
-                return groups;
-            }
-            set
-            {
-                groups = value;
-            }
-        }
-
-        /// <summary>
-        /// The string for this instance
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            string debugstr = String.Empty;
-            if (account != null)
-                debugstr += account + "  |  isMessengerUser:  " + IsMessengerUser.ToString();
-            if (displayname != null)
-                debugstr += "  |  diaplayName:  " + displayname;
-            return debugstr;
-        }
-    }
-
-    #endregion
-
-    #region GroupInfo
-    internal struct GroupInfo
-    {
-        private string guid;
-        public string Guid
-        {
-            get
-            {
-                return guid;
-            }
-            set
-            {
-                guid = value;
-            }
-        }
-
-        private string name;
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                name = value;
-            }
-        }
-
-        public override string ToString()
-        {
-            return Name;
-        }
-    }
-
-    #endregion
-
-    #region Service
-    internal struct Service
-    {
-        private int id;
-        public int Id
-        {
-            get
-            {
-                return id;
-            }
-            set
-            {
-                id = value;
-            }
-        }
-
-        private ServiceFilterType type;
-        public ServiceFilterType Type
-        {
-            get
-            {
-                return type;
-            }
-            set
-            {
-                type = value;
-            }
-        }
-
-        private DateTime lastChange;
-        public DateTime LastChange
-        {
-            get
-            {
-                return lastChange;
-            }
-            set
-            {
-                lastChange = value;
-            }
-        }
-
-        private string foreignId;
-        public string ForeignId
-        {
-            get
-            {
-                return foreignId;
-            }
-            set
-            {
-                foreignId = value;
-            }
-        }
-
-        public override string ToString()
-        {
-            return Convert.ToString(Type);
-        }
-    }
-
-    #endregion
-
-    #region XMLMembershipList
+    using System.Xml.Serialization;
+    using System.Collections.Generic;
+    using MSNPSharp.MSNABSharingService;
 
     /// <summary>
-    /// XML Membership List file maintainer
+    /// ContactList file maintainer
     /// </summary>
-    internal class XMLMembershipList : XMLContactList
+    [Serializable]
+    [XmlRoot("ContactList")]
+    public class XMLContactList : MCLSerializer
     {
-        private string fileName = String.Empty;
-        private Dictionary<int, Service> services = new Dictionary<int, Service>(0);
-        private Dictionary<MemberRole, Dictionary<string, ContactInfo>> rolelists = new Dictionary<MemberRole, Dictionary<string, ContactInfo>>(0);
 
-        public XMLMembershipList(string filename)
-            : this(filename, false)
+        public static XMLContactList LoadFromFile(string filename, bool nocompress)
         {
+            return LoadFromFile(filename, nocompress, typeof(XMLContactList)) as XMLContactList;
         }
 
-        public XMLMembershipList(string filename, bool nocompress)
-            : base(nocompress)
+        public void Merge(DeltasList deltas, NSMessageHandler nsMessageHandler)
         {
-            fileName = filename;
-            LoadFromFile(filename);
+            foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
+            {
+                Merge(membershipResult);
+            }
+            foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
+            {
+                Merge(abfindallResult, nsMessageHandler);
+            }
         }
 
-        public Dictionary<int, Service> Services
+
+        #region Membership
+
+        DateTime msLastChange;
+        SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
+        SerializableDictionary<string, MembershipContactInfo> mscontacts = new SerializableDictionary<string, MembershipContactInfo>(0);
+
+        public DateTime MembershipLastChange
+        {
+            get
+            {
+                return msLastChange;
+            }
+            set
+            {
+                msLastChange = value;
+            }
+        }
+
+        public SerializableDictionary<int, Service> Services
         {
             get
             {
                 return services;
             }
+
+            set
+            {
+                services = value;
+            }
         }
 
-        public Dictionary<MemberRole, Dictionary<string, ContactInfo>> MemberRoles
+        public SerializableDictionary<string, MembershipContactInfo> MembershipContacts
         {
             get
             {
-                return rolelists;
+                return mscontacts;
+            }
+            set
+            {
+                mscontacts = value;
             }
         }
 
         public MSNLists GetMSNLists(string account)
         {
             MSNLists contactlists = MSNLists.None;
-
-            if (rolelists.ContainsKey(MemberRole.Allow) && rolelists[MemberRole.Allow].ContainsKey(account))
-                contactlists |= MSNLists.AllowedList;
-
-            if (rolelists.ContainsKey(MemberRole.Pending) && rolelists[MemberRole.Pending].ContainsKey(account))
-                contactlists |= MSNLists.PendingList;
-
-            if (rolelists.ContainsKey(MemberRole.Reverse) && rolelists[MemberRole.Reverse].ContainsKey(account))
-                contactlists |= MSNLists.ReverseList;
-
-            if (rolelists.ContainsKey(MemberRole.Block) && rolelists[MemberRole.Block].ContainsKey(account))
+            if (MembershipContacts.ContainsKey(account))
             {
-                contactlists |= MSNLists.BlockedList;
-                if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
-                    contactlists ^= MSNLists.AllowedList;
-            }
+                MembershipContactInfo ci = MembershipContacts[account];
+                if (ci.Memberships.ContainsKey(MemberRole.Allow))
+                    contactlists |= MSNLists.AllowedList;
 
+                if (ci.Memberships.ContainsKey(MemberRole.Pending))
+                    contactlists |= MSNLists.PendingList;
+
+                if (ci.Memberships.ContainsKey(MemberRole.Reverse))
+                    contactlists |= MSNLists.ReverseList;
+
+                if (ci.Memberships.ContainsKey(MemberRole.Block))
+                {
+                    contactlists |= MSNLists.BlockedList;
+
+                    if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
+                    {
+                        contactlists ^= MSNLists.AllowedList;
+                        RemoveMemberhip(account, MemberRole.Allow);
+                    }
+                }
+            }
             return contactlists;
         }
 
-        public void CombineMemberRoles(Dictionary<MemberRole, Dictionary<string, ContactInfo>> memberroles)
+        public void AddMemberhip(string account, ClientType type, MemberRole memberrole, int membershipid)
         {
-            foreach (MemberRole role in memberroles.Keys)
+            if (!MembershipContacts.ContainsKey(account))
+                MembershipContacts.Add(account, new MembershipContactInfo(account, type));
+
+            MembershipContacts[account].Type = type;
+            MembershipContacts[account].Memberships[memberrole] = membershipid;
+        }
+
+        public void RemoveMemberhip(string account, MemberRole memberrole)
+        {
+            if (MembershipContacts.ContainsKey(account))
             {
-                if (rolelists.ContainsKey(role))
+                MembershipContacts[account].Memberships.Remove(memberrole);
+
+                if (0 == MembershipContacts[account].Memberships.Count)
+                    MembershipContacts.Remove(account);
+            }
+        }
+
+        public virtual void Add(Dictionary<string, MembershipContactInfo> range)
+        {
+            foreach (string account in range.Keys)
+            {
+                if (mscontacts.ContainsKey(account))
                 {
-                    foreach (string account in memberroles[role].Keys)
+                    if (mscontacts[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
                     {
-                        if (rolelists[role].ContainsKey(account))
-                        {
-                            rolelists[role][account] = memberroles[role][account];
-                        }
-                        else
-                        {
-                            rolelists[role].Add(account, memberroles[role][account]);
-                        }
+                        mscontacts[account] = range[account];
                     }
                 }
                 else
                 {
-                    rolelists.Add(role, memberroles[role]);
+                    mscontacts.Add(account, range[account]);
                 }
             }
         }
 
         /// <summary>
-        /// Combine the new services with old ones and get Messenger service's lastchange property.
+        /// Merge changes into membership list
         /// </summary>
-        /// <param name="serviceRange"></param>
-        public void CombineService(Dictionary<int, Service> serviceRange)
+        /// <param name="findMembership"></param>
+        public void Merge(FindMembershipResultType findMembership)
         {
-            foreach (Service service in serviceRange.Values)
-                services[service.Id] = service;
-
-            foreach (Service innerService in Services.Values)
-                if (innerService.Type == ServiceFilterType.Messenger)
-                    if (lastChange.CompareTo(innerService.LastChange) < 0)
-                        lastChange = innerService.LastChange;
-
-        }
-
-        /// <summary>
-        /// Load the contact list from a file.
-        /// </summary>
-        /// <param name="filename"></param>
-        public override void LoadFromFile(string filename)
-        {
-            base.LoadFromFile(filename);
-            this.Clear();
-            XMLContactListParser parser = new XMLContactListParser(doc);
-            parser.Parse();
-            Add(parser.MembershipContactList);
-            lastChange = parser.MembershipLastChange;
-            services = parser.ServiceList;
-            rolelists = parser.MemberShips;
-        }
-
-        /// <summary>
-        /// Save the contact list into a file.
-        /// </summary>
-        /// <param name="filename"></param>
-        public override void Save(string filename)
-        {
-            XmlNode membershipRoot = doc.GetElementsByTagName(XMLContactListTags.MembershipList.ToString())[0];
-            if (membershipRoot == null)
-                membershipRoot = CreateNode(XMLContactListTags.MembershipList.ToString(), null);
-
-            membershipRoot.RemoveAll();
-            membershipRoot.AppendChild(CreateNode(MembershipListChildNodes.LastChanged.ToString(), XmlConvert.ToString(
-                lastChange, XmlDateTimeSerializationMode.RoundtripKind)));
-
-            XmlNode serviceRoot = CreateNode(MembershipListChildNodes.Services.ToString(), null);
-            XmlNode membersRoot = null;
-            foreach (int serviceId in services.Keys)
+            if (null != findMembership && null != findMembership.Services)
             {
-                XmlNode serviceNode = CreateNode(XMLContactListTags.Service.ToString(), null);
-                serviceNode.AppendChild(CreateNode(ServiceChildNodes.Id.ToString(),
-                    XmlConvert.ToString(serviceId)));
-                serviceNode.AppendChild(CreateNode(ServiceChildNodes.Type.ToString(), Convert.ToString(services[serviceId].Type)));
-                serviceNode.AppendChild(CreateNode(ServiceChildNodes.LastChange.ToString(),
-                    XmlConvert.ToString(services[serviceId].LastChange,
-                    XmlDateTimeSerializationMode.RoundtripKind)));
-                XmlNode membersRootTmp = CreateNode(ServiceChildNodes.Memberships.ToString(), null);
-                serviceNode.AppendChild(membersRootTmp);
-                serviceRoot.AppendChild(serviceNode);
-                if (services[serviceId].Type == ServiceFilterType.Messenger)
-                    membersRoot = membersRootTmp;
-            }
-            membershipRoot.AppendChild(serviceRoot);
-
-            if (membersRoot != null)
-            {
-                int[] roleArray = (int[])Enum.GetValues(typeof(MemberRole));
-                foreach (int role in roleArray)
+                foreach (ServiceType serviceType in findMembership.Services)
                 {
-                    if (rolelists.ContainsKey((MemberRole)role))
+                    Service currentService = new Service();
+                    currentService.LastChange = serviceType.LastChange;
+                    currentService.Id = int.Parse(serviceType.Info.Handle.Id);
+                    currentService.Type = serviceType.Info.Handle.Type;
+                    currentService.ForeignId = serviceType.Info.Handle.ForeignId;
+                    Services[currentService.Id] = currentService;
+
+                    if (currentService.Type == ServiceFilterType.Messenger)
                     {
-                        membersRoot.AppendChild(GetList((MemberRole)role));
+                        if (MembershipLastChange < currentService.LastChange && null != serviceType.Memberships)
+                        {
+                            foreach (Membership membership in serviceType.Memberships)
+                            {
+                                if (null != membership.Members)
+                                {
+                                    MemberRole memberrole = membership.MemberRole;
+                                    foreach (BaseMember bm in membership.Members)
+                                    {
+                                        string account = null;
+                                        ClientType type = ClientType.PassportMember;
+
+                                        if (bm is PassportMember)
+                                        {
+                                            type = ClientType.PassportMember;
+                                            PassportMember pm = (PassportMember)bm;
+                                            if (!pm.IsPassportNameHidden)
+                                            {
+                                                account = pm.PassportName;
+                                            }
+                                        }
+                                        else if (bm is EmailMember)
+                                        {
+                                            type = ClientType.EmailMember;
+                                            account = ((EmailMember)bm).Email;
+                                        }
+                                        else if (bm is PhoneMember)
+                                        {
+                                            type = ClientType.PhoneMember;
+                                            account = ((PhoneMember)bm).PhoneNumber;
+                                        }
+
+                                        if (account != null)
+                                        {
+                                            account = account.ToLower(CultureInfo.InvariantCulture);
+
+                                            if (bm.Deleted)
+                                            {
+                                                RemoveMemberhip(account, memberrole);
+                                            }
+                                            else
+                                            {
+                                                AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
+                                                MembershipContacts[account].LastChanged = bm.LastChanged;
+                                                MembershipContacts[account].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        MembershipLastChange = currentService.LastChange;
                     }
                 }
             }
-
-            SaveToHiddenMCL(filename);
         }
 
-        /// <summary>
-        /// Save the contact list into a file.
-        /// </summary>
-        public override void Save()
-        {
-            Save(fileName);
-        }
+        #endregion
 
-        private XmlNode GetList(MemberRole memberrole)
-        {
-            XmlNode listroot = CreateNode(XMLContactListTags.Membership.ToString(), null);
-            listroot.AppendChild(CreateNode(MembershipsChildNodes.MemberRole.ToString(), memberrole.ToString()));
-            XmlNode membersRoot = CreateNode(MembershipsChildNodes.Members.ToString(), null);
-            foreach (ContactInfo cinfo in rolelists[memberrole].Values)
-            {
-                XmlNode memberNode = CreateNode(XMLContactListTags.Member.ToString(), null);
-                if (cinfo != null/* && (cinfo.msnlist & list) == list*/)
-                {
-                    memberNode.AppendChild(CreateNode(MemberChildNodes.MembershipId.ToString(), cinfo.MembershipId.ToString()));
-                    memberNode.AppendChild(CreateNode(MemberChildNodes.Account.ToString(), cinfo.Account));
-                    memberNode.AppendChild(CreateNode(MemberChildNodes.DisplayName.ToString(), cinfo.DisplayName));
-                    memberNode.AppendChild(CreateNode(MemberChildNodes.LastChanged.ToString(),
-                        XmlConvert.ToString(cinfo.LastChanged, XmlDateTimeSerializationMode.RoundtripKind)));
-                    memberNode.AppendChild(CreateNode(MemberChildNodes.Type.ToString(),
-                        XmlConvert.ToString((int)cinfo.Type)));
+        #region Addressbook
 
-                    membersRoot.AppendChild(memberNode);
-                }
-            }
-            listroot.AppendChild(membersRoot);
-
-            return listroot;
-        }
-    }
-
-    #endregion
-
-    #region XMLAddressBook
-
-    /// <summary>
-    /// XML ForwardList file maintainer
-    /// </summary>
-    internal class XMLAddressBook : XMLContactList
-    {
-        string fileName = String.Empty;
+        DateTime abLastChange;
         DateTime dynamicItemLastChange;
-        Dictionary<string, GroupInfo> groups = new Dictionary<string, GroupInfo>(0);
-        Dictionary<string, string> myproperties = new Dictionary<string, string>(0);
+        SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
+        SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
+        SerializableDictionary<Guid, AddressbookContactInfo> abcontacts = new SerializableDictionary<Guid, AddressbookContactInfo>(0);
 
-        public XMLAddressBook(string filename)
-            : this(filename, false)
+        public DateTime AddressbookLastChange
         {
-        }
-
-        public XMLAddressBook(string filename, bool nocompress)
-            : base(nocompress)
-        {
-            fileName = filename;
-            LoadFromFile(filename);
+            get
+            {
+                return abLastChange;
+            }
+            set
+            {
+                abLastChange = value;
+            }
         }
 
         public DateTime DynamicItemLastChange
@@ -487,15 +254,7 @@
             }
         }
 
-        public Dictionary<string, GroupInfo> Groups
-        {
-            get
-            {
-                return groups;
-            }
-        }
-
-        public Dictionary<string, string> MyProperties
+        public SerializableDictionary<string, string> MyProperties
         {
             get
             {
@@ -507,66 +266,37 @@
             }
         }
 
-        public override void LoadFromFile(string filename)
+        public SerializableDictionary<string, GroupInfo> Groups
         {
-            base.LoadFromFile(filename);
-            this.Clear();
-            XmlNode addressbookRoot = doc.GetElementsByTagName(XMLContactListTags.AddressBook.ToString())[0];
-            if (addressbookRoot == null)
-                addressbookRoot = CreateNode(XMLContactListTags.AddressBook.ToString(), null);
-
-            XMLContactListParser parser = new XMLContactListParser(doc);
-            parser.Parse();
-            Add(parser.AddressBookContactList);
-            LastChange = parser.AddressBookLastChange;
-            dynamicItemLastChange = parser.DynamicItemLastChange;
-            groups = parser.GroupList;
-
-            XmlNodeList annos = doc.GetElementsByTagName(XMLContactListTags.Annotation.ToString());
-            foreach (XmlNode node in annos)
+            get
             {
-                string name = node.ChildNodes[0].InnerText;
-                string value = node.ChildNodes[1].InnerText;
-                name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                myproperties[name] = value;
+                return groups;
+            }
+
+            set
+            {
+                groups = value;
             }
         }
 
-        public override void Save(string filename)
+        public SerializableDictionary<Guid, AddressbookContactInfo> AddressbookContacts
         {
-            XmlNode addressbookRoot = doc.GetElementsByTagName(XMLContactListTags.AddressBook.ToString())[0];
-            if (addressbookRoot == null)
-                addressbookRoot = CreateNode(XMLContactListTags.AddressBook.ToString(), null);
-            addressbookRoot.RemoveAll();
-
-            addressbookRoot.AppendChild(CreateNode(AddressBookChildNodes.LastChanged.ToString(), XmlConvert.ToString
-                (lastChange, XmlDateTimeSerializationMode.RoundtripKind)));
-            addressbookRoot.AppendChild(CreateNode(AddressBookChildNodes.DynamicItemLastChange.ToString(), XmlConvert.ToString
-                (dynamicItemLastChange, XmlDateTimeSerializationMode.RoundtripKind)));
-
-            addressbookRoot.AppendChild(GetGroups());
-            addressbookRoot.AppendChild(GetContacts());
-
-            XmlNode settingsroot = CreateNode(XMLContactListTags.Settings.ToString(), null);
-            settingsroot.AppendChild(CreateNode(XMLContactListTags.contactType.ToString(), XMLContactListTags.Me.ToString()));
-            XmlNode AnnotationsRoot = CreateNode(XMLContactListTags.Annotations.ToString(), null);
-
-            foreach (string name in myproperties.Keys)
+            get
             {
-                XmlNode annotation = CreateNode(XMLContactListTags.Annotation.ToString(), null);
-                annotation.AppendChild(CreateNode(XMLContactListTags.Name.ToString(), name));
-                annotation.AppendChild(CreateNode(XMLContactListTags.Value.ToString(), myproperties[name]));
-                AnnotationsRoot.AppendChild(annotation);
+                return abcontacts;
             }
-            settingsroot.AppendChild(AnnotationsRoot);
-            addressbookRoot.AppendChild(settingsroot);
-
-            SaveToHiddenMCL(filename);
+            set
+            {
+                abcontacts = value;
+            }
         }
 
-        public override void Save()
+        public void AddGroup(Dictionary<string, GroupInfo> range)
         {
-            Save(fileName);
+            foreach (GroupInfo group in range.Values)
+            {
+                AddGroup(group);
+            }
         }
 
         public void AddGroup(GroupInfo group)
@@ -581,57 +311,223 @@
             }
         }
 
-        public void AddGroup(Dictionary<string, GroupInfo> range)
+        public virtual void Add(Dictionary<Guid, AddressbookContactInfo> range)
         {
-            foreach (GroupInfo group in range.Values)
+            foreach (Guid guid in range.Keys)
             {
-                AddGroup(group);
-            }
-        }
-
-        private XmlNode GetGroups()
-        {
-            XmlNode grouproot = CreateNode(XMLContactListTags.groups.ToString(), null);
-            foreach (string groupId in groups.Keys)
-            {
-                XmlNode groupNode = CreateNode(XMLContactListTags.Group.ToString(), null);
-                groupNode.AppendChild(CreateNode(GroupChildNodes.Guid.ToString(), groupId));
-                groupNode.AppendChild(CreateNode(GroupChildNodes.Name.ToString(), groups[groupId].Name));
-                grouproot.AppendChild(groupNode);
-            }
-            return grouproot;
-        }
-
-        private XmlNode GetContacts()
-        {
-            XmlNode contactRoot = CreateNode(XMLContactListTags.contacts.ToString(), null);
-            foreach (ContactInfo cinfo in this.Values)
-            {
-                XmlNode contactNode = CreateNode(XMLContactListTags.Contact.ToString(), null); //This node MUST comes first.
-                if (cinfo != null)
+                if (abcontacts.ContainsKey(guid))
                 {
-                    contactNode.AppendChild(CreateNode(ContactChildNodes.ContactId.ToString(), cinfo.Guid));
-                    contactNode.AppendChild(CreateNode(ContactChildNodes.Account.ToString(), cinfo.Account));
-                    contactNode.AppendChild(CreateNode(ContactChildNodes.DisplayName.ToString(), cinfo.DisplayName));
-                    contactNode.AppendChild(CreateNode(ContactChildNodes.IsMessengerUser.ToString(),
-                        XmlConvert.ToString(cinfo.IsMessengerUser)));
-
-                    XmlNode groupIdRoot = CreateNode(ContactChildNodes.Groups.ToString(), null);
-                    foreach (string guid in cinfo.Groups)
+                    if (abcontacts[guid].LastChanged.CompareTo(range[guid].LastChanged) <= 0)
                     {
-                        groupIdRoot.AppendChild(CreateNode(XMLContactListTags.Group.ToString(), guid));
+                        abcontacts[guid] = range[guid];
                     }
-                    contactNode.AppendChild(groupIdRoot);
-                    contactNode.AppendChild(CreateNode(ContactChildNodes.LastChanged.ToString(),
-                        XmlConvert.ToString(cinfo.LastChanged, XmlDateTimeSerializationMode.RoundtripKind)));
-                    contactNode.AppendChild(CreateNode(ContactChildNodes.Type.ToString(), XmlConvert.ToString((int)cinfo.Type)));
-                    contactNode.AppendChild(CreateNode(ContactChildNodes.Capability.ToString(),
-                        XmlConvert.ToString((long)cinfo.Capability)));
-                    contactRoot.AppendChild(contactNode);
+                }
+                else
+                {
+                    abcontacts.Add(guid, range[guid]);
                 }
             }
-            return contactRoot;
         }
+
+        public virtual AddressbookContactInfo Find(string email, ClientType type)
+        {
+            foreach (AddressbookContactInfo ci in AddressbookContacts.Values)
+            {
+                if (ci.Account == email && ci.Type == type)
+                    return ci;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Merge changes to addressbook and add contacts
+        /// </summary>
+        /// <param name="forwardList"></param>
+        /// <param name="nsMessageHandler"></param>
+        public void Merge(ABFindAllResultType forwardList, NSMessageHandler nsMessageHandler)
+        {
+            if (AddressbookLastChange < forwardList.ab.lastChange)
+            {
+                if (null != forwardList.contacts)
+                {
+                    foreach (ContactType contactType in forwardList.contacts)
+                    {
+                        if (null != contactType.contactInfo)
+                        {
+                            ClientType type = ClientType.PassportMember;
+                            string account = contactType.contactInfo.passportName;
+                            string displayname = contactType.contactInfo.displayName;
+                            bool ismessengeruser = contactType.contactInfo.isMessengerUser;
+
+                            if (contactType.contactInfo.emails != null && account == null)
+                            {
+                                /* This is not related with ClientCapacities, I think :)
+                                if (Enum.IsDefined(typeof(ClientCapacities), long.Parse(contactType.contactInfo.emails[0].Capability)))
+                                {
+                                    ci.Capability = (ClientCapacities)long.Parse(contactType.contactInfo.emails[0].Capability);
+                                }
+                                 * */
+
+                                type = ClientType.EmailMember;
+                                account = contactType.contactInfo.emails[0].email;
+                                ismessengeruser |= contactType.contactInfo.emails[0].isMessengerEnabled;
+                                displayname = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? account : contactType.contactInfo.quickName;
+                            }
+
+                            if (account == null)
+                                continue; // PassportnameHidden... Nothing to do...
+
+                            if (contactType.fDeleted)
+                            {
+                                AddressbookContacts.Remove(new Guid(contactType.contactId));
+                            }
+                            else
+                            {
+                                AddressbookContactInfo ci = new AddressbookContactInfo(account, type, new Guid(contactType.contactId));
+                                ci.DisplayName = displayname;
+                                ci.IsMessengerUser = ismessengeruser;
+                                ci.LastChanged = contactType.lastChange;
+
+                                if (null != contactType.contactInfo.annotations)
+                                {
+                                    foreach (Annotation anno in contactType.contactInfo.annotations)
+                                    {
+                                        if (anno.Name == "AB.NickName" && anno.Value != null)
+                                        {
+                                            ci.DisplayName = anno.Value;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (contactType.contactInfo.groupIds != null)
+                                {
+                                    ci.Groups = new List<string>(contactType.contactInfo.groupIds);
+                                }
+
+                                if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
+                                {
+                                    if (ci.DisplayName == nsMessageHandler.Owner.Mail && nsMessageHandler.Owner.Name != String.Empty)
+                                    {
+                                        ci.DisplayName = nsMessageHandler.Owner.Name;
+                                    }
+
+                                    MyProperties["displayname"] = ci.DisplayName;
+                                    MyProperties["cid"] = contactType.contactInfo.CID;
+
+                                    if (null != contactType.contactInfo.annotations)
+                                    {
+                                        foreach (Annotation anno in contactType.contactInfo.annotations)
+                                        {
+                                            string name = anno.Name;
+                                            string value = anno.Value;
+                                            name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
+                                            MyProperties[name] = value;
+                                        }
+                                    }
+
+                                    if (!MyProperties.ContainsKey("mbea"))
+                                        MyProperties["mbea"] = "0";
+
+                                    if (!MyProperties.ContainsKey("gtc"))
+                                        MyProperties["gtc"] = "1";
+
+                                    if (!MyProperties.ContainsKey("blp"))
+                                        MyProperties["blp"] = "0";
+
+                                    if (!MyProperties.ContainsKey("roamliveproperties"))
+                                        MyProperties["roamliveproperties"] = "1";
+
+                                    if (!MyProperties.ContainsKey("personalmessage"))
+                                        MyProperties["personalmessage"] = MyProperties["displayname"];
+                                }
+
+                                if (AddressbookContacts.ContainsKey(ci.Guid))
+                                {
+                                    if (AddressbookContacts[ci.Guid].LastChanged.CompareTo(ci.LastChanged) < 0)
+                                    {
+                                        AddressbookContacts[ci.Guid] = ci;
+                                    }
+                                }
+                                else
+                                {
+                                    AddressbookContacts.Add(ci.Guid, ci);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (null != forwardList.groups)
+                {
+                    foreach (GroupType groupType in forwardList.groups)
+                    {
+                        if (groupType.fDeleted)
+                        {
+                            Groups.Remove(groupType.groupId);
+                        }
+                        else
+                        {
+                            GroupInfo group = new GroupInfo();
+                            group.Name = groupType.groupInfo.name;
+                            group.Guid = groupType.groupId;
+                            Groups[group.Guid] = group;
+                        }
+                    }
+                }
+
+                // Update lastchange
+                AddressbookLastChange = forwardList.ab.lastChange;
+                DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
+            }
+
+            // Create Groups
+            foreach (GroupInfo group in Groups.Values)
+            {
+                nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
+            }
+
+            // Create Messenger Contacts
+            if (MembershipContacts.Count > 0)
+            {
+                foreach (MembershipContactInfo msci in MembershipContacts.Values)
+                {
+                    Contact contact = nsMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName);
+                    contact.SetClientType(msci.Type);
+                    contact.SetLists(GetMSNLists(msci.Account));
+                    contact.NSMessageHandler = nsMessageHandler;
+                }
+            }
+
+            // Create the Forward List and Email Contacts
+            foreach (AddressbookContactInfo abci in AddressbookContacts.Values)
+            {
+                if (abci.Account != nsMessageHandler.Owner.Mail)
+                {
+                    Contact contact = nsMessageHandler.ContactList.GetContact(abci.Account);
+                    contact.SetGuid(abci.Guid);
+                    contact.SetClientType(abci.Type);
+                    contact.SetIsMessengerUser(abci.IsMessengerUser);
+                    if (abci.IsMessengerUser)
+                        contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+
+                    if (!String.IsNullOrEmpty(abci.DisplayName))
+                        contact.SetName(abci.DisplayName);
+
+                    contact.NSMessageHandler = nsMessageHandler;
+
+                    foreach (string groupId in abci.Groups)
+                    {
+                        contact.ContactGroups.Add(nsMessageHandler.ContactGroups[groupId]);
+                    }
+
+                    if (abci.Type == ClientType.EmailMember)
+                    {
+                        contact.ClientCapacities = abci.Capability;
+                    }
+                }
+            }
+        }
+        #endregion
     }
-    #endregion
 };

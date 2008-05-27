@@ -176,7 +176,7 @@ namespace MSNPSharp.Core
             }
 
             // get the command parameters
-            Command = System.Text.Encoding.ASCII.GetString(data, 0, 3);
+            Command = System.Text.Encoding.UTF8.GetString(data, 0, 3);
             CommandValues = new ArrayList(System.Text.Encoding.UTF8.GetString(data, 4, cnt - 4).Split(new char[] { ' ' }));
 
             // set the inner body contents, if it is available
@@ -193,7 +193,7 @@ namespace MSNPSharp.Core
         {
             PrepareMessage();
 
-            return System.Text.Encoding.ASCII.GetString(GetBytes());
+            return System.Text.Encoding.UTF8.GetString(GetBytes());
         }
 
         public override string ToDebugString()

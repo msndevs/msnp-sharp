@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns="http://www.msn.com/webservices/storage/w10" xmlns:msnss="http://www.msn.com/webservices/storage/w10" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/storage/w10" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="Alias">
+    <xsd:sequence>
+      <xsd:element name="Name" type="xsd:string" />
+      <xsd:element name="NameSpace" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="Handle">
+    <xsd:sequence>
+      <xsd:element name="Alias" type="msnss:Alias" />
+      <xsd:element default="MyProfile" name="RelationshipName" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="profileAttributes">
+    <xsd:sequence>
+      <xsd:element default="true" name="ResourceID" type="xsd:boolean" />
+      <xsd:element default="true" name="DateModified" type="xsd:boolean" />
+      <xsd:element name="ExpressionProfileAttributes">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element default="true" name="ResourceID" type="xsd:boolean" />
+            <xsd:element default="true" name="DateModified" type="xsd:boolean" />
+            <xsd:element default="true" name="DisplayName" type="xsd:boolean" />
+            <xsd:element default="true" name="DisplayNameLastModified" type="xsd:boolean" />
+            <xsd:element default="true" name="PersonalStatus" type="xsd:boolean" />
+            <xsd:element default="true" name="PersonalStatusLastModified" type="xsd:boolean" />
+            <xsd:element default="true" name="StaticUserTilePublicURL" type="xsd:boolean" />
+            <xsd:element default="true" name="Photo" type="xsd:boolean" />
+            <xsd:element default="true" name="Flag" type="xsd:boolean" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="DocumentStream">
+    <xsd:sequence>
+      <xsd:element name="DocumentStreamType" type="xsd:string" />
+      <xsd:element name="MimeType" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Data" type="xsd:base64Binary" />
+      <xsd:element name="DataSize" type="xsd:int" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="PhotoStream">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnss:DocumentStream">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" name="PreAuthURL" type="xsd:anyURI" />
+          <xsd:element minOccurs="0" name="PreAuthURLPartner" type="xsd:anyURI" />
+          <xsd:element minOccurs="0" name="SizeX" type="xsd:int" />
+          <xsd:element minOccurs="0" name="SizeY" type="xsd:int" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+</xsd:schema>

@@ -14,5 +14,8 @@
     <Setting Name="MSNPSharp_MSNSecurityTokenService_SecurityTokenService" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">https://login.live.com/RST.srf</Value>
     </Setting>
+    <Setting Name="MSNPSharp_MSNStorageService_MSNStorageService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://storage.msn.com/storageservice/SchematizedStore.asmx</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

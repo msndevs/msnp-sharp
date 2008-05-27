@@ -1007,7 +1007,10 @@ namespace MSNPSharp
                 if (AutoSynchronize == true)
                 {
                     OnSignedIn();
-                    SetPersonalMessage(new PersonalMessage(new NSMessage()));
+
+                    PersonalMessage pm = new PersonalMessage(contactService.AddressBook.MyProperties["personalmessage"], MediaType.None, null);
+                    SetPersonalMessage(pm);
+                    owner.PersonalMessage = pm;
                 }
 
                 // no contacts are sent so we are done synchronizing
@@ -1097,10 +1100,10 @@ namespace MSNPSharp
         /// <param name="contact"></param>
         public virtual void RequestScreenName(Contact contact)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty.ToString())
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid, "MFN", HttpUtility.UrlEncode(contact.Name).Replace("+", "%20") }));
+            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", HttpUtility.UrlEncode(contact.Name).Replace("+", "%20") }));
         }
 
         /// <summary>
@@ -2173,7 +2176,7 @@ namespace MSNPSharp
 
             Contact contact = ContactList.GetContact(message.CommandValues[0].ToString());
 
-            PersonalMessage pm = new PersonalMessage(message);
+            PersonalMessage pm = new PersonalMessage(message);            
             contact.SetPersonalMessage(pm);
         }
 
@@ -2296,7 +2299,7 @@ namespace MSNPSharp
         {
             if (message.CommandValues.Count == 4)
             {
-                Contact c = ContactList.GetContactByGuid(message.CommandValues[2].ToString().Remove(0, 2));
+                Contact c = ContactList.GetContactByGuid(new Guid(message.CommandValues[2].ToString().Remove(0, 2)));
                 //Add contact to group
                 string guid = message.CommandValues[3].ToString();
 
@@ -2315,7 +2318,7 @@ namespace MSNPSharp
                 contact.SetName(message.CommandValues[3].ToString().Remove(0, 2));
 
             if (message.CommandValues.Count >= 5)
-                contact.SetGuid(message.CommandValues[4].ToString().Remove(0, 2));
+                contact.SetGuid(new Guid(message.CommandValues[4].ToString().Remove(0, 2)));
 
             // add the list to this contact						
             contact.AddToList(MSNLists.PendingList);
@@ -2358,7 +2361,7 @@ namespace MSNPSharp
 
             Contact contact = null;
             if (list == MSNLists.ForwardList)
-                contact = ContactList.GetContactByGuid((string)message.CommandValues[2]);
+                contact = ContactList.GetContactByGuid(new Guid((string)message.CommandValues[2]));
             else
                 contact = ContactList.GetContact((string)message.CommandValues[2]);
 

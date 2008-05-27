@@ -62,5 +62,15 @@ namespace MSNPSharp.Properties {
                 return ((string)(this["MSNPSharp_MSNSecurityTokenService_SecurityTokenService"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://storage.msn.com/storageservice/SchematizedStore.asmx")]
+        public string MSNPSharp_MSNStorageService_MSNStorageService {
+            get {
+                return ((string)(this["MSNPSharp_MSNStorageService_MSNStorageService"]));
+            }
+        }
     }
 }
