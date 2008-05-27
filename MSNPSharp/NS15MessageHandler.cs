@@ -55,7 +55,7 @@ namespace MSNPSharp
 
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using MSNPSharp.MSNABSharingService;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     #region Event argument classes
     /// <summary>

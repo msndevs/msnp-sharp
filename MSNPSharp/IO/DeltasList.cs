@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MSNPSharp.MSNABSharingService;
 
 namespace MSNPSharp.IO
 {
+    using MSNPSharp.MSNWS.MSNABSharingService;
+
     internal class AddressBookDeltasComparer : IComparer<ABFindAllResultType>
     {
         private AddressBookDeltasComparer()

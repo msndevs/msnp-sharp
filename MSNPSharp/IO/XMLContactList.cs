@@ -6,7 +6,7 @@
     using System.Globalization;
     using System.Xml.Serialization;
     using System.Collections.Generic;
-    using MSNPSharp.MSNABSharingService;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     /// <summary>
     /// ContactList file maintainer

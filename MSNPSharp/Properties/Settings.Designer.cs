@@ -27,9 +27,9 @@ namespace MSNPSharp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
         [global::System.Configuration.DefaultSettingValueAttribute("https://contacts.msn.com/abservice/SharingService.asmx")]
-        public string MSNPSharp_MSNABSharingService_SharingService {
+        public string MSNPSharp_MSNWS_MSNABSharingService_SharingService {
             get {
-                return ((string)(this["MSNPSharp_MSNABSharingService_SharingService"]));
+                return ((string)(this["MSNPSharp_MSNWS_MSNABSharingService_SharingService"]));
             }
         }
         
@@ -37,9 +37,9 @@ namespace MSNPSharp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
         [global::System.Configuration.DefaultSettingValueAttribute("https://ows.messenger.msn.com/OimWS/oim.asmx")]
-        public string MSNPSharp_MSNOIMStoreService_OIMService {
+        public string MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService {
             get {
-                return ((string)(this["MSNPSharp_MSNOIMStoreService_OIMService"]));
+                return ((string)(this["MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService"]));
             }
         }
         
@@ -47,9 +47,9 @@ namespace MSNPSharp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
         [global::System.Configuration.DefaultSettingValueAttribute("https://rsi.hotmail.com/rsi/rsi.asmx")]
-        public string MSNPSharp_MSNRSIService_RSIService {
+        public string MSNPSharp_MSNWS_MSNRSIService_RSIService {
             get {
-                return ((string)(this["MSNPSharp_MSNRSIService_RSIService"]));
+                return ((string)(this["MSNPSharp_MSNWS_MSNRSIService_RSIService"]));
             }
         }
         
@@ -57,9 +57,9 @@ namespace MSNPSharp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
         [global::System.Configuration.DefaultSettingValueAttribute("https://login.live.com/RST.srf")]
-        public string MSNPSharp_MSNSecurityTokenService_SecurityTokenService {
+        public string MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService {
             get {
-                return ((string)(this["MSNPSharp_MSNSecurityTokenService_SecurityTokenService"]));
+                return ((string)(this["MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService"]));
             }
         }
         
@@ -67,9 +67,9 @@ namespace MSNPSharp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
         [global::System.Configuration.DefaultSettingValueAttribute("https://storage.msn.com/storageservice/SchematizedStore.asmx")]
-        public string MSNPSharp_MSNStorageService_MSNStorageService {
+        public string MSNPSharp_MSNWS_MSNStorageService_StorageService {
             get {
-                return ((string)(this["MSNPSharp_MSNStorageService_MSNStorageService"]));
+                return ((string)(this["MSNPSharp_MSNWS_MSNStorageService_StorageService"]));
             }
         }
     }

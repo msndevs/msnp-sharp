@@ -13,7 +13,7 @@
 // 
 #pragma warning disable 1591
 
-namespace MSNPSharp.MSNABSharingService {
+namespace MSNPSharp.MSNWS.MSNABSharingService {
     using System.Diagnostics;
     using System.Web.Services;
     using System.ComponentModel;
@@ -47,7 +47,7 @@ namespace MSNPSharp.MSNABSharingService {
         
         /// <remarks/>
         public SharingServiceBinding() {
-            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNABSharingService_SharingService;
+            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNWS_MSNABSharingService_SharingService;
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;

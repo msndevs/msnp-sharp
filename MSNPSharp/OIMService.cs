@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MSNPSharp.Core;
-using MSNPSharp.MSNRSIService;
 using System.Xml;
-using MSNPSharp.MSNOIMStoreService;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Web.Services.Protocols;
 using System.Net;
+
+using MSNPSharp.Core;
+using MSNPSharp.MSNWS.MSNRSIService;
+using MSNPSharp.MSNWS.MSNOIMStoreService;
 
 namespace MSNPSharp
 {
