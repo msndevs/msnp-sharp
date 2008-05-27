@@ -41,9 +41,10 @@ using System.Security.Cryptography;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Globalization;
-using MSNPSharp.MSNSecurityTokenService;
-using MSNPSharp.SOAP;
 using System.Web.Services.Protocols;
+
+using MSNPSharp.SOAP;
+using MSNPSharp.MSNWS.MSNSecurityTokenService;
 
 namespace MSNPSharp
 {

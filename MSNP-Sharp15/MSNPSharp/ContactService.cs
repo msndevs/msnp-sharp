@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MSNPSharp.MSNABSharingService;
 using System.IO;
 using System.Xml;
 using System.Globalization;
-using MSNPSharp.IO;
-using MSNPSharp.Core;
 using System.Diagnostics;
 using System.Net;
-using MSNPSharp.MSNStorageService;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.IO;
+    using MSNPSharp.Core;
+    using MSNPSharp.MSNWS.MSNABSharingService;
+    using MSNPSharp.MSNWS.MSNStorageService;
+
     public class ContactService : MSNService
     {
         #region Fields

@@ -1,11 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
 namespace MSNPSharp.IO
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-
-    using MemberRole = MSNPSharp.MSNABSharingService.MemberRole;
-    using ServiceFilterType = MSNPSharp.MSNABSharingService.ServiceFilterType;
+    using MemberRole = MSNPSharp.MSNWS.MSNABSharingService.MemberRole;
+    using ServiceFilterType = MSNPSharp.MSNWS.MSNABSharingService.ServiceFilterType;
 
     #region Contact Types
 

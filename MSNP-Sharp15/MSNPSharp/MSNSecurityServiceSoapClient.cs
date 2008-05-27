@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MSNPSharp.MSNSecurityTokenService;
 using System.Web.Services.Protocols;
 using System.Net;
 using System.Security.Authentication;
@@ -11,6 +10,8 @@ using System.Runtime.Serialization;
 
 namespace MSNPSharp.SOAP
 {
+    using MSNPSharp.MSNWS.MSNSecurityTokenService;
+
     /// <summary>
     /// Why this happens??? Just go and ask M$ why they just ignore to send a ContentType header!
     /// </summary>
