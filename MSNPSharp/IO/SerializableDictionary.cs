@@ -6,6 +6,11 @@ using System.Runtime.Serialization;
 
 namespace MSNPSharp.IO
 {
+    /// <summary>
+    /// Serializable Dictionary
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
     [XmlRoot("Dictionary"), Serializable]
     public class SerializableDictionary<TKey, TValue>
         : Dictionary<TKey, TValue>, IXmlSerializable

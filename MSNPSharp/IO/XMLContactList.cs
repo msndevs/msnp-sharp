@@ -70,6 +70,9 @@ namespace MSNPSharp.IO
         SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
         SerializableDictionary<string, MembershipContactInfo> mscontacts = new SerializableDictionary<string, MembershipContactInfo>(0);
 
+        /// <summary>
+        /// 
+        /// </summary>
         public DateTime MembershipLastChange
         {
             get

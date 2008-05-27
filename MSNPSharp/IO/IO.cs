@@ -44,6 +44,9 @@ namespace MSNPSharp.IO
         public byte[] content;
     }
 
+    /// <summary>
+    /// File class used to save userdata.
+    /// </summary>
     public sealed class MCLFile
     {
         int length = 0;
