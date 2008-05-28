@@ -21,26 +21,23 @@ namespace MSNPSharp.IO
         {
             if (reader.IsEmptyElement)
                 return;
-            //reader.Read();
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(string));
-            reader.ReadStartElement("base64");
-            string base64str = (string)valueSerializer.Deserialize(reader);
-            byte[] byt = Convert.FromBase64String(base64str);
+            reader.Read();
+            XmlSerializer valueSerializer = new XmlSerializer(typeof(byte[]));
+            byte[] byt = (byte[])valueSerializer.Deserialize(reader);
             reader.ReadEndElement();
-            reader.MoveToContent();
+
             Write(byt, 0, byt.Length);
             Flush();
         }
 
         public void WriteXml(System.Xml.XmlWriter writer)
         {
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(string));
-            writer.WriteStartElement("base64");
+            XmlSerializer valueSerializer = new XmlSerializer(typeof(byte[]));
+            // I just can't imagine what will happen if the stream size exceed 1 mega byte
             if (ToArray() != null)
             {
-                valueSerializer.Serialize(writer, Convert.ToBase64String(ToArray(),Base64FormattingOptions.InsertLineBreaks));
+                valueSerializer.Serialize(writer, ToArray());
             }
-            writer.WriteEndElement();
         }
 
         #endregion
