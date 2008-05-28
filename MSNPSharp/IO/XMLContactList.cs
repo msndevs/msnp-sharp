@@ -63,7 +63,6 @@ namespace MSNPSharp.IO
             }
         }
 
-
         #region Membership
 
         DateTime msLastChange;
@@ -569,5 +568,17 @@ namespace MSNPSharp.IO
             }
         }
         #endregion
+
+        #region Other
+        private SerializableMemoryStream displayImageStream = null;
+
+        public SerializableMemoryStream DisplayImageStream
+        {
+            get { return displayImageStream; }
+            set { displayImageStream = value; }
+        }
+
+        #endregion
+    
     }
 };
