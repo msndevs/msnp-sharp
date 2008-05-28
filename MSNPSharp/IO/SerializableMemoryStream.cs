@@ -21,6 +21,7 @@ namespace MSNPSharp.IO
         {
             if (reader.IsEmptyElement)
                 return;
+            reader.Read();
             XmlSerializer valueSerializer = new XmlSerializer(typeof(string));
             reader.ReadStartElement("base64");
             string base64str = (string)valueSerializer.Deserialize(reader);
