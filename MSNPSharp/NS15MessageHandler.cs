@@ -998,7 +998,7 @@ namespace MSNPSharp
                 initialadlcount = 0;
 
                 // Set my display name
-                string mydispName = contactService.AddressBook.MyProperties["displayname"];
+                string mydispName = contactService.AddressBook.Profile.DisplayName;
                 if (mydispName != String.Empty)
                 {
                     owner.Name = mydispName;
@@ -1008,7 +1008,7 @@ namespace MSNPSharp
                 {
                     OnSignedIn();
 
-                    PersonalMessage pm = new PersonalMessage(contactService.AddressBook.MyProperties["personalmessage"], MediaType.None, null);
+                    PersonalMessage pm = new PersonalMessage(contactService.AddressBook.Profile.PersonalMessage, MediaType.None, null);
                     SetPersonalMessage(pm);
                     owner.PersonalMessage = pm;
                 }

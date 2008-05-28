@@ -309,4 +309,96 @@ namespace MSNPSharp.IO
     }
 
     #endregion
+
+    #region Owner properties
+
+    /// <summary>
+    /// Base class for profile resource
+    /// </summary>
+    [Serializable]
+    public class ProfileResource
+    {
+        private DateTime dateModified;
+        private string resourceID = null;
+
+        public DateTime DateModified
+        {
+            get { return dateModified; }
+            set { dateModified = value; }
+        }
+
+
+        public string ResourceID
+        {
+            get { return resourceID; }
+            set { resourceID = value; }
+        }
+    }
+
+    /// <summary>
+    /// Owner's photo resource in profile
+    /// </summary>
+    [Serializable]
+    public class ProfilePhoto : ProfileResource
+    {
+        private string preAthURL = null;
+        private SerializableMemoryStream displayImage = null;
+
+        public string PreAthURL
+        {
+            get { return preAthURL; }
+            set { preAthURL = value; }
+        }
+
+        public SerializableMemoryStream DisplayImage
+        {
+            get { return displayImage; }
+            set { displayImage = value; }
+        }
+    }
+
+    /// <summary>
+    /// Owner profile
+    /// </summary>
+    [Serializable]
+    public class OwnerProfile : ProfileResource
+    {
+        private string cID = string.Empty;
+        private string displayName = string.Empty;
+        private string personalMessage = string.Empty;
+        private ProfilePhoto photo = new ProfilePhoto();
+
+        /// <summary>
+        /// DisplayImage of owner
+        /// </summary>
+        public ProfilePhoto Photo
+        {
+            get { return photo; }
+            set { photo = value; }
+        }
+
+        public string CID
+        {
+            get { return cID; }
+            set { cID = value; }
+        }
+
+        /// <summary>
+        /// DisplayName of owner
+        /// </summary>
+        public string DisplayName
+        {
+            get { return displayName; }
+            set { displayName = value; }
+        }
+
+        public string PersonalMessage
+        {
+            get { return personalMessage; }
+            set { personalMessage = value; }
+        }
+
+
+    }
+    #endregion
 }
