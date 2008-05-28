@@ -342,7 +342,7 @@ namespace MSNPSharp.IO
     public class ProfilePhoto : ProfileResource
     {
         private string preAthURL = null;
-        private SerializableMemoryStream displayImage = null;
+        private string displayImage = null;
 
         public string PreAthURL
         {
@@ -350,7 +350,7 @@ namespace MSNPSharp.IO
             set { preAthURL = value; }
         }
 
-        public SerializableMemoryStream DisplayImage
+        public string DisplayImage
         {
             get { return displayImage; }
             set { displayImage = value; }

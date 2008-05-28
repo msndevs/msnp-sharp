@@ -586,7 +586,7 @@ namespace MSNPSharp.IO
 
         public override void Save(string filename)
         {
-            Version = "4.1";
+            Version = "2.0";
             base.Save(filename);
         }
         #endregion
