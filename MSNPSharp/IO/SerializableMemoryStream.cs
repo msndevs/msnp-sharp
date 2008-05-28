@@ -24,8 +24,10 @@ namespace MSNPSharp.IO
             reader.Read();
             XmlSerializer valueSerializer = new XmlSerializer(typeof(string));
             reader.ReadStartElement("base64");
+            reader.ReadStartElement("string");
             string base64str = (string)valueSerializer.Deserialize(reader);
             byte[] byt = Convert.FromBase64String(base64str);
+            reader.ReadEndElement();
             reader.ReadEndElement();
             Write(byt, 0, byt.Length);
             Flush();
