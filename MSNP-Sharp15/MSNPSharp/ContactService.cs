@@ -102,6 +102,13 @@ namespace MSNPSharp
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
+                if (AddressBook.Version != "4.1" && recursiveCall == 0)
+                {
+                    recursiveCall++;
+                    DeleteRecordFile();
+                    SynchronizeContactList();
+                    return;
+                }
             }
             catch (Exception ex)
             {
@@ -136,39 +143,38 @@ namespace MSNPSharp
                                 GetProfileRequestType request = new GetProfileRequestType();
                                 request.profileHandle = new Handle();
                                 request.profileHandle.Alias = new Alias();
-                                request.profileHandle.Alias.Name = AddressBook.MyProperties["cid"];
+                                request.profileHandle.Alias.Name = AddressBook.Profile.CID;  //All string.Empty ??!! What the hell!!
                                 request.profileHandle.Alias.NameSpace = "MyCidStuff";
                                 request.profileHandle.RelationshipName = "MyProfile";
                                 request.profileAttributes = new profileAttributes();
                                 request.profileAttributes.ExpressionProfileAttributes = new profileAttributesExpressionProfileAttributes();
 
                                 GetProfileResponse response = storageService.GetProfile(request);
+                                AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
+                                AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
 
                                 // Display name
                                 if (!String.IsNullOrEmpty(response.GetProfileResult.ExpressionProfile.DisplayName))
                                 {
-                                    AddressBook.MyProperties["displayname"] = response.GetProfileResult.ExpressionProfile.DisplayName;
+                                    AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
                                 }
 
                                 // Personal status
                                 if (!String.IsNullOrEmpty(response.GetProfileResult.ExpressionProfile.PersonalStatus))
                                 {
-                                    AddressBook.MyProperties["personalmessage"] = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+                                    AddressBook.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
                                 }
 
                                 // Display image
                                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                                 {
                                     string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                                    
-                                    if (!AddressBook.MyProperties.ContainsKey("displayimage_athurl"))
-                                    {
-                                        AddressBook.MyProperties["displayimage_athurl"] = null;
-                                    }
+                                    AddressBook.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
+                                    AddressBook.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
 
-                                    if (AddressBook.MyProperties["displayimage_athurl"] != url)
+                                    if (AddressBook.Profile.Photo.PreAthURL != url)
                                     {
-                                        AddressBook.MyProperties["displayimage_athurl"] = url;
+                                        AddressBook.Profile.Photo.PreAthURL = url;
                                         if (!url.StartsWith("http"))
                                         {
                                             url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
@@ -189,9 +195,9 @@ namespace MSNPSharp
                                             ms.Write(data, 0, read);
                                         }
                                         stream.Close();
-                                        AddressBook.DisplayImageStream = ms;
+                                        AddressBook.Profile.Photo.DisplayImage = ms;
                                     }
-                                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.DisplayImageStream);
+                                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
                                     DisplayImage displayImage = new DisplayImage();
                                     displayImage.Image = fileImage;
                                     

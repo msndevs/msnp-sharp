@@ -451,8 +451,8 @@ namespace MSNPSharp.IO
                                         ci.DisplayName = nsMessageHandler.Owner.Name;
                                     }
 
-                                    MyProperties["displayname"] = ci.DisplayName;
-                                    MyProperties["cid"] = contactType.contactInfo.CID;
+                                    Profile.DisplayName = ci.DisplayName;
+                                    Profile.CID = contactType.contactInfo.CID;
 
                                     if (null != contactType.contactInfo.annotations)
                                     {
@@ -478,7 +478,9 @@ namespace MSNPSharp.IO
                                         MyProperties["roamliveproperties"] = "1";
 
                                     if (!MyProperties.ContainsKey("personalmessage"))
-                                        MyProperties["personalmessage"] = MyProperties["displayname"];
+                                        Profile.PersonalMessage = Profile.DisplayName;
+                                    else
+                                        Profile.PersonalMessage = MyProperties["personalmessage"];
                                 }
 
                                 if (AddressbookContacts.ContainsKey(ci.Guid))
@@ -569,15 +571,24 @@ namespace MSNPSharp.IO
         }
         #endregion
 
-        #region Other
-        private SerializableMemoryStream displayImageStream = null;
+        #region Profile
+        private OwnerProfile profile = new OwnerProfile();
 
-        public SerializableMemoryStream DisplayImageStream
+        public OwnerProfile Profile
         {
-            get { return displayImageStream; }
-            set { displayImageStream = value; }
+            get { return profile; }
+            set { profile = value; }
         }
 
+        #endregion
+
+        #region Overrides
+
+        public override void Save(string filename)
+        {
+            Version = "4.1";
+            base.Save(filename);
+        }
         #endregion
     
     }

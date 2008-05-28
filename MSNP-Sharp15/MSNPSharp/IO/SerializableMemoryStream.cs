@@ -37,7 +37,7 @@ namespace MSNPSharp.IO
             writer.WriteStartElement("base64");
             if (ToArray() != null)
             {
-                valueSerializer.Serialize(writer, Convert.ToBase64String(ToArray()));
+                valueSerializer.Serialize(writer, Convert.ToBase64String(ToArray(),Base64FormattingOptions.InsertLineBreaks));
             }
             writer.WriteEndElement();
         }

@@ -21,6 +21,8 @@ namespace MSNPSharp.IO
         [NonSerialized]
         private string fileName;
 
+        private string version = "1.0";
+
         public MCLSerializer()
         {
         }
@@ -47,6 +49,15 @@ namespace MSNPSharp.IO
             {
                 noCompress = value;
             }
+        }
+
+        /// <summary>
+        /// The version of serialized object in the mcl file.
+        /// </summary>
+        public string Version
+        {
+            get { return version; }
+            set { version = value; }
         }
 
         protected static object LoadFromFile(string filename, bool nocompress,Type targettype)
