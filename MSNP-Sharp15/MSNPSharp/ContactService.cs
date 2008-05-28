@@ -98,8 +98,19 @@ namespace MSNPSharp
             bool nocompress = true;
             string addressbookFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
             string deltasResultsFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
-            AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
-            Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
+            try
+            {
+                AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
+                Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
+            }
+            catch (Exception ex)
+            {
+                if (Settings.TraceSwitch.TraceError)
+                    Trace.WriteLine(ex.Message);
+                recursiveCall++;
+                SynchronizeContactList();
+                return;
+            }
 
             AddressBook.Merge(Deltas, nsMessageHandler);
 
@@ -149,35 +160,48 @@ namespace MSNPSharp
                                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                                 {
                                     string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                                    if (!url.StartsWith("http"))
+                                    
+                                    if (!AddressBook.MyProperties.ContainsKey("displayimage_athurl"))
                                     {
-                                        url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
+                                        AddressBook.MyProperties["displayimage_athurl"] = null;
                                     }
 
-                                    // Ha ha... Don't urlencode t= :))
-                                    Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
-
-                                    HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-
-                                    Stream stream = fwr.GetResponse().GetResponseStream();
-                                    MemoryStream ms = new MemoryStream();
-                                    byte[] data = new byte[8192];
-                                    int read;
-                                    while ((read = stream.Read(data, 0, data.Length)) > 0)
+                                    if (AddressBook.MyProperties["displayimage_athurl"] != url)
                                     {
-                                        ms.Write(data, 0, read);
-                                    }
-                                    stream.Close();
+                                        AddressBook.MyProperties["displayimage_athurl"] = url;
+                                        if (!url.StartsWith("http"))
+                                        {
+                                            url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
+                                        }
 
-                                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(ms);
+
+                                        // Ha ha... Don't urlencode t= :))
+                                        Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
+
+                                        HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
+
+                                        Stream stream = fwr.GetResponse().GetResponseStream();
+                                        SerializableMemoryStream ms = new SerializableMemoryStream();
+                                        byte[] data = new byte[8192];
+                                        int read;
+                                        while ((read = stream.Read(data, 0, data.Length)) > 0)
+                                        {
+                                            ms.Write(data, 0, read);
+                                        }
+                                        stream.Close();
+                                        AddressBook.DisplayImageStream = ms;
+                                    }
+                                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.DisplayImageStream);
                                     DisplayImage displayImage = new DisplayImage();
                                     displayImage.Image = fileImage;
-
+                                    
                                     nsMessageHandler.Owner.DisplayImage = displayImage;
                                 }
                             }
-                            catch
+                            catch(Exception ex)
                             {
+                                if (Settings.TraceSwitch.TraceError)
+                                    Trace.WriteLine(ex.Message);
                             }
                             #endregion
 
