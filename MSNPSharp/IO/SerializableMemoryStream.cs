@@ -21,14 +21,13 @@ namespace MSNPSharp.IO
         {
             if (reader.IsEmptyElement)
                 return;
-            reader.Read();
+            //reader.Read();
             XmlSerializer valueSerializer = new XmlSerializer(typeof(string));
             reader.ReadStartElement("base64");
-            reader.ReadStartElement("string");
             string base64str = (string)valueSerializer.Deserialize(reader);
             byte[] byt = Convert.FromBase64String(base64str);
             reader.ReadEndElement();
-            reader.ReadEndElement();
+            reader.MoveToContent();
             Write(byt, 0, byt.Length);
             Flush();
         }
