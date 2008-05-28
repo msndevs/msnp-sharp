@@ -586,7 +586,7 @@ namespace MSNPSharp.IO
 
         public override void Save(string filename)
         {
-            Version = "2.0";
+            Version = Properties.Resources.XMLContactListVersion;
             base.Save(filename);
         }
         #endregion

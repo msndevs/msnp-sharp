@@ -102,7 +102,7 @@ namespace MSNPSharp
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
-                if (AddressBook.Version != "2.0" && recursiveCall == 0)
+                if (AddressBook.Version != Properties.Resources.XMLContactListVersion && recursiveCall == 0)
                 {
                     recursiveCall++;
                     DeleteRecordFile();
@@ -195,9 +195,9 @@ namespace MSNPSharp
                                             ms.Write(data, 0, read);
                                         }
                                         stream.Close();
-                                        AddressBook.Profile.Photo.DisplayImage = Convert.ToBase64String(ms.ToArray(), Base64FormattingOptions.InsertLineBreaks);
+                                        AddressBook.Profile.Photo.DisplayImage = ms;
                                     }
-                                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(new MemoryStream(Convert.FromBase64String(AddressBook.Profile.Photo.DisplayImage)));
+                                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
                                     DisplayImage displayImage = new DisplayImage();
                                     displayImage.Image = fileImage;
                                     
