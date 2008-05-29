@@ -257,10 +257,7 @@ namespace MSNPSharp
         {
             get
             {
-                if (base.Name == null)
-                    return base.Mail;
-                else
-                    return base.Name;
+                return (base.Name == null) ? NickName : base.Name;
             }
             set
             {
@@ -270,6 +267,16 @@ namespace MSNPSharp
                 }
             }
         }
+
+        string nickName;
+        public string NickName
+        {
+            get
+            {
+                return nickName;
+            }
+        }
+
 
         #region Profile datafields
         bool validProfile = false;
@@ -525,8 +532,8 @@ namespace MSNPSharp
             string country, string postalCode, string gender,
             string kid, string age, string birthday,
             string wallet, string sid, string kv,
-            string MSPAuth, IPAddress clientIP, int clientPort,
-            string displayName)
+            string mspAuth, IPAddress clientIP, int clientPort,
+            string nick)
         {
             LoginTime = loginTime;
             EmailEnabled = emailEnabled;
@@ -543,13 +550,13 @@ namespace MSNPSharp
             Wallet = wallet;
             Sid = sid;
             KV = kv;
-            this.MSPAuth = MSPAuth;
+            MSPAuth = mspAuth;
             ClientIP = clientIP;
             ClientPort = clientPort;
+            nickName = nick;
 
-            SetName(displayName);
+            validProfile = true;
 
-            this.validProfile = true;
             if (ProfileReceived != null)
                 ProfileReceived(this, new EventArgs());
         }

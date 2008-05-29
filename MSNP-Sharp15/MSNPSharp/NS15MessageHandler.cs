@@ -997,19 +997,18 @@ namespace MSNPSharp
                 abSynchronized = true;
                 initialadlcount = 0;
 
-                // Set my display name
-                string mydispName = contactService.AddressBook.Profile.DisplayName;
-                if (mydispName != String.Empty)
-                {
-                    owner.Name = mydispName;
-                }
+                // Set my display name and personal status
+                string mydispName = String.IsNullOrEmpty(contactService.AddressBook.Profile.DisplayName) ? owner.NickName : contactService.AddressBook.Profile.DisplayName;
+                PersonalMessage pm = new PersonalMessage(contactService.AddressBook.Profile.PersonalMessage, MediaType.None, null);
+                owner.SetName(mydispName);
+                owner.SetPersonalMessage(pm);
+
+                owner.Name = mydispName; // Send PRP command, but no storage request.
 
                 if (AutoSynchronize == true)
                 {
                     OnSignedIn();
-
-                    PersonalMessage pm = new PersonalMessage(contactService.AddressBook.Profile.PersonalMessage, MediaType.None, null);
-                    owner.PersonalMessage = pm;
+                    owner.PersonalMessage = pm; // Send UUX command, but no storage request.
                 }
 
                 // no contacts are sent so we are done synchronizing
