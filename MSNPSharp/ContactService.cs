@@ -54,14 +54,6 @@ namespace MSNPSharp
             }
         }
 
-        public OwnerProfile OwnerProfile
-        {
-            get
-            {
-                return AddressBook.Profile;
-            }
-        }
-
         /// <summary>
         /// Preferred host of the contact service.
         /// </summary>
@@ -1374,7 +1366,7 @@ namespace MSNPSharp
         /// <summary>
         /// Get my profile. Display name, personal status and display photo.
         /// </summary>
-        public OwnerProfile GetProfile()
+        internal OwnerProfile GetProfile()
         {
             try
             {
@@ -1459,7 +1451,7 @@ namespace MSNPSharp
             return AddressBook.Profile;
         }
 
-        public void UpdateProfile(string displayName, string personalStatus)
+        internal void UpdateProfile(string displayName, string personalStatus)
         {
             OwnerProfile profile = AddressBook.Profile;
 

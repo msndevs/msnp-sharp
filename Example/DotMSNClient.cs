@@ -704,7 +704,7 @@ namespace MSNPSharpClient
         }
         void Nameserver_ContactOffline(object sender, ContactEventArgs e)
         {
-            Invoke(new ContactChangedEventHandler(ContactOnlineOfline),sender, e);
+            Invoke(new ContactChangedEventHandler(ContactOnlineOfline), sender, e);
         }
 
         void ContactOnlineOfline(object sender, ContactEventArgs e)
@@ -919,7 +919,7 @@ namespace MSNPSharpClient
             loginButton.Tag = 2;
             loginButton.Text = "Sign off";
             pnlNameAndPM.Visible = true;
-            
+
             messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
             Invoke(new UpdateContactlistDelegate(UpdateContactlist));
@@ -1298,7 +1298,7 @@ namespace MSNPSharpClient
                     }
                     else
                     {
-                        contact.IsMessengerUser = false;                        
+                        contact.IsMessengerUser = false;
                     }
                 }
             };
@@ -1568,7 +1568,7 @@ namespace MSNPSharpClient
             Application.DoEvents();
             System.Threading.Thread.Sleep(500);
 
-            SortByGroup();            
+            SortByGroup();
         }
 
         private void btnAddNew_Click(object sender, EventArgs e)
@@ -1645,11 +1645,14 @@ namespace MSNPSharpClient
 
         private void lblName_Leave(object sender, EventArgs e)
         {
-            if (messenger.Nameserver.ContactService.OwnerProfile.DisplayName != lblName.Text ||
-                messenger.Nameserver.ContactService.OwnerProfile.PersonalMessage != lblPM.Text)
-            {
-                messenger.Nameserver.ContactService.UpdateProfile(lblName.Text, lblPM.Text);
-            }
-        }        
+            string dn = lblName.Text;
+            string pm = lblPM.Text;
+
+            if (dn != messenger.Nameserver.Owner.Name)
+                messenger.Nameserver.Owner.Name = dn;
+
+            if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
+                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null);
+        }
     }
 }

@@ -1009,7 +1009,6 @@ namespace MSNPSharp
                     OnSignedIn();
 
                     PersonalMessage pm = new PersonalMessage(contactService.AddressBook.Profile.PersonalMessage, MediaType.None, null);
-                    SetPersonalMessage(pm);
                     owner.PersonalMessage = pm;
                 }
 
@@ -1170,6 +1169,8 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Not a valid owner");
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+
+            ContactService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
 
         public virtual void SetPersonalMessage(PersonalMessage pmsg)
@@ -1186,6 +1187,8 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSMessage("UUX", new string[] { Convert.ToString(size) }));
             MessageProcessor.SendMessage(msg);
+
+            ContactService.UpdateProfile(Owner.Name, pmsg.Message);
         }
 
         /// <summary>
