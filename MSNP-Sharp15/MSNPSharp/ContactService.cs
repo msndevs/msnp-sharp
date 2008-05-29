@@ -765,7 +765,7 @@ namespace MSNPSharp
 
         #region UpdateContact
 
-        internal void UpdateContact(Contact contact, string displayName, bool isMessengerUser)
+        internal void UpdateContact(Contact contact, string displayName, bool isMessengerUser, string comment)
         {
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
@@ -794,6 +794,9 @@ namespace MSNPSharp
                         contact.SetName(displayName);
                         AddressBook.AddressbookContacts[contact.Guid].DisplayName = displayName;
                     }
+
+                    contact.SetComment(comment);
+                    AddressBook.AddressbookContacts[contact.Guid].Comment = comment;
                 }
                 else if (e.Error != null)
                 {
@@ -837,6 +840,12 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo.annotations = new Annotation[] { new Annotation() };
                 request.contacts[0].contactInfo.annotations[0].Name = "AB.NickName";
                 request.contacts[0].contactInfo.annotations[0].Value = displayName;
+            }
+
+            if (comment != null && comment != contact.Comment)
+            {
+                propertiesChanged.Add("Comment");
+                request.contacts[0].contactInfo.comment = comment;
             }
 
             if (propertiesChanged.Count > 0)

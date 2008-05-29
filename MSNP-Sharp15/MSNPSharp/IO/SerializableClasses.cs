@@ -205,7 +205,21 @@ namespace MSNPSharp.IO
                 groups = value;
             }
         }
-    } 
+
+        private string comment;
+        public string Comment
+        {
+            get
+            {
+                return comment;
+            }
+            set
+            {
+                comment = value;
+            }
+        }
+
+    }
     #endregion
 
     #region GroupInfo
