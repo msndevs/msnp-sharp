@@ -476,11 +476,6 @@ namespace MSNPSharp.IO
 
                                     if (!MyProperties.ContainsKey("roamliveproperties"))
                                         MyProperties["roamliveproperties"] = "1";
-
-                                    if (!MyProperties.ContainsKey("personalmessage"))
-                                        Profile.PersonalMessage = Profile.DisplayName;
-                                    else
-                                        Profile.PersonalMessage = MyProperties["personalmessage"];
                                 }
 
                                 if (AddressbookContacts.ContainsKey(ci.Guid))

@@ -129,7 +129,7 @@ namespace MSNPSharp
                     abRequest("Initial",
                         delegate
                         {
-                            #region Get my profile (display name, personal status, photos etc)
+                            #region Get my profile (display name, personal status, display photo)
                             try
                             {
                                 StorageService storageService = new StorageService();
@@ -165,7 +165,7 @@ namespace MSNPSharp
                                     AddressBook.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
                                 }
 
-                                // Display image
+                                // Display photo
                                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                                 {
                                     string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
@@ -180,8 +180,7 @@ namespace MSNPSharp
                                             url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
                                         }
 
-
-                                        // Ha ha... Don't urlencode t= :))
+                                        // Don't urlencode t= :))
                                         Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
 
                                         HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
@@ -197,14 +196,15 @@ namespace MSNPSharp
                                         stream.Close();
                                         AddressBook.Profile.Photo.DisplayImage = ms;
                                     }
+
                                     System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
                                     DisplayImage displayImage = new DisplayImage();
                                     displayImage.Image = fileImage;
-                                    
+
                                     nsMessageHandler.Owner.DisplayImage = displayImage;
                                 }
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
                                 if (Settings.TraceSwitch.TraceError)
                                     Trace.WriteLine(ex.Message);
@@ -216,7 +216,6 @@ namespace MSNPSharp
 
                             nsMessageHandler.OnInitialSyncDone(ConstructADLString(AddressBook.MembershipContacts.Values, true, MSNLists.None));
                         }
-
                     );
                 }
             );
