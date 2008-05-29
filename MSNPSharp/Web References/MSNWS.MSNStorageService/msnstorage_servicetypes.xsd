@@ -98,8 +98,8 @@
               <xsd:complexType>
                 <xsd:sequence>
                   <xsd:element default="Update" name="FreeText" type="xsd:string" />
-                  <xsd:element minOccurs="0" default="Update" name="DisplayName" type="xsd:string" />
-                  <xsd:element minOccurs="0" default="Update" name="PersonalStatus" type="xsd:string" />
+                  <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
+                  <xsd:element minOccurs="0" name="PersonalStatus" type="xsd:string" />
                   <xsd:element default="0" name="Flags" type="xsd:int" />
                 </xsd:sequence>
               </xsd:complexType>

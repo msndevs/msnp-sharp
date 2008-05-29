@@ -182,6 +182,8 @@ namespace MSNPSharpClient
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
             this.pnlNameAndPM = new System.Windows.Forms.Panel();
+            this.lblPM = new System.Windows.Forms.TextBox();
+            this.lblName = new System.Windows.Forms.TextBox();
             this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.accountTextBox = new System.Windows.Forms.TextBox();
             this.loginButton = new System.Windows.Forms.Button();
@@ -200,8 +202,6 @@ namespace MSNPSharpClient
             this.toolStripDeleteGroup = new System.Windows.Forms.ToolStripMenuItem();
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.pictureBox = new System.Windows.Forms.PictureBox();
-            this.lblName = new System.Windows.Forms.TextBox();
-            this.lblPM = new System.Windows.Forms.TextBox();
             this.ListPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
@@ -483,6 +483,22 @@ namespace MSNPSharpClient
             this.pnlNameAndPM.TabIndex = 1;
             this.pnlNameAndPM.Visible = false;
             // 
+            // lblPM
+            // 
+            this.lblPM.Location = new System.Drawing.Point(4, 25);
+            this.lblPM.Name = "lblPM";
+            this.lblPM.Size = new System.Drawing.Size(197, 20);
+            this.lblPM.TabIndex = 1;
+            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
+            // lblName
+            // 
+            this.lblName.Location = new System.Drawing.Point(4, 2);
+            this.lblName.Name = "lblName";
+            this.lblName.Size = new System.Drawing.Size(197, 20);
+            this.lblName.TabIndex = 0;
+            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
             // displayImageBox
             // 
             this.displayImageBox.BackColor = System.Drawing.Color.White;
@@ -638,22 +654,6 @@ namespace MSNPSharpClient
             this.pictureBox.Size = new System.Drawing.Size(539, 88);
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
-            // 
-            // lblName
-            // 
-            this.lblName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
-            this.lblName.Location = new System.Drawing.Point(4, 2);
-            this.lblName.Name = "lblName";
-            this.lblName.Size = new System.Drawing.Size(197, 20);
-            this.lblName.TabIndex = 0;
-            // 
-            // lblPM
-            // 
-            this.lblPM.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
-            this.lblPM.Location = new System.Drawing.Point(4, 25);
-            this.lblPM.Name = "lblPM";
-            this.lblPM.Size = new System.Drawing.Size(197, 20);
-            this.lblPM.TabIndex = 1;
             // 
             // ClientForm
             // 
@@ -1643,6 +1643,13 @@ namespace MSNPSharpClient
             }
         }
 
-        
+        private void lblName_Leave(object sender, EventArgs e)
+        {
+            if (messenger.Nameserver.ContactService.OwnerProfile.DisplayName != lblName.Text ||
+                messenger.Nameserver.ContactService.OwnerProfile.PersonalMessage != lblPM.Text)
+            {
+                messenger.Nameserver.ContactService.UpdateProfile(lblName.Text, lblPM.Text);
+            }
+        }        
     }
 }

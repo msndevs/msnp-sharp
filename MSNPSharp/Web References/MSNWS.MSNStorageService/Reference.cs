@@ -686,8 +686,6 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         
         public UpdateProfileRequestTypeProfileExpressionProfile() {
             this.freeTextField = "Update";
-            this.displayNameField = "Update";
-            this.personalStatusField = "Update";
             this.flagsField = 0;
         }
         
@@ -702,7 +700,6 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute("Update")]
         public string DisplayName {
             get {
                 return this.displayNameField;
@@ -713,7 +710,6 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute("Update")]
         public string PersonalStatus {
             get {
                 return this.personalStatusField;
