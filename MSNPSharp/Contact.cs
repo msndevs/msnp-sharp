@@ -135,6 +135,7 @@ namespace MSNPSharp
 
         bool hasBlog;
         bool isMessengerUser = false;
+        string comment = string.Empty;
 
         ClientType clienttype = ClientType.PassportMember;
 
@@ -363,11 +364,30 @@ namespace MSNPSharp
                 {
                     if (IsMessengerUser != value)
                     {
-                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, value);
+                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, value, Comment);
                     }
                 }
             }
         }
+
+        public string Comment
+        {
+            get
+            {
+                return comment;
+            }
+            set
+            {
+                if (NSMessageHandler != null && Guid != Guid.Empty)
+                {
+                    if (Comment != value)
+                    {
+                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, IsMessengerUser, value);
+                    }
+                }
+            }
+        }
+
 
         #region Internal setters
         internal void SetName(string newName)
@@ -542,6 +562,11 @@ namespace MSNPSharp
         internal void SetIsMessengerUser(bool isMessengerEnabled)
         {
             isMessengerUser = isMessengerEnabled;
+        }
+
+        internal void SetComment(string note)
+        {
+            comment = note;
         }
 
         #endregion

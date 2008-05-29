@@ -426,6 +426,7 @@ namespace MSNPSharp.IO
                                 ci.DisplayName = displayname;
                                 ci.IsMessengerUser = ismessengeruser;
                                 ci.LastChanged = contactType.lastChange;
+                                ci.Comment = contactType.contactInfo.comment;
 
                                 if (null != contactType.contactInfo.annotations)
                                 {
@@ -543,6 +544,7 @@ namespace MSNPSharp.IO
                     Contact contact = nsMessageHandler.ContactList.GetContact(abci.Account);
                     contact.SetGuid(abci.Guid);
                     contact.SetClientType(abci.Type);
+                    contact.SetComment(abci.Comment);
                     contact.SetIsMessengerUser(abci.IsMessengerUser);
                     if (abci.IsMessengerUser)
                         contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
