@@ -518,6 +518,7 @@ namespace MSNPSharpClient
             this.accountTextBox.Size = new System.Drawing.Size(198, 20);
             this.accountTextBox.TabIndex = 1;
             this.accountTextBox.Text = "msnpsharp@live.cn";
+            this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // loginButton
             // 
@@ -538,6 +539,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.Size = new System.Drawing.Size(135, 20);
             this.passwordTextBox.TabIndex = 2;
             this.passwordTextBox.Text = "123456";
+            this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // comboStatus
             // 
@@ -867,6 +869,14 @@ namespace MSNPSharpClient
             }
         }
 
+        private void login_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if ((e.KeyChar == '\r') || (e.KeyChar == '\r'))
+            {
+                loginButton.PerformClick();
+            }
+        }
+
 
         private void comboStatus_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -1151,7 +1161,7 @@ namespace MSNPSharpClient
                 propertyGrid.SelectedObject = selectedContact;
                 if (selectedContact.Online)
                 {
-                    sendMessageToolStripMenuItem_Click(this, EventArgs.Empty);
+                    sendIMMenuItem.PerformClick();
                 }
             }
         }
@@ -1654,5 +1664,6 @@ namespace MSNPSharpClient
             if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
                 messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null);
         }
+
     }
 }
