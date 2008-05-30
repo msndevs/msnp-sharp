@@ -125,6 +125,7 @@ namespace MSNPSharp
         public string Authenticate(string nonce, out Dictionary<Iniproperties, string> tickets)
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
+            securService.Timeout = 60000;
             securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
@@ -165,7 +166,9 @@ namespace MSNPSharp
             catch (Exception ex)
             {
                 MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
-                sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
+                if (securService.pp != null)
+                    sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
+
                 throw sexp;
             }
 

@@ -55,7 +55,7 @@ namespace MSNPSharp.IO
         {
             foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
             {
-                Merge(membershipResult);
+                Merge(membershipResult, nsMessageHandler);
             }
             foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
             {
@@ -177,10 +177,11 @@ namespace MSNPSharp.IO
         }
 
         /// <summary>
-        /// Merge changes into membership list
+        /// Merge changes into membership list and add membership contacts
         /// </summary>
         /// <param name="findMembership"></param>
-        public void Merge(FindMembershipResultType findMembership)
+        /// <param name="nsMessageHandler"></param>
+        public void Merge(FindMembershipResultType findMembership, NSMessageHandler nsMessageHandler)
         {
             if (null != findMembership && null != findMembership.Services)
             {
@@ -255,6 +256,18 @@ namespace MSNPSharp.IO
                             MembershipLastChange = currentService.LastChange;
                         }
                     }
+                }
+            }
+
+            // Create Messenger Contacts
+            if (MembershipContacts.Count > 0)
+            {
+                foreach (MembershipContactInfo msci in MembershipContacts.Values)
+                {
+                    Contact contact = nsMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName);
+                    contact.SetClientType(msci.Type);
+                    contact.SetLists(GetMSNLists(msci.Account));
+                    contact.NSMessageHandler = nsMessageHandler;
                 }
             }
         }
@@ -379,7 +392,7 @@ namespace MSNPSharp.IO
         }
 
         /// <summary>
-        /// Merge changes to addressbook and add contacts
+        /// Merge changes to addressbook and add address book contacts
         /// </summary>
         /// <param name="forwardList"></param>
         /// <param name="nsMessageHandler"></param>
@@ -522,18 +535,6 @@ namespace MSNPSharp.IO
             foreach (GroupInfo group in Groups.Values)
             {
                 nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, nsMessageHandler));
-            }
-
-            // Create Messenger Contacts
-            if (MembershipContacts.Count > 0)
-            {
-                foreach (MembershipContactInfo msci in MembershipContacts.Values)
-                {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName);
-                    contact.SetClientType(msci.Type);
-                    contact.SetLists(GetMSNLists(msci.Account));
-                    contact.NSMessageHandler = nsMessageHandler;
-                }
             }
 
             // Create the Forward List and Email Contacts
