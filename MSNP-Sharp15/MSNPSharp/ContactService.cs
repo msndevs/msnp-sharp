@@ -302,7 +302,7 @@ namespace MSNPSharp
 
         private void refreshMS(FindMembershipResultType findMembership)
         {
-            AddressBook.Merge(findMembership);
+            AddressBook.Merge(findMembership, nsMessageHandler);
             Deltas.MembershipDeltas.Add(findMembership);
             Deltas.Save();
         }
