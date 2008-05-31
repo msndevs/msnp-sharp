@@ -1655,6 +1655,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         ContactPhoneFax,
+        
+        /// <remarks/>
+        Personal2,
     }
     
     /// <remarks/>

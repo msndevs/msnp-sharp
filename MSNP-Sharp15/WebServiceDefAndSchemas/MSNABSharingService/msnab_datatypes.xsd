@@ -352,6 +352,7 @@
       <xsd:enumeration value="ContactPhonePager" />
       <xsd:enumeration value="ContactPhoneOther" />
       <xsd:enumeration value="ContactPhoneFax" />
+      <xsd:enumeration value="Personal2" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:complexType name="contactLocationType">
