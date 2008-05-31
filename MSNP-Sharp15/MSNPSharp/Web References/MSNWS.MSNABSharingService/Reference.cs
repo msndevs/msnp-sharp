@@ -893,6 +893,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string lastNameField;
         
+        private string suffixField;
+        
+        private string nameTitleField;
+        
         private string passportNameField;
         
         private bool isPassportNameHiddenField;
@@ -1098,6 +1102,26 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.lastNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Suffix {
+            get {
+                return this.suffixField;
+            }
+            set {
+                this.suffixField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string NameTitle {
+            get {
+                return this.nameTitleField;
+            }
+            set {
+                this.nameTitleField = value;
             }
         }
         
@@ -1658,6 +1682,15 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         Personal2,
+        
+        /// <remarks/>
+        Business2,
+        
+        /// <remarks/>
+        BusinessFax,
+        
+        /// <remarks/>
+        BusinessMobile,
     }
     
     /// <remarks/>
@@ -1681,6 +1714,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private string countryField;
         
         private string postalCodeField;
+        
+        private string departmentField;
         
         private string changesField;
         
@@ -1752,6 +1787,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.postalCodeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Department {
+            get {
+                return this.departmentField;
+            }
+            set {
+                this.departmentField = value;
             }
         }
         

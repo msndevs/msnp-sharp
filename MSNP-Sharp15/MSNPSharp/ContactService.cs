@@ -1461,7 +1461,7 @@ namespace MSNPSharp
                 storageService.UpdateProfileCompleted += delegate(object sender, UpdateProfileCompletedEventArgs e)
                 {
                     storageService = sender as StorageService;
-                    if (!e.Cancelled || e.Error == null)
+                    if (!e.Cancelled && e.Error == null)
                     {
                         // And get profile again
                         AddressBook.Profile = GetProfile();

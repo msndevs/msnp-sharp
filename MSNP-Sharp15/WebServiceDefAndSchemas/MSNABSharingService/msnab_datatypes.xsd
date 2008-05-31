@@ -278,6 +278,8 @@
       <xsd:element minOccurs="0" name="firstName" type="xsd:string" />
       <xsd:element minOccurs="0" name="MiddleName" type="xsd:string" />
       <xsd:element minOccurs="0" name="lastName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Suffix" type="xsd:string" />
+      <xsd:element minOccurs="0" name="NameTitle" type="xsd:string" />
       <xsd:element minOccurs="0" name="passportName" type="xsd:string" />
       <xsd:element minOccurs="0" name="IsPassportNameHidden" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="displayName" type="xsd:string" />
@@ -353,6 +355,9 @@
       <xsd:enumeration value="ContactPhoneOther" />
       <xsd:enumeration value="ContactPhoneFax" />
       <xsd:enumeration value="Personal2" />
+      <xsd:enumeration value="Business2" />
+      <xsd:enumeration value="BusinessFax" />
+      <xsd:enumeration value="BusinessMobile" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:complexType name="contactLocationType">
@@ -364,6 +369,7 @@
       <xsd:element name="state" type="xsd:string" />
       <xsd:element name="country" type="xsd:string" />
       <xsd:element name="postalCode" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Department" type="xsd:string" />
       <xsd:element name="Changes" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
