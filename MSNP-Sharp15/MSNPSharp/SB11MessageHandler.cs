@@ -178,7 +178,7 @@ namespace MSNPSharp
 		/// <summary>
 		/// The hash identifier used to define this switchboard session.
 		/// </summary>
-		protected string			SessionHash
+		internal string			SessionHash
 		{
 			get { return sessionHash; }
 			set { sessionHash = value;}
@@ -524,6 +524,15 @@ namespace MSNPSharp
 			if(MessageProcessor != null)
 				((SocketMessageProcessor)MessageProcessor).Disconnect();
 		}
+
+        /// <summary>
+        /// Debug string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return SessionHash;
+        }
 
 		#endregion
 
