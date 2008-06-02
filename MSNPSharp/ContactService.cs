@@ -120,6 +120,7 @@ namespace MSNPSharp
             }
 
             AddressBook.Merge(Deltas, nsMessageHandler);
+            AddressBook.Merge(new FindMembershipResultType(), nsMessageHandler);
 
             msRequest(
                 "Initial",
