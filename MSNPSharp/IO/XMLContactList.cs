@@ -572,6 +572,9 @@ namespace MSNPSharp.IO
         #region Profile
         private OwnerProfile profile = new OwnerProfile();
 
+        /// <summary>
+        /// Profile of current user.
+        /// </summary>
         public OwnerProfile Profile
         {
             get { return profile; }
@@ -582,6 +585,10 @@ namespace MSNPSharp.IO
 
         #region Overrides
 
+        /// <summary>
+        /// Save the <see cref="XMLContactList"/> into a specified file.
+        /// </summary>
+        /// <param name="filename"></param>
         public override void Save(string filename)
         {
             Version = Properties.Resources.XMLContactListVersion;

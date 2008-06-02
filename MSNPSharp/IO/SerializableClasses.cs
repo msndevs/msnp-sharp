@@ -223,6 +223,10 @@ namespace MSNPSharp.IO
     #endregion
 
     #region GroupInfo
+
+    /// <summary>
+    /// Group info for address book contacts
+    /// </summary>
     [Serializable]
     public class GroupInfo
     {
@@ -240,6 +244,9 @@ namespace MSNPSharp.IO
         }
 
         private string name;
+        /// <summary>
+        /// Group name.
+        /// </summary>
         public string Name
         {
             get
@@ -261,6 +268,9 @@ namespace MSNPSharp.IO
     #endregion
 
     #region Service
+    /// <summary>
+    /// Membership service
+    /// </summary>
     [Serializable]
     public class Service
     {
@@ -335,13 +345,18 @@ namespace MSNPSharp.IO
         private DateTime dateModified;
         private string resourceID = null;
 
+        /// <summary>
+        /// Last modify time of the resource
+        /// </summary>
         public DateTime DateModified
         {
             get { return dateModified; }
             set { dateModified = value; }
         }
 
-
+        /// <summary>
+        /// Identifier of the resource
+        /// </summary>
         public string ResourceID
         {
             get { return resourceID; }
@@ -383,7 +398,7 @@ namespace MSNPSharp.IO
         private ProfilePhoto photo = new ProfilePhoto();
 
         /// <summary>
-        /// DisplayImage of owner
+        /// DisplayImage of owner.
         /// </summary>
         public ProfilePhoto Photo
         {
@@ -391,6 +406,9 @@ namespace MSNPSharp.IO
             set { photo = value; }
         }
 
+        /// <summary>
+        /// CID of owner.
+        /// </summary>
         public string CID
         {
             get { return cID; }
@@ -406,6 +424,9 @@ namespace MSNPSharp.IO
             set { displayName = value; }
         }
 
+        /// <summary>
+        /// Personal description of owner.
+        /// </summary>
         public string PersonalMessage
         {
             get { return personalMessage; }
