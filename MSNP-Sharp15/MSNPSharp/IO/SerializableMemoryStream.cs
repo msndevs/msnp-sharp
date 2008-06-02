@@ -7,6 +7,9 @@ using System.Xml;
 
 namespace MSNPSharp.IO
 {
+    /// <summary>
+    /// Serializable MemoryStream
+    /// </summary>
     [XmlRoot("Stream"), Serializable]
     public class SerializableMemoryStream : MemoryStream,IXmlSerializable
     {

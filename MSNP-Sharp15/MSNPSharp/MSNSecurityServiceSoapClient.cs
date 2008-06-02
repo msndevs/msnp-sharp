@@ -13,13 +13,14 @@ namespace MSNPSharp.SOAP
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
 
     /// <summary>
-    /// Why this happens??? Just go and ask M$ why they just ignore to send a ContentType header!
+    /// Just go and ask M$ why they just send a ContentType header as "text/html" instead of "text/xml"!
     /// </summary>
     public class MSNSecurityServiceSoapClient : SecurityTokenService
     {
         /// <summary>
         /// Override GetWebResponse is just enough. If you want to know why...use Reflector to see
         /// how SoapHttpClientProtocol class is implemented in the framework.
+        /// <remarks>This class migth not needed in Linux with mono.</remarks>
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
