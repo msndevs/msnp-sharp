@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns="http://www.msn.com/webservices/AddressBook" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:complexType name="HandleType">
     <xsd:sequence>
       <xsd:element name="Id" type="xsd:integer" />
@@ -471,5 +471,26 @@
       </xsd:element>
       <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
     </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="DynamicItem">
+    <xsd:sequence>
+      <xsd:element name="Type" type="xsd:string" />
+      <xsd:element name="Deleted" type="xsd:boolean" />
+      <xsd:element name="LastChanged" type="xsd:dateTime" />
+      <xsd:element name="PassportName" type="xsd:string" />
+      <xsd:element name="PassportId" type="xsd:string" />
+      <xsd:element name="CID" type="xsd:string" />
+      <xsd:element name="SpaceStatus" type="xsd:string" />
+      <xsd:element name="SpaceLastChanged" type="xsd:dateTime" />
+      <xsd:element name="SpaceLastViewed" type="xsd:dateTime" />
+      <xsd:element name="SpaceGleam" type="xsd:boolean" />
+      <xsd:element name="ProfileStatus" type="xsd:string" />
+      <xsd:element name="ProfileGleam" type="xsd:boolean" />
+      <xsd:element name="ContactProfileStatus" type="xsd:string" />
+      <xsd:element name="ContactProfileLastChanged" type="xsd:dateTime" />
+      <xsd:element name="ContactProfileLastViewed" type="xsd:dateTime" />
+      <xsd:element name="Changes" type="xsd:anyType" />
+    </xsd:sequence>
+    <xsd:attribute name="type" />
   </xsd:complexType>
 </xsd:schema>

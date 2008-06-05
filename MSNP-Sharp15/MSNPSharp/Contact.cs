@@ -135,12 +135,13 @@ namespace MSNPSharp
 
         bool hasBlog;
         bool isMessengerUser = false;
+        bool dynamicChanged = false;
         string comment = string.Empty;
 
         ClientType clienttype = ClientType.PassportMember;
 
         [NonSerialized]
-        IMessageHandler nsMessageHandler;
+        NSMessageHandler nsMessageHandler;
 
         ArrayList contactGroups = new ArrayList();
         MSNLists lists = MSNLists.None;
@@ -244,6 +245,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The amount of OIMs sent in a session.
+        /// </summary>
         internal int OIMCount
         {
             get
@@ -277,6 +281,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The contactId of contact, NOT CID.
+        /// </summary>
         public Guid Guid
         {
             get
@@ -313,7 +320,7 @@ namespace MSNPSharp
         {
             get
             {
-                return (NSMessageHandler)nsMessageHandler;
+                return nsMessageHandler;
             }
             set
             {
@@ -352,6 +359,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Indicates whether the contact is a mail contact or a messenger buddy.
+        /// </summary>
         public bool IsMessengerUser
         {
             get
@@ -385,6 +395,17 @@ namespace MSNPSharp
                         NSMessageHandler.ContactService.UpdateContact(this, String.Empty, IsMessengerUser, value);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// When DynamicChanged = true, the official client will show a gleam before the contact.
+        /// </summary>
+        public bool DynamicChanged
+        {
+            get 
+            { 
+                return dynamicChanged; 
             }
         }
 
@@ -567,6 +588,15 @@ namespace MSNPSharp
         internal void SetComment(string note)
         {
             comment = note;
+        }
+
+        internal void SetdynamicItemChanged(bool changed)
+        {
+            dynamicChanged = changed;
+            if (mail != null && changed == false)
+            {
+                nsMessageHandler.ContactService.AddressBook.DynamicItems.Remove(mail);
+            }
         }
 
         #endregion

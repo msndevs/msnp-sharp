@@ -6,6 +6,7 @@ namespace MSNPSharp.IO
 {
     using MemberRole = MSNPSharp.MSNWS.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNWS.MSNABSharingService.ServiceFilterType;
+using System.Xml;
 
     #region Contact Types
 
@@ -221,6 +222,182 @@ namespace MSNPSharp.IO
 
     }
     #endregion
+
+    #region DynamicItem
+
+    [Serializable]
+    public enum DynamicItemType
+    {
+        PassportDynamicItem
+    }
+
+
+    /// <summary>
+    /// DynamicItem indicates whether the contact space or profile has been updated
+    /// </summary>
+    [Serializable]
+    public class DynamicItem
+    {
+        private string cID;
+        private bool spaceGleam = false;
+        private bool profileGleam = false;
+        private ClientType type = ClientType.PassportMember;
+        private string passportName;
+        private DynamicItemType itemType;
+        private DateTime lastChanged;
+        private DateTime spaceLastChanged;
+        private DateTime spaceLastViewed;
+        private DateTime profileLastChanged;
+        private DateTime liveContactLastChanged;
+
+        public DynamicItem() { }
+        /// <summary>
+        /// Convert the DynamicItem object gets from the addressbook service into DynamicItem class.
+        /// </summary>
+        /// <param name="dynodes"></param>
+        public DynamicItem(XmlNode[] dynodes)
+        {
+            foreach (XmlNode node in dynodes)
+            {
+                if (node is XmlAttribute && node.Name == "xsi:type")
+                {
+                    if (Enum.IsDefined(typeof(DynamicItemType), node.Value))
+                    {
+                        ItemType = (DynamicItemType)Enum.Parse(typeof(DynamicItemType), node.Value);
+                    }
+                    continue;
+                }
+                switch (node.Name)
+                {
+                    case "CID":
+                        CID = node.InnerText;
+                        break;
+                    case "SpaceGleam":
+                        SpaceGleam = Boolean.Parse(node.InnerText);
+                        break;
+                    case "ProfileGleam":
+                        ProfileGleam = Boolean.Parse(node.InnerText);
+                        break;
+                    case "Type":
+                        if (node.InnerText == "Passport")
+                            Type = ClientType.PassportMember;
+                        break;
+                    case "PassportName":
+                        PassportName = node.InnerText;
+                        break;
+                    case "LastChanged":
+                        LastChanged = XmlConvert.ToDateTime(node.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
+                        break;
+                    case "SpaceLastChanged":
+                        SpaceLastChanged = XmlConvert.ToDateTime(node.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
+                        break;
+                    case "SpaceLastViewed":
+                        SpaceLastViewed = XmlConvert.ToDateTime(node.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
+                        break;
+                    case "ProfileLastChanged":
+                        ProfileLastChanged = XmlConvert.ToDateTime(node.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
+                        break;
+                    case "LiveContactLastChanged":
+                        ProfileLastChanged = XmlConvert.ToDateTime(node.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
+                        break;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// CID of the contact
+        /// </summary>
+        public string CID
+        {
+            get { return cID; }
+            set { cID = value; }
+        }
+
+        /// <summary>
+        /// Whether the specified contact's space was changed
+        /// </summary>
+        public bool SpaceGleam
+        {
+            get { return spaceGleam; }
+            set { spaceGleam = value; }
+        }
+
+        /// <summary>
+        /// Whether the specified contact's profile was changed
+        /// </summary>
+        public bool ProfileGleam
+        {
+            get { return profileGleam; }
+            set { profileGleam = value; }
+        }
+
+        public ClientType Type
+        {
+            get { return type; }
+            set { type = value; }
+        }
+
+        /// <summary>
+        /// DynamicItem type
+        /// </summary>
+        public DynamicItemType ItemType
+        {
+            get { return itemType; }
+            set { itemType = value; }
+        }
+
+        /// <summary>
+        /// Contact account
+        /// </summary>
+        public string PassportName
+        {
+            get { return passportName; }
+            set { passportName = value; }
+        }
+
+        public DateTime LastChanged
+        {
+            get { return lastChanged; }
+            set { lastChanged = value; }
+        }
+
+        /// <summary>
+        /// Last modify time of the contact's space.
+        /// </summary>
+        public DateTime SpaceLastChanged
+        {
+            get { return spaceLastChanged; }
+            set { spaceLastChanged = value; }
+        }
+
+        /// <summary>
+        /// Last view time of the contact's space.
+        /// </summary>
+        public DateTime SpaceLastViewed
+        {
+            get { return spaceLastViewed; }
+            set { spaceLastViewed = value; }
+        }
+
+
+        public DateTime ProfileLastChanged
+        {
+            get { return profileLastChanged; }
+            set { profileLastChanged = value; }
+        }
+
+
+        public DateTime LiveContactLastChanged
+        {
+            get { return liveContactLastChanged; }
+            set { liveContactLastChanged = value; }
+        }
+
+    }
+
+    #endregion
+
 
     #region GroupInfo
 

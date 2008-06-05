@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns="http://www.msn.com/webservices/AddressBook" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:include schemaLocation="msnab_datatypes.xsd" />
   <xsd:element name="ABApplicationHeader">
     <xsd:complexType>
@@ -136,7 +136,7 @@
       <xsd:element minOccurs="0" name="DynamicItems">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element name="DynamicItems" type="xsd:anyType" />
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="DynamicItem" type="xsd:anyType" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>

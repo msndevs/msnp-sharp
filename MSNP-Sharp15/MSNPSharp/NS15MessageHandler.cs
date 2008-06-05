@@ -469,7 +469,7 @@ namespace MSNPSharp
 
         private ContactService contactService = null;
         private OIMService oimService = null;
-
+        private ContactSpaceService spaceService = null;
 
         /// <summary>
         /// Event handler.
@@ -800,6 +800,7 @@ namespace MSNPSharp
             contactGroups = new ContactGroupList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
+            spaceService = new ContactSpaceService(this);
         }
 
         /// <summary>
@@ -925,12 +926,23 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Offline message service.
+        /// </summary>
         public OIMService OIMService
         {
             get
             {
                 return oimService;
             }
+        }
+
+        /// <summary>
+        /// Contactcard service.
+        /// </summary>
+        public ContactSpaceService SpaceService
+        {
+            get { return spaceService; }
         }
 
         #region Message sending methods

@@ -418,7 +418,7 @@ namespace MSNPSharp
         /// </summary>
         AllExceptBlocked = 1,
         /// <summary>
-        /// ct all messages except those from people on your allow list.
+        /// Reject all messages except those from people on your allow list.
         /// </summary>
         NoneButAllowed = 2
     }
@@ -629,5 +629,15 @@ namespace MSNPSharp
         /// Email member, currently Yahoo!
         /// </summary>
         EmailMember = 32
+    }
+
+    /// <summary>
+    /// Type of profiles that store in msn space.
+    /// </summary>
+    public enum ProfileType
+    {
+        GeneralProfile,
+        PublicProfile,
+        SocialProfile
     }
 }
