@@ -43,6 +43,7 @@
     <Compile Include="ConnectivityException.cs" />
     <Compile Include="ConnectivitySettings.cs" />
     <Compile Include="Contact.cs" />
+    <Compile Include="ContactCard.cs" />
     <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
@@ -123,10 +124,16 @@
     <Compile Include="Core\SBMSGMessage.cs" />
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
+    <Compile Include="ContactSpaceService.cs" />
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
     <Compile Include="ContactService.cs" />
+    <Compile Include="Web References\MSNSPACEWS.MSNSpaceService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -163,6 +170,20 @@
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNSPACEWS.MSNSpaceService\GetXmlFeedResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNSPACEWS.MSNSpaceService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNSPACEWS.MSNSpaceService\space_ws.wsdl" />
+    <None Include="Web References\MSNSPACEWS.MSNSpaceService\space_ws_datatype.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNSPACEWS.MSNSpaceService\space_ws_servicetype.xsd">
+      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\ABContactAddResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
@@ -358,6 +379,17 @@
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNSPACEWS.MSNSpaceService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNSPACEWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>

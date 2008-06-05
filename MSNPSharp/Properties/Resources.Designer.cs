@@ -60,6 +60,24 @@ namespace MSNPSharp.Properties {
             }
         }
         
+        /// <summary>
+        ///   查找类似 CFE80F9D-180F-4399-82AB-413F33A1FA11 的本地化字符串。
+        /// </summary>
+        internal static string ApplicationId {
+            get {
+                return ResourceManager.GetString("ApplicationId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Messenger Client 8.5 的本地化字符串。
+        /// </summary>
+        internal static string ApplicationStrId {
+            get {
+                return ResourceManager.GetString("ApplicationStrId", resourceCulture);
+            }
+        }
+        
         internal static System.Drawing.Bitmap owner {
             get {
                 object obj = ResourceManager.GetObject("owner", resourceCulture);
@@ -68,7 +86,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 2.0.1 的本地化字符串。
+        ///   查找类似 2.0.2 的本地化字符串。
         /// </summary>
         internal static string XMLContactListVersion {
             get {

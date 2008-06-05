@@ -37,6 +37,7 @@ using System.Collections.Generic;
 namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using System.Diagnostics;
 
     /// <summary>
     /// ContactList file maintainer
@@ -51,6 +52,11 @@ namespace MSNPSharp.IO
             return LoadFromFile(filename, nocompress, typeof(XMLContactList)) as XMLContactList;
         }
 
+        /// <summary>
+        /// Merge the deltas list into current AddressBook and MemberShipList.
+        /// </summary>
+        /// <param name="deltas">DeltasList that loads from a mcl file.</param>
+        /// <param name="nsMessageHandler"></param>
         public void Merge(DeltasList deltas, NSMessageHandler nsMessageHandler)
         {
             foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
@@ -281,6 +287,13 @@ namespace MSNPSharp.IO
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
         SerializableDictionary<Guid, AddressbookContactInfo> abcontacts = new SerializableDictionary<Guid, AddressbookContactInfo>(0);
+        SerializableDictionary<string, DynamicItem> dynamicItems = new SerializableDictionary<string, DynamicItem>(0);
+
+        public SerializableDictionary<string, DynamicItem> DynamicItems
+        {
+            get { return dynamicItems; }
+            set { dynamicItems = value; }
+        }
 
         public DateTime AddressbookLastChange
         {
@@ -566,7 +579,42 @@ namespace MSNPSharp.IO
                     }
                 }
             }
+
+            //Update dynamic items
+            string lastacc="";
+            if (forwardList.DynamicItems != null)
+            {
+                foreach (object obj in forwardList.DynamicItems)
+                {
+                    XmlNode[] nodes = obj as XmlNode[];
+                    DynamicItem dyItem = new DynamicItem(nodes);
+                    if (dyItem.PassportName != null && (dyItem.SpaceGleam || dyItem.ProfileGleam))
+                    {
+                        DynamicItems[dyItem.PassportName] = dyItem;
+                        if (nsMessageHandler.ContactList.HasContact(dyItem.PassportName))
+                        {
+                            nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(true);
+                            lastacc = dyItem.PassportName;
+                        }
+                    }
+                }
+            }
+
+            //For testing
+            //if (DynamicItems.Count > 0 && lastacc!="")
+            //{
+            //    nsMessageHandler.SpaceService.GetContactCard(lastacc);
+            //    nsMessageHandler.SpaceService.ContactCardCompleted += delegate(object sender, ContactCardCompletedEventArg arg)
+            //    {
+            //        if (arg.Error != null)
+            //        {
+            //            if (Settings.TraceSwitch.TraceError)
+            //                Trace.WriteLine(arg.Error.Message);
+            //        }
+            //    };
+            //}
         }
+
         #endregion
 
         #region Profile
