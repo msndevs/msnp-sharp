@@ -24,15 +24,18 @@ namespace MSNPSharp
         private int recursiveCall = 0;
         private WebProxy webProxy = null;
         private NSMessageHandler nsMessageHandler = null;
-        private const string applicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
+        private string applicationId = "";
         internal XMLContactList AddressBook = null;
         private DeltasList Deltas = null;
 
         #endregion
 
+        protected ContactService() { }
+
         public ContactService(NSMessageHandler nsHandler)
         {
             nsMessageHandler = nsHandler;
+            applicationId = Properties.Resources.ApplicationId;
             if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
             {
                 webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
@@ -126,7 +129,7 @@ namespace MSNPSharp
                 "Initial",
                 delegate
                 {
-                    recursiveCall = 0;  //reset
+                    //recursiveCall = 0;  //reset
                     abRequest("Initial",
                         delegate
                         {
