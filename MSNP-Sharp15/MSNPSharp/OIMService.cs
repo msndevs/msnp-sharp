@@ -33,6 +33,8 @@ namespace MSNPSharp
         NSMessageHandler nsMessageHandler = null;
         WebProxy webProxy = null;
 
+        protected OIMService() { }
+
         public OIMService(NSMessageHandler nsHandler)
         {
             nsMessageHandler = nsHandler;

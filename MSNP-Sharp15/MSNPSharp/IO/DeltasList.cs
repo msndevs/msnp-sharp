@@ -52,8 +52,19 @@ namespace MSNPSharp.IO
     [Serializable]
     public class DeltasList : MCLSerializer
     {
-        List<ABFindAllResultType> addressBookDeltas = new List<ABFindAllResultType>(0);
-        List<FindMembershipResultType> membershipDeltas = new List<FindMembershipResultType>(0);
+        private List<ABFindAllResultType> addressBookDeltas = new List<ABFindAllResultType>(0);
+        private List<FindMembershipResultType> membershipDeltas = new List<FindMembershipResultType>(0);
+        private SerializableDictionary<string, DynamicItem> dynamicItems = new SerializableDictionary<string, DynamicItem>(0);
+
+        /// <summary>
+        /// The users that have changed their spaces or profiles.
+        /// </summary>
+        public SerializableDictionary<string, DynamicItem> DynamicItems
+        {
+            get { return dynamicItems; }
+            set { dynamicItems = value; }
+        }
+
 
         public List<ABFindAllResultType> AddressBookDeltas
         {
@@ -109,5 +120,18 @@ namespace MSNPSharp.IO
         {
             return LoadFromFile(filename, nocompress, typeof(DeltasList)) as DeltasList;
         }
+
+        #region Overrides
+
+        /// <summary>
+        /// Save the <see cref="DeltasList"/> into a specified file.
+        /// </summary>
+        /// <param name="filename"></param>
+        public override void Save(string filename)
+        {
+            Version = Properties.Resources.DeltasListVersion;
+            base.Save(filename);
+        }
+        #endregion
     }
 }
