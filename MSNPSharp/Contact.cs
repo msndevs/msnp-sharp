@@ -135,7 +135,7 @@ namespace MSNPSharp
 
         bool hasBlog;
         bool isMessengerUser = false;
-        bool dynamicChanged = false;
+        DynamicItemState dynamicChanged = DynamicItemState.None;
         string comment = string.Empty;
 
         ClientType clienttype = ClientType.PassportMember;
@@ -401,7 +401,7 @@ namespace MSNPSharp
         /// <summary>
         /// When DynamicChanged = true, the official client will show a gleam before the contact.
         /// </summary>
-        public bool DynamicChanged
+        public DynamicItemState DynamicChanged
         {
             get 
             { 
@@ -590,12 +590,12 @@ namespace MSNPSharp
             comment = note;
         }
 
-        internal void SetdynamicItemChanged(bool changed)
+        internal void SetdynamicItemChanged(DynamicItemState changed)
         {
             dynamicChanged = changed;
-            if (mail != null && changed == false)
+            if (mail != null && changed == DynamicItemState.None)
             {
-                nsMessageHandler.ContactService.AddressBook.DynamicItems.Remove(mail);
+                nsMessageHandler.ContactService.Deltas.DynamicItems.Remove(mail);
             }
         }
 

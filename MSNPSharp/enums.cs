@@ -640,4 +640,25 @@ namespace MSNPSharp
         PublicProfile,
         SocialProfile
     }
+
+    /// <summary>
+    /// State of dynamicitems.
+    /// </summary>
+    public enum DynamicItemState
+    {
+        /// <summary>
+        /// The contact has no dynamic items.
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// The contact has changed his/her space or profiles. 
+        /// </summary>
+        HasNew,
+
+        /// <summary>
+        /// The contact has dynamic items but all of them are read.
+        /// </summary>
+        Viewed
+    }
 }

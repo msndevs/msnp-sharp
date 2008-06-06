@@ -231,7 +231,6 @@ using System.Xml;
         PassportDynamicItem
     }
 
-
     /// <summary>
     /// DynamicItem indicates whether the contact space or profile has been updated
     /// </summary>
@@ -249,6 +248,7 @@ using System.Xml;
         private DateTime spaceLastViewed;
         private DateTime profileLastChanged;
         private DateTime liveContactLastChanged;
+        private DynamicItemState state = DynamicItemState.None;
 
         public DynamicItem() { }
         /// <summary>
@@ -274,9 +274,13 @@ using System.Xml;
                         break;
                     case "SpaceGleam":
                         SpaceGleam = Boolean.Parse(node.InnerText);
+                        if (ProfileGleam || SpaceGleam)
+                            State = DynamicItemState.HasNew;
                         break;
                     case "ProfileGleam":
                         ProfileGleam = Boolean.Parse(node.InnerText);
+                        if (ProfileGleam || SpaceGleam)
+                            State = DynamicItemState.HasNew;
                         break;
                     case "Type":
                         if (node.InnerText == "Passport")
@@ -392,6 +396,15 @@ using System.Xml;
         {
             get { return liveContactLastChanged; }
             set { liveContactLastChanged = value; }
+        }
+
+        /// <summary>
+        /// View state of this dynamic item.
+        /// </summary>
+        public DynamicItemState State
+        {
+            get { return state; }
+            set { state = value; }
         }
 
     }

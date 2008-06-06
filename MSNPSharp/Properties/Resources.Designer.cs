@@ -78,9 +78,25 @@ namespace MSNPSharp.Properties {
             }
         }
         
+        /// <summary>
+        ///   查找类似 1.0.1 的本地化字符串。
+        /// </summary>
+        internal static string DeltasListVersion {
+            get {
+                return ResourceManager.GetString("DeltasListVersion", resourceCulture);
+            }
+        }
+        
         internal static System.Drawing.Bitmap owner {
             get {
                 object obj = ResourceManager.GetObject("owner", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap WLXLarge_default {
+            get {
+                object obj = ResourceManager.GetObject("WLXLarge_default", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

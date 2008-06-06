@@ -26,7 +26,7 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler = null;
         private string applicationId = "";
         internal XMLContactList AddressBook = null;
-        private DeltasList Deltas = null;
+        internal DeltasList Deltas = null;
 
         #endregion
 
@@ -105,7 +105,9 @@ namespace MSNPSharp
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
-                if (AddressBook.Version != Properties.Resources.XMLContactListVersion && recursiveCall == 0)
+                if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
+                    || Deltas.Version != Properties.Resources.DeltasListVersion)
+                    && recursiveCall == 0)
                 {
                     recursiveCall++;
                     DeleteRecordFile();
@@ -1375,6 +1377,7 @@ namespace MSNPSharp
             try
             {
                 StorageService storageService = new StorageService();
+                storageService.Proxy = webProxy;
                 storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
                 storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
                 storageService.StorageApplicationHeaderValue.Scenario = "Initial";
@@ -1421,6 +1424,7 @@ namespace MSNPSharp
                         Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
 
                         HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
+                        fwr.Proxy = webProxy;
 
                         Stream stream = fwr.GetResponse().GetResponseStream();
                         SerializableMemoryStream ms = new SerializableMemoryStream();
@@ -1456,6 +1460,7 @@ namespace MSNPSharp
             if (profile.DisplayName != displayName || profile.PersonalMessage != personalStatus)
             {
                 StorageService storageService = new StorageService();
+                storageService.Proxy = webProxy;
                 storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
                 storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
                 storageService.StorageApplicationHeaderValue.Scenario = "RoamingIdentityChanged";

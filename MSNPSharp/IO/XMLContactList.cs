@@ -287,13 +287,6 @@ namespace MSNPSharp.IO
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
         SerializableDictionary<Guid, AddressbookContactInfo> abcontacts = new SerializableDictionary<Guid, AddressbookContactInfo>(0);
-        SerializableDictionary<string, DynamicItem> dynamicItems = new SerializableDictionary<string, DynamicItem>(0);
-
-        public SerializableDictionary<string, DynamicItem> DynamicItems
-        {
-            get { return dynamicItems; }
-            set { dynamicItems = value; }
-        }
 
         public DateTime AddressbookLastChange
         {
@@ -581,7 +574,6 @@ namespace MSNPSharp.IO
             }
 
             //Update dynamic items
-            string lastacc="";
             if (forwardList.DynamicItems != null)
             {
                 foreach (object obj in forwardList.DynamicItems)
@@ -590,29 +582,19 @@ namespace MSNPSharp.IO
                     DynamicItem dyItem = new DynamicItem(nodes);
                     if (dyItem.PassportName != null && (dyItem.SpaceGleam || dyItem.ProfileGleam))
                     {
-                        DynamicItems[dyItem.PassportName] = dyItem;
-                        if (nsMessageHandler.ContactList.HasContact(dyItem.PassportName))
-                        {
-                            nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(true);
-                            lastacc = dyItem.PassportName;
-                        }
+                        nsMessageHandler.ContactService.Deltas.DynamicItems[dyItem.PassportName] = dyItem;
                     }
                 }
             }
 
-            //For testing
-            //if (DynamicItems.Count > 0 && lastacc!="")
-            //{
-            //    nsMessageHandler.SpaceService.GetContactCard(lastacc);
-            //    nsMessageHandler.SpaceService.ContactCardCompleted += delegate(object sender, ContactCardCompletedEventArg arg)
-            //    {
-            //        if (arg.Error != null)
-            //        {
-            //            if (Settings.TraceSwitch.TraceError)
-            //                Trace.WriteLine(arg.Error.Message);
-            //        }
-            //    };
-            //}
+            foreach (DynamicItem dyItem in nsMessageHandler.ContactService.Deltas.DynamicItems.Values)
+            {
+                if (nsMessageHandler.ContactList.HasContact(dyItem.PassportName))
+                {
+                    nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(dyItem.State);
+                }
+            }
+
         }
 
         #endregion

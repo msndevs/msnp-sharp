@@ -35,9 +35,9 @@ namespace MSNPSharp
 
         private string displayName = string.Empty;
         private string mail = string.Empty;
-        private Image displayImage = Properties.Resources.owner;
+        private Image displayImage = Properties.Resources.WLXLarge_default;
         private ContactCardItem space = null;
-        private List<ThumbnailImage> photos = new List<ThumbnailImage>(0);
+        private Album album = null;
         private ContactCardItem newPost = null;
         private Dictionary<ProfileType, ProfileItem> profiles = new Dictionary<ProfileType, ProfileItem>(0);
 
@@ -76,11 +76,11 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Latest photos uploaded to the photo album.
+        /// Album element of space.
         /// </summary>
-        public List<ThumbnailImage> Photos
+        public Album Album
         {
-            get { return photos; }
+            get { return album; }
         }
 
         /// <summary>
@@ -107,10 +107,17 @@ namespace MSNPSharp
             space = spacetitle;
         }
 
+        #region Internal setters
         internal void SetBlogPost(ContactCardItem value)
         {
             newPost = value;
         }
+
+        internal void SetAlbum(Album value)
+        {
+            album = value;
+        }
+        #endregion
     }
 
     /// <summary>
@@ -140,7 +147,7 @@ namespace MSNPSharp
         /// <list type="bullet">
         /// <item>For photo objects, this property is file description.</item>
         /// <item>For blog post objects, this property is the content of new bolg.</item>
-        /// <item>For space and profile objects, this property is set to null.</item>
+        /// <item>For space, album and profile objects, this property is set to null.</item>
         /// </list>
         /// </summary>
         public string Description
@@ -153,6 +160,7 @@ namespace MSNPSharp
         /// <item>For photo objects, this property is filename.</item>
         /// <item>For space objects, this property is a space title.</item>
         /// <item>For blog post objects, this property is title of a new bolg.</item>
+        /// <item>For album objects, this property is album title.</item>
         /// </list>
         /// </summary>
         public string Title
@@ -163,7 +171,7 @@ namespace MSNPSharp
         /// <summary>
         /// Tooltip shown for the new object.
         /// <list type="bullet">
-        /// <item>For space objects, this property is set to null.</item>
+        /// <item>For space and album objects, this property is set to null.</item>
         /// </list>
         /// </summary>
         public string ToolTip
@@ -223,6 +231,27 @@ namespace MSNPSharp
             albumName = name;
         }
         #endregion
+    }
+
+    /// <summary>
+    /// Photo album class.
+    /// </summary>
+    public class Album : ContactCardItem
+    {
+        private List<ThumbnailImage> photos = new List<ThumbnailImage>(0);
+
+        /// <summary>
+        /// Lastest uploaded photos in the photo album.
+        /// </summary>
+        public List<ThumbnailImage> Photos
+        {
+            get { return photos; }
+        }
+
+        public Album(string title, string url)
+            : base(url, null, title, null)
+        {
+        }
     }
 
     /// <summary>
