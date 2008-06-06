@@ -17,7 +17,7 @@
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
     <DelaySign>false</DelaySign>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>DotMSNClient</RootNamespace>
+    <RootNamespace>MSNPSharpClient</RootNamespace>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <StartupObject>
     </StartupObject>
@@ -102,6 +102,12 @@
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ContactCardForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ContactCardForm.Designer.cs">
+      <DependentUpon>ContactCardForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="ConversationForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -134,6 +140,10 @@
     <EmbeddedResource Include="AddContactForm.resx">
       <SubType>Designer</SubType>
       <DependentUpon>AddContactForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ContactCardForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ContactCardForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ConversationForm.resx">
       <DependentUpon>ConversationForm.cs</DependentUpon>

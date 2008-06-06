@@ -22,12 +22,13 @@ namespace MSNPSharpClient
 		private System.Windows.Forms.TextBox inputTextBox;
 		private System.Windows.Forms.Button sendButton;
         private Button sendnudgeButton;
+        private Panel panel2;
+
 
 		/// <summary>
 		/// </summary>
 		private Conversation _conversation;
         private List<string> _leftusers = new List<string>(0);
-        private Panel panel2;
         private List<TextMessage> _messagequene = new List<TextMessage>(0);
         private List<object> _nudgequene = new List<object>(0);
         private ClientForm _clientform = null;
