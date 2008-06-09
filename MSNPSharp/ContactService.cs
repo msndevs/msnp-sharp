@@ -125,7 +125,6 @@ namespace MSNPSharp
             }
 
             AddressBook.Merge(Deltas, nsMessageHandler);
-            AddressBook.Merge(new FindMembershipResultType(), nsMessageHandler);
 
             msRequest(
                 "Initial",
@@ -1374,81 +1373,84 @@ namespace MSNPSharp
         /// </summary>
         internal OwnerProfile GetProfile()
         {
-            try
+            if (AddressBook.MyProperties["roamliveproperties"] == "1")
             {
-                StorageService storageService = new StorageService();
-                storageService.Proxy = webProxy;
-                storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
-                storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
-                storageService.StorageApplicationHeaderValue.Scenario = "Initial";
-                storageService.StorageUserHeaderValue = new StorageUserHeader();
-                storageService.StorageUserHeaderValue.Puid = 0;
-                storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.StorageTicket];
-
-                GetProfileRequestType request = new GetProfileRequestType();
-                request.profileHandle = new Handle();
-                request.profileHandle.Alias = new Alias();
-                request.profileHandle.Alias.Name = AddressBook.Profile.CID;
-                request.profileHandle.Alias.NameSpace = "MyCidStuff";
-                request.profileHandle.RelationshipName = "MyProfile";
-                request.profileAttributes = new profileAttributes();
-                request.profileAttributes.ExpressionProfileAttributes = new profileAttributesExpressionProfileAttributes();
-
-                GetProfileResponse response = storageService.GetProfile(request);
-
-                AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
-                AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
-
-                // Display name
-                AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
-
-                // Personal status
-                AddressBook.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
-
-                // Display photo
-                if (null != response.GetProfileResult.ExpressionProfile.Photo)
+                try
                 {
-                    string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                    AddressBook.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
-                    AddressBook.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
+                    StorageService storageService = new StorageService();
+                    storageService.Proxy = webProxy;
+                    storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
+                    storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
+                    storageService.StorageApplicationHeaderValue.Scenario = "Initial";
+                    storageService.StorageUserHeaderValue = new StorageUserHeader();
+                    storageService.StorageUserHeaderValue.Puid = 0;
+                    storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.StorageTicket];
 
-                    if (AddressBook.Profile.Photo.PreAthURL != url)
+                    GetProfileRequestType request = new GetProfileRequestType();
+                    request.profileHandle = new Handle();
+                    request.profileHandle.Alias = new Alias();
+                    request.profileHandle.Alias.Name = AddressBook.Profile.CID;
+                    request.profileHandle.Alias.NameSpace = "MyCidStuff";
+                    request.profileHandle.RelationshipName = "MyProfile";
+                    request.profileAttributes = new profileAttributes();
+                    request.profileAttributes.ExpressionProfileAttributes = new profileAttributesExpressionProfileAttributes();
+
+                    GetProfileResponse response = storageService.GetProfile(request);
+
+                    AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
+                    AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
+
+                    // Display name
+                    AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
+
+                    // Personal status
+                    AddressBook.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+
+                    // Display photo
+                    if (null != response.GetProfileResult.ExpressionProfile.Photo)
                     {
-                        AddressBook.Profile.Photo.PreAthURL = url;
-                        if (!url.StartsWith("http"))
+                        string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+                        AddressBook.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
+                        AddressBook.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
+
+                        if (AddressBook.Profile.Photo.PreAthURL != url)
                         {
-                            url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
+                            AddressBook.Profile.Photo.PreAthURL = url;
+                            if (!url.StartsWith("http"))
+                            {
+                                url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
+                            }
+
+                            // Don't urlencode t= :))
+                            Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
+
+                            HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
+                            fwr.Proxy = webProxy;
+
+                            Stream stream = fwr.GetResponse().GetResponseStream();
+                            SerializableMemoryStream ms = new SerializableMemoryStream();
+                            byte[] data = new byte[8192];
+                            int read;
+                            while ((read = stream.Read(data, 0, data.Length)) > 0)
+                            {
+                                ms.Write(data, 0, read);
+                            }
+                            stream.Close();
+                            AddressBook.Profile.Photo.DisplayImage = ms;
                         }
 
-                        // Don't urlencode t= :))
-                        Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
+                        System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
+                        DisplayImage displayImage = new DisplayImage();
+                        displayImage.Image = fileImage;
 
-                        HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-                        fwr.Proxy = webProxy;
-
-                        Stream stream = fwr.GetResponse().GetResponseStream();
-                        SerializableMemoryStream ms = new SerializableMemoryStream();
-                        byte[] data = new byte[8192];
-                        int read;
-                        while ((read = stream.Read(data, 0, data.Length)) > 0)
-                        {
-                            ms.Write(data, 0, read);
-                        }
-                        stream.Close();
-                        AddressBook.Profile.Photo.DisplayImage = ms;
+                        nsMessageHandler.Owner.DisplayImage = displayImage;
                     }
-
-                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
-                    DisplayImage displayImage = new DisplayImage();
-                    displayImage.Image = fileImage;
-
-                    nsMessageHandler.Owner.DisplayImage = displayImage;
                 }
-            }
-            catch (Exception ex)
-            {
-                if (Settings.TraceSwitch.TraceError)
-                    Trace.WriteLine(ex.Message);
+                catch (Exception ex)
+                {
+                    if (Settings.TraceSwitch.TraceError)
+                        Trace.WriteLine(ex.Message);
+                }
             }
             return AddressBook.Profile;
         }
@@ -1459,78 +1461,88 @@ namespace MSNPSharp
 
             if (profile.DisplayName != displayName || profile.PersonalMessage != personalStatus)
             {
-                StorageService storageService = new StorageService();
-                storageService.Proxy = webProxy;
-                storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
-                storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
-                storageService.StorageApplicationHeaderValue.Scenario = "RoamingIdentityChanged";
-                storageService.StorageUserHeaderValue = new StorageUserHeader();
-                storageService.StorageUserHeaderValue.Puid = 0;
-                storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.StorageTicket];
-                storageService.UpdateProfileCompleted += delegate(object sender, UpdateProfileCompletedEventArgs e)
+                AddressBook.Profile.DisplayName = displayName;
+                AddressBook.Profile.PersonalMessage = personalStatus;
+
+                if (AddressBook.MyProperties["roamliveproperties"] == "1")
                 {
-                    storageService = sender as StorageService;
-                    if (!e.Cancelled && e.Error == null)
+                    StorageService storageService = new StorageService();
+                    storageService.Proxy = webProxy;
+                    storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
+                    storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
+                    storageService.StorageApplicationHeaderValue.Scenario = "RoamingIdentityChanged";
+                    storageService.StorageUserHeaderValue = new StorageUserHeader();
+                    storageService.StorageUserHeaderValue.Puid = 0;
+                    storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.StorageTicket];
+                    storageService.UpdateProfileCompleted += delegate(object sender, UpdateProfileCompletedEventArgs e)
                     {
-                        // And get profile again
-                        AddressBook.Profile = GetProfile();
+                        storageService = sender as StorageService;
+                        if (!e.Cancelled && e.Error == null)
+                        {
+                            // And get profile again
+                            AddressBook.Profile = GetProfile();
 
-                        DateTime lastUpdated = AddressBook.Profile.DateModified;
+                            DateTime lastUpdated = AddressBook.Profile.DateModified;
 
-                        // http://www.msn.com/webservices/AddressBook/UpdateDynamicItem
-                        //<soap:Body>
-                        //   <UpdateDynamicItem xmlns="http://www.msn.com/webservices/AddressBook">
-                        //     <abId>00000000-0000-0000-0000-000000000000</abId>
-                        //     <dynamicItems>
-                        //       <DynamicItem xsi:type="PassportDynamicItem">
-                        //         <Type>Passport</Type>
-                        //         <PassportName>....OWNER.....MAIL....ADDRESS.....</PassportName>
-                        //         <Notifications>
-                        //           <NotificationData>
-                        //             <StoreService>
-                        //               <Info>
-                        //                 <Handle>
-                        //                   <Id>0</Id>
-                        //                   <Type>Profile</Type>
-                        //                   <ForeignId>MyProfile</ForeignId>
-                        //                 </Handle>
-                        //                 <InverseRequired>false</InverseRequired>
-                        //                 <IsBot>false</IsBot>
-                        //               </Info>
-                        //               <Changes />
-                        //               <LastChange>0001-01-01T00:00:00</LastChange>
-                        //               <Deleted>false</Deleted>
-                        //             </StoreService>
-                        //             <Status>Exist Access</Status>
-                        //             <LastChanged>.......AddressBook.Profile.DateModified........</LastChanged>
-                        //             <Gleam>false</Gleam>
-                        //             <InstanceId>0</InstanceId>
-                        //           </NotificationData>
-                        //         </Notifications>
-                        //         <Changes>Notifications</Changes>
-                        //       </DynamicItem>
-                        //     </dynamicItems>
-                        //  </UpdateDynamicItem>
-                        //</soap:Body>
+                            // http://www.msn.com/webservices/AddressBook/UpdateDynamicItem
+                            //<soap:Body>
+                            //   <UpdateDynamicItem xmlns="http://www.msn.com/webservices/AddressBook">
+                            //     <abId>00000000-0000-0000-0000-000000000000</abId>
+                            //     <dynamicItems>
+                            //       <DynamicItem xsi:type="PassportDynamicItem">
+                            //         <Type>Passport</Type>
+                            //         <PassportName>....OWNER.....MAIL....ADDRESS.....</PassportName>
+                            //         <Notifications>
+                            //           <NotificationData>
+                            //             <StoreService>
+                            //               <Info>
+                            //                 <Handle>
+                            //                   <Id>0</Id>
+                            //                   <Type>Profile</Type>
+                            //                   <ForeignId>MyProfile</ForeignId>
+                            //                 </Handle>
+                            //                 <InverseRequired>false</InverseRequired>
+                            //                 <IsBot>false</IsBot>
+                            //               </Info>
+                            //               <Changes />
+                            //               <LastChange>0001-01-01T00:00:00</LastChange>
+                            //               <Deleted>false</Deleted>
+                            //             </StoreService>
+                            //             <Status>Exist Access</Status>
+                            //             <LastChanged>.......AddressBook.Profile.DateModified........</LastChanged>
+                            //             <Gleam>false</Gleam>
+                            //             <InstanceId>0</InstanceId>
+                            //           </NotificationData>
+                            //         </Notifications>
+                            //         <Changes>Notifications</Changes>
+                            //       </DynamicItem>
+                            //     </dynamicItems>
+                            //  </UpdateDynamicItem>
+                            //</soap:Body>
 
-                        AddressBook.Save();
-                        return;
-                    }
-                    else if (e.Error != null)
-                    {
-                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateProfile", e.Error));
-                    }
-                };
+                            AddressBook.Save();
+                            return;
+                        }
+                        else if (e.Error != null)
+                        {
+                            OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateProfile", e.Error));
+                        }
+                    };
 
-                UpdateProfileRequestType request = new UpdateProfileRequestType();
-                request.profile = new UpdateProfileRequestTypeProfile();
-                request.profile.ResourceID = profile.ResourceID;
-                request.profile.ExpressionProfile = new UpdateProfileRequestTypeProfileExpressionProfile();
-                request.profile.ExpressionProfile.FreeText = "Update";
-                request.profile.ExpressionProfile.DisplayName = displayName;
-                request.profile.ExpressionProfile.PersonalStatus = personalStatus;
-                request.profile.ExpressionProfile.Flags = 0;
-                storageService.UpdateProfileAsync(request, new object());
+                    UpdateProfileRequestType request = new UpdateProfileRequestType();
+                    request.profile = new UpdateProfileRequestTypeProfile();
+                    request.profile.ResourceID = profile.ResourceID;
+                    request.profile.ExpressionProfile = new UpdateProfileRequestTypeProfileExpressionProfile();
+                    request.profile.ExpressionProfile.FreeText = "Update";
+                    request.profile.ExpressionProfile.DisplayName = displayName;
+                    request.profile.ExpressionProfile.PersonalStatus = personalStatus;
+                    request.profile.ExpressionProfile.Flags = 0;
+                    storageService.UpdateProfileAsync(request, new object());
+                }
+                else
+                {
+                    AddressBook.Save();
+                }
             }
         }
     

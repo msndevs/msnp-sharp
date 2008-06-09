@@ -59,10 +59,18 @@ namespace MSNPSharp.IO
         /// <param name="nsMessageHandler"></param>
         public void Merge(DeltasList deltas, NSMessageHandler nsMessageHandler)
         {
-            foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
+            if (deltas.MembershipDeltas.Count > 0)
             {
-                Merge(membershipResult, nsMessageHandler);
+                foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
+                {
+                    Merge(membershipResult, nsMessageHandler);
+                }
             }
+            else
+            {
+                Merge(new FindMembershipResultType(), nsMessageHandler);
+            }
+
             foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
             {
                 Merge(abfindallResult, nsMessageHandler);
