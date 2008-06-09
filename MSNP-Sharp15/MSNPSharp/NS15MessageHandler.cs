@@ -1015,6 +1015,15 @@ namespace MSNPSharp
                 owner.SetName(mydispName);
                 owner.SetPersonalMessage(pm);
 
+                if (contactService.AddressBook.Profile.Photo != null && contactService.AddressBook.Profile.Photo.DisplayImage != null)
+                {
+                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(contactService.AddressBook.Profile.Photo.DisplayImage);
+                    DisplayImage displayImage = new DisplayImage();
+                    displayImage.Image = fileImage;
+
+                    owner.DisplayImage = displayImage;
+                }
+
                 owner.Name = mydispName; // Send PRP command, but no storage request.
 
                 if (AutoSynchronize == true)
