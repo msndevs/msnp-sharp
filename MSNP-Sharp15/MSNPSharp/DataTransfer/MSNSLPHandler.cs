@@ -1218,7 +1218,7 @@ namespace MSNPSharp.DataTransfer
         private Hashtable TransferProperties = new Hashtable();
 
         /// <summary>
-        /// Extracts the checksum (SHA1C field) from the supplied context.
+        /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
         /// </summary>
         /// <remarks>The context must be a plain string, no base-64 decoding will be done</remarks>
         /// <param name="context"></param>
@@ -1230,9 +1230,13 @@ namespace MSNPSharp.DataTransfer
             if (match.Success)
             {
                 return match.Groups[1].Value;
+            }else{
+                shaRe = new Regex("SHA1D=\"([^\"]+)\"");
+                match = shaRe.Match(context);
+                if(match .Success )
+                    return match.Groups[1].Value;
             }
-            else
-                throw new MSNPSharpException("SHA1C field could not be extracted from the specified context: " + context);
+            throw new MSNPSharpException("SHA field could not be extracted from the specified context: " + context);
         }
 
         /// <summary>
