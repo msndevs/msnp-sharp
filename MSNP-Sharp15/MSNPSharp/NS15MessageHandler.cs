@@ -986,12 +986,11 @@ namespace MSNPSharp
             SetPrivacyMode((ContactService.AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
 
             initialadlcount = stradls.Length;
-            foreach (string str in stradls)
+            foreach (string payload in stradls)
             {
-                NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
+                NSMessage message = new NSMessage("ADL", new string[] { payload });
                 MessageProcessor.SendMessage(message);
                 initialadls.Add(message.TransactionID);
-                MessageProcessor.SendMessage(new NSMessage(str));
             }
         }
 
@@ -1710,7 +1709,7 @@ namespace MSNPSharp
 
             string md = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
             _Tickets[Iniproperties.LockKey] = md;
-            MessageProcessor.SendMessage(new NSMessage("QRY", new string[] { " " + Credentials.ClientID, " 32\r\n", md }));
+            MessageProcessor.SendMessage(new NSMessage("QRY", new string[] { Credentials.ClientID, md }));
         }
 
         /// <summary>
