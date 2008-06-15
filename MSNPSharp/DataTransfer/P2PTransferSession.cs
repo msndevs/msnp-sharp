@@ -246,20 +246,22 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Aborts the datatransfer, if available. This will send a P2P abort message and stop the sending thread.
         /// It will not close a direct connection. If AutoCloseStream is set to true, the datastream will be closed.
+        /// <remarks>
+        /// This function is called by internal.
+        /// <para>If you want to abort the current transfer,call <see cref="MSNSLPHandler.CloseSession"/></para>
+        /// </remarks>
         /// </summary>
         public void AbortTransfer()
         {
             if (transferThread != null && transferThread.ThreadState == ThreadState.Running)
             {
                 AbortTransferThread();
-                SendAbortMessage();
-
-                if (AutoCloseStream)
-                    DataStream.Close();
-
-                OnTransferAborted();
-                MessageSession.RemoveTransferSession(this);
             }
+
+            OnTransferAborted();
+            MessageSession.RemoveTransferSession(this);
+            if (AutoCloseStream)
+                DataStream.Close();
         }
 
 
@@ -375,12 +377,14 @@ namespace MSNPSharp.DataTransfer
                     if (DataStream == null)
                         throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
 
-                    if (DataStream.Length < (long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length)
-                        DataStream.SetLength((long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length);
+                    if (DataStream.CanWrite)
+                    {
+                        if (DataStream.Length < (long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length)
+                            DataStream.SetLength((long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length);
 
-                    DataStream.Seek((long)p2pMessage.Offset, SeekOrigin.Begin);
-                    DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
-
+                        DataStream.Seek((long)p2pMessage.Offset, SeekOrigin.Begin);
+                        DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+                    }
                     // check for end of file transfer
                     if (p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
                     {

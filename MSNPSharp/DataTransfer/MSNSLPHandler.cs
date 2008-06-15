@@ -1199,8 +1199,7 @@ namespace MSNPSharp.DataTransfer
         protected virtual void RemoveTransferSession(P2PTransferSession session)
         {
             // remove the session
-            //MessageSession.RemoveTransferSession(session);
-
+            MessageSession.RemoveTransferSession(session);
             OnTransferSessionClosed(session);
         }
 
