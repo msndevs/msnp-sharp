@@ -445,7 +445,7 @@ namespace MSNPSharp
                     string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
                     payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
                     payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { payload }));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL",payload ));
                     contact.AddToList(MSNLists.AllowedList);
 
                     // 3: ADL FL
@@ -457,7 +457,7 @@ namespace MSNPSharp
                     payload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
                     payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
                     payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("FQY", new string[] { payload }));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", payload ));
                 }
             );
         }
@@ -469,7 +469,7 @@ namespace MSNPSharp
             payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
             payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
             payload = payload.Replace("{t}", ((int)contact.ClientType).ToString());
-            nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { payload }));
+            nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload ));
             contact.AddToList(MSNLists.AllowedList);
 
             System.Threading.Thread.Sleep(100);
@@ -1047,7 +1047,7 @@ namespace MSNPSharp
 
             if (list == MSNLists.ForwardList)
             {
-                nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { payload }));
+                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload ));
                 contact.AddToList(list);
 
                 if (onSuccess != null)
@@ -1083,7 +1083,7 @@ namespace MSNPSharp
                     contact.AddToList(list);
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
 
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("ADL", new string[] { payload }));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload ));
 
                     if (onSuccess != null)
                     {
@@ -1162,7 +1162,7 @@ namespace MSNPSharp
 
             if (list == MSNLists.ForwardList)
             {
-                nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("RML", new string[] { payload }));
+                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload ));
                 contact.RemoveFromList(list);
                 if (onSuccess != null)
                 {
@@ -1196,7 +1196,7 @@ namespace MSNPSharp
                     contact.RemoveFromList(list);
                     AddressBook.RemoveMemberhip(contact.Mail, GetMemberRole(list));
 
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSMessage("RML", new string[] { payload }));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML",  payload ));
 
                     if (onSuccess != null)
                     {
