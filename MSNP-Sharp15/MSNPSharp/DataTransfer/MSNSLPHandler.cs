@@ -1201,6 +1201,8 @@ namespace MSNPSharp.DataTransfer
             // remove the session
             MessageSession.RemoveTransferSession(session);
             OnTransferSessionClosed(session);
+            if (session.AutoCloseStream)
+                session.DataStream.Close();
         }
 
         #endregion
@@ -1361,7 +1363,6 @@ namespace MSNPSharp.DataTransfer
 
             // remove the resources
             RemoveTransferSession(session);
-
             // and close the connection
             //session.MessageSession.CloseDirectConnection();
 
