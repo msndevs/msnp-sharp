@@ -73,20 +73,6 @@ namespace MSNPSharp.Core
                     return System.Text.Encoding.UTF8.GetBytes("PNG\r\n");
 
                 case "QRY":
-                    {
-                        StringBuilder builder = new StringBuilder(64);
-                        builder.Append(Command);
-                        builder.Append(' ');
-                        builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                        builder.Append(' ');
-                        builder.Append(CommandValues[0].ToString());
-                        builder.Append(' ');
-                        builder.Append(CommandValues[1].ToString().Length.ToString());
-                        builder.Append("\r\n");
-                        builder.Append(CommandValues[1].ToString());
-                        return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
-                    }
-
                 case "ADL":
                 case "MSG":
                 case "NOT":
@@ -97,15 +83,24 @@ namespace MSNPSharp.Core
                 case "IPG":
                 case "FQY":
                     {
-                        string data = CommandValues[0].ToString();
-                        return System.Text.Encoding.UTF8.GetBytes(
-                            Command +
-                            " " +
-                            TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture) +
-                            " " +
-                            Encoding.UTF8.GetByteCount(data).ToString() +
-                            "\r\n" +
-                            data);
+                        StringBuilder builder = new StringBuilder(64);
+                        builder.Append(Command);
+                        builder.Append(' ');
+                        builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        builder.Append(' ');
+
+                        for (int i = 0; i < CommandValues.Count - 1; i++)
+                        {
+                            builder.Append(CommandValues[i].ToString());
+                            builder.Append(' ');
+                        }
+
+                        string payloadData = CommandValues[CommandValues.Count - 1].ToString();
+
+                        builder.Append(Encoding.UTF8.GetByteCount(payloadData));
+                        builder.Append("\r\n");
+                        builder.Append(payloadData);
+                        return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
                     }
 
                 default:
