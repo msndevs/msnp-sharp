@@ -988,7 +988,7 @@ namespace MSNPSharp
             initialadlcount = stradls.Length;
             foreach (string payload in stradls)
             {
-                NSMessage message = new NSMessage("ADL", new string[] { payload });
+                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                 MessageProcessor.SendMessage(message);
                 initialadls.Add(message.TransactionID);
             }
@@ -1197,15 +1197,7 @@ namespace MSNPSharp
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MSNMessage msg = new MSNMessage();
-
-            string payload = pmsg.Payload;
-            msg.Command = payload;
-
-            int size = System.Text.Encoding.UTF8.GetByteCount(payload);
-
-            MessageProcessor.SendMessage(new NSMessage("UUX", new string[] { Convert.ToString(size) }));
-            MessageProcessor.SendMessage(msg);
+            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
 
             ContactService.UpdateProfile(Owner.Name, pmsg.Message);
         }
@@ -1709,7 +1701,7 @@ namespace MSNPSharp
 
             string md = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
             _Tickets[Iniproperties.LockKey] = md;
-            MessageProcessor.SendMessage(new NSMessage("QRY", new string[] { Credentials.ClientID, md }));
+            MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, md));
         }
 
         /// <summary>

@@ -72,36 +72,36 @@ namespace MSNPSharp.Core
                 case "PNG":
                     return System.Text.Encoding.UTF8.GetBytes("PNG\r\n");
 
-                case "QRY":
-                case "ADL":
-                case "MSG":
-                case "NOT":
-                case "UBX":
-                case "GCF":
-                case "UBM":
-                case "RML":
-                case "IPG":
-                case "FQY":
-                    {
-                        StringBuilder builder = new StringBuilder(64);
-                        builder.Append(Command);
-                        builder.Append(' ');
-                        builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                        builder.Append(' ');
+                //case "QRY":
+                //case "ADL":
+                //case "MSG":
+                //case "NOT":
+                //case "UBX":
+                //case "GCF":
+                //case "UBM":
+                //case "RML":
+                //case "IPG":
+                //case "FQY":
+                //    {
+                //        StringBuilder builder = new StringBuilder(64);
+                //        builder.Append(Command);
+                //        builder.Append(' ');
+                //        builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                //        builder.Append(' ');
 
-                        for (int i = 0; i < CommandValues.Count - 1; i++)
-                        {
-                            builder.Append(CommandValues[i].ToString());
-                            builder.Append(' ');
-                        }
+                //        for (int i = 0; i < CommandValues.Count - 1; i++)
+                //        {
+                //            builder.Append(CommandValues[i].ToString());
+                //            builder.Append(' ');
+                //        }
 
-                        string payloadData = CommandValues[CommandValues.Count - 1].ToString();
+                //        string payloadData = CommandValues[CommandValues.Count - 1].ToString();
 
-                        builder.Append(Encoding.UTF8.GetByteCount(payloadData));
-                        builder.Append("\r\n");
-                        builder.Append(payloadData);
-                        return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
-                    }
+                //        builder.Append(Encoding.UTF8.GetByteCount(payloadData));
+                //        builder.Append("\r\n");
+                //        builder.Append(payloadData);
+                //        return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+                //    }
 
                 default:
                     return base.GetBytes();
