@@ -1733,6 +1733,8 @@ namespace MSNPSharp
         {
             // allright
             Contact contact = ContactList.GetContact((string)message.CommandValues[2]);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[3]);
+
             contact.SetName((string)message.CommandValues[4]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[1]));
@@ -1770,6 +1772,8 @@ namespace MSNPSharp
         protected virtual void OnNLNReceived(NSMessage message)
         {
             Contact contact = ContactList.GetContact((string)message.CommandValues[1]);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
+
             contact.SetName((string)message.CommandValues[3]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[0]));
@@ -1914,6 +1918,8 @@ namespace MSNPSharp
         protected virtual void OnFLNReceived(NSMessage message)
         {
             Contact contact = ContactList.GetContact((string)message.CommandValues[0]);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
+
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
 
