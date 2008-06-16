@@ -117,6 +117,28 @@ using System.Xml;
 
             return debugstr;
         }
+
+        /// <summary>
+        /// Overrided. Treat contacts with same account but different clienttype as different contacts.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            if (obj == null || obj.GetType() != GetType())
+                return false;
+
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            ContactInfo cinfo = obj as ContactInfo;
+            return ((Account.ToLowerInvariant() == cinfo.Account.ToLowerInvariant()) && (Type == cinfo.Type));
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 
         #endregion

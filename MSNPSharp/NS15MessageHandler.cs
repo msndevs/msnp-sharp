@@ -1074,9 +1074,9 @@ namespace MSNPSharp
 
                             MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
-                            if (ContactList.HasContact(account))
+                            if (ContactList.HasContact(account,type))
                             {
-                                Contact updateContact = ContactList.GetContact(account);
+                                Contact updateContact = ContactList.GetContact(account,type);
                                 updateContact.SetName(displayName);
                                 if (!updateContact.HasLists(list))
                                     updateContact.AddToList(list);
@@ -1085,7 +1085,7 @@ namespace MSNPSharp
                             {
                                 if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                                 {
-                                    Contact newcontact = ContactList.GetContact(account, displayName);
+                                    Contact newcontact = ContactList.GetContact(account, displayName,type);
                                     newcontact.SetClientType(type);
                                     newcontact.SetLists(MSNLists.PendingList);
                                     newcontact.NSMessageHandler = this;
@@ -1093,7 +1093,7 @@ namespace MSNPSharp
                                         "MessengerPendingList",
                                         delegate
                                         {
-                                            newcontact = ContactList.GetContact(account);
+                                            newcontact = ContactList.GetContact(account,type);
                                             OnReverseAdded(newcontact);
                                         }
                                     );
@@ -1724,9 +1724,8 @@ namespace MSNPSharp
         protected virtual void OnILNReceived(NSMessage message)
         {
             // allright
-            Contact contact = ContactList.GetContact((string)message.CommandValues[2]);
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[3]);
-
+            Contact contact = ContactList.GetContact((string)message.CommandValues[2],type);
             contact.SetName((string)message.CommandValues[4]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[1]));
@@ -1763,9 +1762,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnNLNReceived(NSMessage message)
         {
-            Contact contact = ContactList.GetContact((string)message.CommandValues[1]);
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
 
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[1],type);
             contact.SetName((string)message.CommandValues[3]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[0]));
@@ -1909,9 +1908,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-            Contact contact = ContactList.GetContact((string)message.CommandValues[0]);
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
 
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[0],type);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
 
@@ -2031,13 +2030,17 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Called when a UBX command has been received.
+        /// </summary>
+        /// <param name="message"></param>
         protected virtual void OnUBXReceived(NSMessage message)
         {
             //check the payload length
             if (message.CommandValues[1].ToString() == "0")
                 return;
-
-            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString());
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
+            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
 
             PersonalMessage pm = new PersonalMessage(message);            
             contact.SetPersonalMessage(pm);
@@ -2383,9 +2386,9 @@ namespace MSNPSharp
                         ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
                         MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                         account = account.ToLower(CultureInfo.InvariantCulture);
-                        if (ContactList.HasContact(account))
+                        if (ContactList.HasContact(account,type))
                         {
-                            Contact contact = ContactList.GetContact(account);
+                            Contact contact = ContactList.GetContact(account,type);
                             if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                             {
                                 OnReverseRemoved(contact);
@@ -2450,7 +2453,7 @@ namespace MSNPSharp
             }
 
             if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))
-                && ContactList.HasContact(sender))
+                && ContactList.HasContact(sender, ClientType.EmailMember))
             {
                 foreach (YIMMessageHandler YimHandler in SwitchBoards)
                 {
@@ -2462,12 +2465,12 @@ namespace MSNPSharp
 
                 YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
                 switchboard.NSMessageHandler = this;
-                switchboard.Contacts.Add(sender, ContactList[sender]);
+                switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
                 switchboard.MessageProcessor = MessageProcessor;
                 SwitchBoards.Add(switchboard);
 
                 OnSBCreated(switchboard, null);
-                switchboard.ForceJoin(ContactList[sender]);
+                switchboard.ForceJoin(ContactList[sender,ClientType.EmailMember]);
                 MessageProcessor.RegisterHandler(switchboard);
                 switchboard.HandleMessage(MessageProcessor, msg);
             }

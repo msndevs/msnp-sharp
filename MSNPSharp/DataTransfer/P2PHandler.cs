@@ -465,20 +465,22 @@ namespace MSNPSharp.DataTransfer
         /// <param name="remoteContact"></param>
         protected virtual SBMessageHandler RequestSwitchboard(string remoteContact)
         {
-            Contact contact = NSMessageHandler.ContactList[remoteContact];
-            SBMessageHandler handler = null;
-            if (contact.ClientType != ClientType.EmailMember)
+            if (nsMessageHandler.ContactList.HasContact(remoteContact, ClientType.PassportMember))
             {
+                SBMessageHandler handler = null;
+
                 handler = Factory.CreateSwitchboardHandler();
                 if (NSMessageHandler == null)
                     throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
 
                 NSMessageHandler.RequestSwitchboard(handler, this);
                 handler.NSMessageHandler = NSMessageHandler;
-                handler.Invite(((Contact)NSMessageHandler.ContactList[remoteContact]).Mail);
-            }
+                handler.Invite(((Contact)NSMessageHandler.ContactList[remoteContact, ClientType.PassportMember]).Mail);
 
-            return handler;
+
+                return handler;
+            }
+            return null;
         }
 
         /// <summary>
@@ -646,7 +648,7 @@ namespace MSNPSharp.DataTransfer
             SBMessageHandler sbHandler = GetSwitchboardSession(((P2PMessageSession)sender).RemoteContact);
 
             // if the contact is offline, there is no need to request a new switchboard. close the session.
-            if (((Contact)NSMessageHandler.ContactList[((P2PMessageSession)sender).RemoteContact]).Status == PresenceStatus.Offline)
+            if ((NSMessageHandler.ContactList[((P2PMessageSession)sender).RemoteContact, ClientType.PassportMember]).Status == PresenceStatus.Offline)
             {
                 CloseMessageSession(session);
                 return;

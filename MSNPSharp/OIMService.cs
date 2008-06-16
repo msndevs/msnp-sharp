@@ -213,7 +213,7 @@ namespace MSNPSharp
         /// <param name="msg">Plain text message</param>
         public void SendOIMMessage(string account, string msg)
         {
-            Contact contact = nsMessageHandler.ContactList[account];
+            Contact contact = nsMessageHandler.ContactList[account]; //No need to change.
             if (contact != null && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
