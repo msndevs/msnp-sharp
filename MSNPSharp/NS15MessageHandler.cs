@@ -2626,13 +2626,20 @@ namespace MSNPSharp
                     {
                         string account = contactNode.Attributes["n"].Value + "@" + domain;
                         account = account.ToLower(CultureInfo.InvariantCulture);
-                        if (ContactList.HasContact(account))
+                        ClientType type = ClientType.PassportMember;
+
+                        if (contactNode.Attributes["t"] != null && contactNode.Attributes["t"].Value == "32")
+                        {
+                            type = ClientType.EmailMember;
+                        }
+
+                        if (ContactList.HasContact(account,type))
                         {
                             ContactService.abRequest(
                                 "ContactSave",
                                 delegate(object abservice, ABFindAllCompletedEventArgs fae)
                                 {
-                                    Contact contact = ContactList.GetContact(account);
+                                    Contact contact = ContactList.GetContact(account,type);
                                     OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 }
                             );
