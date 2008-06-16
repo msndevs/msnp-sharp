@@ -294,7 +294,7 @@ namespace MSNPSharpClient
                 AddEvent();
                 foreach (string account in _leftusers)
                 {
-                    _conversation.Invite(account);
+                    _conversation.Invite(account, ClientType.PassportMember);
                 }
                 _leftusers.Clear();
                 return true;

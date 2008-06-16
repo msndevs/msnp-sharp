@@ -295,9 +295,9 @@ namespace MSNPSharp
 
 
             nsMessageHandler.ContactService.Deltas.DynamicItems[account].State = DynamicItemState.Viewed;
-            if (nsMessageHandler.ContactList.HasContact(account))
+            if (nsMessageHandler.ContactList.HasContact(account, ClientType.PassportMember))
             {
-                nsMessageHandler.ContactList[account].SetdynamicItemChanged(DynamicItemState.Viewed);
+                nsMessageHandler.ContactList[account,ClientType.PassportMember].SetdynamicItemChanged(DynamicItemState.Viewed);
                 nsMessageHandler.ContactService.Deltas.Save();
             }
         }

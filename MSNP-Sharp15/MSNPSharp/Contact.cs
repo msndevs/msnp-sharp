@@ -732,7 +732,16 @@ namespace MSNPSharp
 
         #endregion
 
-        override public int GetHashCode()
+        public override bool Equals(object obj)
+        {
+            if (obj == null || obj.GetType() != GetType())
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            Contact contact = obj as Contact;
+            return ((Mail.ToLowerInvariant() == contact.Mail.ToLowerInvariant()) && (ClientType == contact.ClientType));
+        }
+        public override int GetHashCode()
         {
             return mail.GetHashCode();
         }

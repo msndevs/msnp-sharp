@@ -437,7 +437,7 @@ namespace MSNPSharp
                 ct,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(account);
+                    Contact contact = nsMessageHandler.ContactList.GetContact(account,ct);
                     contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
                     contact.NSMessageHandler = nsMessageHandler;
 
@@ -510,7 +510,7 @@ namespace MSNPSharp
                                 "ContactMsgrAPI",
                                 delegate
                                 {
-                                    contact = nsMessageHandler.ContactList.GetContact(contact.Mail);
+                                    contact = nsMessageHandler.ContactList.GetContact(contact.Mail,contact.ClientType);
                                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 });
                         }
@@ -615,7 +615,7 @@ namespace MSNPSharp
 
             if (AddressBook.Find(account, network) != null)
             {
-                Contact contact = nsMessageHandler.ContactList.GetContact(account);
+                Contact contact = nsMessageHandler.ContactList.GetContact(account,network);
                 RemoveContactFromList(contact, MSNLists.PendingList, null);
                 contact.RemoveFromList(MSNLists.PendingList);
                 return;
@@ -623,7 +623,7 @@ namespace MSNPSharp
 
             if (MSNLists.PendingList == (AddressBook.GetMSNLists(account) & MSNLists.PendingList))
             {
-                AddPendingContact(nsMessageHandler.ContactList.GetContact(account));
+                AddPendingContact(nsMessageHandler.ContactList.GetContact(account,network));
             }
             else
             {

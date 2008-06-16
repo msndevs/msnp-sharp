@@ -278,7 +278,7 @@ namespace MSNPSharp.IO
             {
                 foreach (MembershipContactInfo msci in MembershipContacts.Values)
                 {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName);
+                    Contact contact = nsMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName, msci.Type);
                     contact.SetClientType(msci.Type);
                     contact.SetLists(GetMSNLists(msci.Account));
                     contact.NSMessageHandler = nsMessageHandler;
@@ -556,7 +556,7 @@ namespace MSNPSharp.IO
             {
                 if (abci.Account != nsMessageHandler.Owner.Mail)
                 {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(abci.Account);
+                    Contact contact = nsMessageHandler.ContactList.GetContact(abci.Account,abci.Type);
                     contact.SetGuid(abci.Guid);
                     contact.SetClientType(abci.Type);
                     contact.SetComment(abci.Comment);
@@ -597,9 +597,9 @@ namespace MSNPSharp.IO
 
             foreach (DynamicItem dyItem in nsMessageHandler.ContactService.Deltas.DynamicItems.Values)
             {
-                if (nsMessageHandler.ContactList.HasContact(dyItem.PassportName))
+                if (nsMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
                 {
-                    nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(dyItem.State);
+                    nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(dyItem.State); //TODO: Type
                 }
             }
 

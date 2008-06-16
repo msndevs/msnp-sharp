@@ -40,7 +40,31 @@ namespace MSNPSharp
     [Serializable()]
     public class ContactList
     {
-        Dictionary<string, Contact> contacts = new Dictionary<string, Contact>(10);
+        #region Nested class
+        private struct ContactIdentifier
+        {
+            private string mail;
+            private ClientType clientType;
+
+            public string Mail
+            {
+                get { return mail; }
+            }
+
+            public ClientType ClientType
+            {
+                get { return clientType; }
+            }
+
+            public ContactIdentifier(string account, ClientType type)
+            {
+                mail = account.ToLowerInvariant();
+                clientType = type;
+            }
+        } 
+        #endregion
+
+        Dictionary<ContactIdentifier, Contact> contacts = new Dictionary<ContactIdentifier, Contact>(10);
 
         public class ListEnumerator : IEnumerator
         {
@@ -284,42 +308,104 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Get the specified contact.
+        /// <remarks>If the contact does not exist, return null</remarks>
+        /// </summary>
+        /// <param name="account"></param>
+        /// <returns>
+        /// If the contact does not exist, return null.
+        /// If the specified account has multi-clienttype, the contact with type
+        /// <see cref="ClientType.PassportMember"/> will be returned first.
+        /// If there's no PassportMember with the specified account, the contact with type 
+        /// <see cref="ClientType.EmailMember"/> will be returned.Then the next is <see cref="ClientType.PhoneMember"/>
+        /// ,<see cref="ClientType.LCS"/> and so on...
+        /// </returns>
         internal Contact GetContact(string account)
         {
-            account = account.ToLower(CultureInfo.InvariantCulture);
-            if (contacts.ContainsKey(account))
-            {
-                return contacts[account];
-            }
-            else
-            {
-                Contact tmpContact = Factory.CreateContact();
+            if (!HasContact(account))
+                return null;
+            if (HasContact(account, ClientType.PassportMember))
+                return GetContact(account, ClientType.PassportMember);
+            if (HasContact(account, ClientType.EmailMember))
+                return GetContact(account, ClientType.EmailMember);
+            if (HasContact(account, ClientType.PhoneMember))
+                return GetContact(account, ClientType.PhoneMember);
+            if (HasContact(account, ClientType.LCS))
+                return GetContact(account, ClientType.LCS);
+            return null;
 
-                tmpContact.SetMail(account);
-                tmpContact.SetName(account);
-
-                contacts.Add(account, tmpContact);
-
-                return contacts[account];
-            }
         }
 
+        /// <summary>
+        /// Get the specified contact.
+        /// <para>This overload will set the contact name to a specified value (if the contact exists.).</para>
+        /// <remarks>If the contact does not exist, return null</remarks>
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="name"></param>
+        /// <returns>
+        /// If the contact does not exist, return null.
+        /// If the specified account has multi-clienttype, the contact with type
+        /// <see cref="ClientType.PassportMember"/> will be returned first.
+        /// If there's no PassportMember with the specified account, the contact with type 
+        /// <see cref="ClientType.EmailMember"/> will be returned.Then the next is <see cref="ClientType.PhoneMember"/>
+        /// ,<see cref="ClientType.LCS"/> and so on...
+        /// </returns>
         internal Contact GetContact(string account, string name)
         {
-            account = account.ToLower(CultureInfo.InvariantCulture);
-            if (contacts.ContainsKey(account))
-                return contacts[account];
-            else
+            Contact contact = GetContact(account);
+            if (contact != null)
+                lock (contact)
+                    contact.SetName(name);
+            return contact;
+        }
+
+        /// <summary>
+        /// Get a contact with specified account and client type, if the contact does not exist, create it.
+        /// <para>This overload will set the contact name to a specified value.</para>
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="name">The new name you want to set.</param>
+        /// <param name="type"></param>
+        /// <returns>
+        /// A <see cref="Contact"/> object.
+        /// If the contact does not exist, return null.
+        /// </returns>
+        internal Contact GetContact(string account, string name, ClientType type)
+        {
+            Contact contact = GetContact(account, type);
+            lock (contact)
+                contact.SetName(name);
+            return contact;
+        }
+
+        /// <summary>
+        /// Get a contact with specified account and client type, if the contact does not exist, create it.
+        /// </summary>
+        /// <param name="account">Account (Mail) of a contact</param>
+        /// <param name="type">Contact type.</param>
+        /// <returns>
+        /// A <see cref="Contact"/> object.
+        /// If the contact does not exist, return null.
+        /// </returns>
+        internal Contact GetContact(string account, ClientType type)
+        {
+            ContactIdentifier cid = new ContactIdentifier(account, type);
+            if (HasContact(account, type))
             {
-                Contact tmpContact = Factory.CreateContact();
-
-                tmpContact.SetMail(account);
-                tmpContact.SetName(name);
-
-                contacts.Add(account, tmpContact);
-
-                return contacts[account];
+                return contacts[cid];
             }
+
+            Contact tmpContact = Factory.CreateContact();
+
+            tmpContact.SetMail(account);
+            tmpContact.SetName(account);
+            tmpContact.SetClientType(type);
+            lock (contacts)
+                contacts.Add(cid, tmpContact);
+
+            return GetContact(account, type);
         }
 
         public Contact GetContactByGuid(Guid guid)
@@ -337,28 +423,60 @@ namespace MSNPSharp
         {
             get
             {
-                account = account.ToLower(CultureInfo.InvariantCulture);
-                if (contacts.ContainsKey(account))
-                    return contacts[account];
-
-                return null;
+                return GetContact(account);
             }
+
             set
             {
-                account = account.ToLower(CultureInfo.InvariantCulture);
-                contacts[account] = value;
+                this[account ,value.ClientType] = value;
             }
         }
 
+        public Contact this[string account, ClientType type]
+        {
+            get
+            {
+                return GetContact(account, type);
+            }
+            set
+            {
+                this[account, type] = value;
+            }
+        }
+
+        /// <summary>
+        /// Check whether the specified account is in the contact list.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <returns></returns>
         public bool HasContact(string account)
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
-            return contacts.ContainsKey(account);
+            lock (contacts)
+            {
+                foreach (ContactIdentifier cid in contacts.Keys)
+                    if (cid.Mail == account)
+                        return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Check whether the account with specified client type is in the contact list.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool HasContact(string account,ClientType type)
+        {
+            ContactIdentifier cid = new ContactIdentifier(account, type);
+            return contacts.ContainsKey(cid);
         }
 
         public void CopyTo(Contact[] array, int index)
         {
-            contacts.Values.CopyTo(array, index);
+            lock (contacts)
+                contacts.Values.CopyTo(array, index);
         }
 
         internal void Clear()
@@ -366,13 +484,57 @@ namespace MSNPSharp
             contacts.Clear();
         }
 
+        /// <summary>
+        /// Remove all the contacts with the specified account.
+        /// </summary>
+        /// <param name="account"></param>
         internal void Remove(string account)
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
+            List<ContactIdentifier > removecid=new List<ContactIdentifier> (0);
             if (HasContact(account))
             {
-                contacts.Remove(account);
+                lock (contacts)
+                {
+                    foreach (ContactIdentifier cid in contacts.Keys)
+                    {
+                        if (cid.Mail == account)
+                            removecid.Add(cid);
+                    }
+                }
             }
+
+            foreach (ContactIdentifier rcid in removecid)
+                lock (contacts)
+                    contacts.Remove(rcid);
+        }
+
+        /// <summary>
+        /// Remove a contact with specified account and client type.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="type"></param>
+        internal void Remove(string account, ClientType type)
+        {
+            lock (contacts)
+            {
+                contacts.Remove(new ContactIdentifier(account, type));
+            }
+        }
+
+        private bool HasMultiType(string account)
+        {
+            int typecount = 0;
+            lock (contacts)
+                foreach (ContactIdentifier cid in contacts.Keys)
+                    if (cid.Mail == account.ToLowerInvariant())
+                    {
+                        typecount++;
+                        if (typecount == 2)
+                            return true;
+                    }
+            return false;
+
         }
     }
 };
