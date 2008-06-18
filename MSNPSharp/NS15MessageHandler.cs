@@ -1008,27 +1008,12 @@ namespace MSNPSharp
                 abSynchronized = true;
                 initialadlcount = 0;
 
-                // Set my display name and personal status
-                string mydispName = String.IsNullOrEmpty(contactService.AddressBook.Profile.DisplayName) ? owner.NickName : contactService.AddressBook.Profile.DisplayName;
-                PersonalMessage pm = new PersonalMessage(contactService.AddressBook.Profile.PersonalMessage, MediaType.None, null);
-                owner.SetName(mydispName);
-                owner.SetPersonalMessage(pm);
+                SetScreenName(owner.Name);
 
-                if (contactService.AddressBook.Profile.Photo != null && contactService.AddressBook.Profile.Photo.DisplayImage != null)
-                {
-                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(contactService.AddressBook.Profile.Photo.DisplayImage);
-                    DisplayImage displayImage = new DisplayImage();
-                    displayImage.Image = fileImage;
-
-                    owner.DisplayImage = displayImage;
-                }
-
-                owner.Name = mydispName; // Send PRP command, but no storage request.
-
-                if (AutoSynchronize == true)
+                if (AutoSynchronize)
                 {
                     OnSignedIn();
-                    owner.PersonalMessage = pm; // Send UUX command, but no storage request.
+                    SetPersonalMessage(Owner.PersonalMessage);
                 }
 
                 // no contacts are sent so we are done synchronizing
@@ -1036,7 +1021,7 @@ namespace MSNPSharp
                 // MSNP8: New callback defined, SynchronizationCompleted.
                 if (SynchronizationCompleted != null)
                 {
-                    SynchronizationCompleted(this, new EventArgs());
+                    SynchronizationCompleted(this, EventArgs.Empty);
                     abSynchronized = true;
                 }
 
@@ -1074,9 +1059,9 @@ namespace MSNPSharp
 
                             MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
-                            if (ContactList.HasContact(account,type))
+                            if (ContactList.HasContact(account, type))
                             {
-                                Contact updateContact = ContactList.GetContact(account,type);
+                                Contact updateContact = ContactList.GetContact(account, type);
                                 updateContact.SetName(displayName);
                                 if (!updateContact.HasLists(list))
                                     updateContact.AddToList(list);
@@ -1085,7 +1070,7 @@ namespace MSNPSharp
                             {
                                 if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                                 {
-                                    Contact newcontact = ContactList.GetContact(account, displayName,type);
+                                    Contact newcontact = ContactList.GetContact(account, displayName, type);
                                     newcontact.SetClientType(type);
                                     newcontact.SetLists(MSNLists.PendingList);
                                     newcontact.NSMessageHandler = this;
@@ -1093,7 +1078,7 @@ namespace MSNPSharp
                                         "MessengerPendingList",
                                         delegate
                                         {
-                                            newcontact = ContactList.GetContact(account,type);
+                                            newcontact = ContactList.GetContact(account, type);
                                             OnReverseAdded(newcontact);
                                         }
                                     );
