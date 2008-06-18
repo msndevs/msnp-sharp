@@ -136,6 +136,7 @@ namespace MSNPSharp
                     abRequest("Initial",
                         delegate
                         {
+                            // Set privacy settings and roam property
                             nsMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
                             nsMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
                             nsMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
@@ -143,6 +144,20 @@ namespace MSNPSharp
                             AddressBook.Profile = GetProfile();
                             AddressBook.Save(); // The first and the last AddressBook.Save()
                             Deltas.Truncate();
+
+                            // Set display name, personal status and photo
+                            string mydispName = String.IsNullOrEmpty(AddressBook.Profile.DisplayName) ? nsMessageHandler.Owner.NickName : AddressBook.Profile.DisplayName;
+                            PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null);
+                            nsMessageHandler.Owner.SetName(mydispName);
+                            nsMessageHandler.Owner.SetPersonalMessage(pm);
+
+                            if (AddressBook.Profile.Photo != null && AddressBook.Profile.Photo.DisplayImage != null)
+                            {
+                                System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
+                                DisplayImage displayImage = new DisplayImage();
+                                displayImage.Image = fileImage;
+                                nsMessageHandler.Owner.DisplayImage = displayImage;
+                            }
 
                             nsMessageHandler.OnInitialSyncDone(ConstructADLString(AddressBook.MembershipContacts.Values, true, MSNLists.None));
                         }
