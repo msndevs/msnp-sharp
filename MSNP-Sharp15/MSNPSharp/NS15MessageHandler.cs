@@ -983,7 +983,7 @@ namespace MSNPSharp
         private List<int> initialadls = new List<int>();
         internal void OnInitialSyncDone(string[] stradls)
         {
-            SetPrivacyMode((ContactService.AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+            SetPrivacyMode(Owner.Privacy);
 
             initialadlcount = stradls.Length;
             foreach (string payload in stradls)
@@ -1139,15 +1139,13 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Set the contactlist owner's notification mode.
+        /// Set the contactlist owner's notification mode on contact service.
         /// </summary>
         /// <param name="privacy">New notify privacy setting</param>
         public virtual void SetNotifyPrivacyMode(NotifyPrivacy privacy)
         {
-            if (privacy == NotifyPrivacy.AutomaticAdd)
-                MessageProcessor.SendMessage(new NSMessage("GTC", new string[] { "N" }));
-            if (privacy == NotifyPrivacy.PromptOnAdd)
-                MessageProcessor.SendMessage(new NSMessage("GTC", new string[] { "A" }));
+            Owner.SetNotifyPrivacy(privacy);
+            ContactService.UpdateMe();
         }
 
         /// <summary>
@@ -1444,8 +1442,8 @@ namespace MSNPSharp
                     case "FLN":
                         OnFLNReceived(nsMessage);
                         break;
-                    case "GTC":
-                        OnGTCReceived(nsMessage);
+                    case "FQY":
+                        OnFQYReceived(nsMessage);
                         break;
                     case "ILN":
                         OnILNReceived(nsMessage);
@@ -1453,12 +1451,8 @@ namespace MSNPSharp
                     case "LSG":
                         OnLSGReceived(nsMessage);
                         break;
-                    //case "LST":  OnLSTReceived(nsMessage); break;   //In MSNP15, LST no longer used
                     case "MSG":
                         OnMSGReceived(nsMessage);
-                        break;
-                    case "UBM":
-                        OnUBMReceived(nsMessage);
                         break;
                     case "NLN":
                         OnNLNReceived(nsMessage);
@@ -1490,7 +1484,12 @@ namespace MSNPSharp
                     case "RNG":
                         OnRNGReceived(nsMessage);
                         break;
-                    //case "SYN":  OnSYNReceived(nsMessage); break;   //In MSNP15, SYN no longer used
+                    case "UBM":
+                        OnUBMReceived(nsMessage);
+                        break;
+                    case "UBX":
+                        OnUBXReceived(nsMessage);
+                        break;
                     case "USR":
                         OnUSRReceived(nsMessage);
                         break;
@@ -1500,12 +1499,7 @@ namespace MSNPSharp
                     case "XFR":
                         OnXFRReceived(nsMessage);
                         break;
-                    case "UBX":
-                        OnUBXReceived(nsMessage);
-                        break;
-                    case "FQY":
-                        OnFQYReceived(nsMessage);
-                        break;
+
                     default:
                         // first check whether it is a numeric error command
                         if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
@@ -2281,38 +2275,14 @@ namespace MSNPSharp
             {
                 case "AL":
                     Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
+                    ContactService.UpdateMe();
                     break;
                 case "BL":
                     owner.SetPrivacy(PrivacyMode.NoneButAllowed);
+                    ContactService.UpdateMe();
                     break;
             }
         }
-
-
-        /// <summary>
-        /// Called when a GTC command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send us the privacy notify setting for the contact list owner.
-        /// <code>GTC [Transaction] [SynchronizationID] [NotifyPrivacy]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnGTCReceived(NSMessage message)
-        {
-            if (Owner == null)
-                return;
-
-            switch ((string)message.CommandValues[0])
-            {
-                case "A":
-                    owner.SetNotifyPrivacy(NotifyPrivacy.PromptOnAdd);
-                    break;
-                case "N":
-                    owner.SetNotifyPrivacy(NotifyPrivacy.AutomaticAdd);
-                    break;
-            }
-        }
-
 
         /// <summary>
         /// Called when an ADG command has been received.
