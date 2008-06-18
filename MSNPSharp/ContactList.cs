@@ -38,45 +38,32 @@ namespace MSNPSharp
     using System.Globalization;
 
     [Serializable()]
-    public struct ContactIdentifier
-    {
-        private string mail;
-        private ClientType clientType;
-
-        public string Mail
-        {
-            get
-            {
-                return mail;
-            }
-            set
-            {
-                mail = value;
-            }
-        }
-
-        public ClientType ClientType
-        {
-            get
-            {
-                return clientType;
-            }
-            set
-            {
-                clientType = value;
-            }
-        }
-
-        public ContactIdentifier(string account, ClientType type)
-        {
-            mail = account.ToLowerInvariant();
-            clientType = type;
-        }
-    }
-
-    [Serializable()]
     public class ContactList
     {
+        #region Nested class
+        private struct ContactIdentifier
+        {
+            private string mail;
+            private ClientType clientType;
+
+            public string Mail
+            {
+                get { return mail; }
+            }
+
+            public ClientType ClientType
+            {
+                get { return clientType; }
+            }
+
+            public ContactIdentifier(string account, ClientType type)
+            {
+                mail = account.ToLowerInvariant();
+                clientType = type;
+            }
+        } 
+        #endregion
+
         Dictionary<ContactIdentifier, Contact> contacts = new Dictionary<ContactIdentifier, Contact>(10);
 
         public class ListEnumerator : IEnumerator
