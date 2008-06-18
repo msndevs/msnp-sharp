@@ -340,7 +340,7 @@ namespace MSNPSharp
             Deltas.Save();
         }
 
-        internal string[] ConstructADLString(Dictionary<ContactIdentifier, MembershipContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
+        internal string[] ConstructADLString(Dictionary<string, MembershipContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
         {
             List<string> mls = new List<string>();
 
@@ -370,7 +370,7 @@ namespace MSNPSharp
                 if (initial)
                 {
                     sendlist = 0;
-                    lists = AddressBook.GetMSNLists(contact.Account, contact.Type);
+                    lists = AddressBook.GetMSNLists(contact.Account);
                     AddressbookContactInfo abci = AddressBook.Find(contact.Account, contact.Type);
                     if (abci != null && abci.IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
@@ -642,7 +642,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (MSNLists.PendingList == (AddressBook.GetMSNLists(account, network) & MSNLists.PendingList))
+            if (MSNLists.PendingList == (AddressBook.GetMSNLists(account) & MSNLists.PendingList))
             {
                 AddPendingContact(nsMessageHandler.ContactList.GetContact(account, network));
             }
@@ -1300,7 +1300,7 @@ namespace MSNPSharp
                         Trace.WriteLine("DeleteMember completed.");
 
                     contact.RemoveFromList(list);
-                    AddressBook.RemoveMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list));
+                    AddressBook.RemoveMemberhip(contact.Mail, GetMemberRole(list));
 
                     nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
 
