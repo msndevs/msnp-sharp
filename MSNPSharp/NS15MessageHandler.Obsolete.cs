@@ -233,6 +233,11 @@ namespace MSNPSharp
             }
         }
 
+        [Obsolete("Sending GTC command to NS causes disconnect", true)]
+        protected virtual void OnGTCReceived(NSMessage message)
+        {
+        }
+
         #region Passport authentication
         /// <summary>
         /// Authenticates the contactlist owner with the Passport (Nexus) service.		

@@ -30,7 +30,9 @@ namespace MSNPSharp
 
         #endregion
 
-        protected ContactService() { }
+        protected ContactService()
+        {
+        }
 
         public ContactService(NSMessageHandler nsHandler)
         {
@@ -134,6 +136,10 @@ namespace MSNPSharp
                     abRequest("Initial",
                         delegate
                         {
+                            nsMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+                            nsMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
+                            nsMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+
                             AddressBook.Profile = GetProfile();
                             AddressBook.Save(); // The first and the last AddressBook.Save()
                             Deltas.Truncate();
@@ -437,7 +443,7 @@ namespace MSNPSharp
                 ct,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(account,ct);
+                    Contact contact = nsMessageHandler.ContactList.GetContact(account, ct);
                     contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
                     contact.NSMessageHandler = nsMessageHandler;
 
@@ -445,7 +451,7 @@ namespace MSNPSharp
                     string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
                     payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
                     payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL",payload ));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                     contact.AddToList(MSNLists.AllowedList);
 
                     // 3: ADL FL
@@ -457,7 +463,7 @@ namespace MSNPSharp
                     payload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
                     payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
                     payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", payload ));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", payload));
                 }
             );
         }
@@ -469,7 +475,7 @@ namespace MSNPSharp
             payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
             payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
             payload = payload.Replace("{t}", ((int)contact.ClientType).ToString());
-            nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload ));
+            nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
             contact.AddToList(MSNLists.AllowedList);
 
             System.Threading.Thread.Sleep(100);
@@ -510,7 +516,7 @@ namespace MSNPSharp
                                 "ContactMsgrAPI",
                                 delegate
                                 {
-                                    contact = nsMessageHandler.ContactList.GetContact(contact.Mail,contact.ClientType);
+                                    contact = nsMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
                                     nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 });
                         }
@@ -615,7 +621,7 @@ namespace MSNPSharp
 
             if (AddressBook.Find(account, network) != null)
             {
-                Contact contact = nsMessageHandler.ContactList.GetContact(account,network);
+                Contact contact = nsMessageHandler.ContactList.GetContact(account, network);
                 RemoveContactFromList(contact, MSNLists.PendingList, null);
                 contact.RemoveFromList(MSNLists.PendingList);
                 return;
@@ -623,7 +629,7 @@ namespace MSNPSharp
 
             if (MSNLists.PendingList == (AddressBook.GetMSNLists(account) & MSNLists.PendingList))
             {
-                AddPendingContact(nsMessageHandler.ContactList.GetContact(account,network));
+                AddPendingContact(nsMessageHandler.ContactList.GetContact(account, network));
             }
             else
             {
@@ -772,6 +778,91 @@ namespace MSNPSharp
             if (propertiesChanged.Count > 0)
             {
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+                abService.ABContactUpdateAsync(request, new object());
+            }
+        }
+
+        internal void UpdateMe()
+        {
+            Owner owner = NSMessageHandler.Owner;
+
+            if (owner == null)
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
+            PrivacyMode oldPrivacy = AddressBook.MyProperties["blp"] == "1" ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed;
+            NotifyPrivacy oldNotify = AddressBook.MyProperties["gtc"] == "1" ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd;
+            RoamLiveProperty oldRoaming = AddressBook.MyProperties["roamliveproperties"] == "1" ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled;
+            List<Annotation> annos = new List<Annotation>();
+
+            if (oldPrivacy != owner.Privacy)
+            {
+                Annotation anno = new Annotation();
+                anno.Name = "MSN.IM.BLP";
+                anno.Value = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
+                annos.Add(anno);
+
+                if (owner.Privacy == PrivacyMode.NoneButAllowed)
+                    owner.SetNotifyPrivacy(NotifyPrivacy.PromptOnAdd);
+            }
+
+            if (oldNotify != owner.NotifyPrivacy)
+            {
+                Annotation anno = new Annotation();
+                anno.Name = "MSN.IM.GTC";
+                anno.Value = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
+                annos.Add(anno);
+            }
+
+            if (oldRoaming != owner.RoamLiveProperty)
+            {
+                Annotation anno = new Annotation();
+                anno.Name = "MSN.IM.RoamLiveProperties";
+                anno.Value = owner.RoamLiveProperty == RoamLiveProperty.Enabled ? "1" : "2";
+                annos.Add(anno);
+            }
+
+            if (annos.Count > 0)
+            {
+                ABServiceBinding abService = new ABServiceBinding();
+                abService.Proxy = webProxy;
+                abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
+                abService.ABApplicationHeaderValue = new ABApplicationHeader();
+                abService.ABApplicationHeaderValue.IsMigration = false;
+                abService.ABApplicationHeaderValue.PartnerScenario = "PrivacyApply";
+                abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.Tickets[Iniproperties.AddressBookCacheKey];
+                abService.ABApplicationHeaderValue.ApplicationId = applicationId;
+
+                abService.ABAuthHeaderValue = new ABAuthHeader();
+                abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+                abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.ContactTicket];
+                abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
+                {
+                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                    if (!e.Cancelled && e.Error == null)
+                    {
+                        if (Settings.TraceSwitch.TraceVerbose)
+                            Trace.WriteLine("UpdateMe completed.");
+
+                        AddressBook.MyProperties["blp"] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
+                        AddressBook.MyProperties["gtc"] = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
+                        AddressBook.MyProperties["roamliveproperties"] = owner.RoamLiveProperty == RoamLiveProperty.Enabled ? "1" : "2";
+                    }
+                    else if (e.Error != null)
+                    {
+                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateMe", e.Error));
+                    }
+                    ((IDisposable)service).Dispose();
+                    return;
+                };
+
+                ABContactUpdateRequestType request = new ABContactUpdateRequestType();
+                request.abId = "00000000-0000-0000-0000-000000000000";
+                request.contacts = new ContactType[] { new ContactType() };
+                request.contacts[0].contactInfo = new contactInfoType();
+                request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.Me;
+                request.contacts[0].contactInfo.contactTypeSpecified = true;
+                request.contacts[0].contactInfo.annotations = annos.ToArray();
+                request.contacts[0].propertiesChanged = "Annotation";
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1047,7 +1138,7 @@ namespace MSNPSharp
 
             if (list == MSNLists.ForwardList)
             {
-                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload ));
+                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                 contact.AddToList(list);
 
                 if (onSuccess != null)
@@ -1083,7 +1174,7 @@ namespace MSNPSharp
                     contact.AddToList(list);
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
 
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload ));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
 
                     if (onSuccess != null)
                     {
@@ -1162,7 +1253,7 @@ namespace MSNPSharp
 
             if (list == MSNLists.ForwardList)
             {
-                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload ));
+                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                 contact.RemoveFromList(list);
                 if (onSuccess != null)
                 {
@@ -1196,7 +1287,7 @@ namespace MSNPSharp
                     contact.RemoveFromList(list);
                     AddressBook.RemoveMemberhip(contact.Mail, GetMemberRole(list));
 
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML",  payload ));
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
 
                     if (onSuccess != null)
                     {
@@ -1366,7 +1457,7 @@ namespace MSNPSharp
         /// </summary>
         internal OwnerProfile GetProfile()
         {
-            if (AddressBook.MyProperties["roamliveproperties"] == "1")
+            if (nsMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
             {
                 try
                 {
@@ -1457,7 +1548,7 @@ namespace MSNPSharp
                 AddressBook.Profile.DisplayName = displayName;
                 AddressBook.Profile.PersonalMessage = personalStatus;
 
-                if (AddressBook.MyProperties["roamliveproperties"] == "1")
+                if (nsMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
                 {
                     StorageService storageService = new StorageService();
                     storageService.Proxy = webProxy;
@@ -1538,7 +1629,7 @@ namespace MSNPSharp
                 }
             }
         }
-    
+
 
 
 

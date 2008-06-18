@@ -447,10 +447,29 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Use the same display picture and personal message wherever I sign in.
+    /// </summary>
+    public enum RoamLiveProperty
+    {
+        /// <summary>
+        /// Unspecified
+        /// </summary>
+        Unspecified = 0,
+
+        /// <summary>
+        /// Enabled
+        /// </summary>
+        Enabled = 1,
+
+        /// <summary>
+        /// Disabled
+        /// </summary>
+        Disabled = 2
+    }
+
+    /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
-
-
     [FlagsAttribute]
     public enum ClientCapacities : long
     {
