@@ -480,7 +480,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public MSNSLPHandler GetMSNSLPHandler(string remoteAccount)
         {
-            if (Nameserver.ContactList[remoteAccount].ClientType != ClientType.PassportMember)
+            if (!Nameserver.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
                 throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
 
             P2PMessageSession p2pSession = p2pHandler.GetSession(Owner.Mail, remoteAccount);

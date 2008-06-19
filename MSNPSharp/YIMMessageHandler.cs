@@ -56,8 +56,8 @@ namespace MSNPSharp
         /// <param name="contact"></param>
         public override void Invite(string contact)
         {
-            Contacts.Add(contact, NSMessageHandler.ContactList[contact]);
-            OnContactJoined(NSMessageHandler.ContactList[contact]);
+            Contacts.Add(contact, NSMessageHandler.ContactList[contact, ClientType.EmailMember]);
+            OnContactJoined(NSMessageHandler.ContactList[contact, ClientType.EmailMember]);
         }
 
         public override void SendNudge()
@@ -116,7 +116,7 @@ namespace MSNPSharp
         {
             IEnumerator ienum = Contacts.Keys.GetEnumerator();
             ienum.MoveNext();
-            OnContactLeft(NSMessageHandler.ContactList[(string)(ienum.Current)]);
+            OnContactLeft(NSMessageHandler.ContactList[(string)(ienum.Current), ClientType.EmailMember]);
             OnSessionClosed();
             NSMessageHandler.MessageProcessor.UnregisterHandler(this);
             NSMessageHandler.SwitchBoards.Remove(this);
@@ -154,11 +154,11 @@ namespace MSNPSharp
         {
             MSGMessage sbMSGMessage = message.InnerMessage;
 
-            if (!NSMessageHandler.ContactList.HasContact(message.CommandValues[0].ToString()))
+            if (!NSMessageHandler.ContactList.HasContact(message.CommandValues[0].ToString(), ClientType.EmailMember))
             {
                 return;
             }
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
+            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString(), ClientType.EmailMember);
             if (sbMSGMessage.MimeHeader.ContainsKey("Content-Type"))
             {
                 switch (sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture))

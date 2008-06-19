@@ -87,6 +87,9 @@ namespace MSNPSharp.Core
                 ParentMessage.InnerMessage = this;
         }
 
+        /// <summary>
+        /// The byte array contains in the message stream
+        /// </summary>
         public byte[] InnerBody
         {
             get
@@ -99,6 +102,9 @@ namespace MSNPSharp.Core
             }
         }
 
+        /// <summary>
+        /// Usually the payload of a payload message.
+        /// </summary>
         public NetworkMessage InnerMessage
         {
             get
@@ -125,6 +131,9 @@ namespace MSNPSharp.Core
             }
         }
 
+        /// <summary>
+        /// Format the message and make it ready to send.
+        /// </summary>
         public virtual void PrepareMessage()
         {
             if (InnerMessage != null)

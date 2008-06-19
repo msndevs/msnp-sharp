@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MSNPSharp.Core;
-using MSNPSharp.MSNRSIService;
 using System.Xml;
-using MSNPSharp.MSNOIMStoreService;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Web.Services.Protocols;
 using System.Net;
+
+using MSNPSharp.Core;
+using MSNPSharp.MSNWS.MSNRSIService;
+using MSNPSharp.MSNWS.MSNOIMStoreService;
 
 namespace MSNPSharp
 {
@@ -24,10 +25,15 @@ namespace MSNPSharp
         }
     }
 
+    /// <summary>
+    /// Provides webservice operation for offline messages
+    /// </summary>
     public class OIMService : MSNService
     {
         NSMessageHandler nsMessageHandler = null;
         WebProxy webProxy = null;
+
+        protected OIMService() { }
 
         public OIMService(NSMessageHandler nsHandler)
         {
@@ -203,11 +209,11 @@ namespace MSNPSharp
         /// <summary>
         /// Send an offline message to a contact.
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="msg"></param>
+        /// <param name="account">Target user</param>
+        /// <param name="msg">Plain text message</param>
         public void SendOIMMessage(string account, string msg)
         {
-            Contact contact = nsMessageHandler.ContactList[account];
+            Contact contact = nsMessageHandler.ContactList[account]; //No need to change.
             if (contact != null && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(

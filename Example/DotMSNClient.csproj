@@ -17,7 +17,7 @@
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
     <DelaySign>false</DelaySign>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>DotMSNClient</RootNamespace>
+    <RootNamespace>MSNPSharpClient</RootNamespace>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <StartupObject>
     </StartupObject>
@@ -82,6 +82,7 @@
     <Reference Include="System.Drawing">
       <Name>System.Drawing</Name>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms">
       <Name>System.Windows.Forms</Name>
@@ -92,8 +93,20 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
+    <Compile Include="AddContactForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddContactForm.Designer.cs">
+      <DependentUpon>AddContactForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ContactCardForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ContactCardForm.Designer.cs">
+      <DependentUpon>ContactCardForm.cs</DependentUpon>
     </Compile>
     <Compile Include="ConversationForm.cs">
       <SubType>Form</SubType>
@@ -101,6 +114,37 @@
     <Compile Include="DotMSNClient.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ImportContacts.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ImportContacts.Designer.cs">
+      <DependentUpon>ImportContacts.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="RemoveContactForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RemoveContactForm.Designer.cs">
+      <DependentUpon>RemoveContactForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ReverseAddedForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ReverseAddedForm.Designer.cs">
+      <DependentUpon>ReverseAddedForm.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="AddContactForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>AddContactForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ContactCardForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ContactCardForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ConversationForm.resx">
       <DependentUpon>ConversationForm.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -109,7 +153,23 @@
       <DependentUpon>DotMSNClient.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="listbg.png" />
+    <EmbeddedResource Include="ImportContacts.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ImportContacts.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RemoveContactForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>RemoveContactForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ReverseAddedForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ReverseAddedForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MSNPSharp\MSNPSharp.csproj">

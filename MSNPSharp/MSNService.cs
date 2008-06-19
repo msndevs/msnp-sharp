@@ -27,8 +27,14 @@ namespace MSNPSharp
         }
     }
 
+    /// <summary>
+    /// Base class of webservice-related classes
+    /// </summary>
     public abstract class MSNService
     {
+        /// <summary>
+        /// Fired when request to an async webservice method failed.
+        /// </summary>
         public event ServiceOperationFailedEventHandler ServiceOperationFailed;
         protected virtual void OnServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {

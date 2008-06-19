@@ -63,6 +63,9 @@ namespace MSNPSharp.IO
         }
     }
 
+    /// <summary>
+    /// A caching file system..
+    /// </summary>
     public static class MCLFileManager
     {
         private static Dictionary<string, MCLInfo> storage = new Dictionary<string, MCLInfo>(0);

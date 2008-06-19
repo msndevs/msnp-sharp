@@ -28,21 +28,23 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.Net;
+using System.Reflection;
+using System.Collections;
+
 namespace MSNPSharp
 {
-    using System;
-    using System.Net;
-    using System.Reflection;
-    using System.Collections;
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
 
     [Serializable()]
     public class Owner : Contact
     {
-        PrivacyMode privacy = 0;
-        NotifyPrivacy notifyPrivacy = 0;
         bool passportVerified = false;
+        PrivacyMode privacy = PrivacyMode.Unknown;
+        NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
+        RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
 
         public delegate void ProfileReceivedEventHandler(object sender, EventArgs e);
         public event ProfileReceivedEventHandler ProfileReceived;
@@ -72,6 +74,11 @@ namespace MSNPSharp
         internal void SetNotifyPrivacy(NotifyPrivacy mode)
         {
             notifyPrivacy = mode;
+        }
+
+        internal void SetRoamLiveProperty(RoamLiveProperty mode)
+        {
+            RoamLiveProperty = mode;
         }
 
         public new DisplayImage DisplayImage
@@ -200,6 +207,14 @@ namespace MSNPSharp
             }
         }
 
+        public bool PassportVerified
+        {
+            get
+            {
+                return passportVerified;
+            }
+        }
+
         public PrivacyMode Privacy
         {
             get
@@ -215,14 +230,6 @@ namespace MSNPSharp
             }
         }
 
-        public bool PassportVerified
-        {
-            get
-            {
-                return passportVerified;
-            }
-        }
-
         public NotifyPrivacy NotifyPrivacy
         {
             get
@@ -234,6 +241,22 @@ namespace MSNPSharp
                 if (NSMessageHandler != null)
                 {
                     NSMessageHandler.SetNotifyPrivacyMode(value);
+                }
+            }
+        }
+
+        public RoamLiveProperty RoamLiveProperty
+        {
+            get
+            {
+                return roamLiveProperty;
+            }
+            set
+            {
+                roamLiveProperty = value;
+                if (NSMessageHandler != null)
+                {
+                    NSMessageHandler.ContactService.UpdateMe();
                 }
             }
         }
@@ -257,10 +280,7 @@ namespace MSNPSharp
         {
             get
             {
-                if (base.Name == null)
-                    return base.Mail;
-                else
-                    return base.Name;
+                return (base.Name == null) ? NickName : base.Name;
             }
             set
             {
@@ -270,6 +290,16 @@ namespace MSNPSharp
                 }
             }
         }
+
+        string nickName;
+        public string NickName
+        {
+            get
+            {
+                return nickName;
+            }
+        }
+
 
         #region Profile datafields
         bool validProfile = false;
@@ -525,8 +555,8 @@ namespace MSNPSharp
             string country, string postalCode, string gender,
             string kid, string age, string birthday,
             string wallet, string sid, string kv,
-            string MSPAuth, IPAddress clientIP, int clientPort,
-            string displayName)
+            string mspAuth, IPAddress clientIP, int clientPort,
+            string nick)
         {
             LoginTime = loginTime;
             EmailEnabled = emailEnabled;
@@ -543,13 +573,13 @@ namespace MSNPSharp
             Wallet = wallet;
             Sid = sid;
             KV = kv;
-            this.MSPAuth = MSPAuth;
+            MSPAuth = mspAuth;
             ClientIP = clientIP;
             ClientPort = clientPort;
+            nickName = nick;
 
-            SetName(displayName);
+            validProfile = true;
 
-            this.validProfile = true;
             if (ProfileReceived != null)
                 ProfileReceived(this, new EventArgs());
         }

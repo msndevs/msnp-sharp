@@ -135,11 +135,13 @@ namespace MSNPSharp
 
         bool hasBlog;
         bool isMessengerUser = false;
+        DynamicItemState dynamicChanged = DynamicItemState.None;
+        string comment = string.Empty;
 
         ClientType clienttype = ClientType.PassportMember;
 
         [NonSerialized]
-        IMessageHandler nsMessageHandler;
+        NSMessageHandler nsMessageHandler;
 
         ArrayList contactGroups = new ArrayList();
         MSNLists lists = MSNLists.None;
@@ -243,6 +245,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The amount of OIMs sent in a session.
+        /// </summary>
         internal int OIMCount
         {
             get
@@ -276,6 +281,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The contactId of contact, NOT CID.
+        /// </summary>
         public Guid Guid
         {
             get
@@ -312,7 +320,7 @@ namespace MSNPSharp
         {
             get
             {
-                return (NSMessageHandler)nsMessageHandler;
+                return nsMessageHandler;
             }
             set
             {
@@ -351,6 +359,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Indicates whether the contact is a mail contact or a messenger buddy.
+        /// </summary>
         public bool IsMessengerUser
         {
             get
@@ -363,11 +374,41 @@ namespace MSNPSharp
                 {
                     if (IsMessengerUser != value)
                     {
-                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, value);
+                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, value, Comment);
                     }
                 }
             }
         }
+
+        public string Comment
+        {
+            get
+            {
+                return comment;
+            }
+            set
+            {
+                if (NSMessageHandler != null && Guid != Guid.Empty)
+                {
+                    if (Comment != value)
+                    {
+                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, IsMessengerUser, value);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// When DynamicChanged = true, the official client will show a gleam before the contact.
+        /// </summary>
+        public DynamicItemState DynamicChanged
+        {
+            get 
+            { 
+                return dynamicChanged; 
+            }
+        }
+
 
         #region Internal setters
         internal void SetName(string newName)
@@ -544,6 +585,20 @@ namespace MSNPSharp
             isMessengerUser = isMessengerEnabled;
         }
 
+        internal void SetComment(string note)
+        {
+            comment = note;
+        }
+
+        internal void SetdynamicItemChanged(DynamicItemState changed)
+        {
+            dynamicChanged = changed;
+            if (mail != null && changed == DynamicItemState.None)
+            {
+                nsMessageHandler.ContactService.Deltas.DynamicItems.Remove(mail);
+            }
+        }
+
         #endregion
 
         #region Public setters
@@ -677,7 +732,16 @@ namespace MSNPSharp
 
         #endregion
 
-        override public int GetHashCode()
+        public override bool Equals(object obj)
+        {
+            if (obj == null || obj.GetType() != GetType())
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            Contact contact = obj as Contact;
+            return ((Mail.ToLowerInvariant() == contact.Mail.ToLowerInvariant()) && (ClientType == contact.ClientType));
+        }
+        public override int GetHashCode()
         {
             return mail.GetHashCode();
         }

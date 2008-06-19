@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/AddressBook" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="HandleType">
+    <xsd:sequence>
+      <xsd:element name="Id" type="xsd:integer" />
+      <xsd:element default="Messenger" name="Type" type="msnab:ServiceFilterType" />
+      <xsd:element name="ForeignId" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ServiceType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="Memberships">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Membership" type="msnab:Membership" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="Info">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Handle" type="msnab:HandleType" />
+            <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
+            <xsd:element name="InverseRequired" type="xsd:boolean" />
+            <xsd:element name="AuthorizationCriteria" type="xsd:string" />
+            <xsd:element name="IsBot" type="xsd:boolean" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="Changes" type="xsd:string" />
+      <xsd:element name="LastChange" type="xsd:dateTime" />
+      <xsd:element name="Deleted" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="Membership">
+    <xsd:sequence>
+      <xsd:element name="MemberRole" type="msnab:MemberRole" />
+      <xsd:element name="Members">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Member" type="msnab:BaseMember" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="MembershipIsComplete" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BaseMember">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="MembershipId" type="xsd:positiveInteger" />
+      <xsd:element name="Type" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Location">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Id" type="msnab:Guid" />
+            <xsd:element name="IsPassportNameHidden" type="xsd:boolean" />
+            <xsd:element name="CID" type="xsd:integer" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
+      <xsd:element name="State" type="msnab:MemberState" />
+      <xsd:element minOccurs="0" name="Annotations">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Annotation" type="msnab:Annotation" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" default="false" name="Deleted" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="LastChanged" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="JoinedDate" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="ExpirationDate" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="Changes" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="PassportMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="PassportName" type="xsd:string" />
+          <xsd:element minOccurs="0" name="IsPassportNameHidden" type="xsd:boolean" />
+          <xsd:element minOccurs="0" name="PassportId" type="xsd:integer" />
+          <xsd:element minOccurs="0" name="CID" type="xsd:integer" />
+          <xsd:element minOccurs="0" name="PassportChanges" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="EmailMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="Email" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="PhoneMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="PhoneNumber" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="RoleMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="Id" type="xsd:string" />
+          <xsd:element name="DefiningService">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="Id" type="xsd:integer" />
+                <xsd:element name="Type" type="xsd:string" />
+                <xsd:element name="ForeignId" type="xsd:string" />
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="MaxRoleRecursionDepth" type="xsd:integer" />
+          <xsd:element name="MaxDegreesSeparation" type="xsd:integer" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ServiceMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="Service">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="ID" type="msnab:Guid" />
+                <xsd:element name="Type" type="xsd:string" />
+                <xsd:element name="ForeignId" type="xsd:string" />
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="EveryoneMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember" />
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:simpleType name="Guid">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:simpleType name="MemberRole">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Allow" />
+      <xsd:enumeration value="Block" />
+      <xsd:enumeration value="Reverse" />
+      <xsd:enumeration value="Pending" />
+      <xsd:enumeration value="Contributor" />
+      <xsd:enumeration value="ProfileGeneral" />
+      <xsd:enumeration value="ProfilePersonalContact" />
+      <xsd:enumeration value="ProfileProfessionalContact" />
+      <xsd:enumeration value="ProfileSocial" />
+      <xsd:enumeration value="ProfileExpression" />
+      <xsd:enumeration value="TwoWayRelationship" />
+      <xsd:enumeration value="OneWayRelationship" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element name="MemberType">
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:enumeration value="Allow" />
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:element>
+  <xsd:simpleType name="MemberState">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Accepted" />
+      <xsd:enumeration value="Pending" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="Annotation">
+    <xsd:sequence>
+      <xsd:element name="Name" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Value" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ContactType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="contactId" type="msnab:Guid" />
+      <xsd:element minOccurs="0" name="contactInfo" type="msnab:contactInfoType" />
+      <xsd:element minOccurs="0" name="propertiesChanged" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            A space (ASCII #32) separated list of properties that
+            have changed as part of an update request. The property
+            names don't always match the name of the associated
+            element.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="fDeleted" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="lastChange" type="xsd:dateTime" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ContactIdType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="contactId" type="msnab:Guid" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="contactInfoType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="emails">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="ContactEmail" type="msnab:contactEmailType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="phones">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="ContactPhone" type="msnab:contactPhoneType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="locations">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="ContactLocation" type="msnab:contactLocationType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="webSites">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="ContactWebSite" type="msnab:contactWebSiteType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="annotations">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="Annotation" type="msnab:Annotation" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="groupIds">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="guid" type="msnab:Guid" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="groupIdsDeleted">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="guid" type="msnab:Guid" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="contactType">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Me" />
+            <xsd:enumeration value="Regular" />
+            <xsd:enumeration value="Messenger" />
+            <xsd:enumeration value="Live" />
+            <xsd:enumeration value="LivePending" />
+            <xsd:enumeration value="LiveRejected" />
+            <xsd:enumeration value="LiveDropped" />
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="quickName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="firstName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="MiddleName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="lastName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Suffix" type="xsd:string" />
+      <xsd:element minOccurs="0" name="NameTitle" type="xsd:string" />
+      <xsd:element minOccurs="0" name="passportName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="IsPassportNameHidden" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="displayName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="puid" type="xsd:integer" />
+      <xsd:element minOccurs="0" name="CID" type="xsd:integer" />
+      <xsd:element minOccurs="0" name="BrandIdList" type="xsd:anyType" />
+      <xsd:element minOccurs="0" name="comment" type="xsd:string" />
+      <xsd:element minOccurs="0" name="IsNotMobileVisible" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="isMobileIMEnabled" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="isMessengerUser" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="isFavorite" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="isSmtp" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="hasSpace" type="xsd:boolean">
+        <xsd:annotation>
+          <xsd:documentation>
+            Indicates whether the contact has a Windows Live
+            Space or not.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="spotWatchState" type="xsd:string" />
+      <xsd:element minOccurs="0" name="birthdate" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="primaryEmailType" type="msnab:ContactEmailTypeType" />
+      <xsd:element minOccurs="0" name="PrimaryLocation" type="msnab:ContactLocationTypeType" />
+      <xsd:element minOccurs="0" name="PrimaryPhone" type="msnab:ContactPhoneTypeType" />
+      <xsd:element minOccurs="0" name="IsPrivate" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="Anniversary" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            Seen is YYYY/MM/DD format.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="Gender" type="xsd:string" />
+      <xsd:element minOccurs="0" name="TimeZone" type="xsd:string" />
+      <xsd:element minOccurs="0" name="MessengerMemberInfo" type="msnab:MessengerMemberInfo" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="contactEmailType">
+    <xsd:sequence>
+      <xsd:element name="contactEmailType" type="msnab:ContactEmailTypeType" />
+      <xsd:element name="email" type="xsd:string" />
+      <xsd:element name="isMessengerEnabled" type="xsd:boolean" />
+      <xsd:element name="Capability" type="xsd:integer" />
+      <xsd:element name="MessengerEnabledExternally" type="xsd:boolean" />
+      <xsd:element name="propertiesChanged" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:simpleType name="ContactEmailTypeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="ContactEmailPersonal" />
+      <xsd:enumeration value="ContactEmailBusiness" />
+      <xsd:enumeration value="ContactEmailOther" />
+      <xsd:enumeration value="ContactEmailMessenger" />
+      <xsd:enumeration value="Messenger2" />
+      <xsd:enumeration value="Passport" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="contactPhoneType">
+    <xsd:sequence>
+      <xsd:element name="contactPhoneType" type="msnab:ContactPhoneTypeType" />
+      <xsd:element name="number" type="xsd:string" />
+      <xsd:element name="isMessengerEnabled" type="xsd:boolean" />
+      <xsd:element name="propertiesChanged" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:simpleType name="ContactPhoneTypeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="ContactPhonePersonal" />
+      <xsd:enumeration value="ContactPhoneBusiness" />
+      <xsd:enumeration value="ContactPhoneMobile" />
+      <xsd:enumeration value="ContactPhonePager" />
+      <xsd:enumeration value="ContactPhoneOther" />
+      <xsd:enumeration value="ContactPhoneFax" />
+      <xsd:enumeration value="Personal2" />
+      <xsd:enumeration value="Business2" />
+      <xsd:enumeration value="BusinessFax" />
+      <xsd:enumeration value="BusinessMobile" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="contactLocationType">
+    <xsd:sequence>
+      <xsd:element name="contactLocationType" type="msnab:ContactLocationTypeType" />
+      <xsd:element minOccurs="0" name="name" type="xsd:string" />
+      <xsd:element name="street" type="xsd:string" />
+      <xsd:element name="city" type="xsd:string" />
+      <xsd:element name="state" type="xsd:string" />
+      <xsd:element name="country" type="xsd:string" />
+      <xsd:element name="postalCode" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Department" type="xsd:string" />
+      <xsd:element name="Changes" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:simpleType name="ContactLocationTypeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="ContactLocationPersonal" />
+      <xsd:enumeration value="ContactLocationBusiness" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="contactWebSiteType">
+    <xsd:sequence>
+      <xsd:element name="contactWebSiteType" type="msnab:ContactWebSiteTypeType" />
+      <xsd:element name="webURL" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:simpleType name="ContactWebSiteTypeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="ContactWebSitePersonal" />
+      <xsd:enumeration value="ContactWebSiteBusiness" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="GroupType">
+    <xsd:sequence>
+      <xsd:element name="groupId" type="msnab:Guid" />
+      <xsd:element name="groupInfo" type="msnab:groupInfoType" />
+      <xsd:element name="propertiesChanged" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            A space (ASCII #32) separated list of properties that
+            have changed as part of an update request. The property
+            names don't always match the name of the associated
+            element.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="fDeleted" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="lastChange" type="xsd:dateTime" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="groupInfoType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="annotations">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Annotation" type="msnab:Annotation" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" default="C8529CE2-6EAD-434d-881F-341E17DB3FF8" name="groupType" type="msnab:Guid" />
+      <xsd:element minOccurs="0" name="name" type="xsd:string" />
+      <xsd:element minOccurs="0" name="IsNotMobileVisible" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="IsPrivate" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="fMessenger" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="groupFilterType">
+    <xsd:sequence>
+      <xsd:element name="groupIds">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="guid" type="msnab:Guid" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:simpleType name="ServiceFilterType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Messenger" />
+      <xsd:enumeration value="Invitation" />
+      <xsd:enumeration value="SocialNetwork" />
+      <xsd:enumeration value="Space" />
+      <xsd:enumeration value="Profile" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element name="InvalidPassportUser">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="errorcode" type="xsd:string" />
+        <xsd:element name="errorstring" type="xsd:string" />
+        <xsd:element name="additionalDetails">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="originalExceptionErrorMessage" type="xsd:string" />
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="MessengerMemberInfo">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="PendingAnnotations">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="Annotation" type="msnab:Annotation" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="DynamicItem">
+    <xsd:sequence>
+      <xsd:element name="Type" type="xsd:string" />
+      <xsd:element name="Deleted" type="xsd:boolean" />
+      <xsd:element name="LastChanged" type="xsd:dateTime" />
+      <xsd:element name="PassportName" type="xsd:string" />
+      <xsd:element name="PassportId" type="xsd:string" />
+      <xsd:element name="CID" type="xsd:string" />
+      <xsd:element name="SpaceStatus" type="xsd:string" />
+      <xsd:element name="SpaceLastChanged" type="xsd:dateTime" />
+      <xsd:element name="SpaceLastViewed" type="xsd:dateTime" />
+      <xsd:element name="SpaceGleam" type="xsd:boolean" />
+      <xsd:element name="ProfileStatus" type="xsd:string" />
+      <xsd:element name="ProfileGleam" type="xsd:boolean" />
+      <xsd:element name="ContactProfileStatus" type="xsd:string" />
+      <xsd:element name="ContactProfileLastChanged" type="xsd:dateTime" />
+      <xsd:element name="ContactProfileLastViewed" type="xsd:dateTime" />
+      <xsd:element name="Changes" type="xsd:anyType" />
+    </xsd:sequence>
+    <xsd:attribute name="type" />
+  </xsd:complexType>
+</xsd:schema>

@@ -28,11 +28,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.Text;
+using System.Collections;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.Collections;
-    using System.Text;
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
 
@@ -42,7 +43,6 @@ namespace MSNPSharp.Core
         public NSMessage()
             : base()
         {
-
         }
 
         public NSMessage(string command, ArrayList commandValues)
@@ -61,27 +61,52 @@ namespace MSNPSharp.Core
             Command = command;
         }
 
-        //this is only different for QRY response
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override byte[] GetBytes()
         {
-            if (Command == "PNG")
-                return System.Text.Encoding.UTF8.GetBytes("PNG\r\n");
-
-            if (Command != "QRY")
-                return base.GetBytes();
-
-            StringBuilder builder = new StringBuilder(64);
-            builder.Append(Command);
-
-            // for the exception do it ourselves
-            builder.Append(' ');
-            builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            foreach (string val in CommandValues)
+            switch (Command)
             {
-                builder.Append(val);
-            }
+                case "PNG":
+                    return System.Text.Encoding.UTF8.GetBytes("PNG\r\n");
 
-            return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+                //case "QRY":
+                //case "ADL":
+                //case "MSG":
+                //case "NOT":
+                //case "UBX":
+                //case "GCF":
+                //case "UBM":
+                //case "RML":
+                //case "IPG":
+                //case "FQY":
+                //    {
+                //        StringBuilder builder = new StringBuilder(64);
+                //        builder.Append(Command);
+                //        builder.Append(' ');
+                //        builder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                //        builder.Append(' ');
+
+                //        for (int i = 0; i < CommandValues.Count - 1; i++)
+                //        {
+                //            builder.Append(CommandValues[i].ToString());
+                //            builder.Append(' ');
+                //        }
+
+                //        string payloadData = CommandValues[CommandValues.Count - 1].ToString();
+
+                //        builder.Append(Encoding.UTF8.GetByteCount(payloadData));
+                //        builder.Append("\r\n");
+                //        builder.Append(payloadData);
+                //        return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+                //    }
+
+                default:
+                    return base.GetBytes();
+
+            }
         }
     }
 };

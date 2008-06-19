@@ -4,6 +4,7 @@ namespace MSNPSharpClient
     using System.IO;
     using System.Drawing;
     using System.Collections;
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.Windows.Forms;
     using System.Data;
@@ -18,6 +19,12 @@ namespace MSNPSharpClient
     {
         // Create a Messenger object to use MSNPSharp.
         private Messenger messenger = new Messenger();
+        private Dictionary<Conversation, ConversationForm> dicconversation = new Dictionary<Conversation, ConversationForm>(0);
+
+        public Dictionary<Conversation, ConversationForm> Dicconversation
+        {
+            get { return dicconversation; }
+        }
 
         #region Form controls
         private Panel ListPanel;
@@ -42,12 +49,8 @@ namespace MSNPSharpClient
         private ToolStripMenuItem sendMIMMenuItem;
         private StatusBar statusBar;
         private Panel OwnerPanel;
-        private Splitter splitter2;
         private Panel panel1;
-        private Label label1;
-        private Button button1;
         private TextBox accountTextBox;
-        private Label label2;
         private Button loginButton;
         private TextBox passwordTextBox;
         private PropertyGrid propertyGrid;
@@ -59,8 +62,17 @@ namespace MSNPSharpClient
         private ToolStripMenuItem toolStripSortBygroup;
         private ToolStripMenuItem toolStripDeleteGroup;
         private ContextMenuStrip groupContextMenu;
-        private TextBox txtAddNew;
         private Button btnAddNew;
+        private ToolStripMenuItem importContactsMenuItem;
+        private TreeView treeViewFilterList;
+        private TextBox txtSearch;
+        private ToolStripMenuItem deleteMenuItem;
+        private ToolStripSeparator toolStripMenuItem4;
+        private ComboBox comboStatus;
+        private Panel pnlNameAndPM;
+        private TextBox lblName;
+        private TextBox lblPM;
+        private ToolStripMenuItem viewContactCardMenuItem;
         private IContainer components;
         #endregion
 
@@ -83,27 +95,69 @@ namespace MSNPSharpClient
             // set the events that we will handle
             // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
             // a switchboard server handles the individual conversation sessions.
-            messenger.NameserverProcessor.ConnectionEstablished += new EventHandler(NameserverProcessor_ConnectionEstablished);
-            messenger.Nameserver.SignedIn += new EventHandler(Nameserver_SignedIn);
-            messenger.Nameserver.SignedOff += new SignedOffEventHandler(Nameserver_SignedOff);
-            messenger.NameserverProcessor.ConnectingException += new ProcessorExceptionEventHandler(NameserverProcessor_ConnectingException);
-            messenger.Nameserver.ExceptionOccurred += new HandlerExceptionEventHandler(Nameserver_ExceptionOccurred);
-            messenger.Nameserver.AuthenticationError += new HandlerExceptionEventHandler(Nameserver_AuthenticationError);
-            messenger.Nameserver.ServerErrorReceived += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
-            messenger.ConversationCreated += new ConversationCreatedEventHandler(messenger_ConversationCreated);
-            messenger.TransferInvitationReceived += new MSNSLPInvitationReceivedEventHandler(messenger_TransferInvitationReceived);
-            messenger.Nameserver.OIMReceived += new OIMReceivedEventHandler(Nameserver_OIMReceived);
-            messenger.Nameserver.PingAnswer += new PingAnswerEventHandler(Nameserver_PingAnswer);
+            messenger.NameserverProcessor.ConnectionEstablished             += new EventHandler(NameserverProcessor_ConnectionEstablished);
+            messenger.Nameserver.SignedIn                                   += new EventHandler(Nameserver_SignedIn);
+            messenger.Nameserver.SignedOff                                  += new SignedOffEventHandler(Nameserver_SignedOff);
+            messenger.NameserverProcessor.ConnectingException               += new ProcessorExceptionEventHandler(NameserverProcessor_ConnectingException);
+            messenger.Nameserver.ExceptionOccurred                          += new HandlerExceptionEventHandler(Nameserver_ExceptionOccurred);
+            messenger.Nameserver.AuthenticationError                        += new HandlerExceptionEventHandler(Nameserver_AuthenticationError);
+            messenger.Nameserver.ServerErrorReceived                        += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
+            messenger.ConversationCreated                                   += new ConversationCreatedEventHandler(messenger_ConversationCreated);
+            messenger.TransferInvitationReceived                            += new MSNSLPInvitationReceivedEventHandler(messenger_TransferInvitationReceived);
+            messenger.Nameserver.OIMReceived                                += new OIMReceivedEventHandler(Nameserver_OIMReceived);
+            messenger.Nameserver.PingAnswer                                 += new PingAnswerEventHandler(Nameserver_PingAnswer);
 
-            messenger.Nameserver.ContactOnline += new ContactChangedEventHandler(Nameserver_ContactOnline);
-            messenger.Nameserver.ContactOffline += new ContactChangedEventHandler(Nameserver_ContactOffline);
+            messenger.Nameserver.ContactOnline                              += new ContactChangedEventHandler(Nameserver_ContactOnline);
+            messenger.Nameserver.ContactOffline                             += new ContactChangedEventHandler(Nameserver_ContactOffline);
 
+            messenger.Nameserver.ReverseAdded                               += new ContactChangedEventHandler(Nameserver_ReverseAdded);
+
+            messenger.Nameserver.Owner.PersonalMessageChanged               += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
+            messenger.Nameserver.Owner.ScreenNameChanged                    += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
+            messenger.Nameserver.SpaceService.ContactCardCompleted          += new ContactCardCompletedEventHandler(SpaceService_ContactCardCompleted);
+          
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             if (toolStripSortByStatus.Checked)
                 SortByStatus();
             else
                 SortByGroup();
+
+            comboStatus.SelectedIndex = 0;
+        }
+
+
+        void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArg arg)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new ContactCardCompletedEventHandler(SpaceService_ContactCardCompleted),
+                    new object[] { sender, arg });
+            }
+            else
+            {
+                if (arg.Error == null && arg.Changed)
+                {
+                    ContactCardForm ccform = new ContactCardForm(arg.ContactCard);
+                    ccform.Show();
+                }
+            }
+        }
+
+        void Owner_PersonalMessageChanged(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged), sender, e);
+                return;
+            }
+
+            lblName.Text = messenger.Owner.Name;
+
+            if (messenger.Owner.PersonalMessage != null && messenger.Owner.PersonalMessage.Message != null)
+            {
+                lblPM.Text = System.Web.HttpUtility.HtmlDecode(messenger.Owner.PersonalMessage.Message);
+            }
         }
 
         /// <summary>
@@ -130,12 +184,12 @@ namespace MSNPSharpClient
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClientForm));
             this.ListPanel = new System.Windows.Forms.Panel();
             this.treeViewPanel = new System.Windows.Forms.Panel();
             this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
+            this.treeViewFilterList = new System.Windows.Forms.TreeView();
             this.SortPanel = new System.Windows.Forms.Panel();
-            this.txtAddNew = new System.Windows.Forms.TextBox();
+            this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnAddNew = new System.Windows.Forms.Button();
             this.btnSortBy = new System.Windows.Forms.Button();
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -144,22 +198,25 @@ namespace MSNPSharpClient
             this.sendMIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.sendFileMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unblockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
+            this.viewContactCardMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.changeDisplayButton = new System.Windows.Forms.Button();
             this.ContactPanel = new System.Windows.Forms.Panel();
-            this.splitter2 = new System.Windows.Forms.Splitter();
+            this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.label1 = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
+            this.pnlNameAndPM = new System.Windows.Forms.Panel();
+            this.lblPM = new System.Windows.Forms.TextBox();
+            this.lblName = new System.Windows.Forms.TextBox();
+            this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.accountTextBox = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.loginButton = new System.Windows.Forms.Button();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
-            this.propertyGrid = new System.Windows.Forms.PropertyGrid();
-            this.displayImageBox = new System.Windows.Forms.PictureBox();
-            this.pictureBox = new System.Windows.Forms.PictureBox();
+            this.comboStatus = new System.Windows.Forms.ComboBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
@@ -172,17 +229,19 @@ namespace MSNPSharpClient
             this.toolStripSortBygroup = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDeleteGroup = new System.Windows.Forms.ToolStripMenuItem();
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.pictureBox = new System.Windows.Forms.PictureBox();
             this.ListPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
             this.userMenuStrip.SuspendLayout();
             this.ContactPanel.SuspendLayout();
             this.panel1.SuspendLayout();
+            this.pnlNameAndPM.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.OwnerPanel.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
             // 
             // ListPanel
@@ -191,18 +250,19 @@ namespace MSNPSharpClient
             this.ListPanel.Controls.Add(this.treeViewPanel);
             this.ListPanel.Controls.Add(this.SortPanel);
             this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ListPanel.Location = new System.Drawing.Point(239, 88);
+            this.ListPanel.Location = new System.Drawing.Point(287, 95);
             this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(328, 572);
+            this.ListPanel.Size = new System.Drawing.Size(252, 514);
             this.ListPanel.TabIndex = 0;
             // 
             // treeViewPanel
             // 
             this.treeViewPanel.Controls.Add(this.treeViewFavoriteList);
+            this.treeViewPanel.Controls.Add(this.treeViewFilterList);
             this.treeViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
+            this.treeViewPanel.Location = new System.Drawing.Point(0, 29);
             this.treeViewPanel.Name = "treeViewPanel";
-            this.treeViewPanel.Size = new System.Drawing.Size(328, 545);
+            this.treeViewPanel.Size = new System.Drawing.Size(252, 485);
             this.treeViewPanel.TabIndex = 2;
             // 
             // treeViewFavoriteList
@@ -220,7 +280,7 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.ShowLines = false;
             this.treeViewFavoriteList.ShowPlusMinus = false;
             this.treeViewFavoriteList.ShowRootLines = false;
-            this.treeViewFavoriteList.Size = new System.Drawing.Size(328, 545);
+            this.treeViewFavoriteList.Size = new System.Drawing.Size(252, 485);
             this.treeViewFavoriteList.TabIndex = 0;
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
@@ -229,45 +289,73 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
             this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
             // 
+            // treeViewFilterList
+            // 
+            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
+            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.treeViewFilterList.FullRowSelect = true;
+            this.treeViewFilterList.HideSelection = false;
+            this.treeViewFilterList.Indent = 20;
+            this.treeViewFilterList.ItemHeight = 20;
+            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
+            this.treeViewFilterList.Name = "treeViewFilterList";
+            this.treeViewFilterList.ShowLines = false;
+            this.treeViewFilterList.ShowPlusMinus = false;
+            this.treeViewFilterList.ShowRootLines = false;
+            this.treeViewFilterList.Size = new System.Drawing.Size(252, 485);
+            this.treeViewFilterList.TabIndex = 0;
+            this.treeViewFilterList.Visible = false;
+            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            // 
             // SortPanel
             // 
             this.SortPanel.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.SortPanel.Controls.Add(this.txtAddNew);
+            this.SortPanel.Controls.Add(this.txtSearch);
             this.SortPanel.Controls.Add(this.btnAddNew);
             this.SortPanel.Controls.Add(this.btnSortBy);
             this.SortPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.SortPanel.Location = new System.Drawing.Point(0, 0);
             this.SortPanel.Name = "SortPanel";
-            this.SortPanel.Size = new System.Drawing.Size(328, 27);
+            this.SortPanel.Size = new System.Drawing.Size(252, 29);
             this.SortPanel.TabIndex = 1;
             // 
-            // txtAddNew
+            // txtSearch
             // 
-            this.txtAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtAddNew.Location = new System.Drawing.Point(95, 5);
-            this.txtAddNew.Name = "txtAddNew";
-            this.txtAddNew.Size = new System.Drawing.Size(156, 20);
-            this.txtAddNew.TabIndex = 8;
+            this.txtSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtSearch.ForeColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtSearch.Location = new System.Drawing.Point(-101, 2);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(239, 21);
+            this.txtSearch.TabIndex = 9;
+            this.txtSearch.Text = "Search contacts";
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
+            this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
+            this.txtSearch.Enter += new System.EventHandler(this.txtSearch_Enter);
             // 
             // btnAddNew
             // 
             this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddNew.Location = new System.Drawing.Point(257, 2);
+            this.btnAddNew.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnAddNew.Location = new System.Drawing.Point(197, 1);
             this.btnAddNew.Name = "btnAddNew";
-            this.btnAddNew.Size = new System.Drawing.Size(59, 23);
+            this.btnAddNew.Size = new System.Drawing.Size(43, 23);
             this.btnAddNew.TabIndex = 7;
-            this.btnAddNew.Text = "add new";
+            this.btnAddNew.Text = "+";
             this.btnAddNew.UseVisualStyleBackColor = true;
             this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
             // 
             // btnSortBy
             // 
+            this.btnSortBy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSortBy.BackColor = System.Drawing.SystemColors.Control;
             this.btnSortBy.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnSortBy.Location = new System.Drawing.Point(8, 3);
+            this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnSortBy.Location = new System.Drawing.Point(144, 1);
             this.btnSortBy.Name = "btnSortBy";
-            this.btnSortBy.Size = new System.Drawing.Size(38, 21);
+            this.btnSortBy.Size = new System.Drawing.Size(46, 23);
             this.btnSortBy.TabIndex = 1;
             this.btnSortBy.Text = "sort";
             this.btnSortBy.UseVisualStyleBackColor = true;
@@ -281,17 +369,21 @@ namespace MSNPSharpClient
             this.sendMIMMenuItem,
             this.toolStripMenuItem3,
             this.sendFileMenuItem,
+            this.importContactsMenuItem,
             this.toolStripMenuItem2,
             this.blockMenuItem,
-            this.unblockMenuItem});
+            this.unblockMenuItem,
+            this.deleteMenuItem,
+            this.toolStripMenuItem4,
+            this.viewContactCardMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(212, 148);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 220);
             // 
             // sendIMMenuItem
             // 
             this.sendIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendIMMenuItem.Name = "sendIMMenuItem";
-            this.sendIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendIMMenuItem.Text = "Send Instant Message";
             this.sendIMMenuItem.Click += new System.EventHandler(this.sendMessageToolStripMenuItem_Click);
             // 
@@ -299,7 +391,7 @@ namespace MSNPSharpClient
             // 
             this.sendOIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendOIMMenuItem.Name = "sendOIMMenuItem";
-            this.sendOIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendOIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendOIMMenuItem.Text = "Send Offline Message";
             this.sendOIMMenuItem.Click += new System.EventHandler(this.sendOfflineMessageToolStripMenuItem_Click);
             // 
@@ -307,48 +399,74 @@ namespace MSNPSharpClient
             // 
             this.sendMIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendMIMMenuItem.Name = "sendMIMMenuItem";
-            this.sendMIMMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendMIMMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendMIMMenuItem.Text = "Send Mobile Message";
             this.sendMIMMenuItem.Click += new System.EventHandler(this.sendMIMMenuItem_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(208, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(197, 6);
             // 
             // sendFileMenuItem
             // 
             this.sendFileMenuItem.Name = "sendFileMenuItem";
-            this.sendFileMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.sendFileMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendFileMenuItem.Text = "Send File";
             this.sendFileMenuItem.Click += new System.EventHandler(this.sendFileMenuItem_Click);
+            // 
+            // importContactsMenuItem
+            // 
+            this.importContactsMenuItem.Name = "importContactsMenuItem";
+            this.importContactsMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.importContactsMenuItem.Text = "Import Contacts";
+            this.importContactsMenuItem.Click += new System.EventHandler(this.importContactsMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(208, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(197, 6);
             // 
             // blockMenuItem
             // 
             this.blockMenuItem.Name = "blockMenuItem";
-            this.blockMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.blockMenuItem.Size = new System.Drawing.Size(200, 22);
             this.blockMenuItem.Text = "Block";
             this.blockMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
             // 
             // unblockMenuItem
             // 
             this.unblockMenuItem.Name = "unblockMenuItem";
-            this.unblockMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.unblockMenuItem.Size = new System.Drawing.Size(200, 22);
             this.unblockMenuItem.Text = "Unblock";
             this.unblockMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
+            // 
+            // deleteMenuItem
+            // 
+            this.deleteMenuItem.Name = "deleteMenuItem";
+            this.deleteMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.deleteMenuItem.Text = "Delete";
+            this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
+            // 
+            // toolStripMenuItem4
+            // 
+            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(197, 6);
+            // 
+            // viewContactCardMenuItem
+            // 
+            this.viewContactCardMenuItem.Name = "viewContactCardMenuItem";
+            this.viewContactCardMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.viewContactCardMenuItem.Text = "View Contact Card";
+            this.viewContactCardMenuItem.Click += new System.EventHandler(this.viewContactCardToolStripMenuItem_Click);
             // 
             // changeDisplayButton
             // 
             this.changeDisplayButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.changeDisplayButton.BackColor = System.Drawing.SystemColors.Control;
-            this.changeDisplayButton.Location = new System.Drawing.Point(387, 59);
+            this.changeDisplayButton.Location = new System.Drawing.Point(323, 64);
             this.changeDisplayButton.Name = "changeDisplayButton";
-            this.changeDisplayButton.Size = new System.Drawing.Size(85, 23);
+            this.changeDisplayButton.Size = new System.Drawing.Size(102, 24);
             this.changeDisplayButton.TabIndex = 7;
             this.changeDisplayButton.Text = "Display image";
             this.changeDisplayButton.UseVisualStyleBackColor = true;
@@ -357,123 +475,126 @@ namespace MSNPSharpClient
             // ContactPanel
             // 
             this.ContactPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            this.ContactPanel.Controls.Add(this.splitter2);
-            this.ContactPanel.Controls.Add(this.panel1);
             this.ContactPanel.Controls.Add(this.propertyGrid);
             this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Left;
-            this.ContactPanel.Location = new System.Drawing.Point(0, 88);
+            this.ContactPanel.Location = new System.Drawing.Point(0, 95);
             this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(239, 572);
+            this.ContactPanel.Size = new System.Drawing.Size(287, 514);
             this.ContactPanel.TabIndex = 2;
             // 
-            // splitter2
+            // propertyGrid
             // 
-            this.splitter2.BackColor = System.Drawing.SystemColors.Control;
-            this.splitter2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.splitter2.Location = new System.Drawing.Point(0, 428);
-            this.splitter2.Name = "splitter2";
-            this.splitter2.Size = new System.Drawing.Size(239, 10);
-            this.splitter2.TabIndex = 6;
-            this.splitter2.TabStop = false;
+            this.propertyGrid.BackColor = System.Drawing.SystemColors.Control;
+            this.propertyGrid.CommandsBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
+            this.propertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
+            this.propertyGrid.Location = new System.Drawing.Point(0, 0);
+            this.propertyGrid.Name = "propertyGrid";
+            this.propertyGrid.Size = new System.Drawing.Size(287, 514);
+            this.propertyGrid.TabIndex = 4;
             // 
             // panel1
             // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Controls.Add(this.button1);
+            this.panel1.Controls.Add(this.pnlNameAndPM);
+            this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.accountTextBox);
-            this.panel1.Controls.Add(this.label2);
             this.panel1.Controls.Add(this.loginButton);
             this.panel1.Controls.Add(this.passwordTextBox);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 428);
+            this.panel1.Controls.Add(this.comboStatus);
+            this.panel1.Location = new System.Drawing.Point(179, 6);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(239, 144);
+            this.panel1.Size = new System.Drawing.Size(348, 83);
             this.panel1.TabIndex = 5;
             // 
-            // label1
+            // pnlNameAndPM
             // 
-            this.label1.Location = new System.Drawing.Point(6, 12);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(56, 16);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Account";
+            this.pnlNameAndPM.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.pnlNameAndPM.Controls.Add(this.lblPM);
+            this.pnlNameAndPM.Controls.Add(this.lblName);
+            this.pnlNameAndPM.Location = new System.Drawing.Point(4, 3);
+            this.pnlNameAndPM.Name = "pnlNameAndPM";
+            this.pnlNameAndPM.Size = new System.Drawing.Size(244, 53);
+            this.pnlNameAndPM.TabIndex = 1;
+            this.pnlNameAndPM.Visible = false;
             // 
-            // button1
+            // lblPM
             // 
-            this.button1.Location = new System.Drawing.Point(145, 61);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 6;
-            this.button1.Text = "Sign off >";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.lblPM.Location = new System.Drawing.Point(5, 27);
+            this.lblPM.Name = "lblPM";
+            this.lblPM.Size = new System.Drawing.Size(236, 21);
+            this.lblPM.TabIndex = 1;
+            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
+            // lblName
+            // 
+            this.lblName.Location = new System.Drawing.Point(5, 2);
+            this.lblName.Name = "lblName";
+            this.lblName.Size = new System.Drawing.Size(236, 21);
+            this.lblName.TabIndex = 0;
+            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
+            // displayImageBox
+            // 
+            this.displayImageBox.BackColor = System.Drawing.Color.White;
+            this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.displayImageBox.Dock = System.Windows.Forms.DockStyle.Right;
+            this.displayImageBox.Location = new System.Drawing.Point(252, 0);
+            this.displayImageBox.Name = "displayImageBox";
+            this.displayImageBox.Size = new System.Drawing.Size(96, 83);
+            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.displayImageBox.TabIndex = 2;
+            this.displayImageBox.TabStop = false;
             // 
             // accountTextBox
             // 
-            this.accountTextBox.Location = new System.Drawing.Point(64, 12);
+            this.accountTextBox.Location = new System.Drawing.Point(7, 6);
             this.accountTextBox.Name = "accountTextBox";
-            this.accountTextBox.Size = new System.Drawing.Size(156, 20);
-            this.accountTextBox.TabIndex = 0;
-            // 
-            // label2
-            // 
-            this.label2.Location = new System.Drawing.Point(6, 35);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(56, 23);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "Password";
+            this.accountTextBox.Size = new System.Drawing.Size(238, 21);
+            this.accountTextBox.TabIndex = 1;
+            this.accountTextBox.Text = "msnpsharp@live.cn";
+            this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // loginButton
             // 
-            this.loginButton.Location = new System.Drawing.Point(64, 61);
+            this.loginButton.Location = new System.Drawing.Point(178, 30);
             this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(75, 23);
+            this.loginButton.Size = new System.Drawing.Size(67, 23);
             this.loginButton.TabIndex = 4;
+            this.loginButton.Tag = "0";
             this.loginButton.Text = "> Sign in";
             this.loginButton.UseVisualStyleBackColor = true;
             this.loginButton.Click += new System.EventHandler(this.loginButton_Click);
             // 
             // passwordTextBox
             // 
-            this.passwordTextBox.Location = new System.Drawing.Point(64, 38);
+            this.passwordTextBox.Location = new System.Drawing.Point(8, 30);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(156, 20);
-            this.passwordTextBox.TabIndex = 3;
+            this.passwordTextBox.Size = new System.Drawing.Size(162, 21);
+            this.passwordTextBox.TabIndex = 2;
+            this.passwordTextBox.Text = "123456";
+            this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
-            // propertyGrid
+            // comboStatus
             // 
-            this.propertyGrid.BackColor = System.Drawing.SystemColors.Control;
-            this.propertyGrid.CommandsBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            this.propertyGrid.Dock = System.Windows.Forms.DockStyle.Top;
-            this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
-            this.propertyGrid.Location = new System.Drawing.Point(0, 0);
-            this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(239, 428);
-            this.propertyGrid.TabIndex = 4;
-            // 
-            // displayImageBox
-            // 
-            this.displayImageBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.displayImageBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayImageBox.Location = new System.Drawing.Point(479, 6);
-            this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(80, 76);
-            this.displayImageBox.TabIndex = 2;
-            this.displayImageBox.TabStop = false;
-            // 
-            // pictureBox
-            // 
-            this.pictureBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
-            this.pictureBox.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pictureBox.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox.Image")));
-            this.pictureBox.Location = new System.Drawing.Point(0, 0);
-            this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(567, 88);
-            this.pictureBox.TabIndex = 5;
-            this.pictureBox.TabStop = false;
+            this.comboStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboStatus.FormattingEnabled = true;
+            this.comboStatus.Items.AddRange(new object[] {
+            "Online",
+            "Busy",
+            "BRB",
+            "Away",
+            "Phone",
+            "Lunch",
+            "Hidden",
+            "Offline"});
+            this.comboStatus.Location = new System.Drawing.Point(8, 58);
+            this.comboStatus.Name = "comboStatus";
+            this.comboStatus.Size = new System.Drawing.Size(237, 20);
+            this.comboStatus.TabIndex = 3;
+            this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             // 
             // openFileDialog
             // 
@@ -498,9 +619,9 @@ namespace MSNPSharpClient
             // 
             // statusBar
             // 
-            this.statusBar.Location = new System.Drawing.Point(0, 2);
+            this.statusBar.Location = new System.Drawing.Point(0, 3);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(567, 22);
+            this.statusBar.Size = new System.Drawing.Size(539, 24);
             this.statusBar.TabIndex = 5;
             // 
             // OwnerPanel
@@ -508,9 +629,9 @@ namespace MSNPSharpClient
             this.OwnerPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.OwnerPanel.Controls.Add(this.statusBar);
             this.OwnerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.OwnerPanel.Location = new System.Drawing.Point(0, 660);
+            this.OwnerPanel.Location = new System.Drawing.Point(0, 609);
             this.OwnerPanel.Name = "OwnerPanel";
-            this.OwnerPanel.Size = new System.Drawing.Size(567, 24);
+            this.OwnerPanel.Size = new System.Drawing.Size(539, 27);
             this.OwnerPanel.TabIndex = 1;
             // 
             // sortContextMenu
@@ -519,7 +640,6 @@ namespace MSNPSharpClient
             this.toolStripSortByStatus,
             this.toolStripSortBygroup});
             this.sortContextMenu.Name = "sortContextMenu";
-            this.sortContextMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
             this.sortContextMenu.ShowCheckMargin = true;
             this.sortContextMenu.ShowImageMargin = false;
             this.sortContextMenu.Size = new System.Drawing.Size(136, 48);
@@ -547,7 +667,7 @@ namespace MSNPSharpClient
             // toolStripDeleteGroup
             // 
             this.toolStripDeleteGroup.Name = "toolStripDeleteGroup";
-            this.toolStripDeleteGroup.Size = new System.Drawing.Size(147, 22);
+            this.toolStripDeleteGroup.Size = new System.Drawing.Size(136, 22);
             this.toolStripDeleteGroup.Text = "Delete group";
             this.toolStripDeleteGroup.Click += new System.EventHandler(this.toolStripDeleteGroup_Click);
             // 
@@ -556,17 +676,27 @@ namespace MSNPSharpClient
             this.groupContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripDeleteGroup});
             this.groupContextMenu.Name = "sortContextMenu";
-            this.groupContextMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
             this.groupContextMenu.ShowCheckMargin = true;
             this.groupContextMenu.ShowImageMargin = false;
-            this.groupContextMenu.Size = new System.Drawing.Size(148, 26);
+            this.groupContextMenu.Size = new System.Drawing.Size(153, 48);
+            // 
+            // pictureBox
+            // 
+            this.pictureBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.pictureBox.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pictureBox.Image = global::MSNPSharpClient.Properties.Resources.listbg;
+            this.pictureBox.Location = new System.Drawing.Point(0, 0);
+            this.pictureBox.Name = "pictureBox";
+            this.pictureBox.Size = new System.Drawing.Size(539, 95);
+            this.pictureBox.TabIndex = 5;
+            this.pictureBox.TabStop = false;
             // 
             // ClientForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(567, 684);
+            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
+            this.ClientSize = new System.Drawing.Size(539, 636);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.ListPanel);
-            this.Controls.Add(this.displayImageBox);
             this.Controls.Add(this.ContactPanel);
             this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.OwnerPanel);
@@ -581,11 +711,13 @@ namespace MSNPSharpClient
             this.ContactPanel.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            this.pnlNameAndPM.ResumeLayout(false);
+            this.pnlNameAndPM.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.OwnerPanel.ResumeLayout(false);
             this.sortContextMenu.ResumeLayout(false);
             this.groupContextMenu.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -608,7 +740,7 @@ namespace MSNPSharpClient
         }
         void Nameserver_ContactOffline(object sender, ContactEventArgs e)
         {
-            Invoke(new ContactChangedEventHandler(ContactOnlineOfline),sender, e);
+            Invoke(new ContactChangedEventHandler(ContactOnlineOfline), sender, e);
         }
 
         void ContactOnlineOfline(object sender, ContactEventArgs e)
@@ -626,10 +758,60 @@ namespace MSNPSharpClient
 
         void Nameserver_OIMReceived(object sender, OIMReceivedEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                Invoke(new OIMReceivedEventHandler(Nameserver_OIMReceived), sender, e);
+                return;
+            }
+
             if (DialogResult.Yes == MessageBox.Show(e.ReceivedTime + ":\r\n" + e.Message + "\r\n\r\n\r\nClick yes, if you want to receive this message next time you login.", "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel))
             {
                 e.IsRead = false;
             }
+        }
+
+        void Nameserver_ReverseAdded(object sender, ContactEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new ContactChangedEventHandler(Nameserver_ReverseAdded), sender, e);
+                return;
+            }
+
+            Contact contact = e.Contact;
+            ReverseAddedForm form = new ReverseAddedForm(contact);
+            form.FormClosed += delegate(object f, FormClosedEventArgs fce)
+            {
+                form = f as ReverseAddedForm;
+                if (DialogResult.OK == form.DialogResult)
+                {
+                    if (form.AddToContactList)
+                    {
+                        contact.NSMessageHandler.ContactService.AddNewContact(contact.Mail);
+                        if (form.Blocked)
+                        {
+                            contact.Blocked = true;
+                        }
+                        contact.OnPendingList = false;
+                    }
+                    /*
+                else if (form.Blocked)
+                {
+                    contact.Blocked = true;
+                    contact.OnPendingList = false;
+                }
+                else
+                {
+                    contact.OnAllowedList = true;
+                    contact.OnPendingList = false;
+                }
+                * */
+
+
+                }
+                return;
+            };
+            form.Show(this);
         }
 
 
@@ -655,24 +837,110 @@ namespace MSNPSharpClient
         /// <param name="e"></param>
         private void loginButton_Click(object sender, System.EventArgs e)
         {
-            if (messenger.Connected)
+            switch (Convert.ToInt32(loginButton.Tag))
             {
-                SetStatus("Disconnecting from server");
-                messenger.Disconnect();
+                case 0: // not connected -> connect
+                    {
+                        if (messenger.Connected)
+                        {
+                            SetStatus("Disconnecting from server");
+                            messenger.Disconnect();
+                        }
+
+                        // set the credentials, this is ofcourse something every MSNPSharp program will need to
+                        // implement.
+                        messenger.Credentials.Account = accountTextBox.Text;
+                        messenger.Credentials.Password = passwordTextBox.Text;
+
+                        // inform the user what is happening and try to connecto to the messenger network.			
+                        SetStatus("Connecting to server");
+                        messenger.Connect();
+
+                        displayImageBox.Image = global::MSNPSharpClient.Properties.Resources.loading;
+
+                        loginButton.Tag = 1;
+                        loginButton.Text = "Cancel";
+
+                        // note that Messenger.Connect() will run in a seperate thread and return immediately.
+                        // it will fire events that informs you about the status of the connection attempt. 
+                        // these events are registered in the constructor.
+                    }
+                    break;
+
+                case 1: // connecting -> cancel
+                    {
+                        if (messenger.Connected)
+                            messenger.Disconnect();
+
+                        if (toolStripSortByStatus.Checked)
+                            SortByStatus();
+                        else
+                            SortByGroup();
+
+                        displayImageBox.Image = null;
+                        loginButton.Tag = 0;
+                        loginButton.Text = "> Sign in";
+                        pnlNameAndPM.Visible = false;
+                    }
+                    break;
+
+                case 2: // connected -> disconnect
+                    {
+                        if (messenger.Connected)
+                            messenger.Disconnect();
+
+                        if (toolStripSortByStatus.Checked)
+                            SortByStatus();
+                        else
+                            SortByGroup();
+
+                        displayImageBox.Image = null;
+                        loginButton.Tag = 0;
+                        loginButton.Text = "> Sign in";
+                        pnlNameAndPM.Visible = true;
+                    }
+                    break;
+            }
+        }
+
+        private void login_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if ((e.KeyChar == '\r') || (e.KeyChar == '\r'))
+            {
+                loginButton.PerformClick();
+            }
+        }
+
+
+        private void comboStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler(comboStatus_SelectedIndexChanged), sender, e);
+                return;
             }
 
-            // set the credentials, this is ofcourse something every MSNPSharp program will need to
-            // implement.
-            messenger.Credentials.Account = accountTextBox.Text;
-            messenger.Credentials.Password = passwordTextBox.Text;
+            int oldindex = comboStatus.SelectedIndex;
+            PresenceStatus newstatus = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
-            // inform the user what is happening and try to connecto to the messenger network.			
-            SetStatus("Connecting to server");
-            messenger.Connect();
-
-            // note that Messenger.Connect() will run in a seperate thread and return immediately.
-            // it will fire events that informs you about the status of the connection attempt. 
-            // these events are registered in the constructor.
+            if (messenger.Connected)
+            {
+                if (newstatus == PresenceStatus.Offline)
+                {
+                    loginButton.Tag = 2;
+                    loginButton.PerformClick();
+                    pnlNameAndPM.Visible = false;
+                }
+                else
+                {
+                    messenger.Owner.Status = newstatus;
+                }
+            }
+            else if (newstatus == PresenceStatus.Offline)
+            {
+                MessageBox.Show("You can not login as Offline :)");
+                comboStatus.SelectedIndex = 0;
+            }
         }
 
         private void NameserverProcessor_ConnectionEstablished(object sender, EventArgs e)
@@ -684,8 +952,19 @@ namespace MSNPSharpClient
         {
             SetStatus("Signed into the messenger network as " + messenger.Owner.Name);
 
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler(Nameserver_SignedIn), sender, e);
+                return;
+            }
+
             // set our presence status
-            messenger.Owner.Status = PresenceStatus.Online;
+            displayImageBox.Image = messenger.Owner.DisplayImage.Image;
+            loginButton.Tag = 2;
+            loginButton.Text = "Sign off";
+            pnlNameAndPM.Visible = true;
+
+            messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
             Invoke(new UpdateContactlistDelegate(UpdateContactlist));
         }
@@ -693,7 +972,19 @@ namespace MSNPSharpClient
         private void Nameserver_SignedOff(object sender, SignedOffEventArgs e)
         {
             SetStatus("Signed off from the messenger network");
+
+            if (InvokeRequired)
+            {
+                Invoke(new SignedOffEventHandler(Nameserver_SignedOff), sender, e);
+                return;
+            }
+
             tmrKeepOnLine.Enabled = false;
+
+            displayImageBox.Image = null;
+            loginButton.Tag = 0;
+            loginButton.Text = "> Sign in";
+            pnlNameAndPM.Visible = false;
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
@@ -715,22 +1006,6 @@ namespace MSNPSharpClient
         {
             MessageBox.Show("Authentication failed, check your account or password.", "Authentication failed");
             SetStatus("Authentication failed");
-        }
-
-        /// <summary>
-        /// Sign off from the messenger network by disconnecting.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void button1_Click(object sender, System.EventArgs e)
-        {
-            if (messenger.Connected)
-                messenger.Disconnect();
-
-            if (toolStripSortByStatus.Checked)
-                SortByStatus();
-            else
-                SortByGroup();
         }
 
         /// <summary>
@@ -785,18 +1060,26 @@ namespace MSNPSharpClient
         /// <summary>
         /// A delegate passed to Invoke in order to create the conversation form in the thread of the main form.
         /// </summary>
-        private delegate ConversationForm CreateConversationDelegate(Conversation conversation);
+        private delegate ConversationForm CreateConversationDelegate(Conversation conversation, Contact remote);
 
-        private ConversationForm CreateConversationForm(Conversation conversation)
+        private ConversationForm CreateConversationForm(Conversation conversation, Contact remote)
         {
+            foreach (ConversationForm cform in Dicconversation.Values)
+            {
+                if (cform.CanAttach(remote.Mail) == 1)
+                {
+                    cform.AttachConversation(conversation);
+                    return cform;
+                }
+            }
             // create a new conversation. However do not show the window untill a message is received.
             // for example, a conversation will be created when the remote client sends wants to send
             // you a file. You don't want to show the conversation form in that case.
-            ConversationForm conversationForm = new ConversationForm(conversation);
+            ConversationForm conversationForm = new ConversationForm(conversation, this);
             // do this to create the window handle. Otherwise we are not able to call Invoke() on the
             // conversation form later.
             conversationForm.Handle.ToInt32();
-
+            dicconversation.Add(conversation, conversationForm);
             return conversationForm;
         }
 
@@ -807,8 +1090,12 @@ namespace MSNPSharpClient
             // form is already created and we don't need to create another one.
             if (e.Initiator == null)
             {
-                // use the invoke method to create the form in the main thread
-                this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { e.Conversation });
+                // use the invoke method to create the form in the main thread, ONLY create the form after a contact joined our conversation.
+                e.Conversation.Switchboard.ContactJoined += delegate(object switchboard, ContactEventArgs args)
+                {
+                    this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { e.Conversation, args.Contact });
+                };
+                
             }
         }
 
@@ -920,7 +1207,7 @@ namespace MSNPSharpClient
                 propertyGrid.SelectedObject = selectedContact;
                 if (selectedContact.Online)
                 {
-                    sendMessageToolStripMenuItem_Click(this, EventArgs.Empty);
+                    sendIMMenuItem.PerformClick();
                 }
             }
         }
@@ -1019,6 +1306,13 @@ namespace MSNPSharpClient
                         toolStripMenuItem2.Visible = false;
                     }
 
+                    if (contact.DynamicChanged == DynamicItemState.None)
+                        viewContactCardMenuItem.Visible = false;
+                    else
+                        viewContactCardMenuItem.Visible = true;
+
+                    deleteMenuItem.Visible = contact.Guid != Guid.Empty;
+
                     Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
                     userMenuStrip.Show(point.X - userMenuStrip.Width, point.Y);
                 }
@@ -1045,11 +1339,48 @@ namespace MSNPSharpClient
             treeViewFavoriteList.SelectedNode.NodeFont = USER_NODE_FONT;
         }
 
+        private void deleteMenuItem_Click(object sender, EventArgs e)
+        {
+            Contact contact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
+            RemoveContactForm form = new RemoveContactForm();
+            form.FormClosed += delegate(object f, FormClosedEventArgs fce)
+            {
+                form = f as RemoveContactForm;
+                if (DialogResult.OK == form.DialogResult)
+                {
+                    if (form.Block)
+                    {
+                        contact.Blocked = true;
+                    }
+
+                    if (form.RemoveFromAddressBook)
+                    {
+                        messenger.Nameserver.ContactService.RemoveContact(contact);
+                    }
+                    else
+                    {
+                        contact.IsMessengerUser = false;
+                    }
+                }
+            };
+            form.ShowDialog(this);
+        }
+
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            foreach (Conversation conv in Dicconversation.Keys)
+            {
+                int res = Dicconversation[conv].CanAttach(((Contact)treeViewFavoriteList.SelectedNode.Tag).Mail);
+                if (res != -1)
+                {
+                    Dicconversation[conv].Show();
+                    return;
+                }
+
+            }
             Conversation conversation = messenger.CreateConversation();
             conversation.Invite(((Contact)treeViewFavoriteList.SelectedNode.Tag));
-            ConversationForm form = CreateConversationForm(conversation);
+            ConversationForm form = CreateConversationForm(conversation, ((Contact)treeViewFavoriteList.SelectedNode.Tag));
             form.Show();
         }
 
@@ -1308,12 +1639,97 @@ namespace MSNPSharpClient
             Application.DoEvents();
             System.Threading.Thread.Sleep(500);
 
-            SortByGroup();            
+            SortByGroup();
         }
 
         private void btnAddNew_Click(object sender, EventArgs e)
         {
-            messenger.Nameserver.ContactService.AddNewContact(txtAddNew.Text);
+            AddContactForm acf = new AddContactForm();
+            if (DialogResult.OK == acf.ShowDialog(this) && acf.Account != String.Empty)
+            {
+                messenger.Nameserver.ContactService.AddNewContact(
+                    acf.Account,
+                    acf.IsYahooUser ? ClientType.EmailMember : ClientType.PassportMember,
+                    acf.InvitationMessage);
+            }
+        }
+
+        private void importContactsMenuItem_Click(object sender, EventArgs e)
+        {
+            ImportContacts ic = new ImportContacts();
+            if (ic.ShowDialog(this) == DialogResult.OK)
+            {
+                string invitation = ic.InvitationMessage;
+                foreach (String account in ic.Contacts)
+                {
+                    messenger.Nameserver.ContactService.AddNewContact(account, ClientType.PassportMember, invitation);
+                }
+            }
+        }
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == String.Empty || txtSearch.Text == "Search contacts")
+            {
+                treeViewFilterList.Nodes.Clear();
+                treeViewFavoriteList.Visible = true;
+                treeViewFilterList.Visible = false;
+            }
+            else
+            {
+                treeViewFilterList.Nodes.Clear();
+                treeViewFavoriteList.Visible = false;
+                treeViewFilterList.Visible = true;
+                TreeNode foundnode = treeViewFilterList.Nodes.Add("0", "Search Results:");
+
+                foreach (Contact contact in messenger.ContactList.All)
+                {
+                    if (contact.Mail.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1
+                        ||
+                        contact.Name.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1)
+                    {
+                        TreeNode newnode = foundnode.Nodes.Add(contact.Mail, contact.Name);
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.Tag = contact;
+                    }
+                }
+                foundnode.Text = "Search Results: " + foundnode.Nodes.Count;
+                foundnode.Expand();
+            }
+        }
+
+        private void txtSearch_Enter(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == "Search contacts")
+            {
+                txtSearch.Text = String.Empty;
+            }
+        }
+
+        private void txtSearch_Leave(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == String.Empty)
+            {
+                txtSearch.Text = "Search contacts";
+            }
+        }
+
+        private void lblName_Leave(object sender, EventArgs e)
+        {
+            string dn = lblName.Text;
+            string pm = lblPM.Text;
+
+            if (dn != messenger.Nameserver.Owner.Name)
+                messenger.Nameserver.Owner.Name = dn;
+
+            if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
+                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null);
+        }
+
+        private void viewContactCardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Contact contact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
+            messenger.Nameserver.SpaceService.GetContactCard(contact.Mail);
         }
 
     }

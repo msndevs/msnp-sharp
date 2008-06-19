@@ -128,11 +128,12 @@ namespace MSNPSharp
 		/// Invite a remote contact to join the conversation.
 		/// </summary>
 		/// <param name="contactMail"></param>
-        public void Invite(string contactMail)
+        /// <param name="type"></param>
+        public void Invite(string contactMail, ClientType type)
         {
             if (Switchboard != null)
             {
-                if (Messenger.Nameserver.ContactList[contactMail].ClientType == ClientType.EmailMember)
+                if (type == ClientType.EmailMember)
                 {
                     Switchboard.SessionClosed -= Messenger.Switchboard_SessionClosed;
                     SBMessageHandler tmpsb = Switchboard;
@@ -155,7 +156,7 @@ namespace MSNPSharp
 		/// <param name="contact">The remote contact to invite.</param>
 		public void Invite(Contact contact)
 		{
-			Invite(contact.Mail);
+			Invite(contact.Mail,contact.ClientType);
 		}
 
 		#endregion

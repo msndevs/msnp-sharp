@@ -55,7 +55,7 @@ namespace MSNPSharp
 
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using MSNPSharp.MSNABSharingService;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     #region Event argument classes
     /// <summary>
@@ -469,7 +469,7 @@ namespace MSNPSharp
 
         private ContactService contactService = null;
         private OIMService oimService = null;
-
+        private ContactSpaceService spaceService = null;
 
         /// <summary>
         /// Event handler.
@@ -800,6 +800,7 @@ namespace MSNPSharp
             contactGroups = new ContactGroupList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
+            spaceService = new ContactSpaceService(this);
         }
 
         /// <summary>
@@ -925,12 +926,23 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Offline message service.
+        /// </summary>
         public OIMService OIMService
         {
             get
             {
                 return oimService;
             }
+        }
+
+        /// <summary>
+        /// Contactcard service.
+        /// </summary>
+        public ContactSpaceService SpaceService
+        {
+            get { return spaceService; }
         }
 
         #region Message sending methods
@@ -971,15 +983,14 @@ namespace MSNPSharp
         private List<int> initialadls = new List<int>();
         internal void OnInitialSyncDone(string[] stradls)
         {
-            SetPrivacyMode((ContactService.AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+            SetPrivacyMode(Owner.Privacy);
 
             initialadlcount = stradls.Length;
-            foreach (string str in stradls)
+            foreach (string payload in stradls)
             {
-                NSMessage message = new NSMessage("ADL", new string[] { Encoding.UTF8.GetByteCount(str).ToString() });
+                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                 MessageProcessor.SendMessage(message);
                 initialadls.Add(message.TransactionID);
-                MessageProcessor.SendMessage(new NSMessage(str));
             }
         }
 
@@ -997,20 +1008,12 @@ namespace MSNPSharp
                 abSynchronized = true;
                 initialadlcount = 0;
 
-                // Set my display name
-                string mydispName = contactService.AddressBook.MyProperties["displayname"];
-                if (mydispName != String.Empty)
-                {
-                    owner.Name = mydispName;
-                }
+                SetScreenName(owner.Name);
 
-                if (AutoSynchronize == true)
+                if (AutoSynchronize)
                 {
                     OnSignedIn();
-
-                    PersonalMessage pm = new PersonalMessage(contactService.AddressBook.MyProperties["personalmessage"], MediaType.None, null);
-                    SetPersonalMessage(pm);
-                    owner.PersonalMessage = pm;
+                    SetPersonalMessage(Owner.PersonalMessage);
                 }
 
                 // no contacts are sent so we are done synchronizing
@@ -1018,7 +1021,7 @@ namespace MSNPSharp
                 // MSNP8: New callback defined, SynchronizationCompleted.
                 if (SynchronizationCompleted != null)
                 {
-                    SynchronizationCompleted(this, new EventArgs());
+                    SynchronizationCompleted(this, EventArgs.Empty);
                     abSynchronized = true;
                 }
 
@@ -1056,9 +1059,9 @@ namespace MSNPSharp
 
                             MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
-                            if (ContactList.HasContact(account))
+                            if (ContactList.HasContact(account, type))
                             {
-                                Contact updateContact = ContactList.GetContact(account);
+                                Contact updateContact = ContactList.GetContact(account, type);
                                 updateContact.SetName(displayName);
                                 if (!updateContact.HasLists(list))
                                     updateContact.AddToList(list);
@@ -1067,7 +1070,7 @@ namespace MSNPSharp
                             {
                                 if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                                 {
-                                    Contact newcontact = ContactList.GetContact(account, displayName);
+                                    Contact newcontact = ContactList.GetContact(account, displayName, type);
                                     newcontact.SetClientType(type);
                                     newcontact.SetLists(MSNLists.PendingList);
                                     newcontact.NSMessageHandler = this;
@@ -1075,7 +1078,7 @@ namespace MSNPSharp
                                         "MessengerPendingList",
                                         delegate
                                         {
-                                            newcontact = ContactList.GetContact(account);
+                                            newcontact = ContactList.GetContact(account, type);
                                             OnReverseAdded(newcontact);
                                         }
                                     );
@@ -1121,15 +1124,13 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Set the contactlist owner's notification mode.
+        /// Set the contactlist owner's notification mode on contact service.
         /// </summary>
         /// <param name="privacy">New notify privacy setting</param>
         public virtual void SetNotifyPrivacyMode(NotifyPrivacy privacy)
         {
-            if (privacy == NotifyPrivacy.AutomaticAdd)
-                MessageProcessor.SendMessage(new NSMessage("GTC", new string[] { "N" }));
-            if (privacy == NotifyPrivacy.PromptOnAdd)
-                MessageProcessor.SendMessage(new NSMessage("GTC", new string[] { "A" }));
+            Owner.SetNotifyPrivacy(privacy);
+            ContactService.UpdateMe();
         }
 
         /// <summary>
@@ -1170,6 +1171,8 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Not a valid owner");
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+
+            ContactService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
 
         public virtual void SetPersonalMessage(PersonalMessage pmsg)
@@ -1177,15 +1180,9 @@ namespace MSNPSharp
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MSNMessage msg = new MSNMessage();
+            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
 
-            string payload = pmsg.Payload;
-            msg.Command = payload;
-
-            int size = System.Text.Encoding.UTF8.GetByteCount(payload);
-
-            MessageProcessor.SendMessage(new NSMessage("UUX", new string[] { Convert.ToString(size) }));
-            MessageProcessor.SendMessage(msg);
+            ContactService.UpdateProfile(Owner.Name, pmsg.Message);
         }
 
         /// <summary>
@@ -1430,8 +1427,8 @@ namespace MSNPSharp
                     case "FLN":
                         OnFLNReceived(nsMessage);
                         break;
-                    case "GTC":
-                        OnGTCReceived(nsMessage);
+                    case "FQY":
+                        OnFQYReceived(nsMessage);
                         break;
                     case "ILN":
                         OnILNReceived(nsMessage);
@@ -1439,12 +1436,8 @@ namespace MSNPSharp
                     case "LSG":
                         OnLSGReceived(nsMessage);
                         break;
-                    //case "LST":  OnLSTReceived(nsMessage); break;   //In MSNP15, LST no longer used
                     case "MSG":
                         OnMSGReceived(nsMessage);
-                        break;
-                    case "UBM":
-                        OnUBMReceived(nsMessage);
                         break;
                     case "NLN":
                         OnNLNReceived(nsMessage);
@@ -1476,7 +1469,12 @@ namespace MSNPSharp
                     case "RNG":
                         OnRNGReceived(nsMessage);
                         break;
-                    //case "SYN":  OnSYNReceived(nsMessage); break;   //In MSNP15, SYN no longer used
+                    case "UBM":
+                        OnUBMReceived(nsMessage);
+                        break;
+                    case "UBX":
+                        OnUBXReceived(nsMessage);
+                        break;
                     case "USR":
                         OnUSRReceived(nsMessage);
                         break;
@@ -1486,12 +1484,7 @@ namespace MSNPSharp
                     case "XFR":
                         OnXFRReceived(nsMessage);
                         break;
-                    case "UBX":
-                        OnUBXReceived(nsMessage);
-                        break;
-                    case "FQY":
-                        OnFQYReceived(nsMessage);
-                        break;
+
                     default:
                         // first check whether it is a numeric error command
                         if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
@@ -1521,163 +1514,6 @@ namespace MSNPSharp
                 throw e;
             }
         }
-
-        #region Passport authentication
-        /// <summary>
-        /// Authenticates the contactlist owner with the Passport (Nexus) service.		
-        /// </summary>
-        /// <remarks>
-        /// The passport uri in the ConnectivitySettings is used to determine the service location. Also if a WebProxy is specified the resource will be accessed
-        /// through the webproxy.
-        /// </remarks>
-        /// <param name="twnString">The string passed as last parameter of the USR command</param>
-        /// <returns>The ticket string</returns>
-        private string AuthenticatePassport(string twnString)
-        {
-            // check whether we have settings to follow
-            if (ConnectivitySettings == null)
-                throw new MSNPSharpException("No ConnectivitySettings specified in the NSMessageHandler");
-
-            try
-            {
-                // first login to nexus			
-                /*
-                Bas Geertsema: as of 14 march 2006 this is not done anymore since it returned always the same URI, and only increased login time.
-				
-                WebRequest request = HttpWebRequest.Create(ConnectivitySettings.PassportUri);
-                if(ConnectivitySettings.WebProxy != null)
-                    request.Proxy = ConnectivitySettings.WebProxy;
-
-                Uri uri = null;
-                // create the header				
-                using(WebResponse response = request.GetResponse())
-                {
-                    string urls = response.Headers.Get("PassportURLs");			
-
-                    // get everything from DALogin= till the next ,
-                    // example string: PassportURLs: DARealm=Passport.Net,DALogin=login.passport.com/login2.srf,DAReg=http://register.passport.net/uixpwiz.srf,Properties=https://register.passport.net/editprof.srf,Privacy=http://www.passport.com/consumer/privacypolicy.asp,GeneralRedir=http://nexusrdr.passport.com/redir.asp,Help=http://memberservices.passport.net/memberservice.srf,ConfigVersion=11
-                    Regex re = new Regex("DALogin=([^,]+)");
-                    Match m  = re.Match(urls);
-                    if(m.Success == false)
-                    {
-                        throw new MSNPSharpException("Regular expression failed; no DALogin (messenger login server) could be extracted");
-                    }											
-                    string loginServer = m.Groups[1].ToString();
-
-                    uri = new Uri("https://"+loginServer);
-                    response.Close();
-                }
-                */
-
-                string ticket = null;
-                // login at the passport server
-                using (WebResponse response = PassportServerLogin(ConnectivitySettings.PassportUri, twnString, 0))
-                {
-                    // at this point the login has succeeded, otherwise an exception is thrown
-                    ticket = response.Headers.Get("Authentication-Info");
-                    Regex re = new Regex("from-PP='([^']+)'");
-                    Match m = re.Match(ticket);
-                    if (m.Success == false)
-                    {
-                        throw new MSNPSharpException("Regular expression failed; no ticket could be extracted");
-                    }
-                    // get the ticket (kind of challenge string
-                    ticket = m.Groups[1].ToString();
-
-                    response.Close();
-                }
-
-                return ticket;
-            }
-            catch (Exception e)
-            {
-                // call this event
-                OnAuthenticationErrorOccurred(e);
-
-                // rethrow to client programmer
-                throw new MSNPSharpException("Authenticating with the Nexus service failed : " + e.ToString(), e);
-            }
-        }
-
-
-        /// <summary>
-        /// Login at the Passport server.		
-        /// </summary>
-        /// <exception cref="UnauthorizedException">Thrown when the credentials are invalid.</exception>
-        /// <param name="serverUri"></param>
-        /// <param name="twnString"></param>
-        /// <param name="retries"></param>
-        /// <returns></returns>
-        private WebResponse PassportServerLogin(Uri serverUri, string twnString, int retries)
-        {
-            // create the header to login
-            // example header:
-            // >>> GET /login2.srf HTTP/1.1\r\n
-            // >>> Authorization: Passport1.4 OrgVerb=GET,OrgURL=http%3A%2F%2Fmessenger%2Emsn%2Ecom,example%40passport.com,pwd=password,lc=1033,id=507,tw=40,fs=1,ru=http%3A%2F%2Fmessenger%2Emsn%2Ecom,ct=1062764229,kpp=1,kv=5,ver=2.1.0173.1,tpf=43f8a4c8ed940c04e3740be46c4d1619\r\n
-            // >>> Host: login.passport.com\r\n
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(serverUri);
-            if (ConnectivitySettings.WebProxy != null)
-                request.Proxy = ConnectivitySettings.WebProxy;
-
-            request.Headers.Clear();
-            string authorizationHeader = "Authorization: Passport1.4 OrgVerb=GET,OrgURL=http%3A%2F%2Fmessenger%2Emsn%2Ecom,sign-in=" + HttpUtility.UrlEncode(Credentials.Account) + ",pwd=" + HttpUtility.UrlEncode(Credentials.Password) + "," + twnString;
-            request.Headers.Add(authorizationHeader);
-            //string headersstr = request.Headers.ToString();
-
-            // auto redirect does not work correctly in this case! (we get HTML pages that way)
-            request.AllowAutoRedirect = false;
-            request.PreAuthenticate = false;
-            request.Timeout = 60000;
-
-            if (Settings.TraceSwitch.TraceVerbose)
-                System.Diagnostics.Trace.WriteLine("Making connection with Passport. URI=" + request.RequestUri, "NS11MessgeHandler");
-
-
-            // now do the transaction
-            try
-            {
-                // get response
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("Response received from Passport service: " + response.StatusCode.ToString() + ".", "NS11MessgeHandler");
-
-                // check for responses						
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    // 200 OK response
-                    return response;
-                }
-                else if (response.StatusCode == HttpStatusCode.Found)
-                {
-                    // 302 Found (this means redirection)
-                    string newUri = response.Headers.Get("Location");
-                    response.Close();
-
-                    // call ourselfs again to try a new login					
-                    return PassportServerLogin(new Uri(newUri), twnString, retries);
-                }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    // 401 Unauthorized 
-                    throw new UnauthorizedException("Failed to login. Response of passport server: " + response.Headers.Get(0));
-                }
-                else
-                {
-                    throw new MSNPSharpException("Passport server responded with an unknown header");
-                }
-            }
-            catch (HttpException e)
-            {
-                if (retries < 3)
-                {
-                    return PassportServerLogin(serverUri, twnString, retries + 1);
-                }
-                else
-                    throw e;
-            }
-        }
-        #endregion
 
         #region Helper methods
 
@@ -1844,7 +1680,7 @@ namespace MSNPSharp
 
             string md = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
             _Tickets[Iniproperties.LockKey] = md;
-            MessageProcessor.SendMessage(new NSMessage("QRY", new string[] { " " + Credentials.ClientID, " 32\r\n", md }));
+            MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, md));
         }
 
         /// <summary>
@@ -1867,7 +1703,8 @@ namespace MSNPSharp
         protected virtual void OnILNReceived(NSMessage message)
         {
             // allright
-            Contact contact = ContactList.GetContact((string)message.CommandValues[2]);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[3]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[2],type);
             contact.SetName((string)message.CommandValues[4]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[1]));
@@ -1904,7 +1741,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnNLNReceived(NSMessage message)
         {
-            Contact contact = ContactList.GetContact((string)message.CommandValues[1]);
+
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[1],type);
             contact.SetName((string)message.CommandValues[3]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[0]));
@@ -2048,7 +1887,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-            Contact contact = ContactList.GetContact((string)message.CommandValues[0]);
+
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[0],type);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
 
@@ -2168,13 +2009,17 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Called when a UBX command has been received.
+        /// </summary>
+        /// <param name="message"></param>
         protected virtual void OnUBXReceived(NSMessage message)
         {
             //check the payload length
             if (message.CommandValues[1].ToString() == "0")
                 return;
-
-            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString());
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
+            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
 
             PersonalMessage pm = new PersonalMessage(message);            
             contact.SetPersonalMessage(pm);
@@ -2415,38 +2260,14 @@ namespace MSNPSharp
             {
                 case "AL":
                     Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
+                    ContactService.UpdateMe();
                     break;
                 case "BL":
                     owner.SetPrivacy(PrivacyMode.NoneButAllowed);
+                    ContactService.UpdateMe();
                     break;
             }
         }
-
-
-        /// <summary>
-        /// Called when a GTC command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send us the privacy notify setting for the contact list owner.
-        /// <code>GTC [Transaction] [SynchronizationID] [NotifyPrivacy]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnGTCReceived(NSMessage message)
-        {
-            if (Owner == null)
-                return;
-
-            switch ((string)message.CommandValues[0])
-            {
-                case "A":
-                    owner.SetNotifyPrivacy(NotifyPrivacy.PromptOnAdd);
-                    break;
-                case "N":
-                    owner.SetNotifyPrivacy(NotifyPrivacy.AutomaticAdd);
-                    break;
-            }
-        }
-
 
         /// <summary>
         /// Called when an ADG command has been received.
@@ -2520,9 +2341,9 @@ namespace MSNPSharp
                         ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
                         MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                         account = account.ToLower(CultureInfo.InvariantCulture);
-                        if (ContactList.HasContact(account))
+                        if (ContactList.HasContact(account,type))
                         {
-                            Contact contact = ContactList.GetContact(account);
+                            Contact contact = ContactList.GetContact(account,type);
                             if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                             {
                                 OnReverseRemoved(contact);
@@ -2587,7 +2408,7 @@ namespace MSNPSharp
             }
 
             if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))
-                && ContactList.HasContact(sender))
+                && ContactList.HasContact(sender, ClientType.EmailMember))
             {
                 foreach (YIMMessageHandler YimHandler in SwitchBoards)
                 {
@@ -2599,12 +2420,12 @@ namespace MSNPSharp
 
                 YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
                 switchboard.NSMessageHandler = this;
-                switchboard.Contacts.Add(sender, ContactList[sender]);
+                switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
                 switchboard.MessageProcessor = MessageProcessor;
                 SwitchBoards.Add(switchboard);
 
                 OnSBCreated(switchboard, null);
-                switchboard.ForceJoin(ContactList[sender]);
+                switchboard.ForceJoin(ContactList[sender,ClientType.EmailMember]);
                 MessageProcessor.RegisterHandler(switchboard);
                 switchboard.HandleMessage(MessageProcessor, msg);
             }
@@ -2760,13 +2581,20 @@ namespace MSNPSharp
                     {
                         string account = contactNode.Attributes["n"].Value + "@" + domain;
                         account = account.ToLower(CultureInfo.InvariantCulture);
-                        if (ContactList.HasContact(account))
+                        ClientType type = ClientType.PassportMember;
+
+                        if (contactNode.Attributes["t"] != null && contactNode.Attributes["t"].Value == "32")
+                        {
+                            type = ClientType.EmailMember;
+                        }
+
+                        if (ContactList.HasContact(account,type))
                         {
                             ContactService.abRequest(
                                 "ContactSave",
                                 delegate(object abservice, ABFindAllCompletedEventArgs fae)
                                 {
-                                    Contact contact = ContactList.GetContact(account);
+                                    Contact contact = ContactList.GetContact(account,type);
                                     OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 }
                             );
