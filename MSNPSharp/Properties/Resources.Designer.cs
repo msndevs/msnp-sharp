@@ -102,7 +102,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 2.0.2 的本地化字符串。
+        ///   查找类似 2.0.3 的本地化字符串。
         /// </summary>
         internal static string XMLContactListVersion {
             get {

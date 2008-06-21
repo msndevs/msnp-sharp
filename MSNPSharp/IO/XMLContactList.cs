@@ -81,7 +81,7 @@ namespace MSNPSharp.IO
 
         DateTime msLastChange;
         SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
-        SerializableDictionary<string, MembershipContactInfo> mscontacts = new SerializableDictionary<string, MembershipContactInfo>(0);
+        SerializableDictionary<ContactIdentifier, MembershipContactInfo> mscontacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>(0);
 
         /// <summary>
         /// 
@@ -111,7 +111,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        public SerializableDictionary<string, MembershipContactInfo> MembershipContacts
+        public SerializableDictionary<ContactIdentifier, MembershipContactInfo> MembershipContacts
         {
             get
             {
@@ -123,12 +123,14 @@ namespace MSNPSharp.IO
             }
         }
 
-        public MSNLists GetMSNLists(string account)
+        public MSNLists GetMSNLists(string account, ClientType type)
         {
             MSNLists contactlists = MSNLists.None;
-            if (MembershipContacts.ContainsKey(account))
+            ContactIdentifier cid = new ContactIdentifier(account, type);
+
+            if (MembershipContacts.ContainsKey(cid))
             {
-                MembershipContactInfo ci = MembershipContacts[account];
+                MembershipContactInfo ci = MembershipContacts[cid];
                 if (ci.Memberships.ContainsKey(MemberRole.Allow))
                     contactlists |= MSNLists.AllowedList;
 
@@ -145,7 +147,7 @@ namespace MSNPSharp.IO
                     if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
                     {
                         contactlists ^= MSNLists.AllowedList;
-                        RemoveMemberhip(account, MemberRole.Allow);
+                        RemoveMemberhip(account, type, MemberRole.Allow);
                     }
                 }
             }
@@ -154,27 +156,31 @@ namespace MSNPSharp.IO
 
         public void AddMemberhip(string account, ClientType type, MemberRole memberrole, int membershipid)
         {
-            if (!MembershipContacts.ContainsKey(account))
-                MembershipContacts.Add(account, new MembershipContactInfo(account, type));
+            ContactIdentifier cid = new ContactIdentifier(account, type);
 
-            MembershipContacts[account].Type = type;
-            MembershipContacts[account].Memberships[memberrole] = membershipid;
+            if (!MembershipContacts.ContainsKey(cid))
+                MembershipContacts.Add(cid, new MembershipContactInfo(account, type));
+
+            MembershipContacts[cid].Type = type;
+            MembershipContacts[cid].Memberships[memberrole] = membershipid;
         }
 
-        public void RemoveMemberhip(string account, MemberRole memberrole)
+        public void RemoveMemberhip(string account, ClientType type, MemberRole memberrole)
         {
-            if (MembershipContacts.ContainsKey(account))
-            {
-                MembershipContacts[account].Memberships.Remove(memberrole);
+            ContactIdentifier cid = new ContactIdentifier(account, type);
 
-                if (0 == MembershipContacts[account].Memberships.Count)
-                    MembershipContacts.Remove(account);
+            if (MembershipContacts.ContainsKey(cid))
+            {
+                MembershipContacts[cid].Memberships.Remove(memberrole);
+
+                if (0 == MembershipContacts[cid].Memberships.Count)
+                    MembershipContacts.Remove(cid);
             }
         }
 
-        public virtual void Add(Dictionary<string, MembershipContactInfo> range)
+        public virtual void Add(Dictionary<ContactIdentifier, MembershipContactInfo> range)
         {
-            foreach (string account in range.Keys)
+            foreach (ContactIdentifier account in range.Keys)
             {
                 if (mscontacts.ContainsKey(account))
                 {
@@ -254,13 +260,14 @@ namespace MSNPSharp.IO
 
                                                 if (bm.Deleted)
                                                 {
-                                                    RemoveMemberhip(account, memberrole);
+                                                    RemoveMemberhip(account, type, memberrole);
                                                 }
                                                 else
                                                 {
                                                     AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
-                                                    MembershipContacts[account].LastChanged = bm.LastChanged;
-                                                    MembershipContacts[account].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
+                                                    ContactIdentifier cid = new ContactIdentifier(account, type);
+                                                    MembershipContacts[cid].LastChanged = bm.LastChanged;
+                                                    MembershipContacts[cid].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
                                                 }
                                             }
                                         }
@@ -279,8 +286,7 @@ namespace MSNPSharp.IO
                 foreach (MembershipContactInfo msci in MembershipContacts.Values)
                 {
                     Contact contact = nsMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName, msci.Type);
-                    contact.SetClientType(msci.Type);
-                    contact.SetLists(GetMSNLists(msci.Account));
+                    contact.SetLists(GetMSNLists(msci.Account, msci.Type));
                     contact.NSMessageHandler = nsMessageHandler;
                 }
             }
