@@ -38,32 +38,65 @@ namespace MSNPSharp
     using System.Globalization;
 
     [Serializable()]
+    public class ContactIdentifier
+    {
+        private string mail;
+        private ClientType clientType;
+
+        public string Mail
+        {
+            get
+            {
+                return mail;
+            }
+            set
+            {
+                mail = value;
+            }
+        }
+
+        public ClientType ClientType
+        {
+            get
+            {
+                return clientType;
+            }
+            set
+            {
+                clientType = value;
+            }
+        }
+
+        public ContactIdentifier()
+        {
+            mail = string.Empty;
+        }
+
+        public ContactIdentifier(string account, ClientType type)
+        {
+            mail = account.ToLowerInvariant();
+            clientType = type;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(this, obj))
+                return true;
+            ContactIdentifier ci = obj as ContactIdentifier;
+            if ((object)ci == null)
+                return false;
+            return (ci.Mail == Mail && ci.ClientType == ClientType);
+        }
+
+        public override int GetHashCode()
+        {
+            return Mail.GetHashCode() - ClientType.GetHashCode(); //This is the key line.
+        }
+    }
+
+    [Serializable()]
     public class ContactList
     {
-        #region Nested class
-        private struct ContactIdentifier
-        {
-            private string mail;
-            private ClientType clientType;
-
-            public string Mail
-            {
-                get { return mail; }
-            }
-
-            public ClientType ClientType
-            {
-                get { return clientType; }
-            }
-
-            public ContactIdentifier(string account, ClientType type)
-            {
-                mail = account.ToLowerInvariant();
-                clientType = type;
-            }
-        } 
-        #endregion
-
         Dictionary<ContactIdentifier, Contact> contacts = new Dictionary<ContactIdentifier, Contact>(10);
 
         public class ListEnumerator : IEnumerator
@@ -428,7 +461,7 @@ namespace MSNPSharp
 
             set
             {
-                this[account ,value.ClientType] = value;
+                this[account, value.ClientType] = value;
             }
         }
 
@@ -467,7 +500,7 @@ namespace MSNPSharp
         /// <param name="account"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public bool HasContact(string account,ClientType type)
+        public bool HasContact(string account, ClientType type)
         {
             ContactIdentifier cid = new ContactIdentifier(account, type);
             return contacts.ContainsKey(cid);
@@ -491,7 +524,7 @@ namespace MSNPSharp
         internal void Remove(string account)
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
-            List<ContactIdentifier > removecid=new List<ContactIdentifier> (0);
+            List<ContactIdentifier> removecid = new List<ContactIdentifier>(0);
             if (HasContact(account))
             {
                 lock (contacts)
