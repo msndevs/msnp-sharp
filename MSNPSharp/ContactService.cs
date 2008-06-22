@@ -112,7 +112,6 @@ namespace MSNPSharp
                     && recursiveCall == 0)
                 {
                     recursiveCall++;
-                    DeleteRecordFile();
                     SynchronizeContactList();
                     return;
                 }
@@ -132,10 +131,12 @@ namespace MSNPSharp
                 "Initial",
                 delegate
                 {
-                    //recursiveCall = 0;  //reset
                     abRequest("Initial",
                         delegate
                         {
+                            // Reset
+                            recursiveCall = 0;
+
                             // Set privacy settings and roam property
                             nsMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
                             nsMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
