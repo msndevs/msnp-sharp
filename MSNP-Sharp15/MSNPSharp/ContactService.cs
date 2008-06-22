@@ -462,23 +462,42 @@ namespace MSNPSharp
                     contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
                     contact.NSMessageHandler = nsMessageHandler;
 
-                    //2: ADL AL without membership, so the user can see our status...
-                    string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"1\" /></d></ml>";
-                    payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                    payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-                    contact.AddToList(MSNLists.AllowedList);
+                    //2: ADL AL
+                    if (ct == ClientType.PassportMember)
+                    {
+                        // without membership
+                        string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"{t}\" /></d></ml>";
+                        payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                        payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                        payload = payload.Replace("{t}", ((int)contact.ClientType).ToString());
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                        contact.AddToList(MSNLists.AllowedList);
+                    }
+                    else
+                    {
+                        // with membership
+                        contact.OnAllowedList = true;
+                        contact.AddToList(MSNLists.AllowedList);
+                    }
 
                     // 3: ADL FL
                     contact.OnForwardList = true;
                     System.Threading.Thread.Sleep(100);
 
-                    // 4: Send FQY command, and wait OnFQYReceived 
-                    // then 5: abRequest("ContactSave")
-                    payload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
-                    payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                    payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", payload));
+                    // 4: Send FQY command
+                    string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
+                    fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                    fqypayload = fqypayload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
+
+                    // 5: Get all information. LivePending will be Live :)
+                    abRequest(
+                        "ContactSave",
+                        delegate
+                        {
+                            contact = nsMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
+                            nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                        });
                 }
             );
         }

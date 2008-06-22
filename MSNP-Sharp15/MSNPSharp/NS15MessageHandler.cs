@@ -415,7 +415,7 @@ namespace MSNPSharp
 
     /// <summary>
     /// Handles the protocol messages from the notification server.
-    /// NS11Handler implements protocol version MSNP9.
+    /// NSMessageHandler implements protocol version MSNP15.
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
@@ -942,7 +942,10 @@ namespace MSNPSharp
         /// </summary>
         public ContactSpaceService SpaceService
         {
-            get { return spaceService; }
+            get
+            {
+                return spaceService;
+            }
         }
 
         #region Message sending methods
@@ -978,7 +981,7 @@ namespace MSNPSharp
                 OIMReceived(sender, e);
             }
         }
-        
+
         private int initialadlcount = 0;
         private List<int> initialadls = new List<int>();
         internal void OnInitialSyncDone(string[] stradls)
@@ -1704,7 +1707,7 @@ namespace MSNPSharp
         {
             // allright
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[3]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[2],type);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[2], type);
             contact.SetName((string)message.CommandValues[4]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[1]));
@@ -1743,7 +1746,7 @@ namespace MSNPSharp
         {
 
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[1],type);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[1], type);
             contact.SetName((string)message.CommandValues[3]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[0]));
@@ -1889,7 +1892,7 @@ namespace MSNPSharp
         {
 
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[0],type);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[0], type);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
 
@@ -2021,7 +2024,7 @@ namespace MSNPSharp
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
             Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
 
-            PersonalMessage pm = new PersonalMessage(message);            
+            PersonalMessage pm = new PersonalMessage(message);
             contact.SetPersonalMessage(pm);
         }
 
@@ -2341,9 +2344,9 @@ namespace MSNPSharp
                         ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
                         MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                         account = account.ToLower(CultureInfo.InvariantCulture);
-                        if (ContactList.HasContact(account,type))
+                        if (ContactList.HasContact(account, type))
                         {
-                            Contact contact = ContactList.GetContact(account,type);
+                            Contact contact = ContactList.GetContact(account, type);
                             if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                             {
                                 OnReverseRemoved(contact);
@@ -2425,7 +2428,7 @@ namespace MSNPSharp
                 SwitchBoards.Add(switchboard);
 
                 OnSBCreated(switchboard, null);
-                switchboard.ForceJoin(ContactList[sender,ClientType.EmailMember]);
+                switchboard.ForceJoin(ContactList[sender, ClientType.EmailMember]);
                 MessageProcessor.RegisterHandler(switchboard);
                 switchboard.HandleMessage(MessageProcessor, msg);
             }
@@ -2563,11 +2566,15 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>Called when a FQY command has been received.
+        /// <remarks>Indicates a client has different network types except PassportMember.</remarks>
+        /// </summary>
+        /// <param name="message"></param>
         protected virtual void OnFQYReceived(NSMessage message)
         {
-            // <ml><d n="domain"><c n="username" /></d></ml>
+            // <ml><d n="domain"><c n="username" t="clienttype" /></d></ml>
             NetworkMessage networkMessage = message as NetworkMessage;
-            if (networkMessage.InnerBody != null) //Payload FQY command. Forward Query What? :)
+            if (networkMessage.InnerBody != null)
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
@@ -2581,27 +2588,12 @@ namespace MSNPSharp
                     {
                         string account = contactNode.Attributes["n"].Value + "@" + domain;
                         account = account.ToLower(CultureInfo.InvariantCulture);
-                        ClientType type = ClientType.PassportMember;
+                        ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
 
-                        if (contactNode.Attributes["t"] != null && contactNode.Attributes["t"].Value == "32")
+                        if (!ContactList.HasContact(account, type))
                         {
-                            type = ClientType.EmailMember;
+                            ContactService.AddNewContact(account, type, String.Empty);
                         }
-
-                        if (ContactList.HasContact(account,type))
-                        {
-                            ContactService.abRequest(
-                                "ContactSave",
-                                delegate(object abservice, ABFindAllCompletedEventArgs fae)
-                                {
-                                    Contact contact = ContactList.GetContact(account,type);
-                                    OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
-                                }
-                            );
-                        }
-
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine(" FQY command: " + xmlDoc.OuterXml);
 
                     } while (contactNode.NextSibling != null);
                 }
