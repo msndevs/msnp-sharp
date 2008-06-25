@@ -23,8 +23,12 @@ namespace MSNPSharp
 
         private int recursiveCall = 0;
         private WebProxy webProxy = null;
+        private string applicationId = String.Empty;
         private NSMessageHandler nsMessageHandler = null;
-        private string applicationId = "";
+        private List<int> initialADLs = new List<int>();
+        private int initialADLcount = 0;
+        private bool abSynchronized = false;
+
         internal XMLContactList AddressBook = null;
         internal DeltasList Deltas = null;
 
@@ -32,21 +36,22 @@ namespace MSNPSharp
 
         protected ContactService()
         {
+            applicationId = Properties.Resources.ApplicationId;
+            ServicePointManager.ServerCertificateValidationCallback = delegate
+            {
+                return true;
+            };
         }
 
         public ContactService(NSMessageHandler nsHandler)
+            : this()
         {
             nsMessageHandler = nsHandler;
-            applicationId = Properties.Resources.ApplicationId;
             if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
             {
                 webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
             }
 
-            ServicePointManager.ServerCertificateValidationCallback = delegate
-            {
-                return true;
-            };
         }
 
         #region Properties
@@ -74,6 +79,16 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Keep track whether a address book synchronization has been completed so we can warn the client programmer
+        /// </summary>
+        public bool AddressBookSynchronized
+        {
+            get
+            {
+                return abSynchronized;
+            }
+        }
 
         #endregion
 
@@ -160,7 +175,17 @@ namespace MSNPSharp
                                 nsMessageHandler.Owner.DisplayImage = displayImage;
                             }
 
-                            nsMessageHandler.OnInitialSyncDone(ConstructADLString(AddressBook.MembershipContacts.Values, true, MSNLists.None));
+                            nsMessageHandler.SetPrivacyMode(nsMessageHandler.Owner.Privacy);
+
+                            string[] adls = ConstructADLString(AddressBook.MembershipContacts.Values, true, MSNLists.None);
+
+                            initialADLcount = adls.Length;
+                            foreach (string payload in adls)
+                            {
+                                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                                nsMessageHandler.MessageProcessor.SendMessage(message);
+                                initialADLs.Add(message.TransactionID);
+                            }
                         }
                     );
                 }
@@ -1484,7 +1509,6 @@ namespace MSNPSharp
 
         #endregion
 
-
         #region Storage Service
 
         /// <summary>
@@ -1670,8 +1694,6 @@ namespace MSNPSharp
 
         #endregion
 
-
-
         protected virtual MemberRole GetMemberRole(MSNLists list)
         {
             switch (list)
@@ -1689,6 +1711,53 @@ namespace MSNPSharp
                     return MemberRole.Reverse;
             }
             return MemberRole.ProfilePersonalContact;
+        }
+
+        internal void Clear()
+        {
+            recursiveCall = 0;
+            initialADLs.Clear();
+            initialADLcount = 0;
+
+            abSynchronized = false;
+            AddressBook = null;
+            Deltas = null;
+        }
+
+        internal void SetAddressBookSynchronized(bool synchronized)
+        {
+            abSynchronized = synchronized;
+        }
+
+        internal bool ProcessADL(int transid)
+        {
+            if (initialADLs.Contains(transid))
+            {
+                initialADLs.Remove(transid);
+                if (--initialADLcount <= 0)
+                {
+                    abSynchronized = true;
+                    initialADLcount = 0;
+
+                    if (nsMessageHandler.AutoSynchronize)
+                    {
+                        nsMessageHandler.OnSignedIn();
+                        nsMessageHandler.SetPersonalMessage(nsMessageHandler.Owner.PersonalMessage);
+                    }
+
+                    // No contacts are sent so we are done synchronizing call the callback
+                    // MSNP8: New callback defined, SynchronizationCompleted.
+                    nsMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
+
+                    // Fire the ReverseAdded event
+                    foreach (Contact pendingContact in this.nsMessageHandler.ContactList.Pending)
+                    {
+                        nsMessageHandler.OnReverseAdded(pendingContact);
+                    }
+                }
+                return true;
+            }
+            return false;
         }
     }
 };
