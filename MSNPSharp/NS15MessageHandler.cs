@@ -39,23 +39,14 @@ using System.Net;
 using System.Web;
 using System.Xml;
 using System.Text;
-using System.Xml.XPath;
 using System.Collections;
 using System.Diagnostics;
-using System.Web.Services;
 using System.Globalization;
-using System.Xml.Serialization;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Web.Services.Protocols;
-using System.Text.RegularExpressions;
-using System.Security.Cryptography.X509Certificates;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
-    using MSNPSharp.MSNWS.MSNABSharingService;
 
     #region Delegates
 
@@ -129,7 +120,7 @@ namespace MSNPSharp
 
         private bool isSignedIn = false;
         private bool autoSynchronize = true;
-        private bool abSynchronized = false;
+        
         private ContactGroupList contactGroups = null;
         private ContactList contactList = new ContactList();
 
@@ -143,8 +134,7 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-
-            owner.ClientCapacities = ClientCapacities.CanHandleMSNC7
+            owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
                                     | ClientCapacities.CanMultiPacketMSG
                                     | ClientCapacities.CanReceiveWinks;
 
@@ -191,7 +181,7 @@ namespace MSNPSharp
         {
             get
             {
-                return abSynchronized;
+                return ContactService.AddressBookSynchronized;
             }
         }
 
@@ -459,6 +449,7 @@ namespace MSNPSharp
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
 
@@ -472,8 +463,10 @@ namespace MSNPSharp
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", HttpUtility.UrlEncode(number) }));
         }
 
@@ -484,8 +477,10 @@ namespace MSNPSharp
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             if (number.Length > 30)
                 throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", HttpUtility.UrlEncode(number) }));
         }
 
@@ -496,6 +491,7 @@ namespace MSNPSharp
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MOB", enabled ? "Y" : "N" }));
         }
 
@@ -506,6 +502,7 @@ namespace MSNPSharp
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
+
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
         }
 
@@ -670,7 +667,7 @@ namespace MSNPSharp
         public virtual void SetPresenceStatus(PresenceStatus status)
         {
             // check whether we are allowed to send a CHG command
-            if (abSynchronized == false)
+            if (ContactService.AddressBookSynchronized == false)
                 throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
             string context = String.Empty;
@@ -739,7 +736,6 @@ namespace MSNPSharp
             if (Credentials == null)
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
-
             // send client information back
             MessageProcessor.SendMessage(new NSMessage("CVR", new string[] { "0x040c", "winnt", "5.1", "i386", "MSNMSGR", "8.5.1302", "msmsgs", Credentials.Account }));
         }
@@ -781,7 +777,6 @@ namespace MSNPSharp
                 }
                 sso.AddDefaultAuths();
                 string response = sso.Authenticate(nonce, out _Tickets);
-                //_Ticket = response;
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
             }
             else if ((string)message.CommandValues[1] == "OK")
@@ -789,8 +784,6 @@ namespace MSNPSharp
                 // we sucesfully logged in, set the owner's name
                 Owner.SetMail(message.CommandValues[2].ToString());
                 Owner.SetPassportVerified(message.CommandValues[3].Equals("1"));
-
-
             }
         }
 
@@ -840,6 +833,7 @@ namespace MSNPSharp
                 // set the external end point. This can be used in file transfer connectivity determing
                 externalEndPoint = new IPEndPoint(ip, clientPort);
             }
+
             //ADL
             if (AutoSynchronize)
             {
@@ -888,7 +882,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fires the SignedIn event.
         /// </summary>
-        protected virtual void OnSignedIn()
+        protected internal virtual void OnSignedIn()
         {
             isSignedIn = true;
             if (SignedIn != null)
@@ -906,6 +900,22 @@ namespace MSNPSharp
             if (SignedOff != null)
                 SignedOff(this, new SignedOffEventArgs(reason));
         }
+
+        /// <summary>
+        /// Fires the SynchronizationCompleted event.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected internal virtual void OnSynchronizationCompleted(object sender, EventArgs e)
+        {
+            if (SynchronizationCompleted != null)
+            {
+                SynchronizationCompleted(sender, e);
+            }
+
+            ContactService.SetAddressBookSynchronized(true);
+        }
+
 
         #endregion
 
@@ -945,7 +955,6 @@ namespace MSNPSharp
             // unknown status
             return PresenceStatus.Unknown;
         }
-
 
         /// <summary>
         /// Translates MSNStatus enumeration to messenger's textual status presentation.
@@ -991,11 +1000,11 @@ namespace MSNPSharp
             //check the payload length
             if (message.CommandValues[1].ToString() == "0")
                 return;
+
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
             Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
 
-            PersonalMessage pm = new PersonalMessage(message);
-            contact.SetPersonalMessage(pm);
+            contact.SetPersonalMessage(new PersonalMessage(message));
         }
 
         /// <summary>
@@ -1036,13 +1045,12 @@ namespace MSNPSharp
                 ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
         }
 
-
         /// <summary>
         /// Called when a NLN command has been received.
         /// </summary>
         /// <remarks>
         /// Indicates that a contact on the forward list went online.
-        /// <code>NLN [status] [account] [name]</code>
+        /// <code>NLN [status] [account] [clienttype] [name] [clientcapacities] [displayimage]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnNLNReceived(NSMessage message)
@@ -1076,7 +1084,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a user went offline.
-        /// <code>FLN [account]</code>
+        /// <code>FLN [account] [clienttype]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
@@ -1264,12 +1272,10 @@ namespace MSNPSharp
             {
                 if (pendingSwitchboards.Count > 0)
                 {
-
                     if (Owner.Status == PresenceStatus.Offline)
                         System.Diagnostics.Trace.WriteLine("Owner not yet online!", "NS15MessageHandler");
 
                     SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
-
                     SwitchboardQueueItem queueItem = (SwitchboardQueueItem)pendingSwitchboards.Dequeue();
 
                     // set new connectivity settings
@@ -1285,7 +1291,7 @@ namespace MSNPSharp
                     processor.ConnectivitySettings = newSettings;
 
                     // set the switchboard objects with the processor values
-                    //SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[4].ToString());
+                    // SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[4].ToString());
                     string sessionHash = message.CommandValues[4].ToString();
                     queueItem.SwitchboardHandler.SetInvitation(sessionHash);
                     queueItem.SwitchboardHandler.MessageProcessor = processor;
@@ -1316,7 +1322,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Called when a UBM command has been received,this message was sent by a Yahoo Messenger client.
+        /// Called when a UBM command has been received, this message was sent by a Yahoo Messenger client.
         /// </summary>
         /// <remarks>
         /// Indicates that the notification server has send us a UBM. This is usually a message from Yahoo Messenger.
@@ -1355,7 +1361,6 @@ namespace MSNPSharp
                 MessageProcessor.RegisterHandler(switchboard);
                 switchboard.HandleMessage(MessageProcessor, msg);
             }
-
         }
 
         #endregion
@@ -1377,7 +1382,6 @@ namespace MSNPSharp
 
             if (Settings.TraceSwitch.TraceVerbose)
                 Trace.WriteLine("Notification received : " + notification.ToDebugString());
-
         }
 
         /// <summary>
@@ -1474,7 +1478,6 @@ namespace MSNPSharp
             }
         }
 
-
         #endregion
 
         #region Contact and Group
@@ -1506,38 +1509,9 @@ namespace MSNPSharp
         {
             if (message.CommandValues[1].ToString() == "OK" &&
                 message.TransactionID == 0 &&
-                initialadls.Contains(Convert.ToInt32(message.CommandValues[0])))
+                ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))                
             {
-                initialadls.Remove(Convert.ToInt32(message.CommandValues[0]));
-                if (--initialadlcount > 0)
-                    return;
 
-                // set this so the user can set initial presence
-                abSynchronized = true;
-                initialadlcount = 0;
-
-                SetScreenName(owner.Name);
-
-                if (AutoSynchronize)
-                {
-                    OnSignedIn();
-                    SetPersonalMessage(Owner.PersonalMessage);
-                }
-
-                // no contacts are sent so we are done synchronizing
-                // call the callback
-                // MSNP8: New callback defined, SynchronizationCompleted.
-                if (SynchronizationCompleted != null)
-                {
-                    SynchronizationCompleted(this, EventArgs.Empty);
-                    abSynchronized = true;
-                }
-
-                // Fire the ReverseAdded event
-                foreach (Contact pendingContact in ContactList.Pending)
-                {
-                    OnReverseAdded(pendingContact);
-                }
             }
             else
             {
@@ -1648,7 +1622,7 @@ namespace MSNPSharp
         /// <remarks>
         /// Indicates that a contact group has been added to the contact group list.
         /// Raises the ContactGroupAdded event.
-        /// <code>ADG [Transaction] [ListVersion] [Name] [GroepID] </code>
+        /// <code>ADG [Transaction] [ListVersion] [Name] [GroupID] </code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnADGReceived(NSMessage message)
@@ -1664,7 +1638,6 @@ namespace MSNPSharp
                 ContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
             }
         }
-
 
         /// <summary>
         /// Called when a RMG command has been received.
@@ -1719,21 +1692,6 @@ namespace MSNPSharp
 
                     } while (contactNode.NextSibling != null);
                 }
-            }
-        }
-
-        private int initialadlcount = 0;
-        private List<int> initialadls = new List<int>();
-        internal void OnInitialSyncDone(string[] stradls)
-        {
-            SetPrivacyMode(Owner.Privacy);
-
-            initialadlcount = stradls.Length;
-            foreach (string payload in stradls)
-            {
-                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                MessageProcessor.SendMessage(message);
-                initialadls.Add(message.TransactionID);
             }
         }
 
@@ -1846,11 +1804,8 @@ namespace MSNPSharp
         /// <param name="e"></param>
         private void NSMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
         {
-            abSynchronized = false;
-            initialadlcount = 0;
-            initialadls.Clear();
-            IMessageProcessor processor = (IMessageProcessor)sender;
-            OnProcessorConnectCallback(processor);
+            Clear();
+            OnProcessorConnectCallback((IMessageProcessor)sender);
         }
 
         /// <summary>
@@ -1860,12 +1815,10 @@ namespace MSNPSharp
         /// <param name="e"></param>
         private void NSMessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            IMessageProcessor processor = (IMessageProcessor)sender;
-
-            if (IsSignedIn == true)
+            if (IsSignedIn)
                 OnSignedOff(SignedOffReason.None);
 
-            OnProcessorDisconnectCallback(processor);
+            OnProcessorDisconnectCallback((IMessageProcessor)sender);
 
             Clear();
         }
@@ -1879,11 +1832,9 @@ namespace MSNPSharp
         protected virtual void Clear()
         {
             ContactList.Clear();
-            contactGroups.Clear();
-
-            abSynchronized = false;
-            initialadlcount = 0;
-            initialadls.Clear();
+            ContactGroups.Clear();            
+            ContactService.Clear();
+            externalEndPoint = null;
         }
 
         /// <summary>
