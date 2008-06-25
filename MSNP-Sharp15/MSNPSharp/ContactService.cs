@@ -91,7 +91,7 @@ namespace MSNPSharp
             if (nsMessageHandler.AddressBookSynchronized)
             {
                 if (Settings.TraceSwitch.TraceWarning)
-                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized. Make sure the AutoSynchronize property is set to false in order to manually synchronize the contact list.", "NS11MessageHandler");
+                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized. Make sure the AutoSynchronize property is set to false in order to manually synchronize the contact list.", "NSMessageHandler");
                 return;
             }
 

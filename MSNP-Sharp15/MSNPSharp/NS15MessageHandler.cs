@@ -1,6 +1,4 @@
-﻿#define TRACE
-
-#region Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
+﻿#region Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
 /*
 Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
 All rights reserved.
@@ -33,322 +31,31 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+#define TRACE
+
+using System;
+using System.IO;
+using System.Net;
+using System.Web;
+using System.Xml;
+using System.Text;
+using System.Xml.XPath;
+using System.Collections;
+using System.Diagnostics;
+using System.Web.Services;
+using System.Globalization;
+using System.Xml.Serialization;
+using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Web.Services.Protocols;
+using System.Text.RegularExpressions;
+using System.Security.Cryptography.X509Certificates;
+
 namespace MSNPSharp
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Web;
-    using System.Xml;
-    using System.Text;
-    using System.Xml.XPath;
-    using System.Collections;
-    using System.Diagnostics;
-    using System.Web.Services;
-    using System.Globalization;
-    using System.Xml.Serialization;
-    using System.Collections.Generic;
-    using System.Security.Cryptography;
-    using System.Web.Services.Protocols;
-    using System.Text.RegularExpressions;
-    using System.Security.Cryptography.X509Certificates;
-
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
     using MSNPSharp.MSNWS.MSNABSharingService;
-
-    #region Event argument classes
-    /// <summary>
-    /// Used when a list (FL, Al, BL, RE) is received via synchronize or on request.
-    /// </summary>
-    [Serializable()]
-    public class ListReceivedEventArgs : EventArgs
-    {
-        /// <summary>
-        /// </summary>
-        private MSNLists affectedList = MSNLists.None;
-
-        /// <summary>
-        /// The list which was send by the server
-        /// </summary>
-        public MSNLists AffectedList
-        {
-            get
-            {
-                return affectedList;
-            }
-            set
-            {
-                affectedList = value;
-            }
-        }
-
-        /// <summary>
-        /// Constructory.
-        /// </summary>
-        /// <param name="affectedList"></param>
-        public ListReceivedEventArgs(MSNLists affectedList)
-        {
-            AffectedList = affectedList;
-        }
-    }
-
-    /// <summary>
-    /// Used when the local user is signed off.
-    /// </summary>
-    [Serializable()]
-    public class SignedOffEventArgs : EventArgs
-    {
-        /// <summary>
-        /// </summary>
-        private SignedOffReason signedOffReason;
-
-        /// <summary>
-        /// The list which was send by the server
-        /// </summary>
-        public SignedOffReason SignedOffReason
-        {
-            get
-            {
-                return signedOffReason;
-            }
-            set
-            {
-                signedOffReason = value;
-            }
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="signedOffReason"></param>
-        public SignedOffEventArgs(SignedOffReason signedOffReason)
-        {
-            this.signedOffReason = signedOffReason;
-        }
-    }
-
-
-    /// <summary>
-    /// Used as event argument when an answer to a ping is received.
-    /// </summary>
-    [Serializable()]
-    public class PingAnswerEventArgs : EventArgs
-    {
-        /// <summary>
-        /// The number of seconds to wait before sending another PNG, 
-        /// and is reset to 50 every time a command is sent to the server. 
-        /// In environments where idle connections are closed after a short time, 
-        /// you should send a command to the server (even if it's just a PNG) at least this often.
-        /// Note: MSNPSharp does not handle this! E.g. if you experience unexpected connection dropping call the Ping() method.
-        /// </summary>
-        public int SecondsToWait
-        {
-            get
-            {
-                return secondsToWait;
-            }
-            set
-            {
-                secondsToWait = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private int secondsToWait;
-
-
-        /// <summary>
-        /// </summary>
-        /// <param name="seconds"></param>
-        public PingAnswerEventArgs(int seconds)
-        {
-            SecondsToWait = seconds;
-        }
-    }
-
-
-    /// <summary>
-    /// Used as event argument when any contact list mutates.
-    /// </summary>
-    [Serializable()]
-    public class ListMutateEventArgs : EventArgs
-    {
-        /// <summary>
-        /// </summary>
-        private Contact contact;
-
-        /// <summary>
-        /// The affected contact.
-        /// </summary>
-        public Contact Contact
-        {
-            get
-            {
-                return contact;
-            }
-            set
-            {
-                contact = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private MSNLists affectedList = MSNLists.None;
-
-        /// <summary>
-        /// The list which mutated.
-        /// </summary>
-        public MSNLists AffectedList
-        {
-            get
-            {
-                return affectedList;
-            }
-            set
-            {
-                affectedList = value;
-            }
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="contact"></param>
-        /// <param name="affectedList"></param>
-        public ListMutateEventArgs(Contact contact, MSNLists affectedList)
-        {
-            Contact = contact;
-            AffectedList = affectedList;
-        }
-    }
-
-
-    /// <summary>
-    /// Used as event argument when msn sends us an error.
-    /// </summary>	
-    [Serializable()]
-    public class MSNErrorEventArgs : EventArgs
-    {
-        /// <summary>
-        /// </summary>
-        private MSNError msnError;
-
-        /// <summary>
-        /// The error that occurred
-        /// </summary>
-        public MSNError MSNError
-        {
-            get
-            {
-                return msnError;
-            }
-            set
-            {
-                msnError = value;
-            }
-        }
-
-
-        /// <summary>
-        /// Constructory.
-        /// </summary>
-        /// <param name="msnError"></param>
-        public MSNErrorEventArgs(MSNError msnError)
-        {
-            this.msnError = msnError;
-        }
-    }
-
-    [Serializable()]
-    public class OIMReceivedEventArgs : EventArgs
-    {
-        private string receivedTime;
-
-        public string ReceivedTime
-        {
-            get
-            {
-                return receivedTime;
-            }
-        }
-        private string email;
-
-        /// <summary>
-        /// Sender account.
-        /// </summary>
-        public string Email
-        {
-            get
-            {
-                return email;
-            }
-        }
-        private string message;
-
-        /// <summary>
-        /// Text message.
-        /// </summary>
-        public string Message
-        {
-            get
-            {
-                return message;
-            }
-        }
-        private bool isRead = true;
-
-        /// <summary>
-        /// Set this to true if you don't want to receive this message
-        /// next time you login.
-        /// </summary>
-        public bool IsRead
-        {
-            get
-            {
-                return isRead;
-            }
-            set
-            {
-                isRead = value;
-            }
-        }
-
-        public OIMReceivedEventArgs(string rcvTime, string account, string msg)
-        {
-            receivedTime = rcvTime;
-            email = account;
-            message = msg;
-        }
-    }
-
-    #endregion
-
-    #region Enumeration
-    /// <summary>
-    /// Defines why a user has (been) signed off.
-    /// </summary>
-    /// <remarks>
-    /// <b>OtherClient</b> is used when this account has signed in from another location. <b>ServerDown</b> is used when the msn server is going down.
-    /// </remarks>
-    public enum SignedOffReason
-    {
-        /// <summary>
-        /// None.
-        /// </summary>
-        None,
-        /// <summary>
-        /// User logged in on the other client.
-        /// </summary>
-        OtherClient,
-        /// <summary>
-        /// Server went down.
-        /// </summary>
-        ServerDown
-    }
-    #endregion
 
     #region Delegates
 
@@ -405,12 +112,6 @@ namespace MSNPSharp
     /// </summary>
     public delegate void MailChangedEventHandler(object sender, MailChangedEventArgs e);
 
-    /// <summary>
-    /// This delegate is used when an OIM was received.
-    /// </summary>
-    /// <param name="sender">The sender's email</param>
-    /// <param name="e">OIMReceivedEventArgs</param>
-    public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
     #endregion
 
     /// <summary>
@@ -419,376 +120,26 @@ namespace MSNPSharp
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
+        #region Members
 
-        #region Private
-        /// <summary>
-        /// </summary>
         private SocketMessageProcessor messageProcessor = null;
-        /// <summary>
-        /// </summary>
         private ConnectivitySettings connectivitySettings = null;
-
-        /// <summary>
-        /// </summary>
         private IPEndPoint externalEndPoint = null;
-
-        /// <summary>
-        /// </summary>
         private Credentials credentials = null;
 
-        /// <summary>
-        /// </summary>
+        private bool isSignedIn = false;
         private bool autoSynchronize = true;
-
-        /// <summary>
-        /// </summary>
+        private bool abSynchronized = false;
+        private ContactGroupList contactGroups = null;
         private ContactList contactList = new ContactList();
 
-        /// <summary>
-        /// </summary>
-        private ContactGroupList contactGroups = null;
-
-        /// <summary>
-        /// </summary>
         private Owner owner = new Owner();
-
-        /// <summary>
-        /// Keep track whether a address book synchronization has been completed so we can warn the client programmer
-        /// </summary>
-        private bool abSynchronized = false;
-
-        /// <summary>
-        /// Defines whether the user is signed in the messenger network
-        /// </summary>
-        private bool isSignedIn = false;
-
-        /// <summary>
-        /// A collection of all switchboard handlers waiting for a connection
-        /// </summary>
         private Queue pendingSwitchboards = new Queue();
 
         private ContactService contactService = null;
         private OIMService oimService = null;
         private ContactSpaceService spaceService = null;
 
-        /// <summary>
-        /// Event handler.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void NSMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
-        {
-            abSynchronized = false;
-            initialadlcount = 0;
-            initialadls.Clear();
-            IMessageProcessor processor = (IMessageProcessor)sender;
-            OnProcessorConnectCallback(processor);
-        }
-
-        /// <summary>
-        /// Event handler.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void NSMessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
-        {
-            IMessageProcessor processor = (IMessageProcessor)sender;
-
-            if (IsSignedIn == true)
-                OnSignedOff(SignedOffReason.None);
-
-            OnProcessorDisconnectCallback(processor);
-
-            Clear();
-
-        }
-
-        #endregion
-
-        #region Protected
-
-        /// <summary>
-        /// Clears all resources associated with a nameserver session.
-        /// </summary>
-        /// <remarks>
-        /// Called after we the processor has disconnected. This will clear the contactlist and free other resources.
-        /// </remarks>
-        protected virtual void Clear()
-        {
-            ContactList.Clear();
-            contactGroups.Clear();
-
-            abSynchronized = false;
-            initialadlcount = 0;
-            initialadls.Clear();
-        }
-
-        /// <summary>
-        /// Translates the codes used by the MSN server to a MSNList object.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        protected virtual MSNLists GetMSNList(string name)
-        {
-            switch (name)
-            {
-                case "AL":
-                    return MSNLists.AllowedList;
-                case "FL":
-                    return MSNLists.ForwardList;
-                case "BL":
-                    return MSNLists.BlockedList;
-                case "RL":
-                    return MSNLists.ReverseList;
-                case "PL":
-                    return MSNLists.PendingList;
-            }
-            throw new MSNPSharpException("Unknown MSNList type");
-        }
-
-        /// <summary>
-        /// Class used for items stored in the switchboard queue.
-        /// </summary>
-        protected class SwitchboardQueueItem
-        {
-            /// <summary>
-            /// The object that initiated the request.
-            /// </summary>
-            public object Initiator;
-            /// <summary>
-            /// The switchboard handler that will be handling the new switchboard session.
-            /// </summary>
-            public SBMessageHandler SwitchboardHandler;
-
-            /// <summary>
-            /// Constructs a queue item.
-            /// </summary>
-            /// <param name="switchboardHandler"></param>
-            /// <param name="initiator"></param>
-            public SwitchboardQueueItem(SBMessageHandler switchboardHandler, object initiator)
-            {
-                Initiator = initiator;
-                SwitchboardHandler = switchboardHandler;
-            }
-        }
-
-        #endregion
-
-        #region Public Events
-
-
-        /// <summary>
-        /// Occurs when a new contactgroup is created
-        /// </summary>
-        public event ContactGroupChangedEventHandler ContactGroupAdded;
-        /// <summary>
-        /// Occurs when a contactgroup is removed
-        /// </summary>
-        public event ContactGroupChangedEventHandler ContactGroupRemoved;
-
-        /// <summary>
-        /// Occurs when an exception is thrown while handling the incoming or outgoing messages
-        /// </summary>
-        public event HandlerExceptionEventHandler ExceptionOccurred;
-
-        /// <summary>
-        /// Occurs when the user could not be signed in due to authentication errors. Most likely due to an invalid account or password. Note that this event will also raise the more general <see cref="ExceptionOccurred"/> event.
-        /// </summary>
-        public event HandlerExceptionEventHandler AuthenticationError;
-
-        /*/// <summary>
-        /// Occurs when a message is received from a MSN server. This is not a message from another contact!
-        /// These messages are handled internally in dotMSN, but by using this event you can peek at the incoming messages.
-        /// </summary>
-        public event MessageReceivedHandler		MessageReceived; */
-
-        /// <summary>
-        /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method
-        /// </summary>
-        public event PingAnswerEventHandler PingAnswer;
-
-        /// <summary>
-        /// Occurs when a contact is added to any list (including reverse list)
-        /// </summary>
-        public event ListMutatedAddedEventHandler ContactAdded;
-        /// <summary>
-        /// Occurs when a contact is removed from any list (including reverse list)
-        /// </summary>
-        public event ListMutatedAddedEventHandler ContactRemoved;
-
-        /// <summary>
-        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event ContactChangedEventHandler ReverseAdded;
-        /// <summary>
-        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event ContactChangedEventHandler ReverseRemoved;
-
-        /// <summary>
-        /// Occurs when any contact changes status
-        /// </summary>
-        public event ContactStatusChangedEventHandler ContactStatusChanged;
-
-        /// <summary>
-        /// Occurs when any contact goes from offline status to another status
-        /// </summary>
-        public event ContactChangedEventHandler ContactOnline;
-        /// <summary>
-        /// Occurs when any contact goed from any status to offline status
-        /// </summary>
-        public event ContactChangedEventHandler ContactOffline;
-
-        /*/// <summary>
-        /// Occurs when any of the 4 lists is received. The requested list is given in the event arguments object.
-        /// </summary>
-        public event ListReceivedEventHandler		ListReceived;*/
-
-        /// <summary>
-        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
-        /// This means all contact-updates are received from the server and processed.
-        /// </summary>
-        public event EventHandler SynchronizationCompleted;
-
-        /// <summary>
-        /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
-        /// </summary>
-        public event EventHandler SignedIn;
-
-        /// <summary>
-        /// Occurs when the message processor has disconnected, and thus the user is no longer signed in.
-        /// </summary>
-        public event SignedOffEventHandler SignedOff;
-
-        /// <summary>
-        /// Occurs when a switchboard session has been created
-        /// </summary>
-        public event SBCreatedEventHandler SBCreated;
-
-        /// <summary>
-        /// Occurs when the server notifies the client with the status of the owner's mailbox.
-        /// </summary>
-        public event MailboxStatusEventHandler MailboxStatusReceived;
-
-        /// <summary>
-        /// Occurs when new mail is received by the Owner.
-        /// </summary>
-        public event NewMailEventHandler NewMailReceived;
-
-        /// <summary>
-        /// Occurs when unread mail is read or mail is moved by the Owner.
-        /// </summary>
-        public event MailChangedEventHandler MailboxChanged;
-
-        /// <summary>
-        /// Occurs when the the server send an error.
-        /// </summary>
-        public event ErrorReceivedEventHandler ServerErrorReceived;
-
-        /// <summary>
-        /// Occurs when receive an OIM.
-        /// </summary>
-        public event OIMReceivedEventHandler OIMReceived;
-
-
-        /// <summary>
-        /// Fires the ServerErrorReceived event.
-        /// </summary>
-        /// <param name="msnError"></param>
-        protected virtual void OnServerErrorReceived(MSNError msnError)
-        {
-            if (ServerErrorReceived != null)
-                ServerErrorReceived(this, new MSNErrorEventArgs(msnError));
-        }
-
-        /// <summary>
-        /// Fires the SignedIn event.
-        /// </summary>
-        protected virtual void OnSignedIn()
-        {
-            isSignedIn = true;
-            if (SignedIn != null)
-                SignedIn(this, new EventArgs());
-        }
-
-        /// <summary>
-        /// Fires the SignedOff event.
-        /// </summary>
-        protected virtual void OnSignedOff(SignedOffReason reason)
-        {
-            isSignedIn = false;
-            SwitchBoards.Clear();
-            owner.SetStatus(PresenceStatus.Offline);
-            if (SignedOff != null)
-                SignedOff(this, new SignedOffEventArgs(reason));
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ExceptionOccurred"/> event.
-        /// </summary>
-        /// <param name="e">The exception which was thrown</param>
-        protected virtual void OnExceptionOccurred(Exception e)
-        {
-            if (ExceptionOccurred != null)
-                ExceptionOccurred(this, new ExceptionEventArgs(e));
-
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine(e.ToString(), "NS11MessageHandler");
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ReverseRemoved"/> event.
-        /// </summary>
-        /// <param name="contact"></param>
-        protected virtual void OnReverseRemoved(Contact contact)
-        {
-            if (ReverseRemoved != null)
-                ReverseRemoved(this, new ContactEventArgs(contact));
-        }
-
-        /// <summary>
-        ///  Fires the <see cref="ReverseAdded"/> event.
-        /// </summary>
-        /// <param name="contact"></param>
-        protected internal virtual void OnReverseAdded(Contact contact)
-        {
-            if (ReverseAdded != null)
-                ReverseAdded(this, new ContactEventArgs(contact));
-        }
-
-        /// <summary>
-        /// Fires the <see cref="AuthenticationError"/> event.
-        /// </summary>
-        /// <param name="e">The exception which was thrown</param>
-        protected virtual void OnAuthenticationErrorOccurred(Exception e)
-        {
-            if (AuthenticationError != null)
-                AuthenticationError(this, new ExceptionEventArgs(e));
-
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine(e.ToString(), "NS11MessageHandler");
-        }
-
-
-        /// <summary>
-        /// Fires the <see cref="ExceptionOccurred"/> event.
-        /// </summary>
-        /// <param name="switchboard">The switchboard created</param>
-        /// <param name="initiator">The object that initiated the switchboard request.</param>
-        protected virtual void OnSBCreated(SBMessageHandler switchboard, object initiator)
-        {
-            if (SBCreated != null)
-                SBCreated(this, new SBCreatedEventArgs(switchboard, initiator));
-        }
-
-        #endregion
-
-        #region Public
-
-        internal List<SBMessageHandler> SwitchBoards = new List<SBMessageHandler>();
-        /// <summary>
-        /// Constructor.
-        /// </summary>
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
@@ -802,6 +153,10 @@ namespace MSNPSharp
             oimService = new OIMService(this);
             spaceService = new ContactSpaceService(this);
         }
+
+        #endregion
+
+        #region Properties
 
         /// <summary>
         /// Defines if the contact list is automatically synchronized upon connection.
@@ -948,29 +303,1166 @@ namespace MSNPSharp
             }
         }
 
-        #region Message sending methods
-
-        protected internal virtual void OnContactGroupAdded(object sender, ContactGroupEventArgs e)
+        /// <summary>
+        /// The processor to handle the messages
+        /// </summary>
+        public IMessageProcessor MessageProcessor
         {
-            if (ContactGroupAdded != null)
+            get
             {
-                ContactGroupAdded(this, e);
+                return messageProcessor;
+            }
+            set
+            {
+                if (processorConnectedHandler != null && messageProcessor != null)
+                {
+                    // de-register from the previous message processor					
+                    ((SocketMessageProcessor)messageProcessor).ConnectionEstablished -= processorConnectedHandler;
+                }
+
+                if (processorConnectedHandler == null)
+                {
+                    processorConnectedHandler = new EventHandler(NSMessageHandler_ProcessorConnectCallback);
+                    processorDisconnectedHandler = new EventHandler(NSMessageHandler_ProcessorDisconnectCallback);
+                }
+
+                messageProcessor = (SocketMessageProcessor)value;
+
+                // catch the connect event so we can start sending the USR command upon initiating
+                ((SocketMessageProcessor)messageProcessor).ConnectionEstablished += processorConnectedHandler;
+
+                // and make sure we respond on closing
+                ((SocketMessageProcessor)messageProcessor).ConnectionClosed += processorDisconnectedHandler;
             }
         }
 
-        protected internal virtual void OnContactAdded(object sender, ListMutateEventArgs e)
+        #endregion
+
+        #region Public Events
+
+        /// <summary>
+        /// Occurs when a new contactgroup is created
+        /// </summary>
+        public event ContactGroupChangedEventHandler ContactGroupAdded;
+
+        /// <summary>
+        /// Occurs when a contactgroup is removed
+        /// </summary>
+        public event ContactGroupChangedEventHandler ContactGroupRemoved;
+
+        /// <summary>
+        /// Occurs when an exception is thrown while handling the incoming or outgoing messages
+        /// </summary>
+        public event HandlerExceptionEventHandler ExceptionOccurred;
+
+        /// <summary>
+        /// Occurs when the user could not be signed in due to authentication errors. Most likely due to an invalid account or password. Note that this event will also raise the more general <see cref="ExceptionOccurred"/> event.
+        /// </summary>
+        public event HandlerExceptionEventHandler AuthenticationError;
+
+        /// <summary>
+        /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method
+        /// </summary>
+        public event PingAnswerEventHandler PingAnswer;
+
+        /// <summary>
+        /// Occurs when a contact is added to any list (including reverse list)
+        /// </summary>
+        public event ListMutatedAddedEventHandler ContactAdded;
+
+        /// <summary>
+        /// Occurs when a contact is removed from any list (including reverse list)
+        /// </summary>
+        public event ListMutatedAddedEventHandler ContactRemoved;
+
+        /// <summary>
+        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
+        /// </summary>
+        public event ContactChangedEventHandler ReverseAdded;
+
+        /// <summary>
+        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
+        /// </summary>
+        public event ContactChangedEventHandler ReverseRemoved;
+
+        /// <summary>
+        /// Occurs when any contact changes status
+        /// </summary>
+        public event ContactStatusChangedEventHandler ContactStatusChanged;
+
+        /// <summary>
+        /// Occurs when any contact goes from offline status to another status
+        /// </summary>
+        public event ContactChangedEventHandler ContactOnline;
+
+        /// <summary>
+        /// Occurs when any contact goed from any status to offline status
+        /// </summary>
+        public event ContactChangedEventHandler ContactOffline;
+
+        /// <summary>
+        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
+        /// This means all contact-updates are received from the server and processed.
+        /// </summary>
+        public event EventHandler SynchronizationCompleted;
+
+        /// <summary>
+        /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
+        /// </summary>
+        public event EventHandler SignedIn;
+
+        /// <summary>
+        /// Occurs when the message processor has disconnected, and thus the user is no longer signed in.
+        /// </summary>
+        public event SignedOffEventHandler SignedOff;
+
+        /// <summary>
+        /// Occurs when a switchboard session has been created
+        /// </summary>
+        public event SBCreatedEventHandler SBCreated;
+
+        /// <summary>
+        /// Occurs when the server notifies the client with the status of the owner's mailbox.
+        /// </summary>
+        public event MailboxStatusEventHandler MailboxStatusReceived;
+
+        /// <summary>
+        /// Occurs when new mail is received by the Owner.
+        /// </summary>
+        public event NewMailEventHandler NewMailReceived;
+
+        /// <summary>
+        /// Occurs when unread mail is read or mail is moved by the Owner.
+        /// </summary>
+        public event MailChangedEventHandler MailboxChanged;
+
+        /// <summary>
+        /// Occurs when the the server send an error.
+        /// </summary>
+        public event ErrorReceivedEventHandler ServerErrorReceived;
+
+        /// <summary>
+        /// Occurs when receive an OIM.
+        /// </summary>
+        public event OIMReceivedEventHandler OIMReceived;
+
+        #endregion
+
+        #region Public Methods
+
+        #region Mobile
+
+        /// <summary>
+        /// Sets the telephonenumber for the contact list owner's homephone.
+        /// </summary>
+        public virtual void SetPhoneNumberHome(string number)
         {
-            if (ContactAdded != null)
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+            if (number.Length > 30)
+                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
+
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHH", HttpUtility.UrlEncode(number) }));
+        }
+
+        /// <summary>
+        /// Sets the telephonenumber for the contact list owner's workphone.
+        /// </summary>
+        public virtual void SetPhoneNumberWork(string number)
+        {
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+            if (number.Length > 30)
+                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", HttpUtility.UrlEncode(number) }));
+        }
+
+        /// <summary>
+        /// Sets the telephonenumber for the contact list owner's mobile phone.
+        /// </summary>
+        public virtual void SetPhoneNumberMobile(string number)
+        {
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+            if (number.Length > 30)
+                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", HttpUtility.UrlEncode(number) }));
+        }
+
+        /// <summary>
+        /// Sets whether the contact list owner allows remote contacts to send messages to it's mobile device.
+        /// </summary>
+        public virtual void SetMobileAccess(bool enabled)
+        {
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MOB", enabled ? "Y" : "N" }));
+        }
+
+        /// <summary>
+        /// Sets whether the contact list owner has a mobile device enabled.
+        /// </summary>
+        public virtual void SetMobileDevice(bool enabled)
+        {
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
+        }
+
+        /// <summary>
+        /// Sends a mobile message to the specified remote contact. This only works when the remote contact has it's mobile device enabled and has MSN-direct enabled.
+        /// </summary>
+        /// <param name="receiver"></param>
+        /// <param name="text"></param>
+        public virtual void SendMobileMessage(Contact receiver, string text)
+        {
+            SendMobileMessage(receiver, text, String.Empty, String.Empty);
+        }
+
+        /// <summary>
+        /// Sends a mobile message to the specified remote contact. This only works when the remote contact has it's mobile device enabled and has MSN-direct enabled.
+        /// </summary>
+        /// <param name="receiver"></param>
+        /// <param name="text"></param>
+        /// <param name="callbackNumber"></param>
+        /// <param name="callbackDevice"></param>
+        public virtual void SendMobileMessage(Contact receiver, string text, string callbackNumber, string callbackDevice)
+        {
+            if (receiver.MobileAccess == false)
+                throw new MSNPSharpException("A direct message can not be send. The specified contact has no mobile device enabled.");
+
+            // create a body message
+            MobileMessage bodyMessage = new MobileMessage();
+            bodyMessage.CallbackDeviceName = callbackDevice;
+            bodyMessage.CallbackNumber = callbackNumber;
+            bodyMessage.Receiver = receiver.Mail;
+            bodyMessage.Text = text;
+
+            // create an NS message to transport it
+            NSMessage nsMessage = new NSMessage();
+            nsMessage.InnerMessage = bodyMessage;
+
+            // and send it
+            MessageProcessor.SendMessage(nsMessage);
+        }
+
+
+        #endregion
+
+        #region RequestSwitchboard & SendPing
+
+        internal List<SBMessageHandler> SwitchBoards = new List<SBMessageHandler>();
+
+        /// <summary>
+        /// Sends a request to the server to start a new switchboard session.
+        /// </summary>
+        public virtual SBMessageHandler RequestSwitchboard(object initiator)
+        {
+            // create a switchboard object
+            SBMessageHandler handler = Factory.CreateSwitchboardHandler();
+
+            RequestSwitchboard(handler, initiator);
+
+            return handler;
+        }
+
+        /// <summary>
+        /// Sends a request to the server to start a new switchboard session. The specified switchboard handler will be associated with the new switchboard session.
+        /// </summary>
+        /// <param name="switchboardHandler">The switchboard handler to use. A switchboard processor will be created and connected to this handler.</param>
+        /// <param name="initiator">The object that initiated the request for the switchboard.</param>
+        /// <returns></returns>
+        public virtual void RequestSwitchboard(SBMessageHandler switchboardHandler, object initiator)
+        {
+            pendingSwitchboards.Enqueue(new SwitchboardQueueItem(switchboardHandler, initiator));
+            MessageProcessor.SendMessage(new NSMessage("XFR", new string[] { "SB" }));
+        }
+
+        /// <summary>
+        /// Sends PNG (ping) command.
+        /// </summary>
+        public virtual void SendPing()
+        {
+            MessageProcessor.SendMessage(new NSMessage("PNG"));
+        }
+
+        #endregion
+
+        #region RequestScreenName & SetScreenName & SetPersonalMessage
+
+        /// <summary>
+        /// Send the server a request for the contact's screen name.
+        /// </summary>
+        /// <remarks>
+        /// When the server replies with the screen name the Name property of the <see cref="Contact"/> will
+        /// be updated.
+        /// </remarks>
+        /// <param name="contact"></param>
+        public virtual void RequestScreenName(Contact contact)
+        {
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
+            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", HttpUtility.UrlEncode(contact.Name).Replace("+", "%20") }));
+        }
+
+        /// <summary>
+        /// Sets the contactlist owner's screenname. After receiving confirmation from the server
+        /// this will set the Owner object's name which will in turn raise the NameChange event.
+        /// </summary>
+        public virtual void SetScreenName(string newName)
+        {
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+
+            ContactService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
+        }
+
+        /// <summary>
+        /// Sets personal message.
+        /// </summary>
+        /// <param name="pmsg"></param>
+        public virtual void SetPersonalMessage(PersonalMessage pmsg)
+        {
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
+
+            ContactService.UpdateProfile(Owner.Name, pmsg.Message);
+        }
+
+        #endregion
+
+        #region SetPrivacyMode & SetNotifyPrivacyMode & SetPresenceStatus
+
+        /// <summary>
+        /// Set the contactlist owner's privacy mode.
+        /// </summary>
+        /// <param name="privacy">New privacy setting</param>
+        public virtual void SetPrivacyMode(PrivacyMode privacy)
+        {
+            if (privacy == PrivacyMode.AllExceptBlocked)
+                MessageProcessor.SendMessage(new NSMessage("BLP", new string[] { "AL" }));
+
+            if (privacy == PrivacyMode.NoneButAllowed)
+                MessageProcessor.SendMessage(new NSMessage("BLP", new string[] { "BL" }));
+
+        }
+
+        /// <summary>
+        /// Set the contactlist owner's notification mode on contact service.
+        /// </summary>
+        /// <param name="privacy">New notify privacy setting</param>
+        public virtual void SetNotifyPrivacyMode(NotifyPrivacy privacy)
+        {
+            Owner.SetNotifyPrivacy(privacy);
+            ContactService.UpdateMe();
+        }
+
+        /// <summary>
+        /// Set the status of the contactlistowner (the client).
+        /// Note: you can only set the status _after_ you have synchronized the list using SynchronizeList(). Otherwise you won't receive online notifications from other clients or the connection is closed by the server.
+        /// </summary>
+        /// <param name="status"></param>
+        public virtual void SetPresenceStatus(PresenceStatus status)
+        {
+            // check whether we are allowed to send a CHG command
+            if (abSynchronized == false)
+                throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
+
+            string context = String.Empty;
+
+            if (owner.DisplayImage != null)
+                context = owner.DisplayImage.Context;
+
+            if (status == PresenceStatus.Offline)
+                messageProcessor.Disconnect();
+
+            //don't set the same status or it will result in disconnection
+            else if (status != owner.Status)
             {
-                ContactAdded(this, e);
+                string capacities = ((long)owner.ClientCapacities).ToString();
+
+                MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
         }
 
-        protected internal virtual void OnContactGroupRemoved(object sender, ContactGroupEventArgs e)
+        #endregion
+
+        #endregion
+
+        #region Command Handlers
+
+        #region Login
+
+        /// <summary>
+        /// Called when the message processor has disconnected.
+        /// </summary>
+        /// <param name="sender"></param>
+        protected virtual void OnProcessorDisconnectCallback(IMessageProcessor sender)
         {
-            if (ContactGroupRemoved != null)
+            // do nothing
+        }
+
+        /// <summary>
+        /// Called when the message processor has established a connection. This function will 
+        /// begin the login procedure by sending the VER command.
+        /// </summary>
+        /// <param name="sender"></param>
+        protected virtual void OnProcessorConnectCallback(IMessageProcessor sender)
+        {
+            SendInitialMessage();
+        }
+
+        /// <summary>
+        /// Send the first message to the server. This is usually the VER command.
+        /// </summary>
+        protected virtual void SendInitialMessage()
+        {
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15 MSNP14 MSNP13", "CVR0" }));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the server has approved our version of the protocol. This function will send the CVR command.
+        /// <code>VER [Transaction] [Protocol1] ([Protocol2]) [Clientversion]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnVERReceived(NSMessage message)
+        {
+            // check for valid credentials
+            if (Credentials == null)
+                throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
+
+
+            // send client information back
+            MessageProcessor.SendMessage(new NSMessage("CVR", new string[] { "0x040c", "winnt", "5.1", "i386", "MSNMSGR", "8.5.1302", "msmsgs", Credentials.Account }));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the server has approved our client details. This function will send the USR command. 
+        /// <code>CVR [Transaction] [Recommended version] [Recommended version] [Minimum version] [Download url] [Info url]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnCVRReceived(NSMessage message)
+        {
+            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
+        }
+
+        private Dictionary<Iniproperties, string> _Tickets = new Dictionary<Iniproperties, string>();
+        internal Dictionary<Iniproperties, string> Tickets
+        {
+            get
             {
-                ContactGroupRemoved(this, e);
+                return _Tickets;
+            }
+        }
+
+        protected virtual void OnUSRReceived(NSMessage message)
+        {
+            //single-sign-on stuff
+            if ((string)message.CommandValues[1] == "SSO")
+            {
+                string policy = (string)message.CommandValues[3];
+                string nonce = (string)message.CommandValues[4];
+
+                SingleSignOn sso = new SingleSignOn(Credentials.Account, Credentials.Password, policy);
+                if (ConnectivitySettings != null && ConnectivitySettings.WebProxy != null)
+                {
+                    sso.WebProxy = ConnectivitySettings.WebProxy;
+                }
+                sso.AddDefaultAuths();
+                string response = sso.Authenticate(nonce, out _Tickets);
+                //_Ticket = response;
+                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
+            }
+            else if ((string)message.CommandValues[1] == "OK")
+            {
+                // we sucesfully logged in, set the owner's name
+                Owner.SetMail(message.CommandValues[2].ToString());
+                Owner.SetPassportVerified(message.CommandValues[3].Equals("1"));
+
+
+            }
+        }
+
+        /// <summary>
+        /// Called when the server has send a profile description. This will update the profile of the Owner object. 
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnProfileReceived(MSGMessage message)
+        {
+            StrDictionary hdr = message.MimeHeader;
+
+            int clientPort = 0;
+
+            if (hdr.ContainsKey("ClientPort"))
+            {
+                clientPort = int.Parse(message.MimeHeader["ClientPort"].Replace('.', ' '),
+                                           System.Globalization.CultureInfo.InvariantCulture);
+
+                clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
+            }
+
+            IPAddress ip = hdr.ContainsKey("ClientIP") ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None;
+            Owner.UpdateProfile(
+                hdr["LoginTime"],
+                (hdr.ContainsKey("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
+                hdr["MemberIdHigh"],
+                hdr["MemberIdLow"],
+                hdr["lang_preference"],
+                hdr["preferredEmail"],
+                hdr["country"],
+                hdr["PostalCode"],
+                hdr["Gender"],
+                hdr["Kid"],
+                hdr["Age"],
+                hdr["Birthday"],
+                hdr["Wallet"],
+                hdr["sid"],
+                hdr["kv"],
+                hdr["MSPAuth"],
+                ip,
+                clientPort,
+                hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
+            );
+
+            if (IPAddress.None != ip)
+            {
+                // set the external end point. This can be used in file transfer connectivity determing
+                externalEndPoint = new IPEndPoint(ip, clientPort);
+            }
+            //ADL
+            if (AutoSynchronize)
+            {
+                contactService.SynchronizeContactList();
+            }
+            else
+            {
+                // notify the client programmer
+                OnSignedIn();
+            }
+        }
+
+        /// <summary>
+        /// Called when a BLP command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the server has send the privacy mode for the contact list owner.
+        /// <code>BLP [Transaction] [SynchronizationID] [PrivacyMode]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnBLPReceived(NSMessage message)
+        {
+            if (Owner == null)
+                return;
+
+            string type = String.Empty;
+
+            if (message.CommandValues.Count == 1)
+                type = message.CommandValues[0].ToString();
+            else
+                type = message.CommandValues[1].ToString();
+
+            switch (type)
+            {
+                case "AL":
+                    Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
+                    ContactService.UpdateMe();
+                    break;
+                case "BL":
+                    owner.SetPrivacy(PrivacyMode.NoneButAllowed);
+                    ContactService.UpdateMe();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Fires the SignedIn event.
+        /// </summary>
+        protected virtual void OnSignedIn()
+        {
+            isSignedIn = true;
+            if (SignedIn != null)
+                SignedIn(this, new EventArgs());
+        }
+
+        /// <summary>
+        /// Fires the SignedOff event.
+        /// </summary>
+        protected virtual void OnSignedOff(SignedOffReason reason)
+        {
+            isSignedIn = false;
+            SwitchBoards.Clear();
+            owner.SetStatus(PresenceStatus.Offline);
+            if (SignedOff != null)
+                SignedOff(this, new SignedOffEventArgs(reason));
+        }
+
+        #endregion
+
+        #region Status
+
+        /// <summary>
+        /// Translates messenger's textual status to the corresponding value of the Status enum.
+        /// </summary>
+        /// <param name="status">Textual MSN status received from server</param>
+        /// <returns>The corresponding enum value</returns>
+        protected PresenceStatus ParseStatus(string status)
+        {
+            switch (status)
+            {
+                case "NLN":
+                    return PresenceStatus.Online;
+                case "BSY":
+                    return PresenceStatus.Busy;
+                case "IDL":
+                    return PresenceStatus.Idle;
+                case "BRB":
+                    return PresenceStatus.BRB;
+                case "AWY":
+                    return PresenceStatus.Away;
+                case "PHN":
+                    return PresenceStatus.Phone;
+                case "LUN":
+                    return PresenceStatus.Lunch;
+                case "FLN":
+                    return PresenceStatus.Offline;
+                case "HDN":
+                    return PresenceStatus.Hidden;
+                default:
+                    break;
+            }
+
+            // unknown status
+            return PresenceStatus.Unknown;
+        }
+
+
+        /// <summary>
+        /// Translates MSNStatus enumeration to messenger's textual status presentation.
+        /// </summary>
+        /// <param name="status">MSNStatus enum object representing the status to translate</param>
+        /// <returns>The corresponding textual value</returns>
+        protected string ParseStatus(PresenceStatus status)
+        {
+            switch (status)
+            {
+                case PresenceStatus.Online:
+                    return "NLN";
+                case PresenceStatus.Busy:
+                    return "BSY";
+                case PresenceStatus.Idle:
+                    return "IDL";
+                case PresenceStatus.BRB:
+                    return "BRB";
+                case PresenceStatus.Away:
+                    return "AWY";
+                case PresenceStatus.Phone:
+                    return "PHN";
+                case PresenceStatus.Lunch:
+                    return "LUN";
+                case PresenceStatus.Offline:
+                    return "FLN";
+                case PresenceStatus.Hidden:
+                    return "HDN";
+                default:
+                    break;
+            }
+
+            // unknown status
+            return "Unknown status";
+        }
+
+        /// <summary>
+        /// Called when a UBX command has been received.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnUBXReceived(NSMessage message)
+        {
+            //check the payload length
+            if (message.CommandValues[1].ToString() == "0")
+                return;
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
+            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
+
+            PersonalMessage pm = new PersonalMessage(message);
+            contact.SetPersonalMessage(pm);
+        }
+
+        /// <summary>
+        /// Called when a ILN command has been received.
+        /// </summary>
+        /// <remarks>
+        /// ILN indicates the initial status of a contact.
+        /// It is send after initial log on or after adding/removing contact from the contactlist.
+        /// Fires the ContactOnline and/or the ContactStatusChange events.
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnILNReceived(NSMessage message)
+        {
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[3]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[2], type);
+            contact.SetName((string)message.CommandValues[4]);
+            PresenceStatus oldStatus = contact.Status;
+            contact.SetStatus(ParseStatus((string)message.CommandValues[1]));
+
+            // set the client capabilities, if available
+            if (message.CommandValues.Count >= 5)
+                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString());
+
+            // check whether there is a msn object available
+            if (message.CommandValues.Count >= 6)
+            {
+                DisplayImage userDisplay = new DisplayImage();
+                userDisplay.Context = message.CommandValues[6].ToString();
+                contact.SetUserDisplay(userDisplay);
+            }
+
+            if (oldStatus == PresenceStatus.Unknown || oldStatus == PresenceStatus.Offline)
+            {
+                if (ContactOnline != null)
+                    ContactOnline(this, new ContactEventArgs(contact));
+            }
+            if (ContactStatusChanged != null)
+                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
+        }
+
+
+        /// <summary>
+        /// Called when a NLN command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that a contact on the forward list went online.
+        /// <code>NLN [status] [account] [name]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnNLNReceived(NSMessage message)
+        {
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[1], type);
+            contact.SetName((string)message.CommandValues[3]);
+            PresenceStatus oldStatus = contact.Status;
+            contact.SetStatus(ParseStatus((string)message.CommandValues[0]));
+            if (message.CommandValues.Count >= 5)
+            {
+                DisplayImage userDisplay = new DisplayImage();
+                userDisplay.Context = message.CommandValues[5].ToString();
+                contact.SetUserDisplay(userDisplay);
+            }
+            // set the client capabilities, if available
+            if (message.CommandValues.Count > 4)
+                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString());
+
+            // the contact changed status, fire event
+            if (ContactStatusChanged != null)
+                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
+
+            // the contact goes online, fire event
+            if (ContactOnline != null)
+                ContactOnline(this, new ContactEventArgs(contact));
+        }
+
+        /// <summary>
+        /// Called when a FLN command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that a user went offline.
+        /// <code>FLN [account]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnFLNReceived(NSMessage message)
+        {
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
+            Contact contact = ContactList.GetContact((string)message.CommandValues[0], type);
+            PresenceStatus oldStatus = contact.Status;
+            contact.SetStatus(PresenceStatus.Offline);
+
+            // the contact changed status, fire event
+            if (ContactStatusChanged != null)
+                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
+
+            // the contact goes offline, fire event
+            if (ContactOffline != null)
+                ContactOffline(this, new ContactEventArgs(contact));
+        }
+
+        /// <summary>
+        /// Called when an OUT command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the server has signed off the user.
+        /// <code>OUT [Reason]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnOUTReceived(NSMessage message)
+        {
+            if (message.CommandValues.Count == 1)
+            {
+                switch (message.CommandValues[0].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
+                {
+                    case "OTH":
+                        OnSignedOff(SignedOffReason.OtherClient);
+                        break;
+                    case "SSD":
+                        OnSignedOff(SignedOffReason.ServerDown);
+                        break;
+                    default:
+                        OnSignedOff(SignedOffReason.None);
+                        break;
+                }
+            }
+            else
+                OnSignedOff(SignedOffReason.None);
+        }
+
+        /// <summary>
+        /// Called when a CHG command has been received.
+        /// </summary>
+        /// <remarks>
+        /// The notification server has confirmed our request for a status change. 
+        /// This function sets the status of the contactlist owner.
+        /// <code>CHG [Transaction] [Status]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnCHGReceived(NSMessage message)
+        {
+            Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
+        }
+
+        #endregion
+
+        #region Switchboard
+
+        /// <summary>
+        /// Class used for items stored in the switchboard queue.
+        /// </summary>
+        protected class SwitchboardQueueItem
+        {
+            /// <summary>
+            /// The object that initiated the request.
+            /// </summary>
+            public object Initiator;
+            /// <summary>
+            /// The switchboard handler that will be handling the new switchboard session.
+            /// </summary>
+            public SBMessageHandler SwitchboardHandler;
+
+            /// <summary>
+            /// Constructs a queue item.
+            /// </summary>
+            /// <param name="switchboardHandler"></param>
+            /// <param name="initiator"></param>
+            public SwitchboardQueueItem(SBMessageHandler switchboardHandler, object initiator)
+            {
+                Initiator = initiator;
+                SwitchboardHandler = switchboardHandler;
+            }
+        }
+
+        /// <summary>
+        /// Gets a new switchboard handler object. Called when a remote client initiated the switchboard.
+        /// </summary>
+        /// <param name="processor"></param>
+        /// <param name="sessionHash"></param>
+        /// <param name="sessionId"></param>
+        /// <returns></returns>
+        protected virtual IMessageHandler CreateSBHandler(IMessageProcessor processor, string sessionHash, int sessionId)
+        {
+            SBMessageHandler handler = Factory.CreateSwitchboardHandler();
+            handler.MessageProcessor = processor;
+            handler.NSMessageHandler = this;
+            handler.SetInvitation(sessionHash, sessionId);
+
+            return handler;
+        }
+
+        /// <summary>
+        /// Fires the <see cref="SBCreated"/> event.
+        /// </summary>
+        /// <param name="switchboard">The switchboard created</param>
+        /// <param name="initiator">The object that initiated the switchboard request.</param>
+        protected virtual void OnSBCreated(SBMessageHandler switchboard, object initiator)
+        {
+            if (SBCreated != null)
+                SBCreated(this, new SBCreatedEventArgs(switchboard, initiator));
+        }
+
+        /// <summary>
+        /// Called when a RNG command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the user receives a switchboard session (chatsession) request. A connection to the switchboard will be established
+        /// and the corresponding events and objects are created.
+        /// <code>RNG [Session] [IP:Port] 'CKI' [Hash] [Account] [Name]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnRNGReceived(NSMessage message)
+        {
+            SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
+
+            // set new connectivity settings
+            ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
+            string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
+
+            newSettings.Host = values[0];
+            newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
+            processor.ConnectivitySettings = newSettings;
+
+            // create a switchboard object
+            SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[3].ToString(), int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture));
+
+            processor.RegisterHandler(handler);
+
+            // start connecting
+            processor.Connect();
+
+            // notify the client
+            OnSBCreated(handler, null);
+        }
+
+        /// <summary>
+        /// Called when a XFR command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the notification server has send us the location of a switch-board server in order to
+        /// make contact with a client, or that we must switch to a new notification server.
+        /// <code>XFR [Transaction] [SB|NS] [IP:Port] ['0'|'CKI'] [Hash|CurrentIP:CurrentPort]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnXFRReceived(NSMessage message)
+        {
+            if ((string)message.CommandValues[1] == "NS")
+            {
+                // switch to a new notification server. That means reconnecting our current message processor.
+                SocketMessageProcessor processor = (SocketMessageProcessor)MessageProcessor;
+
+                // disconnect first
+                processor.Disconnect();
+
+                // set new connectivity settings
+                ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
+                string[] values = ((string)message.CommandValues[2]).Split(new char[] { ':' });
+
+                newSettings.Host = values[0];
+                newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
+
+                processor.ConnectivitySettings = newSettings;
+
+                // and reconnect. The login procedure will now start over again
+                processor.Connect();
+            }
+            if ((string)message.CommandValues[1] == "SB")
+            {
+                if (pendingSwitchboards.Count > 0)
+                {
+
+                    if (Owner.Status == PresenceStatus.Offline)
+                        System.Diagnostics.Trace.WriteLine("Owner not yet online!", "NS15MessageHandler");
+
+                    SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
+
+                    SwitchboardQueueItem queueItem = (SwitchboardQueueItem)pendingSwitchboards.Dequeue();
+
+                    // set new connectivity settings
+                    ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
+                    string[] values = ((string)message.CommandValues[2]).Split(new char[] { ':' });
+
+                    newSettings.Host = values[0];
+                    newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
+
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        System.Diagnostics.Trace.WriteLine("Switchboard connectivity settings: " + newSettings.ToString(), "NS15MessageHandler");
+
+                    processor.ConnectivitySettings = newSettings;
+
+                    // set the switchboard objects with the processor values
+                    //SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[4].ToString());
+                    string sessionHash = message.CommandValues[4].ToString();
+                    queueItem.SwitchboardHandler.SetInvitation(sessionHash);
+                    queueItem.SwitchboardHandler.MessageProcessor = processor;
+                    queueItem.SwitchboardHandler.NSMessageHandler = this;
+
+                    // register this handler so the switchboard can respond
+                    processor.RegisterHandler(queueItem.SwitchboardHandler);
+
+                    // notify the client
+                    OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator);
+
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        System.Diagnostics.Trace.WriteLine("SB created event handler called", "NS15MessageHandler");
+
+                    // start connecting
+                    processor.Connect();
+
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        System.Diagnostics.Trace.WriteLine("Opening switchboard connection..", "NS15MessageHandler");
+
+                }
+                else
+                {
+                    if (Settings.TraceSwitch.TraceWarning)
+                        System.Diagnostics.Trace.WriteLine("Switchboard request received, but no pending switchboards available.", "NS15MessageHandler");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called when a UBM command has been received,this message was sent by a Yahoo Messenger client.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the notification server has send us a UBM. This is usually a message from Yahoo Messenger.
+        /// <code>UBM [Account] 32 [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnUBMReceived(NSMessage message)
+        {
+            string sender = message.CommandValues[0].ToString();
+            YIMMessage msg = new YIMMessage(message);
+
+            if (sender == null)
+            {
+                sender = message.CommandValues[0].ToString();
+            }
+
+            if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))
+                && ContactList.HasContact(sender, ClientType.EmailMember))
+            {
+                foreach (YIMMessageHandler YimHandler in SwitchBoards)
+                {
+                    if (YimHandler.Contacts.Contains(sender))
+                    {
+                        return;
+                    }
+                }
+
+                YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
+                switchboard.NSMessageHandler = this;
+                switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
+                switchboard.MessageProcessor = MessageProcessor;
+                SwitchBoards.Add(switchboard);
+
+                OnSBCreated(switchboard, null);
+                switchboard.ForceJoin(ContactList[sender, ClientType.EmailMember]);
+                MessageProcessor.RegisterHandler(switchboard);
+                switchboard.HandleMessage(MessageProcessor, msg);
+            }
+
+        }
+
+        #endregion
+
+        #region Mail and Notification
+
+        /// <summary>
+        /// Called when a NOT command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that a notification message has been received.
+        /// <code>NOT [body length]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnNOTReceived(NSMessage message)
+        {
+            // build a notification message
+            NotificationMessage notification = new NotificationMessage(message);
+
+            if (Settings.TraceSwitch.TraceVerbose)
+                Trace.WriteLine("Notification received : " + notification.ToDebugString());
+
+        }
+
+        /// <summary>
+        /// Called when a MSG command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the notification server has send us a MSG. This is usually a MSG from the 'HOTMAIL' user (account is also 'HOTMAIL') which includes notifications about the contact list owner's profile, new mail, number of unread mails in the inbox, etc.
+        /// <code>MSG [Account] [Name] [Length]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnMSGReceived(MSNMessage message)
+        {
+            MSGMessage msgMessage = new MSGMessage(message);
+            string mime = msgMessage.MimeHeader["Content-Type"].ToString();
+
+            if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
+                OnProfileReceived(msgMessage);
+            else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
+                OnMailNotificationReceived(msgMessage);
+            else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
+                OnMailChanged(msgMessage);
+            else if (mime.IndexOf("x-msmsgsinitialemailnotification") >= 0)
+                OnMailboxStatusReceived(msgMessage);
+            else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
+            {
+                if (OIMReceived == null)
+                    return;
+
+                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
+                msgMessage = new MSGMessage(message);
+                oimService.ProcessOIM(msgMessage);
+            }
+        }
+
+        /// <summary>
+        /// Called when the owner has removed or moved e-mail.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnMailChanged(MSGMessage message)
+        {
+            // dispatch the event
+            if (MailboxChanged != null)
+            {
+                string sourceFolder = (string)message.MimeHeader["Src-Folder"];
+                string destFolder = (string)message.MimeHeader["Dest-Folder"];
+                int count = int.Parse((string)message.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture);
+                MailboxChanged(this, new MailChangedEventArgs(sourceFolder, destFolder, count));
+            }
+        }
+
+        /// <summary>
+        /// Called when the server sends the status of the owner's mailbox.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnMailboxStatusReceived(MSGMessage message)
+        {
+            // dispatch the event
+            if (MailboxStatusReceived != null)
+            {
+                int inboxUnread = int.Parse((string)message.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture);
+                int foldersUnread = int.Parse((string)message.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture);
+                string inboxURL = (string)message.MimeHeader["Inbox-URL"];
+                string folderURL = (string)message.MimeHeader["Folders-URL"];
+                string postURL = (string)message.MimeHeader["Post-URL"];
+                MailboxStatusReceived(this, new MailboxStatusEventArgs(inboxUnread, foldersUnread, new Uri(inboxURL), new Uri(folderURL), new Uri(postURL)));
+            }
+        }
+
+        /// <summary>
+        /// Called when the owner has received new e-mail, or e-mail has been removed / moved. Fires the <see cref="NewMailReceived"/> event.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnMailNotificationReceived(MSGMessage message)
+        {
+            // dispatch the event
+            if (NewMailReceived != null)
+            {
+                string from = (string)message.MimeHeader["From"];
+                string messageUrl = (string)message.MimeHeader["Message-URL"];
+                string postUrl = (string)message.MimeHeader["Post-URL"];
+                string subject = (string)message.MimeHeader["Subject"];
+                string destFolder = (string)message.MimeHeader["Dest-Folder"];
+                string fromMail = (string)message.MimeHeader["From-Addr"];
+                int id = int.Parse((string)message.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture);
+                NewMailReceived(this, new NewMailEventArgs(from, new Uri(postUrl), new Uri(messageUrl), subject, destFolder, fromMail, id));
             }
         }
 
@@ -982,22 +1474,35 @@ namespace MSNPSharp
             }
         }
 
-        private int initialadlcount = 0;
-        private List<int> initialadls = new List<int>();
-        internal void OnInitialSyncDone(string[] stradls)
-        {
-            SetPrivacyMode(Owner.Privacy);
 
-            initialadlcount = stradls.Length;
-            foreach (string payload in stradls)
+        #endregion
+
+        #region Contact and Group
+
+        /// <summary>
+        /// Translates the codes used by the MSN server to a MSNList object.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        protected virtual MSNLists GetMSNList(string name)
+        {
+            switch (name)
             {
-                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                MessageProcessor.SendMessage(message);
-                initialadls.Add(message.TransactionID);
+                case "AL":
+                    return MSNLists.AllowedList;
+                case "FL":
+                    return MSNLists.ForwardList;
+                case "BL":
+                    return MSNLists.BlockedList;
+                case "RL":
+                    return MSNLists.ReverseList;
+                case "PL":
+                    return MSNLists.PendingList;
             }
+            throw new MSNPSharpException("Unknown MSNList type");
         }
 
-        private void OnADLReceived(NSMessage message)
+        protected virtual void OnADLReceived(NSMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK" &&
                 message.TransactionID == 0 &&
@@ -1097,290 +1602,289 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Send the server a request for the contact's screen name.
+        /// Called when a RML command has been received.
         /// </summary>
-        /// <remarks>
-        /// When the server replies with the screen name the Name property of the <see cref="Contact"/> will
-        /// be updated.
-        /// </remarks>
-        /// <param name="contact"></param>
-        public virtual void RequestScreenName(Contact contact)
+        /// <remarks>Indicates that someone was removed from a list by local user (RML [Trans-ID] OK)
+        /// or local user was removed from someone's reverse list (RML 0 [Trans-ID]\r\n[payload]).</remarks>
+        /// <param name="nsMessage"></param>
+        protected virtual void OnRMLReceived(NSMessage nsMessage)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty)
-                throw new InvalidOperationException("This is not a valid Messenger contact.");
-
-            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", HttpUtility.UrlEncode(contact.Name).Replace("+", "%20") }));
-        }
-
-        /// <summary>
-        /// Set the contactlist owner's privacy mode.
-        /// </summary>
-        /// <param name="privacy">New privacy setting</param>
-        public virtual void SetPrivacyMode(PrivacyMode privacy)
-        {
-            if (privacy == PrivacyMode.AllExceptBlocked)
-                MessageProcessor.SendMessage(new NSMessage("BLP", new string[] { "AL" }));
-
-            if (privacy == PrivacyMode.NoneButAllowed)
-                MessageProcessor.SendMessage(new NSMessage("BLP", new string[] { "BL" }));
-
-        }
-
-        /// <summary>
-        /// Set the contactlist owner's notification mode on contact service.
-        /// </summary>
-        /// <param name="privacy">New notify privacy setting</param>
-        public virtual void SetNotifyPrivacyMode(NotifyPrivacy privacy)
-        {
-            Owner.SetNotifyPrivacy(privacy);
-            ContactService.UpdateMe();
-        }
-
-        /// <summary>
-        /// Set the status of the contactlistowner (the client).
-        /// Note: you can only set the status _after_ you have synchronized the list using SynchronizeList(). Otherwise you won't receive online notifications from other clients or the connection is closed by the server.
-        /// </summary>
-        /// <param name="status"></param>
-        public virtual void SetPresenceStatus(PresenceStatus status)
-        {
-            // check whether we are allowed to send a CHG command
-            if (abSynchronized == false)
-                throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
-
-            string context = String.Empty;
-
-            if (owner.DisplayImage != null)
-                context = owner.DisplayImage.Context;
-
-            if (status == PresenceStatus.Offline)
-                messageProcessor.Disconnect();
-
-            //don't set the same status or it will result in disconnection
-            else if (status != owner.Status)
+            NetworkMessage networkMessage = nsMessage as NetworkMessage;
+            XmlDocument xmlDoc = new XmlDocument();
+            if (networkMessage.InnerBody != null)   //Payload RML command.
             {
-                string capacities = ((long)owner.ClientCapacities).ToString();
+                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                string domain = String.Empty;
+                foreach (XmlNode domainNode in domains)
+                {
+                    domain = domainNode.Attributes["n"].Value;
+                    XmlNode contactNode = domainNode.FirstChild;
+                    do
+                    {
+                        string account = contactNode.Attributes["n"].Value + "@" + domain;
+                        ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                        MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                        account = account.ToLower(CultureInfo.InvariantCulture);
+                        if (ContactList.HasContact(account, type))
+                        {
+                            Contact contact = ContactList.GetContact(account, type);
+                            if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
+                            {
+                                OnReverseRemoved(contact);
+                            }
+                        }
+                        if (Settings.TraceSwitch.TraceVerbose)
+                            Trace.WriteLine(account + " has removed you from his/her " + list.ToString());
 
-                MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
+                    } while (contactNode.NextSibling != null);
+                }
             }
         }
 
         /// <summary>
-        /// Sets the contactlist owner's screenname. After receiving confirmation from the server
-        /// this will set the Owner object's name which will in turn raise the NameChange event.
+        /// Called when an ADG command has been received.
         /// </summary>
-        public virtual void SetScreenName(string newName)
+        /// <remarks>
+        /// Indicates that a contact group has been added to the contact group list.
+        /// Raises the ContactGroupAdded event.
+        /// <code>ADG [Transaction] [ListVersion] [Name] [GroepID] </code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnADGReceived(NSMessage message)
         {
-            if (owner == null)
-                throw new MSNPSharpException("Not a valid owner");
+            string guid = message.CommandValues[2].ToString();
 
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+            // add a new group									
+            ContactGroups.AddGroup(new ContactGroup(System.Web.HttpUtility.UrlDecode((string)message.CommandValues[1]), guid, this));
 
-            ContactService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
-        }
-
-        public virtual void SetPersonalMessage(PersonalMessage pmsg)
-        {
-            if (owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
-
-            ContactService.UpdateProfile(Owner.Name, pmsg.Message);
-        }
-
-        /// <summary>
-        /// Sets the telephonenumber for the contact list owner's homephone.
-        /// </summary>
-        public virtual void SetPhoneNumberHome(string number)
-        {
-            if (owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-            if (number.Length > 30)
-                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHH", HttpUtility.UrlEncode(number) }));
-        }
-        /// <summary>
-        /// Sets the telephonenumber for the contact list owner's workphone.
-        /// </summary>
-        public virtual void SetPhoneNumberWork(string number)
-        {
-            if (owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-            if (number.Length > 30)
-                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", HttpUtility.UrlEncode(number) }));
-        }
-
-        /// <summary>
-        /// Sets the telephonenumber for the contact list owner's mobile phone.
-        /// </summary>
-        public virtual void SetPhoneNumberMobile(string number)
-        {
-            if (owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-            if (number.Length > 30)
-                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", HttpUtility.UrlEncode(number) }));
-        }
-
-        /// <summary>
-        /// Sets whether the contact list owner allows remote contacts to send messages to it's mobile device.
-        /// </summary>
-        public virtual void SetMobileAccess(bool enabled)
-        {
-            if (owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MOB", enabled ? "Y" : "N" }));
-        }
-
-        /// <summary>
-        /// Sets whether the contact list owner has a mobile device enabled.
-        /// </summary>
-        public virtual void SetMobileDevice(bool enabled)
-        {
-            if (owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
-        }
-
-        /// <summary>
-        /// Send the first message to the server. This is usually the VER command.
-        /// </summary>
-        protected virtual void SendInitialMessage()
-        {
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15 MSNP14 MSNP13", "CVR0" }));
+            // fire the event
+            if (ContactGroupAdded != null)
+            {
+                ContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
+            }
         }
 
 
         /// <summary>
-        /// Sends a request to the server to start a new switchboard session.
+        /// Called when a RMG command has been received.
         /// </summary>
-        public virtual SBMessageHandler RequestSwitchboard(object initiator)
+        /// <remarks>
+        /// Indicates that a contact group has been removed.
+        /// Raises the ContactGroupRemoved event.
+        /// <code>RMG [Transaction] [ListVersion] [GroupID]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnRMGReceived(NSMessage message)
         {
-            // create a switchboard object
-            SBMessageHandler handler = Factory.CreateSwitchboardHandler();
+            string guid = message.CommandValues[1].ToString();
 
-            RequestSwitchboard(handler, initiator);
+            ContactGroup contactGroup = (ContactGroup)contactGroups[guid];
+            ContactGroups.RemoveGroup(contactGroup);
 
-            return handler;
+            if (ContactGroupRemoved != null)
+            {
+                ContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
+            }
+        }
+
+        /// <summary>Called when a FQY command has been received.
+        /// <remarks>Indicates a client has different network types except PassportMember.</remarks>
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnFQYReceived(NSMessage message)
+        {
+            // <ml><d n="domain"><c n="username" t="clienttype" /></d></ml>
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (networkMessage.InnerBody != null)
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                string domain = String.Empty;
+                foreach (XmlNode domainNode in domains)
+                {
+                    domain = domainNode.Attributes["n"].Value;
+                    XmlNode contactNode = domainNode.FirstChild;
+                    do
+                    {
+                        string account = contactNode.Attributes["n"].Value + "@" + domain;
+                        account = account.ToLower(CultureInfo.InvariantCulture);
+                        ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
+
+                        if (!ContactList.HasContact(account, type))
+                        {
+                            ContactService.AddNewContact(account, type, String.Empty);
+                        }
+
+                    } while (contactNode.NextSibling != null);
+                }
+            }
+        }
+
+        private int initialadlcount = 0;
+        private List<int> initialadls = new List<int>();
+        internal void OnInitialSyncDone(string[] stradls)
+        {
+            SetPrivacyMode(Owner.Privacy);
+
+            initialadlcount = stradls.Length;
+            foreach (string payload in stradls)
+            {
+                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                MessageProcessor.SendMessage(message);
+                initialadls.Add(message.TransactionID);
+            }
         }
 
         /// <summary>
-        /// Sends a request to the server to start a new switchboard session. The specified switchboard handler will be associated with the new switchboard session.
+        /// Fires the <see cref="ReverseRemoved"/> event.
         /// </summary>
-        /// <param name="switchboardHandler">The switchboard handler to use. A switchboard processor will be created and connected to this handler.</param>
-        /// <param name="initiator">The object that initiated the request for the switchboard.</param>
-        /// <returns></returns>
-        public virtual void RequestSwitchboard(SBMessageHandler switchboardHandler, object initiator)
+        /// <param name="contact"></param>
+        protected virtual void OnReverseRemoved(Contact contact)
         {
-            pendingSwitchboards.Enqueue(new SwitchboardQueueItem(switchboardHandler, initiator));
-            MessageProcessor.SendMessage(new NSMessage("XFR", new string[] { "SB" }));
+            if (ReverseRemoved != null)
+                ReverseRemoved(this, new ContactEventArgs(contact));
         }
 
         /// <summary>
-        /// Sends a mobile message to the specified remote contact. This only works when the remote contact has it's mobile device enabled and has MSN-direct enabled.
+        ///  Fires the <see cref="ReverseAdded"/> event.
         /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="text"></param>
-        public virtual void SendMobileMessage(Contact receiver, string text)
+        /// <param name="contact"></param>
+        protected internal virtual void OnReverseAdded(Contact contact)
         {
-            SendMobileMessage(receiver, text, String.Empty, String.Empty);
+            if (ReverseAdded != null)
+                ReverseAdded(this, new ContactEventArgs(contact));
         }
 
-        /// <summary>
-        /// Sends a mobile message to the specified remote contact. This only works when the remote contact has it's mobile device enabled and has MSN-direct enabled.
-        /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="text"></param>
-        /// <param name="callbackNumber"></param>
-        /// <param name="callbackDevice"></param>
-        public virtual void SendMobileMessage(Contact receiver, string text, string callbackNumber, string callbackDevice)
+        protected internal virtual void OnContactAdded(object sender, ListMutateEventArgs e)
         {
-            if (receiver.MobileAccess == false)
-                throw new MSNPSharpException("A direct message can not be send. The specified contact has no mobile device enabled.");
-
-            // create a body message
-            MobileMessage bodyMessage = new MobileMessage();
-            bodyMessage.CallbackDeviceName = callbackDevice;
-            bodyMessage.CallbackNumber = callbackNumber;
-            bodyMessage.Receiver = receiver.Mail;
-            bodyMessage.Text = text;
-
-            // create an NS message to transport it
-            NSMessage nsMessage = new NSMessage();
-            nsMessage.InnerMessage = bodyMessage;
-
-            // and send it
-            MessageProcessor.SendMessage(nsMessage);
+            if (ContactAdded != null)
+            {
+                ContactAdded(this, e);
+            }
         }
 
-        public virtual void SendPing()
+        protected internal virtual void OnContactGroupAdded(object sender, ContactGroupEventArgs e)
         {
-            MessageProcessor.SendMessage(new NSMessage("PNG"));
+            if (ContactGroupAdded != null)
+            {
+                ContactGroupAdded(this, e);
+            }
         }
+
+        protected internal virtual void OnContactGroupRemoved(object sender, ContactGroupEventArgs e)
+        {
+            if (ContactGroupRemoved != null)
+            {
+                ContactGroupRemoved(this, e);
+            }
+        }
+
 
         #endregion
 
-        #region IMessageHandler Members
+        #region Challenge and Ping
+
+        /// <summary>
+        /// Called when a CHL (challenge) command message has been received.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnCHLReceived(NSMessage message)
+        {
+            if (Credentials == null)
+                throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
+
+            string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
+            _Tickets[Iniproperties.LockKey] = payload;
+            MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, payload));
+        }
+
+        /// <summary>
+        /// Called when a QRY (challenge) command message has been received.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnQRYReceived(NSMessage message)
+        {
+
+        }
+
+        /// <summary>
+        /// Called when a QNG command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates a ping answer. The number of seconds indicates the timespan in which another ping must be send.
+        /// <code>QNG [Seconds]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnQNGReceived(NSMessage message)
+        {
+            if (PingAnswer != null)
+            {
+                // get the number of seconds till the next ping and fire the event
+                // with the correct parameters.
+                int seconds = int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture);
+                PingAnswer(this, new PingAnswerEventArgs(seconds));
+            }
+        }
+
+
+
+        #endregion
+
+        #endregion
+
+        #region Command handler
 
         private EventHandler processorConnectedHandler = null;
-
         private EventHandler processorDisconnectedHandler = null;
 
         /// <summary>
-        /// The processor to handle the messages
-        /// </summary>
-        public IMessageProcessor MessageProcessor
-        {
-            get
-            {
-                return messageProcessor;
-            }
-            set
-            {
-                if (processorConnectedHandler != null && messageProcessor != null)
-                {
-                    // de-register from the previous message processor					
-                    ((SocketMessageProcessor)messageProcessor).ConnectionEstablished -= processorConnectedHandler;
-                }
-
-                if (processorConnectedHandler == null)
-                {
-                    processorConnectedHandler = new EventHandler(NSMessageHandler_ProcessorConnectCallback);
-                    processorDisconnectedHandler = new EventHandler(NSMessageHandler_ProcessorDisconnectCallback);
-                }
-
-                messageProcessor = (SocketMessageProcessor)value;
-
-                // catch the connect event so we can start sending the USR command upon initiating
-                ((SocketMessageProcessor)messageProcessor).ConnectionEstablished += processorConnectedHandler;
-
-                // and make sure we respond on closing
-                ((SocketMessageProcessor)messageProcessor).ConnectionClosed += processorDisconnectedHandler;
-            }
-        }
-
-
-        /// <summary>
-        /// Called when the message processor has established a connection. This function will 
-        /// begin the login procedure by sending the VER command.
+        /// Event handler.
         /// </summary>
         /// <param name="sender"></param>
-        protected virtual void OnProcessorConnectCallback(IMessageProcessor sender)
+        /// <param name="e"></param>
+        private void NSMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
         {
-            SendInitialMessage();
+            abSynchronized = false;
+            initialadlcount = 0;
+            initialadls.Clear();
+            IMessageProcessor processor = (IMessageProcessor)sender;
+            OnProcessorConnectCallback(processor);
         }
 
         /// <summary>
-        /// Called when the message processor has disconnected.
+        /// Event handler.
         /// </summary>
         /// <param name="sender"></param>
-        protected virtual void OnProcessorDisconnectCallback(IMessageProcessor sender)
+        /// <param name="e"></param>
+        private void NSMessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            // do nothing
+            IMessageProcessor processor = (IMessageProcessor)sender;
+
+            if (IsSignedIn == true)
+                OnSignedOff(SignedOffReason.None);
+
+            OnProcessorDisconnectCallback(processor);
+
+            Clear();
         }
 
+        /// <summary>
+        /// Clears all resources associated with a nameserver session.
+        /// </summary>
+        /// <remarks>
+        /// Called after we the processor has disconnected. This will clear the contactlist and free other resources.
+        /// </remarks>
+        protected virtual void Clear()
+        {
+            ContactList.Clear();
+            contactGroups.Clear();
+
+            abSynchronized = false;
+            initialadlcount = 0;
+            initialadls.Clear();
+        }
 
         /// <summary>
         /// Handles message from the processor.
@@ -1518,1091 +2022,41 @@ namespace MSNPSharp
             }
         }
 
-        #region Helper methods
-
         /// <summary>
-        /// Translates messenger's textual status to the corresponding value of the Status enum.
+        /// Fires the ServerErrorReceived event.
         /// </summary>
-        /// <param name="status">Textual MSN status received from server</param>
-        /// <returns>The corresponding enum value</returns>
-        protected PresenceStatus ParseStatus(string status)
+        /// <param name="msnError"></param>
+        protected virtual void OnServerErrorReceived(MSNError msnError)
         {
-            switch (status)
-            {
-                case "NLN":
-                    return PresenceStatus.Online;
-                case "BSY":
-                    return PresenceStatus.Busy;
-                case "IDL":
-                    return PresenceStatus.Idle;
-                case "BRB":
-                    return PresenceStatus.BRB;
-                case "AWY":
-                    return PresenceStatus.Away;
-                case "PHN":
-                    return PresenceStatus.Phone;
-                case "LUN":
-                    return PresenceStatus.Lunch;
-                case "FLN":
-                    return PresenceStatus.Offline;
-                case "HDN":
-                    return PresenceStatus.Hidden;
-                default:
-                    break;
-            }
-
-            // unknown status
-            return PresenceStatus.Unknown;
-        }
-
-
-        /// <summary>
-        /// Translates MSNStatus enumeration to messenger's textual status presentation.
-        /// </summary>
-        /// <param name="status">MSNStatus enum object representing the status to translate</param>
-        /// <returns>The corresponding textual value</returns>
-        protected string ParseStatus(PresenceStatus status)
-        {
-            switch (status)
-            {
-                case PresenceStatus.Online:
-                    return "NLN";
-                case PresenceStatus.Busy:
-                    return "BSY";
-                case PresenceStatus.Idle:
-                    return "IDL";
-                case PresenceStatus.BRB:
-                    return "BRB";
-                case PresenceStatus.Away:
-                    return "AWY";
-                case PresenceStatus.Phone:
-                    return "PHN";
-                case PresenceStatus.Lunch:
-                    return "LUN";
-                case PresenceStatus.Offline:
-                    return "FLN";
-                case PresenceStatus.Hidden:
-                    return "HDN";
-                default:
-                    break;
-            }
-
-            // unknown status
-            return "Unknown status";
-        }
-
-        #endregion
-
-        #region Command handler methods
-
-        #region Login procedure
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has approved our version of the protocol. This function will send the CVR command.
-        /// <code>VER [Transaction] [Protocol1] ([Protocol2]) [Clientversion]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnVERReceived(NSMessage message)
-        {
-            // check for valid credentials
-            if (Credentials == null)
-                throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
-
-
-            // send client information back
-            MessageProcessor.SendMessage(new NSMessage("CVR", new string[] { "0x040c", "winnt", "5.1", "i386", "MSNMSGR", "8.5.1302", "msmsgs", Credentials.Account }));
+            if (ServerErrorReceived != null)
+                ServerErrorReceived(this, new MSNErrorEventArgs(msnError));
         }
 
         /// <summary>
-        /// 
+        /// Fires the <see cref="ExceptionOccurred"/> event.
         /// </summary>
-        /// <remarks>
-        /// Indicates that the server has approved our client details. This function will send the USR command. 
-        /// <code>CVR [Transaction] [Recommended version] [Recommended version] [Minimum version] [Download url] [Info url]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnCVRReceived(NSMessage message)
+        /// <param name="e">The exception which was thrown</param>
+        protected virtual void OnExceptionOccurred(Exception e)
         {
-            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
-        }
+            if (ExceptionOccurred != null)
+                ExceptionOccurred(this, new ExceptionEventArgs(e));
 
-        private Dictionary<Iniproperties, string> _Tickets = new Dictionary<Iniproperties, string>();
-
-        internal Dictionary<Iniproperties, string> Tickets
-        {
-            get
-            {
-                return _Tickets;
-            }
-        }
-
-        protected virtual void OnUSRReceived(NSMessage message)
-        {
-            //single-sign-on stuff
-            if ((string)message.CommandValues[1] == "SSO")
-            {
-                string policy = (string)message.CommandValues[3];
-                string nonce = (string)message.CommandValues[4];
-
-                SingleSignOn sso = new SingleSignOn(Credentials.Account, Credentials.Password, policy);
-                if (ConnectivitySettings != null && ConnectivitySettings.WebProxy != null)
-                {
-                    sso.WebProxy = ConnectivitySettings.WebProxy;
-                }
-                sso.AddDefaultAuths();
-                string response = sso.Authenticate(nonce, out _Tickets);
-                //_Ticket = response;
-                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
-            }
-            else if ((string)message.CommandValues[1] == "OK")
-            {
-                // we sucesfully logged in, set the owner's name
-                Owner.SetMail(message.CommandValues[2].ToString());
-                Owner.SetPassportVerified(message.CommandValues[3].Equals("1"));
-
-
-            }
-        }
-
-
-        #endregion
-
-
-        /// <summary>
-        /// Called when a CHL (challenge) command message has been received.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnCHLReceived(NSMessage message)
-        {
-            if (Credentials == null)
-                throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
-
-            string md = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
-            _Tickets[Iniproperties.LockKey] = md;
-            MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, md));
+            if (Settings.TraceSwitch.TraceError)
+                System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");
         }
 
         /// <summary>
-        /// Called when a QRY (challenge) command message has been received.
+        /// Fires the <see cref="AuthenticationError"/> event.
         /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnQRYReceived(NSMessage message)
+        /// <param name="e">The exception which was thrown</param>
+        protected virtual void OnAuthenticationErrorOccurred(Exception e)
         {
+            if (AuthenticationError != null)
+                AuthenticationError(this, new ExceptionEventArgs(e));
 
+            if (Settings.TraceSwitch.TraceError)
+                System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");
         }
-        /// <summary>
-        /// Called when a ILN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// ILN indicates the initial status of a contact.
-        /// It is send after initial log on or after adding/removing contact from the contactlist.
-        /// Fires the ContactOnline and/or the ContactStatusChange events.
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnILNReceived(NSMessage message)
-        {
-            // allright
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[3]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[2], type);
-            contact.SetName((string)message.CommandValues[4]);
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(ParseStatus((string)message.CommandValues[1]));
-
-            // set the client capabilities, if available
-            if (message.CommandValues.Count >= 5)
-                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString());
-
-            // check whether there is a msn object available
-            if (message.CommandValues.Count >= 6)
-            {
-                DisplayImage userDisplay = new DisplayImage();
-                userDisplay.Context = message.CommandValues[6].ToString();
-                contact.SetUserDisplay(userDisplay);
-            }
-
-            if (oldStatus == PresenceStatus.Unknown || oldStatus == PresenceStatus.Offline)
-            {
-                if (ContactOnline != null)
-                    ContactOnline(this, new ContactEventArgs(contact));
-            }
-            if (ContactStatusChanged != null)
-                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
-        }
-
-
-        /// <summary>
-        /// Called when a NLN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact on the forward list went online.
-        /// <code>NLN [status] [account] [name]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnNLNReceived(NSMessage message)
-        {
-
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[1], type);
-            contact.SetName((string)message.CommandValues[3]);
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(ParseStatus((string)message.CommandValues[0]));
-            if (message.CommandValues.Count >= 5)
-            {
-                DisplayImage userDisplay = new DisplayImage();
-                userDisplay.Context = message.CommandValues[5].ToString();
-                contact.SetUserDisplay(userDisplay);
-            }
-            // set the client capabilities, if available
-            if (message.CommandValues.Count > 4)
-                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString());
-
-            // the contact changed status, fire event
-            if (ContactStatusChanged != null)
-                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
-
-            // the contact goes online, fire event
-            if (ContactOnline != null)
-                ContactOnline(this, new ContactEventArgs(contact));
-        }
-
-        /// <summary>
-        /// Called when a NOT command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a notification message has been received.
-        /// <code>NOT [body length]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnNOTReceived(NSMessage message)
-        {
-            // build a notification message
-            NotificationMessage notification = new NotificationMessage(message);
-
-            if (Settings.TraceSwitch.TraceVerbose)
-                Trace.WriteLine("Notification received : " + notification.ToDebugString());
-
-        }
-
-        /// <summary>
-        /// Called when an OUT command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has signed off the user.
-        /// <code>OUT [Reason]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnOUTReceived(NSMessage message)
-        {
-            if (message.CommandValues.Count == 1)
-            {
-                switch (message.CommandValues[0].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
-                {
-                    case "OTH":
-                        OnSignedOff(SignedOffReason.OtherClient);
-                        break;
-                    case "SSD":
-                        OnSignedOff(SignedOffReason.ServerDown);
-                        break;
-                    default:
-                        OnSignedOff(SignedOffReason.None);
-                        break;
-                }
-            }
-            else
-                OnSignedOff(SignedOffReason.None);
-        }
-
-        /// <summary>
-        /// Called when an PRP command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Informs about the phone numbers of the contact list owner.
-        /// <code>PRP [TransactionID] [ListVersion] PhoneType Number</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnPRPReceived(NSMessage message)
-        {
-            string number = String.Empty;
-            string type = String.Empty;
-            if (message.CommandValues.Count >= 4)
-            {
-                if (message.CommandValues.Count >= 4)
-                    number = HttpUtility.UrlDecode((string)message.CommandValues[3]);
-                else
-                    number = String.Empty;
-                type = message.CommandValues[1].ToString();
-            }
-            else
-            {
-                number = HttpUtility.UrlDecode((string)message.CommandValues[2]);
-                type = message.CommandValues[1].ToString();
-            }
-
-            switch (type)
-            {
-                case "PHH":
-                    Owner.SetHomePhone(number);
-                    break;
-                case "PHW":
-                    Owner.SetWorkPhone(number);
-                    break;
-                case "PHM":
-                    Owner.SetMobilePhone(number);
-                    break;
-                case "MBE":
-                    Owner.SetMobileDevice((number == "Y") ? true : false);
-                    break;
-                case "MOB":
-                    Owner.SetMobileAccess((number == "Y") ? true : false);
-                    break;
-                case "MFN":
-                    Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Called when a CHG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// The notification server has confirmed our request for a status change. 
-        /// This function sets the status of the contactlist owner.
-        /// <code>CHG [Transaction] [Status]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnCHGReceived(NSMessage message)
-        {
-            Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
-        }
-
-
-        /// <summary>
-        /// Called when a FLN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a user went offline.
-        /// <code>FLN [account]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnFLNReceived(NSMessage message)
-        {
-
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[0], type);
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(PresenceStatus.Offline);
-
-            // the contact changed status, fire event
-            if (ContactStatusChanged != null)
-                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
-
-            // the contact goes offline, fire event
-            if (ContactOffline != null)
-                ContactOffline(this, new ContactEventArgs(contact));
-        }
-
-
-
-
-        /// <summary>
-        /// Gets a new switchboard handler object. Called when a remote client initiated the switchboard.
-        /// </summary>
-        /// <param name="processor"></param>
-        /// <param name="sessionHash"></param>
-        /// <param name="sessionId"></param>
-        /// <returns></returns>
-        protected virtual IMessageHandler CreateSBHandler(IMessageProcessor processor, string sessionHash, int sessionId)
-        {
-            SBMessageHandler handler = Factory.CreateSwitchboardHandler();
-            handler.MessageProcessor = processor;
-            handler.NSMessageHandler = this;
-            handler.SetInvitation(sessionHash, sessionId);
-
-            return handler;
-        }
-
-
-        /// <summary>
-        /// Called when a XFR command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the notification server has send us the location of a switch-board server in order to
-        /// make contact with a client, or that we must switch to a new notification server.
-        /// <code>XFR [Transaction] [SB|NS] [IP:Port] ['0'|'CKI'] [Hash|CurrentIP:CurrentPort]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnXFRReceived(NSMessage message)
-        {
-            if ((string)message.CommandValues[1] == "NS")
-            {
-                // switch to a new notification server. That means reconnecting our current message processor.
-                SocketMessageProcessor processor = (SocketMessageProcessor)MessageProcessor;
-
-                // disconnect first
-                processor.Disconnect();
-
-                // set new connectivity settings
-                ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-                string[] values = ((string)message.CommandValues[2]).Split(new char[] { ':' });
-
-                newSettings.Host = values[0];
-                newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
-
-                processor.ConnectivitySettings = newSettings;
-
-                // and reconnect. The login procedure will now start over again
-                processor.Connect();
-            }
-            if ((string)message.CommandValues[1] == "SB")
-            {
-                if (pendingSwitchboards.Count > 0)
-                {
-
-                    if (Owner.Status == PresenceStatus.Offline)
-                        System.Diagnostics.Trace.WriteLine("Owner not yet online!", "NS15MessageHandler");
-
-                    SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
-
-                    SwitchboardQueueItem queueItem = (SwitchboardQueueItem)pendingSwitchboards.Dequeue();
-
-                    // set new connectivity settings
-                    ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-                    string[] values = ((string)message.CommandValues[2]).Split(new char[] { ':' });
-
-                    newSettings.Host = values[0];
-                    newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Switchboard connectivity settings: " + newSettings.ToString(), "NS15MessageHandler");
-
-                    processor.ConnectivitySettings = newSettings;
-
-                    // set the switchboard objects with the processor values
-                    //SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[4].ToString());
-                    string sessionHash = message.CommandValues[4].ToString();
-                    queueItem.SwitchboardHandler.SetInvitation(sessionHash);
-                    queueItem.SwitchboardHandler.MessageProcessor = processor;
-                    queueItem.SwitchboardHandler.NSMessageHandler = this;
-
-                    // register this handler so the switchboard can respond
-                    processor.RegisterHandler(queueItem.SwitchboardHandler);
-
-                    // notify the client
-                    OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator);
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("SB created event handler called", "NS15MessageHandler");
-
-                    // start connecting
-                    processor.Connect();
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Opening switchboard connection..", "NS15MessageHandler");
-
-                }
-                else
-                {
-                    if (Settings.TraceSwitch.TraceWarning)
-                        System.Diagnostics.Trace.WriteLine("Switchboard request received, but no pending switchboards available.", "NS15MessageHandler");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Called when a UBX command has been received.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnUBXReceived(NSMessage message)
-        {
-            //check the payload length
-            if (message.CommandValues[1].ToString() == "0")
-                return;
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
-
-            PersonalMessage pm = new PersonalMessage(message);
-            contact.SetPersonalMessage(pm);
-        }
-
-
-        /// <summary>
-        /// Called when a RNG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the user receives a switchboard session (chatsession) request. A connection to the switchboard will be established
-        /// and the corresponding events and objects are created.
-        /// <code>RNG [Session] [IP:Port] 'CKI' [Hash] [Account] [Name]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnRNGReceived(NSMessage message)
-        {
-            SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
-
-            // set new connectivity settings
-            ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-            string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
-
-            newSettings.Host = values[0];
-            newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
-            processor.ConnectivitySettings = newSettings;
-
-            // create a switchboard object
-            SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[3].ToString(), int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture));
-
-            processor.RegisterHandler(handler);
-
-            // start connecting
-            processor.Connect();
-
-            // notify the client
-            OnSBCreated(handler, null);
-        }
-
-
-        /// <summary>
-        /// Called when a BPR command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send a phone number for a contact. Usually send after a synchronization command.
-        /// <code>BPR [Type] [Number]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnBPRReceived(NSMessage message)
-        {
-            string commandone = (string)message.CommandValues[0];
-
-            Contact contact = null;
-            int index = 2;
-
-            if (commandone.IndexOf('@') != -1)
-            {
-                contact = ContactList.GetContact(commandone);
-                index = 2;
-            }
-            //else
-            //{
-            //    contact = lastContactSynced;
-            //    index = 1;
-            //}
-
-            string number = HttpUtility.UrlDecode((string)message.CommandValues[index]);
-
-            if (contact != null)
-            {
-                switch ((string)message.CommandValues[index - 1])
-                {
-                    case "PHH":
-                        contact.SetHomePhone(number);
-                        break;
-                    case "PHW":
-                        contact.SetWorkPhone(number);
-                        break;
-                    case "PHM":
-                        contact.SetMobilePhone(number);
-                        break;
-                    case "MOB":
-                        contact.SetMobileAccess((number == "Y"));
-                        break;
-                    case "MBE":
-                        contact.SetMobileDevice((number == "Y"));
-                        break;
-                    case "HSB":
-                        contact.SetHasBlog((number == "1"));
-                        break;
-                }
-            }
-            else
-                throw new MSNPSharpException("Phone numbers are sent but lastContact == null");
-        }
-
-
-        /// <summary>
-        /// Called when a LSG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send us a contactgroup definition. This adds a new <see cref="ContactGroup"/> object to the ContactGroups colletion.
-        /// <code>LSG [Name] [Guid]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnLSGReceived(NSMessage message)
-        {
-            ContactGroups.AddGroup(new ContactGroup((string)message.CommandValues[0], (string)message.CommandValues[1], this));
-        }
-
-        /// <summary>
-        /// Called when a ADC command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact has been added to a list.
-        /// This function raises the ReverseAdded event when a remote contact has added the contactlist owner on it's (forward) contact list.
-        /// The ContactAdded event is always raised.
-        /// <code>ADD [Transaction] [Type] [Listversion] [Account] [Name] ([Group])</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnADCReceived(NSMessage message)
-        {
-            if (message.CommandValues.Count == 4)
-            {
-                Contact c = ContactList.GetContactByGuid(new Guid(message.CommandValues[2].ToString().Remove(0, 2)));
-                //Add contact to group
-                string guid = message.CommandValues[3].ToString();
-
-                if (contactGroups[guid] != null)
-                    c.AddContactToGroup(contactGroups[guid]);
-
-                return;
-            }
-
-            MSNLists Type = GetMSNList((string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact(message.CommandValues[2].ToString().Remove(0, 2));
-
-            contact.NSMessageHandler = this;
-
-            if (message.CommandValues.Count >= 4)
-                contact.SetName(message.CommandValues[3].ToString().Remove(0, 2));
-
-            if (message.CommandValues.Count >= 5)
-                contact.SetGuid(new Guid(message.CommandValues[4].ToString().Remove(0, 2)));
-
-            // add the list to this contact						
-            contact.AddToList(MSNLists.PendingList);
-
-            // check whether another user added us .The client programmer can then act on it.
-
-            // only fire the event if >=4 because name is just sent when other user add you to her/his contact list
-            // msnp11 allows you to add someone to the reverse list.
-            if (Type == MSNLists.ReverseList && message.CommandValues.Count >= 4)
-            {
-                ContactService.msRequest(
-                    "MessengerPendingList",
-                     delegate
-                     {
-                         contact = ContactList.GetContact(contact.Mail);
-                         OnReverseAdded(contact);
-                     }
-                );
-            }
-
-            // send a list mutation event
-            if (ContactAdded != null)
-                ContactAdded(this, new ListMutateEventArgs(contact, Type));
-        }
-
-
-        /// <summary>
-        /// Called when a REM command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact has been removed from a list.
-        /// Raises the ReverseRemoved event when another contact has removed the contact list owner from it's list.
-        /// Raises always the ContactRemoved event.
-        /// <code>REM [Transaction] [Type] [List version] [Account] ([Group])</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnREMReceived(NSMessage message)
-        {
-            MSNLists list = GetMSNList((string)message.CommandValues[1]);
-
-            Contact contact = null;
-            if (list == MSNLists.ForwardList)
-                contact = ContactList.GetContactByGuid(new Guid((string)message.CommandValues[2]));
-            else
-                contact = ContactList.GetContact((string)message.CommandValues[2]);
-
-            if (contact == null)
-                return;
-
-            if (message.CommandValues.Count == 4)
-            {
-                //Remove from group
-                string group = message.CommandValues[3].ToString();
-
-                if (contactGroups[group] != null)
-                    contact.RemoveContactFromGroup(contactGroups[group]);
-
-                return;
-            }
-
-            //remove the contact from list
-            contact.RemoveFromList(list);
-
-            // check whether another user removed us
-            if (list == MSNLists.ReverseList && ReverseRemoved != null)
-                ReverseRemoved(this, new ContactEventArgs(contact));
-
-            if (list == MSNLists.ForwardList && ContactRemoved != null)
-                ContactRemoved(this, new ListMutateEventArgs(contact, list));
-        }
-
-
-        /// <summary>
-        /// Called when a BLP command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send the privacy mode for the contact list owner.
-        /// <code>BLP [Transaction] [SynchronizationID] [PrivacyMode]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnBLPReceived(NSMessage message)
-        {
-            if (Owner == null)
-                return;
-
-            string type = String.Empty;
-
-            if (message.CommandValues.Count == 1)
-                type = message.CommandValues[0].ToString();
-            else
-                type = message.CommandValues[1].ToString();
-
-            switch (type)
-            {
-                case "AL":
-                    Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
-                    ContactService.UpdateMe();
-                    break;
-                case "BL":
-                    owner.SetPrivacy(PrivacyMode.NoneButAllowed);
-                    ContactService.UpdateMe();
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Called when an ADG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact group has been added to the contact group list.
-        /// Raises the ContactGroupAdded event.
-        /// <code>ADG [Transaction] [ListVersion] [Name] [GroepID] </code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnADGReceived(NSMessage message)
-        {
-            string guid = message.CommandValues[2].ToString();
-
-            // add a new group									
-            ContactGroups.AddGroup(new ContactGroup(System.Web.HttpUtility.UrlDecode((string)message.CommandValues[1]), guid, this));
-
-            // fire the event
-            if (ContactGroupAdded != null)
-            {
-                ContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
-            }
-        }
-
-
-        /// <summary>
-        /// Called when a RMG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact group has been removed.
-        /// Raises the ContactGroupRemoved event.
-        /// <code>RMG [Transaction] [ListVersion] [GroupID]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnRMGReceived(NSMessage message)
-        {
-            string guid = message.CommandValues[1].ToString();
-
-            ContactGroup contactGroup = (ContactGroup)contactGroups[guid];
-            ContactGroups.RemoveGroup(contactGroup);
-
-            if (ContactGroupRemoved != null)
-            {
-                ContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
-            }
-        }
-
-
-        /// <summary>
-        /// Called when a RML command has been received.
-        /// </summary>
-        /// <remarks>Indicates that someone was removed from a list by local user (RML [Trans-ID] OK)
-        /// or local user was removed from someone's reverse list (RML 0 [Trans-ID]\r\n[payload]).</remarks>
-        /// <param name="nsMessage"></param>
-        protected virtual void OnRMLReceived(NSMessage nsMessage)
-        {
-            NetworkMessage networkMessage = nsMessage as NetworkMessage;
-            XmlDocument xmlDoc = new XmlDocument();
-            if (networkMessage.InnerBody != null)   //Payload RML command.
-            {
-                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                string domain = String.Empty;
-                foreach (XmlNode domainNode in domains)
-                {
-                    domain = domainNode.Attributes["n"].Value;
-                    XmlNode contactNode = domainNode.FirstChild;
-                    do
-                    {
-                        string account = contactNode.Attributes["n"].Value + "@" + domain;
-                        ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                        MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
-                        account = account.ToLower(CultureInfo.InvariantCulture);
-                        if (ContactList.HasContact(account, type))
-                        {
-                            Contact contact = ContactList.GetContact(account, type);
-                            if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
-                            {
-                                OnReverseRemoved(contact);
-                            }
-                        }
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine(account + " has removed you from his/her " + list.ToString());
-
-                    } while (contactNode.NextSibling != null);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Called when a MSG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the notification server has send us a MSG. This is usually a MSG from the 'HOTMAIL' user (account is also 'HOTMAIL') which includes notifications about the contact list owner's profile, new mail, number of unread mails in the inbox, etc.
-        /// <code>MSG [Account] [Name] [Length]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnMSGReceived(MSNMessage message)
-        {
-            MSGMessage msgMessage = new MSGMessage(message);
-            string mime = msgMessage.MimeHeader["Content-Type"].ToString();
-
-            if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
-                OnProfileReceived(msgMessage);
-            else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
-                OnMailNotificationReceived(msgMessage);
-            else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
-                OnMailChanged(msgMessage);
-            else if (mime.IndexOf("x-msmsgsinitialemailnotification") >= 0)
-                OnMailboxStatusReceived(msgMessage);
-            else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
-            {
-                if (OIMReceived == null)
-                    return;
-
-                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
-                msgMessage = new MSGMessage(message);
-                oimService.ProcessOIM(msgMessage);
-            }
-        }
-
-        /// <summary>
-        /// Called when a UBM command has been received,this message was sent by a Yahoo Messenger client.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the notification server has send us a UBM. This is usually a message from Yahoo Messenger.
-        /// <code>UBM [Account] 32 [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnUBMReceived(NSMessage message)
-        {
-            string sender = message.CommandValues[0].ToString();
-            YIMMessage msg = new YIMMessage(message);
-
-            if (sender == null)
-            {
-                sender = message.CommandValues[0].ToString();
-            }
-
-            if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))
-                && ContactList.HasContact(sender, ClientType.EmailMember))
-            {
-                foreach (YIMMessageHandler YimHandler in SwitchBoards)
-                {
-                    if (YimHandler.Contacts.Contains(sender))
-                    {
-                        return;
-                    }
-                }
-
-                YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
-                switchboard.NSMessageHandler = this;
-                switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
-                switchboard.MessageProcessor = MessageProcessor;
-                SwitchBoards.Add(switchboard);
-
-                OnSBCreated(switchboard, null);
-                switchboard.ForceJoin(ContactList[sender, ClientType.EmailMember]);
-                MessageProcessor.RegisterHandler(switchboard);
-                switchboard.HandleMessage(MessageProcessor, msg);
-            }
-
-        }
-
-        /// <summary>
-        /// Called when the owner has removed or moved e-mail.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnMailChanged(MSGMessage message)
-        {
-            // dispatch the event
-            if (MailboxChanged != null)
-            {
-                string sourceFolder = (string)message.MimeHeader["Src-Folder"];
-                string destFolder = (string)message.MimeHeader["Dest-Folder"];
-                int count = int.Parse((string)message.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture);
-                MailboxChanged(this, new MailChangedEventArgs(sourceFolder, destFolder, count));
-            }
-        }
-
-        /// <summary>
-        /// Called when the server sends the status of the owner's mailbox.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnMailboxStatusReceived(MSGMessage message)
-        {
-            // dispatch the event
-            if (MailboxStatusReceived != null)
-            {
-                int inboxUnread = int.Parse((string)message.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture);
-                int foldersUnread = int.Parse((string)message.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture);
-                string inboxURL = (string)message.MimeHeader["Inbox-URL"];
-                string folderURL = (string)message.MimeHeader["Folders-URL"];
-                string postURL = (string)message.MimeHeader["Post-URL"];
-                MailboxStatusReceived(this, new MailboxStatusEventArgs(inboxUnread, foldersUnread, new Uri(inboxURL), new Uri(folderURL), new Uri(postURL)));
-            }
-        }
-
-        /// <summary>
-        /// Called when the owner has received new e-mail, or e-mail has been removed / moved. Fires the <see cref="NewMailReceived"/> event.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnMailNotificationReceived(MSGMessage message)
-        {
-            // dispatch the event
-            if (NewMailReceived != null)
-            {
-                string from = (string)message.MimeHeader["From"];
-                string messageUrl = (string)message.MimeHeader["Message-URL"];
-                string postUrl = (string)message.MimeHeader["Post-URL"];
-                string subject = (string)message.MimeHeader["Subject"];
-                string destFolder = (string)message.MimeHeader["Dest-Folder"];
-                string fromMail = (string)message.MimeHeader["From-Addr"];
-                int id = int.Parse((string)message.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture);
-                NewMailReceived(this, new NewMailEventArgs(from, new Uri(postUrl), new Uri(messageUrl), subject, destFolder, fromMail, id));
-            }
-        }
-
-        /// <summary>
-        /// Called when the server has send a profile description. This will update the profile of the Owner object. 
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnProfileReceived(MSGMessage message)
-        {
-            StrDictionary hdr = message.MimeHeader;
-
-            int clientPort = 0;
-
-            if (hdr.ContainsKey("ClientPort"))
-            {
-                clientPort = int.Parse(message.MimeHeader["ClientPort"].Replace('.', ' '),
-                                           System.Globalization.CultureInfo.InvariantCulture);
-
-                clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
-            }
-
-            IPAddress ip = hdr.ContainsKey("ClientIP") ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None;
-            Owner.UpdateProfile(
-                hdr["LoginTime"],
-                (hdr.ContainsKey("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
-                hdr["MemberIdHigh"],
-                hdr["MemberIdLow"],
-                hdr["lang_preference"],
-                hdr["preferredEmail"],
-                hdr["country"],
-                hdr["PostalCode"],
-                hdr["Gender"],
-                hdr["Kid"],
-                hdr["Age"],
-                hdr["Birthday"],
-                hdr["Wallet"],
-                hdr["sid"],
-                hdr["kv"],
-                hdr["MSPAuth"],
-                ip,
-                clientPort,
-                hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
-            );
-
-            if (IPAddress.None != ip)
-            {
-                // set the external end point. This can be used in file transfer connectivity determing
-                externalEndPoint = new IPEndPoint(ip, clientPort);
-            }
-            //ADL
-            if (AutoSynchronize)
-            {
-                contactService.SynchronizeContactList();
-            }
-            else
-            {
-                // notify the client programmer
-                OnSignedIn();
-            }
-        }
-
-        /// <summary>
-        /// Called when a QNG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates a ping answer. The number of seconds indicates the timespan in which another ping must be send.
-        /// <code>QNG [Seconds]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnQNGReceived(NSMessage message)
-        {
-            if (PingAnswer != null)
-            {
-                // get the number of seconds till the next ping and fire the event
-                // with the correct parameters.
-                int seconds = int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture);
-                PingAnswer(this, new PingAnswerEventArgs(seconds));
-            }
-        }
-
-        /// <summary>Called when a FQY command has been received.
-        /// <remarks>Indicates a client has different network types except PassportMember.</remarks>
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnFQYReceived(NSMessage message)
-        {
-            // <ml><d n="domain"><c n="username" t="clienttype" /></d></ml>
-            NetworkMessage networkMessage = message as NetworkMessage;
-            if (networkMessage.InnerBody != null)
-            {
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                string domain = String.Empty;
-                foreach (XmlNode domainNode in domains)
-                {
-                    domain = domainNode.Attributes["n"].Value;
-                    XmlNode contactNode = domainNode.FirstChild;
-                    do
-                    {
-                        string account = contactNode.Attributes["n"].Value + "@" + domain;
-                        account = account.ToLower(CultureInfo.InvariantCulture);
-                        ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
-
-                        if (!ContactList.HasContact(account, type))
-                        {
-                            ContactService.AddNewContact(account, type, String.Empty);
-                        }
-
-                    } while (contactNode.NextSibling != null);
-                }
-            }
-        }
-
-        #endregion
-
-        #endregion
 
         #endregion
     }
