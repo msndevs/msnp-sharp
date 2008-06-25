@@ -1,27 +1,84 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
-using System.Web.Services.Protocols;
 using System.Net;
-
-using MSNPSharp.Core;
-using MSNPSharp.MSNWS.MSNRSIService;
-using MSNPSharp.MSNWS.MSNOIMStoreService;
+using System.Xml;
+using System.Text;
+using System.Diagnostics;
+using System.Collections.Generic;
+using System.Web.Services.Protocols;
+using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
-    internal class OIMUserState
+    using MSNPSharp.Core;
+    using MSNPSharp.MSNWS.MSNRSIService;
+    using MSNPSharp.MSNWS.MSNOIMStoreService;
+
+    /// <summary>
+    /// This delegate is used when an OIM was received.
+    /// </summary>
+    /// <param name="sender">The sender's email</param>
+    /// <param name="e">OIMReceivedEventArgs</param>
+    public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
+
+    [Serializable()]
+    public class OIMReceivedEventArgs : EventArgs
     {
-        public int RecursiveCall = 0;
-        private readonly int oimcount;
-        private readonly string account = String.Empty;
-        public OIMUserState(int oimCount, string account)
+        private string receivedTime;
+
+        public string ReceivedTime
         {
-            this.oimcount = oimCount;
-            this.account = account;
+            get
+            {
+                return receivedTime;
+            }
+        }
+        private string email;
+
+        /// <summary>
+        /// Sender account.
+        /// </summary>
+        public string Email
+        {
+            get
+            {
+                return email;
+            }
+        }
+        private string message;
+
+        /// <summary>
+        /// Text message.
+        /// </summary>
+        public string Message
+        {
+            get
+            {
+                return message;
+            }
+        }
+        private bool isRead = true;
+
+        /// <summary>
+        /// Set this to true if you don't want to receive this message
+        /// next time you login.
+        /// </summary>
+        public bool IsRead
+        {
+            get
+            {
+                return isRead;
+            }
+            set
+            {
+                isRead = value;
+            }
+        }
+
+        public OIMReceivedEventArgs(string rcvTime, string account, string msg)
+        {
+            receivedTime = rcvTime;
+            email = account;
+            message = msg;
         }
     }
 
@@ -33,7 +90,9 @@ namespace MSNPSharp
         NSMessageHandler nsMessageHandler = null;
         WebProxy webProxy = null;
 
-        protected OIMService() { }
+        protected OIMService()
+        {
+        }
 
         public OIMService(NSMessageHandler nsHandler)
         {
@@ -46,7 +105,10 @@ namespace MSNPSharp
 
         public NSMessageHandler NSMessageHandler
         {
-            get { return nsMessageHandler; }
+            get
+            {
+                return nsMessageHandler;
+            }
         }
 
         internal void ProcessOIM(MSGMessage message)
@@ -299,4 +361,16 @@ namespace MSNPSharp
         }
 
     }
-}
+
+    internal class OIMUserState
+    {
+        public int RecursiveCall = 0;
+        private readonly int oimcount;
+        private readonly string account = String.Empty;
+        public OIMUserState(int oimCount, string account)
+        {
+            this.oimcount = oimCount;
+            this.account = account;
+        }
+    }
+};
