@@ -510,11 +510,14 @@ namespace MSNPSharp
                     contact.OnForwardList = true;
                     System.Threading.Thread.Sleep(100);
 
-                    // 4: Send FQY command
-                    string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
-                    fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                    fqypayload = fqypayload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
+                    // 4: Query other networks and add as new contact
+                    if (ct == ClientType.PassportMember)
+                    {
+                        string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
+                        fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                        fqypayload = fqypayload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
+                    }
 
                     // 5: Get all information. LivePending will be Live :)
                     abRequest(
@@ -1739,6 +1742,8 @@ namespace MSNPSharp
                     abSynchronized = true;
                     initialADLcount = 0;
 
+                    nsMessageHandler.SetScreenName(nsMessageHandler.Owner.Name);
+
                     if (nsMessageHandler.AutoSynchronize)
                     {
                         nsMessageHandler.OnSignedIn();
@@ -1748,11 +1753,29 @@ namespace MSNPSharp
                     // No contacts are sent so we are done synchronizing call the callback
                     // MSNP8: New callback defined, SynchronizationCompleted.
                     nsMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
+                    abSynchronized = true;
 
-                    // Fire the ReverseAdded event
-                    foreach (Contact pendingContact in this.nsMessageHandler.ContactList.Pending)
+                    // Fire the ReverseAdded event (pending)
+                    foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
                     {
-                        nsMessageHandler.OnReverseAdded(pendingContact);
+                        if (pendingContact.OnAllowedList || pendingContact.Blocked)
+                        {
+                            RemoveContactFromList(
+                                pendingContact,
+                                MSNLists.PendingList,
+                                delegate
+                                {
+                                    AddContactToList(pendingContact, MSNLists.ReverseList, null);
+                                }
+                            );
+
+                            System.Threading.Thread.Sleep(100);
+                            AddContactToList(pendingContact, MSNLists.ReverseList, null);
+                        }
+                        else
+                        {
+                            nsMessageHandler.OnReverseAdded(pendingContact);
+                        }
                     }
                 }
                 return true;

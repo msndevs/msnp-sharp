@@ -912,8 +912,6 @@ namespace MSNPSharp
             {
                 SynchronizationCompleted(sender, e);
             }
-
-            ContactService.SetAddressBookSynchronized(true);
         }
 
 
