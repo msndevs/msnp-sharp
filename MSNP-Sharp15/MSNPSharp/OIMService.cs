@@ -87,8 +87,13 @@ namespace MSNPSharp
     /// </summary>
     public class OIMService : MSNService
     {
-        NSMessageHandler nsMessageHandler = null;
-        WebProxy webProxy = null;
+        private NSMessageHandler nsMessageHandler = null;
+        private WebProxy webProxy = null;
+
+        /// <summary>
+        /// Occurs when receive an OIM.
+        /// </summary>
+        public event OIMReceivedEventHandler OIMReceived;
 
         protected OIMService()
         {
@@ -111,8 +116,11 @@ namespace MSNPSharp
             }
         }
 
-        internal void ProcessOIM(MSGMessage message)
+        internal void ProcessOIM(MSGMessage message, bool initial)
         {
+            if (OIMReceived == null)
+                return;
+
             string xmlstr = message.MimeHeader["Mail-Data"];
             if ("too-large" == xmlstr)
             {
@@ -130,7 +138,17 @@ namespace MSNPSharp
                         if (Settings.TraceSwitch.TraceVerbose)
                             Trace.WriteLine("GetMetadata completed.");
 
-                        processOIMS(e.Result);
+                        if (e.Result != null && e.Result is Array)
+                        {
+                            foreach (XmlNode m in (XmlNode[])e.Result)
+                            {
+                                if (m.Name == "MD")
+                                {
+                                    processOIMS(((XmlNode)m).ParentNode.InnerXml, initial);
+                                    break;
+                                }
+                            }
+                        }
                     }
                     else if (e.Error != null)
                     {
@@ -143,11 +161,19 @@ namespace MSNPSharp
                 rsiService.GetMetadataAsync(new GetMetadataRequestType(), new object());
                 return;
             }
-            processOIMS(xmlstr);
+            processOIMS(xmlstr, initial);
         }
 
-        private void processOIMS(string xmldata)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="xmldata"></param>
+        /// <param name="initial">if true, get all oims and sort by receive date</param>
+        private void processOIMS(string xmldata, bool initial)
         {
+            if (OIMReceived == null)
+                return;
+
             XmlDocument xdoc = new XmlDocument();
             xdoc.LoadXml(xmldata);
             XmlNodeList xnodlst = xdoc.GetElementsByTagName("M");
@@ -210,7 +236,7 @@ namespace MSNPSharp
                         message = encode.GetString(Convert.FromBase64String(regmsg.Match(e.Result.GetMessageResult).Value.Trim()));
 
                         OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, email, message);
-                        nsMessageHandler.OnOIMReceived(this, orea);
+                        OnOIMReceived(this, orea);
                         if (orea.IsRead)
                         {
                             guidstodelete.Add(guid);
@@ -360,6 +386,13 @@ namespace MSNPSharp
             }
         }
 
+        protected virtual void OnOIMReceived(object sender, OIMReceivedEventArgs e)
+        {
+            if (OIMReceived != null)
+            {
+                OIMReceived(sender, e);
+            }
+        }
     }
 
     internal class OIMUserState

@@ -9,29 +9,31 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="GetMetadata" type="rsi:GetMetadataRequestType" />
   <xsd:complexType name="GetMetadataRequestType">
     <xsd:sequence />
   </xsd:complexType>
-  <xsd:element name="GetMetadata" type="rsi:GetMetadataRequestType" />
+  <xsd:element name="GetMetadataResponse" type="xsd:anyType" />
+  <xsd:element name="GetMetadataResponse2" type="rsi:GetMetadataResponseType" />
   <xsd:complexType name="GetMetadataResponseType">
     <xsd:sequence>
       <xsd:element name="MD" type="rsi:MetaData" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="GetMetadataResponse" type="rsi:GetMetadataResponseType" />
+  <xsd:element name="GetMessage" type="rsi:GetMessageRequestType" />
   <xsd:complexType name="GetMessageRequestType">
     <xsd:sequence>
       <xsd:element name="messageId" type="xsd:string" />
       <xsd:element name="alsoMarkAsRead" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="GetMessage" type="rsi:GetMessageRequestType" />
+  <xsd:element name="GetMessageResponse" type="rsi:GetMessageResponseType" />
   <xsd:complexType name="GetMessageResponseType">
     <xsd:sequence>
       <xsd:element name="GetMessageResult" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="GetMessageResponse" type="rsi:GetMessageResponseType" />
+  <xsd:element name="DeleteMessages" type="rsi:DeleteMessagesRequestType" />
   <xsd:complexType name="DeleteMessagesRequestType">
     <xsd:sequence>
       <xsd:element name="messageIds">
@@ -43,10 +45,8 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:element name="DeleteMessages" type="rsi:DeleteMessagesRequestType" />
+  <xsd:element name="DeleteMessagesResponse" type="rsi:DeleteMessagesResponseType" />
   <xsd:complexType name="DeleteMessagesResponseType">
     <xsd:sequence />
   </xsd:complexType>
-  <xsd:element name="DeleteMessagesResponse" type="rsi:DeleteMessagesResponseType" />
-  <xsd:element name="GetMetadataResponseString" type="xsd:string" />
 </xsd:schema>

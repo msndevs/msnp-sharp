@@ -431,11 +431,6 @@ namespace MSNPSharp
         /// </summary>
         public event ErrorReceivedEventHandler ServerErrorReceived;
 
-        /// <summary>
-        /// Occurs when receive an OIM.
-        /// </summary>
-        public event OIMReceivedEventHandler OIMReceived;
-
         #endregion
 
         #region Public Methods
@@ -1405,12 +1400,9 @@ namespace MSNPSharp
                 OnMailboxStatusReceived(msgMessage);
             else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
             {
-                if (OIMReceived == null)
-                    return;
-
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
                 msgMessage = new MSGMessage(message);
-                oimService.ProcessOIM(msgMessage);
+                OIMService.ProcessOIM(msgMessage, mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0);
             }
         }
 
@@ -1465,14 +1457,6 @@ namespace MSNPSharp
                 string fromMail = (string)message.MimeHeader["From-Addr"];
                 int id = int.Parse((string)message.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture);
                 NewMailReceived(this, new NewMailEventArgs(from, new Uri(postUrl), new Uri(messageUrl), subject, destFolder, fromMail, id));
-            }
-        }
-
-        protected internal virtual void OnOIMReceived(object sender, OIMReceivedEventArgs e)
-        {
-            if (OIMReceived != null)
-            {
-                OIMReceived(sender, e);
             }
         }
 

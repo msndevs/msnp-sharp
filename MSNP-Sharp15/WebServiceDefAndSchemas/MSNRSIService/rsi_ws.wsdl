@@ -12,7 +12,7 @@
     <wsdl:part name="GetMetadata" element="rsi:GetMetadata" />
   </wsdl:message>
   <wsdl:message name="GetMetadataResponseMessage">
-    <wsdl:part name="GetMetadataResponse" element="rsi:GetMetadataResponseString" />
+    <wsdl:part name="GetMetadataResponse" element="rsi:GetMetadataResponse" />
   </wsdl:message>
   <wsdl:message name="GetMessageMessage">
     <wsdl:part name="GetMessage" element="rsi:GetMessage" />
