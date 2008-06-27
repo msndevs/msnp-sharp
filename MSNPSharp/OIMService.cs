@@ -23,16 +23,19 @@ namespace MSNPSharp
     [Serializable()]
     public class OIMReceivedEventArgs : EventArgs
     {
-        private string receivedTime;
+        private bool isRead = true;
+        private Guid guid = Guid.Empty;
+        private DateTime receivedTime = DateTime.Now;
+        private string email;
+        private string message;
 
-        public string ReceivedTime
+        public DateTime ReceivedTime
         {
             get
             {
                 return receivedTime;
             }
         }
-        private string email;
 
         /// <summary>
         /// Sender account.
@@ -44,7 +47,6 @@ namespace MSNPSharp
                 return email;
             }
         }
-        private string message;
 
         /// <summary>
         /// Text message.
@@ -56,7 +58,17 @@ namespace MSNPSharp
                 return message;
             }
         }
-        private bool isRead = true;
+
+        /// <summary>
+        /// Message ID
+        /// </summary>
+        public Guid Guid
+        {
+            get
+            {
+                return guid;
+            }
+        }
 
         /// <summary>
         /// Set this to true if you don't want to receive this message
@@ -74,9 +86,10 @@ namespace MSNPSharp
             }
         }
 
-        public OIMReceivedEventArgs(string rcvTime, string account, string msg)
+        public OIMReceivedEventArgs(DateTime rcvTime, Guid g, string account, string msg)
         {
             receivedTime = rcvTime;
+            guid = g;
             email = account;
             message = msg;
         }
@@ -178,6 +191,7 @@ namespace MSNPSharp
             xdoc.LoadXml(xmldata);
             XmlNodeList xnodlst = xdoc.GetElementsByTagName("M");
             List<string> guidstodelete = new List<string>();
+            List<OIMReceivedEventArgs> initialOIMS = new List<OIMReceivedEventArgs>();
             int oimdeletecount = xnodlst.Count;
 
             Regex regmsg = new Regex("\n\n[^\n]+");
@@ -187,10 +201,11 @@ namespace MSNPSharp
 
             foreach (XmlNode m in xnodlst)
             {
-                string rt = DateTime.Now.ToString();
+                DateTime rt = DateTime.Now;
                 Int32 size = 0;
+                Guid guid = Guid.Empty;
                 String email = String.Empty;
-                String guid = String.Empty;
+
                 String message = String.Empty;
 
                 foreach (XmlNode a in m)
@@ -198,7 +213,7 @@ namespace MSNPSharp
                     switch (a.Name)
                     {
                         case "RT":
-                            rt = a.InnerText;
+                            rt = XmlConvert.ToDateTime(a.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
                             break;
 
                         case "SZ":
@@ -210,7 +225,7 @@ namespace MSNPSharp
                             break;
 
                         case "I":
-                            guid = a.InnerText;
+                            guid = new Guid(a.InnerText);
                             break;
                     }
                 }
@@ -235,30 +250,61 @@ namespace MSNPSharp
                         Encoding encode = Encoding.GetEncoding(strencoding);
                         message = encode.GetString(Convert.FromBase64String(regmsg.Match(e.Result.GetMessageResult).Value.Trim()));
 
-                        OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, email, message);
-                        OnOIMReceived(this, orea);
-                        if (orea.IsRead)
+                        OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, guid, email, message);
+
+                        if (initial)
                         {
-                            guidstodelete.Add(guid);
+                            initialOIMS.Add(orea);
+
+                            // Is this the last OIM?
+                            if (initialOIMS.Count == oimdeletecount)
+                            {
+                                initialOIMS.Sort(CompareDates);
+                                foreach (OIMReceivedEventArgs ea in initialOIMS)
+                                {
+                                    OnOIMReceived(this, ea);
+                                    if (ea.IsRead)
+                                    {
+                                        guidstodelete.Add(ea.Guid.ToString());
+                                    }
+                                    if (0 == --oimdeletecount && guidstodelete.Count > 0)
+                                    {
+                                        DeleteOIMMessages(guidstodelete.ToArray());
+                                    }
+                                }
+                            }
                         }
-                        if (0 == --oimdeletecount && guidstodelete.Count > 0)
+                        else
                         {
-                            DeleteOIMMessages(guidstodelete.ToArray());
+                            OnOIMReceived(this, orea);
+                            if (orea.IsRead)
+                            {
+                                guidstodelete.Add(guid.ToString());
+                            }
+                            if (0 == --oimdeletecount && guidstodelete.Count > 0)
+                            {
+                                DeleteOIMMessages(guidstodelete.ToArray());
+                            }
                         }
+
                     }
                     else if (e.Error != null)
                     {
-                        OnServiceOperationFailed(rsiService,
-                            new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
+                        OnServiceOperationFailed(rsiService, new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
                     }
                     return;
                 };
 
                 GetMessageRequestType request = new GetMessageRequestType();
-                request.messageId = guid;
+                request.messageId = guid.ToString();
                 request.alsoMarkAsRead = false;
                 rsiService.GetMessageAsync(request, new object());
             }
+        }
+
+        private static int CompareDates(OIMReceivedEventArgs x, OIMReceivedEventArgs y)
+        {
+            return x.ReceivedTime.CompareTo(y.ReceivedTime);
         }
 
         private void DeleteOIMMessages(string[] guids)
