@@ -103,7 +103,7 @@ namespace MSNPSharp
         /// </remarks>
         public virtual void SynchronizeContactList()
         {
-            if (nsMessageHandler.AddressBookSynchronized)
+            if (AddressBookSynchronized)
             {
                 if (Settings.TraceSwitch.TraceWarning)
                     Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized. Make sure the AutoSynchronize property is set to false in order to manually synchronize the contact list.", "NSMessageHandler");

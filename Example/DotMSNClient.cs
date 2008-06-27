@@ -104,7 +104,6 @@ namespace MSNPSharpClient
             messenger.Nameserver.ServerErrorReceived                        += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
             messenger.ConversationCreated                                   += new ConversationCreatedEventHandler(messenger_ConversationCreated);
             messenger.TransferInvitationReceived                            += new MSNSLPInvitationReceivedEventHandler(messenger_TransferInvitationReceived);
-            messenger.Nameserver.OIMReceived                                += new OIMReceivedEventHandler(Nameserver_OIMReceived);
             messenger.Nameserver.PingAnswer                                 += new PingAnswerEventHandler(Nameserver_PingAnswer);
 
             messenger.Nameserver.ContactOnline                              += new ContactChangedEventHandler(Nameserver_ContactOnline);
@@ -115,6 +114,8 @@ namespace MSNPSharpClient
             messenger.Nameserver.Owner.PersonalMessageChanged               += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.ScreenNameChanged                    += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
             messenger.Nameserver.SpaceService.ContactCardCompleted          += new ContactCardCompletedEventHandler(SpaceService_ContactCardCompleted);
+
+            messenger.Nameserver.OIMService.OIMReceived                     += new OIMReceivedEventHandler(Nameserver_OIMReceived);
           
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
