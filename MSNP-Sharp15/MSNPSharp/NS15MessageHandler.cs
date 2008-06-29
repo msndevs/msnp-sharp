@@ -842,39 +842,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Called when a BLP command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send the privacy mode for the contact list owner.
-        /// <code>BLP [Transaction] [SynchronizationID] [PrivacyMode]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnBLPReceived(NSMessage message)
-        {
-            if (Owner == null)
-                return;
-
-            string type = String.Empty;
-
-            if (message.CommandValues.Count == 1)
-                type = message.CommandValues[0].ToString();
-            else
-                type = message.CommandValues[1].ToString();
-
-            switch (type)
-            {
-                case "AL":
-                    Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
-                    ContactService.UpdateMe();
-                    break;
-                case "BL":
-                    owner.SetPrivacy(PrivacyMode.NoneButAllowed);
-                    ContactService.UpdateMe();
-                    break;
-            }
-        }
-
-        /// <summary>
         /// Fires the SignedIn event.
         /// </summary>
         protected internal virtual void OnSignedIn()
@@ -1772,6 +1739,61 @@ namespace MSNPSharp
 
         #endregion
 
+        #region Privacy
+
+        /// <summary>
+        /// Called when a BLP command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the server has send the privacy mode for the contact list owner.
+        /// <code>BLP [Transaction] [SynchronizationID] [PrivacyMode]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnBLPReceived(NSMessage message)
+        {
+            if (Owner == null)
+                return;
+
+            string type = String.Empty;
+
+            if (message.CommandValues.Count == 1)
+                type = message.CommandValues[0].ToString();
+            else
+                type = message.CommandValues[1].ToString();
+
+            switch (type)
+            {
+                case "AL":
+                    Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
+                    ContactService.UpdateMe();
+                    break;
+                case "BL":
+                    owner.SetPrivacy(PrivacyMode.NoneButAllowed);
+                    ContactService.UpdateMe();
+                    break;
+            }
+        }
+
+        protected virtual void OnGCFReceived(NSMessage message)
+        {
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (networkMessage.InnerBody != null)
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                XmlNodeList imtexts = xmlDoc.GetElementsByTagName("imtext");
+                foreach (XmlNode imtextNode in imtexts)
+                {
+                    string censor = Encoding.UTF8.GetString(Convert.FromBase64String(imtextNode.Attributes["value"].Value));
+
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        System.Diagnostics.Trace.WriteLine("Censor: " + censor, "NSMessageHandler");
+                }
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region Command handler
@@ -1869,6 +1891,9 @@ namespace MSNPSharp
                         break;
                     case "FQY":
                         OnFQYReceived(nsMessage);
+                        break;
+                    case "GCF":
+                        OnGCFReceived(nsMessage);
                         break;
                     case "ILN":
                         OnILNReceived(nsMessage);
