@@ -1253,6 +1253,14 @@ namespace MSNPSharp
                 emailMember.Annotations[0].Name = "MSN.IM.BuddyType";
                 emailMember.Annotations[0].Value = "32:";
             }
+            else if (contact.ClientType == ClientType.PhoneMember)
+            {
+                member = new PhoneMember();
+                PhoneMember phoneMember = member as PhoneMember;
+                phoneMember.State = MemberState.Accepted;
+                phoneMember.PhoneNumber = contact.Mail;
+            }
+
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
 
@@ -1350,13 +1358,19 @@ namespace MSNPSharp
                 PassportMember passportMember = member as PassportMember;
                 passportMember.PassportName = contact.Mail;
             }
-            else
+            else if (contact.ClientType == ClientType.EmailMember)
             {
                 member = new EmailMember();
                 EmailMember emailMember = member as EmailMember;
                 emailMember.Email = contact.Mail;
             }
-            //member.MembershipId = MemberShipList.MemberRoles[memberShip.MemberRole][contact.Mail].MembershipId.ToString();
+            else if (contact.ClientType == ClientType.PhoneMember)
+            {
+                member = new PhoneMember();
+                PhoneMember phoneMember = member as PhoneMember;
+                phoneMember.State = MemberState.Accepted;
+                phoneMember.PhoneNumber = contact.Mail;
+            }
 
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
