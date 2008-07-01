@@ -401,17 +401,30 @@ namespace MSNPSharp
             }
 
             List<MembershipContactInfo> sortedContacts = new List<MembershipContactInfo>(contacts);
-            sortedContacts.Sort(CompareDomains);
+            sortedContacts.Sort(CompareContacts);
             string currentDomain = null;
             int domaincontactcount = 0;
+            MembershipContactInfo lastContact = null;
 
             foreach (MembershipContactInfo contact in sortedContacts)
             {
+                String name;
+                String domain;
+
                 MSNLists sendlist = lists;
-                String[] usernameanddomain = contact.Account.Split('@');
                 String type = ((int)contact.Type).ToString();
-                String domain = usernameanddomain[1];
-                String name = usernameanddomain[0];
+
+                if (contact.Type == ClientType.PhoneMember)
+                {
+                    domain = String.Empty;
+                    name = "tel:" + contact.Account;
+                }
+                else
+                {
+                    String[] usernameanddomain = contact.Account.Split('@');
+                    domain = usernameanddomain[1];
+                    name = usernameanddomain[0];
+                }
 
                 if (initial)
                 {
@@ -435,20 +448,55 @@ namespace MSNPSharp
                         currentDomain = domain;
 
                         if (domaincontactcount > 0)
-                            ml.Append("</d>");
+                        {
+                            if (lastContact.Type == ClientType.PhoneMember)
+                            {
+                                ml.Append("</t>");
+                            }
+                            else
+                            {
+                                ml.Append("</d>");
+                            }
+                        }
 
-                        ml.Append("<d n=\"" + currentDomain + "\">");
+                        if (contact.Type == ClientType.PhoneMember)
+                        {
+                            ml.Append("<t>");
+                        }
+                        else
+                        {
+                            ml.Append("<d n=\"" + currentDomain + "\">");
+                        }
+
                         domaincontactcount = 0;
                     }
 
-                    ml.Append("<c n=\"" + name + "\" l=\"" + strlist + "\" t=\"" + type + "\"/>");
+                    if (contact.Type == ClientType.PhoneMember)
+                    {
+                        ml.Append("<c n=\"" + name + "\" l=\"" + strlist + "\" />");
+                    }
+                    else
+                    {
+                        ml.Append("<c n=\"" + name + "\" l=\"" + strlist + "\" t=\"" + type + "\" />");
+                    }
+
                     domaincontactcount++;
+                    lastContact = contact;
                 }
 
                 if (ml.Length > 7300)
                 {
                     if (domaincontactcount > 0)
-                        ml.Append("</d>");
+                    {
+                        if (lastContact.Type == ClientType.PhoneMember)
+                        {
+                            ml.Append("</t>");
+                        }
+                        else
+                        {
+                            ml.Append("</d>");
+                        }
+                    }
 
                     ml.Append("</ml>");
                     mls.Add(ml.ToString());
@@ -461,14 +509,23 @@ namespace MSNPSharp
             }
 
             if (domaincontactcount > 0)
-                ml.Append("</d>");
+            {
+                if (lastContact.Type == ClientType.PhoneMember)
+                {
+                    ml.Append("</t>");
+                }
+                else
+                {
+                    ml.Append("</d>");
+                }
+            }
 
             ml.Append("</ml>");
             mls.Add(ml.ToString());
             return mls.ToArray();
         }
 
-        private static int CompareDomains(MembershipContactInfo x, MembershipContactInfo y)
+        private static int CompareContacts(MembershipContactInfo x, MembershipContactInfo y)
         {
             if (x.Account == null)
                 return 1;
@@ -476,9 +533,19 @@ namespace MSNPSharp
             else if (y.Account == null)
                 return -1;
 
-            string xDomainName = x.Account.Substring(x.Account.IndexOf("@") + 1);
-            string yDomainName = y.Account.Substring(y.Account.IndexOf("@") + 1);
-            return String.Compare(xDomainName, yDomainName, true, CultureInfo.InvariantCulture);
+            string xContact, yContact;
+
+            if (x.Account.IndexOf("@") == -1)
+                xContact = x.Account;
+            else
+                xContact = x.Account.Substring(x.Account.IndexOf("@") + 1);
+
+            if (y.Account.IndexOf("@") == -1)
+                yContact = y.Account;
+            else
+                yContact = y.Account.Substring(y.Account.IndexOf("@") + 1);
+
+            return String.Compare(xContact, yContact, true, CultureInfo.InvariantCulture);
         }
 
         #endregion
