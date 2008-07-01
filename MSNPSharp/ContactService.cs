@@ -868,6 +868,14 @@ namespace MSNPSharp
                         request.contacts[0].contactInfo.emails[0].isMessengerEnabled = isMessengerUser;
                         request.contacts[0].contactInfo.emails[0].propertiesChanged = "IsMessengerEnabled";
                         break;
+
+                    case ClientType.PhoneMember:
+                        propertiesChanged.Add("ContactPhone");
+                        request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
+                        request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
+                        request.contacts[0].contactInfo.phones[0].isMessengerEnabled = isMessengerUser;
+                        request.contacts[0].contactInfo.phones[0].propertiesChanged = "IsMessengerEnabled";
+                        break;
                 }
             }
 

@@ -446,6 +446,14 @@ namespace MSNPSharp.IO
                                 displayname = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? account : contactType.contactInfo.quickName;
                             }
 
+                            if (contactType.contactInfo.phones != null && account == null)
+                            {
+                                type = ClientType.PhoneMember;
+                                account = contactType.contactInfo.phones[0].number;
+                                ismessengeruser |= contactType.contactInfo.phones[0].isMessengerEnabled;
+                                displayname = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? account : contactType.contactInfo.quickName;
+                            }
+
                             if (account == null)
                                 continue; // PassportnameHidden... Nothing to do...
 
