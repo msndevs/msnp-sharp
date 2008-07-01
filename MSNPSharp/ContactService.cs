@@ -581,10 +581,9 @@ namespace MSNPSharp
                     if (ct == ClientType.PassportMember)
                     {
                         // without membership
-                        string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"{t}\" /></d></ml>";
-                        payload = payload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                        payload = payload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                        payload = payload.Replace("{t}", ((int)contact.ClientType).ToString());
+                        SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
+                        contacts.Add(new ContactIdentifier(account, ct), new MembershipContactInfo(account, ct));
+                        string payload = ConstructADLString(contacts.Values, false, MSNLists.AllowedList)[0];
                         nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                         contact.AddToList(MSNLists.AllowedList);
                     }
@@ -614,10 +613,10 @@ namespace MSNPSharp
         private void AddPendingContact(Contact contact)
         {
             // 1: ADL AL without membership, so the user can see our status...
-            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" l=\"2\" t=\"{t}\" /></d></ml>";
-            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
-            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-            payload = payload.Replace("{t}", ((int)contact.ClientType).ToString());
+            SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
+            contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
+            string payload = ConstructADLString(contacts.Values, false, MSNLists.AllowedList)[0];
+
             nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
             contact.AddToList(MSNLists.AllowedList);
 
@@ -1177,10 +1176,9 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
-            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
-            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-            payload = payload.Replace("{l}", ((int)list).ToString());
+            SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier,MembershipContactInfo>();
+            contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
+            string payload = ConstructADLString(contacts.Values, false, list)[0];
 
             if (list == MSNLists.ForwardList)
             {
@@ -1280,10 +1278,9 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
-            string payload = "<ml><d n=\"{d}\"><c n=\"{n}\" t=\"" + ((int)contact.ClientType).ToString() + "\" l=\"{l}\" /></d></ml>";
-            payload = payload.Replace("{d}", contact.Mail.Split(("@").ToCharArray())[1]);
-            payload = payload.Replace("{n}", contact.Mail.Split(("@").ToCharArray())[0]);
-            payload = payload.Replace("{l}", ((int)list).ToString());
+            SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
+            contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
+            string payload = ConstructADLString(contacts.Values, false, list)[0];
 
             if (list == MSNLists.ForwardList)
             {
