@@ -139,7 +139,7 @@ namespace MSNPSharpClient
             this.conversationTextBox.Multiline = true;
             this.conversationTextBox.Name = "conversationTextBox";
             this.conversationTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.conversationTextBox.Size = new System.Drawing.Size(555, 256);
+            this.conversationTextBox.Size = new System.Drawing.Size(555, 262);
             this.conversationTextBox.TabIndex = 0;
             // 
             // panel1
@@ -149,17 +149,17 @@ namespace MSNPSharpClient
             this.panel1.Controls.Add(this.sendButton);
             this.panel1.Controls.Add(this.inputTextBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 256);
+            this.panel1.Location = new System.Drawing.Point(0, 262);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(555, 78);
+            this.panel1.Size = new System.Drawing.Size(555, 72);
             this.panel1.TabIndex = 1;
             // 
             // sendnudgeButton
             // 
             this.sendnudgeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendnudgeButton.Location = new System.Drawing.Point(452, 41);
+            this.sendnudgeButton.Location = new System.Drawing.Point(470, 38);
             this.sendnudgeButton.Name = "sendnudgeButton";
-            this.sendnudgeButton.Size = new System.Drawing.Size(90, 25);
+            this.sendnudgeButton.Size = new System.Drawing.Size(75, 23);
             this.sendnudgeButton.TabIndex = 2;
             this.sendnudgeButton.Text = "Send Nudge";
             this.sendnudgeButton.Click += new System.EventHandler(this.sendnudgeButton_Click);
@@ -167,9 +167,9 @@ namespace MSNPSharpClient
             // sendButton
             // 
             this.sendButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendButton.Location = new System.Drawing.Point(452, 9);
+            this.sendButton.Location = new System.Drawing.Point(470, 8);
             this.sendButton.Name = "sendButton";
-            this.sendButton.Size = new System.Drawing.Size(90, 25);
+            this.sendButton.Size = new System.Drawing.Size(75, 24);
             this.sendButton.TabIndex = 1;
             this.sendButton.Text = "Send";
             this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
@@ -179,11 +179,11 @@ namespace MSNPSharpClient
             this.inputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.inputTextBox.Location = new System.Drawing.Point(10, 9);
+            this.inputTextBox.Location = new System.Drawing.Point(8, 8);
             this.inputTextBox.Multiline = true;
             this.inputTextBox.Name = "inputTextBox";
             this.inputTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.inputTextBox.Size = new System.Drawing.Size(412, 60);
+            this.inputTextBox.Size = new System.Drawing.Size(437, 56);
             this.inputTextBox.TabIndex = 0;
             this.inputTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.inputTextBox_KeyDown);
             // 
@@ -193,12 +193,12 @@ namespace MSNPSharpClient
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(555, 256);
+            this.panel2.Size = new System.Drawing.Size(555, 262);
             this.panel2.TabIndex = 2;
             // 
             // ConversationForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
+            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(555, 334);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);

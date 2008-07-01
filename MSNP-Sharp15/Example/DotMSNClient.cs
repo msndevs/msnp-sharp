@@ -562,7 +562,7 @@ namespace MSNPSharpClient
             this.loginButton.Location = new System.Drawing.Point(148, 28);
             this.loginButton.Name = "loginButton";
             this.loginButton.Size = new System.Drawing.Size(56, 21);
-            this.loginButton.TabIndex = 1;
+            this.loginButton.TabIndex = 4;
             this.loginButton.Tag = "0";
             this.loginButton.Text = "> Sign in";
             this.loginButton.UseVisualStyleBackColor = true;
@@ -596,6 +596,7 @@ namespace MSNPSharpClient
             this.comboStatus.Size = new System.Drawing.Size(197, 21);
             this.comboStatus.TabIndex = 3;
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
+            this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
             // 
             // openFileDialog
             // 
@@ -1650,7 +1651,7 @@ namespace MSNPSharpClient
             {
                 messenger.Nameserver.ContactService.AddNewContact(
                     acf.Account,
-                    acf.IsYahooUser ? ClientType.EmailMember : ClientType.PassportMember,
+                    ClientType.PassportMember,
                     acf.InvitationMessage);
             }
         }
@@ -1731,6 +1732,14 @@ namespace MSNPSharpClient
         {
             Contact contact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
             messenger.Nameserver.SpaceService.GetContactCard(contact.Mail);
+        }
+
+        private void comboStatus_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!messenger.Connected)
+            {
+                login_KeyPress(sender, e);
+            }
         }
 
     }
