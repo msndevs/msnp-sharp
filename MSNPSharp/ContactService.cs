@@ -489,7 +489,16 @@ namespace MSNPSharp
 
         private void AddNonPendingContact(string account, ClientType ct, string invitation)
         {
-            //1: Add contact to address book with "ContactSave"
+            // Query other networks and add as new contact if available
+            if (ct == ClientType.PassportMember)
+            {
+                string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
+                fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
+                fqypayload = fqypayload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
+            }
+
+            // Add contact to address book with "ContactSave"
             AddNewOrPendingContact(
                 account,
                 false,
@@ -501,7 +510,7 @@ namespace MSNPSharp
                     contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
                     contact.NSMessageHandler = nsMessageHandler;
 
-                    //2: ADL AL
+                    // Add to AL
                     if (ct == ClientType.PassportMember)
                     {
                         // without membership
@@ -519,20 +528,11 @@ namespace MSNPSharp
                         contact.AddToList(MSNLists.AllowedList);
                     }
 
-                    // 3: ADL FL
+                    // Add to Forward List
                     contact.OnForwardList = true;
                     System.Threading.Thread.Sleep(100);
 
-                    // 4: Query other networks and add as new contact
-                    if (ct == ClientType.PassportMember)
-                    {
-                        string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
-                        fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                        fqypayload = fqypayload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
-                    }
-
-                    // 5: Get all information. LivePending will be Live :)
+                    // Get all information. LivePending will be Live :)
                     abRequest(
                         "ContactSave",
                         delegate
