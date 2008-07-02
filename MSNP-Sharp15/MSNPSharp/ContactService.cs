@@ -180,7 +180,7 @@ namespace MSNPSharp
 
                             nsMessageHandler.SetPrivacyMode(nsMessageHandler.Owner.Privacy);
 
-                            string[] adls = ConstructADLString(AddressBook.MembershipContacts.Values, true, MSNLists.None);
+                            string[] adls = ConstructLists(AddressBook.MembershipContacts.Values, true, MSNLists.None);
 
                             initialADLcount = adls.Length;
                             foreach (string payload in adls)
@@ -386,31 +386,31 @@ namespace MSNPSharp
             return abService;
         }
 
-        internal string[] ConstructADLString(Dictionary<ContactIdentifier, MembershipContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
+        internal string[] ConstructLists(Dictionary<ContactIdentifier, MembershipContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
         {
             List<string> mls = new List<string>();
-
-            StringBuilder ml = new StringBuilder();
-            ml.Append("<ml" + (initial ? " l=\"1\">" : ">"));
+            XmlDocument xmlDoc = new XmlDocument();            
+            XmlElement mlElement = xmlDoc.CreateElement("ml");
+            if (initial)
+                mlElement.SetAttribute("l", "1");
 
             if (contacts == null || contacts.Count == 0)
             {
-                ml.Append("</ml>");
-                mls.Add(ml.ToString());
+                mls.Add(mlElement.OuterXml);
                 return mls.ToArray();
             }
-
+            
             List<MembershipContactInfo> sortedContacts = new List<MembershipContactInfo>(contacts);
             sortedContacts.Sort(CompareContacts);
-            string currentDomain = null;
+
             int domaincontactcount = 0;
-            MembershipContactInfo lastContact = null;
+            string currentDomain = null;            
+            XmlElement domtelElement = null;
 
             foreach (MembershipContactInfo contact in sortedContacts)
             {
                 String name;
                 String domain;
-
                 MSNLists sendlist = lists;
                 String type = ((int)contact.Type).ToString();
 
@@ -428,7 +428,7 @@ namespace MSNPSharp
 
                 if (initial)
                 {
-                    sendlist = 0;
+                    sendlist = MSNLists.None;
                     lists = AddressBook.GetMSNLists(contact.Account, contact.Type);
                     AddressbookContactInfo abci = AddressBook.Find(contact.Account, contact.Type);
                     if (abci != null && abci.IsMessengerUser)
@@ -439,89 +439,54 @@ namespace MSNPSharp
                         sendlist |= MSNLists.BlockedList;
                 }
 
-                String strlist = ((int)sendlist).ToString();
-
-                if (strlist != "0" && type != "0")
+                if (sendlist != MSNLists.None && type != "0")
                 {
                     if (currentDomain != domain)
                     {
                         currentDomain = domain;
-
-                        if (domaincontactcount > 0)
-                        {
-                            if (lastContact.Type == ClientType.PhoneMember)
-                            {
-                                ml.Append("</t>");
-                            }
-                            else
-                            {
-                                ml.Append("</d>");
-                            }
-                        }
+                        domaincontactcount = 0;                 
 
                         if (contact.Type == ClientType.PhoneMember)
                         {
-                            ml.Append("<t>");
+                            domtelElement = xmlDoc.CreateElement("t");
                         }
                         else
                         {
-                            ml.Append("<d n=\"" + currentDomain + "\">");
+                            domtelElement = xmlDoc.CreateElement("d");
+                            domtelElement.SetAttribute("n", currentDomain);                            
                         }
-
-                        domaincontactcount = 0;
+                        mlElement.AppendChild(domtelElement);
                     }
 
-                    if (contact.Type == ClientType.PhoneMember)
+                    XmlElement contactElement = xmlDoc.CreateElement("c");
+                    contactElement.SetAttribute("n", name);
+                    contactElement.SetAttribute("l", ((int)sendlist).ToString());
+                    if (contact.Type != ClientType.PhoneMember)
                     {
-                        ml.Append("<c n=\"" + name + "\" l=\"" + strlist + "\" />");
+                        contactElement.SetAttribute("t", type);
                     }
-                    else
-                    {
-                        ml.Append("<c n=\"" + name + "\" l=\"" + strlist + "\" t=\"" + type + "\" />");
-                    }
-
+                    domtelElement.AppendChild(contactElement);
                     domaincontactcount++;
-                    lastContact = contact;
                 }
 
-                if (ml.Length > 7300)
+                if (domaincontactcount > 100 && mlElement.OuterXml.Length > 7300)
                 {
-                    if (domaincontactcount > 0)
-                    {
-                        if (lastContact.Type == ClientType.PhoneMember)
-                        {
-                            ml.Append("</t>");
-                        }
-                        else
-                        {
-                            ml.Append("</d>");
-                        }
-                    }
+                    mlElement.AppendChild(domtelElement);
+                    mls.Add(mlElement.OuterXml);
 
-                    ml.Append("</ml>");
-                    mls.Add(ml.ToString());
-                    ml.Length = 0;
-                    ml.Append("<ml" + (initial ? " l=\"1\">" : ">"));
+                    mlElement = xmlDoc.CreateElement("ml");
+                    if (initial)
+                        mlElement.SetAttribute("l", "1");
 
                     currentDomain = null;
                     domaincontactcount = 0;
                 }
             }
 
-            if (domaincontactcount > 0)
-            {
-                if (lastContact.Type == ClientType.PhoneMember)
-                {
-                    ml.Append("</t>");
-                }
-                else
-                {
-                    ml.Append("</d>");
-                }
-            }
+            if (domaincontactcount > 0 && domtelElement != null)
+                mlElement.AppendChild(domtelElement);
 
-            ml.Append("</ml>");
-            mls.Add(ml.ToString());
+            mls.Add(mlElement.OuterXml);
             return mls.ToArray();
         }
 
@@ -583,7 +548,7 @@ namespace MSNPSharp
                         // without membership
                         SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
                         contacts.Add(new ContactIdentifier(account, ct), new MembershipContactInfo(account, ct));
-                        string payload = ConstructADLString(contacts.Values, false, MSNLists.AllowedList)[0];
+                        string payload = ConstructLists(contacts.Values, false, MSNLists.AllowedList)[0];
                         nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                         contact.AddToList(MSNLists.AllowedList);
                     }
@@ -615,7 +580,7 @@ namespace MSNPSharp
             // 1: ADL AL without membership, so the user can see our status...
             SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
             contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
-            string payload = ConstructADLString(contacts.Values, false, MSNLists.AllowedList)[0];
+            string payload = ConstructLists(contacts.Values, false, MSNLists.AllowedList)[0];
 
             nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
             contact.AddToList(MSNLists.AllowedList);
@@ -1186,7 +1151,7 @@ namespace MSNPSharp
 
             SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier,MembershipContactInfo>();
             contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
-            string payload = ConstructADLString(contacts.Values, false, list)[0];
+            string payload = ConstructLists(contacts.Values, false, list)[0];
 
             if (list == MSNLists.ForwardList)
             {
@@ -1296,7 +1261,7 @@ namespace MSNPSharp
 
             SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
             contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
-            string payload = ConstructADLString(contacts.Values, false, list)[0];
+            string payload = ConstructLists(contacts.Values, false, list)[0];
 
             if (list == MSNLists.ForwardList)
             {
