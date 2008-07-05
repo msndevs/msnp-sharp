@@ -1,48 +1,47 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:spc="http://www.msn.com/webservices/spaces/v1/" targetNamespace="http://www.msn.com/webservices/spaces/v1/" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:include schemaLocation="space_ws_datatype.xsd"/>
-	<xs:complexType name="GetXmlFeedResultType">
-		<xs:sequence>
-			<xs:element name="contactCard" type="spc:contactCardType"/>
-		</xs:sequence>
-	</xs:complexType>
-	<xs:complexType name="refreshInformationType">
-		<xs:sequence>
-			<xs:element name="cid" type="xs:string"/>
-			<xs:element name="storageAuthCache" type="xs:string"/>
-			<xs:element name="market" type="xs:language"/>
-			<xs:element name="brand" type="xs:string"/>
-			<xs:element name="maxElementCount" type="xs:integer" default="2"/>
-			<xs:element name="maxCharacterCount" type="xs:integer" default="200"/>
-			<xs:element name="maxImageCount" type="xs:integer" default="6"/>
-			<xs:element name="applicationId" type="xs:string"/>
-			<xs:element name="updateAccessedTime" type="xs:boolean" default="true"/>
-			<xs:element name="spaceLastViewed" type="xs:dateTime" minOccurs="0"/>
-			<xs:element name="isActiveContact" type="xs:boolean"/>
-			<xs:element name="profileLastViewed" type="xs:dateTime" minOccurs="0"/>
-			<xs:element name="contactProfileLastViewed" type="xs:dateTime" minOccurs="0"/>
-			<xs:element name="activeContactLastChanged" type="xs:dateTime" minOccurs="0"/>
-		</xs:sequence>
-	</xs:complexType>
-	<xs:element name="AuthTokenHeader">
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="Token" type="xs:string"/>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="GetXmlFeed" type="spc:GetXmlFeedRequestType"/>
-	<xs:complexType name="GetXmlFeedRequestType">
-		<xs:sequence>
-			<xs:element name="refreshInformation" type="spc:refreshInformationType"/>
-		</xs:sequence>
-	</xs:complexType>
-	<xs:element name="GetXmlFeedResponse">
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="GetXmlFeedResult" type="spc:GetXmlFeedResultType"/>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:spc="http://www.msn.com/webservices/spaces/v1/" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/spaces/v1/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:include schemaLocation="space_ws_datatype.xsd" />
+  <xs:complexType name="GetXmlFeedResultType">
+    <xs:sequence>
+      <xs:element name="contactCard" type="spc:contactCardType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="refreshInformationType">
+    <xs:sequence>
+      <xs:element name="cid" type="xs:string" />
+      <xs:element name="storageAuthCache" type="xs:string" />
+      <xs:element name="market" type="xs:language" />
+      <xs:element name="brand" type="xs:string" />
+      <xs:element default="2" name="maxElementCount" type="xs:integer" />
+      <xs:element default="200" name="maxCharacterCount" type="xs:integer" />
+      <xs:element default="6" name="maxImageCount" type="xs:integer" />
+      <xs:element name="applicationId" type="xs:string" />
+      <xs:element default="true" name="updateAccessedTime" type="xs:boolean" />
+      <xs:element minOccurs="0" name="spaceLastViewed" type="xs:dateTime" />
+      <xs:element name="isActiveContact" type="xs:boolean" />
+      <xs:element minOccurs="0" name="profileLastViewed" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="contactProfileLastViewed" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="activeContactLastChanged" type="xs:dateTime" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="AuthTokenHeader">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Token" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetXmlFeed" type="spc:GetXmlFeedRequestType" />
+  <xs:complexType name="GetXmlFeedRequestType">
+    <xs:sequence>
+      <xs:element name="refreshInformation" type="spc:refreshInformationType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetXmlFeedResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="GetXmlFeedResult" type="spc:GetXmlFeedResultType" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

@@ -130,11 +130,6 @@
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
     <Compile Include="ContactService.cs" />
-    <Compile Include="Web References\MSNSPACEWS.MSNSpaceService\Reference.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reference.map</DependentUpon>
-    </Compile>
     <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -155,6 +150,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
+    <Compile Include="Web References\MSNWS.MSNSpaceService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Web References\MSNWS.MSNStorageService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -171,20 +171,6 @@
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <None Include="Web References\MSNSPACEWS.MSNSpaceService\GetXmlFeedResponse.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNSPACEWS.MSNSpaceService\Reference.map">
-      <Generator>MSDiscoCodeGenerator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-    <None Include="Web References\MSNSPACEWS.MSNSpaceService\space_ws.wsdl" />
-    <None Include="Web References\MSNSPACEWS.MSNSpaceService\space_ws_datatype.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNSPACEWS.MSNSpaceService\space_ws_servicetype.xsd">
-      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\ABContactAddResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
@@ -383,14 +369,14 @@
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNSPACEWS.MSNSpaceService\</RelPath>
+      <RelPath>Web References\MSNWS.MSNSpaceService\</RelPath>
       <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNSPACEWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
@@ -406,6 +392,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\WLXLarge_default.gif" />
+    <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNSpaceService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNWS.MSNSpaceService\space_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNSpaceService\space_ws_datatype.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSpaceService\space_ws_servicetype.xsd">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
