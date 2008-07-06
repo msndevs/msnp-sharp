@@ -261,13 +261,11 @@ namespace MSNPSharp
                 if (dyItem.ProfileGleam)
                 {
                     request.refreshInformation.profileLastViewed = dyItem.ProfileLastChanged;
-                    request.refreshInformation.profileLastViewedSpecified = true;
                 }
 
                 if (dyItem.SpaceGleam)
                 {
                     request.refreshInformation.spaceLastViewed = dyItem.SpaceLastViewed;
-                    request.refreshInformation.spaceLastViewedSpecified = true;
                 }
 
                 service.GetXmlFeedAsync(request, new object());

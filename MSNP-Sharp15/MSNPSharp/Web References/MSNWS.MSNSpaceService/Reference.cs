@@ -918,27 +918,23 @@ namespace MSNPSharp.MSNWS.MSNSpaceService {
         
         private System.DateTime spaceLastViewedField;
         
-        private bool spaceLastViewedFieldSpecified;
-        
         private bool isActiveContactField;
         
         private System.DateTime profileLastViewedField;
         
-        private bool profileLastViewedFieldSpecified;
-        
         private System.DateTime contactProfileLastViewedField;
         
-        private bool contactProfileLastViewedFieldSpecified;
-        
         private System.DateTime activeContactLastChangedField;
-        
-        private bool activeContactLastChangedFieldSpecified;
         
         public refreshInformationType() {
             this.maxElementCountField = "2";
             this.maxCharacterCountField = "200";
             this.maxImageCountField = "6";
             this.updateAccessedTimeField = true;
+            this.spaceLastViewedField = new System.DateTime(552877992000000000);
+            this.profileLastViewedField = new System.DateTime(552877992000000000);
+            this.contactProfileLastViewedField = new System.DateTime(552877992000000000);
+            this.activeContactLastChangedField = new System.DateTime(552877992000000000);
         }
         
         /// <remarks/>
@@ -1036,23 +1032,13 @@ namespace MSNPSharp.MSNWS.MSNSpaceService {
         }
         
         /// <remarks/>
+        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "1753-01-01T02:00:00+02:00")]
         public System.DateTime spaceLastViewed {
             get {
                 return this.spaceLastViewedField;
             }
             set {
                 this.spaceLastViewedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool spaceLastViewedSpecified {
-            get {
-                return this.spaceLastViewedFieldSpecified;
-            }
-            set {
-                this.spaceLastViewedFieldSpecified = value;
             }
         }
         
@@ -1067,6 +1053,7 @@ namespace MSNPSharp.MSNWS.MSNSpaceService {
         }
         
         /// <remarks/>
+        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "1753-01-01T02:00:00+02:00")]
         public System.DateTime profileLastViewed {
             get {
                 return this.profileLastViewedField;
@@ -1077,17 +1064,7 @@ namespace MSNPSharp.MSNWS.MSNSpaceService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool profileLastViewedSpecified {
-            get {
-                return this.profileLastViewedFieldSpecified;
-            }
-            set {
-                this.profileLastViewedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
+        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "1753-01-01T02:00:00+02:00")]
         public System.DateTime contactProfileLastViewed {
             get {
                 return this.contactProfileLastViewedField;
@@ -1098,34 +1075,13 @@ namespace MSNPSharp.MSNWS.MSNSpaceService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool contactProfileLastViewedSpecified {
-            get {
-                return this.contactProfileLastViewedFieldSpecified;
-            }
-            set {
-                this.contactProfileLastViewedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
+        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "1753-01-01T02:00:00+02:00")]
         public System.DateTime activeContactLastChanged {
             get {
                 return this.activeContactLastChangedField;
             }
             set {
                 this.activeContactLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool activeContactLastChangedSpecified {
-            get {
-                return this.activeContactLastChangedFieldSpecified;
-            }
-            set {
-                this.activeContactLastChangedFieldSpecified = value;
             }
         }
     }

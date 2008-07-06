@@ -17,11 +17,11 @@
       <xs:element default="6" name="maxImageCount" type="xs:integer" />
       <xs:element name="applicationId" type="xs:string" />
       <xs:element default="true" name="updateAccessedTime" type="xs:boolean" />
-      <xs:element minOccurs="0" name="spaceLastViewed" type="xs:dateTime" />
+      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="spaceLastViewed" type="xs:dateTime" />
       <xs:element name="isActiveContact" type="xs:boolean" />
-      <xs:element minOccurs="0" name="profileLastViewed" type="xs:dateTime" />
-      <xs:element minOccurs="0" name="contactProfileLastViewed" type="xs:dateTime" />
-      <xs:element minOccurs="0" name="activeContactLastChanged" type="xs:dateTime" />
+      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="profileLastViewed" type="xs:dateTime" />
+      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="contactProfileLastViewed" type="xs:dateTime" />
+      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="activeContactLastChanged" type="xs:dateTime" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="AuthTokenHeader">
