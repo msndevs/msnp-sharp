@@ -1616,7 +1616,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFQYReceived(NSMessage message)
         {
-            // <ml><d n="domain"><c n="username" t="clienttype" /></d></ml>
+            // <ml><d n="domain"><c n="username" [t="clienttype"] /></d></ml>
             NetworkMessage networkMessage = message as NetworkMessage;
             if (networkMessage.InnerBody != null)
             {
@@ -1630,13 +1630,16 @@ namespace MSNPSharp
                     XmlNode contactNode = domainNode.FirstChild;
                     do
                     {
-                        string account = contactNode.Attributes["n"].Value + "@" + domain;
-                        account = account.ToLower(CultureInfo.InvariantCulture);
-                        ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
-
-                        if (!ContactList.HasContact(account, type))
+                        if (contactNode.Attributes["t"] != null)
                         {
-                            ContactService.AddNewContact(account, type, String.Empty);
+                            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
+                            string account = contactNode.Attributes["n"].Value + "@" + domain;
+                            account = account.ToLower(CultureInfo.InvariantCulture);
+
+                            if (!ContactList.HasContact(account, type))
+                            {
+                                ContactService.AddNewContact(account, type, String.Empty);
+                            }
                         }
 
                     } while (contactNode.NextSibling != null);
