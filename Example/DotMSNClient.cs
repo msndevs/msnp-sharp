@@ -922,16 +922,17 @@ namespace MSNPSharpClient
                 return;
             }
 
-            int oldindex = comboStatus.SelectedIndex;
             PresenceStatus newstatus = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
             if (messenger.Connected)
             {
                 if (newstatus == PresenceStatus.Offline)
                 {
+                    PresenceStatus old = messenger.Owner.Status;
                     loginButton.Tag = 2;
                     loginButton.PerformClick();
                     pnlNameAndPM.Visible = false;
+                    comboStatus.SelectedIndex = comboStatus.FindString(old.ToString());
                 }
                 else
                 {
@@ -1469,7 +1470,7 @@ namespace MSNPSharpClient
             foreach (Contact contact in messenger.ContactList.All)
             {
                 TreeNode newnode = contact.Online ? onlinenode.Nodes.Add(contact.Mail, contact.Name) : offlinenode.Nodes.Add(contact.Mail, contact.Name);
-                newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : (contact.DynamicChanged != DynamicItemState.None) ? PARENT_NODE_FONT : USER_NODE_FONT;
                 newnode.Tag = contact;
             }
 
@@ -1517,7 +1518,7 @@ namespace MSNPSharpClient
                 if (contact.ContactGroups.Count == 0)
                 {
                     TreeNode newnode = common.Nodes.Add(contact.Mail, contact.Name);
-                    newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                    newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : (contact.DynamicChanged != DynamicItemState.None) ? PARENT_NODE_FONT : USER_NODE_FONT;
                     newnode.Tag = contact;
                     if (contact.Online)
                         common.Text = (Convert.ToInt32(common.Text) + 1).ToString();
@@ -1528,7 +1529,7 @@ namespace MSNPSharpClient
                     {
                         TreeNode found = treeViewFavoriteList.Nodes.Find(group.Guid, false)[0];
                         TreeNode newnode = found.Nodes.Add(contact.Mail, contact.Name);
-                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : (contact.DynamicChanged != DynamicItemState.None) ? PARENT_NODE_FONT : USER_NODE_FONT;
                         newnode.Tag = contact;
                         if (contact.Online)
                             found.Text = (Convert.ToInt32(found.Text) + 1).ToString();
