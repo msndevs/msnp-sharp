@@ -28,6 +28,30 @@
   <message name="FindDocumentsResponseMessage">
     <part name="FindDocumentsResponse" element="msnss:FindDocumentsResponse" />
   </message>
+  <message name="CreateProfileMessage">
+    <part name="CreateProfile" element="msnss:CreateProfile" />
+  </message>
+  <message name="CreateProfileResponseMessage">
+    <part name="CreateProfileResponse" element="msnss:CreateProfileResponse" />
+  </message>
+  <message name="ShareItemMessage">
+    <part name="ShareItem" element="msnss:ShareItem" />
+  </message>
+  <message name="ShareItemResponseMessage">
+    <part name="ShareItemResponse" element="msnss:ShareItemResponse" />
+  </message>
+  <message name="CreateDocumentMessage">
+    <part name="CreateDocument" element="msnss:CreateDocument" />
+  </message>
+  <message name="CreateDocumentResponseMessage">
+    <part name="CreateDocumentResponse" element="msnss:CreateDocumentResponse" />
+  </message>
+  <message name="CreateRelationshipsMessage">
+    <part name="CreateRelationships" element="msnss:CreateRelationships" />
+  </message>
+  <message name="CreateRelationshipsResponseMessage">
+    <part name="CreateRelationshipsResponse" element="msnss:CreateRelationshipsResponse" />
+  </message>
   <portType name="StorageServicePortType">
     <operation name="GetProfile">
       <input message="msnss:GetProfileMessage" />
@@ -40,6 +64,22 @@
     <operation name="FindDocuments">
       <input message="msnss:FindDocumentsMessage" />
       <output message="msnss:FindDocumentsResponseMessage" />
+    </operation>
+    <operation name="CreateProfile">
+      <input message="msnss:CreateProfileMessage" />
+      <output message="msnss:CreateProfileResponseMessage" />
+    </operation>
+    <operation name="ShareItem">
+      <input message="msnss:ShareItemMessage" />
+      <output message="msnss:ShareItemResponseMessage" />
+    </operation>
+    <operation name="CreateDocument">
+      <input message="msnss:CreateDocumentMessage" />
+      <output message="msnss:CreateDocumentResponseMessage" />
+    </operation>
+    <operation name="CreateRelationships">
+      <input message="msnss:CreateRelationshipsMessage" />
+      <output message="msnss:CreateRelationshipsResponseMessage" />
     </operation>
   </portType>
   <binding name="StorageServiceBinding" type="msnss:StorageServicePortType">
@@ -86,6 +126,59 @@
         <soap:body use="literal" />
       </output>
     </operation>
+    <operation name="CreateProfile">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/CreateProfile" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </output>
+    </operation>
+    <operation name="ShareItem">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/ShareItem" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </output>
+    </operation>
+    <operation name="CreateDocument">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/CreateDocument" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </output>
+    </operation>
+    <operation name="CreateRelationships">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/CreateRelationships" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </output>
+    </operation>
   </binding>
   <service name="StorageService">
     <port name="GetProfilePort" binding="msnss:StorageServiceBinding">
@@ -95,6 +188,18 @@
       <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
     </port>
     <port name="FindDocumentsPort" binding="msnss:StorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+    <port name="CreateProfilePort" binding="msnss:StorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+    <port name="ShareItemPort" binding="msnss:StorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+    <port name="CreateDocumentPort" binding="msnss:StorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+    <port name="CreateRelationshipsPort" binding="msnss:StorageServiceBinding">
       <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
     </port>
   </service>

@@ -136,7 +136,7 @@
       <xsd:element minOccurs="0" name="DynamicItems">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="DynamicItem" type="xsd:anyType" />
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="DynamicItem" type="msnab:BaseDynamicItemType" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
@@ -151,23 +151,7 @@
         <xsd:complexType>
           <xsd:sequence>
             <xsd:element name="abId" type="msnab:Guid" />
-            <xsd:element name="abInfo">
-              <xsd:complexType>
-                <xsd:sequence>
-                  <xsd:element name="ownerPuid" type="xsd:integer" />
-                  <xsd:element name="OwnerCID" type="xsd:integer" />
-                  <xsd:element name="ownerEmail" type="xsd:string" />
-                  <xsd:element name="fDefault" type="xsd:boolean" />
-                  <xsd:element name="joinedNamespace" type="xsd:boolean" />
-                  <xsd:element name="IsBot" type="xsd:boolean" />
-                  <xsd:element name="IsParentManaged" type="xsd:boolean" />
-                  <xsd:element name="SubscribeExternalPartner" type="xsd:boolean" />
-                  <xsd:element name="NotifyExternalPartner" type="xsd:boolean" />
-                  <xsd:element name="AddressBookType" type="xsd:string" />
-                  <xsd:element name="MessengerApplicationServiceCreated" type="xsd:boolean" />
-                </xsd:sequence>
-              </xsd:complexType>
-            </xsd:element>
+            <xsd:element name="abInfo" type="msnab:abInfoType" />
             <xsd:element name="lastChange" type="xsd:dateTime" />
             <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime" />
             <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime" />
@@ -388,4 +372,30 @@
   <xsd:element name="DeleteMemberResponse">
     <xsd:complexType />
   </xsd:element>
+  <xsd:complexType name="ABAddResponseType">
+    <xsd:sequence>
+      <xsd:element name="ABAddResult" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="ABAddResponse" type="msnab:ABAddResponseType" />
+  <xsd:element name="ABAdd" type="msnab:ABAddRequestType" />
+  <xsd:complexType name="ABAddRequestType">
+    <xsd:sequence>
+      <xsd:element name="abInfo" type="msnab:abInfoType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="UpdateDynamicItemRequestType">
+    <xsd:sequence>
+      <xsd:element name="abId" type="xsd:string" />
+      <xsd:element name="dynamicItems">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="DynamicItem" type="msnab:BaseDynamicItemType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="UpdateDynamicItem" type="msnab:UpdateDynamicItemRequestType" />
+  <xsd:element name="UpdateDynamicItemResponse" />
 </xsd:schema>

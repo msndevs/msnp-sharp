@@ -256,6 +256,7 @@ namespace MSNPSharp.IO
     /// <summary>
     /// DynamicItem indicates whether the contact space or profile has been updated
     /// </summary>
+    [Obsolete]
     [Serializable]
     public class DynamicItem
     {

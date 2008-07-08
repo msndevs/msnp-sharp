@@ -87,6 +87,18 @@
   <message name="InvalidPassportUserMessage">
     <part name="fault" element="msnab:InvalidPassportUser" />
   </message>
+  <message name="ABAddMessage">
+    <part name="ABAddRequest" element="msnab:ABAdd" />
+  </message>
+  <message name="ABAddResponseMessage">
+    <part name="ABAddResponse" element="msnab:ABAddResponse" />
+  </message>
+  <message name="UpdateDynamicItemMessage">
+    <part name="UpdateDynamicItem" element="msnab:UpdateDynamicItem" />
+  </message>
+  <message name="UpdateDynamicItemResponseMessage">
+    <part name="UpdateDynamicItemResponse" element="msnab:UpdateDynamicItemResponse" />
+  </message>
   <portType name="SharingServicePortType">
     <operation name="FindMembership">
       <input message="msnab:FindMembershipMessage" />
@@ -140,6 +152,14 @@
     <operation name="ABContactUpdate">
       <input message="msnab:ABContactUpdateMessage" />
       <output message="msnab:ABContactUpdateResponseMessage" />
+    </operation>
+    <operation name="ABAdd">
+      <input message="msnab:ABAddMessage" />
+      <output message="msnab:ABAddResponseMessage" />
+    </operation>
+    <operation name="UpdateDynamicItem">
+      <input message="msnab:UpdateDynamicItemMessage" />
+      <output message="msnab:UpdateDynamicItemResponseMessage" />
     </operation>
   </portType>
   <binding name="SharingServiceBinding" type="msnab:SharingServicePortType">
@@ -300,6 +320,30 @@
         <soap:body use="literal" />
       </output>
     </operation>
+    <operation name="ABAdd">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ABAdd" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
+        <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
+      </output>
+    </operation>
+    <operation name="UpdateDynamicItem">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/UpdateDynamicItem" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
+        <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
+      </output>
+    </operation>
   </binding>
   <service name="SharingService">
     <port name="FindMembershipPort" binding="msnab:SharingServiceBinding">
@@ -338,6 +382,12 @@
       <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
     </port>
     <port name="ABContactUpdatePort" binding="msnab:ABServiceBinding">
+      <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
+    </port>
+    <port name="ABAddPort" binding="msnab:ABServiceBinding">
+      <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
+    </port>
+    <port name="UpdateDynamicItemPort" binding="msnab:ABServiceBinding">
       <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
     </port>
   </service>

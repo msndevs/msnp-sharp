@@ -54,12 +54,12 @@ namespace MSNPSharp.IO
     {
         private List<ABFindAllResultType> addressBookDeltas = new List<ABFindAllResultType>(0);
         private List<FindMembershipResultType> membershipDeltas = new List<FindMembershipResultType>(0);
-        private SerializableDictionary<string, DynamicItem> dynamicItems = new SerializableDictionary<string, DynamicItem>(0);
+        private SerializableDictionary<string, BaseDynamicItemType> dynamicItems = new SerializableDictionary<string, BaseDynamicItemType>(0);
 
         /// <summary>
         /// The users that have changed their spaces or profiles.
         /// </summary>
-        public SerializableDictionary<string, DynamicItem> DynamicItems
+        public SerializableDictionary<string, BaseDynamicItemType> DynamicItems
         {
             get { return dynamicItems; }
             set { dynamicItems = value; }

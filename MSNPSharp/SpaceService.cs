@@ -14,6 +14,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.IO;
     using MSNPSharp.MSNWS.MSNSpaceService;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     public class ContactCardCompletedEventArg
     {
@@ -235,17 +236,25 @@ namespace MSNPSharp
                             OnContactCardCompleted(new ContactCardCompletedEventArg(true, null, cc));
                         }
 
-                        nsMessageHandler.ContactService.Deltas.DynamicItems[account].State = DynamicItemState.Viewed;
+                        BaseDynamicItemType basedyItem = nsMessageHandler.ContactService.Deltas.DynamicItems[account];
+                        basedyItem.ProfileGleamSpecified = true;
+                        basedyItem.ProfileGleam = false;
+
+                        basedyItem.SpaceGleamSpecified = true;
+                        basedyItem.SpaceGleam = false;
 
                         if (nsMessageHandler.ContactList.HasContact(account, ClientType.PassportMember))
                         {
-                            nsMessageHandler.ContactList[account, ClientType.PassportMember].SetdynamicItemChanged(DynamicItemState.Viewed);
+                            if (basedyItem.SpaceStatus == "Exist Access" || basedyItem.ProfileStatus == "Exist Access")
+                            {
+                                nsMessageHandler.ContactList[account, ClientType.PassportMember].SetdynamicItemChanged(DynamicItemState.Viewed);
+                            }
                             nsMessageHandler.ContactService.Deltas.Save();
                         }
                     }
                 };
 
-                DynamicItem dyItem = nsMessageHandler.ContactService.Deltas.DynamicItems[account];
+                BaseDynamicItemType dyItem = nsMessageHandler.ContactService.Deltas.DynamicItems[account];
                 GetXmlFeedRequestType request = new GetXmlFeedRequestType();
                 request.refreshInformation = new refreshInformationType();
                 request.refreshInformation.applicationId = Properties.Resources.ApplicationStrId;
@@ -260,7 +269,7 @@ namespace MSNPSharp
 
                 if (dyItem.ProfileGleam)
                 {
-                    request.refreshInformation.profileLastViewed = dyItem.ProfileLastChanged;
+                    request.refreshInformation.profileLastViewed = dyItem.ContactProfileLastViewed;
                 }
 
                 if (dyItem.SpaceGleam)

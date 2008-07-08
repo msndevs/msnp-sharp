@@ -598,22 +598,40 @@ namespace MSNPSharp.IO
             //Update dynamic items
             if (forwardList.DynamicItems != null)
             {
-                foreach (object obj in forwardList.DynamicItems)
+                foreach (BaseDynamicItemType dyItem in forwardList.DynamicItems)
                 {
-                    XmlNode[] nodes = obj as XmlNode[];
-                    DynamicItem dyItem = new DynamicItem(nodes);
-                    if (dyItem.PassportName != null && (dyItem.SpaceGleam || dyItem.ProfileGleam))
+                    //XmlNode[] nodes = obj as XmlNode[];
+                    //DynamicItem dyItem = new DynamicItem(nodes);
+                    if (dyItem is PassportDynamicItem)
                     {
-                        nsMessageHandler.ContactService.Deltas.DynamicItems[dyItem.PassportName] = dyItem;
+                        if (dyItem.SpaceGleam || dyItem.ProfileGleam)
+                        {
+                            nsMessageHandler.ContactService.Deltas.DynamicItems[(dyItem as PassportDynamicItem).PassportName] = dyItem;
+                        }
                     }
                 }
             }
 
-            foreach (DynamicItem dyItem in nsMessageHandler.ContactService.Deltas.DynamicItems.Values)
+            foreach (PassportDynamicItem dyItem in nsMessageHandler.ContactService.Deltas.DynamicItems.Values)
             {
                 if (nsMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
                 {
-                    nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(dyItem.State); //TODO: Type
+                    if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam) ||
+                        (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam))
+                    {
+                        nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.HasNew); //TODO: Type
+                    }
+
+                    if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam == false) ||
+                        (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam == false))
+                    {
+                        nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.Viewed); //TODO: Type
+                    }
+
+                    if (dyItem.ProfileStatus == null && dyItem.SpaceStatus == null)  //"Exist Access" means the contact has space or profile
+                    {
+                        nsMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.None); //TODO: Type
+                    }
                 }
             }
 
