@@ -859,6 +859,14 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool spaceGleamFieldSpecified;
         
+        private System.DateTime profileLastChangedField;
+        
+        private bool profileLastChangedFieldSpecified;
+        
+        private System.DateTime profileLastViewField;
+        
+        private bool profileLastViewFieldSpecified;
+        
         private string profileStatusField;
         
         private bool profileGleamField;
@@ -879,7 +887,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private BaseDynamicItemTypeNotifications notificationsField;
         
-        private string liveContactLastChangedField;
+        private System.DateTime liveContactLastChangedField;
+        
+        private bool liveContactLastChangedFieldSpecified;
         
         /// <remarks/>
         public string Type {
@@ -1017,6 +1027,48 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public System.DateTime ProfileLastChanged {
+            get {
+                return this.profileLastChangedField;
+            }
+            set {
+                this.profileLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ProfileLastChangedSpecified {
+            get {
+                return this.profileLastChangedFieldSpecified;
+            }
+            set {
+                this.profileLastChangedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime ProfileLastView {
+            get {
+                return this.profileLastViewField;
+            }
+            set {
+                this.profileLastViewField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ProfileLastViewSpecified {
+            get {
+                return this.profileLastViewFieldSpecified;
+            }
+            set {
+                this.profileLastViewFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
         public string ProfileStatus {
             get {
                 return this.profileStatusField;
@@ -1120,12 +1172,23 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public string LiveContactLastChanged {
+        public System.DateTime LiveContactLastChanged {
             get {
                 return this.liveContactLastChangedField;
             }
             set {
                 this.liveContactLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool LiveContactLastChangedSpecified {
+            get {
+                return this.liveContactLastChangedFieldSpecified;
+            }
+            set {
+                this.liveContactLastChangedFieldSpecified = value;
             }
         }
     }
