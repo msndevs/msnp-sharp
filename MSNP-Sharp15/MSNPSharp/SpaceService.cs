@@ -163,53 +163,51 @@ namespace MSNPSharp
                                 // Get the latest blog post.
                                 if (element.subElement != null && element.subElement.Length > 0)
                                 {
-                                    blogpost = new ContactCardItem(
-                                        GetProperty(element.subElement[0] as XmlNode[], "url"),
-                                        GetProperty(element.subElement[0] as XmlNode[], "description"),
-                                        GetProperty(element.subElement[0] as XmlNode[], "title"),
-                                        GetProperty(element.subElement[0] as XmlNode[], "tooltip"));
+                                    blogpost = new ContactCardItem(element.subElement[0].url,
+                                        element.subElement[0].description,
+                                        element.subElement[0].title,
+                                        element.subElement[0].tooltip);
                                 }
                             }
                             else if (element.type == ContactCardElementType.Album.ToString())
                             {
                                 // Get updated album photos
                                 album = new Album(element.title, element.url);
-                                foreach (XmlNode[] subelemen in element.subElement)
+                                foreach (subelementBaseType subelemen in element.subElement)
                                 {
-                                    if (GetProperty(subelemen, "type") == ContactCardSubElementType.Photo.ToString())
-                                    {
-                                        album.Photos.Add(new ThumbnailImage(
-                                            GetProperty(subelemen, "webReadyUrl"),
-                                            GetProperty(subelemen, "thumbnailUrl"),
-                                            GetProperty(subelemen, "albumName"),
-                                            GetProperty(subelemen, "title"),
-                                            GetProperty(subelemen, "description"),
-                                            GetProperty(subelemen, "tooltip")));
-                                    }
+                                    spaceContactCardElementsElementPhotoSubElement spacePhotoElement = subelemen as spaceContactCardElementsElementPhotoSubElement;
+                                    album.Photos.Add(new ThumbnailImage(
+                                        spacePhotoElement.webReadyUrl,
+                                        spacePhotoElement.thumbnailUrl,
+                                        spacePhotoElement.albumName,
+                                        spacePhotoElement.title,
+                                        spacePhotoElement.description,
+                                        spacePhotoElement.tooltip));
                                 }
                             }
                             else if (element.type == ContactCardElementType.Profile.ToString())
                             {
                                 // Get updated profiles
                                 profiles = new Dictionary<ProfileType, ProfileItem>();
-                                foreach (XmlNode[] subelemen in element.subElement)
+                                foreach (subelementBaseType subelemen in element.subElement)
                                 {
-                                    if (GetProperty(subelemen, "type") == ContactCardSubElementType.GeneralProfile.ToString())
+
+                                    if (subelemen.type == ContactCardSubElementType.GeneralProfile.ToString())
                                     {
                                         profiles[ProfileType.GeneralProfile] = new ProfileItem(
-                                            true, GetProperty(subelemen, "url"), GetProperty(subelemen, "title"), GetProperty(subelemen, "tooltip"));
+                                            true, subelemen.url, subelemen.title, subelemen.tooltip);
                                     }
 
-                                    if (GetProperty(subelemen, "type") == ContactCardSubElementType.PublicProfile.ToString())
+                                    if (subelemen.type == ContactCardSubElementType.PublicProfile.ToString())
                                     {
                                         profiles[ProfileType.PublicProfile] = new ProfileItem(
-                                            true, GetProperty(subelemen, "url"), GetProperty(subelemen, "title"), GetProperty(subelemen, "tooltip"));
+                                            true, subelemen.url, subelemen.title, subelemen.tooltip);
                                     }
 
-                                    if (GetProperty(subelemen, "type") == ContactCardSubElementType.SocialProfile.ToString())
+                                    if (subelemen.type == ContactCardSubElementType.SocialProfile.ToString())
                                     {
                                         profiles[ProfileType.SocialProfile] = new ProfileItem(
-                                            true, GetProperty(subelemen, "url"), GetProperty(subelemen, "title"), GetProperty(subelemen, "tooltip"));
+                                            true, subelemen.url, subelemen.title, subelemen.tooltip);
                                     }
                                 }
                             }
@@ -261,20 +259,68 @@ namespace MSNPSharp
                 request.refreshInformation.cid = dyItem.CID;
                 request.refreshInformation.market = CultureInfo.CurrentCulture.Name;
                 request.refreshInformation.updateAccessedTime = true;
-                request.refreshInformation.isActiveContact = true;
                 request.refreshInformation.brand = String.Empty;
                 request.refreshInformation.storageAuthCache = String.Empty;
                 request.refreshInformation.maxCharacterCount = maxcharcount.ToString();
                 request.refreshInformation.maxImageCount = maximagecount.ToString();
+                //"1753-01-01T00:00:00.0000000-00:00"
+                DateTime defaultTime = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.Utc);
 
-                if (dyItem.ProfileGleam)
+                //Active contact
+                if (dyItem.LiveContactLastChangedSpecified)
                 {
-                    request.refreshInformation.profileLastViewed = dyItem.ContactProfileLastViewed;
+                    request.refreshInformation.isActiveContact = true;
+                    request.refreshInformation.activeContactLastChanged = dyItem.LiveContactLastChanged;
+                    request.refreshInformation.activeContactLastChangedSpecified = true;
+                }
+                else
+                {
+                    request.refreshInformation.isActiveContact = false;
+                    request.refreshInformation.activeContactLastChangedSpecified = false;
                 }
 
-                if (dyItem.SpaceGleam)
+                //Profile
+                if (dyItem.ProfileGleam && dyItem.ProfileStatus == "Exist Access")
                 {
-                    request.refreshInformation.spaceLastViewed = dyItem.SpaceLastViewed;
+                    if (dyItem.ProfileLastViewSpecified)
+                    {
+                        request.refreshInformation.profileLastViewed = dyItem.ProfileLastView;
+                    }
+                    else
+                    {
+                        request.refreshInformation.profileLastViewed = defaultTime;
+                    }
+                    request.refreshInformation.profileLastViewedSpecified = true;
+                }
+
+                //Space
+                if (dyItem.SpaceGleam && dyItem.SpaceStatus == "Exist Access")
+                {
+                    if (dyItem.SpaceLastViewedSpecified)
+                    {
+                        request.refreshInformation.spaceLastViewed = dyItem.SpaceLastViewed;
+                    }
+                    else
+                    {
+                        request.refreshInformation.spaceLastViewed = defaultTime;
+                    }
+                    request.refreshInformation.spaceLastViewedSpecified = true;
+                }
+
+
+                //ContactProfile
+                if (dyItem.ContactProfileStatus == "Exist Access")
+                {
+                    if (dyItem.ContactProfileLastViewedSpecified)
+                    {
+                        request.refreshInformation.contactProfileLastViewed = dyItem.ContactProfileLastViewed;
+                    }
+                    else
+                    {
+                        request.refreshInformation.contactProfileLastViewed = defaultTime;
+                    }
+
+                    request.refreshInformation.contactProfileLastViewedSpecified = true;
                 }
 
                 service.GetXmlFeedAsync(request, new object());
@@ -291,6 +337,7 @@ namespace MSNPSharp
         /// <param name="nodes">SubElement object</param>
         /// <param name="name">Property name</param>
         /// <returns></returns>
+        [Obsolete]
         private string GetProperty(XmlNode[] nodes, string name)
         {
             foreach (XmlNode node in nodes)

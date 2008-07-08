@@ -395,7 +395,7 @@
     <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponse.datasource">
+    <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\MSNWS.MSNSpaceService\Reference.map">

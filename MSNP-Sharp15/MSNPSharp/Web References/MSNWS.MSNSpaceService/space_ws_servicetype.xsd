@@ -6,24 +6,6 @@
       <xs:element name="contactCard" type="spc:contactCardType" />
     </xs:sequence>
   </xs:complexType>
-  <xs:complexType name="refreshInformationType">
-    <xs:sequence>
-      <xs:element name="cid" type="xs:string" />
-      <xs:element name="storageAuthCache" type="xs:string" />
-      <xs:element name="market" type="xs:language" />
-      <xs:element name="brand" type="xs:string" />
-      <xs:element default="2" name="maxElementCount" type="xs:integer" />
-      <xs:element default="200" name="maxCharacterCount" type="xs:integer" />
-      <xs:element default="6" name="maxImageCount" type="xs:integer" />
-      <xs:element name="applicationId" type="xs:string" />
-      <xs:element default="true" name="updateAccessedTime" type="xs:boolean" />
-      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="spaceLastViewed" type="xs:dateTime" />
-      <xs:element name="isActiveContact" type="xs:boolean" />
-      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="profileLastViewed" type="xs:dateTime" />
-      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="contactProfileLastViewed" type="xs:dateTime" />
-      <xs:element minOccurs="0" default="1753-01-01T00:00:00.0000000-00:00" name="activeContactLastChanged" type="xs:dateTime" />
-    </xs:sequence>
-  </xs:complexType>
   <xs:element name="AuthTokenHeader">
     <xs:complexType>
       <xs:sequence>
@@ -37,11 +19,10 @@
       <xs:element name="refreshInformation" type="spc:refreshInformationType" />
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="GetXmlFeedResponse">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="GetXmlFeedResult" type="spc:GetXmlFeedResultType" />
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
+  <xs:element name="GetXmlFeedResponse" type="spc:GetXmlFeedResponseType" />
+  <xs:complexType name="GetXmlFeedResponseType">
+    <xs:sequence>
+      <xs:element name="GetXmlFeedResult" type="spc:GetXmlFeedResultType" />
+    </xs:sequence>
+  </xs:complexType>
 </xs:schema>
