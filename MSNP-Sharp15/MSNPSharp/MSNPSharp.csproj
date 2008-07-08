@@ -392,6 +392,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\WLXLarge_default.gif" />
+    <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
@@ -405,6 +408,15 @@
     </None>
     <None Include="Web References\MSNWS.MSNSpaceService\space_ws_servicetype.xsd">
       <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\CreateDocumentResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\CreateProfileResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\ShareItemResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
