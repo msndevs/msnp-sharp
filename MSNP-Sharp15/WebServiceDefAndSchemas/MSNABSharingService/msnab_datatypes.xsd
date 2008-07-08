@@ -505,13 +505,15 @@
 			<xsd:element name="Deleted" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
 			<xsd:element name="CID" type="xsd:string" minOccurs="0"/>
-			<xsd:element name="SpaceStatus" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="SpaceStatus" type="xsd:string"/>
 			<xsd:element name="SpaceLastChanged" type="xsd:dateTime" minOccurs="0"/>
 			<xsd:element name="SpaceLastViewed" type="xsd:dateTime" minOccurs="0"/>
 			<xsd:element name="SpaceGleam" type="xsd:boolean" minOccurs="0"/>
-			<xsd:element name="ProfileStatus" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="ProfileLastChanged" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="ProfileLastView" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="ProfileStatus" type="xsd:string"/>
 			<xsd:element name="ProfileGleam" type="xsd:boolean" minOccurs="0"/>
-			<xsd:element name="ContactProfileStatus" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="ContactProfileStatus" type="xsd:string"/>
 			<xsd:element name="ContactProfileLastChanged" type="xsd:dateTime" minOccurs="0"/>
 			<xsd:element name="ContactProfileLastViewed" type="xsd:dateTime" minOccurs="0"/>
 			<xsd:element name="Changes" type="xsd:string"/>
@@ -522,7 +524,7 @@
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="LiveContactLastChanged" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="LiveContactLastChanged" type="xsd:dateTime" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 </xsd:schema>
