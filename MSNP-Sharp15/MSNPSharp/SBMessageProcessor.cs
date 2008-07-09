@@ -69,7 +69,7 @@ namespace MSNPSharp
 		protected override void OnMessageReceived(byte[] data)
 		{
 			if(Settings.TraceSwitch.TraceVerbose)
-				System.Diagnostics.Trace.WriteLine("Message received "  +System.Text.UTF8Encoding.UTF8.GetString(data), "SBMessageProcessor");
+				System.Diagnostics.Trace.WriteLine("Message received \r\n"  +System.Text.UTF8Encoding.UTF8.GetString(data), "\r\nfrom SBMessageProcessor");
 
 			base.OnMessageReceived (data);			
 			

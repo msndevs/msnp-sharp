@@ -35,6 +35,7 @@ using System.Text.RegularExpressions;
 using System.Drawing;
 using MSNPSharp.Core;
 using MSNPSharp.DataTransfer;
+using System.Web;
 
 
 namespace MSNPSharp
@@ -180,9 +181,9 @@ namespace MSNPSharp
 				MSGMessage msgMessage = (MSGMessage)ParentMessage;
 				msgMessage.MimeHeader["Content-Type"] = "text/plain; charset=UTF-8";
 				msgMessage.MimeHeader["X-MMS-IM-Format"] = GetStyleString();
-				
-				if (customNickname != string.Empty)
-					msgMessage.MimeHeader["P4-Context"] = customNickname;
+
+                if (customNickname != string.Empty)
+                    msgMessage.MimeHeader["P4-Context"] = customNickname;
 			}
 		}
 
@@ -194,7 +195,7 @@ namespace MSNPSharp
 		protected string GetStyleString()
 		{
 			StringBuilder builder = new StringBuilder();
-			builder.Append("FN=").Append(Font.ToString());
+            builder.Append("FN=").Append(HttpUtility.UrlEncode(Font.ToString()));
 			builder.Append("; EF=");
 			if(((int)Decorations & (int)TextDecorations.Italic) > 0) builder.Append('I');
 			if(((int)Decorations & (int)TextDecorations.Bold)   > 0) builder.Append('B');
@@ -236,7 +237,7 @@ namespace MSNPSharp
 				Match match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "FN=(?<Font>.+?);", RegexOptions.Multiline );
 				if(match.Success)
 				{
-					Font = System.Web.HttpUtility.UrlDecode(match.Groups["Font"].ToString());
+					Font = HttpUtility.UrlDecode(match.Groups["Font"].ToString());
 				}			
 				match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "EF=(?<Decoration>\\S*);", RegexOptions.Multiline );
 				if(match.Success)
@@ -295,7 +296,7 @@ namespace MSNPSharp
 		/// <returns></returns>
 		public override string ToString()
 		{
-			return "[TextMessage] " + Text;
+			return "[TextMessage] : \r\n" + Text;
 		}
 
 
