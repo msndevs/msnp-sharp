@@ -1495,7 +1495,7 @@ namespace MSNPSharp
                                 Contact updateContact = ContactList.GetContact(account, type);
                                 updateContact.SetName(displayName);
                                 if (!updateContact.HasLists(list))
-                                    updateContact.AddToList(list);
+                                    updateContact.AddToList(list);  //What about reverse adding ? Not fire OnReverseAdded ?
                             }
                             else
                             {

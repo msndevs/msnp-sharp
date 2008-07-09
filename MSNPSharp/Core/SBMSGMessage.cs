@@ -78,6 +78,50 @@ namespace MSNPSharp.Core
             return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
         }
 
+
+        protected StrDictionary ParseMime(IEnumerator enumerator, byte[] data)
+        {
+            StrDictionary table = new StrDictionary();
+
+            string name = null;
+            string val = null;
+
+            int startpos=0;
+            int endpos=0;
+
+            while (enumerator.MoveNext())
+            {
+                if ((byte)enumerator.Current == 13)
+                {
+                    // no name specified -> end of header (presumably \r\n\r\n)
+                    if (startpos == endpos)
+                    {
+                        enumerator.MoveNext();
+                        return table;
+                    }
+
+                    val = Encoding.UTF8.GetString(data, startpos, endpos -startpos);
+
+                    if (!table.ContainsKey(name))
+                        table.Add(name, val);
+
+                    startpos = endpos + 2;
+                }
+                else if ((byte)enumerator.Current == 58) //:
+                {
+                    name = Encoding.UTF8.GetString(data, startpos, endpos - startpos);
+                    startpos = endpos + 2;
+                    enumerator.MoveNext();
+                    endpos++;
+                }
+                endpos++;
+            }
+
+            return table;
+        }
+
+
+        [Obsolete]
         protected StrDictionary ParseMime(IEnumerator enumerator)
         {
             StrDictionary table = new StrDictionary();
@@ -127,7 +171,7 @@ namespace MSNPSharp.Core
         {
             // parse the header
             IEnumerator enumerator = data.GetEnumerator();
-            mimeHeader = ParseMime(enumerator);
+            mimeHeader = ParseMime(enumerator,data);
 
             // get the rest of the message
             MemoryStream memStream = new MemoryStream();
@@ -137,6 +181,7 @@ namespace MSNPSharp.Core
             InnerBody = memStream.ToArray();
             memStream.Close();
         }
+
 
         public override string ToString()
         {
