@@ -484,8 +484,8 @@ namespace MSNPSharp
                     domtelElement.AppendChild(contactElement);
                     domaincontactcount++;
                 }
-
-                if (domaincontactcount > 100 && mlElement.OuterXml.Length > 7300)
+                //domaincontactcount > 100 will leads to bug if it's less than 100 and mlElement.OuterXml.Length > 7300, it's possible...someone just report this problem..
+                if (/*domaincontactcount > 100 &&*/ mlElement.OuterXml.Length > 7300)  
                 {
                     mlElement.AppendChild(domtelElement);
                     mls.Add(mlElement.OuterXml);
