@@ -1,6 +1,6 @@
-#region Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
+#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
 /*
-Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
@@ -390,6 +390,34 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Offline message service.
+        /// </summary>
+        /// <remarks>
+        /// This property is a reference to the OIMService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
+        /// </remarks>
+        public OIMService OIMService
+        {
+            get
+            {
+                return nsMessageHandler.OIMService;
+            }
+        }
+
+        /// <summary>
+        /// Space contactcard service.
+        /// </summary>
+        /// <remarks>
+        /// This property is a reference to the SpaceService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
+        /// </remarks>
+        public ContactSpaceService SpaceService
+        {
+            get
+            {
+                return nsMessageHandler.SpaceService;
+            }
+        }
+
+        /// <summary>
         /// The local user logged into the network.
         /// </summary>
         /// <remarks>
@@ -467,7 +495,7 @@ namespace MSNPSharp
             Conversation conversation = new Conversation(this, sbHandler);
             tsConversations.Add(conversation);
 
-            conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);           
+            conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
             OnConversationCreated(conversation, this);
 
             return conversation;
