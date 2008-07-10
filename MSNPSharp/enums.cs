@@ -29,11 +29,12 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
 using System;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
+
     /// <summary>
     /// Specifies the type of proxy servers that can be used
     /// </summary>
@@ -111,6 +112,350 @@ namespace MSNPSharp
         /// The contact is idle.
         /// </summary>
         Idle
+    }
+
+    /// <summary>
+    /// Defines why a user has (been) signed off.
+    /// </summary>
+    /// <remarks>
+    /// <b>OtherClient</b> is used when this account has signed in from another location. <b>ServerDown</b> is used when the msn server is going down.
+    /// </remarks>
+    public enum SignedOffReason
+    {
+        /// <summary>
+        /// None.
+        /// </summary>
+        None,
+        /// <summary>
+        /// User logged in on the other client.
+        /// </summary>
+        OtherClient,
+        /// <summary>
+        /// Server went down.
+        /// </summary>
+        ServerDown
+    }
+
+    /// <summary>
+    /// One of the four lists used in the messenger network
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>AllowedList - all contacts who are allowed to see <i>your</i> status</item>
+    /// <item>ReverseList - all contacts who have <i>you</i> on <i>their</i> contactlist</item>
+    /// <item>ForwardList - all contacts in your contactlist. You can send messages to those people</item>
+    /// <item>BlockedList - all contacts who you have blocked</item>
+    /// </list>
+    /// </remarks>
+    [FlagsAttribute]
+    public enum MSNLists
+    {
+        /// <summary>
+        /// No msn list
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// All contacts in your contactlist.
+        /// </summary>
+        ForwardList = 1,
+        /// <summary>
+        /// All contacts who are allowed to see your status.
+        /// </summary>
+        AllowedList = 2,
+        /// <summary>
+        /// All contacts who you have blocked.
+        /// </summary>
+        BlockedList = 4,
+        /// <summary>
+        /// All contacts who have you on their contactlist.
+        /// </summary>
+        ReverseList = 8,
+        /// <summary>
+        /// All pending (for approval) contacts.
+        /// </summary>
+        PendingList = 16
+    }
+
+    /// <summary>
+    /// Defines the privacy mode of the owner of the contactlist
+    /// <list type="bullet">
+    /// <item>AllExceptBlocked - Allow all contacts to send you messages except those on your blocked list</item>
+    /// <item>NoneButAllowed - Reject all messages except those from people on your allow list</item></list>
+    /// </summary>
+    public enum PrivacyMode
+    {
+        /// <summary>
+        /// Unknown privacy mode.
+        /// </summary>
+        Unknown = 0,
+        /// <summary>
+        /// Allow all contacts to send you messages except those on your blocked list.
+        /// </summary>
+        AllExceptBlocked = 1,
+        /// <summary>
+        /// Reject all messages except those from people on your allow list.
+        /// </summary>
+        NoneButAllowed = 2
+    }
+
+    /// <summary>
+    /// Defines the way MSN handles with new contacts
+    /// <list type="bullet">
+    /// <item>PromptOnAdd - Notify the clientprogram when a contact adds you and let the program handle the response itself</item>
+    /// <item>AutomaticAdd - When someone adds you MSN will automatically add them on your list</item>
+    /// </list>
+    /// </summary>
+    public enum NotifyPrivacy
+    {
+        /// <summary>
+        /// Unknown notify privacy.
+        /// </summary>
+        Unknown = 0,
+        /// <summary>
+        /// Notify the clientprogram when a contact adds you and let the program handle the response itself.
+        /// </summary>
+        PromptOnAdd = 1,
+        /// <summary>
+        /// When someone adds you MSN will automatically add them on your list.
+        /// </summary>
+        AutomaticAdd = 2
+    }
+
+    /// <summary>
+    /// Use the same display picture and personal message wherever I sign in.
+    /// </summary>
+    public enum RoamLiveProperty
+    {
+        /// <summary>
+        /// Unspecified
+        /// </summary>
+        Unspecified = 0,
+
+        /// <summary>
+        /// Enabled
+        /// </summary>
+        Enabled = 1,
+
+        /// <summary>
+        /// Disabled
+        /// </summary>
+        Disabled = 2
+    }
+
+    /// <summary>
+    /// The functions a (remote) client supports.
+    /// </summary>
+    [FlagsAttribute]
+    public enum ClientCapacities : long
+    {
+        None = 0x00,
+        IsMobile = 0x01,
+        MsnExplorer8User = 0x02,
+        CanViewInkGIF = 0x04,
+        CanViewInkISF = 0x08,
+        CanVideoConference = 0x10,
+        CanMultiPacketMSG = 0x20,
+        IsMobileDevice = 0x40,
+        IsDirectDevice = 0x80,
+        HasMSNSpaces = 0x1000, // 0x001000
+        UsingXPMediaCenter = 0x2000,
+        CanDirectIM = 0x4000,
+        CanReceiveWinks = 0x8000,
+        CanMSNSearch = 0x10000,
+        IsBot = 0x20000,
+        CanReceiveVoiceClips = 0x40000,
+        CanSecureChannel = 0x80000,
+        CanSIP = 0x100000,
+        CanShareFolders = 0x400000,
+
+        CanHandleMSNC1 = 0x10000000, //MSN 6.0
+        CanHandleMSNC2 = 0x20000000, //MSN 6.1
+        CanHandleMSNC3 = 0x30000000, //MSN 6.2
+        CanHandleMSNC4 = 0x40000000, //MSN 7.0
+        CanHandleMSNC5 = 0x50000000, //MSN 7.5
+        CanHandleMSNC6 = 0x60000000, //MSN 8.0
+        CanHandleMSNC7 = 0x70000000, //MSN 8.1
+        CanHandleMSNC8 = 0x80000000, //MSN 8.5
+        CanHandleMSNC9 = 0x90000000, //MSN 9.0
+    }
+
+    /// <summary>
+    /// The text decorations messenger sends with a message
+    /// </summary>
+    [FlagsAttribute]
+    public enum TextDecorations
+    {
+        /// <summary>
+        /// No decoration.
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Bold.
+        /// </summary>
+        Bold = 1,
+        /// <summary>
+        /// Italic.
+        /// </summary>
+        Italic = 2,
+        /// <summary>
+        /// Underline.
+        /// </summary>
+        Underline = 4,
+        /// <summary>
+        /// Strike-trough.
+        /// </summary>
+        Strike = 8
+    }
+
+    /// <summary>
+    /// Types of media used on UBX command
+    /// </summary>
+    public enum MediaType
+    {
+        None = 0,
+        Music = 1,
+        Games = 2,
+        Office = 3
+    }
+
+    /// <summary>
+    /// A charset that can be used in a message.
+    /// </summary>
+    public enum MessageCharSet
+    {
+        /// <summary>
+        /// ANSI
+        /// </summary>
+        Ansi = 0,
+        /// <summary>
+        /// Default charset.
+        /// </summary>
+        Default = 1,
+        /// <summary>
+        /// Symbol.
+        /// </summary>
+        Symbol = 2,
+        /// <summary>
+        /// Mac.
+        /// </summary>
+        Mac = 77,
+        /// <summary>
+        /// Shiftjis.
+        /// </summary>
+        Shiftjis = 128,
+        /// <summary>
+        /// Hangeul.
+        /// </summary>
+        Hangeul = 129,
+        /// <summary>
+        /// Johab.
+        /// </summary>
+        Johab = 130,
+        /// <summary>
+        /// GB2312.
+        /// </summary>
+        GB2312 = 134,
+        /// <summary>
+        /// Chines Big 5.
+        /// </summary>
+        ChineseBig5 = 136,
+        /// <summary>
+        /// Greek.
+        /// </summary>
+        Greek = 161,
+        /// <summary>
+        /// Turkish.
+        /// </summary>
+        Turkish = 162,
+        /// <summary>
+        /// Vietnamese.
+        /// </summary>
+        Vietnamese = 163,
+        /// <summary>
+        /// Hebrew.
+        /// </summary>
+        Hebrew = 177,
+        /// <summary>
+        /// Arabic.
+        /// </summary>
+        Arabic = 178,
+        /// <summary>
+        /// Baltic.
+        /// </summary>
+        Baltic = 186,
+        /// <summary>
+        /// Russian.
+        /// </summary>
+        Russian = 204,
+        /// <summary>
+        /// Thai.
+        /// </summary>
+        Thai = 222,
+        /// <summary>
+        /// Eastern Europe.
+        /// </summary>
+        EastEurope = 238,
+        /// <summary>
+        /// OEM.
+        /// </summary>
+        Oem = 255
+    }
+
+    /// <summary>
+    /// Client Type
+    /// </summary>
+    public enum ClientType
+    {
+        /// <summary>
+        /// Passport member
+        /// </summary>
+        PassportMember = 1,
+
+        /// <summary>
+        /// Live Communication Server
+        /// </summary>
+        LCS = 2,
+
+        /// <summary>
+        /// Phone member
+        /// </summary>
+        PhoneMember = 4,
+
+        /// <summary>
+        /// Email member, currently Yahoo!
+        /// </summary>
+        EmailMember = 32
+    }
+
+    /// <summary>
+    /// Type of profiles that store in msn space.
+    /// </summary>
+    public enum ProfileType
+    {
+        GeneralProfile,
+        PublicProfile,
+        SocialProfile
+    }
+
+    /// <summary>
+    /// State of dynamicitems.
+    /// </summary>
+    public enum DynamicItemState
+    {
+        /// <summary>
+        /// The contact has no dynamic items.
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// The contact has changed his/her space or profiles. 
+        /// </summary>
+        HasNew,
+
+        /// <summary>
+        /// The contact has dynamic items but all of them are read.
+        /// </summary>
+        Viewed
     }
 
     /// <summary>
@@ -359,325 +704,4 @@ namespace MSNPSharp
         /// </summary>
         AccountNotOnThisServer = 931
     }
-
-
-    /// <summary>
-    /// One of the four lists used in the messenger network
-    /// </summary>
-    /// <remarks>
-    /// <list type="bullet">
-    /// <item>AllowedList - all contacts who are allowed to see <i>your</i> status</item>
-    /// <item>ReverseList - all contacts who have <i>you</i> on <i>their</i> contactlist</item>
-    /// <item>ForwardList - all contacts in your contactlist. You can send messages to those people</item>
-    /// <item>BlockedList - all contacts who you have blocked</item>
-    /// </list>
-    /// </remarks>
-    [FlagsAttribute]
-    public enum MSNLists
-    {
-        /// <summary>
-        /// No msn list
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// All contacts in your contactlist.
-        /// </summary>
-        ForwardList = 1,
-        /// <summary>
-        /// All contacts who are allowed to see your status.
-        /// </summary>
-        AllowedList = 2,
-        /// <summary>
-        /// All contacts who you have blocked.
-        /// </summary>
-        BlockedList = 4,
-        /// <summary>
-        /// All contacts who have you on their contactlist.
-        /// </summary>
-        ReverseList = 8,
-        /// <summary>
-        /// All pending (for approval) contacts.
-        /// </summary>
-        PendingList = 16
-    }
-
-    /// <summary>
-    /// Defines the privacy mode of the owner of the contactlist
-    /// <list type="bullet">
-    /// <item>AllExceptBlocked - Allow all contacts to send you messages except those on your blocked list</item>
-    /// <item>NoneButAllowed - Reject all messages except those from people on your allow list</item></list>
-    /// </summary>
-    public enum PrivacyMode
-    {
-        /// <summary>
-        /// Unknown privacy mode.
-        /// </summary>
-        Unknown = 0,
-        /// <summary>
-        /// Allow all contacts to send you messages except those on your blocked list.
-        /// </summary>
-        AllExceptBlocked = 1,
-        /// <summary>
-        /// Reject all messages except those from people on your allow list.
-        /// </summary>
-        NoneButAllowed = 2
-    }
-
-    /// <summary>
-    /// Defines the way MSN handles with new contacts
-    /// <list type="bullet">
-    /// <item>PromptOnAdd - Notify the clientprogram when a contact adds you and let the program handle the response itself</item>
-    /// <item>AutomaticAdd - When someone adds you MSN will automatically add them on your list</item>
-    /// </list>
-    /// </summary>
-    public enum NotifyPrivacy
-    {
-        /// <summary>
-        /// Unknown notify privacy.
-        /// </summary>
-        Unknown = 0,
-        /// <summary>
-        /// Notify the clientprogram when a contact adds you and let the program handle the response itself.
-        /// </summary>
-        PromptOnAdd = 1,
-        /// <summary>
-        /// When someone adds you MSN will automatically add them on your list.
-        /// </summary>
-        AutomaticAdd = 2
-    }
-
-    /// <summary>
-    /// Use the same display picture and personal message wherever I sign in.
-    /// </summary>
-    public enum RoamLiveProperty
-    {
-        /// <summary>
-        /// Unspecified
-        /// </summary>
-        Unspecified = 0,
-
-        /// <summary>
-        /// Enabled
-        /// </summary>
-        Enabled = 1,
-
-        /// <summary>
-        /// Disabled
-        /// </summary>
-        Disabled = 2
-    }
-
-    /// <summary>
-    /// The functions a (remote) client supports.
-    /// </summary>
-    [FlagsAttribute]
-    public enum ClientCapacities : long
-    {
-        None = 0x00,
-        IsMobile = 0x01,
-        MsnExplorer8User = 0x02,
-        CanViewInkGIF = 0x04,
-        CanViewInkISF = 0x08,
-        CanVideoConference = 0x10,
-        CanMultiPacketMSG = 0x20,
-        IsMobileDevice = 0x40,
-        IsDirectDevice = 0x80,
-        HasMSNSpaces = 0x1000, // 0x001000
-        UsingXPMediaCenter = 0x2000,
-        CanDirectIM = 0x4000,
-        CanReceiveWinks = 0x8000,
-        CanMSNSearch = 0x10000,
-        IsBot = 0x20000,
-        CanReceiveVoiceClips = 0x40000,
-        CanSecureChannel = 0x80000,
-        CanSIP = 0x100000,
-        CanShareFolders = 0x400000,
-
-        CanHandleMSNC1 = 0x10000000, //MSN 6.0
-        CanHandleMSNC2 = 0x20000000, //MSN 6.1
-        CanHandleMSNC3 = 0x30000000, //MSN 6.2
-        CanHandleMSNC4 = 0x40000000, //MSN 7.0
-        CanHandleMSNC5 = 0x50000000, //MSN 7.5
-        CanHandleMSNC6 = 0x60000000, //MSN 8.0
-        CanHandleMSNC7 = 0x70000000 //MSN 8.1
-    }
-
-    /// <summary>
-    /// The text decorations messenger sends with a message
-    /// </summary>
-    [FlagsAttribute]
-    public enum TextDecorations
-    {
-        /// <summary>
-        /// No decoration.
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Bold.
-        /// </summary>
-        Bold = 1,
-        /// <summary>
-        /// Italic.
-        /// </summary>
-        Italic = 2,
-        /// <summary>
-        /// Underline.
-        /// </summary>
-        Underline = 4,
-        /// <summary>
-        /// Strike-trough.
-        /// </summary>
-        Strike = 8
-    }
-
-    /// <summary>
-    /// Types of media used on UBX command
-    /// </summary>
-    public enum MediaType
-    {
-        None = 0,
-        Music = 1,
-        Games = 2,
-        Office = 3
-    }
-
-    /// <summary>
-    /// A charset that can be used in a message.
-    /// </summary>
-    public enum MessageCharSet
-    {
-        /// <summary>
-        /// ANSI
-        /// </summary>
-        Ansi = 0,
-        /// <summary>
-        /// Default charset.
-        /// </summary>
-        Default = 1,
-        /// <summary>
-        /// Symbol.
-        /// </summary>
-        Symbol = 2,
-        /// <summary>
-        /// Mac.
-        /// </summary>
-        Mac = 77,
-        /// <summary>
-        /// Shiftjis.
-        /// </summary>
-        Shiftjis = 128,
-        /// <summary>
-        /// Hangeul.
-        /// </summary>
-        Hangeul = 129,
-        /// <summary>
-        /// Johab.
-        /// </summary>
-        Johab = 130,
-        /// <summary>
-        /// GB2312.
-        /// </summary>
-        GB2312 = 134,
-        /// <summary>
-        /// Chines Big 5.
-        /// </summary>
-        ChineseBig5 = 136,
-        /// <summary>
-        /// Greek.
-        /// </summary>
-        Greek = 161,
-        /// <summary>
-        /// Turkish.
-        /// </summary>
-        Turkish = 162,
-        /// <summary>
-        /// Vietnamese.
-        /// </summary>
-        Vietnamese = 163,
-        /// <summary>
-        /// Hebrew.
-        /// </summary>
-        Hebrew = 177,
-        /// <summary>
-        /// Arabic.
-        /// </summary>
-        Arabic = 178,
-        /// <summary>
-        /// Baltic.
-        /// </summary>
-        Baltic = 186,
-        /// <summary>
-        /// Russian.
-        /// </summary>
-        Russian = 204,
-        /// <summary>
-        /// Thai.
-        /// </summary>
-        Thai = 222,
-        /// <summary>
-        /// Eastern Europe.
-        /// </summary>
-        EastEurope = 238,
-        /// <summary>
-        /// OEM.
-        /// </summary>
-        Oem = 255
-    }
-
-    /// <summary>
-    /// Client Type
-    /// </summary>
-    public enum ClientType
-    {
-        /// <summary>
-        /// Passport member
-        /// </summary>
-        PassportMember = 1,
-
-        /// <summary>
-        /// Live Communication Server
-        /// </summary>
-        LCS = 2,
-
-        /// <summary>
-        /// Phone member
-        /// </summary>
-        PhoneMember = 4,
-
-        /// <summary>
-        /// Email member, currently Yahoo!
-        /// </summary>
-        EmailMember = 32
-    }
-
-    /// <summary>
-    /// Type of profiles that store in msn space.
-    /// </summary>
-    public enum ProfileType
-    {
-        GeneralProfile,
-        PublicProfile,
-        SocialProfile
-    }
-
-    /// <summary>
-    /// State of dynamicitems.
-    /// </summary>
-    public enum DynamicItemState
-    {
-        /// <summary>
-        /// The contact has no dynamic items.
-        /// </summary>
-        None,
-
-        /// <summary>
-        /// The contact has changed his/her space or profiles. 
-        /// </summary>
-        HasNew,
-
-        /// <summary>
-        /// The contact has dynamic items but all of them are read.
-        /// </summary>
-        Viewed
-    }
-}
+};

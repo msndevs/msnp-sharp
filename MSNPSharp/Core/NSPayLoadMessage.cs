@@ -23,7 +23,7 @@ namespace MSNPSharp.Core
     /// </item>
     /// <item>
     /// FQY
-    /// <description>Query client's online status </description>
+    /// <description>Query client's network types except PassportMember</description>
     /// </item>
     /// <item>
     /// QRY

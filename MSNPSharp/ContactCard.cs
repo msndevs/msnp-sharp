@@ -35,7 +35,7 @@ namespace MSNPSharp
 
         private string displayName = string.Empty;
         private string mail = string.Empty;
-        private Image displayImage = Properties.Resources.WLXLarge_default;
+        private string displayImageUrl = String.Empty;
         private ContactCardItem space = null;
         private Album album = null;
         private ContactCardItem newPost = null;
@@ -49,21 +49,30 @@ namespace MSNPSharp
         /// </summary>
         public string DisplayName
         {
-            get { return displayName; }
+            get
+            {
+                return displayName;
+            }
         }
 
 
         public string Mail
         {
-            get { return mail; }
+            get
+            {
+                return mail;
+            }
         }
 
         /// <summary>
         /// The display image of contact that stored in the space.
         /// </summary>
-        public Image DisplayImage
+        public string DisplayImageUrl
         {
-            get { return displayImage; }
+            get
+            {
+                return displayImageUrl;
+            }
         }
 
 
@@ -72,7 +81,10 @@ namespace MSNPSharp
         /// </summary>
         public ContactCardItem Space
         {
-            get { return space; }
+            get
+            {
+                return space;
+            }
         }
 
         /// <summary>
@@ -80,7 +92,10 @@ namespace MSNPSharp
         /// </summary>
         public Album Album
         {
-            get { return album; }
+            get
+            {
+                return album;
+            }
         }
 
         /// <summary>
@@ -88,7 +103,10 @@ namespace MSNPSharp
         /// </summary>
         public ContactCardItem NewPost
         {
-            get { return newPost; }
+            get
+            {
+                return newPost;
+            }
         }
 
         /// <summary>
@@ -96,13 +114,17 @@ namespace MSNPSharp
         /// </summary>
         public Dictionary<ProfileType, ProfileItem> Profiles
         {
-            get { return profiles; }
+            get
+            {
+                return profiles;
+            }
         }
         #endregion
 
-        public ContactCard(string displayname, string account, ContactCardItem spacetitle)
+        public ContactCard(string displayname, string displayimageurl, string account, ContactCardItem spacetitle)
         {
             displayName = displayname;
+            displayImageUrl = displayimageurl;
             mail = account;
             space = spacetitle;
         }
@@ -117,6 +139,11 @@ namespace MSNPSharp
         {
             album = value;
         }
+
+        internal void SetProfiles(Dictionary<ProfileType, ProfileItem> p)
+        {
+            profiles = p;
+        }
         #endregion
     }
 
@@ -129,7 +156,7 @@ namespace MSNPSharp
         private string _url = string.Empty;
         private string _description = string.Empty;
         private string _title = string.Empty;
-        private string _toolTip = string.Empty; 
+        private string _toolTip = string.Empty;
         #endregion
 
         #region Properties
@@ -139,7 +166,10 @@ namespace MSNPSharp
         /// </summary>
         public string Url
         {
-            get { return _url; }
+            get
+            {
+                return _url;
+            }
         }
 
         /// <summary>
@@ -152,7 +182,10 @@ namespace MSNPSharp
         /// </summary>
         public string Description
         {
-            get { return _description; }
+            get
+            {
+                return _description;
+            }
         }
 
         /// <summary>
@@ -165,7 +198,10 @@ namespace MSNPSharp
         /// </summary>
         public string Title
         {
-            get { return _title; }
+            get
+            {
+                return _title;
+            }
         }
 
         /// <summary>
@@ -176,11 +212,16 @@ namespace MSNPSharp
         /// </summary>
         public string ToolTip
         {
-            get { return _toolTip; }
-        } 
+            get
+            {
+                return _toolTip;
+            }
+        }
         #endregion
 
-        protected ContactCardItem() { }
+        protected ContactCardItem()
+        {
+        }
         public ContactCardItem(string url, string desc, string title, string tooltip)
         {
             _url = url;
@@ -193,10 +234,10 @@ namespace MSNPSharp
     /// <summary>
     /// A Thumbnail of space photo.
     /// </summary>
-    public class ThumbnailImage:ContactCardItem
+    public class ThumbnailImage : ContactCardItem
     {
         private string albumName = string.Empty;
-        private Image image = null;
+        private string thumbnailUrl = string.Empty;
 
         #region Properties
 
@@ -205,22 +246,28 @@ namespace MSNPSharp
         /// </summary>
         public string AlbumName
         {
-            get { return albumName; }
+            get
+            {
+                return albumName;
+            }
         }
 
         /// <summary>
-        /// Thumbnail image
+        /// Thumbnail URL
         /// </summary>
-        public Image Image
+        public string ThumbnailUrl
         {
-            get { return image; }
-        } 
+            get
+            {
+                return thumbnailUrl;
+            }
+        }
         #endregion
 
-        public ThumbnailImage(string url, Image img, string album, string title, string desc, string tooltip)
+        public ThumbnailImage(string url, string thumbnailurl, string album, string title, string desc, string tooltip)
             : base(url, desc, title, tooltip)
         {
-            image = img;
+            thumbnailUrl = thumbnailurl;
             albumName = album;
         }
 
@@ -245,7 +292,10 @@ namespace MSNPSharp
         /// </summary>
         public List<ThumbnailImage> Photos
         {
-            get { return photos; }
+            get
+            {
+                return photos;
+            }
         }
 
         public Album(string title, string url)
@@ -263,7 +313,10 @@ namespace MSNPSharp
 
         public bool HasUpdated
         {
-            get { return hasUpdated; }
+            get
+            {
+                return hasUpdated;
+            }
         }
 
         public ProfileItem(bool updated, string url, string title, string tooltip)

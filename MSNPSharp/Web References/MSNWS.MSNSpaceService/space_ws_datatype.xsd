@@ -5,27 +5,23 @@
       <xs:element name="title" type="xs:string" />
       <xs:element name="url" type="xs:string" />
       <xs:element name="totalNewItems" type="xs:integer" />
-      <xs:sequence minOccurs="0" maxOccurs="unbounded">
-        <xs:element name="subElement" type="xs:anyType" />
-      </xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="subElement" type="sns:subelementBaseType" />
     </xs:sequence>
     <xs:attribute name="type" type="xs:string" />
   </xs:complexType>
-  <xs:complexType name="subelementType">
+  <xs:complexType name="subelementBaseType">
     <xs:sequence>
       <xs:element name="description" type="xs:string" />
       <xs:element name="tooltip" type="xs:string" />
       <xs:element name="title" type="xs:string" />
       <xs:element name="url" type="xs:string" />
-      <xs:element minOccurs="0" name="thumbnailUrl" type="xs:string" />
-      <xs:element minOccurs="0" name="webReadyUrl" type="xs:string" />
-      <xs:element minOccurs="0" name="albumName" type="xs:string" />
     </xs:sequence>
-    <xs:anyAttribute namespace="##other" />
+    <xs:attribute name="lastUpdated" type="xs:dateTime" />
+    <xs:attribute name="type" type="xs:string" />
   </xs:complexType>
   <xs:complexType name="elementsType">
-    <xs:sequence minOccurs="0" maxOccurs="unbounded">
-      <xs:element name="element" type="sns:elementType" />
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="element" type="sns:elementType" />
     </xs:sequence>
     <xs:attribute name="totalMatches" type="xs:integer" />
     <xs:attribute name="returnedMatches" type="xs:integer" />
@@ -95,17 +91,42 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+  <xs:complexType name="refreshInformationType">
+    <xs:sequence>
+      <xs:element name="cid" type="xs:string" />
+      <xs:element name="storageAuthCache" type="xs:string" />
+      <xs:element name="market" type="xs:language" />
+      <xs:element name="brand" type="xs:string" />
+      <xs:element default="2" name="maxElementCount" type="xs:integer" />
+      <xs:element default="200" name="maxCharacterCount" type="xs:integer" />
+      <xs:element default="6" name="maxImageCount" type="xs:integer" />
+      <xs:element name="applicationId" type="xs:string" />
+      <xs:element default="true" name="updateAccessedTime" type="xs:boolean" />
+      <xs:element minOccurs="0" name="spaceLastViewed" type="xs:dateTime" />
+      <xs:element name="isActiveContact" type="xs:boolean" />
+      <xs:element minOccurs="0" name="profileLastViewed" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="contactProfileLastViewed" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="activeContactLastChanged" type="xs:dateTime" />
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="contactCardType">
     <xs:sequence>
       <xs:element name="storageAuthCache" type="xs:string" />
       <xs:element name="elements" type="sns:elementsType" />
       <xs:element name="theme" type="sns:themeType" />
       <xs:element name="liveTheme" type="sns:liveThemeType" />
+      <xs:element name="lastUpdate" type="xs:dateTime" />
     </xs:sequence>
   </xs:complexType>
-  <xs:complexType name="subelementType2">
+  <xs:complexType name="spaceContactCardElementsElementPhotoSubElement">
     <xs:complexContent mixed="false">
-      <xs:extension base="xs:anyType" />
+      <xs:extension base="sns:subelementBaseType">
+        <xs:sequence>
+          <xs:element name="thumbnailUrl" type="xs:string" />
+          <xs:element name="webReadyUrl" type="xs:string" />
+          <xs:element name="albumName" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 </xs:schema>

@@ -21,6 +21,9 @@ namespace MSNPSharp.IO
         [NonSerialized]
         private string fileName;
 
+        [NonSerialized]
+        NSMessageHandler nsMessageHandler;
+
         private string version = "1.0";
 
         public MCLSerializer()
@@ -51,16 +54,34 @@ namespace MSNPSharp.IO
             }
         }
 
+        protected NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return nsMessageHandler;
+            }
+            set
+            {
+                nsMessageHandler = value;
+            }
+        }
+
         /// <summary>
         /// The version of serialized object in the mcl file.
         /// </summary>
         public string Version
         {
-            get { return version; }
-            set { version = value; }
+            get
+            {
+                return version;
+            }
+            set
+            {
+                version = value;
+            }
         }
 
-        protected static object LoadFromFile(string filename, bool nocompress,Type targettype)
+        protected static object LoadFromFile(string filename, bool nocompress, Type targettype, NSMessageHandler handler)
         {
             object rtnobj = Activator.CreateInstance(targettype);
             if (File.Exists(filename))
@@ -74,10 +95,12 @@ namespace MSNPSharp.IO
                 }
             }
 
-            if (targettype.IsSubclassOf(typeof(MCLSerializer)))   //Subclass of MCLSerializer, set the default NoCompress and FileName properties
+            // Subclass of MCLSerializer, set the default properties
+            if (targettype.IsSubclassOf(typeof(MCLSerializer)))
             {
                 ((MCLSerializer)rtnobj).NoCompress = nocompress;
                 ((MCLSerializer)rtnobj).FileName = filename;
+                ((MCLSerializer)rtnobj).NSMessageHandler = handler;
             }
             return rtnobj;
         }
@@ -112,4 +135,4 @@ namespace MSNPSharp.IO
 
         #endregion
     }
-}
+};

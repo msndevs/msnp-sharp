@@ -27,6 +27,7 @@ namespace MSNPSharp.MSNWS.MSNRSIService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="RSIBinding", Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(GetMetadataResponseType))]
     public partial class RSIService : System.Web.Services.Protocols.SoapHttpClientProtocol {
         
         private PassportCookie passportCookieValueField;
@@ -96,11 +97,11 @@ namespace MSNPSharp.MSNWS.MSNRSIService {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("PassportCookieValue")]
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.hotmail.msn.com/ws/2004/09/oim/rsi/GetMetadata", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
-        [return: System.Xml.Serialization.XmlElementAttribute("GetMetadataResponseString", Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
-        public string GetMetadata([System.Xml.Serialization.XmlElementAttribute("GetMetadata", Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")] GetMetadataRequestType GetMetadata1) {
+        [return: System.Xml.Serialization.XmlElementAttribute("GetMetadataResponse", Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
+        public object GetMetadata([System.Xml.Serialization.XmlElementAttribute("GetMetadata", Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")] GetMetadataRequestType GetMetadata1) {
             object[] results = this.Invoke("GetMetadata", new object[] {
                         GetMetadata1});
-            return ((string)(results[0]));
+            return ((object)(results[0]));
         }
         
         /// <remarks/>
@@ -330,6 +331,241 @@ namespace MSNPSharp.MSNWS.MSNRSIService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
+    public partial class GetMetadataResponseType {
+        
+        private MetaData mdField;
+        
+        /// <remarks/>
+        public MetaData MD {
+            get {
+                return this.mdField;
+            }
+            set {
+                this.mdField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
+    public partial class MetaData {
+        
+        private MetadataMessage[] mField;
+        
+        private MetaDataQ qField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("M")]
+        public MetadataMessage[] M {
+            get {
+                return this.mField;
+            }
+            set {
+                this.mField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public MetaDataQ Q {
+            get {
+                return this.qField;
+            }
+            set {
+                this.qField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
+    public partial class MetadataMessage {
+        
+        private string tField;
+        
+        private string sField;
+        
+        private System.DateTime rtField;
+        
+        private bool rtFieldSpecified;
+        
+        private bool rsField;
+        
+        private string szField;
+        
+        private string eField;
+        
+        private string iField;
+        
+        private string fField;
+        
+        private string nField;
+        
+        private string suField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string T {
+            get {
+                return this.tField;
+            }
+            set {
+                this.tField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string S {
+            get {
+                return this.sField;
+            }
+            set {
+                this.sField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime RT {
+            get {
+                return this.rtField;
+            }
+            set {
+                this.rtField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool RTSpecified {
+            get {
+                return this.rtFieldSpecified;
+            }
+            set {
+                this.rtFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool RS {
+            get {
+                return this.rsField;
+            }
+            set {
+                this.rsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string SZ {
+            get {
+                return this.szField;
+            }
+            set {
+                this.szField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string E {
+            get {
+                return this.eField;
+            }
+            set {
+                this.eField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string I {
+            get {
+                return this.iField;
+            }
+            set {
+                this.iField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string F {
+            get {
+                return this.fField;
+            }
+            set {
+                this.fField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string N {
+            get {
+                return this.nField;
+            }
+            set {
+                this.nField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string SU {
+            get {
+                return this.suField;
+            }
+            set {
+                this.suField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
+    public partial class MetaDataQ {
+        
+        private string qTMField;
+        
+        private string qNMField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string QTM {
+            get {
+                return this.qTMField;
+            }
+            set {
+                this.qTMField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string QNM {
+            get {
+                return this.qNMField;
+            }
+            set {
+                this.qNMField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
     public partial class GetMetadataRequestType {
     }
     
@@ -351,10 +587,10 @@ namespace MSNPSharp.MSNWS.MSNRSIService {
         }
         
         /// <remarks/>
-        public string Result {
+        public object Result {
             get {
                 this.RaiseExceptionIfNecessary();
-                return ((string)(this.results[0]));
+                return ((object)(this.results[0]));
             }
         }
     }

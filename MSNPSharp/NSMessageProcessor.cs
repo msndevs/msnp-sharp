@@ -35,51 +35,53 @@ using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	public class NSMessageProcessor : SocketMessageProcessor
-	{
-		int transactionID = 1;
-		
-		public event ProcessorExceptionEventHandler	HandlerException;
+    public class NSMessageProcessor : SocketMessageProcessor
+    {
+        int transactionID = 1;
 
-		private NSMessageProcessor()
-		{
-			MessagePool = new NSMessagePool();	
-		}
-		
-		public int TransactionID
-		{
-			get { 
-				return transactionID; 
-			}
-			set { 
-				transactionID = value;
-			}
-		}
+        public event ProcessorExceptionEventHandler HandlerException;
 
-		protected int IncreaseTransactionID()
-		{
-			transactionID++;
-			return transactionID;
-		}
+        private NSMessageProcessor()
+        {
+            MessagePool = new NSMessagePool();
+        }
 
-		protected override void OnMessageReceived(byte[] data)
-		{
-			base.OnMessageReceived (data);
-			
-			NSMessage message = new NSMessage();
+        public int TransactionID
+        {
+            get
+            {
+                return transactionID;
+            }
+            set
+            {
+                transactionID = value;
+            }
+        }
 
-			// trace that we will be parsing
-			System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command..", "NSMessageProcessor");
+        protected int IncreaseTransactionID()
+        {
+            transactionID++;
+            return transactionID;
+        }
 
-			// parse the incoming data
-			message.ParseBytes(data);
+        protected override void OnMessageReceived(byte[] data)
+        {
+            base.OnMessageReceived(data);
 
-			// trace and dispatch the message
-			if(Settings.TraceSwitch.TraceInfo)
-				System.Diagnostics.Trace.WriteLine("Dispatching incoming NS command : " + System.Text.Encoding.UTF8.GetString(data)/*message.ToDebugString()*/, "NSMessageProcessor");
-			
-			DispatchMessage(message);
-		}
+            NSMessage message = new NSMessage();
+
+            // trace that we will be parsing
+            System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command..", "NSMessageProcessor");
+
+            // parse the incoming data
+            message.ParseBytes(data);
+
+            // trace and dispatch the message
+            if (Settings.TraceSwitch.TraceInfo)
+                System.Diagnostics.Trace.WriteLine("Dispatching incoming NS command : " + System.Text.Encoding.UTF8.GetString(data)/*message.ToDebugString()*/, "NSMessageProcessor");
+
+            DispatchMessage(message);
+        }
 
         public override void SendMessage(NetworkMessage message)
         {
@@ -96,31 +98,32 @@ namespace MSNPSharp
             SendSocketData(message.GetBytes());
         }
 
-		public override void Disconnect()
-		{
-			SendMessage(new NSMessage("OUT", new string[]{}));
+        public override void Disconnect()
+        {
+            SendMessage(new NSMessage("OUT", new string[] { }));
+            System.Threading.Thread.Sleep(100);
             base.Disconnect();
-		}
+        }
 
-		protected virtual void DispatchMessage(NetworkMessage message)
-		{
-			// copy the messageHandlers array because the collection can be 
-			// modified during the message handling. (Handlers are registered/unregistered)
-			IMessageHandler[] handlers = MessageHandlers.ToArray ();
+        protected virtual void DispatchMessage(NetworkMessage message)
+        {
+            // copy the messageHandlers array because the collection can be 
+            // modified during the message handling. (Handlers are registered/unregistered)
+            IMessageHandler[] handlers = MessageHandlers.ToArray();
 
-			// now give the handlers the opportunity to handle the message
-			foreach(IMessageHandler handler in handlers)
-			{
-				try
-				{
-					handler.HandleMessage(this, message);
-				}
-				catch(Exception e)
-				{
-					if(HandlerException != null)
-						HandlerException(this, new ExceptionEventArgs(new MSNPSharpException("An exception occured while handling a nameserver message. See inner exception for more details.", e)));
-				}
-			}
-		}
-	}
-}
+            // now give the handlers the opportunity to handle the message
+            foreach (IMessageHandler handler in handlers)
+            {
+                try
+                {
+                    handler.HandleMessage(this, message);
+                }
+                catch (Exception e)
+                {
+                    if (HandlerException != null)
+                        HandlerException(this, new ExceptionEventArgs(new MSNPSharpException("An exception occured while handling a nameserver message. See inner exception for more details.", e)));
+                }
+            }
+        }
+    }
+};

@@ -13,7 +13,7 @@
 // 
 #pragma warning disable 1591
 
-namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
+namespace MSNPSharp.MSNWS.MSNSpaceService {
     using System.Diagnostics;
     using System.Web.Services;
     using System.ComponentModel;
@@ -27,7 +27,6 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="SpaceServiceBinding", Namespace="http://www.msn.com/webservices/spaces/v1/")]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(subelementType))]
     public partial class SpaceService : System.Web.Services.Protocols.SoapHttpClientProtocol {
         
         private AuthTokenHeader authTokenHeaderValueField;
@@ -38,7 +37,7 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         
         /// <remarks/>
         public SpaceService() {
-            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNSPACEWS_MSNSpaceService_SpaceService;
+            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNWS_MSNSpaceService_SpaceService;
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
@@ -88,10 +87,10 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         [System.Web.Services.Protocols.SoapHeaderAttribute("AuthTokenHeaderValue")]
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/spaces/v1/GetXmlFeed", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
         [return: System.Xml.Serialization.XmlElementAttribute("GetXmlFeedResponse", Namespace="http://www.msn.com/webservices/spaces/v1/")]
-        public GetXmlFeedResponse GetXmlFeed([System.Xml.Serialization.XmlElementAttribute("GetXmlFeed", Namespace="http://www.msn.com/webservices/spaces/v1/")] GetXmlFeedRequestType GetXmlFeed1) {
+        public GetXmlFeedResponseType GetXmlFeed([System.Xml.Serialization.XmlElementAttribute("GetXmlFeed", Namespace="http://www.msn.com/webservices/spaces/v1/")] GetXmlFeedRequestType GetXmlFeed1) {
             object[] results = this.Invoke("GetXmlFeed", new object[] {
                         GetXmlFeed1});
-            return ((GetXmlFeedResponse)(results[0]));
+            return ((GetXmlFeedResponseType)(results[0]));
         }
         
         /// <remarks/>
@@ -561,12 +560,13 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
     }
     
     /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(spaceContactCardElementsElementPhotoSubElement))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/spaces/v1/")]
-    public partial class subelementType {
+    public partial class subelementBaseType {
         
         private string descriptionField;
         
@@ -576,13 +576,11 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         
         private string urlField;
         
-        private string thumbnailUrlField;
+        private System.DateTime lastUpdatedField;
         
-        private string webReadyUrlField;
+        private bool lastUpdatedFieldSpecified;
         
-        private string albumNameField;
-        
-        private System.Xml.XmlAttribute[] anyAttrField;
+        private string typeField;
         
         /// <remarks/>
         public string description {
@@ -625,6 +623,54 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         }
         
         /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime lastUpdated {
+            get {
+                return this.lastUpdatedField;
+            }
+            set {
+                this.lastUpdatedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool lastUpdatedSpecified {
+            get {
+                return this.lastUpdatedFieldSpecified;
+            }
+            set {
+                this.lastUpdatedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/spaces/v1/")]
+    public partial class spaceContactCardElementsElementPhotoSubElement : subelementBaseType {
+        
+        private string thumbnailUrlField;
+        
+        private string webReadyUrlField;
+        
+        private string albumNameField;
+        
+        /// <remarks/>
         public string thumbnailUrl {
             get {
                 return this.thumbnailUrlField;
@@ -653,17 +699,6 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
                 this.albumNameField = value;
             }
         }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
-        public System.Xml.XmlAttribute[] AnyAttr {
-            get {
-                return this.anyAttrField;
-            }
-            set {
-                this.anyAttrField = value;
-            }
-        }
     }
     
     /// <remarks/>
@@ -680,7 +715,7 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         
         private string totalNewItemsField;
         
-        private object[] subElementField;
+        private subelementBaseType[] subElementField;
         
         private string typeField;
         
@@ -717,7 +752,7 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("subElement")]
-        public object[] subElement {
+        public subelementBaseType[] subElement {
             get {
                 return this.subElementField;
             }
@@ -828,6 +863,8 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         
         private liveThemeType liveThemeField;
         
+        private System.DateTime lastUpdateField;
+        
         /// <remarks/>
         public string storageAuthCache {
             get {
@@ -867,6 +904,16 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
                 this.liveThemeField = value;
             }
         }
+        
+        /// <remarks/>
+        public System.DateTime lastUpdate {
+            get {
+                return this.lastUpdateField;
+            }
+            set {
+                this.lastUpdateField = value;
+            }
+        }
     }
     
     /// <remarks/>
@@ -886,6 +933,27 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
             }
             set {
                 this.contactCardField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/spaces/v1/")]
+    public partial class GetXmlFeedResponseType {
+        
+        private GetXmlFeedResultType getXmlFeedResultField;
+        
+        /// <remarks/>
+        public GetXmlFeedResultType GetXmlFeedResult {
+            get {
+                return this.getXmlFeedResultField;
+            }
+            set {
+                this.getXmlFeedResultField = value;
             }
         }
     }
@@ -1152,27 +1220,6 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/spaces/v1/")]
-    public partial class GetXmlFeedResponse {
-        
-        private GetXmlFeedResultType getXmlFeedResultField;
-        
-        /// <remarks/>
-        public GetXmlFeedResultType GetXmlFeedResult {
-            get {
-                return this.getXmlFeedResultField;
-            }
-            set {
-                this.getXmlFeedResultField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
     public delegate void GetXmlFeedCompletedEventHandler(object sender, GetXmlFeedCompletedEventArgs e);
     
@@ -1190,10 +1237,10 @@ namespace MSNPSharp.MSNSPACEWS.MSNSpaceService {
         }
         
         /// <remarks/>
-        public GetXmlFeedResponse Result {
+        public GetXmlFeedResponseType Result {
             get {
                 this.RaiseExceptionIfNecessary();
-                return ((GetXmlFeedResponse)(this.results[0]));
+                return ((GetXmlFeedResponseType)(this.results[0]));
             }
         }
     }

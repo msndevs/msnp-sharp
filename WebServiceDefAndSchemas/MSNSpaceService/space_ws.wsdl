@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
-<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://www.msn.com/webservices/spaces/v1/" xmlns:ns="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://www.msn.com/webservices/spaces/v1/">
+<definitions xmlns:tns="http://www.msn.com/webservices/spaces/v1/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ns="http://schemas.xmlsoap.org/soap/encoding/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://www.msn.com/webservices/spaces/v1/">
 	<types>
 		<xs:schema xmlns="http://www.w3.org/2001/XMLSchema">
 			<xs:import schemaLocation="space_ws_servicetype.xsd" namespace="http://www.msn.com/webservices/spaces/v1/"/>

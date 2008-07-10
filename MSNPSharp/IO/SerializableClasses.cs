@@ -1,12 +1,12 @@
 using System;
-using System.Collections.Generic;
+using System.Xml;
 using System.Text;
+using System.Collections.Generic;
 
 namespace MSNPSharp.IO
 {
     using MemberRole = MSNPSharp.MSNWS.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNWS.MSNABSharingService.ServiceFilterType;
-using System.Xml;
 
     #region Contact Types
 
@@ -141,7 +141,7 @@ using System.Xml;
         }
     }
 
-        #endregion
+    #endregion
 
     /// <summary>
     /// Contact type for membership list
@@ -256,6 +256,7 @@ using System.Xml;
     /// <summary>
     /// DynamicItem indicates whether the contact space or profile has been updated
     /// </summary>
+    [Obsolete]
     [Serializable]
     public class DynamicItem
     {
@@ -265,14 +266,17 @@ using System.Xml;
         private ClientType type = ClientType.PassportMember;
         private string passportName;
         private DynamicItemType itemType;
-        private DateTime lastChanged;
-        private DateTime spaceLastChanged;
-        private DateTime spaceLastViewed;
-        private DateTime profileLastChanged;
-        private DateTime liveContactLastChanged;
+        private DateTime lastChanged = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.RoundtripKind);
+        private DateTime spaceLastChanged = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.RoundtripKind);
+        private DateTime spaceLastViewed = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.RoundtripKind);
+        private DateTime profileLastChanged = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.RoundtripKind);
+        private DateTime liveContactLastChanged = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.RoundtripKind);
         private DynamicItemState state = DynamicItemState.None;
 
-        public DynamicItem() { }
+        public DynamicItem()
+        {
+        }
+
         /// <summary>
         /// Convert the DynamicItem object gets from the addressbook service into DynamicItem class.
         /// </summary>
@@ -336,8 +340,14 @@ using System.Xml;
         /// </summary>
         public string CID
         {
-            get { return cID; }
-            set { cID = value; }
+            get
+            {
+                return cID;
+            }
+            set
+            {
+                cID = value;
+            }
         }
 
         /// <summary>
@@ -345,8 +355,14 @@ using System.Xml;
         /// </summary>
         public bool SpaceGleam
         {
-            get { return spaceGleam; }
-            set { spaceGleam = value; }
+            get
+            {
+                return spaceGleam;
+            }
+            set
+            {
+                spaceGleam = value;
+            }
         }
 
         /// <summary>
@@ -354,14 +370,26 @@ using System.Xml;
         /// </summary>
         public bool ProfileGleam
         {
-            get { return profileGleam; }
-            set { profileGleam = value; }
+            get
+            {
+                return profileGleam;
+            }
+            set
+            {
+                profileGleam = value;
+            }
         }
 
         public ClientType Type
         {
-            get { return type; }
-            set { type = value; }
+            get
+            {
+                return type;
+            }
+            set
+            {
+                type = value;
+            }
         }
 
         /// <summary>
@@ -369,8 +397,14 @@ using System.Xml;
         /// </summary>
         public DynamicItemType ItemType
         {
-            get { return itemType; }
-            set { itemType = value; }
+            get
+            {
+                return itemType;
+            }
+            set
+            {
+                itemType = value;
+            }
         }
 
         /// <summary>
@@ -378,14 +412,26 @@ using System.Xml;
         /// </summary>
         public string PassportName
         {
-            get { return passportName; }
-            set { passportName = value; }
+            get
+            {
+                return passportName;
+            }
+            set
+            {
+                passportName = value;
+            }
         }
 
         public DateTime LastChanged
         {
-            get { return lastChanged; }
-            set { lastChanged = value; }
+            get
+            {
+                return lastChanged;
+            }
+            set
+            {
+                lastChanged = value;
+            }
         }
 
         /// <summary>
@@ -393,8 +439,14 @@ using System.Xml;
         /// </summary>
         public DateTime SpaceLastChanged
         {
-            get { return spaceLastChanged; }
-            set { spaceLastChanged = value; }
+            get
+            {
+                return spaceLastChanged;
+            }
+            set
+            {
+                spaceLastChanged = value;
+            }
         }
 
         /// <summary>
@@ -402,22 +454,40 @@ using System.Xml;
         /// </summary>
         public DateTime SpaceLastViewed
         {
-            get { return spaceLastViewed; }
-            set { spaceLastViewed = value; }
+            get
+            {
+                return spaceLastViewed;
+            }
+            set
+            {
+                spaceLastViewed = value;
+            }
         }
 
 
         public DateTime ProfileLastChanged
         {
-            get { return profileLastChanged; }
-            set { profileLastChanged = value; }
+            get
+            {
+                return profileLastChanged;
+            }
+            set
+            {
+                profileLastChanged = value;
+            }
         }
 
 
         public DateTime LiveContactLastChanged
         {
-            get { return liveContactLastChanged; }
-            set { liveContactLastChanged = value; }
+            get
+            {
+                return liveContactLastChanged;
+            }
+            set
+            {
+                liveContactLastChanged = value;
+            }
         }
 
         /// <summary>
@@ -425,8 +495,14 @@ using System.Xml;
         /// </summary>
         public DynamicItemState State
         {
-            get { return state; }
-            set { state = value; }
+            get
+            {
+                return state;
+            }
+            set
+            {
+                state = value;
+            }
         }
 
     }
@@ -562,8 +638,14 @@ using System.Xml;
         /// </summary>
         public DateTime DateModified
         {
-            get { return dateModified; }
-            set { dateModified = value; }
+            get
+            {
+                return dateModified;
+            }
+            set
+            {
+                dateModified = value;
+            }
         }
 
         /// <summary>
@@ -571,8 +653,14 @@ using System.Xml;
         /// </summary>
         public string ResourceID
         {
-            get { return resourceID; }
-            set { resourceID = value; }
+            get
+            {
+                return resourceID;
+            }
+            set
+            {
+                resourceID = value;
+            }
         }
     }
 
@@ -587,14 +675,26 @@ using System.Xml;
 
         public string PreAthURL
         {
-            get { return preAthURL; }
-            set { preAthURL = value; }
+            get
+            {
+                return preAthURL;
+            }
+            set
+            {
+                preAthURL = value;
+            }
         }
 
         public SerializableMemoryStream DisplayImage
         {
-            get { return displayImage; }
-            set { displayImage = value; }
+            get
+            {
+                return displayImage;
+            }
+            set
+            {
+                displayImage = value;
+            }
         }
     }
 
@@ -614,8 +714,14 @@ using System.Xml;
         /// </summary>
         public ProfilePhoto Photo
         {
-            get { return photo; }
-            set { photo = value; }
+            get
+            {
+                return photo;
+            }
+            set
+            {
+                photo = value;
+            }
         }
 
         /// <summary>
@@ -623,8 +729,14 @@ using System.Xml;
         /// </summary>
         public string CID
         {
-            get { return cID; }
-            set { cID = value; }
+            get
+            {
+                return cID;
+            }
+            set
+            {
+                cID = value;
+            }
         }
 
         /// <summary>
@@ -632,8 +744,14 @@ using System.Xml;
         /// </summary>
         public string DisplayName
         {
-            get { return displayName; }
-            set { displayName = value; }
+            get
+            {
+                return displayName;
+            }
+            set
+            {
+                displayName = value;
+            }
         }
 
         /// <summary>
@@ -641,8 +759,14 @@ using System.Xml;
         /// </summary>
         public string PersonalMessage
         {
-            get { return personalMessage; }
-            set { personalMessage = value; }
+            get
+            {
+                return personalMessage;
+            }
+            set
+            {
+                personalMessage = value;
+            }
         }
 
 

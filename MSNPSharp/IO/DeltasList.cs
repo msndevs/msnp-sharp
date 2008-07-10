@@ -54,12 +54,12 @@ namespace MSNPSharp.IO
     {
         private List<ABFindAllResultType> addressBookDeltas = new List<ABFindAllResultType>(0);
         private List<FindMembershipResultType> membershipDeltas = new List<FindMembershipResultType>(0);
-        private SerializableDictionary<string, DynamicItem> dynamicItems = new SerializableDictionary<string, DynamicItem>(0);
+        private SerializableDictionary<string, BaseDynamicItemType> dynamicItems = new SerializableDictionary<string, BaseDynamicItemType>(0);
 
         /// <summary>
         /// The users that have changed their spaces or profiles.
         /// </summary>
-        public SerializableDictionary<string, DynamicItem> DynamicItems
+        public SerializableDictionary<string, BaseDynamicItemType> DynamicItems
         {
             get { return dynamicItems; }
             set { dynamicItems = value; }
@@ -115,10 +115,11 @@ namespace MSNPSharp.IO
         /// </summary>
         /// <param name="filename">Path of file where the serialized object was saved.</param>
         /// <param name="nocompress">If true, use gzip to decompress the file(The file must be compressed).</param>
+        /// <param name="handler"></param>
         /// <returns></returns>
-        public static DeltasList LoadFromFile(string filename, bool nocompress)
+        public static DeltasList LoadFromFile(string filename, bool nocompress, NSMessageHandler handler)
         {
-            return LoadFromFile(filename, nocompress, typeof(DeltasList)) as DeltasList;
+            return LoadFromFile(filename, nocompress, typeof(DeltasList), handler) as DeltasList;
         }
 
         #region Overrides
