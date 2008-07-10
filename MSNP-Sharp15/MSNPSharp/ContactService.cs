@@ -143,7 +143,7 @@ namespace MSNPSharp
                 return;
             }
 
-            AddressBook.Merge(Deltas);
+            AddressBook += Deltas;
 
             msRequest(
                 "Initial",
@@ -264,7 +264,9 @@ namespace MSNPSharp
 
                 if (null != e.Result.FindMembershipResult)
                 {
-                    refreshMS(e.Result.FindMembershipResult);
+                    AddressBook += e.Result.FindMembershipResult;
+                    Deltas.MembershipDeltas.Add(e.Result.FindMembershipResult);
+                    Deltas.Save();
                 }
 
                 if (onSuccess != null)
@@ -339,7 +341,9 @@ namespace MSNPSharp
 
                 if (null != e.Result.ABFindAllResult)
                 {
-                    refreshAB(e.Result.ABFindAllResult);
+                    AddressBook += e.Result.ABFindAllResult;
+                    Deltas.AddressBookDeltas.Add(e.Result.ABFindAllResult);
+                    Deltas.Save();
                 }
 
                 if (onSuccess != null)
@@ -353,20 +357,6 @@ namespace MSNPSharp
             request.dynamicItemView = "Gleam";
 
             abService.ABFindAllAsync(request, partnerScenario);
-        }
-
-        private void refreshMS(FindMembershipResultType findMembership)
-        {
-            AddressBook.Merge(findMembership);
-            Deltas.MembershipDeltas.Add(findMembership);
-            Deltas.Save();
-        }
-
-        private void refreshAB(ABFindAllResultType forwardList)
-        {
-            AddressBook.Merge(forwardList);
-            Deltas.AddressBookDeltas.Add(forwardList);
-            Deltas.Save();
         }
 
         private SharingServiceBinding CreateSharingService(string partnerScenario)
