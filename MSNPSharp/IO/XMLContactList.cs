@@ -55,25 +55,29 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Merge the deltas list into current AddressBook and MemberShipList.
         /// </summary>
-        /// <param name="deltas">DeltasList that loads from a mcl file.</param>
-        public void Merge(DeltasList deltas)
+        /// <param name="list"></param>
+        /// <param name="deltas"></param>
+        /// <returns></returns>
+        public static XMLContactList operator +(XMLContactList list, DeltasList deltas)
         {
             if (deltas.MembershipDeltas.Count > 0)
             {
                 foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
                 {
-                    Merge(membershipResult);
+                    list += membershipResult;
                 }
             }
             else
             {
-                Merge(new FindMembershipResultType());
+                list += new FindMembershipResultType();
             }
 
             foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
             {
-                Merge(abfindallResult);
+                list += abfindallResult;
             }
+
+            return list;
         }
 
         #region Membership
@@ -198,8 +202,10 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Merge changes into membership list and add membership contacts
         /// </summary>
+        /// <param name="list"></param>
         /// <param name="findMembership"></param>
-        public void Merge(FindMembershipResultType findMembership)
+        /// <returns></returns>
+        public static XMLContactList operator +(XMLContactList list, FindMembershipResultType findMembership)
         {
             if (null != findMembership && null != findMembership.Services)
             {
@@ -207,7 +213,7 @@ namespace MSNPSharp.IO
                 {
                     if (serviceType.Deleted)
                     {
-                        Services.Remove(int.Parse(serviceType.Info.Handle.Id));
+                        list.Services.Remove(int.Parse(serviceType.Info.Handle.Id));
                     }
                     else
                     {
@@ -216,11 +222,11 @@ namespace MSNPSharp.IO
                         currentService.Id = int.Parse(serviceType.Info.Handle.Id);
                         currentService.Type = serviceType.Info.Handle.Type;
                         currentService.ForeignId = serviceType.Info.Handle.ForeignId;
-                        Services[currentService.Id] = currentService;
+                        list.Services[currentService.Id] = currentService;
 
                         if (ServiceFilterType.Messenger == currentService.Type)
                         {
-                            if (MembershipLastChange < currentService.LastChange && null != serviceType.Memberships)
+                            if (list.MembershipLastChange < currentService.LastChange && null != serviceType.Memberships)
                             {
                                 foreach (Membership membership in serviceType.Memberships)
                                 {
@@ -258,36 +264,38 @@ namespace MSNPSharp.IO
 
                                                 if (bm.Deleted)
                                                 {
-                                                    RemoveMemberhip(account, type, memberrole);
+                                                    list.RemoveMemberhip(account, type, memberrole);
                                                 }
                                                 else
                                                 {
-                                                    AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
+                                                    list.AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
                                                     ContactIdentifier cid = new ContactIdentifier(account, type);
-                                                    MembershipContacts[cid].LastChanged = bm.LastChanged;
-                                                    MembershipContacts[cid].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
+                                                    list.MembershipContacts[cid].LastChanged = bm.LastChanged;
+                                                    list.MembershipContacts[cid].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                            MembershipLastChange = currentService.LastChange;
+                            list.MembershipLastChange = currentService.LastChange;
                         }
                     }
                 }
             }
 
             // Create Messenger Contacts
-            if (MembershipContacts.Count > 0)
+            if (list.MembershipContacts.Count > 0)
             {
-                foreach (MembershipContactInfo msci in MembershipContacts.Values)
+                foreach (MembershipContactInfo msci in list.MembershipContacts.Values)
                 {
-                    Contact contact = NSMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName, msci.Type);
-                    contact.SetLists(GetMSNLists(msci.Account, msci.Type));
-                    contact.NSMessageHandler = NSMessageHandler;
+                    Contact contact = list.NSMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName, msci.Type);
+                    contact.SetLists(list.GetMSNLists(msci.Account, msci.Type));
+                    contact.NSMessageHandler = list.NSMessageHandler;
                 }
             }
+
+            return list;
         }
 
         #endregion
@@ -412,11 +420,12 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Merge changes to addressbook and add address book contacts
         /// </summary>
+        /// <param name="list">Addressbook</param>
         /// <param name="forwardList"></param>
-        /// <param name="nsMessageHandler"></param>
-        public void Merge(ABFindAllResultType forwardList)
+        /// <returns></returns>
+        public static XMLContactList operator +(XMLContactList list, ABFindAllResultType forwardList)
         {
-            if (AddressbookLastChange < forwardList.ab.lastChange)
+            if (list.AddressbookLastChange < forwardList.ab.lastChange)
             {
                 if (null != forwardList.contacts)
                 {
@@ -457,7 +466,7 @@ namespace MSNPSharp.IO
 
                             if (contactType.fDeleted)
                             {
-                                AddressbookContacts.Remove(new Guid(contactType.contactId));
+                                list.AddressbookContacts.Remove(new Guid(contactType.contactId));
                             }
                             else
                             {
@@ -486,13 +495,13 @@ namespace MSNPSharp.IO
 
                                 if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
                                 {
-                                    if (ci.DisplayName == NSMessageHandler.Owner.Mail && NSMessageHandler.Owner.Name != String.Empty)
+                                    if (ci.DisplayName == list.NSMessageHandler.Owner.Mail && list.NSMessageHandler.Owner.Name != String.Empty)
                                     {
-                                        ci.DisplayName = NSMessageHandler.Owner.Name;
+                                        ci.DisplayName = list.NSMessageHandler.Owner.Name;
                                     }
 
-                                    Profile.DisplayName = ci.DisplayName;
-                                    Profile.CID = contactType.contactInfo.CID;
+                                    list.Profile.DisplayName = ci.DisplayName;
+                                    list.Profile.CID = contactType.contactInfo.CID;
 
                                     if (null != contactType.contactInfo.annotations)
                                     {
@@ -501,33 +510,33 @@ namespace MSNPSharp.IO
                                             string name = anno.Name;
                                             string value = anno.Value;
                                             name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                                            MyProperties[name] = value;
+                                            list.MyProperties[name] = value;
                                         }
                                     }
 
-                                    if (!MyProperties.ContainsKey("mbea"))
-                                        MyProperties["mbea"] = "0";
+                                    if (!list.MyProperties.ContainsKey("mbea"))
+                                        list.MyProperties["mbea"] = "0";
 
-                                    if (!MyProperties.ContainsKey("gtc"))
-                                        MyProperties["gtc"] = "1";
+                                    if (!list.MyProperties.ContainsKey("gtc"))
+                                        list.MyProperties["gtc"] = "1";
 
-                                    if (!MyProperties.ContainsKey("blp"))
-                                        MyProperties["blp"] = "0";
+                                    if (!list.MyProperties.ContainsKey("blp"))
+                                        list.MyProperties["blp"] = "0";
 
-                                    if (!MyProperties.ContainsKey("roamliveproperties"))
-                                        MyProperties["roamliveproperties"] = "1";
+                                    if (!list.MyProperties.ContainsKey("roamliveproperties"))
+                                        list.MyProperties["roamliveproperties"] = "1";
                                 }
 
-                                if (AddressbookContacts.ContainsKey(ci.Guid))
+                                if (list.AddressbookContacts.ContainsKey(ci.Guid))
                                 {
-                                    if (AddressbookContacts[ci.Guid].LastChanged.CompareTo(ci.LastChanged) < 0)
+                                    if (list.AddressbookContacts[ci.Guid].LastChanged.CompareTo(ci.LastChanged) < 0)
                                     {
-                                        AddressbookContacts[ci.Guid] = ci;
+                                        list.AddressbookContacts[ci.Guid] = ci;
                                     }
                                 }
                                 else
                                 {
-                                    AddressbookContacts.Add(ci.Guid, ci);
+                                    list.AddressbookContacts.Add(ci.Guid, ci);
                                 }
                             }
                         }
@@ -540,35 +549,35 @@ namespace MSNPSharp.IO
                     {
                         if (groupType.fDeleted)
                         {
-                            Groups.Remove(groupType.groupId);
+                            list.Groups.Remove(groupType.groupId);
                         }
                         else
                         {
                             GroupInfo group = new GroupInfo();
                             group.Name = groupType.groupInfo.name;
                             group.Guid = groupType.groupId;
-                            Groups[group.Guid] = group;
+                            list.Groups[group.Guid] = group;
                         }
                     }
                 }
 
                 // Update lastchange
-                AddressbookLastChange = forwardList.ab.lastChange;
-                DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
+                list.AddressbookLastChange = forwardList.ab.lastChange;
+                list.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
             }
 
             // Create Groups
-            foreach (GroupInfo group in Groups.Values)
+            foreach (GroupInfo group in list.Groups.Values)
             {
-                NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, NSMessageHandler));
+                list.NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, list.NSMessageHandler));
             }
 
             // Create the Forward List and Email Contacts
-            foreach (AddressbookContactInfo abci in AddressbookContacts.Values)
+            foreach (AddressbookContactInfo abci in list.AddressbookContacts.Values)
             {
-                if (abci.Account != NSMessageHandler.Owner.Mail)
+                if (abci.Account != list.NSMessageHandler.Owner.Mail)
                 {
-                    Contact contact = NSMessageHandler.ContactList.GetContact(abci.Account, abci.Type);
+                    Contact contact = list.NSMessageHandler.ContactList.GetContact(abci.Account, abci.Type);
                     contact.SetGuid(abci.Guid);
                     contact.SetClientType(abci.Type);
                     contact.SetComment(abci.Comment);
@@ -579,11 +588,11 @@ namespace MSNPSharp.IO
                     if (!String.IsNullOrEmpty(abci.DisplayName))
                         contact.SetName(abci.DisplayName);
 
-                    contact.NSMessageHandler = NSMessageHandler;
+                    contact.NSMessageHandler = list.NSMessageHandler;
 
                     foreach (string groupId in abci.Groups)
                     {
-                        contact.ContactGroups.Add(NSMessageHandler.ContactGroups[groupId]);
+                        contact.ContactGroups.Add(list.NSMessageHandler.ContactGroups[groupId]);
                     }
 
                     if (abci.Type == ClientType.EmailMember)
@@ -604,35 +613,36 @@ namespace MSNPSharp.IO
                     {
                         if (dyItem.SpaceGleam || dyItem.ProfileGleam)
                         {
-                            NSMessageHandler.ContactService.Deltas.DynamicItems[(dyItem as PassportDynamicItem).PassportName] = dyItem;
+                            list.NSMessageHandler.ContactService.Deltas.DynamicItems[(dyItem as PassportDynamicItem).PassportName] = dyItem;
                         }
                     }
                 }
             }
 
-            foreach (PassportDynamicItem dyItem in NSMessageHandler.ContactService.Deltas.DynamicItems.Values)
+            foreach (PassportDynamicItem dyItem in list.NSMessageHandler.ContactService.Deltas.DynamicItems.Values)
             {
-                if (NSMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
+                if (list.NSMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
                 {
                     if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam) ||
                         (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam))
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.HasNew); //TODO: Type
+                        list.NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.HasNew); //TODO: Type
                     }
 
                     if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam == false) ||
                         (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam == false))
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.Viewed); //TODO: Type
+                        list.NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.Viewed); //TODO: Type
                     }
 
                     if (dyItem.ProfileStatus == null && dyItem.SpaceStatus == null)  //"Exist Access" means the contact has space or profile
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.None); //TODO: Type
+                        list.NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.None); //TODO: Type
                     }
                 }
             }
 
+            return list;
         }
 
         #endregion
