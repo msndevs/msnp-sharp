@@ -122,8 +122,8 @@ namespace MSNPSharp
             string deltasResultsFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
             try
             {
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress);
-                Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress);
+                AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, nsMessageHandler);
+                Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, nsMessageHandler);
                 if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
                     || Deltas.Version != Properties.Resources.DeltasListVersion)
                     && recursiveCall == 0)
@@ -143,7 +143,7 @@ namespace MSNPSharp
                 return;
             }
 
-            AddressBook.Merge(Deltas, nsMessageHandler);
+            AddressBook.Merge(Deltas);
 
             msRequest(
                 "Initial",
@@ -357,14 +357,14 @@ namespace MSNPSharp
 
         private void refreshMS(FindMembershipResultType findMembership)
         {
-            AddressBook.Merge(findMembership, nsMessageHandler);
+            AddressBook.Merge(findMembership);
             Deltas.MembershipDeltas.Add(findMembership);
             Deltas.Save();
         }
 
         private void refreshAB(ABFindAllResultType forwardList)
         {
-            AddressBook.Merge(forwardList, nsMessageHandler);
+            AddressBook.Merge(forwardList);
             Deltas.AddressBookDeltas.Add(forwardList);
             Deltas.Save();
         }

@@ -115,10 +115,11 @@ namespace MSNPSharp.IO
         /// </summary>
         /// <param name="filename">Path of file where the serialized object was saved.</param>
         /// <param name="nocompress">If true, use gzip to decompress the file(The file must be compressed).</param>
+        /// <param name="handler"></param>
         /// <returns></returns>
-        public static DeltasList LoadFromFile(string filename, bool nocompress)
+        public static DeltasList LoadFromFile(string filename, bool nocompress, NSMessageHandler handler)
         {
-            return LoadFromFile(filename, nocompress, typeof(DeltasList)) as DeltasList;
+            return LoadFromFile(filename, nocompress, typeof(DeltasList), handler) as DeltasList;
         }
 
         #region Overrides
