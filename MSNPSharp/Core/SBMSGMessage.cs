@@ -88,13 +88,14 @@ namespace MSNPSharp.Core
 
             int startpos=0;
             int endpos=0;
+            bool gettingval = false;
 
             while (enumerator.MoveNext())
             {
                 if ((byte)enumerator.Current == 13)
                 {
                     // no name specified -> end of header (presumably \r\n\r\n)
-                    if (startpos == endpos)
+                    if (startpos == endpos && !gettingval)
                     {
                         enumerator.MoveNext();
                         return table;
@@ -106,13 +107,18 @@ namespace MSNPSharp.Core
                         table.Add(name, val);
 
                     startpos = endpos + 2;
+                    gettingval = false;
                 }
                 else if ((byte)enumerator.Current == 58) //:
                 {
-                    name = Encoding.UTF8.GetString(data, startpos, endpos - startpos);
-                    startpos = endpos + 2;
-                    enumerator.MoveNext();
-                    endpos++;
+                    if (!gettingval)
+                    {
+                        gettingval = true;
+                        name = Encoding.UTF8.GetString(data, startpos, endpos - startpos);
+                        startpos = endpos + 2;
+                        enumerator.MoveNext();
+                        endpos++;
+                    }
                 }
                 endpos++;
             }
