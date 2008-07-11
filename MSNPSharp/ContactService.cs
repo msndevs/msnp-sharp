@@ -1914,45 +1914,45 @@ namespace MSNPSharp
                             // And get profile again
                             AddressBook.Profile = GetProfile();
 
-                            DateTime lastUpdated = AddressBook.Profile.DateModified;
+                            // UpdateDynamicItem
+                            ABServiceBinding abService = CreateABService("RoamingIdentityChanged");
+                            abService.UpdateDynamicItemCompleted += delegate(object service, UpdateDynamicItemCompletedEventArgs ue)
+                            {
+                                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                                if (!ue.Cancelled && ue.Error == null)
+                                {
+                                    AddressBook.Save();
+                                }
+                                else if (ue.Error != null)
+                                {
+                                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamic", ue.Error));
+                                }
+                            };
 
-                            // http://www.msn.com/webservices/AddressBook/UpdateDynamicItem
-                            //<soap:Body>
-                            //   <UpdateDynamicItem xmlns="http://www.msn.com/webservices/AddressBook">
-                            //     <abId>00000000-0000-0000-0000-000000000000</abId>
-                            //     <dynamicItems>
-                            //       <DynamicItem xsi:type="PassportDynamicItem">
-                            //         <Type>Passport</Type>
-                            //         <PassportName>....OWNER.....MAIL....ADDRESS.....</PassportName>
-                            //         <Notifications>
-                            //           <NotificationData>
-                            //             <StoreService>
-                            //               <Info>
-                            //                 <Handle>
-                            //                   <Id>0</Id>
-                            //                   <Type>Profile</Type>
-                            //                   <ForeignId>MyProfile</ForeignId>
-                            //                 </Handle>
-                            //                 <InverseRequired>false</InverseRequired>
-                            //                 <IsBot>false</IsBot>
-                            //               </Info>
-                            //               <Changes />
-                            //               <LastChange>0001-01-01T00:00:00</LastChange>
-                            //               <Deleted>false</Deleted>
-                            //             </StoreService>
-                            //             <Status>Exist Access</Status>
-                            //             <LastChanged>.......AddressBook.Profile.DateModified........</LastChanged>
-                            //             <Gleam>false</Gleam>
-                            //             <InstanceId>0</InstanceId>
-                            //           </NotificationData>
-                            //         </Notifications>
-                            //         <Changes>Notifications</Changes>
-                            //       </DynamicItem>
-                            //     </dynamicItems>
-                            //  </UpdateDynamicItem>
-                            //</soap:Body>
+                            UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
+                            updateDyItemRequest.abId = Guid.Empty.ToString();
 
-                            AddressBook.Save();
+                            PassportDynamicItem passportDyItem = new PassportDynamicItem();
+                            passportDyItem.Type = "Passport";
+                            passportDyItem.PassportName = NSMessageHandler.Owner.Mail;
+                            passportDyItem.Changes = "Notifications";
+                            passportDyItem.Notifications = new BaseDynamicItemTypeNotifications();
+                            passportDyItem.Notifications.NotificationData = new NotificationDataType();
+                            passportDyItem.Notifications.NotificationData.StoreService = new ServiceType();
+                            passportDyItem.Notifications.NotificationData.StoreService.Info = new InfoType();
+                            passportDyItem.Notifications.NotificationData.StoreService.Info.Handle = new HandleType();
+                            passportDyItem.Notifications.NotificationData.StoreService.Info.Handle.Id = "0";
+                            passportDyItem.Notifications.NotificationData.StoreService.Info.Handle.Type = ServiceFilterType.Profile;
+                            passportDyItem.Notifications.NotificationData.StoreService.Info.Handle.ForeignId = "MyProfile";
+                            passportDyItem.Notifications.NotificationData.StoreService.Info.IsBot = false;
+                            passportDyItem.Notifications.NotificationData.StoreService.Info.InverseRequired = false;
+                            passportDyItem.Notifications.NotificationData.StoreService.Changes = String.Empty;
+                            passportDyItem.Notifications.NotificationData.Status = "Exist Access";
+                            passportDyItem.Notifications.NotificationData.LastChanged = AddressBook.Profile.DateModified;
+
+                            updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
+
+                            abService.UpdateDynamicItemAsync(updateDyItemRequest, new object());
                             return;
                         }
                         else if (e.Error != null)
