@@ -156,6 +156,7 @@
       <xsd:enumeration value="Block" />
       <xsd:enumeration value="Reverse" />
       <xsd:enumeration value="Pending" />
+      <xsd:enumeration value="Admin" />
       <xsd:enumeration value="Contributor" />
       <xsd:enumeration value="ProfileGeneral" />
       <xsd:enumeration value="ProfilePersonalContact" />
@@ -441,6 +442,7 @@
       <xsd:enumeration value="SocialNetwork" />
       <xsd:enumeration value="Space" />
       <xsd:enumeration value="Profile" />
+      <xsd:enumeration value="Folder" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="InvalidPassportUser">
@@ -486,6 +488,7 @@
       <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
       <xsd:element default="false" name="InverseRequired" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="AuthorizationCriteria" type="xsd:string" />
+      <xsd:element minOccurs="0" name="RSSUrl" type="xsd:anyURI" />
       <xsd:element default="false" name="IsBot" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
