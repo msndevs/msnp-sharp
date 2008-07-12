@@ -121,7 +121,8 @@ namespace MSNPSharp
         /// <param name="maxcharcount">Number of character in the blog post content which is shown as description.</param>
         public void GetContactCard(string account, int maximagecount, int maxcharcount)
         {
-            if (nsMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
+            if (nsMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account) &&
+                nsMessageHandler.Tickets.ContainsKey(Iniproperties.SpacesTicket))
             {
                 SpaceService service = new SpaceService();
                 service.Proxy = webProxy;
