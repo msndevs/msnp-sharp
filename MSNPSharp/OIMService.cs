@@ -135,7 +135,7 @@ namespace MSNPSharp
                 return;
 
             string xmlstr = message.MimeHeader["Mail-Data"];
-            if ("too-large" == xmlstr)
+            if ("too-large" == xmlstr && nsMessageHandler.Tickets.ContainsKey(Iniproperties.WebTicket))
             {
                 string[] TandP = nsMessageHandler.Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
                 RSIService rsiService = new RSIService();
@@ -185,6 +185,9 @@ namespace MSNPSharp
         private void processOIMS(string xmldata, bool initial)
         {
             if (OIMReceived == null)
+                return;
+
+            if (false == nsMessageHandler.Tickets.ContainsKey(Iniproperties.WebTicket))
                 return;
 
             XmlDocument xdoc = new XmlDocument();
@@ -309,6 +312,9 @@ namespace MSNPSharp
 
         private void DeleteOIMMessages(string[] guids)
         {
+            if (false == nsMessageHandler.Tickets.ContainsKey(Iniproperties.WebTicket))
+                return;
+
             string[] TandP = nsMessageHandler.Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
@@ -347,8 +353,8 @@ namespace MSNPSharp
         /// <param name="msg">Plain text message</param>
         public void SendOIMMessage(string account, string msg)
         {
-            Contact contact = nsMessageHandler.ContactList[account]; //No need to change.
-            if (contact != null && contact.OnAllowedList)
+            Contact contact = nsMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
+            if (nsMessageHandler.Tickets.ContainsKey(Iniproperties.OIMTicket) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
                     "MIME-Version: 1.0\r\n"

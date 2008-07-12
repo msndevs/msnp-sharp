@@ -1838,9 +1838,10 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void Clear()
         {
+            Tickets.Clear();
             ContactList.Clear();
             ContactGroups.Clear();            
-            ContactService.Clear();
+            ContactService.Clear();            
             externalEndPoint = null;
         }
 
