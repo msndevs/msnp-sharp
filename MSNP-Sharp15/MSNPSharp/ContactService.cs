@@ -1229,7 +1229,7 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier,MembershipContactInfo>();
+            SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
             contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
             string payload = ConstructLists(contacts.Values, false, list)[0];
 
@@ -1257,10 +1257,13 @@ namespace MSNPSharp
             {
                 // Cache key for Sharing service...
                 handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, false);
-                if (!e.Cancelled && e.Error == null)
+                if (!e.Cancelled)
                 {
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("AddMember completed.");
+                    if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
+                    {
+                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
+                        return;
+                    }
 
                     contact.AddToList(list);
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
@@ -1271,13 +1274,10 @@ namespace MSNPSharp
                     {
                         onSuccess(this, EventArgs.Empty);
                     }
+
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        Trace.WriteLine("AddMember completed.");
                 }
-                else if (e.Error != null)
-                {
-                    OnServiceOperationFailed(sharingService,
-                        new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
-                }
-                return;
             };
 
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
@@ -1371,10 +1371,13 @@ namespace MSNPSharp
             {
                 // Cache key for Sharing service...
                 handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, false);
-                if (!e.Cancelled && e.Error == null)
+                if (!e.Cancelled)
                 {
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMember completed.");
+                    if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
+                    {
+                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
+                        return;
+                    }
 
                     contact.RemoveFromList(list);
                     AddressBook.RemoveMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list));
@@ -1385,13 +1388,10 @@ namespace MSNPSharp
                     {
                         onSuccess(this, EventArgs.Empty);
                     }
+
+                    if (Settings.TraceSwitch.TraceVerbose)
+                        Trace.WriteLine("DeleteMember completed.");
                 }
-                else if (e.Error != null)
-                {
-                    OnServiceOperationFailed(sharingService,
-                        new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
-                }
-                return;
             };
 
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
