@@ -781,39 +781,44 @@ namespace MSNPSharpClient
             }
 
             Contact contact = e.Contact;
-            ReverseAddedForm form = new ReverseAddedForm(contact);
-            form.FormClosed += delegate(object f, FormClosedEventArgs fce)
+            if (contact.OnPendingList)
             {
-                form = f as ReverseAddedForm;
-                if (DialogResult.OK == form.DialogResult)
+                ReverseAddedForm form = new ReverseAddedForm(contact);
+                form.FormClosed += delegate(object f, FormClosedEventArgs fce)
                 {
-                    if (form.AddToContactList)
+                    form = f as ReverseAddedForm;
+                    if (DialogResult.OK == form.DialogResult)
                     {
-                        contact.NSMessageHandler.ContactService.AddNewContact(contact.Mail);
-                        if (form.Blocked)
+                        if (form.AddToContactList)
+                        {
+                            contact.NSMessageHandler.ContactService.AddNewContact(contact.Mail);
+                            System.Threading.Thread.Sleep(200);
+
+                            if (form.Blocked)
+                            {
+                                contact.Blocked = true;
+                            }
+                        }
+                        else if (form.Blocked)
                         {
                             contact.Blocked = true;
                         }
+                        else
+                        {
+                            contact.OnAllowedList = true;
+                        }
+
+                        System.Threading.Thread.Sleep(200);
                         contact.OnPendingList = false;
                     }
-                    /*
-                else if (form.Blocked)
-                {
-                    contact.Blocked = true;
-                    contact.OnPendingList = false;
-                }
-                else
-                {
-                    contact.OnAllowedList = true;
-                    contact.OnPendingList = false;
-                }
-                * */
-
-
-                }
-                return;
-            };
-            form.Show(this);
+                    return;
+                };
+                form.Show(this);
+            }
+            else
+            {
+                MessageBox.Show(contact.Mail + " accepted your invitation and added you their contact list.");
+            }
         }
 
 

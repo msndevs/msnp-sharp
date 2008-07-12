@@ -1471,7 +1471,7 @@ namespace MSNPSharp
         {
             if (message.CommandValues[1].ToString() == "OK" &&
                 message.TransactionID == 0 &&
-                ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))                
+                ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))
             {
 
             }
@@ -1479,7 +1479,7 @@ namespace MSNPSharp
             {
                 NetworkMessage networkMessage = message as NetworkMessage;
                 XmlDocument xmlDoc = new XmlDocument();
-                if (networkMessage.InnerBody != null)          //Payload ADL command.
+                if (networkMessage.InnerBody != null) //Payload ADL command
                 {
                     xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
                     XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
@@ -1503,31 +1503,24 @@ namespace MSNPSharp
 
                             MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
-                            if (ContactList.HasContact(account, type))
-                            {
-                                Contact updateContact = ContactList.GetContact(account, type);
-                                updateContact.SetName(displayName);
-                                if (!updateContact.HasLists(list))
-                                    updateContact.AddToList(list);  //What about reverse adding ? Not fire OnReverseAdded ?
-                            }
-                            else
-                            {
-                                if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
+
+                            // Get all memberships
+                            ContactService.msRequest(
+                                "MessengerPendingList",
+                                delegate
                                 {
-                                    Contact newcontact = ContactList.GetContact(account, displayName, type);
-                                    newcontact.SetClientType(type);
-                                    newcontact.SetLists(MSNLists.PendingList);
-                                    newcontact.NSMessageHandler = this;
-                                    ContactService.msRequest(
-                                        "MessengerPendingList",
-                                        delegate
-                                        {
-                                            newcontact = ContactList.GetContact(account, type);
-                                            OnReverseAdded(newcontact);
-                                        }
-                                    );
+                                    // If this contact on Pending list other person added us, otherwise we added and other person accepted.
+                                    Contact contact = ContactList.GetContact(account, type);
+                                    contact.SetName(displayName);
+                                    contact.NSMessageHandler = this;
+
+                                    if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
+                                    {
+                                        OnReverseAdded(contact);
+                                    }
                                 }
-                            }
+                            );
+
                             if (Settings.TraceSwitch.TraceVerbose)
                                 Trace.WriteLine(account + " was added to your " + list.ToString());
 
