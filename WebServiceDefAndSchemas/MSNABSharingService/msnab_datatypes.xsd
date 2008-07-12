@@ -443,6 +443,7 @@
       <xsd:enumeration value="Space"/>
       <xsd:enumeration value="Profile"/>
       <xsd:enumeration value="Folder"/>
+      <xsd:enumeration value="Event"/>
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="InvalidPassportUser">
