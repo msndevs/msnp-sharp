@@ -130,6 +130,7 @@ namespace MSNPSharp
         private ContactService contactService = null;
         private OIMService oimService = null;
         private ContactSpaceService spaceService = null;
+        private MSNStorageService storageService = null;
 
         private NSMessageHandler()
         {
@@ -142,6 +143,7 @@ namespace MSNPSharp
             contactService = new ContactService(this);
             oimService = new OIMService(this);
             spaceService = new ContactSpaceService(this);
+            storageService = new MSNStorageService(this);
         }
 
         #endregion
@@ -290,6 +292,17 @@ namespace MSNPSharp
             get
             {
                 return spaceService;
+            }
+        }
+
+        /// <summary>
+        /// Storage Service for get/update display name, personal status, display picture etc.
+        /// </summary>
+        public MSNStorageService StorageService
+        {
+            get
+            {
+                return storageService;
             }
         }
 
@@ -609,7 +622,7 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
 
-            ContactService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
+            StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
 
         /// <summary>
@@ -623,7 +636,7 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
 
-            ContactService.UpdateProfile(Owner.Name, pmsg.Message);
+            StorageService.UpdateProfile(Owner.Name, pmsg.Message);
         }
 
         #endregion
