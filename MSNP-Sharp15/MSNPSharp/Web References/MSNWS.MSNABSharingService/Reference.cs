@@ -1856,6 +1856,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         Folder,
+        
+        /// <remarks/>
+        Event,
     }
     
     /// <remarks/>
