@@ -675,7 +675,7 @@ namespace MSNPSharp
         public virtual void SetPresenceStatus(PresenceStatus status)
         {
             // check whether we are allowed to send a CHG command
-            if (ContactService.AddressBookSynchronized == false)
+            if (ContactService.AddressBook.AddressbookLastChange == DateTime.MinValue)
                 throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
             string context = String.Empty;
@@ -1657,7 +1657,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ReverseRemoved"/> event.
         /// </summary>
         /// <param name="contact"></param>
-        protected virtual void OnReverseRemoved(Contact contact)
+        protected internal virtual void OnReverseRemoved(Contact contact)
         {
             if (ReverseRemoved != null)
                 ReverseRemoved(this, new ContactEventArgs(contact));

@@ -284,14 +284,14 @@ namespace MSNPSharp.IO
                 }
             }
 
-            // Create Messenger Contacts
+            // Create/Update/Delete Memberships
             if (list.MembershipContacts.Count > 0)
             {
                 foreach (MembershipContactInfo msci in list.MembershipContacts.Values)
                 {
                     Contact contact = list.NSMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName, msci.Type);
-                    contact.SetLists(list.GetMSNLists(msci.Account, msci.Type));
                     contact.NSMessageHandler = list.NSMessageHandler;
+                    contact.SetLists(list.GetMSNLists(msci.Account, msci.Type));
                 }
             }
 
