@@ -144,54 +144,135 @@ namespace MSNPSharp
 
             AddressBook += Deltas;
 
-            msRequest(
-                "Initial",
-                delegate
+            if (AddressBook.AddressbookLastChange != DateTime.MinValue)
+            {
+                SetDefaults(true);
+            }
+            else
+            {
+                msRequest(
+                    "Initial",
+                    delegate
+                    {
+                        abRequest("Initial",
+                            delegate
+                            {
+                                SetDefaults(true);
+                            }
+                        );
+                    }
+                );
+            }
+        }
+
+        private void SetDefaults(bool sendinitialADL)
+        {
+            // Reset
+            recursiveCall = 0;
+
+            // Set privacy settings and roam property
+            nsMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+            nsMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
+            nsMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+
+            AddressBook.Profile = nsMessageHandler.StorageService.GetProfile();
+            AddressBook.Save(); // The first and the last AddressBook.Save()
+            Deltas.Truncate();
+
+            // Set display name, personal status and photo
+            string mydispName = String.IsNullOrEmpty(AddressBook.Profile.DisplayName) ? nsMessageHandler.Owner.NickName : AddressBook.Profile.DisplayName;
+            PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null);
+            nsMessageHandler.Owner.SetName(mydispName);
+            nsMessageHandler.Owner.SetPersonalMessage(pm);
+
+            if (AddressBook.Profile.Photo != null && AddressBook.Profile.Photo.DisplayImage != null)
+            {
+                System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
+                DisplayImage displayImage = new DisplayImage();
+                displayImage.Image = fileImage;
+                nsMessageHandler.Owner.DisplayImage = displayImage;
+            }
+
+            // Send BLP
+            nsMessageHandler.SetPrivacyMode(nsMessageHandler.Owner.Privacy);
+
+            // Send ADL
+            if (sendinitialADL)
+            {
+                string[] adls = ConstructLists(AddressBook.MembershipContacts.Values, true, MSNLists.None);
+
+                initialADLcount = adls.Length;
+                foreach (string payload in adls)
                 {
-                    abRequest("Initial",
-                        delegate
-                        {
-                            // Reset
-                            recursiveCall = 0;
-
-                            // Set privacy settings and roam property
-                            nsMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-                            nsMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
-                            nsMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
-
-                            AddressBook.Profile = nsMessageHandler.StorageService.GetProfile();
-                            AddressBook.Save(); // The first and the last AddressBook.Save()
-                            Deltas.Truncate();
-
-                            // Set display name, personal status and photo
-                            string mydispName = String.IsNullOrEmpty(AddressBook.Profile.DisplayName) ? nsMessageHandler.Owner.NickName : AddressBook.Profile.DisplayName;
-                            PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null);
-                            nsMessageHandler.Owner.SetName(mydispName);
-                            nsMessageHandler.Owner.SetPersonalMessage(pm);
-
-                            if (AddressBook.Profile.Photo != null && AddressBook.Profile.Photo.DisplayImage != null)
-                            {
-                                System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
-                                DisplayImage displayImage = new DisplayImage();
-                                displayImage.Image = fileImage;
-                                nsMessageHandler.Owner.DisplayImage = displayImage;
-                            }
-
-                            nsMessageHandler.SetPrivacyMode(nsMessageHandler.Owner.Privacy);
-
-                            string[] adls = ConstructLists(AddressBook.MembershipContacts.Values, true, MSNLists.None);
-
-                            initialADLcount = adls.Length;
-                            foreach (string payload in adls)
-                            {
-                                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                                nsMessageHandler.MessageProcessor.SendMessage(message);
-                                initialADLs.Add(message.TransactionID);
-                            }
-                        }
-                    );
+                    NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                    nsMessageHandler.MessageProcessor.SendMessage(message);
+                    initialADLs.Add(message.TransactionID);
                 }
-            );
+            }
+        }
+
+        internal bool ProcessADL(int transid)
+        {
+            if (initialADLs.Contains(transid))
+            {
+                initialADLs.Remove(transid);
+                if (--initialADLcount <= 0)
+                {
+                    initialADLcount = 0;
+
+                    nsMessageHandler.SetScreenName(nsMessageHandler.Owner.Name);
+                    nsMessageHandler.SetPersonalMessage(nsMessageHandler.Owner.PersonalMessage);
+
+                    if (nsMessageHandler.AutoSynchronize && !abSynchronized)
+                    {
+                        nsMessageHandler.OnSignedIn();
+
+                        msRequest(
+                            "Initial",
+                            delegate
+                            {
+                                abRequest("Initial",
+                                    delegate
+                                    {
+                                        SetDefaults(false);
+                                        abSynchronized = true;
+
+                                        // No contacts are sent so we are done synchronizing call the callback
+                                        // MSNP8: New callback defined, SynchronizationCompleted.
+                                        nsMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
+                                        abSynchronized = true;
+
+                                        // Fire the ReverseAdded event (pending)
+                                        foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
+                                        {
+                                            if (pendingContact.OnAllowedList || pendingContact.Blocked)
+                                            {
+                                                RemoveContactFromList(
+                                                    pendingContact,
+                                                    MSNLists.PendingList,
+                                                    delegate
+                                                    {
+                                                        AddContactToList(pendingContact, MSNLists.ReverseList, null);
+                                                    }
+                                                );
+
+                                                System.Threading.Thread.Sleep(100);
+                                                AddContactToList(pendingContact, MSNLists.ReverseList, null);
+                                            }
+                                            else
+                                            {
+                                                nsMessageHandler.OnReverseAdded(pendingContact);
+                                            }
+                                        }
+                                    }
+                                );
+                            }
+                        );
+                    }
+                }
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -1582,55 +1663,6 @@ namespace MSNPSharp
             abSynchronized = synchronized;
         }
 
-        internal bool ProcessADL(int transid)
-        {
-            if (initialADLs.Contains(transid))
-            {
-                initialADLs.Remove(transid);
-                if (--initialADLcount <= 0)
-                {
-                    abSynchronized = true;
-                    initialADLcount = 0;
-
-                    nsMessageHandler.SetScreenName(nsMessageHandler.Owner.Name);
-
-                    if (nsMessageHandler.AutoSynchronize)
-                    {
-                        nsMessageHandler.OnSignedIn();
-                        nsMessageHandler.SetPersonalMessage(nsMessageHandler.Owner.PersonalMessage);
-                    }
-
-                    // No contacts are sent so we are done synchronizing call the callback
-                    // MSNP8: New callback defined, SynchronizationCompleted.
-                    nsMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
-                    abSynchronized = true;
-
-                    // Fire the ReverseAdded event (pending)
-                    foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
-                    {
-                        if (pendingContact.OnAllowedList || pendingContact.Blocked)
-                        {
-                            RemoveContactFromList(
-                                pendingContact,
-                                MSNLists.PendingList,
-                                delegate
-                                {
-                                    AddContactToList(pendingContact, MSNLists.ReverseList, null);
-                                }
-                            );
-
-                            System.Threading.Thread.Sleep(100);
-                            AddContactToList(pendingContact, MSNLists.ReverseList, null);
-                        }
-                        else
-                        {
-                            nsMessageHandler.OnReverseAdded(pendingContact);
-                        }
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
+        
     }
 };
