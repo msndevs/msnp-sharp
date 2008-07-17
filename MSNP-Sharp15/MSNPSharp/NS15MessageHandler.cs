@@ -117,13 +117,11 @@ namespace MSNPSharp
         private ConnectivitySettings connectivitySettings = null;
         private IPEndPoint externalEndPoint = null;
         private Credentials credentials = null;
-
-        private bool isSignedIn = false;
-        private bool autoSynchronize = true;
         
         private ContactGroupList contactGroups = null;
         private ContactList contactList = new ContactList();
 
+        private bool isSignedIn = false;
         private Owner owner = new Owner();
         private Queue pendingSwitchboards = new Queue();
 
@@ -149,21 +147,6 @@ namespace MSNPSharp
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// Defines if the contact list is automatically synchronized upon connection.
-        /// </summary>
-        public bool AutoSynchronize
-        {
-            get
-            {
-                return autoSynchronize;
-            }
-            set
-            {
-                autoSynchronize = value;
-            }
-        }
 
         /// <summary>
         /// Defines whether the user is signed in the messenger network
@@ -842,16 +825,7 @@ namespace MSNPSharp
                 externalEndPoint = new IPEndPoint(ip, clientPort);
             }
 
-            //ADL
-            if (AutoSynchronize)
-            {
-                contactService.SynchronizeContactList();
-            }
-            else
-            {
-                // notify the client programmer
-                OnSignedIn();
-            }
+            ContactService.SynchronizeContactList();
         }
 
         /// <summary>
@@ -869,9 +843,10 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnSignedOff(SignedOffReason reason)
         {
-            isSignedIn = false;
-            SwitchBoards.Clear();
             owner.SetStatus(PresenceStatus.Offline);
+
+            Clear();
+
             if (SignedOff != null)
                 SignedOff(this, new SignedOffEventArgs(reason));
         }
@@ -1846,9 +1821,11 @@ namespace MSNPSharp
         {
             Tickets.Clear();
             ContactList.Clear();
-            ContactGroups.Clear();            
-            ContactService.Clear();            
+            ContactGroups.Clear();
+            ContactService.Clear();
+            SwitchBoards.Clear();
             externalEndPoint = null;
+            isSignedIn = false;
         }
 
         /// <summary>

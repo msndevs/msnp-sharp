@@ -223,10 +223,10 @@ namespace MSNPSharp
                     nsMessageHandler.SetScreenName(nsMessageHandler.Owner.Name);
                     nsMessageHandler.SetPersonalMessage(nsMessageHandler.Owner.PersonalMessage);
 
-                    if (nsMessageHandler.AutoSynchronize && !abSynchronized)
-                    {
-                        nsMessageHandler.OnSignedIn();
+                    nsMessageHandler.OnSignedIn();
 
+                    if (!AddressBookSynchronized)
+                    {
                         msRequest(
                             "Initial",
                             delegate
@@ -234,13 +234,12 @@ namespace MSNPSharp
                                 abRequest("Initial",
                                     delegate
                                     {
-                                        SetDefaults(false);
                                         abSynchronized = true;
+                                        SetDefaults(false);
 
                                         // No contacts are sent so we are done synchronizing call the callback
                                         // MSNP8: New callback defined, SynchronizationCompleted.
                                         nsMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
-                                        abSynchronized = true;
 
                                         // Fire the ReverseAdded event (pending)
                                         foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
@@ -503,7 +502,7 @@ namespace MSNPSharp
         internal string[] ConstructLists(Dictionary<ContactIdentifier, MembershipContactInfo>.ValueCollection contacts, bool initial, MSNLists lists)
         {
             List<string> mls = new List<string>();
-            XmlDocument xmlDoc = new XmlDocument();            
+            XmlDocument xmlDoc = new XmlDocument();
             XmlElement mlElement = xmlDoc.CreateElement("ml");
             if (initial)
                 mlElement.SetAttribute("l", "1");
@@ -513,12 +512,12 @@ namespace MSNPSharp
                 mls.Add(mlElement.OuterXml);
                 return mls.ToArray();
             }
-            
+
             List<MembershipContactInfo> sortedContacts = new List<MembershipContactInfo>(contacts);
             sortedContacts.Sort(CompareContacts);
 
             int domaincontactcount = 0;
-            string currentDomain = null;            
+            string currentDomain = null;
             XmlElement domtelElement = null;
 
             foreach (MembershipContactInfo contact in sortedContacts)
@@ -558,7 +557,7 @@ namespace MSNPSharp
                     if (currentDomain != domain)
                     {
                         currentDomain = domain;
-                        domaincontactcount = 0;                 
+                        domaincontactcount = 0;
 
                         if (contact.Type == ClientType.PhoneMember)
                         {
@@ -567,7 +566,7 @@ namespace MSNPSharp
                         else
                         {
                             domtelElement = xmlDoc.CreateElement("d");
-                            domtelElement.SetAttribute("n", currentDomain);                            
+                            domtelElement.SetAttribute("n", currentDomain);
                         }
                         mlElement.AppendChild(domtelElement);
                     }
@@ -583,7 +582,7 @@ namespace MSNPSharp
                     domaincontactcount++;
                 }
                 //domaincontactcount > 100 will leads to bug if it's less than 100 and mlElement.OuterXml.Length > 7300, it's possible...someone just report this problem..
-                if (/*domaincontactcount > 100 &&*/ mlElement.OuterXml.Length > 7300)  
+                if (/*domaincontactcount > 100 &&*/ mlElement.OuterXml.Length > 7300)
                 {
                     mlElement.AppendChild(domtelElement);
                     mls.Add(mlElement.OuterXml);
@@ -1657,12 +1656,5 @@ namespace MSNPSharp
             AddressBook = null;
             Deltas = null;
         }
-
-        internal void SetAddressBookSynchronized(bool synchronized)
-        {
-            abSynchronized = synchronized;
-        }
-
-        
     }
 };
