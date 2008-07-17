@@ -244,24 +244,7 @@ namespace MSNPSharp
                                         // Fire the ReverseAdded event (pending)
                                         foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
                                         {
-                                            if (pendingContact.OnAllowedList || pendingContact.Blocked)
-                                            {
-                                                RemoveContactFromList(
-                                                    pendingContact,
-                                                    MSNLists.PendingList,
-                                                    delegate
-                                                    {
-                                                        AddContactToList(pendingContact, MSNLists.ReverseList, null);
-                                                    }
-                                                );
-
-                                                System.Threading.Thread.Sleep(100);
-                                                AddContactToList(pendingContact, MSNLists.ReverseList, null);
-                                            }
-                                            else
-                                            {
-                                                nsMessageHandler.OnReverseAdded(pendingContact);
-                                            }
+                                            nsMessageHandler.OnReverseAdded(pendingContact);
                                         }
                                     }
                                 );
