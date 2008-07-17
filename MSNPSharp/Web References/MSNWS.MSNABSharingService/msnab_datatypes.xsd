@@ -523,7 +523,7 @@
       <xsd:element minOccurs="0" name="Notifications">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element name="NotificationData" type="msnab:NotificationDataType" />
+            <xsd:element maxOccurs="unbounded" name="NotificationData" type="msnab:NotificationDataType" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
