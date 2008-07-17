@@ -80,7 +80,7 @@ namespace MSNPSharp
     public class ContactSpaceService : MSNService
     {
         private NSMessageHandler nsMessageHandler = null;
-        WebProxy webProxy = null;
+        private WebProxy webProxy = null;
 
         /// <summary>
         /// Fired after GetContactCard completed its async request.
@@ -330,24 +330,6 @@ namespace MSNPSharp
             {
                 OnContactCardCompleted(new ContactCardCompletedEventArg(false, null, null));
             }
-        }
-
-        /// <summary>
-        /// Get subelement properties.
-        /// </summary>
-        /// <param name="nodes">SubElement object</param>
-        /// <param name="name">Property name</param>
-        /// <returns></returns>
-        [Obsolete]
-        private string GetProperty(XmlNode[] nodes, string name)
-        {
-            foreach (XmlNode node in nodes)
-            {
-                if (node.Name == name)
-                    return node.InnerText;
-            }
-
-            return null;
         }
 
         /// <summary>

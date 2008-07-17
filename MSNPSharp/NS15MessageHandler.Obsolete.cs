@@ -10,6 +10,22 @@ namespace MSNPSharp
     partial class NSMessageHandler
     {
         /// <summary>
+        /// Defines if the contact list is automatically synchronized upon connection.
+        /// </summary>
+        /// <remarks>No more used. Using this property causes error!!!</remarks>
+        [Obsolete("No more used. Using this property causes error!!!", true)]
+        public bool AutoSynchronize
+        {
+            get
+            {
+                return true;
+            }
+            set
+            {
+            }
+        }
+
+        /// <summary>
         /// Send the synchronize command to the server. This will rebuild the contactlist with the most recent data.
         /// </summary>
         /// <remarks>

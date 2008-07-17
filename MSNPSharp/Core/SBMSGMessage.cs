@@ -86,8 +86,8 @@ namespace MSNPSharp.Core
             string name = null;
             string val = null;
 
-            int startpos=0;
-            int endpos=0;
+            int startpos = 0;
+            int endpos = 0;
             bool gettingval = false;
 
             while (enumerator.MoveNext())
@@ -101,7 +101,7 @@ namespace MSNPSharp.Core
                         return table;
                     }
 
-                    val = Encoding.UTF8.GetString(data, startpos, endpos -startpos);
+                    val = Encoding.UTF8.GetString(data, startpos, endpos - startpos);
 
                     if (!table.ContainsKey(name))
                         table.Add(name, val);
@@ -177,7 +177,7 @@ namespace MSNPSharp.Core
         {
             // parse the header
             IEnumerator enumerator = data.GetEnumerator();
-            mimeHeader = ParseMime(enumerator,data);
+            mimeHeader = ParseMime(enumerator, data);
 
             // get the rest of the message
             MemoryStream memStream = new MemoryStream();
