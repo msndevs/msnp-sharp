@@ -333,8 +333,7 @@ namespace MSNPSharp
 
                     srvInfo.Info = info;
                     notification.StoreService = srvInfo;
-                    passportDyItem.Notifications = new BaseDynamicItemTypeNotifications();
-                    passportDyItem.Notifications.NotificationData = notification;
+                    passportDyItem.Notifications = new NotificationDataType[] { notification };
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
@@ -389,7 +388,8 @@ namespace MSNPSharp
         public OwnerProfile GetProfile()
         {
             if (nsMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                nsMessageHandler.Tickets.ContainsKey(Iniproperties.StorageTicket))
+                nsMessageHandler.Tickets.ContainsKey(Iniproperties.StorageTicket) &&
+                NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService)
             {
                 try
                 {
@@ -408,6 +408,7 @@ namespace MSNPSharp
 
                     NSMessageHandler.ContactService.AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
                     NSMessageHandler.ContactService.AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
+                    NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService = false;
 
                     // Display name
                     NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
@@ -513,19 +514,18 @@ namespace MSNPSharp
                                 passportDyItem.Type = "Passport";
                                 passportDyItem.PassportName = NSMessageHandler.Owner.Mail;
                                 passportDyItem.Changes = "Notifications";
-                                passportDyItem.Notifications = new BaseDynamicItemTypeNotifications();
-                                passportDyItem.Notifications.NotificationData = new NotificationDataType();
-                                passportDyItem.Notifications.NotificationData.StoreService = new ServiceType();
-                                passportDyItem.Notifications.NotificationData.StoreService.Info = new InfoType();
-                                passportDyItem.Notifications.NotificationData.StoreService.Info.Handle = new HandleType();
-                                passportDyItem.Notifications.NotificationData.StoreService.Info.Handle.Id = "0";
-                                passportDyItem.Notifications.NotificationData.StoreService.Info.Handle.Type = ServiceFilterType.Profile;
-                                passportDyItem.Notifications.NotificationData.StoreService.Info.Handle.ForeignId = "MyProfile";
-                                passportDyItem.Notifications.NotificationData.StoreService.Info.IsBot = false;
-                                passportDyItem.Notifications.NotificationData.StoreService.Info.InverseRequired = false;
-                                passportDyItem.Notifications.NotificationData.StoreService.Changes = String.Empty;
-                                passportDyItem.Notifications.NotificationData.Status = "Exist Access";
-                                passportDyItem.Notifications.NotificationData.LastChanged = NSMessageHandler.ContactService.AddressBook.Profile.DateModified;
+                                passportDyItem.Notifications = new NotificationDataType[] { new NotificationDataType() };
+                                passportDyItem.Notifications[0].StoreService = new ServiceType();
+                                passportDyItem.Notifications[0].StoreService.Info = new InfoType();
+                                passportDyItem.Notifications[0].StoreService.Info.Handle = new HandleType();
+                                passportDyItem.Notifications[0].StoreService.Info.Handle.Id = "0";
+                                passportDyItem.Notifications[0].StoreService.Info.Handle.Type = ServiceFilterType.Profile;
+                                passportDyItem.Notifications[0].StoreService.Info.Handle.ForeignId = "MyProfile";
+                                passportDyItem.Notifications[0].StoreService.Info.IsBot = false;
+                                passportDyItem.Notifications[0].StoreService.Info.InverseRequired = false;
+                                passportDyItem.Notifications[0].StoreService.Changes = String.Empty;
+                                passportDyItem.Notifications[0].Status = "Exist Access";
+                                passportDyItem.Notifications[0].LastChanged = NSMessageHandler.ContactService.AddressBook.Profile.DateModified;
 
                                 updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
 

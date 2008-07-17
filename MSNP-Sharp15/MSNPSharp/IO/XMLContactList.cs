@@ -624,6 +624,19 @@ namespace MSNPSharp.IO
                         {
                             xmlcl.NSMessageHandler.ContactService.Deltas.DynamicItems[(dyItem as PassportDynamicItem).PassportName] = dyItem;
                         }
+                        else if ((dyItem as PassportDynamicItem).PassportName == xmlcl.NSMessageHandler.Owner.Mail && dyItem.Notifications != null)
+                        {
+                            foreach (NotificationDataType notifydata in dyItem.Notifications)
+                            {
+                                if (notifydata.StoreService.Info.Handle.Type == ServiceFilterType.Profile)
+                                {
+                                    if (xmlcl.Profile.DateModified < notifydata.LastChanged)
+                                    {
+                                        xmlcl.Profile.GetFromStorageService = true;
+                                    }
+                                }
+                            }
+                        }                        
                     }
                 }
             }
