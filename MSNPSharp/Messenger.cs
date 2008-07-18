@@ -172,14 +172,16 @@ namespace MSNPSharp
                 tsMsnslpHandlers.Add(msnslpHandler);
 
                 // set the correct switchboard to send messages to
-                foreach (Conversation c in tsConversations)
+                lock (tsConversations.SyncRoot)
                 {
-                    if (c.Switchboard.Contacts.ContainsKey(see.Session.RemoteContact))
+                    foreach (Conversation c in tsConversations)
                     {
-                        see.Session.MessageProcessor = c.SwitchboardProcessor;
+                        if (c.Switchboard.Contacts.ContainsKey(see.Session.RemoteContact))
+                        {
+                            see.Session.MessageProcessor = c.SwitchboardProcessor;
+                        }
                     }
                 }
-
                 // Accepts by default owner display images and contact emoticons.
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
                 {
@@ -575,10 +577,13 @@ namespace MSNPSharp
         /// <returns></returns>
         private MSNSLPHandler GetMSNSLPHandler(P2PMessageSession session)
         {
-            foreach (MSNSLPHandler handler in tsMsnslpHandlers)
+            lock (tsMsnslpHandlers.SyncRoot)
             {
-                if (handler.MessageSession == session)
-                    return handler;
+                foreach (MSNSLPHandler handler in tsMsnslpHandlers)
+                {
+                    if (handler.MessageSession == session)
+                        return handler;
+                }
             }
             return null;
         }
@@ -592,12 +597,15 @@ namespace MSNPSharp
         /// <param name="e"></param>
         internal void Switchboard_SessionClosed(object sender, EventArgs e)
         {
-            foreach (Conversation conversation in tsConversations)
+            lock (tsConversations.SyncRoot)
             {
-                if (conversation.Switchboard == sender)
+                foreach (Conversation conversation in tsConversations)
                 {
-                    tsConversations.Remove(conversation);
-                    return;
+                    if (conversation.Switchboard == sender)
+                    {
+                        tsConversations.Remove(conversation);
+                        return;
+                    }
                 }
             }
         }
