@@ -3347,6 +3347,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         Messenger2,
         
         /// <remarks/>
+        Messenger3,
+        
+        /// <remarks/>
+        Messenger4,
+        
+        /// <remarks/>
         Passport,
     }
     

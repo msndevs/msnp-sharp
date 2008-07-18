@@ -334,6 +334,8 @@
       <xsd:enumeration value="ContactEmailOther"/>
       <xsd:enumeration value="ContactEmailMessenger"/>
       <xsd:enumeration value="Messenger2"/>
+      <xsd:enumeration value="Messenger3"/>
+      <xsd:enumeration value="Messenger4"/>
       <xsd:enumeration value="Passport"/>
     </xsd:restriction>
   </xsd:simpleType>
