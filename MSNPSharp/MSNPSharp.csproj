@@ -126,6 +126,7 @@
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
     <Compile Include="SpaceService.cs" />
+    <Compile Include="StorageService.cs" />
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />

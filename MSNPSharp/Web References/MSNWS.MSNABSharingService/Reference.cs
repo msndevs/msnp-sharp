@@ -885,7 +885,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string changesField;
         
-        private BaseDynamicItemTypeNotifications notificationsField;
+        private NotificationDataType[] notificationsField;
         
         private System.DateTime liveContactLastChangedField;
         
@@ -1162,7 +1162,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public BaseDynamicItemTypeNotifications Notifications {
+        [System.Xml.Serialization.XmlArrayItemAttribute("NotificationData", IsNullable=false)]
+        public NotificationDataType[] Notifications {
             get {
                 return this.notificationsField;
             }
@@ -1189,27 +1190,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.liveContactLastChangedFieldSpecified = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class BaseDynamicItemTypeNotifications {
-        
-        private NotificationDataType notificationDataField;
-        
-        /// <remarks/>
-        public NotificationDataType NotificationData {
-            get {
-                return this.notificationDataField;
-            }
-            set {
-                this.notificationDataField = value;
             }
         }
     }
@@ -1856,6 +1836,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         Folder,
+        
+        /// <remarks/>
+        Event,
     }
     
     /// <remarks/>
@@ -3362,6 +3345,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         Messenger2,
+        
+        /// <remarks/>
+        Messenger3,
+        
+        /// <remarks/>
+        Messenger4,
         
         /// <remarks/>
         Passport,

@@ -117,19 +117,18 @@ namespace MSNPSharp
         private ConnectivitySettings connectivitySettings = null;
         private IPEndPoint externalEndPoint = null;
         private Credentials credentials = null;
-
-        private bool isSignedIn = false;
-        private bool autoSynchronize = true;
         
         private ContactGroupList contactGroups = null;
         private ContactList contactList = new ContactList();
 
+        private bool isSignedIn = false;
         private Owner owner = new Owner();
         private Queue pendingSwitchboards = new Queue();
 
         private ContactService contactService = null;
         private OIMService oimService = null;
         private ContactSpaceService spaceService = null;
+        private MSNStorageService storageService = null;
 
         private NSMessageHandler()
         {
@@ -142,26 +141,12 @@ namespace MSNPSharp
             contactService = new ContactService(this);
             oimService = new OIMService(this);
             spaceService = new ContactSpaceService(this);
+            storageService = new MSNStorageService(this);
         }
 
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// Defines if the contact list is automatically synchronized upon connection.
-        /// </summary>
-        public bool AutoSynchronize
-        {
-            get
-            {
-                return autoSynchronize;
-            }
-            set
-            {
-                autoSynchronize = value;
-            }
-        }
 
         /// <summary>
         /// Defines whether the user is signed in the messenger network
@@ -290,6 +275,17 @@ namespace MSNPSharp
             get
             {
                 return spaceService;
+            }
+        }
+
+        /// <summary>
+        /// Storage Service for get/update display name, personal status, display picture etc.
+        /// </summary>
+        public MSNStorageService StorageService
+        {
+            get
+            {
+                return storageService;
             }
         }
 
@@ -609,7 +605,7 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
 
-            ContactService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
+            StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
 
         /// <summary>
@@ -623,7 +619,7 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
 
-            ContactService.UpdateProfile(Owner.Name, pmsg.Message);
+            StorageService.UpdateProfile(Owner.Name, pmsg.Message);
         }
 
         #endregion
@@ -662,7 +658,7 @@ namespace MSNPSharp
         public virtual void SetPresenceStatus(PresenceStatus status)
         {
             // check whether we are allowed to send a CHG command
-            if (ContactService.AddressBookSynchronized == false)
+            if (ContactService.AddressBook.AddressbookLastChange == DateTime.MinValue)
                 throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
 
             string context = String.Empty;
@@ -829,16 +825,7 @@ namespace MSNPSharp
                 externalEndPoint = new IPEndPoint(ip, clientPort);
             }
 
-            //ADL
-            if (AutoSynchronize)
-            {
-                contactService.SynchronizeContactList();
-            }
-            else
-            {
-                // notify the client programmer
-                OnSignedIn();
-            }
+            ContactService.SynchronizeContactList();
         }
 
         /// <summary>
@@ -856,9 +843,10 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnSignedOff(SignedOffReason reason)
         {
-            isSignedIn = false;
-            SwitchBoards.Clear();
             owner.SetStatus(PresenceStatus.Offline);
+
+            Clear();
+
             if (SignedOff != null)
                 SignedOff(this, new SignedOffEventArgs(reason));
         }
@@ -1458,7 +1446,7 @@ namespace MSNPSharp
         {
             if (message.CommandValues[1].ToString() == "OK" &&
                 message.TransactionID == 0 &&
-                ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))                
+                ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))
             {
 
             }
@@ -1466,7 +1454,7 @@ namespace MSNPSharp
             {
                 NetworkMessage networkMessage = message as NetworkMessage;
                 XmlDocument xmlDoc = new XmlDocument();
-                if (networkMessage.InnerBody != null)          //Payload ADL command.
+                if (networkMessage.InnerBody != null) //Payload ADL command
                 {
                     xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
                     XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
@@ -1490,31 +1478,24 @@ namespace MSNPSharp
 
                             MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
-                            if (ContactList.HasContact(account, type))
-                            {
-                                Contact updateContact = ContactList.GetContact(account, type);
-                                updateContact.SetName(displayName);
-                                if (!updateContact.HasLists(list))
-                                    updateContact.AddToList(list);  //What about reverse adding ? Not fire OnReverseAdded ?
-                            }
-                            else
-                            {
-                                if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
+
+                            // Get all memberships
+                            ContactService.msRequest(
+                                "MessengerPendingList",
+                                delegate
                                 {
-                                    Contact newcontact = ContactList.GetContact(account, displayName, type);
-                                    newcontact.SetClientType(type);
-                                    newcontact.SetLists(MSNLists.PendingList);
-                                    newcontact.NSMessageHandler = this;
-                                    ContactService.msRequest(
-                                        "MessengerPendingList",
-                                        delegate
-                                        {
-                                            newcontact = ContactList.GetContact(account, type);
-                                            OnReverseAdded(newcontact);
-                                        }
-                                    );
+                                    // If this contact on Pending list other person added us, otherwise we added and other person accepted.
+                                    Contact contact = ContactList.GetContact(account, type);
+                                    contact.SetName(displayName);
+                                    contact.NSMessageHandler = this;
+
+                                    if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
+                                    {
+                                        OnReverseAdded(contact);
+                                    }
                                 }
-                            }
+                            );
+
                             if (Settings.TraceSwitch.TraceVerbose)
                                 Trace.WriteLine(account + " was added to your " + list.ToString());
 
@@ -1651,7 +1632,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ReverseRemoved"/> event.
         /// </summary>
         /// <param name="contact"></param>
-        protected virtual void OnReverseRemoved(Contact contact)
+        protected internal virtual void OnReverseRemoved(Contact contact)
         {
             if (ReverseRemoved != null)
                 ReverseRemoved(this, new ContactEventArgs(contact));
@@ -1838,10 +1819,13 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void Clear()
         {
+            Tickets.Clear();
             ContactList.Clear();
-            ContactGroups.Clear();            
+            ContactGroups.Clear();
             ContactService.Clear();
+            SwitchBoards.Clear();
             externalEndPoint = null;
+            isSignedIn = false;
         }
 
         /// <summary>

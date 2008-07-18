@@ -334,6 +334,8 @@
       <xsd:enumeration value="ContactEmailOther" />
       <xsd:enumeration value="ContactEmailMessenger" />
       <xsd:enumeration value="Messenger2" />
+      <xsd:enumeration value="Messenger3" />
+      <xsd:enumeration value="Messenger4" />
       <xsd:enumeration value="Passport" />
     </xsd:restriction>
   </xsd:simpleType>
@@ -443,6 +445,7 @@
       <xsd:enumeration value="Space" />
       <xsd:enumeration value="Profile" />
       <xsd:enumeration value="Folder" />
+      <xsd:enumeration value="Event" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="InvalidPassportUser">
@@ -522,7 +525,7 @@
       <xsd:element minOccurs="0" name="Notifications">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element name="NotificationData" type="msnab:NotificationDataType" />
+            <xsd:element maxOccurs="unbounded" name="NotificationData" type="msnab:NotificationDataType" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
