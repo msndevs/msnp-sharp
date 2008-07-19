@@ -53,7 +53,7 @@ namespace MSNPSharp
             storageService.StorageApplicationHeaderValue.Scenario = Scenario;
             storageService.StorageUserHeaderValue = new StorageUserHeader();
             storageService.StorageUserHeaderValue.Puid = 0;
-            storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.Tickets[Iniproperties.StorageTicket];
+            storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.StorageTicket].Ticket;
             return storageService;
         }
 
@@ -101,7 +101,7 @@ namespace MSNPSharp
         /// </summary>
         private void CreateProfile()
         {
-            if (false == nsMessageHandler.Tickets.ContainsKey(Iniproperties.StorageTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.StorageTicket))
                 return;
 
             try
@@ -149,7 +149,7 @@ namespace MSNPSharp
                 srvHandle.ForeignId = "MyProfile";
                 srvHandle.Id = "0";
                 srvHandle.Type = ServiceFilterType.Profile;
-                if (nsMessageHandler.Tickets.ContainsKey(Iniproperties.ContactTicket))
+                if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
                 {
                     SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed");
                     sharingService.AllowAutoRedirect = true;
@@ -302,7 +302,7 @@ namespace MSNPSharp
 
 
                 //8. UpdateDynamicItem
-                if (nsMessageHandler.Tickets.ContainsKey(Iniproperties.ContactTicket))
+                if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
                 {
                     ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingSeed");
                     abService.AllowAutoRedirect = true;
@@ -388,7 +388,7 @@ namespace MSNPSharp
         public OwnerProfile GetProfile()
         {
             if (nsMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                nsMessageHandler.Tickets.ContainsKey(Iniproperties.StorageTicket) &&
+                nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.StorageTicket) &&
                 NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService)
             {
                 try
@@ -432,7 +432,7 @@ namespace MSNPSharp
                             }
 
                             // Don't urlencode t= :))
-                            Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.Tickets[Iniproperties.StorageTicket].Substring(2)));
+                            Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.StorageTicket].Ticket.Substring(2)));
 
                             HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
                             fwr.Proxy = webProxy;
@@ -474,7 +474,7 @@ namespace MSNPSharp
         {
             OwnerProfile profile = NSMessageHandler.ContactService.AddressBook.Profile;
 
-            if (nsMessageHandler.Tickets.ContainsKey(Iniproperties.StorageTicket) &&
+            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.StorageTicket) &&
                 (profile.DisplayName != displayName || profile.PersonalMessage != personalStatus))
             {
                 NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = displayName;
@@ -491,7 +491,7 @@ namespace MSNPSharp
                             NSMessageHandler.ContactService.AddressBook.Profile = GetProfile();
 
                             // UpdateDynamicItem
-                            if (nsMessageHandler.Tickets.ContainsKey(Iniproperties.ContactTicket))
+                            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
                             {
                                 ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged");
                                 abService.UpdateDynamicItemCompleted += delegate(object service, UpdateDynamicItemCompletedEventArgs ue)

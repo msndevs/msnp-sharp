@@ -48,19 +48,204 @@ using MSNPSharp.MSNWS.MSNSecurityTokenService;
 
 namespace MSNPSharp
 {
-    public enum Iniproperties
+    public class MSNTicket
     {
-        BrandID,
-        OIMTicket,
-        BinarySecret,
-        Ticket,
+        private string mainBrandID = "MSFT";
+        private string oimLockKey = String.Empty;
+        private string abServiceCacheKey = String.Empty;
+        private string sharingServiceCacheKey = String.Empty;
+        private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
+
+        public Dictionary<SSOTicketType, SSOTicket> SSOTickets
+        {
+            get
+            {
+                return ssoTickets;
+            }
+            set
+            {
+                ssoTickets = value;
+            }
+        }
+
+        public string MainBrandID
+        {
+            get
+            {
+                return mainBrandID;
+            }
+            set
+            {
+                mainBrandID = value;
+            }
+        }
+
+        public string OIMLockKey
+        {
+            get
+            {
+                return oimLockKey;
+            }
+            set
+            {
+                oimLockKey = value;
+            }
+        }
+
+        public string ABServiceCacheKey
+        {
+            get
+            {
+                return abServiceCacheKey;
+            }
+            set
+            {
+                abServiceCacheKey = value;
+            }
+        }
+
+        public string SharingServiceCacheKey
+        {
+            get
+            {
+                return sharingServiceCacheKey;
+            }
+            set
+            {
+                sharingServiceCacheKey = value;
+            }
+        }
+
+        public object Clone()
+        {
+            return MemberwiseClone();
+        }
+    }
+
+    public enum SSOTicketType
+    {
+        None,
         WebTicket,
+        OIMTicket,
+        SslTicket,
         ContactTicket,
-        LockKey,
-        AddressBookCacheKey,
-        SharingServiceCacheKey,
         SpacesTicket,
         StorageTicket
+    }
+
+    public class SSOTicket
+    {
+        private String domain = String.Empty;
+        private String ticket = String.Empty;
+        private String binarySecret = String.Empty;        
+        private DateTime created = DateTime.MaxValue;
+        private DateTime expires = DateTime.MaxValue;
+        private SSOTicketType type = SSOTicketType.None;
+
+        public SSOTicket(SSOTicketType tickettype)
+        {
+            type = tickettype;
+        }
+
+        public String Domain
+        {
+            get
+            {
+                return domain;
+            }
+            set
+            {
+                domain = value;
+            }
+        }
+
+        public String Ticket
+        {
+            get
+            {
+                return ticket;
+            }
+            set
+            {
+                ticket = value;
+            }
+        }
+
+        public String BinarySecret
+        {
+            get
+            {
+                return binarySecret;
+            }
+            set
+            {
+                binarySecret = value;
+            }
+        }
+
+        public DateTime Created
+        {
+            get
+            {
+                return created;
+            }
+            set
+            {
+                created = value;
+            }
+        }
+
+        public DateTime Expires
+        {
+            get
+            {
+                return expires;
+            }
+            set
+            {
+                expires = value;
+            }
+        }
+    }
+
+    internal static class SSOManager
+    {
+        private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
+
+        public static string Authenticate(
+            Credentials creds,
+            string policy,
+            string nonce,
+            ConnectivitySettings cs,
+            out MSNTicket ticket)
+        {
+            string ret = string.Empty;
+            int hashcode = (creds.Account + creds.Password).GetHashCode();
+
+            if (cache.ContainsKey(hashcode))
+            {
+                ticket = cache[hashcode];
+
+                // Check lifetime here
+
+                MBI mbi = new MBI();
+                return
+                    ticket.SSOTickets[SSOTicketType.SslTicket].Ticket + " " +
+                    mbi.Encrypt(ticket.SSOTickets[SSOTicketType.SslTicket].BinarySecret, nonce);
+            }
+            else
+            {
+                SingleSignOn sso = new SingleSignOn(creds.Account, creds.Password, policy);
+                if (cs != null && cs.WebProxy != null)
+                {
+                    sso.WebProxy = cs.WebProxy;
+                }
+                sso.AddDefaultAuths();
+                ret = sso.Authenticate(nonce, out ticket);
+                cache[hashcode] = ticket;
+            }
+            return ret;
+        }
     }
 
     public class SingleSignOn
@@ -89,7 +274,6 @@ namespace MSNPSharp
             this.user = username;
             this.pass = password;
             this.policy = policy;
-
         }
 
         public void AuthenticationAdd(string domain, string policyref)
@@ -122,7 +306,7 @@ namespace MSNPSharp
             AuthenticationAdd("storage.msn.com", "MBI");
         }
 
-        public string Authenticate(string nonce, out Dictionary<Iniproperties, string> tickets)
+        public string Authenticate(string nonce, out MSNTicket msnticket)
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
             securService.Timeout = 60000;
@@ -172,14 +356,14 @@ namespace MSNPSharp
                 throw sexp;
             }
 
-            tickets = new Dictionary<Iniproperties, string>(0);
+            msnticket = new MSNTicket();
             if (securService.pp != null && securService.pp.credProperties != null)
             {
                 foreach (credPropertyType credproperty in securService.pp.credProperties)
                 {
                     if (credproperty.Name == "MainBrandID")
                     {
-                        tickets[Iniproperties.BrandID] = credproperty.Value;
+                        msnticket.MainBrandID = credproperty.Value;
                         break;
                     }
                 }
@@ -187,32 +371,48 @@ namespace MSNPSharp
 
             foreach (RequestSecurityTokenResponseType token in result)
             {
+                SSOTicketType ticketype = SSOTicketType.None;
                 switch (token.AppliesTo.EndpointReference.Address)
                 {
                     case "messenger.msn.com":
-                        tickets[Iniproperties.WebTicket] = token.RequestedSecurityToken.InnerText;
+                        ticketype = SSOTicketType.WebTicket;
                         break;
                     case "messengersecure.live.com":
-                        tickets[Iniproperties.OIMTicket] = token.RequestedSecurityToken.InnerText;
+                        ticketype = SSOTicketType.OIMTicket;
                         break;
                     case "contacts.msn.com":
-                        tickets[Iniproperties.ContactTicket] = token.RequestedSecurityToken.InnerText;
+                        ticketype = SSOTicketType.ContactTicket;
                         break;
                     case "messengerclear.live.com":
-                        tickets[Iniproperties.Ticket] = token.RequestedSecurityToken.InnerText;
-                        tickets[Iniproperties.BinarySecret] = token.RequestedProofToken.BinarySecret.Value;
+                        ticketype = SSOTicketType.SslTicket;
                         break;
                     case "spaces.live.com":
-                        tickets[Iniproperties.SpacesTicket] = token.RequestedSecurityToken.InnerText;
+                        ticketype = SSOTicketType.SpacesTicket;
                         break;
                     case "storage.msn.com":
-                        tickets[Iniproperties.StorageTicket] = token.RequestedSecurityToken.InnerText;
+                        ticketype = SSOTicketType.StorageTicket;
                         break;
                 }
+
+                SSOTicket ssoticket = new SSOTicket(ticketype);
+                ssoticket.Domain = token.AppliesTo.EndpointReference.Address;
+                ssoticket.Ticket = token.RequestedSecurityToken.InnerText;
+                if (token.RequestedProofToken != null && token.RequestedProofToken.BinarySecret != null)
+                {
+                    ssoticket.BinarySecret = token.RequestedProofToken.BinarySecret.Value;
+                }
+                if (token.LifeTime != null)
+                {
+                    ssoticket.Created = XmlConvert.ToDateTime(token.LifeTime.Created.Value, XmlDateTimeSerializationMode.Utc);
+                    ssoticket.Expires = XmlConvert.ToDateTime(token.LifeTime.Expires.Value, XmlDateTimeSerializationMode.Utc);
+                }
+                msnticket.SSOTickets[ticketype] = ssoticket;
             }
 
             MBI mbi = new MBI();
-            return tickets[Iniproperties.Ticket] + " " + mbi.Encrypt(tickets[Iniproperties.BinarySecret], nonce);
+            return
+                msnticket.SSOTickets[SSOTicketType.SslTicket].Ticket + " " +
+                mbi.Encrypt(msnticket.SSOTickets[SSOTicketType.SslTicket].BinarySecret, nonce);
         }
     }
 

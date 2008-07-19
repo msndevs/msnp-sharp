@@ -135,9 +135,9 @@ namespace MSNPSharp
                 return;
 
             string xmlstr = message.MimeHeader["Mail-Data"];
-            if ("too-large" == xmlstr && nsMessageHandler.Tickets.ContainsKey(Iniproperties.WebTicket))
+            if ("too-large" == xmlstr && nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.WebTicket))
             {
-                string[] TandP = nsMessageHandler.Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
+                string[] TandP = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WebTicket].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
                 RSIService rsiService = new RSIService();
                 rsiService.Proxy = webProxy;
                 rsiService.Timeout = Int32.MaxValue;
@@ -187,7 +187,7 @@ namespace MSNPSharp
             if (OIMReceived == null)
                 return;
 
-            if (false == nsMessageHandler.Tickets.ContainsKey(Iniproperties.WebTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.WebTicket))
                 return;
 
             XmlDocument xdoc = new XmlDocument();
@@ -200,7 +200,7 @@ namespace MSNPSharp
             Regex regmsg = new Regex("\n\n[^\n]+");
             Regex regsenderdata = new Regex("From:(?<encode>=.*=)<(?<mail>.+)>\n");
 
-            string[] TandP = nsMessageHandler.Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
+            string[] TandP = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WebTicket].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             foreach (XmlNode m in xnodlst)
             {
@@ -312,10 +312,10 @@ namespace MSNPSharp
 
         private void DeleteOIMMessages(string[] guids)
         {
-            if (false == nsMessageHandler.Tickets.ContainsKey(Iniproperties.WebTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.WebTicket))
                 return;
 
-            string[] TandP = nsMessageHandler.Tickets[Iniproperties.WebTicket].Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
+            string[] TandP = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WebTicket].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
             rsiService.Proxy = webProxy;
@@ -354,7 +354,7 @@ namespace MSNPSharp
         public void SendOIMMessage(string account, string msg)
         {
             Contact contact = nsMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
-            if (nsMessageHandler.Tickets.ContainsKey(Iniproperties.OIMTicket) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
+            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.OIMTicket) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
                     "MIME-Version: 1.0\r\n"
@@ -387,8 +387,8 @@ namespace MSNPSharp
                 oimService.ToValue.memberName = account;
 
                 oimService.TicketValue = new Ticket();
-                oimService.TicketValue.passport = nsMessageHandler.Tickets[Iniproperties.OIMTicket];
-                oimService.TicketValue.lockkey = nsMessageHandler.Tickets.ContainsKey(Iniproperties.LockKey) ? nsMessageHandler.Tickets[Iniproperties.LockKey] : String.Empty;
+                oimService.TicketValue.passport = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIMTicket].Ticket;
+                oimService.TicketValue.lockkey = nsMessageHandler.MSNTicket.OIMLockKey;
                 oimService.TicketValue.appid = nsMessageHandler.Credentials.ClientID;
 
                 oimService.Sequence = new SequenceType();
@@ -415,8 +415,8 @@ namespace MSNPSharp
                         SoapException soapexp = e.Error as SoapException;
                         if (soapexp.Code.Name == "AuthenticationFailed")
                         {
-                            nsMessageHandler.Tickets[Iniproperties.LockKey] = QRYFactory.CreateQRY(nsMessageHandler.Credentials.ClientID, nsMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
-                            oimService.TicketValue.lockkey = nsMessageHandler.Tickets[Iniproperties.LockKey];
+                            nsMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(nsMessageHandler.Credentials.ClientID, nsMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
+                            oimService.TicketValue.lockkey = nsMessageHandler.MSNTicket.OIMLockKey;
                         }
                         else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
                         {

@@ -744,12 +744,12 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
-        private Dictionary<Iniproperties, string> _Tickets = new Dictionary<Iniproperties, string>();
-        internal Dictionary<Iniproperties, string> Tickets
+        private MSNTicket msnticket = new MSNTicket();
+        internal MSNTicket MSNTicket
         {
             get
             {
-                return _Tickets;
+                return msnticket;
             }
         }
 
@@ -760,14 +760,8 @@ namespace MSNPSharp
             {
                 string policy = (string)message.CommandValues[3];
                 string nonce = (string)message.CommandValues[4];
+                string response = SSOManager.Authenticate(Credentials, policy, nonce, ConnectivitySettings, out msnticket);
 
-                SingleSignOn sso = new SingleSignOn(Credentials.Account, Credentials.Password, policy);
-                if (ConnectivitySettings != null && ConnectivitySettings.WebProxy != null)
-                {
-                    sso.WebProxy = ConnectivitySettings.WebProxy;
-                }
-                sso.AddDefaultAuths();
-                string response = sso.Authenticate(nonce, out _Tickets);
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
             }
             else if ((string)message.CommandValues[1] == "OK")
@@ -1687,7 +1681,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
 
             string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
-            _Tickets[Iniproperties.LockKey] = payload;
+            MSNTicket.OIMLockKey = payload;
             MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, payload));
         }
 
@@ -1819,13 +1813,13 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void Clear()
         {
-            Tickets.Clear();
             ContactList.Clear();
             ContactGroups.Clear();
             ContactService.Clear();
             SwitchBoards.Clear();
             externalEndPoint = null;
             isSignedIn = false;
+            msnticket = new MSNTicket();
         }
 
         /// <summary>
