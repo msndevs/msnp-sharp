@@ -212,26 +212,26 @@ namespace MSNPSharp
     {
         private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
 
-        public static string Authenticate(
+        public static MSNTicket Authenticate(
             Credentials creds,
             string policy,
-            string nonce,
-            ConnectivitySettings cs,
-            out MSNTicket ticket)
+            ConnectivitySettings cs)
         {
             string ret = string.Empty;
             int hashcode = (creds.Account + creds.Password).GetHashCode();
 
             if (cache.ContainsKey(hashcode))
             {
-                ticket = cache[hashcode];
+                MSNTicket ticket = cache[hashcode].Clone() as MSNTicket;
 
                 // Check lifetime here
 
-                MBI mbi = new MBI();
-                return
-                    ticket.SSOTickets[SSOTicketType.SslTicket].Ticket + " " +
-                    mbi.Encrypt(ticket.SSOTickets[SSOTicketType.SslTicket].BinarySecret, nonce);
+
+
+
+
+
+                return ticket;
             }
             else
             {
@@ -241,10 +241,10 @@ namespace MSNPSharp
                     sso.WebProxy = cs.WebProxy;
                 }
                 sso.AddDefaultAuths();
-                ret = sso.Authenticate(nonce, out ticket);
-                cache[hashcode] = ticket;
+                MSNTicket ticket = sso.Authenticate();
+                cache[hashcode] = ticket.Clone() as MSNTicket;
+                return ticket;
             }
-            return ret;
         }
     }
 
@@ -306,7 +306,7 @@ namespace MSNPSharp
             AuthenticationAdd("storage.msn.com", "MBI");
         }
 
-        public string Authenticate(string nonce, out MSNTicket msnticket)
+        public MSNTicket Authenticate()
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
             securService.Timeout = 60000;
@@ -356,7 +356,7 @@ namespace MSNPSharp
                 throw sexp;
             }
 
-            msnticket = new MSNTicket();
+            MSNTicket msnticket = new MSNTicket();
             if (securService.pp != null && securService.pp.credProperties != null)
             {
                 foreach (credPropertyType credproperty in securService.pp.credProperties)
@@ -409,10 +409,7 @@ namespace MSNPSharp
                 msnticket.SSOTickets[ticketype] = ssoticket;
             }
 
-            MBI mbi = new MBI();
-            return
-                msnticket.SSOTickets[SSOTicketType.SslTicket].Ticket + " " +
-                mbi.Encrypt(msnticket.SSOTickets[SSOTicketType.SslTicket].BinarySecret, nonce);
+            return msnticket;
         }
     }
 

@@ -760,7 +760,14 @@ namespace MSNPSharp
             {
                 string policy = (string)message.CommandValues[3];
                 string nonce = (string)message.CommandValues[4];
-                string response = SSOManager.Authenticate(Credentials, policy, nonce, ConnectivitySettings, out msnticket);
+
+                msnticket = SSOManager.Authenticate(Credentials, policy, ConnectivitySettings);
+
+                MBI mbi = new MBI();
+                string response =
+                    msnticket.SSOTickets[SSOTicketType.SslTicket].Ticket + " " +
+                    mbi.Encrypt(msnticket.SSOTickets[SSOTicketType.SslTicket].BinarySecret, nonce);
+
 
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
             }
