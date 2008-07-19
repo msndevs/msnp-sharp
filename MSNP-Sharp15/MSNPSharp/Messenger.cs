@@ -172,14 +172,12 @@ namespace MSNPSharp
                 tsMsnslpHandlers.Add(msnslpHandler);
 
                 // set the correct switchboard to send messages to
-                lock (tsConversations.SyncRoot)
+
+                foreach (Conversation c in tsConversations)
                 {
-                    foreach (Conversation c in tsConversations)
+                    if (c.Switchboard.Contacts.ContainsKey(see.Session.RemoteContact))
                     {
-                        if (c.Switchboard.Contacts.ContainsKey(see.Session.RemoteContact))
-                        {
-                            see.Session.MessageProcessor = c.SwitchboardProcessor;
-                        }
+                        see.Session.MessageProcessor = c.SwitchboardProcessor;
                     }
                 }
                 // Accepts by default owner display images and contact emoticons.
@@ -577,14 +575,13 @@ namespace MSNPSharp
         /// <returns></returns>
         private MSNSLPHandler GetMSNSLPHandler(P2PMessageSession session)
         {
-            lock (tsMsnslpHandlers.SyncRoot)
+
+            foreach (MSNSLPHandler handler in tsMsnslpHandlers)
             {
-                foreach (MSNSLPHandler handler in tsMsnslpHandlers)
-                {
-                    if (handler.MessageSession == session)
-                        return handler;
-                }
+                if (handler.MessageSession == session)
+                    return handler;
             }
+
             return null;
         }
 
@@ -597,17 +594,16 @@ namespace MSNPSharp
         /// <param name="e"></param>
         internal void Switchboard_SessionClosed(object sender, EventArgs e)
         {
-            lock (tsConversations.SyncRoot)
+
+            foreach (Conversation conversation in tsConversations)
             {
-                foreach (Conversation conversation in tsConversations)
+                if (conversation.Switchboard == sender)
                 {
-                    if (conversation.Switchboard == sender)
-                    {
-                        tsConversations.Remove(conversation);
-                        return;
-                    }
+                    tsConversations.Remove(conversation);
+                    return;
                 }
             }
+
         }
     }
 };
