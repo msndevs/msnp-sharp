@@ -48,7 +48,7 @@ using MSNPSharp.MSNWS.MSNSecurityTokenService;
 
 namespace MSNPSharp
 {
-    public class MSNTicket
+    public class MSNTicket : ICloneable
     {
         private string mainBrandID = "MSFT";
         private string oimLockKey = String.Empty;
