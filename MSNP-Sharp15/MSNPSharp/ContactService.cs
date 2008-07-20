@@ -1324,8 +1324,10 @@ namespace MSNPSharp
 
                     contact.AddToList(list);
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
-
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                    {
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                    }
 
                     if (onSuccess != null)
                     {
@@ -1333,7 +1335,7 @@ namespace MSNPSharp
                     }
 
                     if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("AddMember completed.");
+                        Trace.WriteLine("AddMember completed: " + list);
                 }
             };
 
@@ -1439,7 +1441,10 @@ namespace MSNPSharp
                     contact.RemoveFromList(list);
                     AddressBook.RemoveMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list));
 
-                    nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
+                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                    {
+                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
+                    }
 
                     if (onSuccess != null)
                     {
@@ -1447,7 +1452,7 @@ namespace MSNPSharp
                     }
 
                     if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMember completed.");
+                        Trace.WriteLine("DeleteMember completed: " + list);
                 }
             };
 
