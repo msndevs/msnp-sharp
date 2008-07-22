@@ -242,9 +242,12 @@ namespace MSNPSharp
                                         nsMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
 
                                         // Fire the ReverseAdded event (pending)
-                                        foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
+                                        lock (nsMessageHandler.ContactList.SyncRoot)
                                         {
-                                            nsMessageHandler.OnReverseAdded(pendingContact);
+                                            foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
+                                            {
+                                                nsMessageHandler.OnReverseAdded(pendingContact);
+                                            }
                                         }
                                     }
                                 );
