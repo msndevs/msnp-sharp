@@ -343,19 +343,17 @@ namespace MSNPSharpClient
             Invoke(new PrintTextDelegate(PrintText), new object[] { e.Sender.Name, e.Message.Text });            	
 		}
 
-		private void Switchboard_SessionClosed(object sender, EventArgs e)
-		{
-            if (!this.InvokeRequired)
+        private void Switchboard_SessionClosed(object sender, EventArgs e)
+        {
+            if (!conversationTextBox.InvokeRequired)
             {
                 conversationTextBox.Text += "* Session was closed\r\n";
             }
             else
             {
-                this.Invoke(new SBChangedEventHandler(Switchboard_SessionClosed),
-                    new object[] { sender, e });
+                conversationTextBox.Invoke(new SBChangedEventHandler(Switchboard_SessionClosed), sender, e);
             }
-			
-		}
+        }
 
         #region These three functions causes reinvite
         private delegate void Delegate_Switchboard_ContactJoined(object sender, ContactEventArgs e);
