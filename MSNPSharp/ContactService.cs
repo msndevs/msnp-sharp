@@ -670,17 +670,11 @@ namespace MSNPSharp
 
         private void AddPendingContact(Contact contact)
         {
-            // 1: ADL AL without membership, so the user can see our status...
-            SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
-            contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
-            string payload = ConstructLists(contacts.Values, false, MSNLists.AllowedList)[0];
+            // Delete PL with "ContactMsgrAPI"
+            RemoveContactFromList(contact, MSNLists.PendingList, null);
+            System.Threading.Thread.Sleep(200);
 
-            nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-            contact.AddToList(MSNLists.AllowedList);
-
-            System.Threading.Thread.Sleep(100);
-
-            // 2: ADD contact to AB with "ContactMsgrAPI"
+            // ADD contact to AB with "ContactMsgrAPI"
             AddNewOrPendingContact(
                 contact.Mail,
                 true,
@@ -691,27 +685,35 @@ namespace MSNPSharp
                     contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
                     contact.NSMessageHandler = nsMessageHandler;
 
-                    // 3: ADL FL
+                    // FL
                     contact.OnForwardList = true;
                     System.Threading.Thread.Sleep(100);
 
-                    // 4: Delete pending membership with "ContactMsgrAPI"
-                    RemoveContactFromList(contact, MSNLists.PendingList, null);
-                    System.Threading.Thread.Sleep(100);
-
-                    //5: Add Reverse membership with "ContactMsgrAPI"
+                    // Add RL membership with "ContactMsgrAPI"
                     AddContactToList(contact,
                         MSNLists.ReverseList,
                         delegate
                         {
-                            // 6: Extra work for EmailMember: Add allow membership
+                            // AL: Extra work for EmailMember: Add allow membership
                             if (ClientType.EmailMember == contact.ClientType)
                             {
                                 AddContactToList(contact, MSNLists.AllowedList, null);
                                 System.Threading.Thread.Sleep(100);
                             }
+                            else
+                            {
+                                // ADL AL without membership, so the user can see our status...
+                                SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
+                                contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
+                                string payload = ConstructLists(contacts.Values, false, MSNLists.AllowedList)[0];
 
-                            // 7: abrequest(ContactMsgrAPI)
+                                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                                contact.AddToList(MSNLists.AllowedList);
+
+                                System.Threading.Thread.Sleep(100);
+                            }
+
+                            // abrequest(ContactMsgrAPI)
                             abRequest(
                                 "ContactMsgrAPI",
                                 delegate
