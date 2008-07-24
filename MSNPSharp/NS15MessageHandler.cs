@@ -850,6 +850,9 @@ namespace MSNPSharp
 
             if (SignedOff != null)
                 SignedOff(this, new SignedOffEventArgs(reason));
+
+            if (messageProcessor != null && messageProcessor.Connected)
+                messageProcessor.Disconnect();
         }
 
         /// <summary>
