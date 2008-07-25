@@ -523,8 +523,7 @@ namespace MSNPSharp
                 {
                     sendlist = MSNLists.None;
                     lists = AddressBook.GetMSNLists(contact.Account, contact.Type);
-                    AddressbookContactInfo abci = AddressBook.Find(contact.Account, contact.Type);
-                    if (abci != null && abci.IsMessengerUser)
+                    if (nsMessageHandler.ContactList.GetContact(contact.Account, contact.Type).IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
                         sendlist |= MSNLists.AllowedList;
@@ -817,12 +816,15 @@ namespace MSNPSharp
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
 
-            if (AddressBook.Find(account, network) != null)
+            if (nsMessageHandler.ContactList.HasContact(account, network))
             {
                 Contact contact = nsMessageHandler.ContactList.GetContact(account, network);
-                RemoveContactFromList(contact, MSNLists.PendingList, null);
-                contact.RemoveFromList(MSNLists.PendingList);
-                return;
+                if (contact.Guid != Guid.Empty)
+                {
+                    RemoveContactFromList(contact, MSNLists.PendingList, null);
+                    contact.RemoveFromList(MSNLists.PendingList);
+                    return;
+                }
             }
 
             if (MSNLists.PendingList == (AddressBook.GetMSNLists(account, network) & MSNLists.PendingList))
@@ -902,16 +904,7 @@ namespace MSNPSharp
                 handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
-                    contact.SetIsMessengerUser(isMessengerUser);
-                    AddressBook.AddressbookContacts[contact.Guid].IsMessengerUser = contact.IsMessengerUser;
-                    if (!String.IsNullOrEmpty(displayName))
-                    {
-                        contact.SetName(displayName);
-                        AddressBook.AddressbookContacts[contact.Guid].DisplayName = displayName;
-                    }
-
-                    contact.SetComment(comment);
-                    AddressBook.AddressbookContacts[contact.Guid].Comment = comment;
+                    abRequest("ContactSave", null);
                 }
                 else if (e.Error != null)
                 {
