@@ -72,9 +72,16 @@ namespace MSNPSharp.IO
                 xmlcl += new FindMembershipResultType();
             }
 
-            foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
+            if (deltas.AddressBookDeltas.Count > 0)
             {
-                xmlcl += abfindallResult;
+                foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
+                {
+                    xmlcl += abfindallResult;
+                }
+            }
+            else
+            {
+                xmlcl += new ABFindAllResultType();
             }
 
             return xmlcl;
@@ -414,7 +421,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static XMLContactList operator +(XMLContactList xmlcl, ABFindAllResultType forwardList)
         {
-            if (xmlcl.AddressbookLastChange < forwardList.ab.lastChange)
+            if (forwardList.ab != null && xmlcl.AddressbookLastChange < forwardList.ab.lastChange)
             {
                 if (null != forwardList.contacts)
                 {
