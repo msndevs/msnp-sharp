@@ -1124,7 +1124,7 @@ namespace MSNPSharp
                 if (!e.Cancelled && e.Error == null)
                 {
                     nsMessageHandler.ContactGroups.RemoveGroup(contactGroup);
-                    AddressBook.Groups.Remove(contactGroup.Guid);
+                    AddressBook.Groups.Remove(new Guid(contactGroup.Guid));
                     nsMessageHandler.OnContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
                 }
                 else if (e.Error != null)
