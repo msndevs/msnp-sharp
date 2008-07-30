@@ -175,51 +175,6 @@ namespace MSNPSharp.IO
 
     #endregion
 
-    #region GroupInfo
-
-    /// <summary>
-    /// Group info for address book contacts
-    /// </summary>
-    [Serializable]
-    public class GroupInfo
-    {
-        private string guid;
-        public string Guid
-        {
-            get
-            {
-                return guid;
-            }
-            set
-            {
-                guid = value;
-            }
-        }
-
-        private string name;
-        /// <summary>
-        /// Group name.
-        /// </summary>
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                name = value;
-            }
-        }
-
-        public override string ToString()
-        {
-            return Name;
-        }
-    }
-
-    #endregion
-
     #region Service
     /// <summary>
     /// Membership service

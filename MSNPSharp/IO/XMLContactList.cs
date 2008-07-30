@@ -30,6 +30,7 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 using System;
 using System.IO;
 using System.Xml;
+using System.Diagnostics;
 using System.Globalization;
 using System.Xml.Serialization;
 using System.Collections.Generic;
@@ -37,7 +38,6 @@ using System.Collections.Generic;
 namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
-    using System.Diagnostics;
 
     /// <summary>
     /// ContactList file maintainer
@@ -321,7 +321,7 @@ namespace MSNPSharp.IO
         DateTime abLastChange;
         DateTime dynamicItemLastChange;
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
-        SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
+        SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
         SerializableDictionary<Guid, ContactType> abcontacts = new SerializableDictionary<Guid, ContactType>(0);
 
         public DateTime AddressbookLastChange
@@ -360,7 +360,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        public SerializableDictionary<string, GroupInfo> Groups
+        public SerializableDictionary<Guid, GroupType> Groups
         {
             get
             {
@@ -385,23 +385,24 @@ namespace MSNPSharp.IO
             }
         }
 
-        public void AddGroup(Dictionary<string, GroupInfo> range)
+        public void AddGroup(Dictionary<Guid, GroupType> range)
         {
-            foreach (GroupInfo group in range.Values)
+            foreach (GroupType group in range.Values)
             {
                 AddGroup(group);
             }
         }
 
-        public void AddGroup(GroupInfo group)
+        public void AddGroup(GroupType group)
         {
-            if (groups.ContainsKey(group.Guid))
+            Guid key = new Guid(group.groupId);
+            if (groups.ContainsKey(key))
             {
-                groups[group.Guid] = group;
+                groups[key] = group;
             }
             else
             {
-                groups.Add(group.Guid, group);
+                groups.Add(key, group);
             }
         }
 
@@ -445,16 +446,14 @@ namespace MSNPSharp.IO
                 {
                     foreach (GroupType groupType in forwardList.groups)
                     {
+                        Guid key = new Guid(groupType.groupId);
                         if (groupType.fDeleted)
                         {
-                            xmlcl.Groups.Remove(groupType.groupId);
+                            xmlcl.Groups.Remove(key);
                         }
                         else
                         {
-                            GroupInfo group = new GroupInfo();
-                            group.Name = groupType.groupInfo.name;
-                            group.Guid = groupType.groupId;
-                            xmlcl.Groups[group.Guid] = group;
+                            xmlcl.Groups[key] = groupType;
                         }
                     }
                 }
@@ -465,9 +464,9 @@ namespace MSNPSharp.IO
             }
 
             // Create Groups
-            foreach (GroupInfo group in xmlcl.Groups.Values)
+            foreach (GroupType group in xmlcl.Groups.Values)
             {
-                xmlcl.NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, xmlcl.NSMessageHandler));
+                xmlcl.NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, xmlcl.NSMessageHandler));
             }
 
             // Create the Forward List and Email Contacts
@@ -500,7 +499,9 @@ namespace MSNPSharp.IO
                     if (cit.contactType != contactInfoTypeContactType.Me)
                     {
                         Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
+                        contact.NSMessageHandler = xmlcl.NSMessageHandler;
                         contact.SetGuid(new Guid(ct.contactId));
+                        contact.SetHasBlog(cit.hasSpace);
                         contact.SetComment(cit.comment);
                         contact.SetIsMessengerUser(ismessengeruser);
                         if (contact.IsMessengerUser)
@@ -509,7 +510,26 @@ namespace MSNPSharp.IO
                         if (!String.IsNullOrEmpty(displayname))
                             contact.SetName(displayname);
 
-                        contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                        if (cit.phones != null)
+                        {
+                            foreach (contactPhoneType cp in cit.phones)
+                            {
+                                switch (cp.contactPhoneType1)
+                                {
+                                    case ContactPhoneTypeType.ContactPhoneMobile:
+                                        contact.SetMobilePhone(cp.number);
+                                        break;
+
+                                    case ContactPhoneTypeType.ContactPhonePersonal:
+                                        contact.SetHomePhone(cp.number);
+                                        break;
+
+                                    case ContactPhoneTypeType.ContactPhoneBusiness:
+                                        contact.SetWorkPhone(cp.number);
+                                        break;
+                                }
+                            }
+                        }
 
                         if (null != cit.annotations)
                         {
@@ -580,8 +600,6 @@ namespace MSNPSharp.IO
             {
                 foreach (BaseDynamicItemType dyItem in forwardList.DynamicItems)
                 {
-                    //XmlNode[] nodes = obj as XmlNode[];
-                    //DynamicItem dyItem = new DynamicItem(nodes);
                     if (dyItem is PassportDynamicItem)
                     {
                         if (dyItem.SpaceGleam || dyItem.ProfileGleam)
@@ -600,7 +618,7 @@ namespace MSNPSharp.IO
                                     }
                                 }
                             }
-                        }                        
+                        }
                     }
                 }
             }
@@ -641,8 +659,14 @@ namespace MSNPSharp.IO
         /// </summary>
         public OwnerProfile Profile
         {
-            get { return profile; }
-            set { profile = value; }
+            get
+            {
+                return profile;
+            }
+            set
+            {
+                profile = value;
+            }
         }
 
         #endregion
@@ -659,6 +683,6 @@ namespace MSNPSharp.IO
             base.Save(filename);
         }
         #endregion
-    
+
     }
 };
