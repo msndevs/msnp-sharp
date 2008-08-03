@@ -137,6 +137,7 @@ namespace MSNPSharp
                                     | ClientCapacities.CanMultiPacketMSG
                                     | ClientCapacities.CanReceiveWinks;
 
+            msnticket = new MSNTicket(this);
             contactGroups = new ContactGroupList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
@@ -744,7 +745,7 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
-        private MSNTicket msnticket = new MSNTicket();
+        internal MSNTicket msnticket = null;
         internal MSNTicket MSNTicket
         {
             get
@@ -761,13 +762,13 @@ namespace MSNPSharp
                 string policy = (string)message.CommandValues[3];
                 string nonce = (string)message.CommandValues[4];
 
-                msnticket = SSOManager.Authenticate(Credentials, policy, ConnectivitySettings);
+                MSNTicket.Policy = policy;
+                MSNTicket.Authenticate();
 
                 MBI mbi = new MBI();
                 string response =
-                    msnticket.SSOTickets[SSOTicketType.SslTicket].Ticket + " " +
-                    mbi.Encrypt(msnticket.SSOTickets[SSOTicketType.SslTicket].BinarySecret, nonce);
-
+                    MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
+                    mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
 
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
             }
@@ -1829,7 +1830,7 @@ namespace MSNPSharp
             SwitchBoards.Clear();
             externalEndPoint = null;
             isSignedIn = false;
-            msnticket = new MSNTicket();
+            msnticket = new MSNTicket(this);
         }
 
         /// <summary>
