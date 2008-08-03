@@ -122,12 +122,9 @@ namespace MSNPSharp
         public void GetContactCard(string account, int maximagecount, int maxcharcount)
         {
             if (nsMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account) &&
-                nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.SpacesTicket))
+                nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Spaces))
             {
-                SpaceService service = new SpaceService();
-                service.Proxy = webProxy;
-                service.AuthTokenHeaderValue = new AuthTokenHeader();
-                service.AuthTokenHeaderValue.Token = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.SpacesTicket].Ticket;
+                SpaceService service = CreateSpaceService();
                 service.GetXmlFeedCompleted += delegate(object sender, GetXmlFeedCompletedEventArgs e)
                 {
                     if (e.Cancelled)
@@ -340,6 +337,17 @@ namespace MSNPSharp
         {
             if (ContactCardCompleted != null)
                 ContactCardCompleted(this, arg);
+        }
+
+        private SpaceService CreateSpaceService()
+        {
+            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Spaces);
+
+            SpaceService service = new SpaceService();
+            service.Proxy = webProxy;
+            service.AuthTokenHeaderValue = new AuthTokenHeader();
+            service.AuthTokenHeaderValue.Token = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Spaces].Ticket;
+            return service;
         }
     }
 };

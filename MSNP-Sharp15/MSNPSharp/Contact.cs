@@ -131,7 +131,7 @@ namespace MSNPSharp
         string homePhone;
         string workPhone;
         string mobilePhone;
-        int oimcount = 1;
+        ulong oimcount = 1;
 
         bool hasBlog;
         bool isMessengerUser = false;
@@ -248,7 +248,7 @@ namespace MSNPSharp
         /// <summary>
         /// The amount of OIMs sent in a session.
         /// </summary>
-        internal int OIMCount
+        internal ulong OIMCount
         {
             get
             {

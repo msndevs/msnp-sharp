@@ -44,16 +44,18 @@ namespace MSNPSharp
         }
 
 
-        private StorageService CreateStorageService(String Scenario)
+        private StorageService CreateStorageService(String scenario)
         {
+            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Storage);
+
             StorageService storageService = new StorageService();
             storageService.Proxy = webProxy;
             storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
             storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
-            storageService.StorageApplicationHeaderValue.Scenario = Scenario;
+            storageService.StorageApplicationHeaderValue.Scenario = scenario;
             storageService.StorageUserHeaderValue = new StorageUserHeader();
             storageService.StorageUserHeaderValue.Puid = 0;
-            storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.StorageTicket].Ticket;
+            storageService.StorageUserHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket;
             return storageService;
         }
 
@@ -101,7 +103,7 @@ namespace MSNPSharp
         /// </summary>
         private void CreateProfile()
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.StorageTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage))
                 return;
 
             try
@@ -149,7 +151,7 @@ namespace MSNPSharp
                 srvHandle.ForeignId = "MyProfile";
                 srvHandle.Id = "0";
                 srvHandle.Type = ServiceFilterType.Profile;
-                if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+                if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
                 {
                     SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed");
                     sharingService.AllowAutoRedirect = true;
@@ -302,7 +304,7 @@ namespace MSNPSharp
 
 
                 //8. UpdateDynamicItem
-                if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+                if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
                 {
                     ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingSeed");
                     abService.AllowAutoRedirect = true;
@@ -388,7 +390,7 @@ namespace MSNPSharp
         public OwnerProfile GetProfile()
         {
             if (nsMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.StorageTicket) &&
+                nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage) &&
                 NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService)
             {
                 try
@@ -432,7 +434,7 @@ namespace MSNPSharp
                             }
 
                             // Don't urlencode t= :))
-                            Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.StorageTicket].Ticket.Substring(2)));
+                            Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2)));
 
                             HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
                             fwr.Proxy = webProxy;
@@ -473,8 +475,8 @@ namespace MSNPSharp
         public void UpdateProfile(string displayName, string personalStatus)
         {
             OwnerProfile profile = NSMessageHandler.ContactService.AddressBook.Profile;
-
-            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.StorageTicket) &&
+            
+            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage) &&
                 (profile.DisplayName != displayName || profile.PersonalMessage != personalStatus))
             {
                 NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = displayName;
@@ -491,7 +493,7 @@ namespace MSNPSharp
                             NSMessageHandler.ContactService.AddressBook.Profile = GetProfile();
 
                             // UpdateDynamicItem
-                            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+                            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
                             {
                                 ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged");
                                 abService.UpdateDynamicItemCompleted += delegate(object service, UpdateDynamicItemCompletedEventArgs ue)

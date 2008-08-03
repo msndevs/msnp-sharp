@@ -276,7 +276,7 @@ namespace MSNPSharp
                 serviceLastChange = AddressBook.MembershipLastChange;
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -295,7 +295,7 @@ namespace MSNPSharp
                 {
                     if (e.Error.Message.IndexOf("Address Book Does Not Exist") != -1)
                     {
-                        if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+                        if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
                         {
                             OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("No Contact Ticket")));
                             return;
@@ -389,7 +389,7 @@ namespace MSNPSharp
                 deltasOnly = true;
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindAll", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -444,6 +444,8 @@ namespace MSNPSharp
 
         internal SharingServiceBinding CreateSharingService(string partnerScenario)
         {
+            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = webProxy;
             sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
@@ -454,8 +456,8 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
             sharingService.ABApplicationHeaderValue.BrandId = nsMessageHandler.MSNTicket.MainBrandID;
             sharingService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.MSNTicket.SharingServiceCacheKey;
-            sharingService.ABAuthHeaderValue = new ABAuthHeader();
-            sharingService.ABAuthHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.ContactTicket].Ticket;
+            sharingService.ABAuthHeaderValue = new ABAuthHeader();            
+            sharingService.ABAuthHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
             return sharingService;
@@ -463,6 +465,8 @@ namespace MSNPSharp
 
         internal ABServiceBinding CreateABService(string partnerScenario)
         {
+            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = webProxy;
             abService.Timeout = Int32.MaxValue;
@@ -473,7 +477,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
             abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.MSNTicket.ABServiceCacheKey;
             abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.ContactTicket].Ticket;
+            abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
             return abService;
@@ -728,7 +732,7 @@ namespace MSNPSharp
 
         private void AddNewOrPendingContact(string account, bool pending, string invitation, ClientType network, ABContactAddCompletedEventHandler onSuccess)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -850,7 +854,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -892,7 +896,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactUpdate", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1010,7 +1014,7 @@ namespace MSNPSharp
                 annos.Add(anno);
             }
 
-            if (annos.Count > 0 && nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (annos.Count > 0 && nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 ABServiceBinding abService = CreateABService("PrivacyApply");
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
@@ -1055,7 +1059,7 @@ namespace MSNPSharp
         /// <param name="groupName">The name of the group to add</param>
         internal virtual void AddContactGroup(string groupName)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1111,7 +1115,7 @@ namespace MSNPSharp
                 }
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1152,7 +1156,7 @@ namespace MSNPSharp
         /// <param name="newGroupName">The new name</param>
         public virtual void RenameGroup(ContactGroup group, string newGroupName)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupUpdate", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1195,7 +1199,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1233,7 +1237,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1301,7 +1305,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AddMember", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1417,7 +1421,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.ContactTicket))
+            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("DeleteMember", new MSNPSharpException("No Contact Ticket")));
                 return;
