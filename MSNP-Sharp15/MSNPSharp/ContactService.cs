@@ -34,12 +34,9 @@ namespace MSNPSharp
         #endregion
 
         protected ContactService()
+            : base()
         {
             applicationId = Properties.Resources.ApplicationId;
-            ServicePointManager.ServerCertificateValidationCallback = delegate
-            {
-                return true;
-            };
         }
 
         public ContactService(NSMessageHandler nsHandler)
@@ -456,7 +453,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
             sharingService.ABApplicationHeaderValue.BrandId = nsMessageHandler.MSNTicket.MainBrandID;
             sharingService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.MSNTicket.SharingServiceCacheKey;
-            sharingService.ABAuthHeaderValue = new ABAuthHeader();            
+            sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
