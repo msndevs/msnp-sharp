@@ -1,9 +1,12 @@
 using System;
-using System.Collections.Generic;
+using System.Net;
 using System.Text;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
+    #region ServiceOperationFailedEvent
+
     public delegate void ServiceOperationFailedEventHandler(object sender, ServiceOperationFailedEventArgs e);
 
     public class ServiceOperationFailedEventArgs : EventArgs
@@ -19,27 +22,49 @@ namespace MSNPSharp
 
         public string Method
         {
-            get { return method; }
+            get
+            {
+                return method;
+            }
         }
         public Exception Exception
         {
-            get { return exc; }
+            get
+            {
+                return exc;
+            }
         }
     }
+
+    #endregion
 
     /// <summary>
     /// Base class of webservice-related classes
     /// </summary>
     public abstract class MSNService
     {
+        static MSNService()
+        {
+            ServicePointManager.ServerCertificateValidationCallback = delegate
+            {
+                return true;
+            };
+        }
+
         /// <summary>
         /// Fired when request to an async webservice method failed.
         /// </summary>
         public event ServiceOperationFailedEventHandler ServiceOperationFailed;
+
+        /// <summary>
+        /// Fires ServiceOperationFailed event.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         protected virtual void OnServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {
             if (ServiceOperationFailed != null)
                 ServiceOperationFailed(sender, e);
         }
     }
-}
+};
