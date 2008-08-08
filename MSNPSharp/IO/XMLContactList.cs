@@ -30,6 +30,7 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 using System;
 using System.IO;
 using System.Xml;
+using System.Diagnostics;
 using System.Globalization;
 using System.Xml.Serialization;
 using System.Collections.Generic;
@@ -37,7 +38,6 @@ using System.Collections.Generic;
 namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
-    using System.Diagnostics;
 
     /// <summary>
     /// ContactList file maintainer
@@ -72,9 +72,16 @@ namespace MSNPSharp.IO
                 xmlcl += new FindMembershipResultType();
             }
 
-            foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
+            if (deltas.AddressBookDeltas.Count > 0)
             {
-                xmlcl += abfindallResult;
+                foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
+                {
+                    xmlcl += abfindallResult;
+                }
+            }
+            else
+            {
+                xmlcl += new ABFindAllResultType();
             }
 
             return xmlcl;
@@ -314,8 +321,8 @@ namespace MSNPSharp.IO
         DateTime abLastChange;
         DateTime dynamicItemLastChange;
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
-        SerializableDictionary<string, GroupInfo> groups = new SerializableDictionary<string, GroupInfo>(0);
-        SerializableDictionary<Guid, AddressbookContactInfo> abcontacts = new SerializableDictionary<Guid, AddressbookContactInfo>(0);
+        SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
+        SerializableDictionary<Guid, ContactType> abcontacts = new SerializableDictionary<Guid, ContactType>(0);
 
         public DateTime AddressbookLastChange
         {
@@ -353,7 +360,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        public SerializableDictionary<string, GroupInfo> Groups
+        public SerializableDictionary<Guid, GroupType> Groups
         {
             get
             {
@@ -366,7 +373,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        public SerializableDictionary<Guid, AddressbookContactInfo> AddressbookContacts
+        public SerializableDictionary<Guid, ContactType> AddressbookContacts
         {
             get
             {
@@ -378,52 +385,33 @@ namespace MSNPSharp.IO
             }
         }
 
-        public void AddGroup(Dictionary<string, GroupInfo> range)
+        public void AddGroup(Dictionary<Guid, GroupType> range)
         {
-            foreach (GroupInfo group in range.Values)
+            foreach (GroupType group in range.Values)
             {
                 AddGroup(group);
             }
         }
 
-        public void AddGroup(GroupInfo group)
+        public void AddGroup(GroupType group)
         {
-            if (groups.ContainsKey(group.Guid))
+            Guid key = new Guid(group.groupId);
+            if (groups.ContainsKey(key))
             {
-                groups[group.Guid] = group;
+                groups[key] = group;
             }
             else
             {
-                groups.Add(group.Guid, group);
+                groups.Add(key, group);
             }
         }
 
-        public virtual void Add(Dictionary<Guid, AddressbookContactInfo> range)
+        public virtual void Add(Dictionary<Guid, ContactType> range)
         {
             foreach (Guid guid in range.Keys)
             {
-                if (abcontacts.ContainsKey(guid))
-                {
-                    if (abcontacts[guid].LastChanged.CompareTo(range[guid].LastChanged) <= 0)
-                    {
-                        abcontacts[guid] = range[guid];
-                    }
-                }
-                else
-                {
-                    abcontacts.Add(guid, range[guid]);
-                }
+                abcontacts[guid] = range[guid];
             }
-        }
-
-        public virtual AddressbookContactInfo Find(string email, ClientType type)
-        {
-            foreach (AddressbookContactInfo ci in AddressbookContacts.Values)
-            {
-                if (ci.Account == email && ci.Type == type)
-                    return ci;
-            }
-            return null;
         }
 
         /// <summary>
@@ -434,7 +422,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static XMLContactList operator +(XMLContactList xmlcl, ABFindAllResultType forwardList)
         {
-            if (xmlcl.AddressbookLastChange < forwardList.ab.lastChange)
+            if (forwardList.ab != null && xmlcl.AddressbookLastChange < forwardList.ab.lastChange)
             {
                 if (null != forwardList.contacts)
                 {
@@ -442,111 +430,13 @@ namespace MSNPSharp.IO
                     {
                         if (null != contactType.contactInfo)
                         {
-                            ClientType type = ClientType.PassportMember;
-                            string account = contactType.contactInfo.passportName;
-                            string displayname = contactType.contactInfo.displayName;
-                            bool ismessengeruser = contactType.contactInfo.isMessengerUser;
-
-                            if (contactType.contactInfo.emails != null && account == null)
-                            {
-                                /* This is not related with ClientCapacities, I think :)
-                                if (Enum.IsDefined(typeof(ClientCapacities), long.Parse(contactType.contactInfo.emails[0].Capability)))
-                                {
-                                    ci.Capability = (ClientCapacities)long.Parse(contactType.contactInfo.emails[0].Capability);
-                                }
-                                 * */
-
-                                type = ClientType.EmailMember;
-                                account = contactType.contactInfo.emails[0].email;
-                                ismessengeruser |= contactType.contactInfo.emails[0].isMessengerEnabled;
-                                displayname = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? account : contactType.contactInfo.quickName;
-                            }
-
-                            if (contactType.contactInfo.phones != null && account == null)
-                            {
-                                type = ClientType.PhoneMember;
-                                account = contactType.contactInfo.phones[0].number;
-                                ismessengeruser |= contactType.contactInfo.phones[0].isMessengerEnabled;
-                                displayname = String.IsNullOrEmpty(contactType.contactInfo.quickName) ? account : contactType.contactInfo.quickName;
-                            }
-
-                            if (account == null)
-                                continue; // PassportnameHidden... Nothing to do...
-
                             if (contactType.fDeleted)
                             {
                                 xmlcl.AddressbookContacts.Remove(new Guid(contactType.contactId));
                             }
                             else
                             {
-                                AddressbookContactInfo ci = new AddressbookContactInfo(account, type, new Guid(contactType.contactId));
-                                ci.DisplayName = displayname;
-                                ci.IsMessengerUser = ismessengeruser;
-                                ci.LastChanged = contactType.lastChange;
-                                ci.Comment = contactType.contactInfo.comment;
-
-                                if (null != contactType.contactInfo.annotations)
-                                {
-                                    foreach (Annotation anno in contactType.contactInfo.annotations)
-                                    {
-                                        if (anno.Name == "AB.NickName" && anno.Value != null)
-                                        {
-                                            ci.DisplayName = anno.Value;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (contactType.contactInfo.groupIds != null)
-                                {
-                                    ci.Groups = new List<string>(contactType.contactInfo.groupIds);
-                                }
-
-                                if (contactType.contactInfo.contactType == contactInfoTypeContactType.Me)
-                                {
-                                    if (ci.DisplayName == xmlcl.NSMessageHandler.Owner.Mail && xmlcl.NSMessageHandler.Owner.Name != String.Empty)
-                                    {
-                                        ci.DisplayName = xmlcl.NSMessageHandler.Owner.Name;
-                                    }
-
-                                    xmlcl.Profile.DisplayName = ci.DisplayName;
-                                    xmlcl.Profile.CID = contactType.contactInfo.CID;
-
-                                    if (null != contactType.contactInfo.annotations)
-                                    {
-                                        foreach (Annotation anno in contactType.contactInfo.annotations)
-                                        {
-                                            string name = anno.Name;
-                                            string value = anno.Value;
-                                            name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                                            xmlcl.MyProperties[name] = value;
-                                        }
-                                    }
-
-                                    if (!xmlcl.MyProperties.ContainsKey("mbea"))
-                                        xmlcl.MyProperties["mbea"] = "0";
-
-                                    if (!xmlcl.MyProperties.ContainsKey("gtc"))
-                                        xmlcl.MyProperties["gtc"] = "1";
-
-                                    if (!xmlcl.MyProperties.ContainsKey("blp"))
-                                        xmlcl.MyProperties["blp"] = "0";
-
-                                    if (!xmlcl.MyProperties.ContainsKey("roamliveproperties"))
-                                        xmlcl.MyProperties["roamliveproperties"] = "1";
-                                }
-
-                                if (xmlcl.AddressbookContacts.ContainsKey(ci.Guid))
-                                {
-                                    if (xmlcl.AddressbookContacts[ci.Guid].LastChanged.CompareTo(ci.LastChanged) < 0)
-                                    {
-                                        xmlcl.AddressbookContacts[ci.Guid] = ci;
-                                    }
-                                }
-                                else
-                                {
-                                    xmlcl.AddressbookContacts.Add(ci.Guid, ci);
-                                }
+                                xmlcl.AddressbookContacts[new Guid(contactType.contactId)] = contactType;
                             }
                         }
                     }
@@ -556,16 +446,14 @@ namespace MSNPSharp.IO
                 {
                     foreach (GroupType groupType in forwardList.groups)
                     {
+                        Guid key = new Guid(groupType.groupId);
                         if (groupType.fDeleted)
                         {
-                            xmlcl.Groups.Remove(groupType.groupId);
+                            xmlcl.Groups.Remove(key);
                         }
                         else
                         {
-                            GroupInfo group = new GroupInfo();
-                            group.Name = groupType.groupInfo.name;
-                            group.Guid = groupType.groupId;
-                            xmlcl.Groups[group.Guid] = group;
+                            xmlcl.Groups[key] = groupType;
                         }
                     }
                 }
@@ -576,37 +464,133 @@ namespace MSNPSharp.IO
             }
 
             // Create Groups
-            foreach (GroupInfo group in xmlcl.Groups.Values)
+            foreach (GroupType group in xmlcl.Groups.Values)
             {
-                xmlcl.NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.Name, group.Guid, xmlcl.NSMessageHandler));
+                xmlcl.NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, xmlcl.NSMessageHandler));
             }
 
             // Create the Forward List and Email Contacts
-            foreach (AddressbookContactInfo abci in xmlcl.AddressbookContacts.Values)
+            foreach (ContactType ct in xmlcl.AddressbookContacts.Values)
             {
-                if (abci.Account != xmlcl.NSMessageHandler.Owner.Mail)
+                contactInfoType cit = ct.contactInfo;
+                ClientType type = ClientType.PassportMember;
+                string account = cit.passportName;
+                string displayname = cit.displayName;
+                bool ismessengeruser = cit.isMessengerUser;
+
+                if (cit.emails != null && account == null)
                 {
-                    Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(abci.Account, abci.Type);
-                    contact.SetGuid(abci.Guid);
-                    contact.SetClientType(abci.Type);
-                    contact.SetComment(abci.Comment);
-                    contact.SetIsMessengerUser(abci.IsMessengerUser);
-                    if (abci.IsMessengerUser)
-                        contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+                    type = ClientType.EmailMember;
+                    account = cit.emails[0].email;
+                    ismessengeruser |= cit.emails[0].isMessengerEnabled;
+                    displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
+                }
 
-                    if (!String.IsNullOrEmpty(abci.DisplayName))
-                        contact.SetName(abci.DisplayName);
+                if (cit.phones != null && account == null)
+                {
+                    type = ClientType.PhoneMember;
+                    account = cit.phones[0].number;
+                    ismessengeruser |= cit.phones[0].isMessengerEnabled;
+                    displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
+                }
 
-                    contact.NSMessageHandler = xmlcl.NSMessageHandler;
-
-                    foreach (string groupId in abci.Groups)
+                if (account != null)
+                {
+                    if (cit.contactType != contactInfoTypeContactType.Me)
                     {
-                        contact.ContactGroups.Add(xmlcl.NSMessageHandler.ContactGroups[groupId]);
+                        Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
+                        contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                        contact.SetGuid(new Guid(ct.contactId));
+                        contact.SetHasBlog(cit.hasSpace);
+                        contact.SetComment(cit.comment);
+                        contact.SetIsMessengerUser(ismessengeruser);
+                        if (contact.IsMessengerUser)
+                            contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+
+                        if (!String.IsNullOrEmpty(displayname))
+                            contact.SetName(displayname);
+
+                        if (cit.phones != null)
+                        {
+                            foreach (contactPhoneType cp in cit.phones)
+                            {
+                                switch (cp.contactPhoneType1)
+                                {
+                                    case ContactPhoneTypeType.ContactPhoneMobile:
+                                        contact.SetMobilePhone(cp.number);
+                                        break;
+
+                                    case ContactPhoneTypeType.ContactPhonePersonal:
+                                        contact.SetHomePhone(cp.number);
+                                        break;
+
+                                    case ContactPhoneTypeType.ContactPhoneBusiness:
+                                        contact.SetWorkPhone(cp.number);
+                                        break;
+                                }
+                            }
+                        }
+
+                        if (null != cit.annotations)
+                        {
+                            foreach (Annotation anno in cit.annotations)
+                            {
+                                if (anno.Name == "AB.NickName" && anno.Value != null)
+                                {
+                                    displayname = anno.Value;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (cit.groupIds != null)
+                        {
+                            foreach (string groupId in cit.groupIds)
+                            {
+                                contact.ContactGroups.Add(xmlcl.NSMessageHandler.ContactGroups[groupId]);
+                            }
+                        }
+
+                        if (cit.groupIdsDeleted != null)
+                        {
+                            foreach (string groupId in cit.groupIdsDeleted)
+                            {
+                                contact.ContactGroups.Remove(xmlcl.NSMessageHandler.ContactGroups[groupId]);
+                            }
+                        }
                     }
-
-                    if (abci.Type == ClientType.EmailMember)
+                    else
                     {
-                        contact.ClientCapacities = abci.Capability;
+                        if (displayname == xmlcl.NSMessageHandler.Owner.Mail && xmlcl.NSMessageHandler.Owner.Name != String.Empty)
+                        {
+                            displayname = xmlcl.NSMessageHandler.Owner.Name;
+                        }
+
+                        xmlcl.Profile.DisplayName = displayname;
+                        xmlcl.Profile.CID = cit.CID;
+
+                        if (null != cit.annotations)
+                        {
+                            foreach (Annotation anno in cit.annotations)
+                            {
+                                string name = anno.Name;
+                                string value = anno.Value;
+                                name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
+                                xmlcl.MyProperties[name] = value;
+                            }
+                        }
+
+                        if (!xmlcl.MyProperties.ContainsKey("mbea"))
+                            xmlcl.MyProperties["mbea"] = "0";
+
+                        if (!xmlcl.MyProperties.ContainsKey("gtc"))
+                            xmlcl.MyProperties["gtc"] = "1";
+
+                        if (!xmlcl.MyProperties.ContainsKey("blp"))
+                            xmlcl.MyProperties["blp"] = "0";
+
+                        if (!xmlcl.MyProperties.ContainsKey("roamliveproperties"))
+                            xmlcl.MyProperties["roamliveproperties"] = "1";
                     }
                 }
             }
@@ -616,8 +600,6 @@ namespace MSNPSharp.IO
             {
                 foreach (BaseDynamicItemType dyItem in forwardList.DynamicItems)
                 {
-                    //XmlNode[] nodes = obj as XmlNode[];
-                    //DynamicItem dyItem = new DynamicItem(nodes);
                     if (dyItem is PassportDynamicItem)
                     {
                         if (dyItem.SpaceGleam || dyItem.ProfileGleam)
@@ -636,7 +618,7 @@ namespace MSNPSharp.IO
                                     }
                                 }
                             }
-                        }                        
+                        }
                     }
                 }
             }
@@ -677,8 +659,14 @@ namespace MSNPSharp.IO
         /// </summary>
         public OwnerProfile Profile
         {
-            get { return profile; }
-            set { profile = value; }
+            get
+            {
+                return profile;
+            }
+            set
+            {
+                profile = value;
+            }
         }
 
         #endregion
@@ -695,6 +683,6 @@ namespace MSNPSharp.IO
             base.Save(filename);
         }
         #endregion
-    
+
     }
 };

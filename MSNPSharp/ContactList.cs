@@ -28,14 +28,16 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.Threading;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+
 namespace MSNPSharp
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using System.Globalization;
 
     [Serializable()]
     public class ContactIdentifier
@@ -98,6 +100,19 @@ namespace MSNPSharp
     public class ContactList
     {
         Dictionary<ContactIdentifier, Contact> contacts = new Dictionary<ContactIdentifier, Contact>(10);
+
+        [NonSerialized]
+        private object syncRoot;
+        public object SyncRoot
+        {
+            get
+            {
+                if (syncRoot == null)
+                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
+
+                return syncRoot;
+            }
+        }
 
         public class ListEnumerator : IEnumerator
         {
@@ -389,8 +404,9 @@ namespace MSNPSharp
         {
             Contact contact = GetContact(account);
             if (contact != null)
-                lock (contact)
+                lock (SyncRoot)
                     contact.SetName(name);
+
             return contact;
         }
 
@@ -408,8 +424,10 @@ namespace MSNPSharp
         internal Contact GetContact(string account, string name, ClientType type)
         {
             Contact contact = GetContact(account, type);
-            lock (contact)
+
+            lock (SyncRoot)
                 contact.SetName(name);
+
             return contact;
         }
 
@@ -435,7 +453,8 @@ namespace MSNPSharp
             tmpContact.SetMail(account);
             tmpContact.SetName(account);
             tmpContact.SetClientType(type);
-            lock (contacts)
+
+            lock (SyncRoot)
                 contacts.Add(cid, tmpContact);
 
             return GetContact(account, type);
@@ -485,7 +504,7 @@ namespace MSNPSharp
         public bool HasContact(string account)
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
-            lock (contacts)
+            lock (SyncRoot)
             {
                 foreach (ContactIdentifier cid in contacts.Keys)
                     if (cid.Mail == account)
@@ -527,19 +546,17 @@ namespace MSNPSharp
             List<ContactIdentifier> removecid = new List<ContactIdentifier>(0);
             if (HasContact(account))
             {
-                lock (contacts)
+                lock (SyncRoot)
                 {
                     foreach (ContactIdentifier cid in contacts.Keys)
                     {
                         if (cid.Mail == account)
                             removecid.Add(cid);
                     }
+                    foreach (ContactIdentifier rcid in removecid)
+                        contacts.Remove(rcid);
                 }
             }
-
-            foreach (ContactIdentifier rcid in removecid)
-                lock (contacts)
-                    contacts.Remove(rcid);
         }
 
         /// <summary>
@@ -549,7 +566,7 @@ namespace MSNPSharp
         /// <param name="type"></param>
         internal void Remove(string account, ClientType type)
         {
-            lock (contacts)
+            lock (SyncRoot)
             {
                 contacts.Remove(new ContactIdentifier(account, type));
             }
@@ -558,16 +575,16 @@ namespace MSNPSharp
         private bool HasMultiType(string account)
         {
             int typecount = 0;
-            lock (contacts)
+
+            lock (SyncRoot)
                 foreach (ContactIdentifier cid in contacts.Keys)
                     if (cid.Mail == account.ToLowerInvariant())
                     {
-                        typecount++;
-                        if (typecount == 2)
+                        if (++typecount == 2)
                             return true;
                     }
-            return false;
 
+            return false;
         }
     }
 };

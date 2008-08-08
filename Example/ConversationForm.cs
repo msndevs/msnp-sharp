@@ -8,57 +8,60 @@ using System.Collections.Generic;
 
 namespace MSNPSharpClient
 {
-	/// <summary>
-	/// Summary description for ConversationForm.
-	/// </summary>
-	public class ConversationForm : System.Windows.Forms.Form
-	{
-		/// <summary>
-		/// Required designer variable.
-		/// </summary>
-		private System.ComponentModel.Container components = null;
-		private System.Windows.Forms.TextBox conversationTextBox;
-		private System.Windows.Forms.Panel panel1;
-		private System.Windows.Forms.TextBox inputTextBox;
-		private System.Windows.Forms.Button sendButton;
+    /// <summary>
+    /// Summary description for ConversationForm.
+    /// </summary>
+    public class ConversationForm : System.Windows.Forms.Form
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.Container components = null;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.TextBox inputTextBox;
+        private System.Windows.Forms.Button sendButton;
         private Button sendnudgeButton;
         private Panel panel2;
 
 
-		/// <summary>
-		/// </summary>
-		private Conversation _conversation;
+        /// <summary>
+        /// </summary>
+        private Conversation _conversation;
         private List<string> _leftusers = new List<string>(0);
         private List<TextMessage> _messagequene = new List<TextMessage>(0);
         private List<object> _nudgequene = new List<object>(0);
         private ClientForm _clientform = null;
         private Dictionary<string, bool> _contactStatus = new Dictionary<string, bool>(0);
+        private RichTextBox richTextHistory;
         private bool _isChatForm = false;
 
-		/// <summary>
-		/// The conversation object which is associated with the form.
-		/// </summary>
-		public Conversation Conversation
-		{
-			get { return _conversation; }
-		}
+        /// <summary>
+        /// The conversation object which is associated with the form.
+        /// </summary>
+        public Conversation Conversation
+        {
+            get
+            {
+                return _conversation;
+            }
+        }
 
         protected ConversationForm()
         {
         }
 
-		public ConversationForm(Conversation conversation,ClientForm clientform)
-		{
-			_conversation = conversation;
+        public ConversationForm(Conversation conversation, ClientForm clientform)
+        {
+            _conversation = conversation;
             _clientform = clientform;
 
-			//
-			// Required for Windows Form Designer support
-			//
-			InitializeComponent();
+            //
+            // Required for Windows Form Designer support
+            //
+            InitializeComponent();
 
             AddEvent();
-		}
+        }
 
         /// <summary>
         /// Attatch a new conversation to this chatting form
@@ -92,55 +95,50 @@ namespace MSNPSharpClient
 
         void Switchboard_NudgeReceived(object sender, ContactEventArgs e)
         {
-            MessageBox.Show("!!!!!");
-        }		
+            if (Visible == false)
+            {
+                Invoke(new MakeVisibleDelegate(MakeVisible));
+            }
 
-		/// <summary>
-		/// Clean up any resources being used.
-		/// </summary>
-		protected override void Dispose( bool disposing )
-		{
-			if( disposing )
-			{
-				if(components != null)
-				{
-					components.Dispose();
-				}
-			}
-			base.Dispose( disposing );
-		}
+            Invoke(new PrintNudgeDelegate(PrintNudge), e);
+        }
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+            }
+            base.Dispose(disposing);
+        }
 
         protected override void OnShown(EventArgs e)
         {
             _isChatForm = true;
             base.OnShown(e);
         }
-		#region Windows Form Designer generated code
-		/// <summary>
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
-		private void InitializeComponent()
-		{
-            this.conversationTextBox = new System.Windows.Forms.TextBox();
+        #region Windows Form Designer generated code
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
             this.panel1 = new System.Windows.Forms.Panel();
             this.sendnudgeButton = new System.Windows.Forms.Button();
             this.sendButton = new System.Windows.Forms.Button();
             this.inputTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.richTextHistory = new System.Windows.Forms.RichTextBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // conversationTextBox
-            // 
-            this.conversationTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.conversationTextBox.Location = new System.Drawing.Point(0, 0);
-            this.conversationTextBox.Multiline = true;
-            this.conversationTextBox.Name = "conversationTextBox";
-            this.conversationTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.conversationTextBox.Size = new System.Drawing.Size(555, 262);
-            this.conversationTextBox.TabIndex = 0;
             // 
             // panel1
             // 
@@ -186,15 +184,30 @@ namespace MSNPSharpClient
             this.inputTextBox.Size = new System.Drawing.Size(437, 56);
             this.inputTextBox.TabIndex = 0;
             this.inputTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.inputTextBox_KeyDown);
+            this.inputTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.inputTextBox_KeyPress);
             // 
             // panel2
             // 
-            this.panel2.Controls.Add(this.conversationTextBox);
+            this.panel2.Controls.Add(this.richTextHistory);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(555, 262);
             this.panel2.TabIndex = 2;
+            // 
+            // richTextHistory
+            // 
+            this.richTextHistory.BackColor = System.Drawing.Color.White;
+            this.richTextHistory.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.richTextHistory.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.richTextHistory.Location = new System.Drawing.Point(0, 0);
+            this.richTextHistory.Name = "richTextHistory";
+            this.richTextHistory.ReadOnly = true;
+            this.richTextHistory.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
+            this.richTextHistory.Size = new System.Drawing.Size(555, 262);
+            this.richTextHistory.TabIndex = 1;
+            this.richTextHistory.TabStop = false;
+            this.richTextHistory.Text = "";
             // 
             // ConversationForm
             // 
@@ -208,18 +221,18 @@ namespace MSNPSharpClient
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
             this.ResumeLayout(false);
 
-		}
-		#endregion
+        }
+        #endregion
 
-		private bool _typingMessageSended = false;
+        private bool _typingMessageSended = false;
 
-		private void SendInput()
-		{			
-			// check whether there is input
-			if(inputTextBox.Text.Length == 0) return;
+        private void SendInput()
+        {
+            // check whether there is input
+            if (inputTextBox.Text.Length == 0)
+                return;
 
             /* You can optionally change the message's font, charset, color here.
              * For example:
@@ -227,9 +240,22 @@ namespace MSNPSharpClient
              * message.Decorations = TextDecorations.Bold;
             */
             TextMessage message = new TextMessage(inputTextBox.Text);
+            message.Font = "Trebuchet MS";
+            message.Color = Color.Brown;
+            message.Decorations = TextDecorations.Bold;
             _typingMessageSended = false;
-            inputTextBox.Text = String.Empty;
-            conversationTextBox.Text += "You say: " + message.Text + "\r\n";
+
+
+            richTextHistory.SelectionColor = Color.Gray;
+            richTextHistory.AppendText("You:" + Environment.NewLine);
+
+            richTextHistory.SelectionColor = message.Color;
+            richTextHistory.AppendText(message.Text);
+            richTextHistory.AppendText(Environment.NewLine);
+            richTextHistory.ScrollToCaret();
+
+            inputTextBox.Clear();
+            inputTextBox.Focus();
 
             //All contacts left, recreate the conversation
             if (ReInvite())
@@ -259,28 +285,28 @@ namespace MSNPSharpClient
             //    return;
             //}
 
-			Conversation.Switchboard.SendTextMessage(message);
+            Conversation.Switchboard.SendTextMessage(message);
 
-		}
+        }
 
         private void RemoveEvent()
         {
-            Conversation.Switchboard.TextMessageReceived        -= Switchboard_TextMessageReceived;
-            Conversation.Switchboard.SessionClosed              -= Switchboard_SessionClosed;
-            Conversation.Switchboard.ContactJoined              -= Switchboard_ContactJoined;
-            Conversation.Switchboard.ContactLeft                -= Switchboard_ContactLeft;
-            Conversation.Switchboard.NudgeReceived              -= Switchboard_NudgeReceived;
-            Conversation.Switchboard.AllContactsLeft            -= Switchboard_AllContactsLeft;
+            Conversation.Switchboard.TextMessageReceived -= Switchboard_TextMessageReceived;
+            Conversation.Switchboard.SessionClosed -= Switchboard_SessionClosed;
+            Conversation.Switchboard.ContactJoined -= Switchboard_ContactJoined;
+            Conversation.Switchboard.ContactLeft -= Switchboard_ContactLeft;
+            Conversation.Switchboard.NudgeReceived -= Switchboard_NudgeReceived;
+            Conversation.Switchboard.AllContactsLeft -= Switchboard_AllContactsLeft;
         }
 
         private void AddEvent()
         {
-            Conversation.Switchboard.TextMessageReceived    += new TextMessageReceivedEventHandler(Switchboard_TextMessageReceived);
-            Conversation.Switchboard.SessionClosed          += new SBChangedEventHandler(Switchboard_SessionClosed);
-            Conversation.Switchboard.ContactJoined          += new ContactChangedEventHandler(Switchboard_ContactJoined);
-            Conversation.Switchboard.ContactLeft            += new ContactChangedEventHandler(Switchboard_ContactLeft);
-            Conversation.Switchboard.NudgeReceived          += new ContactChangedEventHandler(Switchboard_NudgeReceived);
-            Conversation.Switchboard.AllContactsLeft        += new SBChangedEventHandler(Switchboard_AllContactsLeft);
+            Conversation.Switchboard.TextMessageReceived += new TextMessageReceivedEventHandler(Switchboard_TextMessageReceived);
+            Conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
+            Conversation.Switchboard.ContactJoined += new ContactChangedEventHandler(Switchboard_ContactJoined);
+            Conversation.Switchboard.ContactLeft += new ContactChangedEventHandler(Switchboard_ContactLeft);
+            Conversation.Switchboard.NudgeReceived += new ContactChangedEventHandler(Switchboard_NudgeReceived);
+            Conversation.Switchboard.AllContactsLeft += new SBChangedEventHandler(Switchboard_AllContactsLeft);
         }
 
         private bool ReInvite()
@@ -302,77 +328,132 @@ namespace MSNPSharpClient
             return false;
         }
 
-		private void sendButton_Click(object sender, System.EventArgs e)
-		{
-			SendInput();
-		}
+        private void sendButton_Click(object sender, System.EventArgs e)
+        {
+            SendInput();
+        }
 
-		private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
-		{
+        private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+        {
             if (!Conversation.Switchboard.IsSessionEstablished) //DONOT call ReInvite here!
                 return;
 
-			if(_typingMessageSended == false)
-			{
-				Conversation.Switchboard.SendTypingMessage();
-				_typingMessageSended = true;
-			}
-			if(e.KeyCode == Keys.Enter)
-				SendInput();
-		}
+            if (_typingMessageSended == false)
+            {
+                Conversation.Switchboard.SendTypingMessage();
+                _typingMessageSended = true;
+            }
 
-		private delegate void MakeVisibleDelegate();
-		private void MakeVisible()
-		{
-			Show();
-		}
+            if ((e.KeyCode == Keys.Return) && (e.Alt || e.Control || e.Shift))
+            {
+                return;
+            }
 
-        private delegate void PrintTextDelegate(string name, string text);
-        private void PrintText(string name, string text)
-        {
-            conversationTextBox.Text += name + " says: " + text + "\r\n";
+            if (e.KeyCode == Keys.Return)
+            {
+                if (!inputTextBox.Text.Equals(String.Empty))
+                {
+                    SendInput();
+                }
+                e.Handled = true;
+            }
         }
 
-		private void Switchboard_TextMessageReceived(object sender, TextMessageEventArgs e)
-		{			
-			// use Invoke() because this method is not run in the form's thread, but in the MSNPSharp (worker)thread
-            if(Visible == false)
-			{
-				this.Invoke(new MakeVisibleDelegate(MakeVisible));
-			}
-            Invoke(new PrintTextDelegate(PrintText), new object[] { e.Sender.Name, e.Message.Text });            	
-		}
-
-		private void Switchboard_SessionClosed(object sender, EventArgs e)
-		{
-            if (!this.InvokeRequired)
+        private void inputTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\x001b')
             {
-                conversationTextBox.Text += "* Session was closed\r\n";
+                Close();
+            }
+            else if ((e.KeyChar == '\r') && inputTextBox.Text.Equals(string.Empty))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private delegate void MakeVisibleDelegate();
+        private void MakeVisible()
+        {
+            Show();
+        }
+
+        private delegate void PrintTextDelegate(TextMessageEventArgs e);
+        private void PrintText(TextMessageEventArgs e)
+        {
+            richTextHistory.SelectionColor = Color.Gray;
+            richTextHistory.AppendText(e.Sender.Name + ":" + Environment.NewLine);
+
+            TextDecorations td = e.Message.Decorations;
+            FontStyle fs = FontStyle.Regular;
+            if ((td & TextDecorations.Bold) == TextDecorations.Bold)
+                fs |= FontStyle.Bold;
+            if ((td & TextDecorations.Italic) == TextDecorations.Italic)
+                fs |= FontStyle.Italic;
+            if ((td & TextDecorations.Underline) == TextDecorations.Underline)
+                fs |= FontStyle.Underline;
+            if ((td & TextDecorations.Strike) == TextDecorations.Strike)
+                fs |= FontStyle.Strikeout;
+
+            richTextHistory.SelectionColor = e.Message.Color;
+            richTextHistory.SelectionFont = new Font(e.Message.Font, 8f, fs);
+            richTextHistory.AppendText(e.Message.Text);
+            richTextHistory.AppendText(Environment.NewLine);
+            richTextHistory.ScrollToCaret();
+        }
+
+        private delegate void PrintNudgeDelegate(ContactEventArgs e);
+        private void PrintNudge(ContactEventArgs e)
+        {
+            DisplaySystemMessage("* " + e.Contact.Name + " has sent a nudge!");
+        }
+
+
+
+        public void DisplaySystemMessage(string systemMessage)
+        {
+            richTextHistory.SelectionColor = Color.Red;
+            richTextHistory.SelectionFont = new Font("Verdana", 8f, FontStyle.Bold);
+            richTextHistory.AppendText(systemMessage);
+            richTextHistory.SelectionColor = Color.Black;
+            richTextHistory.SelectionFont = new Font("Verdana", 9f);
+            richTextHistory.AppendText(Environment.NewLine);
+        }
+
+
+        private void Switchboard_TextMessageReceived(object sender, TextMessageEventArgs e)
+        {
+            if (Visible == false)
+            {
+                this.Invoke(new MakeVisibleDelegate(MakeVisible));
+            }
+            Invoke(new PrintTextDelegate(PrintText), e);
+        }
+
+        private void Switchboard_SessionClosed(object sender, EventArgs e)
+        {
+            if (!richTextHistory.InvokeRequired)
+            {
+                DisplaySystemMessage("* Session was closed");
             }
             else
             {
-                this.Invoke(new SBChangedEventHandler(Switchboard_SessionClosed),
-                    new object[] { sender, e });
+                richTextHistory.Invoke(new SBChangedEventHandler(Switchboard_SessionClosed), sender, e);
             }
-			
-		}
+        }
 
         #region These three functions causes reinvite
         private delegate void Delegate_Switchboard_ContactJoined(object sender, ContactEventArgs e);
 
         private void Switchboard_ContactJoined(object sender, ContactEventArgs e)
         {
-            if (conversationTextBox.InvokeRequired)
+            if (richTextHistory.InvokeRequired)
             {
-                Delegate_Switchboard_ContactJoined d = new Delegate_Switchboard_ContactJoined(Switchboard_ContactJoined);
-                object[] args ={ 0, 0 };
-                args[0] = sender;
-                args[1] = e;
-                conversationTextBox.Invoke(d, args);
+                richTextHistory.Invoke(new Delegate_Switchboard_ContactJoined(Switchboard_ContactJoined), sender, e);
             }
             else
             {
-                conversationTextBox.Text += "* " + e.Contact.Name + " joined the conversation\r\n";
+                DisplaySystemMessage("* " + e.Contact.Name + " joined the conversation");
+
                 _contactStatus[e.Contact.Mail.ToLowerInvariant()] = true;
 
                 //Send all messages and nudges
@@ -398,16 +479,17 @@ namespace MSNPSharpClient
 
         private void Switchboard_ContactLeft(object sender, ContactEventArgs e)
         {
-            if (conversationTextBox.InvokeRequired)
+            if (richTextHistory.InvokeRequired)
             {
-                conversationTextBox.Invoke(new ContactChangedEventHandler(Switchboard_ContactLeft),
-                    new object[] { sender, e });
+                richTextHistory.Invoke(new ContactChangedEventHandler(Switchboard_ContactLeft), sender, e);
             }
             else
             {
-                conversationTextBox.Text += "* " + e.Contact.Name + " left the conversation\r\n";
+                DisplaySystemMessage("* " + e.Contact.Name + " left the conversation");
+
                 if (!_leftusers.Contains(e.Contact.Mail))
                     _leftusers.Add(e.Contact.Mail);
+
                 _contactStatus[e.Contact.Mail.ToLowerInvariant()] = false;
             }
         }
@@ -418,15 +500,15 @@ namespace MSNPSharpClient
             Conversation.Switchboard.Close();
         }
 
-        
+
         #endregion
-		private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-		{
+        private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
             //Remember to close!
-			Conversation.Switchboard.Close();
+            Conversation.Switchboard.Close();
             RemoveEvent();
             _clientform.Dicconversation.Remove(Conversation);
-		}
+        }
 
         private void sendnudgeButton_Click(object sender, EventArgs e)
         {
@@ -436,13 +518,11 @@ namespace MSNPSharpClient
                 return;
             }
 
-            //if (Conversation.SwitchboardProcessor.Connected == false)
-            //{
-            //    Conversation.Messenger.Nameserver.RequestSwitchboard(Conversation.Switchboard, this);
-            //}
-
             Conversation.Switchboard.SendNudge();
-            conversationTextBox.Text += "You send a nudge.\r\n";
+
+            DisplaySystemMessage("* You send a nudge.");
         }
-	}
+
+        
+    }
 }

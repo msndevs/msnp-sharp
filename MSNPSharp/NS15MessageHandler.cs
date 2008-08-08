@@ -137,6 +137,7 @@ namespace MSNPSharp
                                     | ClientCapacities.CanMultiPacketMSG
                                     | ClientCapacities.CanReceiveWinks;
 
+            msnticket = new MSNTicket(this);
             contactGroups = new ContactGroupList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
@@ -744,12 +745,12 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
-        private Dictionary<Iniproperties, string> _Tickets = new Dictionary<Iniproperties, string>();
-        internal Dictionary<Iniproperties, string> Tickets
+        internal MSNTicket msnticket = null;
+        internal MSNTicket MSNTicket
         {
             get
             {
-                return _Tickets;
+                return msnticket;
             }
         }
 
@@ -761,13 +762,14 @@ namespace MSNPSharp
                 string policy = (string)message.CommandValues[3];
                 string nonce = (string)message.CommandValues[4];
 
-                SingleSignOn sso = new SingleSignOn(Credentials.Account, Credentials.Password, policy);
-                if (ConnectivitySettings != null && ConnectivitySettings.WebProxy != null)
-                {
-                    sso.WebProxy = ConnectivitySettings.WebProxy;
-                }
-                sso.AddDefaultAuths();
-                string response = sso.Authenticate(nonce, out _Tickets);
+                MSNTicket.Policy = policy;
+                MSNTicket.Authenticate();
+
+                MBI mbi = new MBI();
+                string response =
+                    MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
+                    mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
+
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
             }
             else if ((string)message.CommandValues[1] == "OK")
@@ -849,6 +851,9 @@ namespace MSNPSharp
 
             if (SignedOff != null)
                 SignedOff(this, new SignedOffEventArgs(reason));
+
+            if (messageProcessor != null && messageProcessor.Connected)
+                messageProcessor.Disconnect();
         }
 
         /// <summary>
@@ -1687,7 +1692,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
 
             string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
-            _Tickets[Iniproperties.LockKey] = payload;
+            MSNTicket.OIMLockKey = payload;
             MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, payload));
         }
 
@@ -1819,13 +1824,13 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void Clear()
         {
-            Tickets.Clear();
             ContactList.Clear();
             ContactGroups.Clear();
             ContactService.Clear();
             SwitchBoards.Clear();
             externalEndPoint = null;
             isSignedIn = false;
+            msnticket = new MSNTicket(this);
         }
 
         /// <summary>

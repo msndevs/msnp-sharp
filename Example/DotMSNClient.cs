@@ -781,7 +781,7 @@ namespace MSNPSharpClient
             }
 
             Contact contact = e.Contact;
-            if (contact.OnPendingList)
+            if (contact.OnPendingList && contact.NSMessageHandler.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
             {
                 ReverseAddedForm form = new ReverseAddedForm(contact);
                 form.FormClosed += delegate(object f, FormClosedEventArgs fce)

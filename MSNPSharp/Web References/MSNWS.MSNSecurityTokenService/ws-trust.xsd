@@ -32,7 +32,7 @@
       <xs:element minOccurs="0" ref="wsp:AppliesTo" />
       <xs:element minOccurs="0" ref="wst:RequestedTokenReference" />
       <xs:element minOccurs="0" ref="wst:RequestedProofToken" />
-      <xs:element minOccurs="0" ref="wst:Lifetime" />
+      <xs:element minOccurs="0" ref="wst:LifeTime" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="RequestedTokenReference" type="wst:RequestedTokenReferenceType" />
@@ -70,7 +70,7 @@
       <xs:any namespace="##any" processContents="lax" />
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="Lifetime" type="wst:LifetimeType" />
+  <xs:element name="LifeTime" type="wst:LifetimeType" />
   <xs:complexType name="LifetimeType">
     <xs:sequence>
       <xs:element minOccurs="0" ref="wsu:Created" />
