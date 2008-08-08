@@ -17,6 +17,21 @@ namespace MSNPSharp.SOAP
     /// </summary>
     public class MSNSecurityServiceSoapClient : SecurityTokenService
     {
+        static MSNSecurityServiceSoapClient()
+        {
+            if (null != Type.GetType("Mono.Runtime"))
+            {
+                ServicePointManager.CertificatePolicy = new MSNServiceCertificatePolicy();
+            }
+            else
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate
+                {
+                    return true;
+                };
+            }
+        }
+
         /// <summary>
         /// Override GetWebResponse is just enough. If you want to know why...use Reflector to see
         /// how SoapHttpClientProtocol class is implemented in the framework.

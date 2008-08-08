@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Text;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MSNPSharp
 {
@@ -38,6 +39,14 @@ namespace MSNPSharp
 
     #endregion
 
+    public class MSNServiceCertificatePolicy : ICertificatePolicy
+    {
+        public bool CheckValidationResult(ServicePoint sp, X509Certificate certificate, WebRequest request, int error)
+        {
+            return true;
+        }
+    }
+
     /// <summary>
     /// Base class of webservice-related classes
     /// </summary>
@@ -45,10 +54,17 @@ namespace MSNPSharp
     {
         static MSNService()
         {
-            ServicePointManager.ServerCertificateValidationCallback = delegate
+            if (null != Type.GetType("Mono.Runtime"))
             {
-                return true;
-            };
+                ServicePointManager.CertificatePolicy = new MSNServiceCertificatePolicy();
+            }
+            else
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate
+                {
+                    return true;
+                };
+            }
         }
 
         /// <summary>
