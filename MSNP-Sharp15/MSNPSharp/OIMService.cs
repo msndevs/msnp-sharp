@@ -100,42 +100,23 @@ namespace MSNPSharp
     /// </summary>
     public class OIMService : MSNService
     {
-        private NSMessageHandler nsMessageHandler = null;
-        private WebProxy webProxy = null;
-
         /// <summary>
         /// Occurs when receive an OIM.
         /// </summary>
         public event OIMReceivedEventHandler OIMReceived;
 
-        protected OIMService()
-        {
-        }
-
         public OIMService(NSMessageHandler nsHandler)
+            : base(nsHandler)
         {
-            nsMessageHandler = nsHandler;
-            if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-            {
-                webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-            }
-        }
-
-        public NSMessageHandler NSMessageHandler
-        {
-            get
-            {
-                return nsMessageHandler;
-            }
         }
 
         private RSIService CreateRSIService()
         {
-            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Web);
-            string[] TandP = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
+            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Web);
+            string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
-            rsiService.Proxy = webProxy;
+            rsiService.Proxy = WebProxy;
             rsiService.Timeout = Int32.MaxValue;
             rsiService.PassportCookieValue = new PassportCookie();
             rsiService.PassportCookieValue.t = TandP[1];
@@ -145,14 +126,14 @@ namespace MSNPSharp
 
         private OIMStoreService CreateOIMStoreService()
         {
-            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.OIM);
+            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.OIM);
 
             OIMStoreService oimService = new OIMStoreService();
-            oimService.Proxy = webProxy;
+            oimService.Proxy = WebProxy;
             oimService.TicketValue = new Ticket();
-            oimService.TicketValue.passport = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIM].Ticket;
-            oimService.TicketValue.lockkey = nsMessageHandler.MSNTicket.OIMLockKey;
-            oimService.TicketValue.appid = nsMessageHandler.Credentials.ClientID;
+            oimService.TicketValue.passport = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIM].Ticket;
+            oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
+            oimService.TicketValue.appid = NSMessageHandler.Credentials.ClientID;
             return oimService;
         }
 
@@ -162,7 +143,7 @@ namespace MSNPSharp
                 return;
 
             string xmlstr = message.MimeHeader["Mail-Data"];
-            if ("too-large" == xmlstr && nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if ("too-large" == xmlstr && NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
             {
                 RSIService rsiService = CreateRSIService();
                 rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
@@ -208,7 +189,7 @@ namespace MSNPSharp
             if (OIMReceived == null)
                 return;
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
                 return;
 
             XmlDocument xdoc = new XmlDocument();
@@ -326,7 +307,7 @@ namespace MSNPSharp
 
         private void DeleteOIMMessages(string[] guids)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
                 return;
 
             RSIService rsiService = CreateRSIService();
@@ -360,8 +341,8 @@ namespace MSNPSharp
         /// <param name="msg">Plain text message</param>
         public void SendOIMMessage(string account, string msg)
         {
-            Contact contact = nsMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
-            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.OIM) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
+            Contact contact = NSMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
+            if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.OIM) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
                     "MIME-Version: 1.0\r\n"
@@ -382,10 +363,14 @@ namespace MSNPSharp
 
                 OIMUserState userstate = new OIMUserState(contact.OIMCount, account);
 
+                string name48 = NSMessageHandler.Owner.Name;
+                if (name48.Length > 48)
+                    name48 = name48.Substring(47);
+
                 OIMStoreService oimService = CreateOIMStoreService();
                 oimService.FromValue = new From();
-                oimService.FromValue.memberName = nsMessageHandler.Owner.Mail;
-                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(nsMessageHandler.Owner.Name)) + "?=";
+                oimService.FromValue.memberName = NSMessageHandler.Owner.Mail;
+                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
                 oimService.FromValue.buildVer = "8.5.1302";
                 oimService.FromValue.msnpVer = "MSNP15";
                 oimService.FromValue.lang = System.Globalization.CultureInfo.CurrentCulture.Name;
@@ -398,7 +383,7 @@ namespace MSNPSharp
                 oimService.Sequence.Identifier = new AttributedURI();
                 oimService.Sequence.Identifier.Value = "http://messenger.msn.com";
                 oimService.Sequence.MessageNumber = userstate.oimcount;
-                
+
                 oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
                     oimService = service as OIMStoreService;
@@ -417,8 +402,8 @@ namespace MSNPSharp
                         SoapException soapexp = e.Error as SoapException;
                         if (soapexp.Code.Name == "AuthenticationFailed")
                         {
-                            nsMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(nsMessageHandler.Credentials.ClientID, nsMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
-                            oimService.TicketValue.lockkey = nsMessageHandler.MSNTicket.OIMLockKey;
+                            NSMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(NSMessageHandler.Credentials.ClientID, NSMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
+                            oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
                         }
                         else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
                         {
