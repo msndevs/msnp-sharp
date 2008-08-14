@@ -147,60 +147,51 @@ namespace MSNPSharp
 
         public void Authenticate()
         {
-            SSOTicketType expiredtickets = SSOTicketType.None;
             int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
+            MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : this;
+            SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
+            SSOTicketType expiredtickets = SSOTicketType.None;
 
-            if (cache.ContainsKey(hashcode) && ((MSNTicket)cache[hashcode]).SSOTickets.Count > 0)
+            foreach (SSOTicketType ssot in ssos)
             {
-                MSNTicket ticket = cache[hashcode].Clone() as MSNTicket;
-                foreach (SSOTicket ssot in ticket.SSOTickets.Values)
-                {
-                    if (ssot.Expires < DateTime.Now)
-                        expiredtickets |= ssot.Type;
-                }
-                if (expiredtickets == SSOTicketType.None)
-                {
-                    nsMessageHandler.msnticket = ticket;
-                    return;
-                }
+                if (ticket.Expired(ssot))
+                    expiredtickets |= ssot;
+            }
+
+            if (expiredtickets == SSOTicketType.None)
+            {
+                nsMessageHandler.msnticket = ticket;
             }
             else
             {
-                expiredtickets =
-                    SSOTicketType.Contact |
-                    SSOTicketType.OIM |
-                    SSOTicketType.Spaces |
-                    SSOTicketType.Clear |
-                    SSOTicketType.Storage |
-                    SSOTicketType.Web;
+                SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
+                if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
+                    sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+
+                sso.AddAuths(expiredtickets);
+                sso.Authenticate(ticket);
+
+                cache[hashcode] = ticket.Clone() as MSNTicket;
+                nsMessageHandler.msnticket = ticket;
             }
-
-            SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
-            if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-                sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-
-            sso.AddAuths(expiredtickets);
-            MSNTicket newticket = sso.Authenticate(this);
-
-            cache[hashcode] = newticket.Clone() as MSNTicket;
-            nsMessageHandler.msnticket = newticket;
         }
 
         public void RenewIfExpired(SSOTicketType renew)
         {
-            if (Expired(renew))
-            {
-                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
+            int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
+            MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : this;
 
+            if (ticket.Expired(renew))
+            {
                 SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
                 if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
                     sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
 
                 sso.AddAuths(renew);
-                MSNTicket newticket = sso.Authenticate(this);
+                sso.Authenticate(ticket);
 
-                cache[hashcode] = newticket.Clone() as MSNTicket;
-                nsMessageHandler.msnticket = newticket;
+                cache[hashcode] = ticket.Clone() as MSNTicket;
+                nsMessageHandler.msnticket = ticket;
             }
         }
 
@@ -225,8 +216,8 @@ namespace MSNPSharp
         private String domain = String.Empty;
         private String ticket = String.Empty;
         private String binarySecret = String.Empty;
-        private DateTime created = DateTime.MaxValue;
-        private DateTime expires = DateTime.MaxValue;
+        private DateTime created = DateTime.MinValue;
+        private DateTime expires = DateTime.MinValue;
         private SSOTicketType type = SSOTicketType.None;
 
         public SSOTicket(SSOTicketType tickettype)
@@ -399,7 +390,7 @@ namespace MSNPSharp
             }
         }
 
-        public MSNTicket Authenticate(MSNTicket msnticket)
+        public void Authenticate(MSNTicket msnticket)
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
             securService.Timeout = 60000;
@@ -500,8 +491,6 @@ namespace MSNPSharp
                 }
                 msnticket.SSOTickets[ticketype] = ssoticket;
             }
-
-            return msnticket;
         }
     }
 
