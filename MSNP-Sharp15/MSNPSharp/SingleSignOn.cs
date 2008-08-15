@@ -140,10 +140,10 @@ namespace MSNPSharp
         {
             if (SSOTickets.ContainsKey(tt))
             {
-                if (SSOTickets[tt].Expires < DateTime.Now.AddMinutes(1))
-                    return ExpiryState.WillExpireSoon;
+                if (SSOTickets[tt].Expires < DateTime.Now)
+                    return ExpiryState.Expired;
 
-                return (SSOTickets[tt].Expires < DateTime.Now) ? ExpiryState.Expired : ExpiryState.NotExpired;
+                return (SSOTickets[tt].Expires < DateTime.Now.AddMinutes(1)) ? ExpiryState.WillExpireSoon : ExpiryState.NotExpired;
             }
             return ExpiryState.Expired;
         }
