@@ -52,6 +52,7 @@ namespace MSNPSharp.SOAP
     public class FakeWebResponse : WebResponse
     {
         WebResponse resp = null;
+        MemoryStream innerstream = null;
 
         protected FakeWebResponse()
         {
@@ -67,25 +68,41 @@ namespace MSNPSharp.SOAP
             // If we don't do this,we will always encount an error when calling RequestMultipleSecurityTokens. 
             // This line of code just cost me 2 days.
             Headers[HttpResponseHeader.ContentType] = "text/xml; charset=utf-8";
-            MemoryStream memstream = new MemoryStream();
 
-            Stream s = resp.GetResponseStream();
-            XmlDocument xmldoc = new XmlDocument();
-            xmldoc.Load(s);
-            XmlNodeList envlist = xmldoc.GetElementsByTagName("S:Envelope");
-            XmlNodeList bodylist = xmldoc.GetElementsByTagName("S:Body");
-            XmlNodeList faultlist = xmldoc.GetElementsByTagName("S:Fault");
-
-            if (bodylist.Count == 0 && faultlist.Count > 0)
+            if (innerstream == null)
             {
-                // RequestMultipleSecurityTokens will never fail but return a reply without <S:Body> tag!!
-                XmlElement bodyElement = xmldoc.CreateElement("Body", xmldoc.DocumentElement.NamespaceURI);
-                bodyElement.AppendChild(faultlist[0]);  //Add the fault to body so RequestMultipleSecurityTokens just throw an exception.
-                envlist[0].AppendChild(bodyElement);
+                innerstream = new MemoryStream();
+
+                using (Stream s = resp.GetResponseStream())
+                {
+                    int read;
+                    byte[] buffer = new byte[8192];
+                    while ((read = s.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        innerstream.Write(buffer, 0, read);
+                    }
+                }
+
+                innerstream.Position = 0;
+
+                XmlDocument xmldoc = new XmlDocument();
+                xmldoc.Load(innerstream);
+
+                XmlNodeList envlist = xmldoc.GetElementsByTagName("S:Envelope");
+                XmlNodeList bodylist = xmldoc.GetElementsByTagName("S:Body");
+                XmlNodeList faultlist = xmldoc.GetElementsByTagName("S:Fault");
+
+                if (bodylist.Count == 0 && faultlist.Count > 0)
+                {
+                    // RequestMultipleSecurityTokens will never fail but return a reply without <S:Body> tag!!
+                    XmlElement bodyElement = xmldoc.CreateElement("Body", xmldoc.DocumentElement.NamespaceURI);
+                    bodyElement.AppendChild(faultlist[0]);  //Add the fault to body so RequestMultipleSecurityTokens just throw an exception.
+                    envlist[0].AppendChild(bodyElement);
+                }
+                xmldoc.Save(innerstream);
+                innerstream.Position = 0;
             }
-            xmldoc.Save(memstream);
-            memstream.Position = 0;
-            return memstream;
+            return innerstream;
         }
 
         #region Other overrides

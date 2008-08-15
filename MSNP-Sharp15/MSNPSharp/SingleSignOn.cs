@@ -136,9 +136,16 @@ namespace MSNPSharp
             return MemberwiseClone();
         }
 
-        public bool Expired(SSOTicketType tt)
+        public ExpiryState Expired(SSOTicketType tt)
         {
-            return (!SSOTickets.ContainsKey(tt) || SSOTickets[tt].Expires < DateTime.Now);
+            if (SSOTickets.ContainsKey(tt))
+            {
+                if (SSOTickets[tt].Expires < DateTime.Now.AddMinutes(1))
+                    return ExpiryState.WillExpireSoon;
+
+                return (SSOTickets[tt].Expires < DateTime.Now) ? ExpiryState.Expired : ExpiryState.NotExpired;
+            }
+            return ExpiryState.Expired;
         }
 
         #region Authenticate
@@ -154,7 +161,7 @@ namespace MSNPSharp
 
             foreach (SSOTicketType ssot in ssos)
             {
-                if (ticket.Expired(ssot))
+                if (ExpiryState.NotExpired != ticket.Expired(ssot))
                     expiredtickets |= ssot;
             }
 
@@ -169,7 +176,7 @@ namespace MSNPSharp
                     sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
 
                 sso.AddAuths(expiredtickets);
-                sso.Authenticate(ticket);
+                sso.Authenticate(ticket, false);
 
                 cache[hashcode] = ticket.Clone() as MSNTicket;
                 nsMessageHandler.msnticket = ticket;
@@ -180,17 +187,26 @@ namespace MSNPSharp
         {
             int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
             MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : this;
+            ExpiryState es = ticket.Expired(renew);
 
-            if (ticket.Expired(renew))
+            if (ExpiryState.NotExpired != es)
             {
                 SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
                 if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
                     sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
 
                 sso.AddAuths(renew);
-                sso.Authenticate(ticket);
 
-                cache[hashcode] = ticket.Clone() as MSNTicket;
+                if (es == ExpiryState.WillExpireSoon)
+                {
+                    sso.Authenticate(ticket, true);
+                }
+                else
+                {
+                    sso.Authenticate(ticket, false);
+                    cache[hashcode] = ticket.Clone() as MSNTicket;
+                }
+
                 nsMessageHandler.msnticket = ticket;
             }
         }
@@ -209,6 +225,13 @@ namespace MSNPSharp
         Spaces = 0x08,
         Storage = 0x10,
         Web = 0x20
+    }
+
+    public enum ExpiryState
+    {
+        NotExpired,
+        WillExpireSoon,
+        Expired
     }
 
     public class SSOTicket
@@ -390,7 +413,7 @@ namespace MSNPSharp
             }
         }
 
-        public void Authenticate(MSNTicket msnticket)
+        public void Authenticate(MSNTicket msnticket, bool async)
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
             securService.Timeout = 60000;
@@ -426,20 +449,50 @@ namespace MSNPSharp
             RequestMultipleSecurityTokensType mulToken = new RequestMultipleSecurityTokensType();
             mulToken.Id = "RSTS";
             mulToken.RequestSecurityToken = auths.ToArray();
-            RequestSecurityTokenResponseType[] result = null;
-            try
-            {
-                result = securService.RequestMultipleSecurityTokens(mulToken);
-            }
-            catch (Exception ex)
-            {
-                MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
-                if (securService.pp != null)
-                    sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
 
-                throw sexp;
-            }
+            if (async)
+            {
+                securService.RequestMultipleSecurityTokensCompleted += delegate(object sender, RequestMultipleSecurityTokensCompletedEventArgs e)
+                {
+                    if (!e.Cancelled)
+                    {
+                        securService = sender as MSNSecurityServiceSoapClient;
+                        if (e.Error != null)
+                        {
+                            MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);
+                            if (securService.pp != null)
+                                sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
 
+                            throw sexp;
+                        }
+
+                        GetTickets(e.Result, securService, msnticket);
+                    }
+                };
+                securService.RequestMultipleSecurityTokensAsync(mulToken, new object());
+            }
+            else
+            {
+                RequestSecurityTokenResponseType[] result = null;
+                try
+                {
+                    result = securService.RequestMultipleSecurityTokens(mulToken);
+                }
+                catch (Exception ex)
+                {
+                    MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
+                    if (securService.pp != null)
+                        sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
+
+                    throw sexp;
+                }
+
+                GetTickets(result, securService, msnticket);
+            }
+        }
+
+        private void GetTickets(RequestSecurityTokenResponseType[] result, MSNSecurityServiceSoapClient securService, MSNTicket msnticket)
+        {
             if (securService.pp != null && securService.pp.credProperties != null)
             {
                 foreach (credPropertyType credproperty in securService.pp.credProperties)
@@ -489,8 +542,10 @@ namespace MSNPSharp
                     ssoticket.Created = XmlConvert.ToDateTime(token.LifeTime.Created.Value, XmlDateTimeSerializationMode.Local);
                     ssoticket.Expires = XmlConvert.ToDateTime(token.LifeTime.Expires.Value, XmlDateTimeSerializationMode.Local);
                 }
+
                 msnticket.SSOTickets[ticketype] = ssoticket;
             }
+
         }
     }
 
