@@ -12,13 +12,86 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
+    using System.Security.Authentication;
 
+    #region Delegates and EventArgs
     /// <summary>
     /// This delegate is used when an OIM was received.
     /// </summary>
     /// <param name="sender">The sender's email</param>
     /// <param name="e">OIMReceivedEventArgs</param>
     public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when an OIM sends out.
+    /// </summary>
+    /// <param name="sender">Sender's email</param>
+    /// <param name="e">The event arg that indicates whether send succeed or not.</param>
+    public delegate void OIMSentCompletedEventHandler(object sender, OIMSendCompletedEventArgs e);
+
+    [Serializable()]
+    public class OIMSendCompletedEventArgs : EventArgs
+    {
+        private Exception error = null;
+        private string sender = string.Empty;
+        private string receiver = string.Empty;
+        private string message = string.Empty;
+        private ulong sequence = 0;
+
+        /// <summary>
+        /// OIM sequence number (OIMCount)
+        /// </summary>
+        public ulong Sequence
+        {
+            get { return sequence; }
+        }
+
+        /// <summary>
+        /// Message content
+        /// </summary>
+        public string Message
+        {
+            get { return message; }
+        }
+
+        /// <summary>
+        /// InnerException
+        /// </summary>
+        public Exception Error
+        {
+            get { return error; }
+        }
+
+        /// <summary>
+        /// OIM sender's email.
+        /// </summary>
+        public string Sender
+        {
+            get { return sender; }
+        }
+
+        /// <summary>
+        /// OIM receiver's email.
+        /// </summary>
+        public string Receiver
+        {
+            get { return receiver; }
+        }
+
+        public OIMSendCompletedEventArgs()
+        {
+        }
+
+        public OIMSendCompletedEventArgs(string sender_account, string receiver_account, ulong seq, string content, Exception err)
+        {
+            sender = sender_account;
+            receiver = receiver_account;
+            sequence = seq;
+            message = content;
+            error = err;
+        }
+    }
+
 
     [Serializable()]
     public class OIMReceivedEventArgs : EventArgs
@@ -93,7 +166,32 @@ namespace MSNPSharp
             email = account;
             message = msg;
         }
+    } 
+    #endregion
+
+    #region Exceptions
+
+    /// <summary>
+    /// SenderThrottleLimitExceededException
+    /// <remarks>If you get this exception, please wait at least 11 seconds then try to send the OIM again.</remarks>
+    /// </summary>
+    public class SenderThrottleLimitExceededException : Exception
+    {
+        public override string Message
+        {
+            get
+            {
+                return "OIM: SenderThrottleLimitExceeded. please waiting 11 seconds to send again...";
+            }
+        }
+
+        public override string ToString()
+        {
+            return Message;
+        }
     }
+
+    #endregion
 
     /// <summary>
     /// Provides webservice operation for offline messages
@@ -104,6 +202,11 @@ namespace MSNPSharp
         /// Occurs when receive an OIM.
         /// </summary>
         public event OIMReceivedEventHandler OIMReceived;
+        
+        /// <summary>
+        /// Fires after an OIM was sent.
+        /// </summary>
+        public event OIMSentCompletedEventHandler OIMSendCompleted;
 
         public OIMService(NSMessageHandler nsHandler)
             : base(nsHandler)
@@ -393,6 +496,14 @@ namespace MSNPSharp
                         if (range.Lower == userstate.oimcount && range.Upper == userstate.oimcount)
                         {
                             contact.OIMCount++; // Sent successfully.
+                            OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                                new OIMSendCompletedEventArgs(
+                                NSMessageHandler.Owner.Mail, 
+                                userstate.account, 
+                                contact.OIMCount,
+                                msg,
+                                null));
+
                             if (Settings.TraceSwitch.TraceVerbose)
                                 Trace.WriteLine("An OIM Message has been sent: " + userstate.account + ", runId = " + _RunGuid);
                         }
@@ -400,23 +511,32 @@ namespace MSNPSharp
                     else if (e.Error != null && e.Error is SoapException)
                     {
                         SoapException soapexp = e.Error as SoapException;
+                        Exception exp = soapexp;
                         if (soapexp.Code.Name == "AuthenticationFailed")
                         {
                             NSMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(NSMessageHandler.Credentials.ClientID, NSMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
                             oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
+                            exp = new AuthenticationException("OIM:AuthenticationFailed");
                         }
                         else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
                         {
+                            exp = new SenderThrottleLimitExceededException();
                             if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("OIM: SenderThrottleLimitExceeded. Waiting 11 seconds...");
-
-                            System.Threading.Thread.Sleep(11111); // wait 11 seconds.
+                                Trace.WriteLine("OIM:SenderThrottleLimitExceeded. please waiting 11 seconds to send again...");
                         }
                         if (userstate.RecursiveCall++ < 5)
                         {
                             oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
                             return;
                         }
+
+                        OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                                new OIMSendCompletedEventArgs(
+                                NSMessageHandler.Owner.Mail,
+                                userstate.account,
+                                contact.OIMCount,
+                                msg,
+                                exp));
                         OnServiceOperationFailed(oimService,
                             new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
                     }
@@ -430,6 +550,14 @@ namespace MSNPSharp
             if (OIMReceived != null)
             {
                 OIMReceived(sender, e);
+            }
+        }
+
+        protected virtual void OnOIMSendCompleted(object sender, OIMSendCompletedEventArgs e)
+        {
+            if (OIMSendCompleted != null)
+            {
+                OIMSendCompleted(sender, e);
             }
         }
     }
