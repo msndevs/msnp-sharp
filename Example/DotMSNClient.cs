@@ -116,6 +116,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.SpaceService.ContactCardCompleted          += new ContactCardCompletedEventHandler(SpaceService_ContactCardCompleted);
 
             messenger.Nameserver.OIMService.OIMReceived                     += new OIMReceivedEventHandler(Nameserver_OIMReceived);
+            messenger.Nameserver.OIMService.OIMSendCompleted                += new OIMSentCompletedEventHandler(OIMService_OIMSendCompleted);
           
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
@@ -126,7 +127,6 @@ namespace MSNPSharpClient
 
             comboStatus.SelectedIndex = 0;
         }
-
 
         void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArg arg)
         {
@@ -769,6 +769,20 @@ namespace MSNPSharpClient
             if (DialogResult.Yes == MessageBox.Show(e.ReceivedTime + ":\r\n" + e.Message + "\r\n\r\n\r\nClick yes, if you want to receive this message next time you login.", "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel))
             {
                 e.IsRead = false;
+            }
+        }
+
+        void OIMService_OIMSendCompleted(object sender, OIMSendCompletedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new OIMSentCompletedEventHandler(OIMService_OIMSendCompleted), sender, e);
+                return;
+            }
+
+            if (e.Error != null)
+            {
+                MessageBox.Show(e.Error.Message, "OIM Send Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
