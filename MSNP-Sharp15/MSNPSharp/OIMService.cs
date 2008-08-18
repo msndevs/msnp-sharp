@@ -181,7 +181,7 @@ namespace MSNPSharp
         {
             get
             {
-                return "OIM: SenderThrottleLimitExceeded. please waiting 11 seconds to send again...";
+                return "OIM: SenderThrottleLimitExceeded. Please wait 11 seconds to send again...";
             }
         }
 
@@ -498,9 +498,9 @@ namespace MSNPSharp
                             contact.OIMCount++; // Sent successfully.
                             OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
                                 new OIMSendCompletedEventArgs(
-                                NSMessageHandler.Owner.Mail, 
-                                userstate.account, 
-                                contact.OIMCount,
+                                NSMessageHandler.Owner.Mail,
+                                userstate.account,
+                                userstate.oimcount,
                                 msg,
                                 null));
 
@@ -516,29 +516,29 @@ namespace MSNPSharp
                         {
                             NSMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(NSMessageHandler.Credentials.ClientID, NSMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
                             oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
+                            if (userstate.RecursiveCall++ < 5)
+                            {
+                                oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
+                                return;
+                            }
                             exp = new AuthenticationException("OIM:AuthenticationFailed");
                         }
                         else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
                         {
                             exp = new SenderThrottleLimitExceededException();
                             if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("OIM:SenderThrottleLimitExceeded. please waiting 11 seconds to send again...");
-                        }
-                        if (userstate.RecursiveCall++ < 5)
-                        {
-                            oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
-                            return;
+                                Trace.WriteLine("OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...");
                         }
 
                         OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
                                 new OIMSendCompletedEventArgs(
                                 NSMessageHandler.Owner.Mail,
                                 userstate.account,
-                                contact.OIMCount,
+                                userstate.oimcount,
                                 msg,
-                                exp));
-                        OnServiceOperationFailed(oimService,
-                            new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
+                                exp)
+                        );
+                        OnServiceOperationFailed(oimService, new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
                     }
                 };
                 oimService.StoreAsync(MessageType.text, message, userstate);
