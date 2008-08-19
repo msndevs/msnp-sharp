@@ -99,6 +99,7 @@ namespace MSNPSharp.SOAP
                     bodyElement.AppendChild(faultlist[0]);  //Add the fault to body so RequestMultipleSecurityTokens just throw an exception.
                     envlist[0].AppendChild(bodyElement);
                 }
+                innerstream.Position = 0;
                 xmldoc.Save(innerstream);
                 innerstream.Position = 0;
             }
