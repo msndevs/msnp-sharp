@@ -504,6 +504,7 @@ namespace MSNPSharp.IO
                         contact.SetHasBlog(cit.hasSpace);
                         contact.SetComment(cit.comment);
                         contact.SetIsMessengerUser(ismessengeruser);
+                        contact.SetMobileAccess(cit.isMobileIMEnabled);
                         if (contact.IsMessengerUser)
                             contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
 

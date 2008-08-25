@@ -31,147 +31,165 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 using System;
 using System.IO;
 using System.Text;
-using MSNPSharp.Core;
 using System.Xml;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Message that is send to a mobile device.
-	/// </summary>
-	public class MobileMessage : MSNMessage
-	{
-		#region Private
-		private string callbackNumber = "";
-		private string callbackDeviceName = "";
+    using MSNPSharp.Core;
 
-		private string text = "";
+    /// <summary>
+    /// Message that is send to a mobile device.
+    /// </summary>
+    public class MobileMessage : MSNMessage
+    {
+        #region Private
+        private string callbackNumber = String.Empty;
+        private string callbackDeviceName = String.Empty;
+        private string text = String.Empty;
+        private string receiver = String.Empty;
+        #endregion
 
-		private string receiver = "";
-		#endregion
+        #region Public
 
-		#region Public
+        /// <summary>
+        /// The telephone number that the remote contact will see.
+        /// </summary>
+        public string CallbackNumber
+        {
+            get
+            {
+                return callbackNumber;
+            }
+            set
+            {
+                callbackNumber = value;
+            }
+        }
 
-		/// <summary>
-		/// The telephone number that the remote contact will see.
-		/// </summary>
-		public string CallbackNumber
-		{
-			get { return callbackNumber; }
-			set { callbackNumber = value;}
-		}
+        /// <summary>
+        /// The telephone device type that the remote contact will see. (e.g. "Homephone", "Work phone")
+        /// </summary>
+        public string CallbackDeviceName
+        {
+            get
+            {
+                return callbackDeviceName;
+            }
+            set
+            {
+                callbackDeviceName = value;
+            }
+        }
 
-		/// <summary>
-		/// The telephone device type that the remote contact will see. (e.g. "Homephone", "Work phone")
-		/// </summary>
-		public string CallbackDeviceName
-		{
-			get { return callbackDeviceName; }
-			set { callbackDeviceName = value;}
-		}
+        /// <summary>
+        /// The text that will be send to the remote contact.
+        /// </summary>
+        public string Text
+        {
+            get
+            {
+                return text;
+            }
+            set
+            {
+                text = value;
+            }
+        }
 
-		/// <summary>
-		/// The text that will be send to the remote contact.
-		/// </summary>
-		public string Text
-		{
-			get { return text; }
-			set { text = value;}
-		}
+        /// <summary>
+        /// The account of the remote contact.
+        /// </summary>
+        public string Receiver
+        {
+            get
+            {
+                return receiver;
+            }
+            set
+            {
+                receiver = value;
+            }
+        }
+        #endregion
 
-		/// <summary>
-		/// The account of the remote contact.
-		/// </summary>
-		public string Receiver
-		{
-			get { return receiver;}
-			set { receiver = value;}
-		}
-		#endregion
+        /// <summary>
+        /// 
+        /// </summary>
+        public MobileMessage()
+        {
+        }
 
-		/// <summary>
-		/// 
-		/// </summary>
-		public MobileMessage()
-		{			
-		}
+        /// <summary>
+        /// Throws an exception.
+        /// </summary>
+        /// <param name="data"></param>
+        public override void ParseBytes(byte[] data)
+        {
+            throw new MSNPSharpException("MobileMessage can not parse data. This is done via a notification document.");
+        }
 
-		/// <summary>
-		/// Throws an exception.
-		/// </summary>
-		/// <param name="data"></param>
-		public override void ParseBytes(byte[] data)
-		{
-			throw new MSNPSharpException("MobileMessage can not parse data. This is done via a notification document.");
-		}
+        /// <summary>
+        /// Returns the XML formatted message that represents the mobile message.
+        /// </summary>
+        /// <returns></returns>
+        public override byte[] GetBytes()
+        {
+            MemoryStream memStream = new MemoryStream();
 
-		/// <summary>
-		/// Returns the XML formatted message that represents the mobile message.
-		/// </summary>
-		/// <returns></returns>
-		public override byte[] GetBytes()
-		{			
-			MemoryStream memStream = new MemoryStream();			
-			
-			XmlTextWriter writer = new XmlTextWriter(memStream, new System.Text.UTF8Encoding(false));
-			
-			writer.Formatting = Formatting.None;
-			writer.Indentation = 0;
-			writer.IndentChar = ' ';	
-									
-			// check whether there is a call back number set
-			if(callbackNumber.Length > 0)
-			{
-				writer.WriteStartElement("PHONE");
-				writer.WriteAttributeString("pri", "1");
-				writer.WriteStartElement("LOC");
-				
-				writer.WriteString(callbackDeviceName);
-				writer.WriteEndElement();
-				writer.WriteStartElement("NUM");
-				writer.WriteString(callbackNumber);
-				writer.WriteEndElement();
-				writer.WriteEndElement();				
-			}
-			
-			if(Text.Length > 113)
-				throw new MSNPSharpException("Mobile text message too long. A maximum of 113 characters is allowed.");
-							
-			writer.WriteRaw("<TEXT xml:space=\"preserve\" enc=\"utf-8\">");
-			writer.WriteString(text);
-			writer.WriteRaw("</TEXT>");			
-			writer.Flush();					
-			
-			// return byte data
-			// strip off first 3 bytes. These are 0xef, 0xbb and 0xbf.
-			//byte[] body = memStream.ToArray();
-			//byte[] msg  = new byte[body.Length - 3];
-			//Array.Copy(body, 3, msg, 0, msg.Length);
-			return memStream.ToArray();			
-		}
+            XmlTextWriter writer = new XmlTextWriter(memStream, new System.Text.UTF8Encoding(false));
 
-		/// <summary>
-		/// Sets the command and commandvalues of the parent.
-		/// </summary>
-		public override void PrepareMessage()
-		{			
-			base.PrepareMessage ();			
-			if(ParentMessage != null && ParentMessage is MSNMessage)
-			{
-				((MSNMessage)ParentMessage).Command = "PGD";
-				((MSNMessage)ParentMessage).CommandValues.Add(Receiver);
-				((MSNMessage)ParentMessage).CommandValues.Add("1");
-			}
-		}
+            writer.Formatting = Formatting.None;
+            writer.Indentation = 0;
+            writer.IndentChar = ' ';
 
-		/// <summary>
-		/// Returns the XML formatted body.
-		/// </summary>
-		/// <returns></returns>
-		public override string ToString()
-		{
-			return "[MobileMessage]" + System.Text.Encoding.UTF8.GetString(this.GetBytes());	
-		}
-		
-	}
-}
+            // check whether there is a call back number set
+            if (callbackNumber.Length > 0)
+            {
+                writer.WriteStartElement("PHONE");
+                writer.WriteAttributeString("pri", "1");
+                writer.WriteStartElement("LOC");
+
+                writer.WriteString(callbackDeviceName);
+                writer.WriteEndElement();
+                writer.WriteStartElement("NUM");
+                writer.WriteString(callbackNumber);
+                writer.WriteEndElement();
+                writer.WriteEndElement();
+            }
+
+            if (Text.Length > 113)
+                throw new MSNPSharpException("Mobile text message too long. A maximum of 113 characters is allowed.");
+
+            writer.WriteRaw("<TEXT xml:space=\"preserve\" enc=\"utf-8\">");
+            writer.WriteString(text);
+            writer.WriteRaw("</TEXT>");
+            writer.Flush();
+
+            return memStream.ToArray();
+        }
+
+        /// <summary>
+        /// Sets the command and commandvalues of the parent.
+        /// </summary>
+        public override void PrepareMessage()
+        {
+            base.PrepareMessage();
+            if (ParentMessage != null && ParentMessage is MSNMessage)
+            {
+                ((MSNMessage)ParentMessage).Command = "PGD";
+                ((MSNMessage)ParentMessage).CommandValues.Add(Receiver);
+                ((MSNMessage)ParentMessage).CommandValues.Add("1");
+            }
+        }
+
+        /// <summary>
+        /// Returns the XML formatted body.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "[MobileMessage]" + System.Text.Encoding.UTF8.GetString(this.GetBytes());
+        }
+
+    }
+};
