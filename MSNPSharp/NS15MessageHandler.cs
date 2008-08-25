@@ -527,9 +527,8 @@ namespace MSNPSharp
             bodyMessage.Receiver = receiver.Mail;
             bodyMessage.Text = text;
 
-            // create an NS message to transport it
-            NSMessage nsMessage = new NSMessage();
-            nsMessage.InnerMessage = bodyMessage;
+            // create a NSPayLoadMessage to transport it
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { receiver.Mail, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
 
             // and send it
             MessageProcessor.SendMessage(nsMessage);

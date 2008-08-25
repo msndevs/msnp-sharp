@@ -12,13 +12,86 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
+    using System.Security.Authentication;
 
+    #region Delegates and EventArgs
     /// <summary>
     /// This delegate is used when an OIM was received.
     /// </summary>
     /// <param name="sender">The sender's email</param>
     /// <param name="e">OIMReceivedEventArgs</param>
     public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when an OIM sends out.
+    /// </summary>
+    /// <param name="sender">Sender's email</param>
+    /// <param name="e">The event arg that indicates whether send succeed or not.</param>
+    public delegate void OIMSentCompletedEventHandler(object sender, OIMSendCompletedEventArgs e);
+
+    [Serializable()]
+    public class OIMSendCompletedEventArgs : EventArgs
+    {
+        private Exception error = null;
+        private string sender = string.Empty;
+        private string receiver = string.Empty;
+        private string message = string.Empty;
+        private ulong sequence = 0;
+
+        /// <summary>
+        /// OIM sequence number (OIMCount)
+        /// </summary>
+        public ulong Sequence
+        {
+            get { return sequence; }
+        }
+
+        /// <summary>
+        /// Message content
+        /// </summary>
+        public string Message
+        {
+            get { return message; }
+        }
+
+        /// <summary>
+        /// InnerException
+        /// </summary>
+        public Exception Error
+        {
+            get { return error; }
+        }
+
+        /// <summary>
+        /// OIM sender's email.
+        /// </summary>
+        public string Sender
+        {
+            get { return sender; }
+        }
+
+        /// <summary>
+        /// OIM receiver's email.
+        /// </summary>
+        public string Receiver
+        {
+            get { return receiver; }
+        }
+
+        public OIMSendCompletedEventArgs()
+        {
+        }
+
+        public OIMSendCompletedEventArgs(string sender_account, string receiver_account, ulong seq, string content, Exception err)
+        {
+            sender = sender_account;
+            receiver = receiver_account;
+            sequence = seq;
+            message = content;
+            error = err;
+        }
+    }
+
 
     [Serializable()]
     public class OIMReceivedEventArgs : EventArgs
@@ -93,49 +166,60 @@ namespace MSNPSharp
             email = account;
             message = msg;
         }
+    } 
+    #endregion
+
+    #region Exceptions
+
+    /// <summary>
+    /// SenderThrottleLimitExceededException
+    /// <remarks>If you get this exception, please wait at least 11 seconds then try to send the OIM again.</remarks>
+    /// </summary>
+    public class SenderThrottleLimitExceededException : Exception
+    {
+        public override string Message
+        {
+            get
+            {
+                return "OIM: SenderThrottleLimitExceeded. Please wait 11 seconds to send again...";
+            }
+        }
+
+        public override string ToString()
+        {
+            return Message;
+        }
     }
+
+    #endregion
 
     /// <summary>
     /// Provides webservice operation for offline messages
     /// </summary>
     public class OIMService : MSNService
     {
-        private NSMessageHandler nsMessageHandler = null;
-        private WebProxy webProxy = null;
-
         /// <summary>
         /// Occurs when receive an OIM.
         /// </summary>
         public event OIMReceivedEventHandler OIMReceived;
-
-        protected OIMService()
-        {
-        }
+        
+        /// <summary>
+        /// Fires after an OIM was sent.
+        /// </summary>
+        public event OIMSentCompletedEventHandler OIMSendCompleted;
 
         public OIMService(NSMessageHandler nsHandler)
+            : base(nsHandler)
         {
-            nsMessageHandler = nsHandler;
-            if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-            {
-                webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-            }
-        }
-
-        public NSMessageHandler NSMessageHandler
-        {
-            get
-            {
-                return nsMessageHandler;
-            }
         }
 
         private RSIService CreateRSIService()
         {
-            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Web);
-            string[] TandP = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
+            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Web);
+            string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
-            rsiService.Proxy = webProxy;
+            rsiService.Proxy = WebProxy;
             rsiService.Timeout = Int32.MaxValue;
             rsiService.PassportCookieValue = new PassportCookie();
             rsiService.PassportCookieValue.t = TandP[1];
@@ -145,14 +229,14 @@ namespace MSNPSharp
 
         private OIMStoreService CreateOIMStoreService()
         {
-            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.OIM);
+            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.OIM);
 
             OIMStoreService oimService = new OIMStoreService();
-            oimService.Proxy = webProxy;
+            oimService.Proxy = WebProxy;
             oimService.TicketValue = new Ticket();
-            oimService.TicketValue.passport = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIM].Ticket;
-            oimService.TicketValue.lockkey = nsMessageHandler.MSNTicket.OIMLockKey;
-            oimService.TicketValue.appid = nsMessageHandler.Credentials.ClientID;
+            oimService.TicketValue.passport = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIM].Ticket;
+            oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
+            oimService.TicketValue.appid = NSMessageHandler.Credentials.ClientID;
             return oimService;
         }
 
@@ -162,7 +246,7 @@ namespace MSNPSharp
                 return;
 
             string xmlstr = message.MimeHeader["Mail-Data"];
-            if ("too-large" == xmlstr && nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if ("too-large" == xmlstr && NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
             {
                 RSIService rsiService = CreateRSIService();
                 rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
@@ -208,7 +292,7 @@ namespace MSNPSharp
             if (OIMReceived == null)
                 return;
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
                 return;
 
             XmlDocument xdoc = new XmlDocument();
@@ -326,7 +410,7 @@ namespace MSNPSharp
 
         private void DeleteOIMMessages(string[] guids)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
                 return;
 
             RSIService rsiService = CreateRSIService();
@@ -360,8 +444,8 @@ namespace MSNPSharp
         /// <param name="msg">Plain text message</param>
         public void SendOIMMessage(string account, string msg)
         {
-            Contact contact = nsMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
-            if (nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.OIM) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
+            Contact contact = NSMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
+            if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.OIM) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
                     "MIME-Version: 1.0\r\n"
@@ -382,10 +466,14 @@ namespace MSNPSharp
 
                 OIMUserState userstate = new OIMUserState(contact.OIMCount, account);
 
+                string name48 = NSMessageHandler.Owner.Name;
+                if (name48.Length > 48)
+                    name48 = name48.Substring(47);
+
                 OIMStoreService oimService = CreateOIMStoreService();
                 oimService.FromValue = new From();
-                oimService.FromValue.memberName = nsMessageHandler.Owner.Mail;
-                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(nsMessageHandler.Owner.Name)) + "?=";
+                oimService.FromValue.memberName = NSMessageHandler.Owner.Mail;
+                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
                 oimService.FromValue.buildVer = "8.5.1302";
                 oimService.FromValue.msnpVer = "MSNP15";
                 oimService.FromValue.lang = System.Globalization.CultureInfo.CurrentCulture.Name;
@@ -398,7 +486,7 @@ namespace MSNPSharp
                 oimService.Sequence.Identifier = new AttributedURI();
                 oimService.Sequence.Identifier.Value = "http://messenger.msn.com";
                 oimService.Sequence.MessageNumber = userstate.oimcount;
-                
+
                 oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
                     oimService = service as OIMStoreService;
@@ -408,6 +496,14 @@ namespace MSNPSharp
                         if (range.Lower == userstate.oimcount && range.Upper == userstate.oimcount)
                         {
                             contact.OIMCount++; // Sent successfully.
+                            OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                                new OIMSendCompletedEventArgs(
+                                NSMessageHandler.Owner.Mail,
+                                userstate.account,
+                                userstate.oimcount,
+                                msg,
+                                null));
+
                             if (Settings.TraceSwitch.TraceVerbose)
                                 Trace.WriteLine("An OIM Message has been sent: " + userstate.account + ", runId = " + _RunGuid);
                         }
@@ -415,25 +511,34 @@ namespace MSNPSharp
                     else if (e.Error != null && e.Error is SoapException)
                     {
                         SoapException soapexp = e.Error as SoapException;
+                        Exception exp = soapexp;
                         if (soapexp.Code.Name == "AuthenticationFailed")
                         {
-                            nsMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(nsMessageHandler.Credentials.ClientID, nsMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
-                            oimService.TicketValue.lockkey = nsMessageHandler.MSNTicket.OIMLockKey;
+                            NSMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(NSMessageHandler.Credentials.ClientID, NSMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
+                            oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
+                            if (userstate.RecursiveCall++ < 5)
+                            {
+                                oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
+                                return;
+                            }
+                            exp = new AuthenticationException("OIM:AuthenticationFailed");
                         }
                         else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
                         {
+                            exp = new SenderThrottleLimitExceededException();
                             if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("OIM: SenderThrottleLimitExceeded. Waiting 11 seconds...");
+                                Trace.WriteLine("OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...");
+                        }
 
-                            System.Threading.Thread.Sleep(11111); // wait 11 seconds.
-                        }
-                        if (userstate.RecursiveCall++ < 5)
-                        {
-                            oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
-                            return;
-                        }
-                        OnServiceOperationFailed(oimService,
-                            new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
+                        OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                                new OIMSendCompletedEventArgs(
+                                NSMessageHandler.Owner.Mail,
+                                userstate.account,
+                                userstate.oimcount,
+                                msg,
+                                exp)
+                        );
+                        OnServiceOperationFailed(oimService, new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
                     }
                 };
                 oimService.StoreAsync(MessageType.text, message, userstate);
@@ -445,6 +550,14 @@ namespace MSNPSharp
             if (OIMReceived != null)
             {
                 OIMReceived(sender, e);
+            }
+        }
+
+        protected virtual void OnOIMSendCompleted(object sender, OIMSendCompletedEventArgs e)
+        {
+            if (OIMSendCompleted != null)
+            {
+                OIMSendCompleted(sender, e);
             }
         }
     }

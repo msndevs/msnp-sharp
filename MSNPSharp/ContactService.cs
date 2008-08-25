@@ -21,9 +21,7 @@ namespace MSNPSharp
         #region Fields
 
         private int recursiveCall = 0;
-        private WebProxy webProxy = null;
         private string applicationId = String.Empty;
-        private NSMessageHandler nsMessageHandler = null;
         private List<int> initialADLs = new List<int>();
         private int initialADLcount = 0;
         private bool abSynchronized = false;
@@ -33,32 +31,13 @@ namespace MSNPSharp
 
         #endregion
 
-        protected ContactService()
-            : base()
+        public ContactService(NSMessageHandler nsHandler)
+            : base(nsHandler)
         {
             applicationId = Properties.Resources.ApplicationId;
         }
 
-        public ContactService(NSMessageHandler nsHandler)
-            : this()
-        {
-            nsMessageHandler = nsHandler;
-            if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-            {
-                webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-            }
-
-        }
-
         #region Properties
-
-        public NSMessageHandler NSMessageHandler
-        {
-            get
-            {
-                return nsMessageHandler;
-            }
-        }
 
         /// <summary>
         /// Preferred host of the contact service.
@@ -114,12 +93,12 @@ namespace MSNPSharp
             }
 
             bool nocompress = false;
-            string addressbookFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
-            string deltasResultsFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
+            string addressbookFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
+            string deltasResultsFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
             try
             {
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, nsMessageHandler);
-                Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, nsMessageHandler);
+                AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
+                Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, NSMessageHandler);
                 if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
                     || Deltas.Version != Properties.Resources.DeltasListVersion)
                     && recursiveCall == 0)
@@ -168,30 +147,30 @@ namespace MSNPSharp
             recursiveCall = 0;
 
             // Set privacy settings and roam property
-            nsMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-            nsMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
-            nsMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+            NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+            NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
+            NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
 
-            AddressBook.Profile = nsMessageHandler.StorageService.GetProfile();
+            AddressBook.Profile = NSMessageHandler.StorageService.GetProfile();
             AddressBook.Save(); // The first and the last AddressBook.Save()
             Deltas.Truncate();
 
             // Set display name, personal status and photo
-            string mydispName = String.IsNullOrEmpty(AddressBook.Profile.DisplayName) ? nsMessageHandler.Owner.NickName : AddressBook.Profile.DisplayName;
+            string mydispName = String.IsNullOrEmpty(AddressBook.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : AddressBook.Profile.DisplayName;
             PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null);
-            nsMessageHandler.Owner.SetName(mydispName);
-            nsMessageHandler.Owner.SetPersonalMessage(pm);
+            NSMessageHandler.Owner.SetName(mydispName);
+            NSMessageHandler.Owner.SetPersonalMessage(pm);
 
             if (AddressBook.Profile.Photo != null && AddressBook.Profile.Photo.DisplayImage != null)
             {
                 System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
                 DisplayImage displayImage = new DisplayImage();
                 displayImage.Image = fileImage;
-                nsMessageHandler.Owner.DisplayImage = displayImage;
+                NSMessageHandler.Owner.DisplayImage = displayImage;
             }
 
             // Send BLP
-            nsMessageHandler.SetPrivacyMode(nsMessageHandler.Owner.Privacy);
+            NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
 
             // Send ADL
             if (sendinitialADL)
@@ -202,7 +181,7 @@ namespace MSNPSharp
                 foreach (string payload in adls)
                 {
                     NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                    nsMessageHandler.MessageProcessor.SendMessage(message);
+                    NSMessageHandler.MessageProcessor.SendMessage(message);
                     initialADLs.Add(message.TransactionID);
                 }
             }
@@ -217,10 +196,10 @@ namespace MSNPSharp
                 {
                     initialADLcount = 0;
 
-                    nsMessageHandler.SetScreenName(nsMessageHandler.Owner.Name);
-                    nsMessageHandler.SetPersonalMessage(nsMessageHandler.Owner.PersonalMessage);
+                    NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
+                    NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
 
-                    nsMessageHandler.OnSignedIn();
+                    NSMessageHandler.OnSignedIn();
 
                     if (!AddressBookSynchronized)
                     {
@@ -236,14 +215,14 @@ namespace MSNPSharp
 
                                         // No contacts are sent so we are done synchronizing call the callback
                                         // MSNP8: New callback defined, SynchronizationCompleted.
-                                        nsMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
+                                        NSMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
 
                                         // Fire the ReverseAdded event (pending)
-                                        lock (nsMessageHandler.ContactList.SyncRoot)
+                                        lock (NSMessageHandler.ContactList.SyncRoot)
                                         {
-                                            foreach (Contact pendingContact in nsMessageHandler.ContactList.Pending)
+                                            foreach (Contact pendingContact in NSMessageHandler.ContactList.Pending)
                                             {
-                                                nsMessageHandler.OnReverseAdded(pendingContact);
+                                                NSMessageHandler.OnReverseAdded(pendingContact);
                                             }
                                         }
                                     }
@@ -264,108 +243,101 @@ namespace MSNPSharp
         /// <param name="onSuccess">The delegate to be executed after async membership request completed successfuly</param>
         internal void msRequest(string partnerScenario, FindMembershipCompletedEventHandler onSuccess)
         {
-            bool msdeltasOnly = false;
-            DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
-
-            if (AddressBook.MembershipLastChange != DateTime.MinValue)
-            {
-                msdeltasOnly = true;
-                serviceLastChange = AddressBook.MembershipLastChange;
-            }
-
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("No Contact Ticket")));
-                return;
             }
-
-            SharingServiceBinding sharingService = CreateSharingService(partnerScenario);
-            sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
+            else
             {
-                sharingService = sender as SharingServiceBinding;
-                handleServiceHeader(sharingService.ServiceHeaderValue, false);
-
-                if (e.Cancelled)
-                    return;
-
-                if (e.Error != null)
+                bool msdeltasOnly = false;
+                DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+                if (AddressBook.MembershipLastChange != DateTime.MinValue)
                 {
-                    if (e.Error.Message.IndexOf("Address Book Does Not Exist") != -1)
-                    {
-                        if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
-                        {
-                            OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("No Contact Ticket")));
-                            return;
-                        }
+                    msdeltasOnly = true;
+                    serviceLastChange = AddressBook.MembershipLastChange;
+                }
 
-                        ABServiceBinding abservice = CreateABService(partnerScenario);
-                        ABAddRequestType abAddRequest = new ABAddRequestType();
-                        abAddRequest.abInfo = new abInfoType();
-                        abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Mail;
-                        abAddRequest.abInfo.ownerPuid = "0";
-                        abAddRequest.abInfo.fDefault = true;
-                        abservice.ABAddAsync(abAddRequest, new object());
-                        abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
+                SharingServiceBinding sharingService = CreateSharingService(partnerScenario);
+                sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
+                {
+                    sharingService = sender as SharingServiceBinding;
+                    handleServiceHeader(sharingService.ServiceHeaderValue, false);
+
+                    if (!e.Cancelled)
+                    {
+                        if (e.Error != null)
                         {
-                            if (abadd_e.Error == null)
+                            if (e.Error.Message.Contains("Address Book Does Not Exist"))
                             {
+                                if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+                                {
+                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("No Contact Ticket")));
+                                }
+                                else
+                                {
+                                    ABServiceBinding abservice = CreateABService(partnerScenario);
+                                    abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
+                                    {
+                                        if (abadd_e.Error == null)
+                                        {
+                                            recursiveCall++;
+                                            SynchronizeContactList();
+                                        }
+                                        else
+                                        {
+                                            OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("SynchronizeContactList", abadd_e.Error));
+                                        }
+                                    };
+                                    ABAddRequestType abAddRequest = new ABAddRequestType();
+                                    abAddRequest.abInfo = new abInfoType();
+                                    abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Mail;
+                                    abAddRequest.abInfo.ownerPuid = "0";
+                                    abAddRequest.abInfo.fDefault = true;
+                                    abservice.ABAddAsync(abAddRequest, new object());
+                                }
+                            }
+                            else if ((recursiveCall == 0 && partnerScenario == "Initial")
+                                || (e.Error.Message.Contains("Need to do full sync")))
+                            {
+                                recursiveCall++;
                                 SynchronizeContactList();
-                                return;
                             }
                             else
                             {
-                                OnServiceOperationFailed(sender,
-                                    new ServiceOperationFailedEventArgs("SynchronizeContactList", abadd_e.Error));
-                                return;
+                                OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
                             }
-                        };
-                        return;
+                        }
+                        else
+                        {
+                            if (null != e.Result.FindMembershipResult)
+                            {
+                                AddressBook += e.Result.FindMembershipResult;
+                                Deltas.MembershipDeltas.Add(e.Result.FindMembershipResult);
+                                Deltas.Save();
+                            }
+                            if (onSuccess != null)
+                            {
+                                onSuccess(sharingService, e);
+                            }
+                        }
                     }
+                };
 
-                    if (recursiveCall == 0 && partnerScenario == "Initial")
-                    {
-                        recursiveCall++;
-                        SynchronizeContactList();
-                        return;
-                    }
-                    else
-                    {
-                        OnServiceOperationFailed(sender,
-                                new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
-                        return;
-                    }
-                }
-
-                if (null != e.Result.FindMembershipResult)
+                FindMembershipRequestType request = new FindMembershipRequestType();
+                request.deltasOnly = msdeltasOnly;
+                request.lastChange = serviceLastChange;
+                request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
+                request.serviceFilter.Types = new ServiceFilterType[]
                 {
-                    AddressBook += e.Result.FindMembershipResult;
-                    Deltas.MembershipDeltas.Add(e.Result.FindMembershipResult);
-                    Deltas.Save();
-                }
-
-                if (onSuccess != null)
-                    onSuccess(sharingService, e);
-
-            };
-
-            FindMembershipRequestType request = new FindMembershipRequestType();
-            request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
-            request.serviceFilter.Types = new ServiceFilterType[]
-            { 
-                ServiceFilterType.Messenger
-            /*
-                ServiceFilterType.Invitation,
-                ServiceFilterType.SocialNetwork,
-                ServiceFilterType.Space,
-                ServiceFilterType.Profile
-             * */
-
-            };
-
-            request.deltasOnly = msdeltasOnly;
-            request.lastChange = serviceLastChange;
-
-            sharingService.FindMembershipAsync(request, partnerScenario);
+                    ServiceFilterType.Messenger
+                    /*ServiceFilterType.Invitation,
+                    ServiceFilterType.SocialNetwork,
+                    ServiceFilterType.Space,
+                    ServiceFilterType.Profile
+                     * */
+                };
+                sharingService.FindMembershipAsync(request, partnerScenario);
+            }
         }
 
         /// <summary>
@@ -375,86 +347,86 @@ namespace MSNPSharp
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
         private void abRequest(string partnerScenario, ABFindAllCompletedEventHandler onSuccess)
         {
-            bool deltasOnly = false;
-            DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
-            DateTime dynamicItemLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
-
-            if (AddressBook.AddressbookLastChange != DateTime.MinValue)
-            {
-                lastChange = AddressBook.AddressbookLastChange;
-                dynamicItemLastChange = AddressBook.DynamicItemLastChange;
-                deltasOnly = true;
-            }
-
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindAll", new MSNPSharpException("No Contact Ticket")));
-                return;
             }
-
-            ABServiceBinding abService = CreateABService(partnerScenario);
-            abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
+            else
             {
-                abService = sender as ABServiceBinding;
-                handleServiceHeader(abService.ServiceHeaderValue, true);
-                string abpartnerScenario = e.UserState.ToString();
-
-                if (e.Cancelled || e.Error != null)
+                bool deltasOnly = false;
+                DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+                DateTime dynamicItemLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+                if (AddressBook.AddressbookLastChange != DateTime.MinValue)
                 {
-                    if (e.Error != null)
+                    lastChange = AddressBook.AddressbookLastChange;
+                    dynamicItemLastChange = AddressBook.DynamicItemLastChange;
+                    deltasOnly = true;
+                }
+
+                ABServiceBinding abService = CreateABService(partnerScenario);
+                abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
+                {
+                    abService = sender as ABServiceBinding;
+                    handleServiceHeader(abService.ServiceHeaderValue, true);
+                    string abpartnerScenario = e.UserState.ToString();
+
+                    if (!e.Cancelled)
                     {
-                        if (recursiveCall == 0 && abpartnerScenario == "Initial")
+                        if (e.Error != null)
                         {
-                            recursiveCall++;
-                            SynchronizeContactList();
-                            return;
+                            if ((recursiveCall == 0 && abpartnerScenario == "Initial")
+                                || (e.Error.Message.Contains("Need to do full sync")))
+                            {
+                                recursiveCall++;
+                                SynchronizeContactList();
+                            }
+                            else
+                            {
+                                OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ABFindAll", e.Error));
+                            }
                         }
                         else
                         {
-                            OnServiceOperationFailed(sender,
-                                new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
-                            return;
+                            if (null != e.Result.ABFindAllResult)
+                            {
+                                AddressBook += e.Result.ABFindAllResult;
+                                Deltas.AddressBookDeltas.Add(e.Result.ABFindAllResult);
+                                Deltas.Save();
+                            }
+                            if (onSuccess != null)
+                            {
+                                onSuccess(abService, e);
+                            }
                         }
                     }
-                    return;
-                }
+                };
 
-                if (null != e.Result.ABFindAllResult)
-                {
-                    AddressBook += e.Result.ABFindAllResult;
-                    Deltas.AddressBookDeltas.Add(e.Result.ABFindAllResult);
-                    Deltas.Save();
-                }
+                ABFindAllRequestType request = new ABFindAllRequestType();
+                request.deltasOnly = deltasOnly;
+                request.lastChange = lastChange;
+                request.dynamicItemLastChange = dynamicItemLastChange;
+                request.dynamicItemView = "Gleam";
 
-                if (onSuccess != null)
-                    onSuccess(abService, e);
-            };
-
-            ABFindAllRequestType request = new ABFindAllRequestType();
-            request.deltasOnly = deltasOnly;
-            request.lastChange = lastChange;
-            request.dynamicItemLastChange = dynamicItemLastChange;
-            request.dynamicItemView = "Gleam";
-
-            abService.ABFindAllAsync(request, partnerScenario);
+                abService.ABFindAllAsync(request, partnerScenario);
+            }
         }
 
         internal SharingServiceBinding CreateSharingService(string partnerScenario)
         {
-            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
-            sharingService.Proxy = webProxy;
+            sharingService.Proxy = WebProxy;
             sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = applicationId;
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
-            sharingService.ABApplicationHeaderValue.BrandId = nsMessageHandler.MSNTicket.MainBrandID;
-            sharingService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.MSNTicket.SharingServiceCacheKey;
+            sharingService.ABApplicationHeaderValue.BrandId = NSMessageHandler.MSNTicket.MainBrandID;
+            sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.SharingServiceCacheKey;
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
-            sharingService.ABAuthHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
+            sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
             return sharingService;
@@ -462,19 +434,19 @@ namespace MSNPSharp
 
         internal ABServiceBinding CreateABService(string partnerScenario)
         {
-            nsMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
 
             ABServiceBinding abService = new ABServiceBinding();
-            abService.Proxy = webProxy;
+            abService.Proxy = WebProxy;
             abService.Timeout = Int32.MaxValue;
             abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = applicationId;
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
-            abService.ABApplicationHeaderValue.CacheKey = nsMessageHandler.MSNTicket.ABServiceCacheKey;
+            abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.ABServiceCacheKey;
             abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.TicketToken = nsMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
+            abService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
             return abService;
@@ -524,7 +496,7 @@ namespace MSNPSharp
                 {
                     sendlist = MSNLists.None;
                     lists = AddressBook.GetMSNLists(contact.Account, contact.Type);
-                    if (nsMessageHandler.ContactList.GetContact(contact.Account, contact.Type).IsMessengerUser)
+                    if (NSMessageHandler.ContactList.GetContact(contact.Account, contact.Type).IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
                         sendlist |= MSNLists.AllowedList;
@@ -620,7 +592,7 @@ namespace MSNPSharp
                 string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
                 fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
                 fqypayload = fqypayload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
-                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
+                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
             }
 
             // Add contact to address book with "ContactSave"
@@ -631,9 +603,9 @@ namespace MSNPSharp
                 ct,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
-                    Contact contact = nsMessageHandler.ContactList.GetContact(account, ct);
+                    Contact contact = NSMessageHandler.ContactList.GetContact(account, ct);
                     contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
-                    contact.NSMessageHandler = nsMessageHandler;
+                    contact.NSMessageHandler = NSMessageHandler;
 
                     // Add to AL
                     if (ct == ClientType.PassportMember)
@@ -642,7 +614,7 @@ namespace MSNPSharp
                         SerializableDictionary<ContactIdentifier, MembershipContactInfo> contacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>();
                         contacts.Add(new ContactIdentifier(account, ct), new MembershipContactInfo(account, ct));
                         string payload = ConstructLists(contacts.Values, false, MSNLists.AllowedList)[0];
-                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                         contact.AddToList(MSNLists.AllowedList);
                     }
                     else
@@ -661,8 +633,8 @@ namespace MSNPSharp
                         "ContactSave",
                         delegate
                         {
-                            contact = nsMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                            nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                            contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
+                            NSMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                         });
                 }
             );
@@ -683,7 +655,7 @@ namespace MSNPSharp
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
-                    contact.NSMessageHandler = nsMessageHandler;
+                    contact.NSMessageHandler = NSMessageHandler;
 
                     // FL
                     contact.OnForwardList = true;
@@ -707,7 +679,7 @@ namespace MSNPSharp
                                 contacts.Add(new ContactIdentifier(contact.Mail, contact.ClientType), new MembershipContactInfo(contact.Mail, contact.ClientType));
                                 string payload = ConstructLists(contacts.Values, false, MSNLists.AllowedList)[0];
 
-                                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                                 contact.AddToList(MSNLists.AllowedList);
 
                                 System.Threading.Thread.Sleep(100);
@@ -718,8 +690,8 @@ namespace MSNPSharp
                                 "ContactMsgrAPI",
                                 delegate
                                 {
-                                    contact = nsMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                                    nsMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                                    contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
+                                    NSMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 });
                         }
                     );
@@ -729,7 +701,7 @@ namespace MSNPSharp
 
         private void AddNewOrPendingContact(string account, bool pending, string invitation, ClientType network, ABContactAddCompletedEventHandler onSuccess)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -772,7 +744,7 @@ namespace MSNPSharp
                         request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
                         request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = invitation;
                     }
-                    request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = nsMessageHandler.Owner.Name;
+                    request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = NSMessageHandler.Owner.Name;
                     request.options = new ABContactAddRequestTypeOptions();
                     request.options.EnableAllowListManagement = true;
                     break;
@@ -817,9 +789,9 @@ namespace MSNPSharp
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
 
-            if (nsMessageHandler.ContactList.HasContact(account, network))
+            if (NSMessageHandler.ContactList.HasContact(account, network))
             {
-                Contact contact = nsMessageHandler.ContactList.GetContact(account, network);
+                Contact contact = NSMessageHandler.ContactList.GetContact(account, network);
                 if (contact.Guid != Guid.Empty)
                 {
                     RemoveContactFromList(contact, MSNLists.PendingList, null);
@@ -830,7 +802,7 @@ namespace MSNPSharp
 
             if (MSNLists.PendingList == (AddressBook.GetMSNLists(account, network) & MSNLists.PendingList))
             {
-                AddPendingContact(nsMessageHandler.ContactList.GetContact(account, network));
+                AddPendingContact(NSMessageHandler.ContactList.GetContact(account, network));
             }
             else
             {
@@ -851,7 +823,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -864,7 +836,7 @@ namespace MSNPSharp
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.NSMessageHandler = null;
-                    nsMessageHandler.ContactList.Remove(contact.Mail);
+                    NSMessageHandler.ContactList.Remove(contact.Mail);
                     AddressBook.AddressbookContacts.Remove(contact.Guid);
                 }
                 else if (e.Error != null)
@@ -893,7 +865,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactUpdate", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1011,7 +983,7 @@ namespace MSNPSharp
                 annos.Add(anno);
             }
 
-            if (annos.Count > 0 && nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (annos.Count > 0 && NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 ABServiceBinding abService = CreateABService("PrivacyApply");
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
@@ -1056,7 +1028,7 @@ namespace MSNPSharp
         /// <param name="groupName">The name of the group to add</param>
         internal virtual void AddContactGroup(string groupName)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1068,8 +1040,8 @@ namespace MSNPSharp
                 handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
-                    nsMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, nsMessageHandler));
-                    nsMessageHandler.OnContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)nsMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
+                    NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, NSMessageHandler));
+                    NSMessageHandler.OnContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)NSMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
                 }
                 else if (e.Error != null)
                 {
@@ -1104,7 +1076,7 @@ namespace MSNPSharp
         /// <param name="contactGroup">The group to remove</param>
         internal virtual void RemoveContactGroup(ContactGroup contactGroup)
         {
-            foreach (Contact cnt in nsMessageHandler.ContactList.All)
+            foreach (Contact cnt in NSMessageHandler.ContactList.All)
             {
                 if (cnt.ContactGroups.Contains(contactGroup))
                 {
@@ -1112,7 +1084,7 @@ namespace MSNPSharp
                 }
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1124,9 +1096,9 @@ namespace MSNPSharp
                 handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
-                    nsMessageHandler.ContactGroups.RemoveGroup(contactGroup);
+                    NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
                     AddressBook.Groups.Remove(new Guid(contactGroup.Guid));
-                    nsMessageHandler.OnContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
+                    NSMessageHandler.OnContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
                 }
                 else if (e.Error != null)
                 {
@@ -1153,7 +1125,7 @@ namespace MSNPSharp
         /// <param name="newGroupName">The new name</param>
         public virtual void RenameGroup(ContactGroup group, string newGroupName)
         {
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupUpdate", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1196,7 +1168,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1234,7 +1206,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1291,7 +1263,7 @@ namespace MSNPSharp
 
             if (list == MSNLists.ForwardList)
             {
-                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                 contact.AddToList(list);
 
                 if (onSuccess != null)
@@ -1302,7 +1274,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AddMember", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1325,7 +1297,7 @@ namespace MSNPSharp
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
                     {
-                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                     }
 
                     if (onSuccess != null)
@@ -1409,7 +1381,7 @@ namespace MSNPSharp
 
             if (list == MSNLists.ForwardList)
             {
-                nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
+                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                 contact.RemoveFromList(list);
                 if (onSuccess != null)
                 {
@@ -1418,7 +1390,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (!nsMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("DeleteMember", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1442,7 +1414,7 @@ namespace MSNPSharp
 
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
                     {
-                        nsMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
+                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                     }
 
                     if (onSuccess != null)
@@ -1565,16 +1537,16 @@ namespace MSNPSharp
         /// </summary>
         public virtual void DeleteRecordFile()
         {
-            if (nsMessageHandler.Owner != null && nsMessageHandler.Owner.Mail != null)
+            if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Mail != null)
             {
-                string addressbookFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
+                string addressbookFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
                 if (File.Exists(addressbookFile))
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
                 }
 
-                string deltasResultFile = Path.GetFullPath(@".\") + nsMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
+                string deltasResultFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
                 if (File.Exists(deltasResultFile))
                 {
                     File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
@@ -1591,11 +1563,11 @@ namespace MSNPSharp
                 {
                     if (isABServiceBinding)
                     {
-                        nsMessageHandler.MSNTicket.ABServiceCacheKey = sh.CacheKey;
+                        NSMessageHandler.MSNTicket.ABServiceCacheKey = sh.CacheKey;
                     }
                     else
                     {
-                        nsMessageHandler.MSNTicket.SharingServiceCacheKey = sh.CacheKey;
+                        NSMessageHandler.MSNTicket.SharingServiceCacheKey = sh.CacheKey;
                     }
                 }
 
