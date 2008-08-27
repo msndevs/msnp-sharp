@@ -40,7 +40,7 @@ namespace MSNPSharp
         #region Properties
 
         /// <summary>
-        /// Preferred host of the contact service.
+        /// Preferred host of the contact service. The default is "contacts.msn.com".
         /// </summary>
         private string PreferredHost
         {
@@ -55,7 +55,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Keep track whether a address book synchronization has been completed so we can warn the client programmer
+        /// Keep track whether a address book synchronization has been completed.
         /// </summary>
         public bool AddressBookSynchronized
         {
@@ -70,19 +70,25 @@ namespace MSNPSharp
         #region Synchronize
 
         /// <summary>
-        /// Send the synchronize command to the server. This will rebuild the contactlist with the most recent data.
+        /// Rebuild the contactlist with the most recent data.
         /// </summary>
         /// <remarks>
         /// Synchronizing is the most complete way to retrieve data about groups, contacts, privacy settings, etc.
-        /// You <b>must</b> call this function before setting your initial status, otherwise you won't received online notifications of other clients.
-        /// Please note that you can only synchronize a single time per session! (this is limited by the the msn-servers)
+        /// This method is called automatically after owner profile received and then the addressbook is merged with deltas file.
+        /// After that, SignedIn event occurs and the client programmer must set it's initial status by SetPresenceStatus(). 
+        /// Otherwise you won't receive online notifications from other clients or the connection is closed by the server.
+        /// If you have an external contact list, you must track ProfileReceived, SignedIn and SynchronizationCompleted events.
+        /// Between ProfileReceived and SignedIn: the internal addressbook is merged with deltas file.
+        /// Between SignedIn and SynchronizationCompleted: the internal addressbook is merged with most recent data by soap request.
+        /// All contact changes will be fired between ProfileReceived, SignedIn and SynchronizationCompleted events. 
+        /// e.g: ContactAdded, ContactRemoved, ReverseAdded, ReverseRemoved.
         /// </remarks>
-        public virtual void SynchronizeContactList()
+        internal void SynchronizeContactList()
         {
             if (AddressBookSynchronized)
             {
                 if (Settings.TraceSwitch.TraceWarning)
-                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized. Make sure the AutoSynchronize property is set to false in order to manually synchronize the contact list.", "NSMessageHandler");
+                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized.", "NSMessageHandler");
 
                 return;
             }
@@ -199,7 +205,7 @@ namespace MSNPSharp
                     NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
                     NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
 
-                    NSMessageHandler.OnSignedIn();
+                    NSMessageHandler.OnSignedIn(EventArgs.Empty);
 
                     if (!AddressBookSynchronized)
                     {
@@ -213,16 +219,14 @@ namespace MSNPSharp
                                         abSynchronized = true;
                                         SetDefaults(false);
 
-                                        // No contacts are sent so we are done synchronizing call the callback
-                                        // MSNP8: New callback defined, SynchronizationCompleted.
-                                        NSMessageHandler.OnSynchronizationCompleted(this, EventArgs.Empty);
+                                        NSMessageHandler.OnSynchronizationCompleted(EventArgs.Empty);
 
                                         // Fire the ReverseAdded event (pending)
                                         lock (NSMessageHandler.ContactList.SyncRoot)
                                         {
                                             foreach (Contact pendingContact in NSMessageHandler.ContactList.Pending)
                                             {
-                                                NSMessageHandler.OnReverseAdded(pendingContact);
+                                                NSMessageHandler.OnReverseAdded(new ContactEventArgs(pendingContact));
                                             }
                                         }
                                     }
@@ -634,7 +638,7 @@ namespace MSNPSharp
                         delegate
                         {
                             contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                            NSMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                            NSMessageHandler.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                         });
                 }
             );
@@ -691,7 +695,7 @@ namespace MSNPSharp
                                 delegate
                                 {
                                     contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                                    NSMessageHandler.OnContactAdded(this, new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                                    NSMessageHandler.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 });
                         }
                     );
@@ -815,7 +819,8 @@ namespace MSNPSharp
         #region RemoveContact
 
         /// <summary>
-        /// Remove the specified contact from your forward and allow list. Note that remote contacts that are blocked remain blocked.
+        /// Remove the specified contact from your forward list.
+        /// Note that remote contacts that are allowed/blocked remain allowed/blocked.
         /// </summary>
         /// <param name="contact">Contact to remove</param>
         public virtual void RemoveContact(Contact contact)
@@ -834,10 +839,20 @@ namespace MSNPSharp
             {
                 handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
-                {
-                    contact.NSMessageHandler = null;
-                    NSMessageHandler.ContactList.Remove(contact.Mail);
+                {                    
+                    contact.OnForwardList = false;
+
                     AddressBook.AddressbookContacts.Remove(contact.Guid);
+                    if (MSNLists.None == AddressBook.GetMSNLists(contact.Mail, contact.ClientType))
+                    {
+                        AddressBook.MembershipContacts.Remove(new ContactIdentifier(contact.Mail, contact.ClientType));
+                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);                        
+                        contact.NSMessageHandler = null;
+                    }
+               
+                    NSMessageHandler.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                    contact.SetGuid(Guid.Empty);
+                    contact.SetIsMessengerUser(false);
                 }
                 else if (e.Error != null)
                 {
@@ -1041,7 +1056,7 @@ namespace MSNPSharp
                 if (!e.Cancelled && e.Error == null)
                 {
                     NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, NSMessageHandler));
-                    NSMessageHandler.OnContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)NSMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
+                    NSMessageHandler.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)NSMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
                 }
                 else if (e.Error != null)
                 {
@@ -1098,7 +1113,7 @@ namespace MSNPSharp
                 {
                     NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
                     AddressBook.Groups.Remove(new Guid(contactGroup.Guid));
-                    NSMessageHandler.OnContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
+                    NSMessageHandler.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
                 }
                 else if (e.Error != null)
                 {
@@ -1295,6 +1310,8 @@ namespace MSNPSharp
 
                     contact.AddToList(list);
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
+                    NSMessageHandler.OnContactAdded(new ListMutateEventArgs(contact, list));
+
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
                     {
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
@@ -1383,6 +1400,7 @@ namespace MSNPSharp
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                 contact.RemoveFromList(list);
+
                 if (onSuccess != null)
                 {
                     onSuccess(this, EventArgs.Empty);
@@ -1411,6 +1429,7 @@ namespace MSNPSharp
 
                     contact.RemoveFromList(list);
                     AddressBook.RemoveMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list));
+                    NSMessageHandler.OnContactRemoved(new ListMutateEventArgs(contact, list));
 
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
                     {
@@ -1552,6 +1571,7 @@ namespace MSNPSharp
                     File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(deltasResultFile);
                 }
+                abSynchronized = false;
             }
         }
 

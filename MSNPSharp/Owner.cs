@@ -549,6 +549,29 @@ namespace MSNPSharp
 
         #endregion
 
+        /// <summary>
+        /// This will update the profile of the Owner object. 
+        /// </summary>
+        /// <remarks>This method fires the <see cref="ProfileReceived"/> event.</remarks>
+        /// <param name="loginTime"></param>
+        /// <param name="emailEnabled"></param>
+        /// <param name="memberIdHigh"></param>
+        /// <param name="memberIdLowd"></param>
+        /// <param name="preferredLanguage"></param>
+        /// <param name="preferredMail"></param>
+        /// <param name="country"></param>
+        /// <param name="postalCode"></param>
+        /// <param name="gender"></param>
+        /// <param name="kid"></param>
+        /// <param name="age"></param>
+        /// <param name="birthday"></param>
+        /// <param name="wallet"></param>
+        /// <param name="sid"></param>
+        /// <param name="kv"></param>
+        /// <param name="mspAuth"></param>
+        /// <param name="clientIP"></param>
+        /// <param name="clientPort"></param>
+        /// <param name="nick"></param>
         internal void UpdateProfile(
             string loginTime, bool emailEnabled, string memberIdHigh,
             string memberIdLowd, string preferredLanguage, string preferredMail,
@@ -580,8 +603,17 @@ namespace MSNPSharp
 
             validProfile = true;
 
+            OnProfileReceived(EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Called when the server has send a profile description.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnProfileReceived(EventArgs e)
+        {
             if (ProfileReceived != null)
-                ProfileReceived(this, new EventArgs());
+                ProfileReceived(this, e);
         }
     }
 };

@@ -9,10 +9,6 @@ namespace MSNPSharp
 
     partial class NSMessageHandler
     {
-        /// <summary>
-        /// Defines if the contact list is automatically synchronized upon connection.
-        /// </summary>
-        /// <remarks>No more used. Using this property causes error!!!</remarks>
         [Obsolete("No more used. Using this property causes error!!!", true)]
         public bool AutoSynchronize
         {
@@ -25,34 +21,17 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Send the synchronize command to the server. This will rebuild the contactlist with the most recent data.
-        /// </summary>
-        /// <remarks>
-        /// Synchronizing is the most complete way to retrieve data about groups, contacts, privacy settings, etc.
-        /// You <b>must</b> call this function before setting your initial status, otherwise you won't received online notifications of other clients.
-        /// Please note that you can only synchronize a single time per session! (this is limited by the the msn-servers)
-        /// </remarks>
-        [Obsolete("Use NSMessageHandler.ContactService.SynchronizeContactList")]
+        [Obsolete("No more used. Using this method causes error!!!", true)]
         public virtual void SynchronizeContactList()
         {
-            contactService.SynchronizeContactList();
         }
 
-        /// <summary>
-        /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
-        /// </summary>
-        /// <param name="account">An e-mail adress to add</param>
         [Obsolete("Use NSMessageHandler.ContactService.AddNewContact")]
         public virtual void AddNewContact(string account)
         {
             ContactService.AddNewContact(account);
         }
 
-        /// <summary>
-        /// Remove the specified contact from your forward and allow list. Note that remote contacts that are blocked remain blocked.
-        /// </summary>
-        /// <param name="contact">Contact to remove</param>
         [Obsolete("Use NSMessageHandler.ContactService.RemoveContact")]
         public virtual void RemoveContact(Contact contact)
         {
@@ -71,33 +50,18 @@ namespace MSNPSharp
             ContactService.RemoveContactFromGroup(contact, group);
         }
 
-        /// <summary>
-        /// Block this contact. This way you don't receive any messages anymore. This contact
-        /// will be removed from your allow list and placed in your blocked list.
-        /// </summary>
-        /// <param name="contact">Contact to block</param>
         [Obsolete("Use NSMessageHandler.ContactService.BlockContact")]
         public virtual void BlockContact(Contact contact)
         {
             ContactService.BlockContact(contact);
         }
 
-        /// <summary>
-        /// Unblock this contact. After this you are able to receive messages from this contact. This contact
-        /// will be removed from your blocked list and placed in your allowed list.
-        /// </summary>
-        /// <param name="contact">Contact to unblock</param>
         [Obsolete("Use NSMessageHandler.ContactService.UnBlockContact")]
         public virtual void UnBlockContact(Contact contact)
         {
             ContactService.UnBlockContact(contact);
         }
 
-        /// <summary>
-        /// Send an offline message to a contact.
-        /// </summary>
-        /// <param name="account"></param>
-        /// <param name="msg"></param>
         [Obsolete("Use NSMessageHandler.OIMService.SendOIMMessage")]
         public virtual void SendOIMMessage(string account, string msg)
         {
@@ -129,6 +93,7 @@ namespace MSNPSharp
         /// <code>LSG [Name] [Guid]</code>
         /// </remarks>
         /// <param name="message"></param>
+        [Obsolete]
         protected virtual void OnLSGReceived(NSMessage message)
         {
             ContactGroups.AddGroup(new ContactGroup((string)message.CommandValues[0], (string)message.CommandValues[1], this));
@@ -144,6 +109,7 @@ namespace MSNPSharp
         /// <code>ADD [Transaction] [Type] [Listversion] [Account] [Name] ([Group])</code>
         /// </remarks>
         /// <param name="message"></param>
+        [Obsolete]
         protected virtual void OnADCReceived(NSMessage message)
         {
             if (message.CommandValues.Count == 4)
@@ -183,7 +149,7 @@ namespace MSNPSharp
                      delegate
                      {
                          contact = ContactList.GetContact(contact.Mail);
-                         OnReverseAdded(contact);
+                         OnReverseAdded(new ContactEventArgs(contact));
                      }
                 );
             }
@@ -204,6 +170,7 @@ namespace MSNPSharp
         /// <code>REM [Transaction] [Type] [List version] [Account] ([Group])</code>
         /// </remarks>
         /// <param name="message"></param>
+        [Obsolete]
         protected virtual void OnREMReceived(NSMessage message)
         {
             MSNLists list = GetMSNList((string)message.CommandValues[1]);
@@ -232,11 +199,11 @@ namespace MSNPSharp
             contact.RemoveFromList(list);
 
             // check whether another user removed us
-            if (list == MSNLists.ReverseList && ReverseRemoved != null)
-                ReverseRemoved(this, new ContactEventArgs(contact));
+            if (list == MSNLists.ReverseList)
+                OnReverseRemoved(new ContactEventArgs(contact));
 
-            if (list == MSNLists.ForwardList && ContactRemoved != null)
-                ContactRemoved(this, new ListMutateEventArgs(contact, list));
+            if (list == MSNLists.ForwardList)
+                OnContactRemoved(new ListMutateEventArgs(contact, list));
         }
 
         /// <summary>
@@ -247,6 +214,7 @@ namespace MSNPSharp
         /// <code>PRP [TransactionID] [ListVersion] PhoneType Number</code>
         /// </remarks>
         /// <param name="message"></param>
+        [Obsolete]
         protected virtual void OnPRPReceived(NSMessage message)
         {
             string number = String.Empty;
@@ -296,6 +264,7 @@ namespace MSNPSharp
         /// <code>BPR [Type] [Number]</code>
         /// </remarks>
         /// <param name="message"></param>
+        [Obsolete]
         protected virtual void OnBPRReceived(NSMessage message)
         {
             string commandone = (string)message.CommandValues[0];
@@ -342,6 +311,12 @@ namespace MSNPSharp
             }
             else
                 throw new MSNPSharpException("Phone numbers are sent but lastContact == null");
+        }
+
+        [Obsolete("Use Owner.OnProfileReceived")]
+        protected virtual void OnProfileReceived(EventArgs e)
+        {
+            Owner.OnProfileReceived(e);
         }
 
         #endregion
