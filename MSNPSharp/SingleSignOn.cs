@@ -167,7 +167,7 @@ namespace MSNPSharp
 
             if (expiredtickets == SSOTicketType.None)
             {
-                nsMessageHandler.msnticket = ticket;
+                nsMessageHandler.MSNTicket = ticket;
             }
             else
             {
@@ -179,7 +179,7 @@ namespace MSNPSharp
                 sso.Authenticate(ticket, false);
 
                 cache[hashcode] = ticket.Clone() as MSNTicket;
-                nsMessageHandler.msnticket = ticket;
+                nsMessageHandler.MSNTicket = ticket;
             }
         }
 
@@ -207,7 +207,7 @@ namespace MSNPSharp
                     cache[hashcode] = ticket.Clone() as MSNTicket;
                 }
 
-                nsMessageHandler.msnticket = ticket;
+                nsMessageHandler.MSNTicket = ticket;
             }
         }
 

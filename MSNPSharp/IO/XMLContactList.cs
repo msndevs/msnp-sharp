@@ -303,7 +303,7 @@ namespace MSNPSharp.IO
                     // Fire ReverseRemoved, Don't trust NSMessageHandler.OnRMLReceived, not fired everytime.
                     if (contact.OnReverseList && (newlists & MSNLists.ReverseList) == MSNLists.None)
                     {
-                        contact.NSMessageHandler.OnReverseRemoved(contact);
+                        xmlcl.NSMessageHandler.OnReverseRemoved(new ContactEventArgs(contact));
                     }
 
                     // Set new lists.
