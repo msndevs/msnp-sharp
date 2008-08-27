@@ -117,7 +117,7 @@ namespace MSNPSharp
         private ConnectivitySettings connectivitySettings = null;
         private IPEndPoint externalEndPoint = null;
         private Credentials credentials = null;
-        
+
         private ContactGroupList contactGroups = null;
         private ContactList contactList = new ContactList();
 
@@ -651,15 +651,15 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Set the status of the contactlistowner (the client).
-        /// Note: you can only set the status _after_ you have synchronized the list using SynchronizeList(). Otherwise you won't receive online notifications from other clients or the connection is closed by the server.
+        /// Set the status of the contact list owner (the client).
         /// </summary>
+        /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
         /// <param name="status"></param>
         public virtual void SetPresenceStatus(PresenceStatus status)
         {
             // check whether we are allowed to send a CHG command
-            if (ContactService.AddressBook.AddressbookLastChange == DateTime.MinValue)
-                throw new MSNPSharpException("Can't set status. You must call SynchronizeList() and wait for the SynchronizationCompleted event before you can set an initial status.");
+            if (IsSignedIn == false)
+                throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
 
             string context = String.Empty;
 
@@ -714,7 +714,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// 
+        /// Called when a VER command has been received. 
         /// </summary>
         /// <remarks>
         /// Indicates that the server has approved our version of the protocol. This function will send the CVR command.
@@ -732,7 +732,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// 
+        /// Called when a CVR command has been received. 
         /// </summary>
         /// <remarks>
         /// Indicates that the server has approved our client details. This function will send the USR command. 
@@ -744,15 +744,27 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
-        internal MSNTicket msnticket = null;
+        private MSNTicket msnticket = null;
         internal MSNTicket MSNTicket
         {
             get
             {
                 return msnticket;
             }
+            set
+            {
+                msnticket = value;
+            }
         }
 
+        /// <summary>
+        /// Called when a USR command has been received. 
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// <code>USR [Transaction] [SSO|OK] [Account] [Policy|Verified] [Nonce]</code>
+        /// </remarks>
+        /// <param name="message"></param>
         protected virtual void OnUSRReceived(NSMessage message)
         {
             //single-sign-on stuff
@@ -780,92 +792,42 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Called when the server has send a profile description. This will update the profile of the Owner object. 
+        /// Fires the <see cref="SignedIn"/> event.
         /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnProfileReceived(MSGMessage message)
-        {
-            StrDictionary hdr = message.MimeHeader;
-
-            int clientPort = 0;
-
-            if (hdr.ContainsKey("ClientPort"))
-            {
-                clientPort = int.Parse(message.MimeHeader["ClientPort"].Replace('.', ' '),
-                                           System.Globalization.CultureInfo.InvariantCulture);
-
-                clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
-            }
-
-            IPAddress ip = hdr.ContainsKey("ClientIP") ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None;
-            Owner.UpdateProfile(
-                hdr["LoginTime"],
-                (hdr.ContainsKey("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
-                hdr["MemberIdHigh"],
-                hdr["MemberIdLow"],
-                hdr["lang_preference"],
-                hdr["preferredEmail"],
-                hdr["country"],
-                hdr["PostalCode"],
-                hdr["Gender"],
-                hdr["Kid"],
-                hdr["Age"],
-                hdr["Birthday"],
-                hdr["Wallet"],
-                hdr["sid"],
-                hdr["kv"],
-                hdr["MSPAuth"],
-                ip,
-                clientPort,
-                hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
-            );
-
-            if (IPAddress.None != ip)
-            {
-                // set the external end point. This can be used in file transfer connectivity determing
-                externalEndPoint = new IPEndPoint(ip, clientPort);
-            }
-
-            ContactService.SynchronizeContactList();
-        }
-
-        /// <summary>
-        /// Fires the SignedIn event.
-        /// </summary>
-        protected internal virtual void OnSignedIn()
+        /// <param name="e"></param>
+        protected internal virtual void OnSignedIn(EventArgs e)
         {
             isSignedIn = true;
+
             if (SignedIn != null)
-                SignedIn(this, new EventArgs());
+                SignedIn(this, e);
         }
 
         /// <summary>
-        /// Fires the SignedOff event.
+        /// Fires the <see cref="SignedOff"/> event.
         /// </summary>
-        protected virtual void OnSignedOff(SignedOffReason reason)
+        /// <param name="e"></param>
+        protected virtual void OnSignedOff(SignedOffEventArgs e)
         {
             owner.SetStatus(PresenceStatus.Offline);
 
             Clear();
 
             if (SignedOff != null)
-                SignedOff(this, new SignedOffEventArgs(reason));
+                SignedOff(this, e);
 
-            if (messageProcessor != null && messageProcessor.Connected)
+            if (messageProcessor != null)
                 messageProcessor.Disconnect();
         }
 
         /// <summary>
-        /// Fires the SynchronizationCompleted event.
+        /// Fires the <see cref="SynchronizationCompleted"/> event.
         /// </summary>
-        /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected internal virtual void OnSynchronizationCompleted(object sender, EventArgs e)
+        protected internal virtual void OnSynchronizationCompleted(EventArgs e)
         {
             if (SynchronizationCompleted != null)
-            {
-                SynchronizationCompleted(sender, e);
-            }
+                SynchronizationCompleted(this, e);
         }
 
 
@@ -965,7 +927,7 @@ namespace MSNPSharp
         /// <remarks>
         /// ILN indicates the initial status of a contact.
         /// It is send after initial log on or after adding/removing contact from the contactlist.
-        /// Fires the ContactOnline and/or the ContactStatusChange events.
+        /// Fires the <see cref="ContactOnline"/> and/or the <see cref="ContactStatusChanged"/> events.
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnILNReceived(NSMessage message)
@@ -1070,18 +1032,18 @@ namespace MSNPSharp
                 switch (message.CommandValues[0].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "OTH":
-                        OnSignedOff(SignedOffReason.OtherClient);
+                        OnSignedOff(new SignedOffEventArgs(SignedOffReason.OtherClient));
                         break;
                     case "SSD":
-                        OnSignedOff(SignedOffReason.ServerDown);
+                        OnSignedOff(new SignedOffEventArgs(SignedOffReason.ServerDown));
                         break;
                     default:
-                        OnSignedOff(SignedOffReason.None);
+                        OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
                         break;
                 }
             }
             else
-                OnSignedOff(SignedOffReason.None);
+                OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
         }
 
         /// <summary>
@@ -1340,7 +1302,9 @@ namespace MSNPSharp
         /// Called when a MSG command has been received.
         /// </summary>
         /// <remarks>
-        /// Indicates that the notification server has send us a MSG. This is usually a MSG from the 'HOTMAIL' user (account is also 'HOTMAIL') which includes notifications about the contact list owner's profile, new mail, number of unread mails in the inbox, etc.
+        /// Indicates that the notification server has send us a MSG.
+        /// This is usually a MSG from the 'HOTMAIL' user (account is also 'HOTMAIL') which includes notifications
+        /// about the contact list owner's profile, new mail, number of unread mails in the inbox, offline messages, etc.
         /// <code>MSG [Account] [Name] [Length]</code>
         /// </remarks>
         /// <param name="message"></param>
@@ -1350,13 +1314,78 @@ namespace MSNPSharp
             string mime = msgMessage.MimeHeader["Content-Type"].ToString();
 
             if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
-                OnProfileReceived(msgMessage);
+            {
+                StrDictionary hdr = msgMessage.MimeHeader;
+
+                int clientPort = 0;
+
+                if (hdr.ContainsKey("ClientPort"))
+                {
+                    clientPort = int.Parse(msgMessage.MimeHeader["ClientPort"].Replace('.', ' '), System.Globalization.CultureInfo.InvariantCulture);
+                    clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
+                }
+
+                IPAddress ip = hdr.ContainsKey("ClientIP") ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None;
+                Owner.UpdateProfile(
+                    hdr["LoginTime"],
+                    (hdr.ContainsKey("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
+                    hdr["MemberIdHigh"],
+                    hdr["MemberIdLow"],
+                    hdr["lang_preference"],
+                    hdr["preferredEmail"],
+                    hdr["country"],
+                    hdr["PostalCode"],
+                    hdr["Gender"],
+                    hdr["Kid"],
+                    hdr["Age"],
+                    hdr["Birthday"],
+                    hdr["Wallet"],
+                    hdr["sid"],
+                    hdr["kv"],
+                    hdr["MSPAuth"],
+                    ip,
+                    clientPort,
+                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
+                );
+
+                if (IPAddress.None != ip)
+                {
+                    // set the external end point. This can be used in file transfer connectivity determing
+                    externalEndPoint = new IPEndPoint(ip, clientPort);
+                }
+
+                ContactService.SynchronizeContactList();
+            }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
-                OnMailNotificationReceived(msgMessage);
+            {
+                OnMailNotificationReceived(new NewMailEventArgs(
+                    (string)msgMessage.MimeHeader["From"],
+                    new Uri((string)msgMessage.MimeHeader["Message-URL"]),
+                    new Uri((string)msgMessage.MimeHeader["Post-URL"]),
+                    (string)msgMessage.MimeHeader["Subject"],
+                    (string)msgMessage.MimeHeader["Dest-Folder"],
+                    (string)msgMessage.MimeHeader["From-Addr"],
+                    int.Parse((string)msgMessage.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture)
+                ));
+            }
             else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
-                OnMailChanged(msgMessage);
+            {
+                OnMailChanged(new MailChangedEventArgs(
+                    (string)msgMessage.MimeHeader["Src-Folder"],
+                    (string)msgMessage.MimeHeader["Dest-Folder"],
+                    int.Parse((string)msgMessage.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture)
+                ));
+            }
             else if (mime.IndexOf("x-msmsgsinitialemailnotification") >= 0)
-                OnMailboxStatusReceived(msgMessage);
+            {
+                OnMailboxStatusReceived(new MailboxStatusEventArgs(
+                    int.Parse((string)msgMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture),
+                    int.Parse((string)msgMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture),
+                    new Uri((string)msgMessage.MimeHeader["Inbox-URL"]),
+                    new Uri((string)msgMessage.MimeHeader["Folders-URL"]),
+                    new Uri((string)msgMessage.MimeHeader["Post-URL"])
+                ));
+            }
             else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
             {
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
@@ -1366,56 +1395,41 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Called when the owner has removed or moved e-mail.
+        /// Fires the <see cref="MailboxChanged"/> event.
         /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnMailChanged(MSGMessage message)
+        /// <remarks>Called when the owner has removed or moved e-mail.</remarks>
+        /// <param name="e"></param>
+        protected virtual void OnMailChanged(MailChangedEventArgs e)
         {
-            // dispatch the event
             if (MailboxChanged != null)
             {
-                string sourceFolder = (string)message.MimeHeader["Src-Folder"];
-                string destFolder = (string)message.MimeHeader["Dest-Folder"];
-                int count = int.Parse((string)message.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture);
-                MailboxChanged(this, new MailChangedEventArgs(sourceFolder, destFolder, count));
+                MailboxChanged(this, e);
             }
         }
 
         /// <summary>
-        /// Called when the server sends the status of the owner's mailbox.
+        /// Fires the <see cref="MailboxStatusReceived"/> event.
         /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnMailboxStatusReceived(MSGMessage message)
+        /// <remarks>Called when the server sends the status of the owner's mailbox.</remarks>
+        /// <param name="e"></param>
+        protected virtual void OnMailboxStatusReceived(MailboxStatusEventArgs e)
         {
-            // dispatch the event
             if (MailboxStatusReceived != null)
             {
-                int inboxUnread = int.Parse((string)message.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture);
-                int foldersUnread = int.Parse((string)message.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture);
-                string inboxURL = (string)message.MimeHeader["Inbox-URL"];
-                string folderURL = (string)message.MimeHeader["Folders-URL"];
-                string postURL = (string)message.MimeHeader["Post-URL"];
-                MailboxStatusReceived(this, new MailboxStatusEventArgs(inboxUnread, foldersUnread, new Uri(inboxURL), new Uri(folderURL), new Uri(postURL)));
+                MailboxStatusReceived(this, e);
             }
         }
 
         /// <summary>
-        /// Called when the owner has received new e-mail, or e-mail has been removed / moved. Fires the <see cref="NewMailReceived"/> event.
+        /// Fires the <see cref="NewMailReceived"/> event.
         /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnMailNotificationReceived(MSGMessage message)
+        /// <remarks>Called when the owner has received new e-mail, or e-mail has been removed / moved.</remarks>
+        /// <param name="e"></param>
+        protected virtual void OnMailNotificationReceived(NewMailEventArgs e)
         {
-            // dispatch the event
             if (NewMailReceived != null)
             {
-                string from = (string)message.MimeHeader["From"];
-                string messageUrl = (string)message.MimeHeader["Message-URL"];
-                string postUrl = (string)message.MimeHeader["Post-URL"];
-                string subject = (string)message.MimeHeader["Subject"];
-                string destFolder = (string)message.MimeHeader["Dest-Folder"];
-                string fromMail = (string)message.MimeHeader["From-Addr"];
-                int id = int.Parse((string)message.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture);
-                NewMailReceived(this, new NewMailEventArgs(from, new Uri(postUrl), new Uri(messageUrl), subject, destFolder, fromMail, id));
+                NewMailReceived(this, e);
             }
         }
 
@@ -1446,6 +1460,10 @@ namespace MSNPSharp
             throw new MSNPSharpException("Unknown MSNList type");
         }
 
+        /// <summary>
+        /// Called when a ADL command has been received.
+        /// </summary>
+        /// <param name="message"></param>
         protected virtual void OnADLReceived(NSMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK" &&
@@ -1495,7 +1513,7 @@ namespace MSNPSharp
 
                                     if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                                     {
-                                        OnReverseAdded(contact);
+                                        OnReverseAdded(new ContactEventArgs(contact));
                                     }
                                 }
                             );
@@ -1539,7 +1557,7 @@ namespace MSNPSharp
                             Contact contact = ContactList.GetContact(account, type);
                             if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                             {
-                                OnReverseRemoved(contact);
+                                OnReverseRemoved(new ContactEventArgs(contact));
                             }
                         }
                         if (Settings.TraceSwitch.TraceVerbose)
@@ -1555,7 +1573,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a contact group has been added to the contact group list.
-        /// Raises the ContactGroupAdded event.
+        /// Raises the <see cref="ContactGroupAdded"/> event.
         /// <code>ADG [Transaction] [ListVersion] [Name] [GroupID] </code>
         /// </remarks>
         /// <param name="message"></param>
@@ -1578,7 +1596,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a contact group has been removed.
-        /// Raises the ContactGroupRemoved event.
+        /// Raises the <see cref="ContactGroupRemoved"/> event.
         /// <code>RMG [Transaction] [ListVersion] [GroupID]</code>
         /// </remarks>
         /// <param name="message"></param>
@@ -1635,24 +1653,28 @@ namespace MSNPSharp
         /// <summary>
         /// Fires the <see cref="ReverseRemoved"/> event.
         /// </summary>
-        /// <param name="contact"></param>
-        protected internal virtual void OnReverseRemoved(Contact contact)
+        /// <param name="e"></param>
+        protected internal virtual void OnReverseRemoved(ContactEventArgs e)
         {
             if (ReverseRemoved != null)
-                ReverseRemoved(this, new ContactEventArgs(contact));
+                ReverseRemoved(this, e);
         }
 
         /// <summary>
         ///  Fires the <see cref="ReverseAdded"/> event.
         /// </summary>
-        /// <param name="contact"></param>
-        protected internal virtual void OnReverseAdded(Contact contact)
+        /// <param name="e"></param>
+        protected internal virtual void OnReverseAdded(ContactEventArgs e)
         {
             if (ReverseAdded != null)
-                ReverseAdded(this, new ContactEventArgs(contact));
+                ReverseAdded(this, e);
         }
 
-        protected internal virtual void OnContactAdded(object sender, ListMutateEventArgs e)
+        /// <summary>
+        /// Fires the <see cref="ContactAdded"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactAdded(ListMutateEventArgs e)
         {
             if (ContactAdded != null)
             {
@@ -1660,7 +1682,23 @@ namespace MSNPSharp
             }
         }
 
-        protected internal virtual void OnContactGroupAdded(object sender, ContactGroupEventArgs e)
+        /// <summary>
+        /// Fires the <see cref="ContactRemoved"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactRemoved(ListMutateEventArgs e)
+        {
+            if (ContactRemoved != null)
+            {
+                ContactRemoved(this, e);
+            }
+        }        
+
+        /// <summary>
+        /// Fires the <see cref="ContactGroupAdded"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactGroupAdded(ContactGroupEventArgs e)
         {
             if (ContactGroupAdded != null)
             {
@@ -1668,7 +1706,11 @@ namespace MSNPSharp
             }
         }
 
-        protected internal virtual void OnContactGroupRemoved(object sender, ContactGroupEventArgs e)
+        /// <summary>
+        /// Fires the <see cref="ContactGroupRemoved"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactGroupRemoved(ContactGroupEventArgs e)
         {
             if (ContactGroupRemoved != null)
             {
@@ -1762,6 +1804,11 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Called when a GCF command has been received. 
+        /// </summary>
+        /// <remarks>Indicates that the server has send bad words for messaging.</remarks>
+        /// <param name="message"></param>
         protected virtual void OnGCFReceived(NSMessage message)
         {
             NetworkMessage networkMessage = message as NetworkMessage;
@@ -1808,7 +1855,7 @@ namespace MSNPSharp
         private void NSMessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
         {
             if (IsSignedIn)
-                OnSignedOff(SignedOffReason.None);
+                OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
 
             OnProcessorDisconnectCallback((IMessageProcessor)sender);
 
@@ -1940,7 +1987,6 @@ namespace MSNPSharp
                     case "XFR":
                         OnXFRReceived(nsMessage);
                         break;
-
                     default:
                         // first check whether it is a numeric error command
                         if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
@@ -1955,7 +2001,7 @@ namespace MSNPSharp
                             {
                                 throw new MSNPSharpException("Exception Occurred when parsing an error code received from the server", e);
                             }
-                            OnServerErrorReceived(msnError);
+                            OnServerErrorReceived(new MSNErrorEventArgs(msnError));
                         }
 
                         // if not then it is a unknown command:
@@ -1966,29 +2012,29 @@ namespace MSNPSharp
             catch (Exception e)
             {
                 // notify the client of this exception
-                OnExceptionOccurred(e);
+                OnExceptionOccurred(new ExceptionEventArgs(e));
                 throw e;
             }
         }
 
         /// <summary>
-        /// Fires the ServerErrorReceived event.
+        /// Fires the <see cref="ServerErrorReceived"/> event.
         /// </summary>
-        /// <param name="msnError"></param>
-        protected virtual void OnServerErrorReceived(MSNError msnError)
+        /// <param name="e"></param>
+        protected virtual void OnServerErrorReceived(MSNErrorEventArgs e)
         {
             if (ServerErrorReceived != null)
-                ServerErrorReceived(this, new MSNErrorEventArgs(msnError));
+                ServerErrorReceived(this, e);
         }
 
         /// <summary>
         /// Fires the <see cref="ExceptionOccurred"/> event.
         /// </summary>
-        /// <param name="e">The exception which was thrown</param>
-        protected virtual void OnExceptionOccurred(Exception e)
+        /// <param name="e">The exception event args</param>
+        protected virtual void OnExceptionOccurred(ExceptionEventArgs e)
         {
             if (ExceptionOccurred != null)
-                ExceptionOccurred(this, new ExceptionEventArgs(e));
+                ExceptionOccurred(this, e);
 
             if (Settings.TraceSwitch.TraceError)
                 System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");
@@ -1997,11 +2043,11 @@ namespace MSNPSharp
         /// <summary>
         /// Fires the <see cref="AuthenticationError"/> event.
         /// </summary>
-        /// <param name="e">The exception which was thrown</param>
-        protected virtual void OnAuthenticationErrorOccurred(Exception e)
+        /// <param name="e">The exception event args</param>
+        protected virtual void OnAuthenticationErrorOccurred(ExceptionEventArgs e)
         {
             if (AuthenticationError != null)
-                AuthenticationError(this, new ExceptionEventArgs(e));
+                AuthenticationError(this, e);
 
             if (Settings.TraceSwitch.TraceError)
                 System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");

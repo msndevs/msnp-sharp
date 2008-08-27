@@ -548,6 +548,14 @@ namespace MSNPSharp
         /// </summary>
         CannotRemoveGroupZero = 230,
         /// <summary>
+        /// If <d/> domain element specified in <ml/> mail list, at least one <c/> contact  must be exists
+        /// </summary>
+        EmptyDomainElement = 240,
+        /// <summary>
+        /// ADL/RML commands accept FL(1)/AL(2)/BL(4) BUT RL(8)/PL(16).
+        /// </summary>
+        InvalidMembershipForADLRML = 241,
+        /// <summary>
         /// Switchboard request failed.
         /// </summary>
         SwitchboardFailed = 280,
