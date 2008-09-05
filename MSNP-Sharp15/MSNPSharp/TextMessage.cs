@@ -305,6 +305,15 @@ namespace MSNPSharp
                 if (match.Success)
                 {
                     string color = match.Groups["Color"].ToString();
+
+                    if (color.Length < 6)
+                    {
+                        for (int i = 0; i < 6 - color.Length; i++)
+                        {
+                            color = "0" + color;
+                        }
+                    }
+
                     try
                     {
                         if (color.Length >= 6)
