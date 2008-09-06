@@ -149,14 +149,13 @@ namespace MSNPSharp
                      delegate
                      {
                          contact = ContactList.GetContact(contact.Mail);
-                         OnReverseAdded(new ContactEventArgs(contact));
+                         ContactService.OnReverseAdded(new ContactEventArgs(contact));
                      }
                 );
             }
 
             // send a list mutation event
-            if (ContactAdded != null)
-                ContactAdded(this, new ListMutateEventArgs(contact, Type));
+            ContactService.OnContactAdded(new ListMutateEventArgs(contact, Type));
         }
 
 
@@ -200,10 +199,10 @@ namespace MSNPSharp
 
             // check whether another user removed us
             if (list == MSNLists.ReverseList)
-                OnReverseRemoved(new ContactEventArgs(contact));
+                ContactService.OnReverseRemoved(new ContactEventArgs(contact));
 
             if (list == MSNLists.ForwardList)
-                OnContactRemoved(new ListMutateEventArgs(contact, list));
+                ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
         }
 
         /// <summary>
@@ -319,6 +318,51 @@ namespace MSNPSharp
             Owner.OnProfileReceived(e);
         }
 
+        #endregion
+
+        #region Obsolate Events
+        /// <summary>
+        /// Occurs when a new contactgroup is created
+        /// </summary>
+        [Obsolete("Please use NSMessageHandler.ContactService.ContactGroupAdded.", true)]
+        public event ContactGroupChangedEventHandler ContactGroupAdded;
+
+        /// <summary>
+        /// Occurs when a contactgroup is removed
+        /// </summary>
+        [Obsolete("Please use NSMessageHandler.ContactService.ContactGroupRemoved.", true)]
+        public event ContactGroupChangedEventHandler ContactGroupRemoved;
+
+        /// <summary>
+        /// Occurs when a contact is added to any list (including reverse list)
+        /// </summary>
+        [Obsolete("Please use NSMessageHandler.ContactService.ContactAdded.", true)]
+        public event ListMutatedAddedEventHandler ContactAdded;
+
+        /// <summary>
+        /// Occurs when a contact is removed from any list (including reverse list)
+        /// </summary>
+        [Obsolete("Please use NSMessageHandler.ContactService.ContactRemoved.", true)]
+        public event ListMutatedAddedEventHandler ContactRemoved;
+
+        /// <summary>
+        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
+        /// </summary>
+        [Obsolete("Please use NSMessageHandler.ContactService.ReverseAdded.", true)]
+        public event ContactChangedEventHandler ReverseAdded;
+
+        /// <summary>
+        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
+        /// </summary>
+        [Obsolete("Please use NSMessageHandler.ContactService.ReverseRemoved.", true)]
+        public event ContactChangedEventHandler ReverseRemoved;
+
+        /// <summary>
+        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
+        /// This means all contact-updates are received from the server and processed.
+        /// </summary>
+        [Obsolete("Please use NSMessageHandler.ContactService.SynchronizationCompleted.", true)]
+        public event EventHandler SynchronizationCompleted;
         #endregion
     }
 };

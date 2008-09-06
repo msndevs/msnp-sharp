@@ -328,16 +328,6 @@ namespace MSNPSharp
         #region Public Events
 
         /// <summary>
-        /// Occurs when a new contactgroup is created
-        /// </summary>
-        public event ContactGroupChangedEventHandler ContactGroupAdded;
-
-        /// <summary>
-        /// Occurs when a contactgroup is removed
-        /// </summary>
-        public event ContactGroupChangedEventHandler ContactGroupRemoved;
-
-        /// <summary>
         /// Occurs when an exception is thrown while handling the incoming or outgoing messages
         /// </summary>
         public event HandlerExceptionEventHandler ExceptionOccurred;
@@ -353,26 +343,6 @@ namespace MSNPSharp
         public event PingAnswerEventHandler PingAnswer;
 
         /// <summary>
-        /// Occurs when a contact is added to any list (including reverse list)
-        /// </summary>
-        public event ListMutatedAddedEventHandler ContactAdded;
-
-        /// <summary>
-        /// Occurs when a contact is removed from any list (including reverse list)
-        /// </summary>
-        public event ListMutatedAddedEventHandler ContactRemoved;
-
-        /// <summary>
-        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event ContactChangedEventHandler ReverseAdded;
-
-        /// <summary>
-        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event ContactChangedEventHandler ReverseRemoved;
-
-        /// <summary>
         /// Occurs when any contact changes status
         /// </summary>
         public event ContactStatusChangedEventHandler ContactStatusChanged;
@@ -386,12 +356,6 @@ namespace MSNPSharp
         /// Occurs when any contact goed from any status to offline status
         /// </summary>
         public event ContactChangedEventHandler ContactOffline;
-
-        /// <summary>
-        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
-        /// This means all contact-updates are received from the server and processed.
-        /// </summary>
-        public event EventHandler SynchronizationCompleted;
 
         /// <summary>
         /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
@@ -818,16 +782,6 @@ namespace MSNPSharp
 
             if (messageProcessor != null)
                 messageProcessor.Disconnect();
-        }
-
-        /// <summary>
-        /// Fires the <see cref="SynchronizationCompleted"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnSynchronizationCompleted(EventArgs e)
-        {
-            if (SynchronizationCompleted != null)
-                SynchronizationCompleted(this, e);
         }
 
 
@@ -1513,7 +1467,7 @@ namespace MSNPSharp
 
                                     if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                                     {
-                                        OnReverseAdded(new ContactEventArgs(contact));
+                                        ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                     }
                                 }
                             );
@@ -1557,7 +1511,7 @@ namespace MSNPSharp
                             Contact contact = ContactList.GetContact(account, type);
                             if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                             {
-                                OnReverseRemoved(new ContactEventArgs(contact));
+                                ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                             }
                         }
                         if (Settings.TraceSwitch.TraceVerbose)
@@ -1585,10 +1539,8 @@ namespace MSNPSharp
             ContactGroups.AddGroup(new ContactGroup(System.Web.HttpUtility.UrlDecode((string)message.CommandValues[1]), guid, this));
 
             // fire the event
-            if (ContactGroupAdded != null)
-            {
-                ContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
-            }
+            ContactService.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
+
         }
 
         /// <summary>
@@ -1607,10 +1559,7 @@ namespace MSNPSharp
             ContactGroup contactGroup = (ContactGroup)contactGroups[guid];
             ContactGroups.RemoveGroup(contactGroup);
 
-            if (ContactGroupRemoved != null)
-            {
-                ContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
-            }
+            ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
         }
 
         /// <summary>Called when a FQY command has been received.
@@ -1647,74 +1596,6 @@ namespace MSNPSharp
 
                     } while (contactNode.NextSibling != null);
                 }
-            }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ReverseRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnReverseRemoved(ContactEventArgs e)
-        {
-            if (ReverseRemoved != null)
-                ReverseRemoved(this, e);
-        }
-
-        /// <summary>
-        ///  Fires the <see cref="ReverseAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnReverseAdded(ContactEventArgs e)
-        {
-            if (ReverseAdded != null)
-                ReverseAdded(this, e);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactAdded(ListMutateEventArgs e)
-        {
-            if (ContactAdded != null)
-            {
-                ContactAdded(this, e);
-            }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactRemoved(ListMutateEventArgs e)
-        {
-            if (ContactRemoved != null)
-            {
-                ContactRemoved(this, e);
-            }
-        }        
-
-        /// <summary>
-        /// Fires the <see cref="ContactGroupAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactGroupAdded(ContactGroupEventArgs e)
-        {
-            if (ContactGroupAdded != null)
-            {
-                ContactGroupAdded(this, e);
-            }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactGroupRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactGroupRemoved(ContactGroupEventArgs e)
-        {
-            if (ContactGroupRemoved != null)
-            {
-                ContactGroupRemoved(this, e);
             }
         }
 
