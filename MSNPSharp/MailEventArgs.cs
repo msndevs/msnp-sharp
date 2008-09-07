@@ -73,7 +73,7 @@ namespace MSNPSharp
 		/// <summary>
 		/// The URL to go directly to the inbox of the contactlist owner
 		/// </summary>
-		public Uri InboxURL
+		public string InboxURL
 		{
 			get { return inboxURL; }
 			set { inboxURL = value;}
@@ -81,12 +81,12 @@ namespace MSNPSharp
 
 		/// <summary>
 		/// </summary>
-		private Uri inboxURL;
+		private string inboxURL;
 
 		/// <summary>
 		/// The URL to go directly to the folders of the contactlist owner
 		/// </summary>
-		public Uri FoldersURL
+		public string FoldersURL
 		{
 			get { return foldersURL; }
 			set { foldersURL = value;}
@@ -94,12 +94,12 @@ namespace MSNPSharp
 
 		/// <summary>
 		/// </summary>
-		private Uri foldersURL;
+		private string foldersURL;
 
 		/// <summary>
 		/// The URL to go directly to the webpage to compose a new mail
 		/// </summary>
-		public Uri PostURL
+		public string PostURL
 		{
 			get { return postURL; }
 			set { postURL = value;}
@@ -107,7 +107,7 @@ namespace MSNPSharp
 
 		/// <summary>
 		/// </summary>
-		private Uri postURL;
+		private string postURL;
 
 		/// <summary>
 		/// Constructory.
@@ -117,7 +117,7 @@ namespace MSNPSharp
 		/// <param name="inboxURL"></param>
 		/// <param name="foldersURL"></param>
 		/// <param name="postURL"></param>
-		public MailboxStatusEventArgs(int inboxUnread, int foldersUnread, Uri inboxURL, Uri foldersURL, Uri postURL)
+		public MailboxStatusEventArgs(int inboxUnread, int foldersUnread, string inboxURL, string foldersURL, string postURL)
 		{
 			InboxUnread		= inboxUnread;
 			FoldersUnread	= foldersUnread;
@@ -250,7 +250,7 @@ namespace MSNPSharp
 		/// <summary>
 		/// The url to directly view the message in Hotmail
 		/// </summary>
-		public Uri MessageUrl
+		public string MessageUrl
 		{
 			get { return messageUrl; }
 			set { messageUrl = value;}
@@ -258,12 +258,12 @@ namespace MSNPSharp
 
 		/// <summary>
 		/// </summary>
-		private Uri messageUrl;
+		private string messageUrl;
 
 		/// <summary>
 		/// The post url used for automatic hotmail login
 		/// </summary>
-		public Uri PostUrl
+		public string PostUrl
 		{
 			get { return postUrl; }
 			set { postUrl = value;}
@@ -271,7 +271,7 @@ namespace MSNPSharp
 
 		/// <summary>
 		/// </summary>
-		private Uri postUrl;
+		private string postUrl;
 
 		/// <summary>
 		/// The subject of the e-mail
@@ -335,7 +335,7 @@ namespace MSNPSharp
 		/// <param name="destinationFolder"></param>
 		/// <param name="fromEmail"></param>
 		/// <param name="id"></param>
-		public NewMailEventArgs(string from, Uri messageUrl, Uri postUrl, string subject, string destinationFolder, string fromEmail, int id)
+		public NewMailEventArgs(string from, string messageUrl, string postUrl, string subject, string destinationFolder, string fromEmail, int id)
 		{
 			From		= from;
 			PostUrl		= postUrl;

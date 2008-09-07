@@ -1317,8 +1317,8 @@ namespace MSNPSharp
 
                 OnMailNotificationReceived(new NewMailEventArgs(
                     (string)msgMessage.MimeHeader["From"],
-                    new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Message-URL"]),
-                    new Uri((string)msgMessage.MimeHeader["Post-URL"]),
+                    (string)msgMessage.MimeHeader["Message-URL"],
+                    (string)msgMessage.MimeHeader["Post-URL"],
                     (string)msgMessage.MimeHeader["Subject"],
                     (string)msgMessage.MimeHeader["Dest-Folder"],
                     (string)msgMessage.MimeHeader["From-Addr"],
@@ -1342,9 +1342,9 @@ namespace MSNPSharp
                 OnMailboxStatusReceived(new MailboxStatusEventArgs(
                     int.Parse((string)msgMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture),
                     int.Parse((string)msgMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture),
-                    new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Inbox-URL"]),
-                    new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Folders-URL"]),
-                    new Uri((string)msgMessage.MimeHeader["Post-URL"])
+                    (string)msgMessage.MimeHeader["Inbox-URL"],
+                    (string)msgMessage.MimeHeader["Folders-URL"],
+                    (string)msgMessage.MimeHeader["Post-URL"]
                 ));
             }
             else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
@@ -1409,9 +1409,9 @@ namespace MSNPSharp
                                 OnMailboxStatusReceived(new MailboxStatusEventArgs(
                                         iu,
                                         ou,
-                                        new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Inbox-URL"]),      //Invalid, I think it should be obsolated.
-                                        new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Folders-URL"]),    //Invalid, I think it should be obsolated.
-                                        new Uri((string)msgMessage.MimeHeader["Post-URL"])
+                                        (string)msgMessage.MimeHeader["Inbox-URL"],      //Invalid, I think it should be obsolated.
+                                        (string)msgMessage.MimeHeader["Folders-URL"],    //Invalid, I think it should be obsolated.
+                                        (string)msgMessage.MimeHeader["Post-URL"]
                                     ));
                                 break;
                             }
