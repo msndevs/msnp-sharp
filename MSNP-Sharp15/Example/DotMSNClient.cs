@@ -109,7 +109,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline                              += new ContactChangedEventHandler(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline                             += new ContactChangedEventHandler(Nameserver_ContactOffline);
 
-            messenger.Nameserver.ReverseAdded                               += new ContactChangedEventHandler(Nameserver_ReverseAdded);
+            messenger.Nameserver.ContactService.ReverseAdded                += new ContactChangedEventHandler(Nameserver_ReverseAdded);
 
             messenger.Nameserver.Owner.PersonalMessageChanged               += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.ScreenNameChanged                    += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
@@ -766,7 +766,10 @@ namespace MSNPSharpClient
                 return;
             }
 
-            if (DialogResult.Yes == MessageBox.Show(e.ReceivedTime + ":\r\n" + e.Message + "\r\n\r\n\r\nClick yes, if you want to receive this message next time you login.", "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel))
+            if (DialogResult.Yes == MessageBox.Show(
+                "OIM received at : " + e.ReceivedTime + "\r\nFrom : " + e.NickName + " (" + e.Email + ") " + ":\r\n"
+                + e.Message + "\r\n\r\n\r\nClick yes, if you want to receive this message next time you login.",
+                "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel))
             {
                 e.IsRead = false;
             }
