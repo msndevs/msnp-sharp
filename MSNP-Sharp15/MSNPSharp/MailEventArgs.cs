@@ -32,6 +32,9 @@ using System;
 using System.Net;
 using MSNPSharp.Core;
 using MSNPSharp.DataTransfer;
+using System.Text.RegularExpressions;
+using System.Text;
+using System.Diagnostics;
 
 namespace MSNPSharp
 {
@@ -204,8 +207,41 @@ namespace MSNPSharp
 		public string From
 		{
 			get { return from; }
-			set { from = value;}
-		}
+            set
+            {
+                try
+                {
+                    Regex senderReg = new Regex("=\\u003F(?<encoding>.+)\\u003F(?<decoder>.)\\u003F(?<from>.+)\\u003F=");
+                    if (senderReg.Match(value).Success)
+                    {
+                        string strencoding = senderReg.Match(value).Groups["encoding"].Value;
+                        string strdecode = senderReg.Match(value).Groups["decoder"].Value;
+                        string encodedfrom = senderReg.Match(value).Groups["from"].Value;
+                        Encoding encode = Encoding.GetEncoding(strencoding);
+                        byte[] bytfrom = null;
+                        if (strdecode.ToLowerInvariant() == "b")
+                        {
+                            bytfrom = Convert.FromBase64String(encodedfrom);
+                            from = encode.GetString(bytfrom);
+                            return;
+                        }
+                        if (strdecode.ToLowerInvariant() == "q")
+                        {
+                            //I GUSS this can work.
+                            from = Converter.ConvertFromQPString(encodedfrom, encode);
+                            return;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (Settings.TraceSwitch.TraceError)
+                        Trace.WriteLine(ex.Message);
+                }
+                from = value;
+
+            }
+        }
 
 		/// <summary>
 		/// </summary>

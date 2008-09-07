@@ -1312,9 +1312,12 @@ namespace MSNPSharp
             }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
             {
+                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
+                msgMessage = new MSGMessage(message);
+
                 OnMailNotificationReceived(new NewMailEventArgs(
                     (string)msgMessage.MimeHeader["From"],
-                    new Uri((string)msgMessage.MimeHeader["Message-URL"]),
+                    new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Message-URL"]),
                     new Uri((string)msgMessage.MimeHeader["Post-URL"]),
                     (string)msgMessage.MimeHeader["Subject"],
                     (string)msgMessage.MimeHeader["Dest-Folder"],
@@ -1324,6 +1327,10 @@ namespace MSNPSharp
             }
             else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
             {
+                //Now this is the unread OIM info, not the new mail.
+                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
+                msgMessage = new MSGMessage(message);
+
                 OnMailChanged(new MailChangedEventArgs(
                     (string)msgMessage.MimeHeader["Src-Folder"],
                     (string)msgMessage.MimeHeader["Dest-Folder"],
@@ -1335,8 +1342,8 @@ namespace MSNPSharp
                 OnMailboxStatusReceived(new MailboxStatusEventArgs(
                     int.Parse((string)msgMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture),
                     int.Parse((string)msgMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture),
-                    new Uri((string)msgMessage.MimeHeader["Inbox-URL"]),
-                    new Uri((string)msgMessage.MimeHeader["Folders-URL"]),
+                    new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Inbox-URL"]),
+                    new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Folders-URL"]),
                     new Uri((string)msgMessage.MimeHeader["Post-URL"])
                 ));
             }
@@ -1344,6 +1351,80 @@ namespace MSNPSharp
             {
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
                 msgMessage = new MSGMessage(message);
+
+
+                /*
+                 * <MD>
+                 *     <E>
+                 *         <I>884</I>     Inbox total
+                 *         <IU>0</IU>     Inbox unread mail
+                 *         <O>222</O>     Sent + Junk + Drafts
+                 *         <OU>15</OU>    Junk unread mail
+                 *     </E>
+                 *     <Q>
+                 *         <QTM>409600</QTM>
+                 *         <QNM>204800</QNM>
+                 *     </Q>
+                 *     <M>
+                 *         <!-- OIM Nodes -->
+                 *     </M>
+                 *     <M>
+                 *         <!-- OIM Nodes -->
+                 *     </M>
+                 * </MD>
+                 */
+
+                string xmlstr = msgMessage.MimeHeader["Mail-Data"];
+                try
+                {
+                    XmlDocument xdoc = new XmlDocument();
+                    xdoc.LoadXml(xmlstr);
+                    XmlNodeList mdnodelist = xdoc.GetElementsByTagName("MD");
+                    if (mdnodelist.Count > 0)
+                    {
+                        foreach (XmlNode node in mdnodelist[0])
+                        {
+                            if (node.Name.ToLowerInvariant() == "e" && node.HasChildNodes)
+                            {
+                                int iu = 0;
+                                int ou = 0;
+                                foreach (XmlNode cnode in node.ChildNodes)
+                                {
+                                    if (cnode.Name.ToLowerInvariant() == "iu")
+                                    {
+                                        int.TryParse(cnode.InnerText, out iu);
+                                        break;
+                                    }
+                                }
+
+                                foreach (XmlNode cnode in node.ChildNodes)
+                                {
+                                    if (cnode.Name.ToLowerInvariant() == "ou")
+                                    {
+                                        int.TryParse(cnode.InnerText, out ou);
+                                        break;
+                                    }
+                                }
+
+                                OnMailboxStatusReceived(new MailboxStatusEventArgs(
+                                        iu,
+                                        ou,
+                                        new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Inbox-URL"]),      //Invalid, I think it should be obsolated.
+                                        new Uri((string)msgMessage.MimeHeader["Post-URL"] + (string)msgMessage.MimeHeader["Folders-URL"]),    //Invalid, I think it should be obsolated.
+                                        new Uri((string)msgMessage.MimeHeader["Post-URL"])
+                                    ));
+                                break;
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    if (Settings.TraceSwitch.TraceError)
+                        Trace.WriteLine(ex.Message);
+                }
+
                 OIMService.ProcessOIM(msgMessage, mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0);
             }
         }
