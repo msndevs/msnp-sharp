@@ -93,9 +93,7 @@ namespace MSNPSharp.IO
         SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
         SerializableDictionary<ContactIdentifier, MembershipContactInfo> mscontacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>(0);
 
-        /// <summary>
-        /// 
-        /// </summary>
+        [XmlElement("MembershipLastChange")]
         public DateTime MembershipLastChange
         {
             get
@@ -324,6 +322,7 @@ namespace MSNPSharp.IO
         SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
         SerializableDictionary<Guid, ContactType> abcontacts = new SerializableDictionary<Guid, ContactType>(0);
 
+        [XmlElement("AddressbookLastChange")]
         public DateTime AddressbookLastChange
         {
             get
@@ -336,6 +335,7 @@ namespace MSNPSharp.IO
             }
         }
 
+        [XmlElement("DynamicItemLastChange")]
         public DateTime DynamicItemLastChange
         {
             get
@@ -658,6 +658,7 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Profile of current user.
         /// </summary>
+        [XmlElement("Profile")]
         public OwnerProfile Profile
         {
             get

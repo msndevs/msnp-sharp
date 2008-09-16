@@ -322,7 +322,7 @@ namespace MSNPSharp
 
         private SpaceService CreateSpaceService()
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Spaces);
+            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Spaces);
 
             SpaceService service = new SpaceService();
             service.Proxy = WebProxy;

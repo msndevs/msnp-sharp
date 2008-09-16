@@ -123,6 +123,7 @@ namespace MSNPSharp
 
         private bool isSignedIn = false;
         private Owner owner = new Owner();
+        private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
 
         private ContactService contactService = null;
@@ -137,7 +138,6 @@ namespace MSNPSharp
                                     | ClientCapacities.CanMultiPacketMSG
                                     | ClientCapacities.CanReceiveWinks;
 
-            msnticket = new MSNTicket(this);
             contactGroups = new ContactGroupList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
@@ -708,7 +708,6 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
-        private MSNTicket msnticket = null;
         internal MSNTicket MSNTicket
         {
             get
@@ -738,7 +737,7 @@ namespace MSNPSharp
                 string nonce = (string)message.CommandValues[4];
 
                 MSNTicket.Policy = policy;
-                MSNTicket.Authenticate();
+                MSNTicket.Authenticate(this, policy);
 
                 MBI mbi = new MBI();
                 string response =
@@ -1838,7 +1837,7 @@ namespace MSNPSharp
             SwitchBoards.Clear();
             externalEndPoint = null;
             isSignedIn = false;
-            msnticket = new MSNTicket(this);
+            msnticket = MSNTicket.Empty;
         }
 
         /// <summary>

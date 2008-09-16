@@ -28,35 +28,54 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-//TODO: remove this
-#define TRACE
-
 using System;
+using System.IO;
 using System.Diagnostics;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	
-	/// <summary>
-	/// General configuration options.
-	/// </summary>
-	[Serializable()]
-	public class Settings
-	{
-		/// <summary>
-		/// Defines the verbosity of the trace messages.
-		/// </summary>
-		public static TraceSwitch TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
+    using MSNPSharp.Core;
 
+    /// <summary>
+    /// General configuration options.
+    /// </summary>
+    [Serializable()]
+    public class Settings
+    {
+        /// <summary>
+        /// Defines the verbosity of the trace messages.
+        /// </summary>
+        public static TraceSwitch TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
 
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		static Settings()
-		{
-			TraceSwitch.Level = TraceLevel.Error;
-		}
-	}
-}
+        /// <summary>
+        /// Don't use compression when saving addressbook files.
+        /// </summary>
+        public static bool NoCompress = true;
+
+        /// <summary>
+        /// Don't save addressbook files.
+        /// </summary>
+        public static bool NoSave = false;
+
+        private static string savepath = Path.GetFullPath(".");
+        public static string SavePath
+        {
+            get
+            {
+                return savepath;
+            }
+            set
+            {
+                savepath = value;
+            }
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        static Settings()
+        {
+            TraceSwitch.Level = TraceLevel.Error;
+        }
+    }
+};

@@ -25,7 +25,7 @@ namespace MSNPSharp
 
         private StorageService CreateStorageService(String scenario)
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Storage);
+            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Storage);
 
             StorageService storageService = new StorageService();
             storageService.Proxy = WebProxy;

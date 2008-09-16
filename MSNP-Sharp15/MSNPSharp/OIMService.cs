@@ -228,7 +228,7 @@ namespace MSNPSharp
 
         private RSIService CreateRSIService()
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Web);
+            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Web);
             string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
@@ -242,7 +242,7 @@ namespace MSNPSharp
 
         private OIMStoreService CreateOIMStoreService()
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.OIM);
+            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.OIM);
 
             OIMStoreService oimService = new OIMStoreService();
             oimService.Proxy = WebProxy;

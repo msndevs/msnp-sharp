@@ -11,6 +11,7 @@ namespace MSNPSharp.IO
     /// <remarks>This class was used to save/load an object into/from a hidden mcl file.
     /// Any object needs to be serialized as a hidden mcl file should derive from this class.</remarks>
     /// </summary>
+    [Serializable]
     public abstract class MCLSerializer
     {
         #region Common
@@ -69,6 +70,7 @@ namespace MSNPSharp.IO
         /// <summary>
         /// The version of serialized object in the mcl file.
         /// </summary>
+        [XmlAttribute("Version")]
         public string Version
         {
             get
@@ -84,7 +86,7 @@ namespace MSNPSharp.IO
         protected static object LoadFromFile(string filename, bool nocompress, Type targettype, NSMessageHandler handler)
         {
             object rtnobj = Activator.CreateInstance(targettype);
-            if (File.Exists(filename))
+            if (Settings.NoSave == false && File.Exists(filename))
             {
                 MCLFile file = MCLFileManager.GetFile(filename, nocompress);
                 if (file.Content != null)
@@ -124,6 +126,9 @@ namespace MSNPSharp.IO
 
         private void SaveToHiddenMCL(string filename)
         {
+            if (Settings.NoSave)
+                return;
+
             XmlSerializer ser = new XmlSerializer(this.GetType());
             MemoryStream ms = new MemoryStream();
             ser.Serialize(ms, this);

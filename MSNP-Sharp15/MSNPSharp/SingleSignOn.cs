@@ -42,8 +42,11 @@ namespace MSNPSharp
     using MSNPSharp.SOAP;
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
 
-    public class MSNTicket : ICloneable
+    public sealed class MSNTicket : ICloneable
     {
+        public static readonly MSNTicket Empty = new MSNTicket();
+        private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();        
+
         private string policy = "MBI_KEY_OLD";
         private string mainBrandID = "MSFT";
         private string oimLockKey = String.Empty;
@@ -51,12 +54,8 @@ namespace MSNPSharp
         private string sharingServiceCacheKey = String.Empty;
         private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
 
-        [NonSerialized]
-        private NSMessageHandler nsMessageHandler = null;
-
-        public MSNTicket(NSMessageHandler nsHandler)
+        internal MSNTicket()
         {
-            nsMessageHandler = nsHandler;
         }
 
         public Dictionary<SSOTicketType, SSOTicket> SSOTickets
@@ -150,61 +149,65 @@ namespace MSNPSharp
 
         #region Authenticate
 
-        private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
-
-        public void Authenticate()
+        public static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
         {
-            int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-            MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : this;
-            SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
-            SSOTicketType expiredtickets = SSOTicketType.None;
-
-            foreach (SSOTicketType ssot in ssos)
+            if (nsMessageHandler != null)
             {
-                if (ExpiryState.NotExpired != ticket.Expired(ssot))
-                    expiredtickets |= ssot;
-            }
+                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
+                MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : new MSNTicket();
+                SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
+                SSOTicketType expiredtickets = SSOTicketType.None;
 
-            if (expiredtickets == SSOTicketType.None)
-            {
-                nsMessageHandler.MSNTicket = ticket;
-            }
-            else
-            {
-                SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
-                if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-                    sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-
-                sso.AddAuths(expiredtickets);
-                sso.Authenticate(ticket, false);
-
-                cache[hashcode] = ticket.Clone() as MSNTicket;
-                nsMessageHandler.MSNTicket = ticket;
-            }
-        }
-
-        public void RenewIfExpired(SSOTicketType renew)
-        {
-            int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-            MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : this;
-            ExpiryState es = ticket.Expired(renew);
-
-            if (ExpiryState.NotExpired != es)
-            {
-                SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
-                if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-                    sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-
-                sso.AddAuths(renew);
-
-                if (es == ExpiryState.WillExpireSoon)
+                foreach (SSOTicketType ssot in ssos)
                 {
-                    sso.Authenticate(ticket, true);
+                    if (ExpiryState.NotExpired != ticket.Expired(ssot))
+                        expiredtickets |= ssot;
+                }
+
+                if (expiredtickets == SSOTicketType.None)
+                {
+                    nsMessageHandler.MSNTicket = ticket;
                 }
                 else
                 {
+                    SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, policy);
+                    if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
+                        sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+
+                    sso.AddAuths(expiredtickets);
                     sso.Authenticate(ticket, false);
+
                     cache[hashcode] = ticket.Clone() as MSNTicket;
+                    nsMessageHandler.MSNTicket = ticket;
+                }
+            }
+        }
+
+        public static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
+        {
+            if (nsMessageHandler != null)
+            {
+                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
+                MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : new MSNTicket();
+                ExpiryState es = ticket.Expired(renew);
+
+                if (ExpiryState.NotExpired != es)
+                {
+                    SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, ticket.Policy);
+                    if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
+                        sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+
+                    sso.AddAuths(renew);
+
+                    if (es == ExpiryState.WillExpireSoon)
+                    {
+                        sso.Authenticate(ticket, true);
+                    }
+                    else
+                    {
+                        sso.Authenticate(ticket, false);
+                        cache[hashcode] = ticket.Clone() as MSNTicket;
+                    }
                 }
 
                 nsMessageHandler.MSNTicket = ticket;

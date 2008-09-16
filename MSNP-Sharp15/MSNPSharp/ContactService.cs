@@ -218,9 +218,9 @@ namespace MSNPSharp
                 DeleteRecordFile();
             }
 
-            bool nocompress = true;
-            string addressbookFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
-            string deltasResultsFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
+            bool nocompress = Settings.NoCompress;
+            string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl");
+            string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
             try
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
@@ -537,7 +537,7 @@ namespace MSNPSharp
 
         internal SharingServiceBinding CreateSharingService(string partnerScenario)
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = WebProxy;
@@ -558,7 +558,7 @@ namespace MSNPSharp
 
         internal ABServiceBinding CreateABService(string partnerScenario)
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = WebProxy;
@@ -1678,14 +1678,14 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Mail != null)
             {
-                string addressbookFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
+                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl");
                 if (File.Exists(addressbookFile))
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
                 }
 
-                string deltasResultFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
+                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
                 if (File.Exists(deltasResultFile))
                 {
                     File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.

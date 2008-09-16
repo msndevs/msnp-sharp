@@ -29,118 +29,130 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
 using System;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Used as event argument when a contactgroup is affected.
-	/// </summary>
-	[Serializable()]
-	public class ContactGroupEventArgs : EventArgs
-	{
-		/// <summary>
-		/// </summary>
-		private ContactGroup	contactGroup;
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		/// <summary>
-		/// The affected contact group
-		/// </summary>
-		public ContactGroup	 ContactGroup
-		{
-			get { return contactGroup; }
-			set { contactGroup = value;}
-		}
+    /// <summary>
+    /// Used as event argument when a contactgroup is affected.
+    /// </summary>
+    [Serializable()]
+    public class ContactGroupEventArgs : EventArgs
+    {
+        private ContactGroup contactGroup;
 
-		/// <summary>
-		/// Constructor, mostly used internal by the library.
-		/// </summary>
-		/// <param name="contactGroup"></param>
-		public ContactGroupEventArgs(ContactGroup contactGroup)
-		{
-			ContactGroup = contactGroup;
-		}
-	}
+        /// <summary>
+        /// The affected contact group
+        /// </summary>
+        public ContactGroup ContactGroup
+        {
+            get
+            {
+                return contactGroup;
+            }
+            set
+            {
+                contactGroup = value;
+            }
+        }
 
+        /// <summary>
+        /// Constructor, mostly used internal by the library.
+        /// </summary>
+        /// <param name="contactGroup"></param>
+        public ContactGroupEventArgs(ContactGroup contactGroup)
+        {
+            ContactGroup = contactGroup;
+        }
+    }
 
-	
-	/// <summary>
-	/// Defines a single contact group.
-	/// </summary>
-	[Serializable()]
-	public class ContactGroup
-	{
-		#region Private
+    /// <summary>
+    /// Defines a single contact group.
+    /// </summary>
+    [Serializable()]
+    public class ContactGroup
+    {
+        #region Private
 
-		[NonSerialized]
-		private NSMessageHandler nsMessageHandler = null;
+        private string name;
+        private string guid;
+        private object clientData;
 
-		/// <summary>
-		/// </summary>
-		private  string		name;
-		/// <summary>
-		/// </summary>
-		private  string		guid;
+        [NonSerialized]
+        private NSMessageHandler nsMessageHandler = null;
 
-		#endregion
+        #endregion
 
-		#region Internal
+        #region Internal
 
-		/// <summary>
-		/// Constructor, used internally by the library.
-		/// </summary>
-		/// <param name="name"></param>
+        /// <summary>
+        /// Constructor, used internally by the library.
+        /// </summary>
+        /// <param name="name"></param>
         /// <param name="guid"></param>
-		/// <param name="nsMessageHandler"></param>
-		internal ContactGroup(string name, string guid, NSMessageHandler nsMessageHandler)
-		{
-			this.name = name;
-			this.guid   = guid;
-			this.nsMessageHandler = nsMessageHandler;
-		}
+        /// <param name="nsMessageHandler"></param>
+        internal ContactGroup(string name, string guid, NSMessageHandler nsMessageHandler)
+        {
+            this.name = name;
+            this.guid = guid;
+            this.nsMessageHandler = nsMessageHandler;
+        }
 
-		/// <summary>
-		/// Used by nameserver.
-		/// </summary>
-		/// <param name="name"></param>
-		internal void SetName(string name)
-		{
-			this.name = name;
-		}
-		#endregion
+        private ContactGroup()
+            : this(String.Empty, System.Guid.NewGuid().ToString(), null)
+        {
+        }
 
-		#region Public
+        /// <summary>
+        /// Used by nameserver.
+        /// </summary>
+        /// <param name="name"></param>
+        internal void SetName(string name)
+        {
+            this.name = name;
+        }
+        #endregion
 
-		/// <summary>
-		/// The notification message handler which controls this contact object
-		/// </summary>
-		public	NSMessageHandler NSMessageHandler
-		{
-			get { return nsMessageHandler; }
-		}
+        #region Public
 
+        /// <summary>
+        /// The notification message handler which controls this contact object
+        /// </summary>
+        public NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return nsMessageHandler;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private object clientData;
+        /// <summary>
+        /// The custom data specified by the client programmer
+        /// </summary>
+        /// <remarks>The application programmer can define it's own data here. It is not used by MSNPSharp.</remarks>
+        public object ClientData
+        {
+            get
+            {
+                return clientData;
+            }
+            set
+            {
+                clientData = value;
+            }
+        }
 
-		/// <summary>
-		/// The custom data specified by the client programmer
-		/// </summary>
-		/// <remarks>The application programmer can define it's own data here. It is not used by MSNPSharp.</remarks>
-		public object ClientData
-		{
-			get { return clientData; }
-			set { clientData = value; }
-		}
-
-		/// <summary>
-		/// Name of the contactgroup
-		/// </summary>
-		public string Name
-		{
-			get { return name; }
+        /// <summary>
+        /// Name of the contactgroup
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                return name;
+            }
             set
             {
                 if (NSMessageHandler != null)
@@ -148,40 +160,41 @@ namespace MSNPSharp
                     NSMessageHandler.ContactService.RenameGroup(this, value);
                 }
             }
-		}
+        }
 
-		/// <summary>
-		/// The unique contactgroup ID assigned by MSN
-		/// </summary>
-		public string Guid
-		{
-			get { return guid; }
-		}
+        /// <summary>
+        /// The unique contactgroup ID assigned by MSN
+        /// </summary>
+        public string Guid
+        {
+            get
+            {
+                return guid;
+            }
+        }
 
-		/// <summary>
-		/// Returns the ID field as hashcode. This is necessary to compare contactgroups.
-		/// </summary>
-		/// <returns></returns>
-		override public int GetHashCode()
-		{
-			return guid.GetHashCode ();
-		}
+        /// <summary>
+        /// Returns the ID field as hashcode. This is necessary to compare contactgroups.
+        /// </summary>
+        /// <returns></returns>
+        override public int GetHashCode()
+        {
+            return guid.GetHashCode();
+        }
 
-		/// <summary>
-		/// Equals two contacgroups based on their ID
-		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
-		public override bool Equals(object obj)
-		{
-			if(obj is ContactGroup)
-				return ((ContactGroup)obj).Guid == guid;
-			return
-				false;
-		}
+        /// <summary>
+        /// Equals two contacgroups based on their ID
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            if (obj is ContactGroup)
+                return ((ContactGroup)obj).Guid == guid;
+            return
+                false;
+        }
 
-		#endregion
-
-	}
-
-}
+        #endregion
+    }
+};
