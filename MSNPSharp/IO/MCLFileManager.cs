@@ -1,12 +1,12 @@
+using System;
+using System.Text;
+using System.Threading;
+using System.Diagnostics;
+using System.Collections.Generic;
+using IOFile = System.IO.File;
+
 namespace MSNPSharp.IO
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-    using System.Threading;
-    using IOFile = System.IO.File;
-    using System.Diagnostics;
-
     internal class MCLInfo
     {
         private MCLFile file;
@@ -70,41 +70,72 @@ namespace MSNPSharp.IO
     {
         private static Dictionary<string, MCLInfo> storage = new Dictionary<string, MCLInfo>(0);
 
-        private static bool _hiddenSave;
+        private static bool hiddenSave;
         private static Timer timer;
+        private static object syncObject;
+
+        private static object SyncObject
+        {
+            get
+            {
+                if (syncObject == null)
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncObject, newobj, null);
+                }
+
+                return syncObject;
+            }
+        }
 
         public static void Save(MCLFile file, bool hiddensave)
         {
+            hiddenSave = hiddensave;
+
             if (timer == null)
-                timer = new Timer(new TimerCallback(SaveImpl));
-            timer.Change(2000, Timeout.Infinite);                     //Prevent user call this in a heigh frequency
-            storage[file.FileName.ToLower(System.Globalization.CultureInfo.InvariantCulture)] = new MCLInfo(file);
-            _hiddenSave = hiddensave;
+            {
+                lock (SyncObject)
+                {
+                    if (timer == null)
+                    {
+                        timer = new Timer(new TimerCallback(SaveImpl));
+                        timer.Change(1000, Timeout.Infinite); //Prevent user call this in a heigh frequency
+                    }
+                }
+            }
+
+            storage[file.FileName.ToLowerInvariant()] = new MCLInfo(file);
         }
 
         private static void SaveImpl(object state)
         {
-            if (storage.Count == 0)
-                return;
-
-            try
+            if (storage.Count != 0)
             {
-                foreach (MCLInfo mclinfo in storage.Values)
+                lock (SyncObject)
                 {
-                    if (_hiddenSave)
-                        mclinfo.File.SaveAndHide();
-                    else
-                        mclinfo.File.Save();
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("MCL files saved.");
+                    try
+                    {
+                        foreach (MCLInfo mclinfo in storage.Values)
+                        {
+                            if (hiddenSave)
+                                mclinfo.File.SaveAndHide();
+                            else
+                                mclinfo.File.Save();
+                        }
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, storage.Count + " MCL file(s) saved.", "MCLFileManager");
+                    }
+                    catch (Exception exception)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, exception.Message, "MCLFileManager");
+                    }
+                    finally
+                    {
+                        ((Timer)state).Dispose();
+                        timer = null;
+                    }
                 }
             }
-            catch (Exception)
-            {
-            }
-            ((Timer)state).Dispose();
-            timer = null;
-
         }
 
         /// <summary>
@@ -115,8 +146,8 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static MCLFile GetFile(string filePath, bool noCompress)
         {
-            filePath = filePath.ToLower(System.Globalization.CultureInfo.InvariantCulture);
-            lock (storage)
+            filePath = filePath.ToLowerInvariant();
+            lock (SyncObject)
             {
                 if (!storage.ContainsKey(filePath))
                 {
