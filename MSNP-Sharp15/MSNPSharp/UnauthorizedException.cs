@@ -30,55 +30,56 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Runtime.Serialization;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Indicates an authentication error with the Nexus service.
-	/// </summary>
-	/// <remarks>
-	/// This exception is thrown when the Nexus service gives back a 401 Unauthorized header. This occurs most likely due to an invalid account or password.
-	/// </remarks>
-	[Serializable()]
-	public class UnauthorizedException : MSNPSharpException
-	{
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		public UnauthorizedException()
-		{
-		}
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		/// <summary>
-		/// Specifies a general exception.
-		/// </summary>
-		/// <param name="message">A textual presentation of the exception message</param>
-		public UnauthorizedException(string message)
-			: base(message)
-		{		
-		}
-		
-		/// <summary>
-		/// Specifies a general exception but which originates from another exception.
-		/// </summary>
-		/// <param name="message">A textual presentation of the exception message</param>
-		/// <param name="innerException">The (inner)exception which caused this exception. For example a SocketException.</param>
-		public UnauthorizedException(string message, Exception innerException)
-			: base(message, innerException)
-		{
-		}
+    /// <summary>
+    /// Indicates an authentication error with the Nexus service.
+    /// </summary>
+    /// <remarks>
+    /// This exception is thrown when the Nexus service gives back a 401 Unauthorized header. This occurs most likely due to an invalid account or password.
+    /// </remarks>
+    [Serializable()]
+    public class UnauthorizedException : MSNPSharpException
+    {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        public UnauthorizedException()
+        {
+        }
 
-		/// <summary>
-		/// Serialization constructor.
-		/// </summary>
-		/// <param name="info"></param>
-		/// <param name="context"></param>
-		protected UnauthorizedException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		
-		}
-	}
+        /// <summary>
+        /// Specifies a general exception.
+        /// </summary>
+        /// <param name="message">A textual presentation of the exception message</param>
+        public UnauthorizedException(string message)
+            : base(message)
+        {
+        }
 
-}
+        /// <summary>
+        /// Specifies a general exception but which originates from another exception.
+        /// </summary>
+        /// <param name="message">A textual presentation of the exception message</param>
+        /// <param name="innerException">The (inner)exception which caused this exception. For example a SocketException.</param>
+        public UnauthorizedException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        /// <summary>
+        /// Serialization constructor.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="context"></param>
+        protected UnauthorizedException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+    }
+
+};

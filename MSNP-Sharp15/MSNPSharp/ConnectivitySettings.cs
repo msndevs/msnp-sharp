@@ -312,4 +312,4 @@ namespace MSNPSharp
         }
         #endregion
     }
-}
+};

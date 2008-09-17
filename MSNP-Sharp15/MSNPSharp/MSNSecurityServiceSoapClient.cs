@@ -100,7 +100,7 @@ namespace MSNPSharp.SOAP
                     envlist[0].AppendChild(bodyElement);
                     innerstream.Position = 0;
                 }
-                
+
                 xmldoc.Save(innerstream);
                 innerstream.Position = 0;
             }

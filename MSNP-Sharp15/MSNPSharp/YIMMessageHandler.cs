@@ -28,18 +28,18 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Collections;
-using MSNPSharp.Core;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Handler for YIM messages
     /// </summary>
-    public class YIMMessageHandler:SBMessageHandler
+    public class YIMMessageHandler : SBMessageHandler
     {
         protected YIMMessageHandler()
             : base()
@@ -133,7 +133,11 @@ namespace MSNPSharp
 
                 switch (nsMessage.Command)
                 {
-                    case "UBM": { OnUBMReceived(nsMessage); break; }
+                    case "UBM":
+                        {
+                            OnUBMReceived(nsMessage);
+                            break;
+                        }
                 }
             }
             catch (Exception e)
@@ -193,12 +197,10 @@ namespace MSNPSharp
         //Do nothing
         protected override void SendInitialMessage()
         {
-            
         }
 
         protected override void ProcessInvitations()
         {
-             
         }
     }
-}
+};

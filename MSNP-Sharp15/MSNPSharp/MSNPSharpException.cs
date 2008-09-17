@@ -30,53 +30,54 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Runtime.Serialization;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
-{	
-	/// <summary>
-	/// The base class for all MSNPSharp related exceptions
-	/// </summary>
-	[Serializable()]
-	public class MSNPSharpException : ApplicationException
-	{
-		/// <summary>
-		/// Basic constructor.
-		/// </summary>
-		public MSNPSharpException()
-		{
-		}
+{
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		/// <summary>
-		/// Specifies a general exception.
-		/// </summary>
-		/// <param name="message">A textual presentation of the exception message</param>
-		public MSNPSharpException(string message)
-			: base(message)
-		{		
-		}
-		
-		/// <summary>
-		/// Specifies a general exception but which originates from another exception.
-		/// </summary>
-		/// <param name="message">A textual presentation of the exception message</param>
-		/// <param name="innerException">The (inner)exception which caused this exception. For example a SocketException.</param>
-		public MSNPSharpException(string message, Exception innerException)
-			: base(message, innerException)
-		{
-		}
+    /// <summary>
+    /// The base class for all MSNPSharp related exceptions
+    /// </summary>
+    [Serializable()]
+    public class MSNPSharpException : ApplicationException
+    {
+        /// <summary>
+        /// Basic constructor.
+        /// </summary>
+        public MSNPSharpException()
+        {
+        }
 
-		/// <summary>
-		/// Serialization constructor.
-		/// </summary>
-		/// <param name="info"></param>
-		/// <param name="context"></param>
-		protected MSNPSharpException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		
-		}
-	}
-		
+        /// <summary>
+        /// Specifies a general exception.
+        /// </summary>
+        /// <param name="message">A textual presentation of the exception message</param>
+        public MSNPSharpException(string message)
+            : base(message)
+        {
+        }
 
-}
+        /// <summary>
+        /// Specifies a general exception but which originates from another exception.
+        /// </summary>
+        /// <param name="message">A textual presentation of the exception message</param>
+        /// <param name="innerException">The (inner)exception which caused this exception. For example a SocketException.</param>
+        public MSNPSharpException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        /// <summary>
+        /// Serialization constructor.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="context"></param>
+        protected MSNPSharpException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+
+        }
+    }
+
+};

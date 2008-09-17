@@ -27,18 +27,20 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.IO;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	[Serializable()]
-	public class Wink : MSNObject
-	{
-		public Wink() : base ()
-		{
-			//Type = MSNObjectType.Wink;	
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
+
+    [Serializable()]
+    public class Wink : MSNObject
+    {
+        public Wink()
+            : base()
+        {
+            //Type = MSNObjectType.Wink;	
             Type = MSNObjectType.Unknown;
-		}		
-	}
-}
+        }
+    }
+};

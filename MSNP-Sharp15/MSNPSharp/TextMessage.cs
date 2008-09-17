@@ -393,4 +393,4 @@ namespace MSNPSharp
         #endregion
 
     }
-}
+};
