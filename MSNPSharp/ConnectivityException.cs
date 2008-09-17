@@ -30,52 +30,53 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Runtime.Serialization;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Specifies an exception when a connection is setup.
-	/// </summary>
-	[Serializable()]
-	public class ConnectivityException : MSNPSharpException
-	{
-		/// <summary>
-		/// Basic constructor.
-		/// </summary>
-		public ConnectivityException()
-		{
-		}
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		/// <summary>
-		/// Specifies a ConnectivityException.
-		/// </summary>
-		/// <param name="message">A textual presentation of the exception message</param>
-		public ConnectivityException(string message)
-			: base(message)
-		{		
-		}
-				
-		/// <summary>
-		/// Specifies a ConnectivityException which originates from another exception.
-		/// </summary>
-		/// <param name="message">A textual presentation of the exception message</param>
-		/// <param name="innerException">The (inner)exception which caused this exception. For example a SocketException</param>
-		public ConnectivityException(string message, Exception innerException)
-			: base(message, innerException)
-		{
-		}
+    /// <summary>
+    /// Specifies an exception when a connection is setup.
+    /// </summary>
+    [Serializable()]
+    public class ConnectivityException : MSNPSharpException
+    {
+        /// <summary>
+        /// Basic constructor.
+        /// </summary>
+        public ConnectivityException()
+        {
+        }
 
-		/// <summary>
-		/// Serialization constructor.
-		/// </summary>
-		/// <param name="info"></param>
-		/// <param name="context"></param>
-		protected ConnectivityException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		
-		}
+        /// <summary>
+        /// Specifies a ConnectivityException.
+        /// </summary>
+        /// <param name="message">A textual presentation of the exception message</param>
+        public ConnectivityException(string message)
+            : base(message)
+        {
+        }
 
-	}
-}
+        /// <summary>
+        /// Specifies a ConnectivityException which originates from another exception.
+        /// </summary>
+        /// <param name="message">A textual presentation of the exception message</param>
+        /// <param name="innerException">The (inner)exception which caused this exception. For example a SocketException</param>
+        public ConnectivityException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        /// <summary>
+        /// Serialization constructor.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="context"></param>
+        protected ConnectivityException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+
+    }
+};

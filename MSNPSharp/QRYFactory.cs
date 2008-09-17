@@ -1,17 +1,17 @@
 // This piece of code was written by Siebe Tolsma (Copyright 2005).
 // Based on documentation by ZoRoNaX (http://zoronax.bot2k3.net/msn_beta/)
 //
-// This code is for eductional purposes only. Modification, use and/or publishing this code 
+// This code is for eductional purposes only. Modification, use and/or publishing this code
 // is entirely on your OWN risk, I can not be held responsible for any damages done by using it.
 // If you have questions please contact me by posting on the BOT2K3 forum: http://bot2k3.net/forum/
 
+using System;
+using System.Globalization;
+using System.Text;
+using System.Security.Cryptography;
+
 namespace MSNPSharp
 {
-    using System;
-    using System.Globalization;
-    using System.Text;
-    using System.Security.Cryptography;
-
     public static class QRYFactory
     {
         public static string CreateQRY(string strProductID, string strProductKey, string strCHLData)

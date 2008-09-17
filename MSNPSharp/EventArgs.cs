@@ -29,11 +29,12 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
 using System;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
+
     /// <summary>
     /// Used in events where a exception is raised. Via these events the client programmer
     /// can react on these exceptions.

@@ -30,41 +30,48 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.IO;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	[Serializable()]
-	public class Emoticon : DisplayImage
-	{
-		string shortcut;
-		
-		public Emoticon()
-		{
-			Type = MSNObjectType.Emoticon;		
-			Location = Guid.NewGuid().ToString();
-		}
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		public Emoticon(string creator, string shortcut)
-		{
-			Type = MSNObjectType.Emoticon;		
-			Location = Guid.NewGuid().ToString();
-			Creator = creator;
-			Shortcut = shortcut;
-		}
+    [Serializable()]
+    public class Emoticon : DisplayImage
+    {
+        string shortcut;
 
-		public Emoticon(string creator, Stream input, string location, string shortcut)
-			: base(creator, input, location)
-		{
-			Type = MSNObjectType.Emoticon;	
-			Shortcut = shortcut;
-		}		
+        public Emoticon()
+        {
+            Type = MSNObjectType.Emoticon;
+            Location = Guid.NewGuid().ToString();
+        }
 
-		public string Shortcut
-		{
-			get { return shortcut; }
-			set { shortcut = value;}
-		}
-	}
-}
+        public Emoticon(string creator, string shortcut)
+        {
+            Type = MSNObjectType.Emoticon;
+            Location = Guid.NewGuid().ToString();
+            Creator = creator;
+            Shortcut = shortcut;
+        }
+
+        public Emoticon(string creator, Stream input, string location, string shortcut)
+            : base(creator, input, location)
+        {
+            Type = MSNObjectType.Emoticon;
+            Shortcut = shortcut;
+        }
+
+        public string Shortcut
+        {
+            get
+            {
+                return shortcut;
+            }
+            set
+            {
+                shortcut = value;
+            }
+        }
+    }
+};

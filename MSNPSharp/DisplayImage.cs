@@ -32,69 +32,73 @@ using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	[Serializable()]
-	public class DisplayImage : MSNObject
-	{
-		Image image = null;
-		
-		public DisplayImage()
-		{
-			Type = MSNObjectType.UserDisplay;		
-			Location = "dotmsn.png";
-		}
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		public DisplayImage(string creator)
-		{
-			Type = MSNObjectType.UserDisplay;		
-			Location = "dotmsn.png";
-			Creator = creator;
-		}
-		
-		public DisplayImage(string creator, Stream input, string location)
-			: base(creator, input, MSNObjectType.UserDisplay, location)
-		{
-			RetrieveImage();
-		}		
+    [Serializable()]
+    public class DisplayImage : MSNObject
+    {
+        Image image = null;
 
-		public Image Image
-		{
-			get { return image; }
-			set 
-			{				
-				image = value;
-				UpdateStream();
-			}
-		}
+        public DisplayImage()
+        {
+            Type = MSNObjectType.UserDisplay;
+            Location = "dotmsn.png";
+        }
 
-		void UpdateStream()
-		{
-			image.Save(DataStream, ImageFormat.Png);
-			Size = (int)DataStream.Length;							
-			Sha = GetStreamHash(DataStream);
-		}
-		
-		public void RetrieveImage()
-		{
-			Stream input = DataStream;
-			
-			if(input != null)
-			{
-				lock(input)
-				{					
-					input.Position = 0;
-					if(input.Length > 0)
-					{						
-						image = System.Drawing.Image.FromStream(input);
-					}
-					
-					input.Position = 0;
-				}
-			}
-		}
-	}
-}
+        public DisplayImage(string creator)
+        {
+            Type = MSNObjectType.UserDisplay;
+            Location = "dotmsn.png";
+            Creator = creator;
+        }
+
+        public DisplayImage(string creator, Stream input, string location)
+            : base(creator, input, MSNObjectType.UserDisplay, location)
+        {
+            RetrieveImage();
+        }
+
+        public Image Image
+        {
+            get
+            {
+                return image;
+            }
+            set
+            {
+                image = value;
+                UpdateStream();
+            }
+        }
+
+        void UpdateStream()
+        {
+            image.Save(DataStream, ImageFormat.Png);
+            Size = (int)DataStream.Length;
+            Sha = GetStreamHash(DataStream);
+        }
+
+        public void RetrieveImage()
+        {
+            Stream input = DataStream;
+
+            if (input != null)
+            {
+                lock (input)
+                {
+                    input.Position = 0;
+                    if (input.Length > 0)
+                    {
+                        image = System.Drawing.Image.FromStream(input);
+                    }
+
+                    input.Position = 0;
+                }
+            }
+        }
+    }
+};

@@ -1,8 +1,8 @@
 using System;
-using System.Collections.Generic;
+using System.Xml;
 using System.Text;
 using System.Drawing;
-using System.Xml;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
@@ -325,4 +325,4 @@ namespace MSNPSharp
             hasUpdated = updated;
         }
     }
-}
+};

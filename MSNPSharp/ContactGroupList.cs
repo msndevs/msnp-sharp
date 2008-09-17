@@ -30,64 +30,65 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
-	[Serializable()]
-	public class ContactGroupList : IEnumerable
-	{
-		List<ContactGroup> list = new List<ContactGroup> ();
-		
-		[NonSerialized]
-		NSMessageHandler nsMessageHandler = null;
+    [Serializable()]
+    public class ContactGroupList : IEnumerable
+    {
+        List<ContactGroup> list = new List<ContactGroup>();
 
-		internal void AddGroup(ContactGroup group)
-		{
+        [NonSerialized]
+        NSMessageHandler nsMessageHandler = null;
+
+        internal void AddGroup(ContactGroup group)
+        {
             if (this[group.Guid] == null)
                 list.Add(group);
             else
                 this[group.Guid].SetName(group.Name);
-		}
-		internal void RemoveGroup(ContactGroup group)
-		{
-			list.Remove(group);
-		}
+        }
+        internal void RemoveGroup(ContactGroup group)
+        {
+            list.Remove(group);
+        }
 
-		internal ContactGroupList(NSMessageHandler handler)
-		{
-			nsMessageHandler = handler;
-		}
+        internal ContactGroupList(NSMessageHandler handler)
+        {
+            nsMessageHandler = handler;
+        }
 
-		public virtual void Add(string name)
-		{
-			if(nsMessageHandler == null)
-				throw new MSNPSharpException("No nameserver handler defined");
+        public virtual void Add(string name)
+        {
+            if (nsMessageHandler == null)
+                throw new MSNPSharpException("No nameserver handler defined");
 
             nsMessageHandler.ContactService.AddContactGroup(name);
-		}
+        }
 
-		public virtual void Remove(ContactGroup group)
-		{
-			if(nsMessageHandler == null)
-				throw new MSNPSharpException("No nameserver handler defined");
-			
-			if(this[group.Guid] != null)
+        public virtual void Remove(ContactGroup group)
+        {
+            if (nsMessageHandler == null)
+                throw new MSNPSharpException("No nameserver handler defined");
+
+            if (this[group.Guid] != null)
                 nsMessageHandler.ContactService.RemoveContactGroup(group);
-			else
-				throw new MSNPSharpException("Contactgroup not defined in this list");
-		}
+            else
+                throw new MSNPSharpException("Contactgroup not defined in this list");
+        }
 
-		public ContactGroup GetByName (string name)
-		{
-			foreach(ContactGroup group in list)
-			{
-				if(group.Name == name)
-					return group;
-			}
-			
-			return null;		}
+        public ContactGroup GetByName(string name)
+        {
+            foreach (ContactGroup group in list)
+            {
+                if (group.Name == name)
+                    return group;
+            }
+
+            return null;
+        }
 
         public ContactGroup this[string guid]
         {
@@ -101,15 +102,15 @@ namespace MSNPSharp
                 return null;
             }
         }
-		
-		public IEnumerator GetEnumerator()
-		{			
-			return list.GetEnumerator();
-		}
-		
-		public void Clear ()
-		{
-			list.Clear ();
-		}
-	}
-}
+
+        public IEnumerator GetEnumerator()
+        {
+            return list.GetEnumerator();
+        }
+
+        public void Clear()
+        {
+            list.Clear();
+        }
+    }
+};

@@ -53,7 +53,6 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
-    <Compile Include="EmoticonCollection.cs" />
     <Compile Include="EmoticonMessage.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="EventArgs.cs" />

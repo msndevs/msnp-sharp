@@ -28,12 +28,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.Net;
+using System.Reflection;
+using System.Collections;
+
 namespace MSNPSharp
 {
-    using System;
-    using System.Net;
-    using System.Reflection;
-    using System.Collections;
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
 
@@ -403,9 +404,9 @@ namespace MSNPSharp
         /// </summary>
         public DynamicItemState DynamicChanged
         {
-            get 
-            { 
-                return dynamicChanged; 
+            get
+            {
+                return dynamicChanged;
             }
         }
 
@@ -746,4 +747,4 @@ namespace MSNPSharp
             return mail.GetHashCode();
         }
     }
-}
+};

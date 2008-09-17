@@ -29,105 +29,120 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
 using System;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Specifies the user credentials. These settings are used when authentication
-	/// is required on the network.
-	/// </summary>
-	/// <remarks>
-	/// The client identifier, together with the client code, represents
-	/// a unique way of identifying the client connected to the network.
-	/// 
-	/// Third party softwarehouses can request their own identifier/code combination
-	/// for their software. These values have to be stored in the properties before connecting
-	/// to the network.
-	/// When you want to emulate the Microsoft MSN Messenger client, you can use any of the following
-	/// values:
-	/// <c>
-	/// ClientID			ClientCode
-	/// msmsgs@msnmsgr.com	Q1P7W2E4J9R8U3S5 
-	/// PROD0038W!61ZTF9	VT6PX?UQTM4WM%YR 
-	/// PROD0058#7IL2{QD	QHDCY@7R1TB6W?5B 
-	/// PROD0061VRRZH@4F	JXQ6J@TUOGYV@N0M
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
+
+    /// <summary>
+    /// Specifies the user credentials. These settings are used when authentication
+    /// is required on the network.
+    /// </summary>
+    /// <remarks>
+    /// The client identifier, together with the client code, represents
+    /// a unique way of identifying the client connected to the network.
+    /// 
+    /// Third party softwarehouses can request their own identifier/code combination
+    /// for their software. These values have to be stored in the properties before connecting
+    /// to the network.
+    /// When you want to emulate the Microsoft MSN Messenger client, you can use any of the following
+    /// values:
+    /// <c>
+    /// ClientID			ClientCode
+    /// msmsgs@msnmsgr.com	Q1P7W2E4J9R8U3S5 
+    /// PROD0038W!61ZTF9	VT6PX?UQTM4WM%YR 
+    /// PROD0058#7IL2{QD	QHDCY@7R1TB6W?5B 
+    /// PROD0061VRRZH@4F	JXQ6J@TUOGYV@N0M
     /// PROD0119GSJUC$18    ILTXC!4IXB5FB*PX
-	/// </c>
-	/// 
-	/// Note that officially you must use an obtained license (client id and client code) from Microsoft in order to access the network legally!
-	/// After you have received your own license you can set the client id and client code in this class.
-	/// </remarks>
-	[Serializable()]
-	public class Credentials
-	{
-		/// <summary>
-		/// </summary>
+    /// </c>
+    /// 
+    /// Note that officially you must use an obtained license (client id and client code) from Microsoft in order to access the network legally!
+    /// After you have received your own license you can set the client id and client code in this class.
+    /// </remarks>
+    [Serializable()]
+    public class Credentials
+    {
         private string clientID = "PROD0119GSJUC$18";
-		/// <summary>
-		/// </summary>
         private string clientCode = "ILTXC!4IXB5FB*PX";
+        private string password;
+        private string account;
 
-		/// <summary>
-		/// The client identifier used to identify the clientsoftware.
-		/// </summary>
-		public string ClientID
-		{
-			get { return clientID; }
-			set { clientID = value;}
-		}
-		/// <summary>
-		/// The client code used to identify the clientsoftware.
-		/// </summary>
-		public string ClientCode
-		{
-			get { return clientCode; }
-			set { clientCode = value;}
-		}
+        /// <summary>
+        /// The client identifier used to identify the clientsoftware.
+        /// </summary>
+        public string ClientID
+        {
+            get
+            {
+                return clientID;
+            }
+            set
+            {
+                clientID = value;
+            }
+        }
+        /// <summary>
+        /// The client code used to identify the clientsoftware.
+        /// </summary>
+        public string ClientCode
+        {
+            get
+            {
+                return clientCode;
+            }
+            set
+            {
+                clientCode = value;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private string password;
-		/// <summary>
-		/// </summary>
-		private string account;
+        /// <summary>
+        /// Password for the account. Used when logging into the network.
+        /// </summary>
+        public string Password
+        {
+            get
+            {
+                return password;
+            }
+            set
+            {
+                password = value;
+            }
+        }
 
-		/// <summary>
-		/// Password for the account. Used when logging into the network.
-		/// </summary>
-		public string	Password
-		{
-			get { return password; }
-			set { password = value;}
-		}
+        /// <summary>
+        /// The account the identity uses. A typical messenger account is specified as name@hotmail.com.
+        /// </summary>
+        public string Account
+        {
+            get
+            {
+                return account;
+            }
+            set
+            {
+                account = value;
+            }
+        }
 
-		/// <summary>
-		/// The account the identity uses. A typical messenger account is specified as name@hotmail.com.
-		/// </summary>
-		public string	Account
-		{
-			get { return account;  }
-			set { account = value;}
-		}
+        /// <summary>
+        /// Constructor to instantiate a Credentials object.
+        /// </summary>
+        public Credentials()
+        {
+        }
 
-		/// <summary>
-		/// Constructor to instantiate a Credentials object.
-		/// </summary>
-		public Credentials()
-		{
-			
-		}
-
-		/// <summary>
-		/// Constructor to instantiate a Credentials object with the specified values.
-		/// </summary>
-		public Credentials(string account, string password, string clientID, string clientCode)
-		{
-			this.account = account;
-			this.password = password;
-			this.clientCode = clientCode;
-			this.clientID = clientID;			
-		}
-	}
-}
+        /// <summary>
+        /// Constructor to instantiate a Credentials object with the specified values.
+        /// </summary>
+        public Credentials(string account, string password, string clientID, string clientCode)
+        {
+            this.account = account;
+            this.password = password;
+            this.clientCode = clientCode;
+            this.clientID = clientID;
+        }
+    }
+};

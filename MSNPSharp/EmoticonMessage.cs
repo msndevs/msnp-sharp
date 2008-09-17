@@ -29,121 +29,129 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
 using System;
-using System.Collections;
 using System.Text;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
+using System.Collections;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// A message that defines a list of emoticons used in the next textmessage.
-	/// </summary>
-	[Serializable()]
-	public class EmoticonMessage : NetworkMessage
-	{
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		public EmoticonMessage()
-		{
-			emoticons = new ArrayList();
-		}
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		/// <summary>
-		/// Constructor with a single emoticon supplied.
-		/// </summary>
-		/// <param name="emoticon"></param>
-		public EmoticonMessage(Emoticon emoticon)
-		{			
-			emoticons = new ArrayList();
-			emoticons.Add(emoticon);
-		}
+    /// <summary>
+    /// A message that defines a list of emoticons used in the next textmessage.
+    /// </summary>
+    [Serializable()]
+    public class EmoticonMessage : NetworkMessage
+    {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        public EmoticonMessage()
+        {
+            emoticons = new ArrayList();
+        }
 
-		/// <summary>
-		/// Constructor with multiple emoticons supplied.
-		/// </summary>
-		/// <param name="emoticons"></param>
-		public EmoticonMessage(ArrayList emoticons)
-		{
-			Emoticons = (ArrayList)emoticons.Clone();			
-		}
+        /// <summary>
+        /// Constructor with a single emoticon supplied.
+        /// </summary>
+        /// <param name="emoticon"></param>
+        public EmoticonMessage(Emoticon emoticon)
+        {
+            emoticons = new ArrayList();
+            emoticons.Add(emoticon);
+        }
 
-		/// <summary>
-		/// </summary>
-		private ArrayList emoticons;
+        /// <summary>
+        /// Constructor with multiple emoticons supplied.
+        /// </summary>
+        /// <param name="emoticons"></param>
+        public EmoticonMessage(ArrayList emoticons)
+        {
+            Emoticons = (ArrayList)emoticons.Clone();
+        }
 
-		/// <summary>
-		/// The emoticon that is defined in this message
-		/// </summary>
-		public ArrayList Emoticons
-		{
-			get { return emoticons; }
-			set { emoticons = value;}
-		}
+        /// <summary>
+        /// </summary>
+        private ArrayList emoticons;
 
-		/// <summary>
-		/// Sets the Emoticon property.
-		/// </summary>
-		/// <param name="data"></param>
-		public override void ParseBytes(byte[] data)
-		{			
-			// set the text property for easy retrieval
-			string body = System.Text.Encoding.UTF8.GetString(data).Trim ();
-			
-			Emoticons = new ArrayList();
-			
-			string[] values = body.Split('\t');
-			
-			for(int i = 0; i < values.Length; i += 2)
-			{
-				Emoticon emoticon = new Emoticon();
-				emoticon.Shortcut = values[0].Trim();
-				emoticon.ParseContext(values[1].Trim());
-				
-				Emoticons.Add(emoticon);
-			}
-		}
+        /// <summary>
+        /// The emoticon that is defined in this message
+        /// </summary>
+        public ArrayList Emoticons
+        {
+            get
+            {
+                return emoticons;
+            }
+            set
+            {
+                emoticons = value;
+            }
+        }
 
-		/// <summary>
-		/// Sets the mime-headers in the <see cref="MSGMessage"/> object. This is the 'parent' message object.
-		/// </summary>
-		public override void PrepareMessage()
-		{
-			base.PrepareMessage();			
-			if(ParentMessage != null)
-			{
-				MSGMessage msgMessage = (MSGMessage)ParentMessage;
-				msgMessage.MimeHeader["Content-Type"] = "text/x-mms-emoticon";				
-			}
-		}
+        /// <summary>
+        /// Sets the Emoticon property.
+        /// </summary>
+        /// <param name="data"></param>
+        public override void ParseBytes(byte[] data)
+        {
+            // set the text property for easy retrieval
+            string body = System.Text.Encoding.UTF8.GetString(data).Trim();
 
-	
-		/// <summary>
-		/// Gets the header with the body appended as a byte array
-		/// </summary>
-		/// <returns></returns>
-		public override byte[] GetBytes()
-		{			
-			StringBuilder builder = new StringBuilder();
-			for(int i = 0; i < emoticons.Count; i++)
-			{	
-				if(i > 0) builder.Append('\t');
+            Emoticons = new ArrayList();
 
-				Emoticon emoticon = (Emoticon)emoticons[i];
-				builder.Append(emoticon.Shortcut).Append('\t').Append(emoticon.ContextPlain);
-			}
-			return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
-		}
+            string[] values = body.Split('\t');
+
+            for (int i = 0; i < values.Length; i += 2)
+            {
+                Emoticon emoticon = new Emoticon();
+                emoticon.Shortcut = values[0].Trim();
+                emoticon.ParseContext(values[1].Trim());
+
+                Emoticons.Add(emoticon);
+            }
+        }
+
+        /// <summary>
+        /// Sets the mime-headers in the <see cref="MSGMessage"/> object. This is the 'parent' message object.
+        /// </summary>
+        public override void PrepareMessage()
+        {
+            base.PrepareMessage();
+            if (ParentMessage != null)
+            {
+                MSGMessage msgMessage = (MSGMessage)ParentMessage;
+                msgMessage.MimeHeader["Content-Type"] = "text/x-mms-emoticon";
+            }
+        }
 
 
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
-		public override string ToString()
-		{
-			return "[EmoticonMessage] " + System.Text.Encoding.UTF8.GetString(GetBytes());
-		}
+        /// <summary>
+        /// Gets the header with the body appended as a byte array
+        /// </summary>
+        /// <returns></returns>
+        public override byte[] GetBytes()
+        {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < emoticons.Count; i++)
+            {
+                if (i > 0)
+                    builder.Append('\t');
 
-	}
-}
+                Emoticon emoticon = (Emoticon)emoticons[i];
+                builder.Append(emoticon.Shortcut).Append('\t').Append(emoticon.ContextPlain);
+            }
+            return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+        }
+
+
+        /// <summary>
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "[EmoticonMessage] " + System.Text.Encoding.UTF8.GetString(GetBytes());
+        }
+
+    }
+};
