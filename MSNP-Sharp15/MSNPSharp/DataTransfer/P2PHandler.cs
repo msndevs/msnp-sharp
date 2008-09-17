@@ -28,12 +28,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.Collections;
+using System.Diagnostics;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.Collections;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Used in events where a P2PMessageSession object is created, or in another way affected.
@@ -361,15 +363,11 @@ namespace MSNPSharp.DataTransfer
 
             SBMessage sbMessage = (SBMessage)message;
 
-            if (Settings.TraceSwitch.TraceVerbose)
-            {
-                System.Diagnostics.Trace.WriteLine("Parsing incoming msg message", "p2phandler " + NSMessageHandler.Owner.Mail);
-            }
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message " + NSMessageHandler.Owner.Mail, GetType().Name);
 
             if (sbMessage.Command != "MSG")
             {
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("No MSG : " + sbMessage.Command + " instead", "p2phandler " + NSMessageHandler.Owner.Mail);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "No MSG : " + sbMessage.Command + " instead " + NSMessageHandler.Owner.Mail, GetType().Name);
                 return;
             }
 
@@ -381,8 +379,7 @@ namespace MSNPSharp.DataTransfer
             }
             catch (Exception e)
             {
-                if (Settings.TraceSwitch.TraceError)
-                    System.Diagnostics.Trace.WriteLine(e.ToString());
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
             }
 
             // check if it's a valid p2p message
@@ -391,24 +388,16 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            if (Settings.TraceSwitch.TraceVerbose)
-            {
-                System.Diagnostics.Trace.WriteLine("Parsing incoming p2p message", "p2phandler " + NSMessageHandler.Owner.Mail);
-            }
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming p2p message " + NSMessageHandler.Owner.Mail, GetType().Name);
 
             // create a P2P Message from the msg message
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.CreateFromMessage(msgMessage);
 
-            if (Settings.TraceSwitch.TraceVerbose)
-            {
-                System.Diagnostics.Trace.WriteLine("Incoming p2p message: \r\n" + ((P2PMessage)p2pMessage).ToDebugString(), "p2phandler " + NSMessageHandler.Owner.Mail);
-            }
-
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Incoming p2p message " + NSMessageHandler.Owner.Mail + "\r\n" + ((P2PMessage)p2pMessage).ToDebugString(), GetType().Name);
 
             // get the associated message session
             P2PMessageSession session = GetSessionFromRemote((string)sbMessage.CommandValues[0]);// p2pMessage.Identifier);			
-
 
             // check for validity
             if (session == null)

@@ -207,9 +207,7 @@ namespace MSNPSharp
         {
             if (AddressBookSynchronized)
             {
-                if (Settings.TraceSwitch.TraceWarning)
-                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized.", "NSMessageHandler");
-
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "SynchronizeContactList() was called, but the list has already been synchronized.", GetType().Name);
                 return;
             }
 
@@ -236,8 +234,7 @@ namespace MSNPSharp
             }
             catch (Exception ex)
             {
-                if (Settings.TraceSwitch.TraceError)
-                    Trace.WriteLine(ex.Message);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
 
                 recursiveCall++;
                 SynchronizeContactList();
@@ -537,7 +534,7 @@ namespace MSNPSharp
 
         internal SharingServiceBinding CreateSharingService(string partnerScenario)
         {
-            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = WebProxy;
@@ -558,7 +555,7 @@ namespace MSNPSharp
 
         internal ABServiceBinding CreateABService(string partnerScenario)
         {
-            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = WebProxy;
@@ -959,17 +956,17 @@ namespace MSNPSharp
             {
                 handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
-                {                    
+                {
                     contact.OnForwardList = false;
 
                     AddressBook.AddressbookContacts.Remove(contact.Guid);
                     if (MSNLists.None == AddressBook.GetMSNLists(contact.Mail, contact.ClientType))
                     {
                         AddressBook.MembershipContacts.Remove(new ContactIdentifier(contact.Mail, contact.ClientType));
-                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);                        
+                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
                         contact.NSMessageHandler = null;
                     }
-               
+
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
                     contact.SetGuid(Guid.Empty);
                     contact.SetIsMessengerUser(false);
@@ -1126,8 +1123,7 @@ namespace MSNPSharp
                     handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                     if (!e.Cancelled && e.Error == null)
                     {
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine("UpdateMe completed.");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateMe completed.", GetType().Name);
 
                         AddressBook.MyProperties["blp"] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
                         AddressBook.MyProperties["gtc"] = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
@@ -1442,8 +1438,7 @@ namespace MSNPSharp
                         onSuccess(this, EventArgs.Empty);
                     }
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("AddMember completed: " + list);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + list, GetType().Name);
                 }
             };
 
@@ -1560,9 +1555,7 @@ namespace MSNPSharp
                     {
                         onSuccess(this, EventArgs.Empty);
                     }
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMember completed: " + list);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + list, GetType().Name);
                 }
             };
 

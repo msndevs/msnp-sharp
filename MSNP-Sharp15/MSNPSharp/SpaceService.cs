@@ -116,9 +116,7 @@ namespace MSNPSharp
                         OnContactCardCompleted(new ContactCardCompletedEventArg(true, e.Error, null));
                         OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("GetContactCard", e.Error));
 
-                        if (Settings.TraceSwitch.TraceError)
-                            Trace.WriteLine(e.Error.Message);
-
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.Message, GetType().Name);
                         return;
                     }
 
@@ -322,7 +320,7 @@ namespace MSNPSharp
 
         private SpaceService CreateSpaceService()
         {
-            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Spaces);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Spaces);
 
             SpaceService service = new SpaceService();
             service.Proxy = WebProxy;

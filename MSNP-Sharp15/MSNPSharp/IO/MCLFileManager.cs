@@ -123,11 +123,11 @@ namespace MSNPSharp.IO
                                 mclinfo.File.Save();
                         }
 
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, storage.Count + " MCL file(s) saved.", "MCLFileManager");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, storage.Count + " MCL file(s) saved.", typeof(MCLFileManager).Name);
                     }
                     catch (Exception exception)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, exception.Message, "MCLFileManager");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, exception.Message, typeof(MCLFileManager).Name);
                     }
                     finally
                     {

@@ -28,14 +28,15 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.IO;
+using System.Xml;
+using System.Text;
+using System.Diagnostics;
+using System.Globalization;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.IO;
-    using System.Xml;
-    using System.Text;
-    using System.Globalization;
-
     /// <summary>
     /// Represents a single NOT or IPG message.
     /// </summary>
@@ -232,8 +233,8 @@ namespace MSNPSharp.Core
 
                 TextReader reader = new StreamReader(new MemoryStream(data), new System.Text.UTF8Encoding(false));
 
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine(reader.ReadToEnd());
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, reader.ReadToEnd(), GetType().Name);
+
                 reader = new StreamReader(new MemoryStream(data), new System.Text.UTF8Encoding(false));
                 xmlDoc.Load(reader);
 

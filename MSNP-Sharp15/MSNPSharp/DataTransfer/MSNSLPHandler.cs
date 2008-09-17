@@ -29,19 +29,20 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.IO;
+using System.Net;
+using System.Threading;
+using System.Collections;
+using System.Diagnostics;
+using System.Net.Sockets;
+using System.Globalization;
+using System.Text.RegularExpressions;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.IO;
-    using System.Threading;
-    using System.Text.RegularExpressions;
-    using System.Collections;
-    using System.Net;
-    using System.Net.Sockets;
-    using System.Globalization;
-    using System.Diagnostics;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Defines the type of datatransfer for a MSNSLPHandler
@@ -632,9 +633,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected MSNSLPHandler()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Constructing object", "MSNSLPHandler");
-
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
         }
 
         /// <summary>
@@ -1103,8 +1102,7 @@ namespace MSNPSharp.DataTransfer
             // check and determine connectivity
             if (LocalEndPoint == null || this.ExternalEndPoint == null)
             {
-                if (Settings.TraceSwitch.TraceWarning)
-                    System.Diagnostics.Trace.WriteLine("LocalEndPoint or ExternalEndPoint are not set. Connection type will be set to unknown.", "MSNSLPHandler");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "LocalEndPoint or ExternalEndPoint are not set. Connection type will be set to unknown.", GetType().Name);
             }
             else
             {
@@ -1122,10 +1120,7 @@ namespace MSNPSharp.DataTransfer
                     else
                         connectionType = "Symmetric-NAT";
                 }
-                if (Settings.TraceSwitch.TraceInfo)
-                {
-                    System.Diagnostics.Trace.WriteLine("Connection type set to " + connectionType + " for session " + transferProperties.SessionId.ToString(CultureInfo.InvariantCulture), "MSNSLPHandler");
-                }
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Connection type set to " + connectionType + " for session " + transferProperties.SessionId.ToString(CultureInfo.InvariantCulture), GetType().Name);
             }
 
             // create the message
@@ -1231,10 +1226,12 @@ namespace MSNPSharp.DataTransfer
             if (match.Success)
             {
                 return match.Groups[1].Value;
-            }else{
+            }
+            else
+            {
                 shaRe = new Regex("SHA1D=\"([^\"]+)\"");
                 match = shaRe.Match(context);
-                if(match .Success )
+                if (match.Success)
                     return match.Groups[1].Value;
             }
             throw new MSNPSharpException("SHA field could not be extracted from the specified context: " + context);
@@ -1304,23 +1301,20 @@ namespace MSNPSharp.DataTransfer
         /// <param name="message"></param>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            System.Diagnostics.Debug.Assert(message is P2PMessage, "Message is not a P2P message in MSNSLP handler", "");
-
+            Debug.Assert(message is P2PMessage, "Message is not a P2P message in MSNSLP handler", "");
 
             P2PMessage p2pMessage = ((P2PMessage)message);
 
             if (p2pMessage.InnerBody.Length == 0)
             {
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("P2PMessage incoming:\r\n" + p2pMessage.ToDebugString(), "MSNSLPHandler");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2PMessage incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
                 return;
             }
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
             slpMessage.CreateFromMessage(message);
 
-            if (Settings.TraceSwitch.TraceVerbose)
-                System.Diagnostics.Trace.WriteLine("MSNSLPMessage incoming:\r\n" + slpMessage.ToDebugString(), "MSNSLPHandler");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "MSNSLPMessage incoming:\r\n" + slpMessage.ToDebugString(), GetType().Name);
 
             // call the methods belonging to the content-type to handle the message
             switch (slpMessage.ContentType)
@@ -1339,12 +1333,10 @@ namespace MSNPSharp.DataTransfer
                     break;
                 default:
                     {
-                        if (Settings.TraceSwitch.TraceWarning)
-                            System.Diagnostics.Trace.WriteLine("Content-type not supported: " + slpMessage.ContentType, "MSNSLPHandler");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Content-type not supported: " + slpMessage.ContentType, GetType().Name);
                         break;
                     }
             }
-
         }
 
 
@@ -1375,8 +1367,7 @@ namespace MSNPSharp.DataTransfer
         {
             if (transfers.ContainsKey(message.CallId))
             {
-                if (Settings.TraceSwitch.TraceWarning)
-                    System.Diagnostics.Trace.WriteLine("Warning: a session with the call-id " + message.CallId.ToString() + " already exists.");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Warning: a session with the call-id " + message.CallId.ToString() + " already exists.", GetType().Name);
                 return;
             }
 

@@ -27,8 +27,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
-#define TRACE
-
 using System;
 using System.IO;
 using System.Text;
@@ -258,7 +256,7 @@ namespace MSNPSharp.IO
                 }
                 catch (Exception exception)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, exception.Message, "MCLFile");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exception.Message, GetType().Name);
                     return new MCLFileStruct();
                 }
                 finally
