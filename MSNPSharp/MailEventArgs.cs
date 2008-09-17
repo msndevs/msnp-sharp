@@ -30,183 +30,238 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Net;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Diagnostics;
 
 namespace MSNPSharp
 {
-	/// <summary>
-	/// Send as event argument when the server has send a (initial) mailbox status.
-	/// </summary>
-	[Serializable()]
-	public class MailboxStatusEventArgs : EventArgs
-	{
-		/// <summary>
-		/// Number of mails in the inbox which are unread
-		/// </summary>
-		public int InboxUnread
-		{
-			get { return inboxUnread; }
-			set { inboxUnread = value;}
-		}
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		/// <summary>
-		/// </summary>
-		private int inboxUnread;
+    /// <summary>
+    /// Send as event argument when the server has send a (initial) mailbox status.
+    /// </summary>
+    [Serializable()]
+    public class MailboxStatusEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Number of mails in the inbox which are unread
+        /// </summary>
+        public int InboxUnread
+        {
+            get
+            {
+                return inboxUnread;
+            }
+            set
+            {
+                inboxUnread = value;
+            }
+        }
 
-		/// <summary>
-		/// Number of folders which are unread
-		/// </summary>
-		public int FoldersUnread
-		{
-			get { return foldersUnread; }
-			set { foldersUnread = value;}
-		}
+        /// <summary>
+        /// </summary>
+        private int inboxUnread;
 
-		/// <summary>
-		/// </summary>
-		private int foldersUnread;
+        /// <summary>
+        /// Number of folders which are unread
+        /// </summary>
+        public int FoldersUnread
+        {
+            get
+            {
+                return foldersUnread;
+            }
+            set
+            {
+                foldersUnread = value;
+            }
+        }
 
-		/// <summary>
-		/// The URL to go directly to the inbox of the contactlist owner
-		/// </summary>
-		public string InboxURL
-		{
-			get { return inboxURL; }
-			set { inboxURL = value;}
-		}
+        /// <summary>
+        /// </summary>
+        private int foldersUnread;
 
-		/// <summary>
-		/// </summary>
-		private string inboxURL;
+        /// <summary>
+        /// The URL to go directly to the inbox of the contactlist owner
+        /// </summary>
+        public string InboxURL
+        {
+            get
+            {
+                return inboxURL;
+            }
+            set
+            {
+                inboxURL = value;
+            }
+        }
 
-		/// <summary>
-		/// The URL to go directly to the folders of the contactlist owner
-		/// </summary>
-		public string FoldersURL
-		{
-			get { return foldersURL; }
-			set { foldersURL = value;}
-		}
+        /// <summary>
+        /// </summary>
+        private string inboxURL;
 
-		/// <summary>
-		/// </summary>
-		private string foldersURL;
+        /// <summary>
+        /// The URL to go directly to the folders of the contactlist owner
+        /// </summary>
+        public string FoldersURL
+        {
+            get
+            {
+                return foldersURL;
+            }
+            set
+            {
+                foldersURL = value;
+            }
+        }
 
-		/// <summary>
-		/// The URL to go directly to the webpage to compose a new mail
-		/// </summary>
-		public string PostURL
-		{
-			get { return postURL; }
-			set { postURL = value;}
-		}
+        /// <summary>
+        /// </summary>
+        private string foldersURL;
 
-		/// <summary>
-		/// </summary>
-		private string postURL;
+        /// <summary>
+        /// The URL to go directly to the webpage to compose a new mail
+        /// </summary>
+        public string PostURL
+        {
+            get
+            {
+                return postURL;
+            }
+            set
+            {
+                postURL = value;
+            }
+        }
 
-		/// <summary>
-		/// Constructory.
-		/// </summary>
-		/// <param name="inboxUnread"></param>
-		/// <param name="foldersUnread"></param>
-		/// <param name="inboxURL"></param>
-		/// <param name="foldersURL"></param>
-		/// <param name="postURL"></param>
-		public MailboxStatusEventArgs(int inboxUnread, int foldersUnread, string inboxURL, string foldersURL, string postURL)
-		{
-			InboxUnread		= inboxUnread;
-			FoldersUnread	= foldersUnread;
-			InboxURL		= inboxURL;
-			FoldersURL		= foldersURL;
-			PostURL			= postURL;
-		}
-	}
+        /// <summary>
+        /// </summary>
+        private string postURL;
 
-	/// <summary>
-	/// Send as event argument when unread mail has been read or the owner moves mail.
-	/// </summary>
-	[Serializable()]
-	public class MailChangedEventArgs : EventArgs
-	{
-		/// <summary>
-		/// The source folder the mail(s) are moved from
-		/// </summary>
-		public string	SourceFolder
-		{
-			get { return sourceFolder; }
-			set { sourceFolder = value;}
-		}
+        /// <summary>
+        /// Constructory.
+        /// </summary>
+        /// <param name="inboxUnread"></param>
+        /// <param name="foldersUnread"></param>
+        /// <param name="inboxURL"></param>
+        /// <param name="foldersURL"></param>
+        /// <param name="postURL"></param>
+        public MailboxStatusEventArgs(int inboxUnread, int foldersUnread, string inboxURL, string foldersURL, string postURL)
+        {
+            InboxUnread = inboxUnread;
+            FoldersUnread = foldersUnread;
+            InboxURL = inboxURL;
+            FoldersURL = foldersURL;
+            PostURL = postURL;
+        }
+    }
 
-		/// <summary>
-		/// </summary>
-		private string	sourceFolder;
+    /// <summary>
+    /// Send as event argument when unread mail has been read or the owner moves mail.
+    /// </summary>
+    [Serializable()]
+    public class MailChangedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// The source folder the mail(s) are moved from
+        /// </summary>
+        public string SourceFolder
+        {
+            get
+            {
+                return sourceFolder;
+            }
+            set
+            {
+                sourceFolder = value;
+            }
+        }
 
-		/// <summary>
-		/// The destination folder the mail(s) are moved to
-		/// </summary>
-		public string	DestinationFolder
-		{
-			get { return destinationFolder; }
-			set { destinationFolder = value;}
-		}
+        /// <summary>
+        /// </summary>
+        private string sourceFolder;
 
-		/// <summary>
-		/// </summary>
-		private string	destinationFolder;
+        /// <summary>
+        /// The destination folder the mail(s) are moved to
+        /// </summary>
+        public string DestinationFolder
+        {
+            get
+            {
+                return destinationFolder;
+            }
+            set
+            {
+                destinationFolder = value;
+            }
+        }
 
-		/// <summary>
-		/// The number of mails moved
-		/// </summary>
-		public int		Count
-		{
-			get { return count; }
-			set { count = value;}
-		}
+        /// <summary>
+        /// </summary>
+        private string destinationFolder;
 
-		/// <summary>
-		/// </summary>
-		private int		count;
+        /// <summary>
+        /// The number of mails moved
+        /// </summary>
+        public int Count
+        {
+            get
+            {
+                return count;
+            }
+            set
+            {
+                count = value;
+            }
+        }
 
-		/// <summary>
-		/// Indicates whether mails are moved between folders or if unread mails are read.
-		/// When sourcefolder and destination folder are the same this means the mails are not moved but read, and MailsRead will return true. Otherwise it will return false.
-		/// </summary>
-		public bool	MailsAreRead
-		{
-			get { return SourceFolder == DestinationFolder; }
-		}
+        /// <summary>
+        /// </summary>
+        private int count;
 
-		/// <summary>
-		/// Constructor, mainly used internal by the library.
-		/// </summary>
-		/// <param name="sourceFolder"></param>
-		/// <param name="destinationFolder"></param>
-		/// <param name="count"></param>
-		public MailChangedEventArgs(string sourceFolder, string destinationFolder, int count)
-		{
-			SourceFolder = sourceFolder;
-			DestinationFolder = destinationFolder;
-			Count = count;
-		}
-	}
-	
-	/// <summary>
-	/// Send as event argument when the server notifies us of a new e-mail waiting.
-	/// </summary>
-	[Serializable()]
-	public class NewMailEventArgs : EventArgs
-	{
-		/// <summary>
-		/// The person's name who sended the e-mail
-		/// </summary>
-		public string From
-		{
-			get { return from; }
+        /// <summary>
+        /// Indicates whether mails are moved between folders or if unread mails are read.
+        /// When sourcefolder and destination folder are the same this means the mails are not moved but read, and MailsRead will return true. Otherwise it will return false.
+        /// </summary>
+        public bool MailsAreRead
+        {
+            get
+            {
+                return SourceFolder == DestinationFolder;
+            }
+        }
+
+        /// <summary>
+        /// Constructor, mainly used internal by the library.
+        /// </summary>
+        /// <param name="sourceFolder"></param>
+        /// <param name="destinationFolder"></param>
+        /// <param name="count"></param>
+        public MailChangedEventArgs(string sourceFolder, string destinationFolder, int count)
+        {
+            SourceFolder = sourceFolder;
+            DestinationFolder = destinationFolder;
+            Count = count;
+        }
+    }
+
+    /// <summary>
+    /// Send as event argument when the server notifies us of a new e-mail waiting.
+    /// </summary>
+    [Serializable()]
+    public class NewMailEventArgs : EventArgs
+    {
+        /// <summary>
+        /// The person's name who sended the e-mail
+        /// </summary>
+        public string From
+        {
+            get
+            {
+                return from;
+            }
             set
             {
                 try
@@ -235,115 +290,149 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine(ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
                 }
                 from = value;
-
             }
         }
 
-		/// <summary>
-		/// </summary>
-		private string from;
+        /// <summary>
+        /// </summary>
+        private string from;
 
-		/// <summary>
-		/// The url to directly view the message in Hotmail
-		/// </summary>
-		public string MessageUrl
-		{
-			get { return messageUrl; }
-			set { messageUrl = value;}
-		}
+        /// <summary>
+        /// The url to directly view the message in Hotmail
+        /// </summary>
+        public string MessageUrl
+        {
+            get
+            {
+                return messageUrl;
+            }
+            set
+            {
+                messageUrl = value;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private string messageUrl;
+        /// <summary>
+        /// </summary>
+        private string messageUrl;
 
-		/// <summary>
-		/// The post url used for automatic hotmail login
-		/// </summary>
-		public string PostUrl
-		{
-			get { return postUrl; }
-			set { postUrl = value;}
-		}
+        /// <summary>
+        /// The post url used for automatic hotmail login
+        /// </summary>
+        public string PostUrl
+        {
+            get
+            {
+                return postUrl;
+            }
+            set
+            {
+                postUrl = value;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private string postUrl;
+        /// <summary>
+        /// </summary>
+        private string postUrl;
 
-		/// <summary>
-		/// The subject of the e-mail
-		/// </summary>
-		public string Subject
-		{
-			get { return subject; }
-			set { subject = value;}
-		}
+        /// <summary>
+        /// The subject of the e-mail
+        /// </summary>
+        public string Subject
+        {
+            get
+            {
+                return subject;
+            }
+            set
+            {
+                subject = value;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private string subject;
+        /// <summary>
+        /// </summary>
+        private string subject;
 
-		/// <summary>
-		/// The folder the mail is redirected to
-		/// </summary>
-		public string DestinationFolder
-		{
-			get { return destinationFolder; }
-			set { destinationFolder = value;}
-		}
+        /// <summary>
+        /// The folder the mail is redirected to
+        /// </summary>
+        public string DestinationFolder
+        {
+            get
+            {
+                return destinationFolder;
+            }
+            set
+            {
+                destinationFolder = value;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private string destinationFolder;
+        /// <summary>
+        /// </summary>
+        private string destinationFolder;
 
-		/// <summary>
-		/// The e-mail adress of the person who sended the e-mail
-		/// </summary>
-		public string FromEmail
-		{
-			get { return fromEmail; }
-			set { fromEmail = value;}
-		}
+        /// <summary>
+        /// The e-mail adress of the person who sended the e-mail
+        /// </summary>
+        public string FromEmail
+        {
+            get
+            {
+                return fromEmail;
+            }
+            set
+            {
+                fromEmail = value;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private string fromEmail;
+        /// <summary>
+        /// </summary>
+        private string fromEmail;
 
-		/// <summary>
-		/// ID of the message, used for hotmail login
-		/// </summary>
-		public int	  Id
-		{
-			get { return id; }
-			set { id = value;}
-		}
+        /// <summary>
+        /// ID of the message, used for hotmail login
+        /// </summary>
+        public int Id
+        {
+            get
+            {
+                return id;
+            }
+            set
+            {
+                id = value;
+            }
+        }
 
-		/// <summary>
-		/// </summary>
-		private int	  id;
+        /// <summary>
+        /// </summary>
+        private int id;
 
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		/// <param name="from"></param>
-		/// <param name="messageUrl"></param>
-		/// <param name="postUrl"></param>
-		/// <param name="subject"></param>
-		/// <param name="destinationFolder"></param>
-		/// <param name="fromEmail"></param>
-		/// <param name="id"></param>
-		public NewMailEventArgs(string from, string messageUrl, string postUrl, string subject, string destinationFolder, string fromEmail, int id)
-		{
-			From		= from;
-			PostUrl		= postUrl;
-			MessageUrl	= messageUrl;
-			Subject		= subject;
-			DestinationFolder = destinationFolder;
-			FromEmail	= fromEmail;
-			Id			= id;
-		}
-	}
-}
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="messageUrl"></param>
+        /// <param name="postUrl"></param>
+        /// <param name="subject"></param>
+        /// <param name="destinationFolder"></param>
+        /// <param name="fromEmail"></param>
+        /// <param name="id"></param>
+        public NewMailEventArgs(string from, string messageUrl, string postUrl, string subject, string destinationFolder, string fromEmail, int id)
+        {
+            From = from;
+            PostUrl = postUrl;
+            MessageUrl = messageUrl;
+            Subject = subject;
+            DestinationFolder = destinationFolder;
+            FromEmail = fromEmail;
+            Id = id;
+        }
+    }
+};

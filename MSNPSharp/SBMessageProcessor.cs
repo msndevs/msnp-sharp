@@ -30,113 +30,111 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
+using System.Diagnostics;
 
 namespace MSNPSharp
 {
-	
-	public class SBMessageProcessor : SocketMessageProcessor
-	{
-		int transactionID = 1;
-		
-		public event ProcessorExceptionEventHandler	HandlerException;
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
-		public int TransactionID
-		{
-			get { 
-				return transactionID; 
-			}
-			set { 
-				transactionID = value;
-			}
-		}
+    public class SBMessageProcessor : SocketMessageProcessor
+    {
+        int transactionID = 1;
 
-		protected int IncreaseTransactionID()
-		{
-			transactionID++;
-			return transactionID;
-		}
+        public event ProcessorExceptionEventHandler HandlerException;
 
-		private SBMessageProcessor()
-		{
-			if(Settings.TraceSwitch.TraceInfo)
-				System.Diagnostics.Trace.WriteLine("Constructing object", "SBMessageProcessor");
-			
-			MessagePool = new SBMessagePool();	
-		}
+        public int TransactionID
+        {
+            get
+            {
+                return transactionID;
+            }
+            set
+            {
+                transactionID = value;
+            }
+        }
 
-		protected override void OnMessageReceived(byte[] data)
-		{
-			if(Settings.TraceSwitch.TraceVerbose)
-				System.Diagnostics.Trace.WriteLine("Message received \r\n"  +System.Text.UTF8Encoding.UTF8.GetString(data), "\r\nfrom SBMessageProcessor");
+        protected int IncreaseTransactionID()
+        {
+            transactionID++;
+            return transactionID;
+        }
 
-			base.OnMessageReceived (data);			
-			
-			// first get the general expected switchboard message
-			SBMessage message = new SBMessage();
+        private SBMessageProcessor()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
 
-			message.ParseBytes(data);
+            MessagePool = new SBMessagePool();
+        }
 
-			// send the message
-			DispatchMessage(message);				
-		}
+        protected override void OnMessageReceived(byte[] data)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + System.Text.UTF8Encoding.UTF8.GetString(data), GetType().Name);
 
-		protected virtual void DispatchMessage(NetworkMessage message)
-		{
-			// copy the messageHandlers array because the collection can be 
-			// modified during the message handling. (Handlers are registered/unregistered)
-			IMessageHandler[] handlers = MessageHandlers.ToArray ();
+            base.OnMessageReceived(data);
 
-			// now give the handlers the opportunity to handle the message
-			foreach(IMessageHandler handler in handlers)
-			{
-				try
-				{
-					if(Settings.TraceSwitch.TraceVerbose)
-						System.Diagnostics.Trace.WriteLine("Handling received message " + handler.ToString(), "SBMessageProcessor");
-					handler.HandleMessage(this, message);
-				}
-				catch(Exception e)
-				{
-					OnHandlerException(e);
-				}			
-			}
-		}
-		
-		protected virtual void OnHandlerException(Exception e)
-		{
-			MSNPSharpException MSNPSharpException = new MSNPSharpException("An exception occured while handling a switchboard message. See inner exception for more details.", e);
-			if(Settings.TraceSwitch.TraceError)
-				System.Diagnostics.Trace.WriteLine(MSNPSharpException.InnerException.ToString() + "\r\nStacktrace:\r\n" + MSNPSharpException.InnerException.StackTrace.ToString());
+            // first get the general expected switchboard message
+            SBMessage message = new SBMessage();
 
-			if(HandlerException != null)
-				HandlerException(this, new ExceptionEventArgs(MSNPSharpException));
-		}
+            message.ParseBytes(data);
 
-		public override void SendMessage(NetworkMessage message)
-		{
-			SBMessage sbMessage = (SBMessage)message;
+            // send the message
+            DispatchMessage(message);
+        }
 
-			sbMessage.TransactionID = IncreaseTransactionID();
+        protected virtual void DispatchMessage(NetworkMessage message)
+        {
+            // copy the messageHandlers array because the collection can be 
+            // modified during the message handling. (Handlers are registered/unregistered)
+            IMessageHandler[] handlers = MessageHandlers.ToArray();
 
-			if(Settings.TraceSwitch.TraceVerbose)
-			{
-				System.Diagnostics.Trace.WriteLine("Outgoing message:\r\n" + sbMessage.ToDebugString(), "SBMessageProcessor");
-			}
+            // now give the handlers the opportunity to handle the message
+            foreach (IMessageHandler handler in handlers)
+            {
+                try
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Handling received message " + handler.ToString(), GetType().Name);
 
-			// prepare the message
-			sbMessage.PrepareMessage();
+                    handler.HandleMessage(this, message);
+                }
+                catch (Exception e)
+                {
+                    OnHandlerException(e);
+                }
+            }
+        }
 
-			// convert to bytes and send it over the socket
-			SendSocketData(sbMessage.GetBytes());
-		}
+        protected virtual void OnHandlerException(Exception e)
+        {
+            MSNPSharpException MSNPSharpException = new MSNPSharpException("An exception occured while handling a switchboard message. See inner exception for more details.", e);
 
-		public override void Disconnect()
-		{
-			SendMessage(new SBMessage("OUT", new string[]{}));
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, MSNPSharpException.InnerException.ToString() + "\r\nStacktrace:\r\n" + MSNPSharpException.InnerException.StackTrace.ToString(), GetType().Name);
+
+            if (HandlerException != null)
+                HandlerException(this, new ExceptionEventArgs(MSNPSharpException));
+        }
+
+        public override void SendMessage(NetworkMessage message)
+        {
+            SBMessage sbMessage = (SBMessage)message;
+
+            sbMessage.TransactionID = IncreaseTransactionID();
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + sbMessage.ToDebugString(), GetType().Name);
+
+            // prepare the message
+            sbMessage.PrepareMessage();
+
+            // convert to bytes and send it over the socket
+            SendSocketData(sbMessage.GetBytes());
+        }
+
+        public override void Disconnect()
+        {
+            SendMessage(new SBMessage("OUT", new string[] { }));
             System.Threading.Thread.CurrentThread.Join(100);
-			base.Disconnect ();
-		}
-	}
-}
+            base.Disconnect();
+        }
+    }
+};

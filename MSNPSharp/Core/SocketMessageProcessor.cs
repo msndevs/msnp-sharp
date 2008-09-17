@@ -28,16 +28,18 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.IO;
+using System.Net;
+using System.Threading;
+using System.Net.Sockets;
+using System.Collections;
+using System.Diagnostics;
+using System.Collections.Generic;
+using Org.Mentalis.Network.ProxySocket;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.Net;
-    using System.Net.Sockets;
-    using System.IO;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Threading;
-    using Org.Mentalis.Network.ProxySocket;
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
 
@@ -243,8 +245,7 @@ namespace MSNPSharp.Core
                 if (socket != null && socket.Connected)
                     socket.Close();
 
-                if (Settings.TraceSwitch.TraceError)
-                    System.Diagnostics.Trace.WriteLine(e.ToString() + "\r\n" + e.StackTrace + "\r\n", "SocketMessageProcessor");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString() + "\r\n" + e.StackTrace + "\r\n", GetType().Name);
 
                 OnDisconnected();
 
@@ -258,13 +259,11 @@ namespace MSNPSharp.Core
         {
             try
             {
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("End Connect Callback", "SocketMessageProcessor");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback", GetType().Name);
 
                 ((ProxySocket)socket).EndConnect(ar);
 
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("End Connect Callback Daarna", "SocketMessageProcessor");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback Daarna", GetType().Name);
 
                 OnConnected();
 
@@ -273,11 +272,8 @@ namespace MSNPSharp.Core
             }
             catch (Exception e)
             {
-                if (Settings.TraceSwitch.TraceError)
-                    System.Diagnostics.Trace.WriteLine("** EndConnectCallback exception **" + e.ToString(), "SocketMessageProessor");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "** EndConnectCallback exception **" + e.ToString(), GetType().Name);
 
-                // an exception was raised while connecting to the endpoint
-                // fire the event to notify the client programmer
                 if (ConnectingException != null)
                     ConnectingException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor failed to connect to the specified endpoint. See the inner exception for more information.", e)));
             }
@@ -285,13 +281,10 @@ namespace MSNPSharp.Core
 
         protected virtual void BeginDataReceive(Socket socket)
         {
-            // now go retrieve data	
             try
             {
-
                 socketBuffer = new byte[socketBuffer.Length];
                 socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(EndReceiveCallback), socket);
-
             }
             catch (ObjectDisposedException)
             {
@@ -300,16 +293,16 @@ namespace MSNPSharp.Core
 
         protected virtual void OnConnected()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Connected", "SocketMessageProcessor");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Connected", GetType().Name);
+
             if (ConnectionEstablished != null)
                 ConnectionEstablished(this, new EventArgs());
         }
 
         protected virtual void OnDisconnected()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Disconnected", "SocketMessageProcessor");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Disconnected", GetType().Name);
+
             if (ConnectionClosed != null)
                 ConnectionClosed(this, new EventArgs());
         }
@@ -376,9 +369,7 @@ namespace MSNPSharp.Core
         {
             if (socket != null && socket.Connected)
             {
-                if (Settings.TraceSwitch.TraceWarning)
-                    System.Diagnostics.Trace.WriteLine("SocketMessageProcess.Connect() called, but already a socket available.", "NS9MessageHandler");
-
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Connect() called, but already a socket available.", GetType().Name);
                 return;
             }
 
@@ -401,11 +392,8 @@ namespace MSNPSharp.Core
             }
             catch (Exception e)
             {
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("Connecting exception: " + e.ToString(), "SocketMessageProcessor");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Connecting exception: " + e.ToString(), GetType().Name);
 
-                // an exception was raised while connecting to the endpoint
-                // fire the event to notify the client programmer
                 if (ConnectingException != null)
                     ConnectingException(this, new ExceptionEventArgs(e));
 

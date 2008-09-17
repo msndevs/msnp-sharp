@@ -30,15 +30,17 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.Net;
+using System.IO;
+using System.Threading;
+using System.Collections;
+using System.Diagnostics;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.Net;
-    using System.IO;
-    using System.Threading;
-    using System.Collections;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// A single transfer of data within a p2p session. 
@@ -239,8 +241,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PTransferSession()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Constructing p2p transfer session object", "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object", GetType().Name);
         }
 
         /// <summary>
@@ -253,7 +254,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void AbortTransfer()
         {
-            if (transferThread != null && transferThread.ThreadState == ThreadState.Running)
+            if (transferThread != null && transferThread.ThreadState == System.Threading.ThreadState.Running)
             {
                 AbortTransferThread();
             }
@@ -411,8 +412,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            if (Settings.TraceSwitch.TraceVerbose)
-                System.Diagnostics.Trace.WriteLine("P2P Info message received", "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2P Info message received", GetType().Name);
 
             // it is not a datamessage.
             // fill up the buffer with this message and extract the messages one-by-one and dispatch
@@ -657,8 +657,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected void TransferDataEntry()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Starting transfer thread", "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Starting transfer thread", GetType().Name);
 
             OnTransferStarted();
 
@@ -733,8 +732,7 @@ namespace MSNPSharp.DataTransfer
             {
                 if (sex.ErrorCode == 10053)
                 {
-                    if (Settings.TraceSwitch.TraceInfo)
-                        System.Diagnostics.Trace.WriteLine("You've closed a connection: " + sex.ToString(), "P2PTransferSession");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "You've closed a connection: " + sex.ToString(), GetType().Name);
                 }
 
                 abortThread = true;
@@ -745,8 +743,7 @@ namespace MSNPSharp.DataTransfer
                 abortThread = true;
                 MessageSession.CloseDirectConnection();
 
-                if (Settings.TraceSwitch.TraceInfo)
-                    System.Diagnostics.Trace.WriteLine("Exception in transfer thread: " + oex.ToString(), "P2PTransferSession");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Exception in transfer thread: " + oex.ToString(), GetType().Name);
             }
             //catch (Exception e)
             //{
@@ -761,8 +758,7 @@ namespace MSNPSharp.DataTransfer
             //}
             finally
             {
-                if (Settings.TraceSwitch.TraceInfo)
-                    System.Diagnostics.Trace.WriteLine("Stopping transfer thread", "P2PTransferSession");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Stopping transfer thread", GetType().Name);
             }
         }
 
@@ -784,7 +780,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void AbortTransferThread()
         {
-            if (transferThread != null && transferThread.ThreadState == ThreadState.Running)
+            if (transferThread != null && transferThread.ThreadState == System.Threading.ThreadState.Running)
             {
                 //transferThread.Abort();
                 abortThread = true;
@@ -869,7 +865,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="e"></param>
         private void messageSession_DirectConnectionFailed(object sender, EventArgs e)
         {
-            if (waitingDirectConnection == true)
+            if (waitingDirectConnection)
             {
                 waitingDirectConnection = false;
                 StartDataTransfer(false);

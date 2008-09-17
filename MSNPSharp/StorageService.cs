@@ -25,7 +25,7 @@ namespace MSNPSharp
 
         private StorageService CreateStorageService(String scenario)
         {
-            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Storage);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Storage);
 
             StorageService storageService = new StorageService();
             storageService.Proxy = WebProxy;
@@ -105,8 +105,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("CreateProfile error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateProfile error: " + ex.Message, GetType().Name);
                 }
 
                 //2. ShareItem, share the profile.
@@ -121,8 +120,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("ShareItem error : " + ex.Message);  //Item already shared.
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ShareItem error: " + ex.Message, GetType().Name); //Item already shared.
                 }
 
                 //3. AddMember, add a ProfileExpression role member into the newly created profile and define messenger service.
@@ -162,8 +160,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        if (Settings.TraceSwitch.TraceError)
-                            Trace.WriteLine("AddMember error : " + ex.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "AddMember error: " + ex.Message, GetType().Name);
                     }
                 }
 
@@ -193,8 +190,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("GetProfile error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "GetProfile error: " + ex.Message, GetType().FullName);
                 }
 
                 //4. CreateDocument, create a new document for this profile and return its resource id.
@@ -230,8 +226,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("CreateDocument error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateDocument error: " + ex.Message, GetType().Name);
                 }
 
                 //5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
@@ -250,8 +245,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("CreateRelationships error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateRelationships error: " + ex.Message, GetType().Name);
                 }
 
                 //6.1 UpdateProfile
@@ -275,8 +269,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("UpdateProfile error ; " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateProfile error: " + ex.Message, GetType().Name);
                 }
 
                 // 6.2 Get Profile again to get notification.LastChanged
@@ -326,8 +319,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        if (Settings.TraceSwitch.TraceError)
-                            Trace.WriteLine("UpdateDynamicItem error ; " + ex.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: " + ex.Message, GetType().Name);
                     }
 
                     //9. ABContactUpdate
@@ -354,8 +346,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        if (Settings.TraceSwitch.TraceError)
-                            Trace.WriteLine("ABContactUpdate error ; " + ex.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ABContactUpdate error: " + ex.Message, GetType().Name);
                     }
                 }
 
@@ -448,8 +439,7 @@ namespace MSNPSharp
                         CreateProfile();
                     }
 
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine(ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
                 }
             }
             return NSMessageHandler.ContactService.AddressBook.Profile;

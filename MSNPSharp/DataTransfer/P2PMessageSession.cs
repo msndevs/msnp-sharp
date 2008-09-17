@@ -28,17 +28,19 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Threading;
+using System.Collections;
+using System.Diagnostics;
+using System.Globalization;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.IO;
-    using System.Collections;
-    using System.Text;
-    using System.Globalization;
-    using System.Threading;
-    using System.Net;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// P2PMessageSession routes all messages in the p2p framework between the local client and a single remote client.
@@ -254,8 +256,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PMessageSession()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Constructing object", "P2PMessageSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
         }
 
         /// <summary>
@@ -358,8 +359,7 @@ namespace MSNPSharp.DataTransfer
             processor.ConnectivitySettings.Host = host;
             processor.ConnectivitySettings.Port = port;
 
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
 
             AddPendingProcessor(processor);
 
@@ -549,14 +549,12 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void SendHandshakeMessage(IMessageProcessor processor)
         {
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine("Preparing to send handshake message", "P2PMessageSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Preparing to send handshake message", GetType().Name);
 
             if (HandshakeMessage == null)
             {
                 // don't throw an exception because the file transfer can continue over the switchboard
-                if (Settings.TraceSwitch.TraceError)
-                    System.Diagnostics.Trace.WriteLine("Handshake could not be send because none is specified.");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Handshake could not be send because none is specified.", GetType().Name);
 
                 // but close the direct connection
                 ((SocketMessageProcessor)processor).Disconnect();
@@ -569,8 +567,7 @@ namespace MSNPSharp.DataTransfer
             HandshakeMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
             DCHandshakeAck = HandshakeMessage.AckSessionId;
 
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), "P2PMessageSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
 
             ((SocketMessageProcessor)processor).SendMessage(HandshakeMessage);
         }
@@ -667,8 +664,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void OnHandshakeCompleted(P2PDirectProcessor processor)
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Handshake accepted", "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Handshake accepted", GetType().Name);
 
             UsePendingProcessor(processor);
         }

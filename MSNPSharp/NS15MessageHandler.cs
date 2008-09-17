@@ -736,8 +736,7 @@ namespace MSNPSharp
                 string policy = (string)message.CommandValues[3];
                 string nonce = (string)message.CommandValues[4];
 
-                MSNTicket.Policy = policy;
-                MSNTicket.Authenticate(this, policy);
+                SingleSignOnManager.Authenticate(this, policy);
 
                 MBI mbi = new MBI();
                 string response =
@@ -1152,8 +1151,7 @@ namespace MSNPSharp
                     newSettings.Host = values[0];
                     newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Switchboard connectivity settings: " + newSettings.ToString(), "NS15MessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Switchboard connectivity settings: " + newSettings.ToString(), GetType().Name);
 
                     processor.ConnectivitySettings = newSettings;
 
@@ -1170,20 +1168,16 @@ namespace MSNPSharp
                     // notify the client
                     OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator);
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("SB created event handler called", "NS15MessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB created event handler called", GetType().Name);
 
                     // start connecting
                     processor.Connect();
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Opening switchboard connection..", "NS15MessageHandler");
-
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Opening switchboard connection...", GetType().Name);
                 }
                 else
                 {
-                    if (Settings.TraceSwitch.TraceWarning)
-                        System.Diagnostics.Trace.WriteLine("Switchboard request received, but no pending switchboards available.", "NS15MessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Switchboard request received, but no pending switchboards available.", GetType().Name);
                 }
             }
         }
@@ -1247,8 +1241,7 @@ namespace MSNPSharp
             // build a notification message
             NotificationMessage notification = new NotificationMessage(message);
 
-            if (Settings.TraceSwitch.TraceVerbose)
-                Trace.WriteLine("Notification received : " + notification.ToDebugString());
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Notification received : " + notification.ToDebugString(), GetType().Name);
         }
 
         /// <summary>
@@ -1420,8 +1413,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine(ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
                 }
 
                 OIMService.ProcessOIM(msgMessage, mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0);
@@ -1552,8 +1544,7 @@ namespace MSNPSharp
                                 }
                             );
 
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine(account + " was added to your " + list.ToString());
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " was added to your " + list.ToString(), GetType().Name);
 
                         } while (contactNode.NextSibling != null);
                     }
@@ -1594,8 +1585,7 @@ namespace MSNPSharp
                                 ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                             }
                         }
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine(account + " has removed you from his/her " + list.ToString());
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " has removed you from his/her " + list.ToString(), GetType().Name);
 
                     } while (contactNode.NextSibling != null);
                 }
@@ -1782,8 +1772,7 @@ namespace MSNPSharp
                 {
                     string censor = Encoding.UTF8.GetString(Convert.FromBase64String(imtextNode.Attributes["value"].Value));
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Censor: " + censor, "NSMessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Censor: " + censor, GetType().Name);
                 }
             }
         }
@@ -1997,8 +1986,7 @@ namespace MSNPSharp
             if (ExceptionOccurred != null)
                 ExceptionOccurred(this, e);
 
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
         }
 
         /// <summary>
@@ -2010,8 +1998,7 @@ namespace MSNPSharp
             if (AuthenticationError != null)
                 AuthenticationError(this, e);
 
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
         }
 
         #endregion

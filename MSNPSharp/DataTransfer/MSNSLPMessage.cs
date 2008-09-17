@@ -28,15 +28,16 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.Text;
+using System.IO;
+using System.Collections;
+using System.Globalization;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.Text;
-    using System.IO;
-    using System.Collections;
-    using System.Globalization;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Represents a single MSNSLPMessage. Usually this message is contained in a P2P Message.
@@ -442,6 +443,7 @@ namespace MSNPSharp.DataTransfer
         {
             if (Body == null)
                 Body = "";
+
             return "[MSNSLPMessage] " + System.Text.Encoding.UTF8.GetString(this.GetBytes()) + "\r\n";
         }
     }

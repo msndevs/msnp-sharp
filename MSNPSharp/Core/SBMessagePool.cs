@@ -28,10 +28,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE. */
 #endregion
 
+using System;
+using System.IO;
+using System.Diagnostics;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.IO;
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
 
@@ -47,16 +49,16 @@ namespace MSNPSharp.Core
         // Buffers data.
         public override void BufferData(BinaryReader reader)
         {
-            if (Settings.TraceSwitch.TraceVerbose)
-                System.Diagnostics.Trace.Write("Buffering data .. ", "SBMessagePool");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Buffering data...", GetType().Name);
 
             base.BufferData(reader);
+
             if (Settings.TraceSwitch.TraceVerbose)
             {
-                if (this.MessageAvailable)
-                    System.Diagnostics.Trace.Write("beschikbaar", "SBMessagePool");
+                if (MessageAvailable)
+                    Trace.Write("MessageAvailable", GetType().Name);
                 else
-                    System.Diagnostics.Trace.Write("_niet_ beschikbaar", "SBMessagePool");
+                    Trace.Write("_not_ MessageAvailable", GetType().Name);
             }
         }
     }

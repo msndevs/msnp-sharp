@@ -5,6 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Web.Services.Protocols;
+using System.Security.Authentication;
 using System.Text.RegularExpressions;
 
 namespace MSNPSharp
@@ -12,7 +13,6 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
-    using System.Security.Authentication;
 
     #region Delegates and EventArgs
     /// <summary>
@@ -43,7 +43,10 @@ namespace MSNPSharp
         /// </summary>
         public ulong Sequence
         {
-            get { return sequence; }
+            get
+            {
+                return sequence;
+            }
         }
 
         /// <summary>
@@ -51,7 +54,10 @@ namespace MSNPSharp
         /// </summary>
         public string Message
         {
-            get { return message; }
+            get
+            {
+                return message;
+            }
         }
 
         /// <summary>
@@ -59,7 +65,10 @@ namespace MSNPSharp
         /// </summary>
         public Exception Error
         {
-            get { return error; }
+            get
+            {
+                return error;
+            }
         }
 
         /// <summary>
@@ -67,7 +76,10 @@ namespace MSNPSharp
         /// </summary>
         public string Sender
         {
-            get { return sender; }
+            get
+            {
+                return sender;
+            }
         }
 
         /// <summary>
@@ -75,7 +87,10 @@ namespace MSNPSharp
         /// </summary>
         public string Receiver
         {
-            get { return receiver; }
+            get
+            {
+                return receiver;
+            }
         }
 
         public OIMSendCompletedEventArgs()
@@ -179,7 +194,7 @@ namespace MSNPSharp
             nickName = nick;
             message = msg;
         }
-    } 
+    }
     #endregion
 
     #region Exceptions
@@ -215,7 +230,7 @@ namespace MSNPSharp
         /// Occurs when receive an OIM.
         /// </summary>
         public event OIMReceivedEventHandler OIMReceived;
-        
+
         /// <summary>
         /// Fires after an OIM was sent.
         /// </summary>
@@ -228,7 +243,7 @@ namespace MSNPSharp
 
         private RSIService CreateRSIService()
         {
-            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.Web);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Web);
             string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
@@ -242,7 +257,7 @@ namespace MSNPSharp
 
         private OIMStoreService CreateOIMStoreService()
         {
-            MSNTicket.RenewIfExpired(NSMessageHandler, SSOTicketType.OIM);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.OIM);
 
             OIMStoreService oimService = new OIMStoreService();
             oimService.Proxy = WebProxy;
@@ -266,8 +281,7 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled && e.Error == null)
                     {
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine("GetMetadata completed.");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "GetMetadata completed.", GetType().Name);
 
                         if (e.Result != null && e.Result is Array)
                         {
@@ -446,8 +460,7 @@ namespace MSNPSharp
             {
                 if (!e.Cancelled && e.Error == null)
                 {
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMessages completed.");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMessages completed.", GetType().Name);
                 }
                 else if (e.Error != null)
                 {
@@ -532,8 +545,7 @@ namespace MSNPSharp
                                 msg,
                                 null));
 
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("An OIM Message has been sent: " + userstate.account + ", runId = " + _RunGuid);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "An OIM Message has been sent: " + userstate.account + ", runId = " + _RunGuid, GetType().Name);
                         }
                     }
                     else if (e.Error != null && e.Error is SoapException)
@@ -554,8 +566,8 @@ namespace MSNPSharp
                         else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
                         {
                             exp = new SenderThrottleLimitExceededException();
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...");
+
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...", GetType().Name);
                         }
 
                         OnOIMSendCompleted(NSMessageHandler.Owner.Mail,

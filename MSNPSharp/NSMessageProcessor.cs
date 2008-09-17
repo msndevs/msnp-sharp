@@ -30,11 +30,13 @@ THE POSSIBILITY OF SUCH DAMAGE. */
 
 using System;
 using System.Collections;
-using MSNPSharp.Core;
-using MSNPSharp.DataTransfer;
+using System.Diagnostics;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
+
     public class NSMessageProcessor : SocketMessageProcessor
     {
         int transactionID = 1;
@@ -70,16 +72,13 @@ namespace MSNPSharp
 
             NSMessage message = new NSMessage();
 
-            // trace that we will be parsing
-            System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command..", "NSMessageProcessor");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
 
             // parse the incoming data
             message.ParseBytes(data);
 
             // trace and dispatch the message
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Dispatching incoming NS command : " + System.Text.Encoding.UTF8.GetString(data)/*message.ToDebugString()*/, "NSMessageProcessor");
-
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Dispatching incoming NS command: " + System.Text.Encoding.UTF8.GetString(data)/*message.ToDebugString()*/, GetType().Name);
             DispatchMessage(message);
         }
 
@@ -91,8 +90,7 @@ namespace MSNPSharp
             NSMessage.TransactionID = IncreaseTransactionID();
             message.PrepareMessage();
 
-            if (Settings.TraceSwitch.TraceVerbose)
-                System.Diagnostics.Trace.WriteLine("Outgoing message:\r\n" + message.ToDebugString(), "NSMessageProcessor");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString(), GetType().Name);
 
             // convert to bytes and send it over the socket
             SendSocketData(message.GetBytes());
