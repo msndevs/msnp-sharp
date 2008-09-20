@@ -1290,8 +1290,11 @@ namespace MSNPSharp
                     hdr["MSPAuth"],
                     ip,
                     clientPort,
-                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty,
+                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
+#if MSNP16                    
+                    ,
                     hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0"
+#endif
                 );
 
                 if (IPAddress.None != ip)

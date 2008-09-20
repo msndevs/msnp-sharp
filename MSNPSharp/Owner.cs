@@ -43,7 +43,6 @@ namespace MSNPSharp
     [Serializable()]
     public class Owner : Contact
     {
-        bool mpopEnabled = false;
         bool passportVerified = false;
         PrivacyMode privacy = PrivacyMode.Unknown;
         NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
@@ -67,11 +66,6 @@ namespace MSNPSharp
         {
             passportVerified = verified;
             CreateDefaultDisplayImage();
-        }
-
-        internal void SetMPOP(bool enabled)
-        {
-            mpopEnabled = enabled;
         }
 
         internal void SetPrivacy(PrivacyMode mode)
@@ -269,6 +263,14 @@ namespace MSNPSharp
             }
         }
 
+#if MSNP16
+
+        bool mpopEnabled = false;
+        internal void SetMPOP(bool enabled)
+        {
+            mpopEnabled = enabled;
+        }
+
         /// <summary>
         /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
         /// </summary>
@@ -279,6 +281,8 @@ namespace MSNPSharp
                 return mpopEnabled;
             }
         }
+
+#endif
 
         new public PresenceStatus Status
         {
@@ -591,6 +595,7 @@ namespace MSNPSharp
         /// <param name="clientIP"></param>
         /// <param name="clientPort"></param>
         /// <param name="nick"></param>
+        /// <param name="mpopenabled"></param>
         internal void UpdateProfile(
             string loginTime, bool emailEnabled, string memberIdHigh,
             string memberIdLowd, string preferredLanguage, string preferredMail,
@@ -598,7 +603,11 @@ namespace MSNPSharp
             string kid, string age, string birthday,
             string wallet, string sid, string kv,
             string mspAuth, IPAddress clientIP, int clientPort,
-            string nick, bool mpopenabled)
+            string nick
+#if MSNP16
+            , bool mpopenabled
+#endif
+            )
         {
             LoginTime = loginTime;
             EmailEnabled = emailEnabled;
@@ -619,7 +628,9 @@ namespace MSNPSharp
             ClientIP = clientIP;
             ClientPort = clientPort;
             nickName = nick;
+#if MSNP16
             mpopEnabled = mpopenabled;
+#endif
 
             validProfile = true;
 
