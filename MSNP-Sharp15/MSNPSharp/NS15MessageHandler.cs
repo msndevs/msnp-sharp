@@ -673,7 +673,7 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void SendInitialMessage()
         {
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15 MSNP14 MSNP13", "CVR0" }));
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
         }
 
         /// <summary>
@@ -1680,7 +1680,7 @@ namespace MSNPSharp
         protected virtual void OnCHLReceived(NSMessage message)
         {
             if (Credentials == null)
-                throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
+                throw new MSNPSharpException("No credentials available for the NSMSNP15 handler. No challenge answer could be send.");
 
             string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
             MSNTicket.OIMLockKey = payload;
@@ -1849,9 +1849,6 @@ namespace MSNPSharp
 
                 switch (nsMessage.Command)
                 {
-                    case "ADC":
-                        OnADCReceived(nsMessage);
-                        break;
                     case "ADG":
                         OnADGReceived(nsMessage);
                         break;
@@ -1885,9 +1882,6 @@ namespace MSNPSharp
                     case "ILN":
                         OnILNReceived(nsMessage);
                         break;
-                    case "LSG":
-                        OnLSGReceived(nsMessage);
-                        break;
                     case "MSG":
                         OnMSGReceived(nsMessage);
                         break;
@@ -1914,9 +1908,6 @@ namespace MSNPSharp
                         break;
                     case "RML":
                         OnRMLReceived(nsMessage);
-                        break;
-                    case "REM":
-                        OnREMReceived(nsMessage);
                         break;
                     case "RNG":
                         OnRNGReceived(nsMessage);

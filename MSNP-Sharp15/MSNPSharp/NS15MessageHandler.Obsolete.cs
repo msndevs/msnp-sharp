@@ -33,7 +33,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Net;
 using System.Web;
-using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
@@ -58,183 +57,71 @@ namespace MSNPSharp
         {
         }
 
-        [Obsolete("Use NSMessageHandler.ContactService.AddNewContact")]
+        [Obsolete("Please use NSMessageHandler.ContactService.AddNewContact", true)]
         public virtual void AddNewContact(string account)
         {
-            ContactService.AddNewContact(account);
         }
 
-        [Obsolete("Use NSMessageHandler.ContactService.RemoveContact")]
+        [Obsolete("Please use NSMessageHandler.ContactService.RemoveContact", true)]
         public virtual void RemoveContact(Contact contact)
         {
-            ContactService.RemoveContact(contact);
         }
 
-        [Obsolete("Use NSMessageHandler.ContactService.AddContactToGroup")]
+        [Obsolete("Please use NSMessageHandler.ContactService.AddContactToGroup", true)]
         public virtual void AddContactToGroup(Contact contact, ContactGroup group)
         {
-            ContactService.AddContactToGroup(contact, group);
         }
 
-        [Obsolete("Use NSMessageHandler.ContactService.RemoveContactFromGroup")]
+        [Obsolete("Please use NSMessageHandler.ContactService.RemoveContactFromGroup", true)]
         public virtual void RemoveContactFromGroup(Contact contact, ContactGroup group)
         {
-            ContactService.RemoveContactFromGroup(contact, group);
         }
 
-        [Obsolete("Use NSMessageHandler.ContactService.BlockContact")]
+        [Obsolete("Please use NSMessageHandler.ContactService.BlockContact", true)]
         public virtual void BlockContact(Contact contact)
         {
-            ContactService.BlockContact(contact);
         }
 
-        [Obsolete("Use NSMessageHandler.ContactService.UnBlockContact")]
+        [Obsolete("Please use NSMessageHandler.ContactService.UnBlockContact", true)]
         public virtual void UnBlockContact(Contact contact)
         {
-            ContactService.UnBlockContact(contact);
         }
 
-        [Obsolete("Use NSMessageHandler.OIMService.SendOIMMessage")]
+        [Obsolete("Please use NSMessageHandler.OIMService.SendOIMMessage", true)]
         public virtual void SendOIMMessage(string account, string msg)
         {
-            oimService.SendOIMMessage(account, msg);
         }
 
-        [Obsolete("No longer used")]
+        [Obsolete("Deprecated as of MSNP13. Instead, the client will fetch the contact list through a SOAP request.", true)]
         protected virtual void OnLSTReceived(NSMessage message)
         {
         }
 
-        [Obsolete("No longer used")]
+        [Obsolete("Deprecated as of MSNP13. Instead, the client will fetch the contact list through a SOAP request.", true)]
         protected virtual void OnSYNReceived(NSMessage message)
         {
         }
 
-        [Obsolete("Sending GTC command to NS causes disconnect", true)]
+        [Obsolete("Deprecated as of MSNP13. The GTC command is no longer accepted by the server.", true)]
         protected virtual void OnGTCReceived(NSMessage message)
         {
         }
 
         #region Outdated Contact and Group Handlers
 
-        /// <summary>
-        /// Called when a LSG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send us a contactgroup definition. This adds a new <see cref="ContactGroup"/> object to the ContactGroups colletion.
-        /// <code>LSG [Name] [Guid]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        [Obsolete]
+        [Obsolete("Deprecated as of MSNP13. Instead, the client will fetch the contact list through a SOAP request.", true)]
         protected virtual void OnLSGReceived(NSMessage message)
         {
-            ContactGroups.AddGroup(new ContactGroup((string)message.CommandValues[0], (string)message.CommandValues[1], this));
         }
 
-        /// <summary>
-        /// Called when a ADC command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact has been added to a list.
-        /// This function raises the ReverseAdded event when a remote contact has added the contactlist owner on it's (forward) contact list.
-        /// The ContactAdded event is always raised.
-        /// <code>ADD [Transaction] [Type] [Listversion] [Account] [Name] ([Group])</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        [Obsolete]
+        [Obsolete("Deprecated as of MSNP13. ADC command has been replaced by ADL.", true)]
         protected virtual void OnADCReceived(NSMessage message)
         {
-            if (message.CommandValues.Count == 4)
-            {
-                Contact c = ContactList.GetContactByGuid(new Guid(message.CommandValues[2].ToString().Remove(0, 2)));
-                //Add contact to group
-                string guid = message.CommandValues[3].ToString();
-
-                if (contactGroups[guid] != null)
-                    c.AddContactToGroup(contactGroups[guid]);
-
-                return;
-            }
-
-            MSNLists Type = GetMSNList((string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact(message.CommandValues[2].ToString().Remove(0, 2));
-
-            contact.NSMessageHandler = this;
-
-            if (message.CommandValues.Count >= 4)
-                contact.SetName(message.CommandValues[3].ToString().Remove(0, 2));
-
-            if (message.CommandValues.Count >= 5)
-                contact.SetGuid(new Guid(message.CommandValues[4].ToString().Remove(0, 2)));
-
-            // add the list to this contact						
-            contact.AddToList(MSNLists.PendingList);
-
-            // check whether another user added us .The client programmer can then act on it.
-
-            // only fire the event if >=4 because name is just sent when other user add you to her/his contact list
-            // msnp11 allows you to add someone to the reverse list.
-            if (Type == MSNLists.ReverseList && message.CommandValues.Count >= 4)
-            {
-                ContactService.msRequest(
-                    "MessengerPendingList",
-                     delegate
-                     {
-                         contact = ContactList.GetContact(contact.Mail);
-                         ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                     }
-                );
-            }
-
-            // send a list mutation event
-            ContactService.OnContactAdded(new ListMutateEventArgs(contact, Type));
         }
 
-
-        /// <summary>
-        /// Called when a REM command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact has been removed from a list.
-        /// Raises the ReverseRemoved event when another contact has removed the contact list owner from it's list.
-        /// Raises always the ContactRemoved event.
-        /// <code>REM [Transaction] [Type] [List version] [Account] ([Group])</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        [Obsolete]
+        [Obsolete("Deprecated as of MSNP13. REM command has been replaced by RML.", true)]
         protected virtual void OnREMReceived(NSMessage message)
         {
-            MSNLists list = GetMSNList((string)message.CommandValues[1]);
-
-            Contact contact = null;
-            if (list == MSNLists.ForwardList)
-                contact = ContactList.GetContactByGuid(new Guid((string)message.CommandValues[2]));
-            else
-                contact = ContactList.GetContact((string)message.CommandValues[2]);
-
-            if (contact == null)
-                return;
-
-            if (message.CommandValues.Count == 4)
-            {
-                //Remove from group
-                string group = message.CommandValues[3].ToString();
-
-                if (contactGroups[group] != null)
-                    contact.RemoveContactFromGroup(contactGroups[group]);
-
-                return;
-            }
-
-            //remove the contact from list
-            contact.RemoveFromList(list);
-
-            // check whether another user removed us
-            if (list == MSNLists.ReverseList)
-                ContactService.OnReverseRemoved(new ContactEventArgs(contact));
-
-            if (list == MSNLists.ForwardList)
-                ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
         }
 
         /// <summary>
@@ -344,15 +231,14 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Phone numbers are sent but lastContact == null");
         }
 
-        [Obsolete("Use Owner.OnProfileReceived")]
+        [Obsolete("Please use NSMessageHandler.Owner.OnProfileReceived", true)]
         protected virtual void OnProfileReceived(EventArgs e)
         {
-            Owner.OnProfileReceived(e);
         }
 
         #endregion
 
-        #region Obsolate Events
+        #region Obsolete Events
         /// <summary>
         /// Occurs when a new contactgroup is created
         /// </summary>
