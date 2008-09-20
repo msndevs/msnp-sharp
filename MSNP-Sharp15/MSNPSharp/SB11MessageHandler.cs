@@ -803,10 +803,14 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void SendInitialMessage()
         {
+            string auth = NSMessageHandler.Owner.Mail;
+#if MSNP16
+            auth += ";" + NSMessageHandler.MachineGuid;
+#endif
             if (Invited)
-                MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { NSMessageHandler.Owner.Mail, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
+                MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { auth, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
             else
-                MessageProcessor.SendMessage(new SBMessage("USR", new string[] { NSMessageHandler.Owner.Mail, SessionHash }));
+                MessageProcessor.SendMessage(new SBMessage("USR", new string[] { auth, SessionHash }));
         }
 
         #endregion
@@ -959,7 +963,13 @@ namespace MSNPSharp
         protected virtual void OnUSRReceived(SBMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK"
-            && NSMessageHandler.Owner.Mail.ToLower(System.Globalization.CultureInfo.InvariantCulture) == message.CommandValues[2].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture))
+#if MSNP16
+              && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant().Split(';')[0]
+                
+#else
+              && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant()  
+#endif
+)
             {
                 // update the owner's name. Just to be sure.
                 //NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
@@ -994,6 +1004,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnJOIReceived(SBMessage message)
         {
+            if (NSMessageHandler.Owner.Mail == message.CommandValues[0].ToString())
+                return;
+
             // get the contact and update it's name
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
             //contact.SetName(message.CommandValues[1].ToString());
@@ -1044,6 +1057,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnIROReceived(SBMessage message)
         {
+            if (NSMessageHandler.Owner.Mail == message.CommandValues[3].ToString())
+                return;
+
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString());
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[4].ToString());
