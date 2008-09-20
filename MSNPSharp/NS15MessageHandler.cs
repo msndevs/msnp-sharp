@@ -112,6 +112,11 @@ namespace MSNPSharp
     {
         #region Members
 
+#if MSNP16
+        public static readonly string MachineGuid = Guid.NewGuid().ToString();
+        public static string EPName = "MSNPSharp";
+#endif
+
         private SocketMessageProcessor messageProcessor = null;
         private ConnectivitySettings connectivitySettings = null;
         private IPEndPoint externalEndPoint = null;
@@ -133,9 +138,13 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
+#if MSNP16
+            owner.ClientCapacities = ClientCapacities.CanHandleMSNC9
+#else
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
-                                    | ClientCapacities.CanMultiPacketMSG
-                                    | ClientCapacities.CanReceiveWinks;
+#endif
+
+ | ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
 
             contactGroups = new ContactGroupList(this);
             contactService = new ContactService(this);
@@ -673,7 +682,11 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void SendInitialMessage()
         {
+#if MSNP16
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16 MSNP15", "CVR0" }));
+#else
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
+#endif
         }
 
         /// <summary>
@@ -742,7 +755,11 @@ namespace MSNPSharp
                     MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
                     mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
 
-                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
+                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response
+#if MSNP16
+         , MachineGuid
+#endif  
+                }));
             }
             else if ((string)message.CommandValues[1] == "OK")
             {
@@ -891,7 +908,13 @@ namespace MSNPSharp
 
             // set the client capabilities, if available
             if (message.CommandValues.Count >= 5)
+            {
+#if MSNP16
+                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString().Split(':')[0]);
+#else
                 contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString());
+#endif
+            }
 
             // check whether there is a msn object available
             if (message.CommandValues.Count >= 6)
@@ -933,7 +956,13 @@ namespace MSNPSharp
             }
             // set the client capabilities, if available
             if (message.CommandValues.Count > 4)
+            {
+#if MSNP16
+                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString().Split(':')[0]);
+#else
                 contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString());
+#endif
+            }
 
             // the contact changed status, fire event
             if (ContactStatusChanged != null)
