@@ -43,6 +43,7 @@ namespace MSNPSharp
     [Serializable()]
     public class Owner : Contact
     {
+        bool mpopEnabled = false;
         bool passportVerified = false;
         PrivacyMode privacy = PrivacyMode.Unknown;
         NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
@@ -66,6 +67,11 @@ namespace MSNPSharp
         {
             passportVerified = verified;
             CreateDefaultDisplayImage();
+        }
+
+        internal void SetMPOP(bool enabled)
+        {
+            mpopEnabled = enabled;
         }
 
         internal void SetPrivacy(PrivacyMode mode)
@@ -260,6 +266,17 @@ namespace MSNPSharp
                 {
                     NSMessageHandler.ContactService.UpdateMe();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
+        /// </summary>
+        public bool MPOPEnabled
+        {
+            get
+            {
+                return mpopEnabled;
             }
         }
 
@@ -581,7 +598,7 @@ namespace MSNPSharp
             string kid, string age, string birthday,
             string wallet, string sid, string kv,
             string mspAuth, IPAddress clientIP, int clientPort,
-            string nick)
+            string nick, bool mpopenabled)
         {
             LoginTime = loginTime;
             EmailEnabled = emailEnabled;
@@ -602,6 +619,7 @@ namespace MSNPSharp
             ClientIP = clientIP;
             ClientPort = clientPort;
             nickName = nick;
+            mpopEnabled = mpopenabled;
 
             validProfile = true;
 
