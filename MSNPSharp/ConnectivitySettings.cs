@@ -64,14 +64,14 @@ namespace MSNPSharp
 
         static ConnectivitySettings()
         {
-            try
+            if (null == Type.GetType("Mono.RunTime"))
             {
                 ServicePointManager.ServerCertificateValidationCallback = delegate
                 {
                     return true;
                 };
             }
-            catch
+            else
             {
                 ServicePointManager.CertificatePolicy = new MSNServiceCertificatePolicy();
             }
