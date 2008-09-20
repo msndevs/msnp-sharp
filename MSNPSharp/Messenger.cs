@@ -423,6 +423,34 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Storage service to get/update display name, personal status, display picture etc.
+        /// </summary>
+        /// <remarks>
+        /// This property is a reference to the StorageService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
+        /// </remarks>
+        public MSNStorageService StorageService
+        {
+            get
+            {
+                return nsMessageHandler.StorageService;
+            }
+        }
+
+        /// <summary>
+        /// Contact service.
+        /// </summary>
+        /// <remarks>
+        /// This property is a reference to the ContactService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
+        /// </remarks>
+        public ContactService ContactService
+        {
+            get
+            {
+                return nsMessageHandler.ContactService;
+            }
+        }
+
+        /// <summary>
         /// The local user logged into the network.
         /// </summary>
         /// <remarks>
