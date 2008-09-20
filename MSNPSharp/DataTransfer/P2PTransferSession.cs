@@ -1,44 +1,46 @@
-#region Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
+#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
-All rights reserved.
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
 
- * Changed in 2007 by Pang Wu <freezingsoft@hotmail.com>: Added support to MSNP15 and fix some bugs
- 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
-this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright 
-notice, this list of conditions and the following disclaimer in the 
-documentation and/or other materials provided with the distribution.
-* Neither the names of Bas Geertsema or Xih Solutions nor the names of its 
-contributors may be used to endorse or promote products derived 
-from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
-THE POSSIBILITY OF SUCH DAMAGE. */
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
 #endregion
+
+using System;
+using System.Net;
+using System.IO;
+using System.Threading;
+using System.Collections;
+using System.Diagnostics;
 
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.Net;
-    using System.IO;
-    using System.Threading;
-    using System.Collections;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// A single transfer of data within a p2p session. 
@@ -239,8 +241,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PTransferSession()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Constructing p2p transfer session object", "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object", GetType().Name);
         }
 
         /// <summary>
@@ -253,7 +254,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void AbortTransfer()
         {
-            if (transferThread != null && transferThread.ThreadState == ThreadState.Running)
+            if (transferThread != null && transferThread.ThreadState == System.Threading.ThreadState.Running)
             {
                 AbortTransferThread();
             }
@@ -411,8 +412,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            if (Settings.TraceSwitch.TraceVerbose)
-                System.Diagnostics.Trace.WriteLine("P2P Info message received", "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2P Info message received", GetType().Name);
 
             // it is not a datamessage.
             // fill up the buffer with this message and extract the messages one-by-one and dispatch
@@ -657,8 +657,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected void TransferDataEntry()
         {
-            if (Settings.TraceSwitch.TraceInfo)
-                System.Diagnostics.Trace.WriteLine("Starting transfer thread", "P2PTransferSession");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Starting transfer thread", GetType().Name);
 
             OnTransferStarted();
 
@@ -733,8 +732,7 @@ namespace MSNPSharp.DataTransfer
             {
                 if (sex.ErrorCode == 10053)
                 {
-                    if (Settings.TraceSwitch.TraceInfo)
-                        System.Diagnostics.Trace.WriteLine("You've closed a connection: " + sex.ToString(), "P2PTransferSession");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "You've closed a connection: " + sex.ToString(), GetType().Name);
                 }
 
                 abortThread = true;
@@ -745,8 +743,7 @@ namespace MSNPSharp.DataTransfer
                 abortThread = true;
                 MessageSession.CloseDirectConnection();
 
-                if (Settings.TraceSwitch.TraceInfo)
-                    System.Diagnostics.Trace.WriteLine("Exception in transfer thread: " + oex.ToString(), "P2PTransferSession");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Exception in transfer thread: " + oex.ToString(), GetType().Name);
             }
             //catch (Exception e)
             //{
@@ -761,8 +758,7 @@ namespace MSNPSharp.DataTransfer
             //}
             finally
             {
-                if (Settings.TraceSwitch.TraceInfo)
-                    System.Diagnostics.Trace.WriteLine("Stopping transfer thread", "P2PTransferSession");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Stopping transfer thread", GetType().Name);
             }
         }
 
@@ -784,7 +780,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void AbortTransferThread()
         {
-            if (transferThread != null && transferThread.ThreadState == ThreadState.Running)
+            if (transferThread != null && transferThread.ThreadState == System.Threading.ThreadState.Running)
             {
                 //transferThread.Abort();
                 abortThread = true;
@@ -869,7 +865,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="e"></param>
         private void messageSession_DirectConnectionFailed(object sender, EventArgs e)
         {
-            if (waitingDirectConnection == true)
+            if (waitingDirectConnection)
             {
                 waitingDirectConnection = false;
                 StartDataTransfer(false);

@@ -1,46 +1,48 @@
-﻿#region Copyright (c) 2007-2008 Pang Wu <freezingsoft@hotmail.com>
+﻿#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2007-2008 Pang Wu <freezingsoft@hotmail.com> All rights reserved.
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
-this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright 
-notice, this list of conditions and the following disclaimer in the 
-documentation and/or other materials provided with the distribution.
-* Neither the names of Bas Geertsema or Xih Solutions nor the names of its 
-contributors may be used to endorse or promote products derived 
-from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
-THE POSSIBILITY OF SUCH DAMAGE. */
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
 #endregion
 
-//#define TRACE
+using System;
+using System.IO;
+using System.Text;
+using System.Diagnostics;
+using System.IO.Compression;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace MSNPSharp.IO
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-    using System.IO;
-    using System.Runtime.InteropServices;
-    using System.IO.Compression;
-
+    [StructLayout(LayoutKind.Sequential)]
     internal struct MCLFileStruct
     {
-        public Int32 len;
         public byte[] content;
     }
 
@@ -49,23 +51,27 @@ namespace MSNPSharp.IO
     /// </summary>
     public sealed class MCLFile
     {
-        int length = 0;
-        string fileName = String.Empty;
-        byte[] uncompressData;
-        bool noCompression = false;
+        public static readonly byte[] MclBytes = new byte[] { (byte)'m', (byte)'c', (byte)'l' };
+        private string fileName = String.Empty;
+        private bool noCompression = false;
+        private byte[] uncompressData;
 
+        /// <summary>
+        /// Opens filename and fills the <see cref="Content"/> with uncompressed data.
+        /// </summary>
+        /// <param name="filename">Name of file</param>
+        /// <param name="nocompress">Use of compression when SAVING file.</param>
         public MCLFile(string filename, bool nocompress)
         {
-            noCompression = nocompress;
             fileName = filename;
-            IniData(filename);
+            noCompression = nocompress;
+            uncompressData = GetStruct().content;
         }
-
 
         #region Public method
         public void Save(string filename)
         {
-            SaveImpl(filename, uncompressData);
+            SaveImpl(filename, FillFileStruct(uncompressData));
         }
 
         public void Save()
@@ -90,10 +96,14 @@ namespace MSNPSharp.IO
         {
             SaveAndHide(fileName);
         }
+
         #endregion
 
         #region Properties
 
+        /// <summary>
+        /// Name of file
+        /// </summary>
         public string FileName
         {
             get
@@ -107,18 +117,7 @@ namespace MSNPSharp.IO
         }
 
         /// <summary>
-        /// The length of data before it was compressed
-        /// </summary>
-        public int Length
-        {
-            get
-            {
-                return length;
-            }
-        }
-
-        /// <summary>
-        /// The data of file
+        /// Uncompressed (XML) data of file
         /// </summary>
         public byte[] Content
         {
@@ -132,6 +131,9 @@ namespace MSNPSharp.IO
             }
         }
 
+        /// <summary>
+        /// Don't use compression when SAVING.
+        /// </summary>
         public bool NoCompression
         {
             get
@@ -144,24 +146,6 @@ namespace MSNPSharp.IO
 
         #region Private
 
-        private void IniData(string filename)
-        {
-            MCLFileStruct file = GetStruct(filename);
-            if (file.content != null)
-            {
-                length = file.len;
-
-                if (noCompression)
-                {
-                    uncompressData = file.content;
-                }
-                else
-                {
-                    uncompressData = Decompress(file.content, length);
-                }
-            }
-        }
-
         private void SaveImpl(string filename, byte[] content)
         {
             fileName = filename;
@@ -173,10 +157,9 @@ namespace MSNPSharp.IO
 
             if (!noCompression)
             {
-                byte[] ext = new byte[3] { (byte)'m', (byte)'c', (byte)'l' };
-                byte[] byt = new byte[content.Length + 3];
-                Array.Copy(ext, byt, 3);
-                Array.Copy(content, 0, byt, 3, content.Length);
+                byte[] byt = new byte[content.Length + MclBytes.Length];
+                Array.Copy(MclBytes, byt, MclBytes.Length);
+                Array.Copy(content, 0, byt, MclBytes.Length, content.Length);
                 File.WriteAllBytes(filename, byt);
             }
             else
@@ -188,34 +171,36 @@ namespace MSNPSharp.IO
 
         private byte[] Compress(byte[] buffer)
         {
-            string str = Encoding.UTF8.GetString(buffer);
             MemoryStream destms = new MemoryStream();
             GZipStream zipsm = new GZipStream(destms, CompressionMode.Compress, true);
             zipsm.Write(buffer, 0, buffer.Length);
             zipsm.Close();
-            byte[] byt = destms.ToArray();
-
-            return byt;
+            return destms.ToArray();
         }
 
-        private byte[] Decompress(byte[] compresseddata, int originallength)
+        private byte[] Decompress(byte[] compresseddata)
         {
-            byte[] decompressdata = new byte[originallength];
+            MemoryStream destms = new MemoryStream();
             MemoryStream ms = new MemoryStream(compresseddata);
             ms.Position = 0;
-            GZipStream zipsm = new GZipStream(ms, CompressionMode.Decompress);
-            int re = 1;
 
-            re = zipsm.Read(decompressdata, 0, originallength);
+            int read;
+            byte[] decompressdata = new byte[8192];
+            GZipStream zipsm = new GZipStream(ms, CompressionMode.Decompress, true);
+
+            while ((read = zipsm.Read(decompressdata, 0, decompressdata.Length)) > 0)
+            {
+                destms.Write(decompressdata, 0, read);
+            }
 
             zipsm.Close();
-            return decompressdata;
+            return destms.ToArray();
         }
 
         /// <summary>
-        /// Compress the data and add the length bits before compressed data
+        /// Compress the data if NoCompression is set to false.
         /// </summary>
-        /// <param name="content"></param>
+        /// <param name="content">Uncompressed data</param>
         /// <returns></returns>
         private byte[] FillFileStruct(byte[] content)
         {
@@ -223,54 +208,71 @@ namespace MSNPSharp.IO
                 return content;
 
             MCLFileStruct mclstruct;
-            mclstruct.len = content.Length;
-            mclstruct.content = Compress(content);
+            mclstruct.content = (content != null) ? Compress(content) : null;
 
-            IntPtr structPtr = Marshal.AllocHGlobal(Marshal.SizeOf(mclstruct.len));
-            byte[] byt = new byte[Marshal.SizeOf(mclstruct.len) + mclstruct.content.Length];
-            Marshal.StructureToPtr(mclstruct.len, structPtr, false);
-            Marshal.Copy(structPtr, byt, 0, Marshal.SizeOf(mclstruct.len));
-            Array.Copy(mclstruct.content, 0, byt, Marshal.SizeOf(mclstruct.len), mclstruct.content.Length);
-            Marshal.FreeHGlobal(structPtr);  //Delete the pointer
-            return byt;
+            return mclstruct.content;
         }
 
         /// <summary>
         /// Decompress the file and fill the MCLFileStruct struct
         /// </summary>
-        /// <param name="filename"></param>
         /// <returns></returns>
-        private MCLFileStruct GetStruct(string filename)
+        private MCLFileStruct GetStruct()
         {
-            if (!File.Exists(fileName))
-                return new MCLFileStruct();
-
-            byte[] bytstruct = File.ReadAllBytes(fileName);
             MCLFileStruct mclfile = new MCLFileStruct();
+            if (File.Exists(fileName))
+            {
+                FileStream fs = File.Open(fileName, FileMode.Open, FileAccess.Read);
+                try
+                {
+                    byte[] mcl = new byte[MclBytes.Length];
+                    if (MclBytes.Length == fs.Read(mcl, 0, mcl.Length))
+                    {
+                        MemoryStream ms = new MemoryStream();
+                        bool ismcl = true;
+                        for (int i = 0; i < MclBytes.Length; i++)
+                        {
+                            if (MclBytes[i] != mcl[i])
+                            {
+                                ismcl = false;
+                                break;
+                            }
+                        }
 
-            try
-            {
-                if (!noCompression)
-                {
-                    IntPtr structPtr = Marshal.AllocHGlobal(Marshal.SizeOf(mclfile.len));
-                    Marshal.Copy(bytstruct, 3, structPtr, Marshal.SizeOf(mclfile.len));
-                    mclfile.len = Marshal.ReadInt32(structPtr);
-                    byte[] content = new byte[bytstruct.Length - 3 - Marshal.SizeOf(mclfile.len)];
-                    Array.Copy(bytstruct, 3 + Marshal.SizeOf(mclfile.len), content, 0, content.Length);
-                    Marshal.FreeHGlobal(structPtr);
-                    mclfile.content = content;
+                        if (!ismcl)
+                        {
+                            Debug.Assert(mcl[0] == (byte)'<' && mcl[1] == (byte)'?' && mcl[2] == (byte)'x', "Not valid xml file");
+                            ms.Write(mcl, 0, mcl.Length);
+                        }
+
+                        int read;
+                        byte[] tmp = new byte[8192];
+                        while ((read = fs.Read(tmp, 0, tmp.Length)) > 0)
+                        {
+                            ms.Write(tmp, 0, read);
+                        }
+
+                        mclfile.content = ismcl ? Decompress(ms.ToArray()) : ms.ToArray();
+
+                        ms.Close();
+                    }
                 }
-                else
+                catch (Exception exception)
                 {
-                    mclfile.len = bytstruct.Length;
-                    mclfile.content = bytstruct;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exception.Message, GetType().Name);
+                    return new MCLFileStruct();
                 }
-            }
-            catch (Exception)
-            {
-                return new MCLFileStruct();
+                finally
+                {
+                    fs.Close();
+                }
             }
             return mclfile;
+        }
+
+        public override string ToString()
+        {
+            return Encoding.UTF8.GetString(Content);
         }
         #endregion
     }

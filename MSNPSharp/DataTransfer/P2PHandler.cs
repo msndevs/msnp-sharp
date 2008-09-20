@@ -1,39 +1,43 @@
-#region Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
+#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
-All rights reserved.
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
-this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright 
-notice, this list of conditions and the following disclaimer in the 
-documentation and/or other materials provided with the distribution.
-* Neither the names of Bas Geertsema or Xih Solutions nor the names of its 
-contributors may be used to endorse or promote products derived 
-from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
-THE POSSIBILITY OF SUCH DAMAGE. */
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
 #endregion
+
+using System;
+using System.Collections;
+using System.Diagnostics;
 
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.Collections;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Used in events where a P2PMessageSession object is created, or in another way affected.
@@ -361,15 +365,11 @@ namespace MSNPSharp.DataTransfer
 
             SBMessage sbMessage = (SBMessage)message;
 
-            if (Settings.TraceSwitch.TraceVerbose)
-            {
-                System.Diagnostics.Trace.WriteLine("Parsing incoming msg message", "p2phandler " + NSMessageHandler.Owner.Mail);
-            }
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message " + NSMessageHandler.Owner.Mail, GetType().Name);
 
             if (sbMessage.Command != "MSG")
             {
-                if (Settings.TraceSwitch.TraceVerbose)
-                    System.Diagnostics.Trace.WriteLine("No MSG : " + sbMessage.Command + " instead", "p2phandler " + NSMessageHandler.Owner.Mail);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "No MSG : " + sbMessage.Command + " instead " + NSMessageHandler.Owner.Mail, GetType().Name);
                 return;
             }
 
@@ -381,8 +381,7 @@ namespace MSNPSharp.DataTransfer
             }
             catch (Exception e)
             {
-                if (Settings.TraceSwitch.TraceError)
-                    System.Diagnostics.Trace.WriteLine(e.ToString());
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
             }
 
             // check if it's a valid p2p message
@@ -391,24 +390,16 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            if (Settings.TraceSwitch.TraceVerbose)
-            {
-                System.Diagnostics.Trace.WriteLine("Parsing incoming p2p message", "p2phandler " + NSMessageHandler.Owner.Mail);
-            }
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming p2p message " + NSMessageHandler.Owner.Mail, GetType().Name);
 
             // create a P2P Message from the msg message
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.CreateFromMessage(msgMessage);
 
-            if (Settings.TraceSwitch.TraceVerbose)
-            {
-                System.Diagnostics.Trace.WriteLine("Incoming p2p message: \r\n" + ((P2PMessage)p2pMessage).ToDebugString(), "p2phandler " + NSMessageHandler.Owner.Mail);
-            }
-
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Incoming p2p message " + NSMessageHandler.Owner.Mail + "\r\n" + ((P2PMessage)p2pMessage).ToDebugString(), GetType().Name);
 
             // get the associated message session
             P2PMessageSession session = GetSessionFromRemote((string)sbMessage.CommandValues[0]);// p2pMessage.Identifier);			
-
 
             // check for validity
             if (session == null)

@@ -1,34 +1,33 @@
-﻿#region Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
+﻿#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2005, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net)
-All rights reserved.
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
 
-Changed in 2006 by Thiago M. Sayão <thiago.sayao@gmail.com>: Added support to MSNP11
-Changed in 2007-2008 by Pang Wu <freezingsoft@hotmail.com>: Added support to MSNP15 and Yahoo Messenger
-
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
-this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright 
-notice, this list of conditions and the following disclaimer in the 
-documentation and/or other materials provided with the distribution.
-* Neither the names of Bas Geertsema or Xih Solutions nor the names of its 
-contributors may be used to endorse or promote products derived 
-from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
-THE POSSIBILITY OF SUCH DAMAGE. */
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
 #endregion
 
 #define TRACE
@@ -123,6 +122,7 @@ namespace MSNPSharp
 
         private bool isSignedIn = false;
         private Owner owner = new Owner();
+        private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
 
         private ContactService contactService = null;
@@ -137,7 +137,6 @@ namespace MSNPSharp
                                     | ClientCapacities.CanMultiPacketMSG
                                     | ClientCapacities.CanReceiveWinks;
 
-            msnticket = new MSNTicket(this);
             contactGroups = new ContactGroupList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
@@ -328,16 +327,6 @@ namespace MSNPSharp
         #region Public Events
 
         /// <summary>
-        /// Occurs when a new contactgroup is created
-        /// </summary>
-        public event ContactGroupChangedEventHandler ContactGroupAdded;
-
-        /// <summary>
-        /// Occurs when a contactgroup is removed
-        /// </summary>
-        public event ContactGroupChangedEventHandler ContactGroupRemoved;
-
-        /// <summary>
         /// Occurs when an exception is thrown while handling the incoming or outgoing messages
         /// </summary>
         public event HandlerExceptionEventHandler ExceptionOccurred;
@@ -353,26 +342,6 @@ namespace MSNPSharp
         public event PingAnswerEventHandler PingAnswer;
 
         /// <summary>
-        /// Occurs when a contact is added to any list (including reverse list)
-        /// </summary>
-        public event ListMutatedAddedEventHandler ContactAdded;
-
-        /// <summary>
-        /// Occurs when a contact is removed from any list (including reverse list)
-        /// </summary>
-        public event ListMutatedAddedEventHandler ContactRemoved;
-
-        /// <summary>
-        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event ContactChangedEventHandler ReverseAdded;
-
-        /// <summary>
-        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event ContactChangedEventHandler ReverseRemoved;
-
-        /// <summary>
         /// Occurs when any contact changes status
         /// </summary>
         public event ContactStatusChangedEventHandler ContactStatusChanged;
@@ -386,12 +355,6 @@ namespace MSNPSharp
         /// Occurs when any contact goed from any status to offline status
         /// </summary>
         public event ContactChangedEventHandler ContactOffline;
-
-        /// <summary>
-        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
-        /// This means all contact-updates are received from the server and processed.
-        /// </summary>
-        public event EventHandler SynchronizationCompleted;
 
         /// <summary>
         /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
@@ -710,7 +673,7 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void SendInitialMessage()
         {
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15 MSNP14 MSNP13", "CVR0" }));
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
         }
 
         /// <summary>
@@ -744,7 +707,6 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
-        private MSNTicket msnticket = null;
         internal MSNTicket MSNTicket
         {
             get
@@ -773,8 +735,7 @@ namespace MSNPSharp
                 string policy = (string)message.CommandValues[3];
                 string nonce = (string)message.CommandValues[4];
 
-                MSNTicket.Policy = policy;
-                MSNTicket.Authenticate();
+                SingleSignOnManager.Authenticate(this, policy);
 
                 MBI mbi = new MBI();
                 string response =
@@ -818,16 +779,6 @@ namespace MSNPSharp
 
             if (messageProcessor != null)
                 messageProcessor.Disconnect();
-        }
-
-        /// <summary>
-        /// Fires the <see cref="SynchronizationCompleted"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnSynchronizationCompleted(EventArgs e)
-        {
-            if (SynchronizationCompleted != null)
-                SynchronizationCompleted(this, e);
         }
 
 
@@ -1199,8 +1150,7 @@ namespace MSNPSharp
                     newSettings.Host = values[0];
                     newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Switchboard connectivity settings: " + newSettings.ToString(), "NS15MessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Switchboard connectivity settings: " + newSettings.ToString(), GetType().Name);
 
                     processor.ConnectivitySettings = newSettings;
 
@@ -1217,20 +1167,16 @@ namespace MSNPSharp
                     // notify the client
                     OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator);
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("SB created event handler called", "NS15MessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB created event handler called", GetType().Name);
 
                     // start connecting
                     processor.Connect();
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Opening switchboard connection..", "NS15MessageHandler");
-
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Opening switchboard connection...", GetType().Name);
                 }
                 else
                 {
-                    if (Settings.TraceSwitch.TraceWarning)
-                        System.Diagnostics.Trace.WriteLine("Switchboard request received, but no pending switchboards available.", "NS15MessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Switchboard request received, but no pending switchboards available.", GetType().Name);
                 }
             }
         }
@@ -1294,8 +1240,7 @@ namespace MSNPSharp
             // build a notification message
             NotificationMessage notification = new NotificationMessage(message);
 
-            if (Settings.TraceSwitch.TraceVerbose)
-                Trace.WriteLine("Notification received : " + notification.ToDebugString());
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Notification received : " + notification.ToDebugString(), GetType().Name);
         }
 
         /// <summary>
@@ -1358,10 +1303,13 @@ namespace MSNPSharp
             }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
             {
+                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
+                msgMessage = new MSGMessage(message);
+
                 OnMailNotificationReceived(new NewMailEventArgs(
                     (string)msgMessage.MimeHeader["From"],
-                    new Uri((string)msgMessage.MimeHeader["Message-URL"]),
-                    new Uri((string)msgMessage.MimeHeader["Post-URL"]),
+                    (string)msgMessage.MimeHeader["Message-URL"],
+                    (string)msgMessage.MimeHeader["Post-URL"],
                     (string)msgMessage.MimeHeader["Subject"],
                     (string)msgMessage.MimeHeader["Dest-Folder"],
                     (string)msgMessage.MimeHeader["From-Addr"],
@@ -1370,6 +1318,10 @@ namespace MSNPSharp
             }
             else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
             {
+                //Now this is the unread OIM info, not the new mail.
+                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
+                msgMessage = new MSGMessage(message);
+
                 OnMailChanged(new MailChangedEventArgs(
                     (string)msgMessage.MimeHeader["Src-Folder"],
                     (string)msgMessage.MimeHeader["Dest-Folder"],
@@ -1381,15 +1333,88 @@ namespace MSNPSharp
                 OnMailboxStatusReceived(new MailboxStatusEventArgs(
                     int.Parse((string)msgMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture),
                     int.Parse((string)msgMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture),
-                    new Uri((string)msgMessage.MimeHeader["Inbox-URL"]),
-                    new Uri((string)msgMessage.MimeHeader["Folders-URL"]),
-                    new Uri((string)msgMessage.MimeHeader["Post-URL"])
+                    (string)msgMessage.MimeHeader["Inbox-URL"],
+                    (string)msgMessage.MimeHeader["Folders-URL"],
+                    (string)msgMessage.MimeHeader["Post-URL"]
                 ));
             }
             else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
             {
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
                 msgMessage = new MSGMessage(message);
+
+
+                /*
+                 * <MD>
+                 *     <E>
+                 *         <I>884</I>     Inbox total
+                 *         <IU>0</IU>     Inbox unread mail
+                 *         <O>222</O>     Sent + Junk + Drafts
+                 *         <OU>15</OU>    Junk unread mail
+                 *     </E>
+                 *     <Q>
+                 *         <QTM>409600</QTM>
+                 *         <QNM>204800</QNM>
+                 *     </Q>
+                 *     <M>
+                 *         <!-- OIM Nodes -->
+                 *     </M>
+                 *     <M>
+                 *         <!-- OIM Nodes -->
+                 *     </M>
+                 * </MD>
+                 */
+
+                string xmlstr = msgMessage.MimeHeader["Mail-Data"];
+                try
+                {
+                    XmlDocument xdoc = new XmlDocument();
+                    xdoc.LoadXml(xmlstr);
+                    XmlNodeList mdnodelist = xdoc.GetElementsByTagName("MD");
+                    if (mdnodelist.Count > 0)
+                    {
+                        foreach (XmlNode node in mdnodelist[0])
+                        {
+                            if (node.Name.ToLowerInvariant() == "e" && node.HasChildNodes)
+                            {
+                                int iu = 0;
+                                int ou = 0;
+                                foreach (XmlNode cnode in node.ChildNodes)
+                                {
+                                    if (cnode.Name.ToLowerInvariant() == "iu")
+                                    {
+                                        int.TryParse(cnode.InnerText, out iu);
+                                        break;
+                                    }
+                                }
+
+                                foreach (XmlNode cnode in node.ChildNodes)
+                                {
+                                    if (cnode.Name.ToLowerInvariant() == "ou")
+                                    {
+                                        int.TryParse(cnode.InnerText, out ou);
+                                        break;
+                                    }
+                                }
+
+                                OnMailboxStatusReceived(new MailboxStatusEventArgs(
+                                        iu,
+                                        ou,
+                                        (string)msgMessage.MimeHeader["Inbox-URL"],      //Invalid, I think it should be obsolated.
+                                        (string)msgMessage.MimeHeader["Folders-URL"],    //Invalid, I think it should be obsolated.
+                                        (string)msgMessage.MimeHeader["Post-URL"]
+                                    ));
+                                break;
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                }
+
                 OIMService.ProcessOIM(msgMessage, mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0);
             }
         }
@@ -1513,13 +1538,12 @@ namespace MSNPSharp
 
                                     if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                                     {
-                                        OnReverseAdded(new ContactEventArgs(contact));
+                                        ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                     }
                                 }
                             );
 
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine(account + " was added to your " + list.ToString());
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " was added to your " + list.ToString(), GetType().Name);
 
                         } while (contactNode.NextSibling != null);
                     }
@@ -1557,11 +1581,10 @@ namespace MSNPSharp
                             Contact contact = ContactList.GetContact(account, type);
                             if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
                             {
-                                OnReverseRemoved(new ContactEventArgs(contact));
+                                ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                             }
                         }
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine(account + " has removed you from his/her " + list.ToString());
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " has removed you from his/her " + list.ToString(), GetType().Name);
 
                     } while (contactNode.NextSibling != null);
                 }
@@ -1585,10 +1608,8 @@ namespace MSNPSharp
             ContactGroups.AddGroup(new ContactGroup(System.Web.HttpUtility.UrlDecode((string)message.CommandValues[1]), guid, this));
 
             // fire the event
-            if (ContactGroupAdded != null)
-            {
-                ContactGroupAdded(this, new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
-            }
+            ContactService.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
+
         }
 
         /// <summary>
@@ -1607,10 +1628,7 @@ namespace MSNPSharp
             ContactGroup contactGroup = (ContactGroup)contactGroups[guid];
             ContactGroups.RemoveGroup(contactGroup);
 
-            if (ContactGroupRemoved != null)
-            {
-                ContactGroupRemoved(this, new ContactGroupEventArgs(contactGroup));
-            }
+            ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
         }
 
         /// <summary>Called when a FQY command has been received.
@@ -1650,74 +1668,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Fires the <see cref="ReverseRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnReverseRemoved(ContactEventArgs e)
-        {
-            if (ReverseRemoved != null)
-                ReverseRemoved(this, e);
-        }
-
-        /// <summary>
-        ///  Fires the <see cref="ReverseAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnReverseAdded(ContactEventArgs e)
-        {
-            if (ReverseAdded != null)
-                ReverseAdded(this, e);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactAdded(ListMutateEventArgs e)
-        {
-            if (ContactAdded != null)
-            {
-                ContactAdded(this, e);
-            }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactRemoved(ListMutateEventArgs e)
-        {
-            if (ContactRemoved != null)
-            {
-                ContactRemoved(this, e);
-            }
-        }        
-
-        /// <summary>
-        /// Fires the <see cref="ContactGroupAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactGroupAdded(ContactGroupEventArgs e)
-        {
-            if (ContactGroupAdded != null)
-            {
-                ContactGroupAdded(this, e);
-            }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactGroupRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactGroupRemoved(ContactGroupEventArgs e)
-        {
-            if (ContactGroupRemoved != null)
-            {
-                ContactGroupRemoved(this, e);
-            }
-        }
-
 
         #endregion
 
@@ -1730,7 +1680,7 @@ namespace MSNPSharp
         protected virtual void OnCHLReceived(NSMessage message)
         {
             if (Credentials == null)
-                throw new MSNPSharpException("No credentials available for the NSMSNP11 handler. No challenge answer could be send.");
+                throw new MSNPSharpException("No credentials available for the NSMSNP15 handler. No challenge answer could be send.");
 
             string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
             MSNTicket.OIMLockKey = payload;
@@ -1821,8 +1771,7 @@ namespace MSNPSharp
                 {
                     string censor = Encoding.UTF8.GetString(Convert.FromBase64String(imtextNode.Attributes["value"].Value));
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        System.Diagnostics.Trace.WriteLine("Censor: " + censor, "NSMessageHandler");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Censor: " + censor, GetType().Name);
                 }
             }
         }
@@ -1876,7 +1825,7 @@ namespace MSNPSharp
             SwitchBoards.Clear();
             externalEndPoint = null;
             isSignedIn = false;
-            msnticket = new MSNTicket(this);
+            msnticket = MSNTicket.Empty;
         }
 
         /// <summary>
@@ -1900,9 +1849,6 @@ namespace MSNPSharp
 
                 switch (nsMessage.Command)
                 {
-                    case "ADC":
-                        OnADCReceived(nsMessage);
-                        break;
                     case "ADG":
                         OnADGReceived(nsMessage);
                         break;
@@ -1936,9 +1882,6 @@ namespace MSNPSharp
                     case "ILN":
                         OnILNReceived(nsMessage);
                         break;
-                    case "LSG":
-                        OnLSGReceived(nsMessage);
-                        break;
                     case "MSG":
                         OnMSGReceived(nsMessage);
                         break;
@@ -1965,9 +1908,6 @@ namespace MSNPSharp
                         break;
                     case "RML":
                         OnRMLReceived(nsMessage);
-                        break;
-                    case "REM":
-                        OnREMReceived(nsMessage);
                         break;
                     case "RNG":
                         OnRNGReceived(nsMessage);
@@ -2036,8 +1976,7 @@ namespace MSNPSharp
             if (ExceptionOccurred != null)
                 ExceptionOccurred(this, e);
 
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
         }
 
         /// <summary>
@@ -2049,8 +1988,7 @@ namespace MSNPSharp
             if (AuthenticationError != null)
                 AuthenticationError(this, e);
 
-            if (Settings.TraceSwitch.TraceError)
-                System.Diagnostics.Trace.WriteLine(e.ToString(), "NSMessageHandler");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
         }
 
         #endregion

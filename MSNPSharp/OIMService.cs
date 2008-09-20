@@ -1,3 +1,35 @@
+#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+/*
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
+#endregion
+
 using System;
 using System.Net;
 using System.Xml;
@@ -5,6 +37,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Web.Services.Protocols;
+using System.Security.Authentication;
 using System.Text.RegularExpressions;
 
 namespace MSNPSharp
@@ -12,7 +45,6 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
-    using System.Security.Authentication;
 
     #region Delegates and EventArgs
     /// <summary>
@@ -43,7 +75,10 @@ namespace MSNPSharp
         /// </summary>
         public ulong Sequence
         {
-            get { return sequence; }
+            get
+            {
+                return sequence;
+            }
         }
 
         /// <summary>
@@ -51,7 +86,10 @@ namespace MSNPSharp
         /// </summary>
         public string Message
         {
-            get { return message; }
+            get
+            {
+                return message;
+            }
         }
 
         /// <summary>
@@ -59,7 +97,10 @@ namespace MSNPSharp
         /// </summary>
         public Exception Error
         {
-            get { return error; }
+            get
+            {
+                return error;
+            }
         }
 
         /// <summary>
@@ -67,7 +108,10 @@ namespace MSNPSharp
         /// </summary>
         public string Sender
         {
-            get { return sender; }
+            get
+            {
+                return sender;
+            }
         }
 
         /// <summary>
@@ -75,7 +119,10 @@ namespace MSNPSharp
         /// </summary>
         public string Receiver
         {
-            get { return receiver; }
+            get
+            {
+                return receiver;
+            }
         }
 
         public OIMSendCompletedEventArgs()
@@ -100,6 +147,7 @@ namespace MSNPSharp
         private Guid guid = Guid.Empty;
         private DateTime receivedTime = DateTime.Now;
         private string email;
+        private string nickName;
         private string message;
 
         public DateTime ReceivedTime
@@ -118,6 +166,17 @@ namespace MSNPSharp
             get
             {
                 return email;
+            }
+        }
+
+        /// <summary>
+        /// Sender nickname.
+        /// </summary>
+        public string NickName
+        {
+            get
+            {
+                return nickName;
             }
         }
 
@@ -159,14 +218,15 @@ namespace MSNPSharp
             }
         }
 
-        public OIMReceivedEventArgs(DateTime rcvTime, Guid g, string account, string msg)
+        public OIMReceivedEventArgs(DateTime rcvTime, Guid g, string account, string nick, string msg)
         {
             receivedTime = rcvTime;
             guid = g;
             email = account;
+            nickName = nick;
             message = msg;
         }
-    } 
+    }
     #endregion
 
     #region Exceptions
@@ -202,7 +262,7 @@ namespace MSNPSharp
         /// Occurs when receive an OIM.
         /// </summary>
         public event OIMReceivedEventHandler OIMReceived;
-        
+
         /// <summary>
         /// Fires after an OIM was sent.
         /// </summary>
@@ -215,7 +275,7 @@ namespace MSNPSharp
 
         private RSIService CreateRSIService()
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Web);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Web);
             string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
             RSIService rsiService = new RSIService();
@@ -229,7 +289,7 @@ namespace MSNPSharp
 
         private OIMStoreService CreateOIMStoreService()
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.OIM);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.OIM);
 
             OIMStoreService oimService = new OIMStoreService();
             oimService.Proxy = WebProxy;
@@ -253,8 +313,7 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled && e.Error == null)
                     {
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine("GetMetadata completed.");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "GetMetadata completed.", GetType().Name);
 
                         if (e.Result != null && e.Result is Array)
                         {
@@ -302,8 +361,8 @@ namespace MSNPSharp
             List<OIMReceivedEventArgs> initialOIMS = new List<OIMReceivedEventArgs>();
             int oimdeletecount = xnodlst.Count;
 
-            Regex regmsg = new Regex("\n\n[^\n]+");
-            Regex regsenderdata = new Regex("From:(?<encode>=.*=)<(?<mail>.+)>\n");
+            Regex regmsg = new Regex("\n\n(?<encodedmsg>[^\n]+)");
+            Regex regsenderdata = new Regex("From:[ ]*=\\u003F(?<encode>.+)\\u003F(?<decoder>.)\\u003F(?<encodenick>.+)\\u003F=[ ]*<(?<mail>.+)>[\r]*\n");
 
             foreach (XmlNode m in xnodlst)
             {
@@ -341,32 +400,60 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled && e.Error == null)
                     {
-                        Match mch = regsenderdata.Match(e.Result.GetMessageResult);
-
-                        string strencoding = "utf-8";
-                        if (mch.Groups["encode"].Value != String.Empty)
+                        if (regsenderdata.Match(e.Result.GetMessageResult).Success)
                         {
-                            strencoding = mch.Groups["encode"].Value.Split('?')[1];
-                        }
-                        Encoding encode = Encoding.GetEncoding(strencoding);
-                        message = encode.GetString(Convert.FromBase64String(regmsg.Match(e.Result.GetMessageResult).Value.Trim()));
-
-                        OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, guid, email, message);
-
-                        if (initial)
-                        {
-                            initialOIMS.Add(orea);
-
-                            // Is this the last OIM?
-                            if (initialOIMS.Count == oimdeletecount)
+                            Match mch = regsenderdata.Match(e.Result.GetMessageResult);
+                            string strencoding = mch.Groups["encode"].Value;
+                            string strdecode = mch.Groups["decoder"].Value;
+                            string strencodenick = mch.Groups["encodenick"].Value;
+                            string nick = "";
+                            Encoding encode = Encoding.GetEncoding(strencoding);
+                            if (strdecode.ToLowerInvariant() == "b")
                             {
-                                initialOIMS.Sort(CompareDates);
-                                foreach (OIMReceivedEventArgs ea in initialOIMS)
+                                byte[] bytnick = Convert.FromBase64String(strencodenick);
+                                nick = encode.GetString(bytnick);
+                            }
+
+                            if (strdecode.ToLowerInvariant() == "q")
+                            {
+                                nick = Converter.ConvertFromQPString(strencodenick, encode);
+                            }
+
+                            if (regmsg.Match(e.Result.GetMessageResult).Success)
+                            {
+                                string msgstr = regmsg.Match(e.Result.GetMessageResult).Groups["encodedmsg"].Value.Trim();
+                                message = encode.GetString(Convert.FromBase64String(msgstr));  //Maybe always use utf-8 ?
+
+                                OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, guid, email, nick, message);
+
+                                if (initial)
                                 {
-                                    OnOIMReceived(this, ea);
-                                    if (ea.IsRead)
+                                    initialOIMS.Add(orea);
+
+                                    // Is this the last OIM?
+                                    if (initialOIMS.Count == oimdeletecount)
                                     {
-                                        guidstodelete.Add(ea.Guid.ToString());
+                                        initialOIMS.Sort(CompareDates);
+                                        foreach (OIMReceivedEventArgs ea in initialOIMS)
+                                        {
+                                            OnOIMReceived(this, ea);
+                                            if (ea.IsRead)
+                                            {
+                                                guidstodelete.Add(ea.Guid.ToString());
+                                            }
+                                            if (0 == --oimdeletecount && guidstodelete.Count > 0)
+                                            {
+                                                DeleteOIMMessages(guidstodelete.ToArray());
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    OnOIMReceived(this, orea);
+                                    if (orea.IsRead)
+                                    {
+                                        guidstodelete.Add(guid.ToString());
                                     }
                                     if (0 == --oimdeletecount && guidstodelete.Count > 0)
                                     {
@@ -375,19 +462,6 @@ namespace MSNPSharp
                                 }
                             }
                         }
-                        else
-                        {
-                            OnOIMReceived(this, orea);
-                            if (orea.IsRead)
-                            {
-                                guidstodelete.Add(guid.ToString());
-                            }
-                            if (0 == --oimdeletecount && guidstodelete.Count > 0)
-                            {
-                                DeleteOIMMessages(guidstodelete.ToArray());
-                            }
-                        }
-
                     }
                     else if (e.Error != null)
                     {
@@ -418,8 +492,7 @@ namespace MSNPSharp
             {
                 if (!e.Cancelled && e.Error == null)
                 {
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMessages completed.");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMessages completed.", GetType().Name);
                 }
                 else if (e.Error != null)
                 {
@@ -504,8 +577,7 @@ namespace MSNPSharp
                                 msg,
                                 null));
 
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("An OIM Message has been sent: " + userstate.account + ", runId = " + _RunGuid);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "An OIM Message has been sent: " + userstate.account + ", runId = " + _RunGuid, GetType().Name);
                         }
                     }
                     else if (e.Error != null && e.Error is SoapException)
@@ -526,8 +598,8 @@ namespace MSNPSharp
                         else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
                         {
                             exp = new SenderThrottleLimitExceededException();
-                            if (Settings.TraceSwitch.TraceVerbose)
-                                Trace.WriteLine("OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...");
+
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...", GetType().Name);
                         }
 
                         OnOIMSendCompleted(NSMessageHandler.Owner.Mail,

@@ -1,3 +1,35 @@
+#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+/*
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
+#endregion
+
 using System;
 using System.IO;
 using System.Net;
@@ -25,7 +57,7 @@ namespace MSNPSharp
 
         private StorageService CreateStorageService(String scenario)
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Storage);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Storage);
 
             StorageService storageService = new StorageService();
             storageService.Proxy = WebProxy;
@@ -105,8 +137,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("CreateProfile error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateProfile error: " + ex.Message, GetType().Name);
                 }
 
                 //2. ShareItem, share the profile.
@@ -121,8 +152,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("ShareItem error : " + ex.Message);  //Item already shared.
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ShareItem error: " + ex.Message, GetType().Name); //Item already shared.
                 }
 
                 //3. AddMember, add a ProfileExpression role member into the newly created profile and define messenger service.
@@ -162,8 +192,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        if (Settings.TraceSwitch.TraceError)
-                            Trace.WriteLine("AddMember error : " + ex.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "AddMember error: " + ex.Message, GetType().Name);
                     }
                 }
 
@@ -193,8 +222,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("GetProfile error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "GetProfile error: " + ex.Message, GetType().FullName);
                 }
 
                 //4. CreateDocument, create a new document for this profile and return its resource id.
@@ -230,8 +258,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("CreateDocument error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateDocument error: " + ex.Message, GetType().Name);
                 }
 
                 //5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
@@ -250,8 +277,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("CreateRelationships error : " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateRelationships error: " + ex.Message, GetType().Name);
                 }
 
                 //6.1 UpdateProfile
@@ -275,8 +301,7 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine("UpdateProfile error ; " + ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateProfile error: " + ex.Message, GetType().Name);
                 }
 
                 // 6.2 Get Profile again to get notification.LastChanged
@@ -326,8 +351,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        if (Settings.TraceSwitch.TraceError)
-                            Trace.WriteLine("UpdateDynamicItem error ; " + ex.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: " + ex.Message, GetType().Name);
                     }
 
                     //9. ABContactUpdate
@@ -354,8 +378,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        if (Settings.TraceSwitch.TraceError)
-                            Trace.WriteLine("ABContactUpdate error ; " + ex.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ABContactUpdate error: " + ex.Message, GetType().Name);
                     }
                 }
 
@@ -448,8 +471,7 @@ namespace MSNPSharp
                         CreateProfile();
                     }
 
-                    if (Settings.TraceSwitch.TraceError)
-                        Trace.WriteLine(ex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
                 }
             }
             return NSMessageHandler.ContactService.AddressBook.Profile;

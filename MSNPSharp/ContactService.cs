@@ -1,3 +1,35 @@
+#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+/*
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
+#endregion
+
 using System;
 using System.IO;
 using System.Net;
@@ -36,6 +68,126 @@ namespace MSNPSharp
         {
             applicationId = Properties.Resources.ApplicationId;
         }
+
+        #region Events
+        /// <summary>
+        /// Occurs when a contact is added to any list (including reverse list)
+        /// </summary>
+        public event ListMutatedAddedEventHandler ContactAdded;
+
+        /// <summary>
+        /// Occurs when a contact is removed from any list (including reverse list)
+        /// </summary>
+        public event ListMutatedAddedEventHandler ContactRemoved;
+
+        /// <summary>
+        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
+        /// </summary>
+        public event ContactChangedEventHandler ReverseAdded;
+
+        /// <summary>
+        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
+        /// </summary>
+        public event ContactChangedEventHandler ReverseRemoved;
+
+        /// <summary>
+        /// Occurs when a new contactgroup is created
+        /// </summary>
+        public event ContactGroupChangedEventHandler ContactGroupAdded;
+
+        /// <summary>
+        /// Occurs when a contactgroup is removed
+        /// </summary>
+        public event ContactGroupChangedEventHandler ContactGroupRemoved;
+
+        /// <summary>
+        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
+        /// This means all contact-updates are received from the server and processed.
+        /// </summary>
+        public event EventHandler SynchronizationCompleted;
+        #endregion
+
+        #region Public members
+
+        /// <summary>
+        /// Fires the <see cref="ReverseRemoved"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal virtual void OnReverseRemoved(ContactEventArgs e)
+        {
+            if (ReverseRemoved != null)
+                ReverseRemoved(this, e);
+        }
+
+        /// <summary>
+        ///  Fires the <see cref="ReverseAdded"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal virtual void OnReverseAdded(ContactEventArgs e)
+        {
+            if (ReverseAdded != null)
+                ReverseAdded(this, e);
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactAdded"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal virtual void OnContactAdded(ListMutateEventArgs e)
+        {
+            if (ContactAdded != null)
+            {
+                ContactAdded(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactRemoved"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal virtual void OnContactRemoved(ListMutateEventArgs e)
+        {
+            if (ContactRemoved != null)
+            {
+                ContactRemoved(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactGroupAdded"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal virtual void OnContactGroupAdded(ContactGroupEventArgs e)
+        {
+            if (ContactGroupAdded != null)
+            {
+                ContactGroupAdded(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactGroupRemoved"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal virtual void OnContactGroupRemoved(ContactGroupEventArgs e)
+        {
+            if (ContactGroupRemoved != null)
+            {
+                ContactGroupRemoved(this, e);
+            }
+        }
+
+
+        /// <summary>
+        /// Fires the <see cref="SynchronizationCompleted"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal virtual void OnSynchronizationCompleted(EventArgs e)
+        {
+            if (SynchronizationCompleted != null)
+                SynchronizationCompleted(this, e);
+        }
+        #endregion
 
         #region Properties
 
@@ -87,9 +239,7 @@ namespace MSNPSharp
         {
             if (AddressBookSynchronized)
             {
-                if (Settings.TraceSwitch.TraceWarning)
-                    Trace.WriteLine("SynchronizeContactList() was called, but the list has already been synchronized.", "NSMessageHandler");
-
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "SynchronizeContactList() was called, but the list has already been synchronized.", GetType().Name);
                 return;
             }
 
@@ -98,9 +248,9 @@ namespace MSNPSharp
                 DeleteRecordFile();
             }
 
-            bool nocompress = false;
-            string addressbookFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
-            string deltasResultsFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
+            bool nocompress = Settings.NoCompress;
+            string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl");
+            string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
             try
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
@@ -116,8 +266,7 @@ namespace MSNPSharp
             }
             catch (Exception ex)
             {
-                if (Settings.TraceSwitch.TraceError)
-                    Trace.WriteLine(ex.Message);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
 
                 recursiveCall++;
                 SynchronizeContactList();
@@ -219,14 +368,14 @@ namespace MSNPSharp
                                         abSynchronized = true;
                                         SetDefaults(false);
 
-                                        NSMessageHandler.OnSynchronizationCompleted(EventArgs.Empty);
+                                        OnSynchronizationCompleted(EventArgs.Empty);
 
                                         // Fire the ReverseAdded event (pending)
                                         lock (NSMessageHandler.ContactList.SyncRoot)
                                         {
                                             foreach (Contact pendingContact in NSMessageHandler.ContactList.Pending)
                                             {
-                                                NSMessageHandler.OnReverseAdded(new ContactEventArgs(pendingContact));
+                                                OnReverseAdded(new ContactEventArgs(pendingContact));
                                             }
                                         }
                                     }
@@ -417,7 +566,7 @@ namespace MSNPSharp
 
         internal SharingServiceBinding CreateSharingService(string partnerScenario)
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = WebProxy;
@@ -438,7 +587,7 @@ namespace MSNPSharp
 
         internal ABServiceBinding CreateABService(string partnerScenario)
         {
-            NSMessageHandler.MSNTicket.RenewIfExpired(SSOTicketType.Contact);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = WebProxy;
@@ -638,7 +787,7 @@ namespace MSNPSharp
                         delegate
                         {
                             contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                            NSMessageHandler.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                            NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                         });
                 }
             );
@@ -695,7 +844,7 @@ namespace MSNPSharp
                                 delegate
                                 {
                                     contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                                    NSMessageHandler.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
+                                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
                                 });
                         }
                     );
@@ -839,18 +988,18 @@ namespace MSNPSharp
             {
                 handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
-                {                    
+                {
                     contact.OnForwardList = false;
 
                     AddressBook.AddressbookContacts.Remove(contact.Guid);
                     if (MSNLists.None == AddressBook.GetMSNLists(contact.Mail, contact.ClientType))
                     {
                         AddressBook.MembershipContacts.Remove(new ContactIdentifier(contact.Mail, contact.ClientType));
-                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);                        
+                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
                         contact.NSMessageHandler = null;
                     }
-               
-                    NSMessageHandler.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+
+                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
                     contact.SetGuid(Guid.Empty);
                     contact.SetIsMessengerUser(false);
                 }
@@ -1006,8 +1155,7 @@ namespace MSNPSharp
                     handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                     if (!e.Cancelled && e.Error == null)
                     {
-                        if (Settings.TraceSwitch.TraceVerbose)
-                            Trace.WriteLine("UpdateMe completed.");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateMe completed.", GetType().Name);
 
                         AddressBook.MyProperties["blp"] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
                         AddressBook.MyProperties["gtc"] = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
@@ -1056,7 +1204,7 @@ namespace MSNPSharp
                 if (!e.Cancelled && e.Error == null)
                 {
                     NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, NSMessageHandler));
-                    NSMessageHandler.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)NSMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
+                    NSMessageHandler.ContactService.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)NSMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
                 }
                 else if (e.Error != null)
                 {
@@ -1113,7 +1261,7 @@ namespace MSNPSharp
                 {
                     NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
                     AddressBook.Groups.Remove(new Guid(contactGroup.Guid));
-                    NSMessageHandler.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
+                    NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
                 }
                 else if (e.Error != null)
                 {
@@ -1310,7 +1458,7 @@ namespace MSNPSharp
 
                     contact.AddToList(list);
                     AddressBook.AddMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list), 0); // 0: XXXXXX
-                    NSMessageHandler.OnContactAdded(new ListMutateEventArgs(contact, list));
+                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, list));
 
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
                     {
@@ -1322,8 +1470,7 @@ namespace MSNPSharp
                         onSuccess(this, EventArgs.Empty);
                     }
 
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("AddMember completed: " + list);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + list, GetType().Name);
                 }
             };
 
@@ -1429,7 +1576,7 @@ namespace MSNPSharp
 
                     contact.RemoveFromList(list);
                     AddressBook.RemoveMemberhip(contact.Mail, contact.ClientType, GetMemberRole(list));
-                    NSMessageHandler.OnContactRemoved(new ListMutateEventArgs(contact, list));
+                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
 
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
                     {
@@ -1440,9 +1587,7 @@ namespace MSNPSharp
                     {
                         onSuccess(this, EventArgs.Empty);
                     }
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                        Trace.WriteLine("DeleteMember completed: " + list);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + list, GetType().Name);
                 }
             };
 
@@ -1558,14 +1703,14 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Mail != null)
             {
-                string addressbookFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl";
+                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl");
                 if (File.Exists(addressbookFile))
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
                 }
 
-                string deltasResultFile = Path.GetFullPath(@".\") + NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl";
+                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
                 if (File.Exists(deltasResultFile))
                 {
                     File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.

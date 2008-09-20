@@ -1,37 +1,40 @@
-#region Copyright (c) 2007-2008 Pang Wu <freezingsoft@hotmail.com>,Thiago M. Sayão <thiago.sayao@gmail.com>
+#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2007-2008 Pang Wu <freezingsoft@hotmail.com>,Thiago M. Sayão <thiago.sayao@gmail.com>
-All rights reserved.
+Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
-this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright 
-notice, this list of conditions and the following disclaimer in the 
-documentation and/or other materials provided with the distribution.
-* Neither the names of Bas Geertsema or Xih Solutions nor the names of its 
-contributors may be used to endorse or promote products derived 
-from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
-THE POSSIBILITY OF SUCH DAMAGE. */
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
 #endregion
 
 using System;
 using System.Net;
 using System.Xml;
 using System.Text;
+using System.Threading;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -42,8 +45,32 @@ namespace MSNPSharp
     using MSNPSharp.SOAP;
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
 
-    public class MSNTicket : ICloneable
+    [Flags]
+    public enum SSOTicketType
     {
+        None = 0x00,
+        Clear = 0x01,
+        Contact = 0x02,
+        OIM = 0x04,
+        Spaces = 0x08,
+        Storage = 0x10,
+        Web = 0x20
+    }
+
+    public enum ExpiryState
+    {
+        NotExpired,
+        WillExpireSoon,
+        Expired
+    }
+
+    #region MSNTicket
+
+    [Serializable]
+    public sealed class MSNTicket : ICloneable
+    {
+        public static readonly MSNTicket Empty = new MSNTicket(null);
+
         private string policy = "MBI_KEY_OLD";
         private string mainBrandID = "MSFT";
         private string oimLockKey = String.Empty;
@@ -52,12 +79,19 @@ namespace MSNPSharp
         private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
 
         [NonSerialized]
-        private NSMessageHandler nsMessageHandler = null;
-
-        public MSNTicket(NSMessageHandler nsHandler)
+        private int hashcode = 0;
+        [NonSerialized]
+        internal int DeleteTick = 0;
+        internal MSNTicket(Credentials creds)
         {
-            nsMessageHandler = nsHandler;
+            if (creds != null)
+            {
+                hashcode = (creds.Account.ToLowerInvariant() + creds.Password).GetHashCode();
+                DeleteTick = unchecked(Environment.TickCount + (30 * 60000)); // Lifetime is 30 minutes
+            }
         }
+
+        #region Properties
 
         public Dictionary<SSOTicketType, SSOTicket> SSOTickets
         {
@@ -131,6 +165,8 @@ namespace MSNPSharp
             }
         }
 
+        #endregion
+
         public object Clone()
         {
             return MemberwiseClone();
@@ -148,91 +184,26 @@ namespace MSNPSharp
             return ExpiryState.Expired;
         }
 
-        #region Authenticate
-
-        private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
-
-        public void Authenticate()
+        public override int GetHashCode()
         {
-            int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-            MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : this;
-            SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
-            SSOTicketType expiredtickets = SSOTicketType.None;
-
-            foreach (SSOTicketType ssot in ssos)
-            {
-                if (ExpiryState.NotExpired != ticket.Expired(ssot))
-                    expiredtickets |= ssot;
-            }
-
-            if (expiredtickets == SSOTicketType.None)
-            {
-                nsMessageHandler.MSNTicket = ticket;
-            }
-            else
-            {
-                SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
-                if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-                    sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-
-                sso.AddAuths(expiredtickets);
-                sso.Authenticate(ticket, false);
-
-                cache[hashcode] = ticket.Clone() as MSNTicket;
-                nsMessageHandler.MSNTicket = ticket;
-            }
+            return hashcode;
         }
 
-        public void RenewIfExpired(SSOTicketType renew)
+        public override bool Equals(object obj)
         {
-            int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-            MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : this;
-            ExpiryState es = ticket.Expired(renew);
+            if (obj == null || obj.GetType() != GetType())
+                return false;
 
-            if (ExpiryState.NotExpired != es)
-            {
-                SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, Policy);
-                if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-                    sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+            if (ReferenceEquals(this, obj))
+                return true;
 
-                sso.AddAuths(renew);
-
-                if (es == ExpiryState.WillExpireSoon)
-                {
-                    sso.Authenticate(ticket, true);
-                }
-                else
-                {
-                    sso.Authenticate(ticket, false);
-                    cache[hashcode] = ticket.Clone() as MSNTicket;
-                }
-
-                nsMessageHandler.MSNTicket = ticket;
-            }
+            return GetHashCode() == ((MSNTicket)obj).GetHashCode();
         }
-
-        #endregion
-
     }
 
-    [Flags]
-    public enum SSOTicketType
-    {
-        None = 0x00,
-        Clear = 0x01,
-        Contact = 0x02,
-        OIM = 0x04,
-        Spaces = 0x08,
-        Storage = 0x10,
-        Web = 0x20
-    }
+    #endregion
 
-    public enum ExpiryState
-    {
-        NotExpired,
-        WillExpireSoon,
-        Expired
-    }
+    #region SSOTicket
 
     public class SSOTicket
     {
@@ -316,6 +287,147 @@ namespace MSNPSharp
             }
         }
     }
+
+    #endregion
+
+    #region SingleSignOnManager
+
+    public static class SingleSignOnManager
+    {
+        public static event EventHandler CleanedUp;
+        private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
+        private static DateTime nextCleanup = NextCleanupTime();
+        private const double cacheCleanupInterval = 5;
+        private static object syncObject;
+        private static object SyncObject
+        {
+            get
+            {
+                if (syncObject == null)
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncObject, newobj, null);
+                }
+
+                return syncObject;
+            }
+        }
+
+        private static DateTime NextCleanupTime()
+        {
+            return DateTime.Now.AddMinutes(cacheCleanupInterval);
+        }
+
+        private static void CheckCleanup()
+        {
+            if (nextCleanup < DateTime.Now)
+            {
+                lock (SyncObject)
+                {
+                    if (nextCleanup < DateTime.Now)
+                    {
+                        nextCleanup = NextCleanupTime();
+                        int tickcount = Environment.TickCount;
+                        List<int> cachestodelete = new List<int>();
+                        foreach (MSNTicket t in cache.Values)
+                        {
+                            if (t.DeleteTick != 0 && t.DeleteTick < tickcount)
+                            {
+                                cachestodelete.Add(t.GetHashCode());
+                            }
+                        }
+                        foreach (int i in cachestodelete)
+                        {
+                            cache.Remove(i);
+                        }
+                        GC.Collect();
+                        try
+                        {
+                            if (CleanedUp != null)
+                                CleanedUp(typeof(SingleSignOnManager), EventArgs.Empty);
+                        }
+                        catch (Exception exception)
+                        {
+                            System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exception.Message, typeof(SingleSignOnManager).Name);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
+        {
+            CheckCleanup();
+
+            if (nsMessageHandler != null)
+            {
+                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
+                MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : new MSNTicket(nsMessageHandler.Credentials);
+                SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
+                SSOTicketType expiredtickets = SSOTicketType.None;
+
+                foreach (SSOTicketType ssot in ssos)
+                {
+                    if (ExpiryState.NotExpired != ticket.Expired(ssot))
+                        expiredtickets |= ssot;
+                }
+
+                if (expiredtickets == SSOTicketType.None)
+                {
+                    nsMessageHandler.MSNTicket = ticket;
+                }
+                else
+                {
+                    SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, policy);
+                    if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
+                        sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+
+                    sso.AddAuths(expiredtickets);
+                    sso.Authenticate(ticket, false);
+
+                    cache[hashcode] = ticket.Clone() as MSNTicket;
+                    nsMessageHandler.MSNTicket = ticket;
+                }
+            }
+        }
+
+        public static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
+        {
+            CheckCleanup();
+
+            if (nsMessageHandler != null)
+            {
+                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
+                MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : new MSNTicket(nsMessageHandler.Credentials);
+                ExpiryState es = ticket.Expired(renew);
+
+                if (ExpiryState.NotExpired != es)
+                {
+                    SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, ticket.Policy);
+                    if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
+                        sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+
+                    sso.AddAuths(renew);
+
+                    if (es == ExpiryState.WillExpireSoon)
+                    {
+                        sso.Authenticate(ticket, true);
+                    }
+                    else
+                    {
+                        sso.Authenticate(ticket, false);
+                        cache[hashcode] = ticket.Clone() as MSNTicket;
+                    }
+                }
+
+                nsMessageHandler.MSNTicket = ticket;
+            }
+        }
+    }
+
+    #endregion
+
+    #region SingleSignOn
 
     public class SingleSignOn
     {
@@ -549,6 +661,10 @@ namespace MSNPSharp
         }
     }
 
+    #endregion
+
+    #region MBI
+
     /// <summary>
     /// MBI encrypt algorithm class
     /// </summary>
@@ -622,4 +738,6 @@ namespace MSNPSharp
             return byt;
         }
     }
+
+    #endregion
 };
