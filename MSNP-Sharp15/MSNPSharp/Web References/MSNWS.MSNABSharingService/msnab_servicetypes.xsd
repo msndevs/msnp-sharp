@@ -46,7 +46,7 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element minOccurs="0" default="Full" name="View" type="xsd:string" />
+      <xsd:element minOccurs="0" name="View" type="xsd:string" />
       <xsd:element minOccurs="0" default="false" name="deltasOnly" type="xsd:boolean" />
       <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:dateTime" />
     </xsd:sequence>
@@ -110,7 +110,7 @@
   <xsd:complexType name="ABFindAllRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
-      <xsd:element minOccurs="0" default="Full" name="abView" type="xsd:string" />
+      <xsd:element minOccurs="0" name="abView" type="xsd:string" />
       <xsd:element minOccurs="0" default="false" name="deltasOnly" type="xsd:boolean" />
       <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:dateTime" />
       <xsd:element minOccurs="0" fixed="Gleam" name="dynamicItemView" type="xsd:string" />

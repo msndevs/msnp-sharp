@@ -51,6 +51,8 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         
         private System.Threading.SendOrPostCallback CreateRelationshipsOperationCompleted;
         
+        private System.Threading.SendOrPostCallback DeleteRelationshipsOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -136,6 +138,9 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         
         /// <remarks/>
         public event CreateRelationshipsCompletedEventHandler CreateRelationshipsCompleted;
+        
+        /// <remarks/>
+        public event DeleteRelationshipsCompletedEventHandler DeleteRelationshipsCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("StorageUserHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
@@ -368,6 +373,39 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("StorageUserHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("AffinityCacheHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("StorageApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/storage/w10/DeleteRelationships", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("DeleteRelationshipsResponse", Namespace="http://www.msn.com/webservices/storage/w10")]
+        public object DeleteRelationships([System.Xml.Serialization.XmlElementAttribute("DeleteRelationships", Namespace="http://www.msn.com/webservices/storage/w10")] DeleteRelationshipsRequestType DeleteRelationships1) {
+            object[] results = this.Invoke("DeleteRelationships", new object[] {
+                        DeleteRelationships1});
+            return ((object)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void DeleteRelationshipsAsync(DeleteRelationshipsRequestType DeleteRelationships1) {
+            this.DeleteRelationshipsAsync(DeleteRelationships1, null);
+        }
+        
+        /// <remarks/>
+        public void DeleteRelationshipsAsync(DeleteRelationshipsRequestType DeleteRelationships1, object userState) {
+            if ((this.DeleteRelationshipsOperationCompleted == null)) {
+                this.DeleteRelationshipsOperationCompleted = new System.Threading.SendOrPostCallback(this.OnDeleteRelationshipsOperationCompleted);
+            }
+            this.InvokeAsync("DeleteRelationships", new object[] {
+                        DeleteRelationships1}, this.DeleteRelationshipsOperationCompleted, userState);
+        }
+        
+        private void OnDeleteRelationshipsOperationCompleted(object arg) {
+            if ((this.DeleteRelationshipsCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.DeleteRelationshipsCompleted(this, new DeleteRelationshipsCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -449,6 +487,118 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
             }
             set {
                 this.isAdminField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class DeleteRelationshipsRequestType {
+        
+        private Handle sourceHandleField;
+        
+        private Handle[] targetHandlesField;
+        
+        /// <remarks/>
+        public Handle sourceHandle {
+            get {
+                return this.sourceHandleField;
+            }
+            set {
+                this.sourceHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("ObjectHandle", IsNullable=false)]
+        public Handle[] targetHandles {
+            get {
+                return this.targetHandlesField;
+            }
+            set {
+                this.targetHandlesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class Handle {
+        
+        private Alias aliasField;
+        
+        private string relationshipNameField;
+        
+        private string resourceIDField;
+        
+        /// <remarks/>
+        public Alias Alias {
+            get {
+                return this.aliasField;
+            }
+            set {
+                this.aliasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string RelationshipName {
+            get {
+                return this.relationshipNameField;
+            }
+            set {
+                this.relationshipNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ResourceID {
+            get {
+                return this.resourceIDField;
+            }
+            set {
+                this.resourceIDField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
+    public partial class Alias {
+        
+        private string nameField;
+        
+        private string nameSpaceField;
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string NameSpace {
+            get {
+                return this.nameSpaceField;
+            }
+            set {
+                this.nameSpaceField = value;
             }
         }
     }
@@ -611,76 +761,6 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
-    public partial class Handle {
-        
-        private Alias aliasField;
-        
-        private string relationshipNameField;
-        
-        public Handle() {
-            this.relationshipNameField = "MyProfile";
-        }
-        
-        /// <remarks/>
-        public Alias Alias {
-            get {
-                return this.aliasField;
-            }
-            set {
-                this.aliasField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string RelationshipName {
-            get {
-                return this.relationshipNameField;
-            }
-            set {
-                this.relationshipNameField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
-    public partial class Alias {
-        
-        private string nameField;
-        
-        private string nameSpaceField;
-        
-        /// <remarks/>
-        public string Name {
-            get {
-                return this.nameField;
-            }
-            set {
-                this.nameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string NameSpace {
-            get {
-                return this.nameSpaceField;
-            }
-            set {
-                this.nameSpaceField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Photo))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
     [System.SerializableAttribute()]
@@ -689,12 +769,12 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
     public partial class documentBaseType {
         
-        private object nameField;
+        private string nameField;
         
         private DocumentStream[] documentStreamsField;
         
         /// <remarks/>
-        public object Name {
+        public string Name {
             get {
                 return this.nameField;
             }
@@ -969,7 +1049,7 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/storage/w10")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/storage/w10")]
     public partial class ExpressionProfile {
         
         private string freeTextField;
@@ -980,17 +1060,11 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         
         private int flagsField;
         
+        private bool flagsFieldSpecified;
+        
         private string roleDefinitionNameField;
         
-        public ExpressionProfile() {
-            this.freeTextField = "Update";
-            this.displayNameField = "Update";
-            this.personalStatusField = "Update";
-            this.flagsField = 0;
-        }
-        
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute("Update")]
         public string FreeText {
             get {
                 return this.freeTextField;
@@ -1001,7 +1075,6 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute("Update")]
         public string DisplayName {
             get {
                 return this.displayNameField;
@@ -1012,7 +1085,6 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute("Update")]
         public string PersonalStatus {
             get {
                 return this.personalStatusField;
@@ -1023,13 +1095,23 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(0)]
         public int Flags {
             get {
                 return this.flagsField;
             }
             set {
                 this.flagsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool FlagsSpecified {
+            get {
+                return this.flagsFieldSpecified;
+            }
+            set {
+                this.flagsFieldSpecified = value;
             }
         }
         
@@ -2197,6 +2279,32 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         private object[] results;
         
         internal CreateRelationshipsCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public object Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((object)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    public delegate void DeleteRelationshipsCompletedEventHandler(object sender, DeleteRelationshipsCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class DeleteRelationshipsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal DeleteRelationshipsCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
                 base(exception, cancelled, userState) {
             this.results = results;
         }
