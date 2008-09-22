@@ -44,35 +44,39 @@ namespace MSNPSharp
     [Serializable()]
     public class PersonalMessage
     {
-        string personalmessage;
-        string machineguid;
-        string appname;
-        string format;
-        MediaType mediatype;
+        private string personalMessage;
+#if MSNP16
+        private string signatureSound;
+#endif
+        private string machineGuid;
+        private string appName;
+        private string format;
+        private MediaType mediaType;
 
         [NonSerialized]
-        NSMessage message;
+        private NSMessage nsMessage;
 
-        string[] content;
+        private string[] content;
 
         public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent)
         {
             Message = personalmsg;
-            this.mediatype = mediatype;
-            this.content = currentmediacontent;
+            mediaType = mediatype;
+            content = currentmediacontent;
         }
 
         internal PersonalMessage(NSMessage message)
         {
-            this.message = message;
-            mediatype = MediaType.None;
+            nsMessage = message;
+            mediaType = MediaType.None;
 
             try
             {
                 Handle();
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exception.Message, GetType().Name);
             }
         }
 
@@ -80,7 +84,7 @@ namespace MSNPSharp
         {
             get
             {
-                return message;
+                return nsMessage;
             }
         }
 
@@ -90,14 +94,23 @@ namespace MSNPSharp
             {
                 string currentmedia = String.Empty;
 
-                if (mediatype != MediaType.None)
+                if (mediaType != MediaType.None)
                     currentmedia = System.Web.HttpUtility.HtmlEncode(String.Join(@"\0", content));
 
-                personalmessage = System.Web.HttpUtility.HtmlEncode(personalmessage);
+                personalMessage = System.Web.HttpUtility.HtmlEncode(personalMessage);
 
-                string pload = String.Format("<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia></Data>",
-                                              personalmessage,
-                                              currentmedia);
+                string pload = String.Format("<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia><MachineGuid>{2}</MachineGuid>" +
+#if MSNP16
+ "<SignatureSound>{3}</SignatureSound>" +
+#endif
+ "</Data>",
+                                              personalMessage,
+                                              currentmedia,
+                                              machineGuid
+#if MSNP16
+, signatureSound
+#endif
+);
 
                 return pload;
             }
@@ -107,11 +120,11 @@ namespace MSNPSharp
         {
             get
             {
-                return personalmessage;
+                return personalMessage;
             }
             set
             {
-                personalmessage = value;
+                personalMessage = value;
             }
         }
 
@@ -119,15 +132,23 @@ namespace MSNPSharp
         {
             get
             {
-                return machineguid;
+                return machineGuid;
             }
         }
-
+#if MSNP16
+        public string SignatureSound
+        {
+            get
+            {
+                return signatureSound;
+            }
+        }
+#endif
         public MediaType MediaType
         {
             get
             {
-                return mediatype;
+                return mediaType;
             }
         }
 
@@ -135,7 +156,7 @@ namespace MSNPSharp
         {
             get
             {
-                return appname;
+                return appName;
             }
         }
 
@@ -166,39 +187,32 @@ namespace MSNPSharp
 
         public string ToDebugString()
         {
-            return System.Text.UTF8Encoding.UTF8.GetString(message.InnerBody);
+            return System.Text.UTF8Encoding.UTF8.GetString(nsMessage.InnerBody);
         }
 
         public override string ToString()
         {
-            return personalmessage;
+            return personalMessage;
         }
 
-        void Handle()
+        private void Handle()
         {
-            XmlDocument xmlDoc = new XmlDocument();
-            MemoryStream ms;
-            if (message.InnerBody == null)
-            {
+            if (nsMessage.InnerBody == null)
                 return;
-            }
-            else
-            {
-                ms = new MemoryStream(message.InnerBody);
-            }
+
+            XmlDocument xmlDoc = new XmlDocument();
+            MemoryStream ms = new MemoryStream(nsMessage.InnerBody);
             TextReader reader = new StreamReader(ms, new System.Text.UTF8Encoding(false));
 
             xmlDoc.Load(reader);
 
             XmlNode node = xmlDoc.SelectSingleNode("//Data/PSM");
-
             if (node != null)
             {
-                personalmessage = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                personalMessage = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
             }
 
             node = xmlDoc.SelectSingleNode("//Data/CurrentMedia");
-
             if (node != null)
             {
                 string cmedia = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
@@ -208,18 +222,18 @@ namespace MSNPSharp
                     string[] vals = cmedia.Split(new string[] { @"\0" }, StringSplitOptions.None);
 
                     if (vals[0] != "")
-                        appname = vals[0];
+                        appName = vals[0];
 
                     switch (vals[1])
                     {
                         case "Music":
-                            mediatype = MediaType.Music;
+                            mediaType = MediaType.Music;
                             break;
                         case "Games":
-                            mediatype = MediaType.Games;
+                            mediaType = MediaType.Games;
                             break;
                         case "Office":
-                            mediatype = MediaType.Office;
+                            mediaType = MediaType.Office;
                             break;
                     }
 
@@ -250,7 +264,12 @@ namespace MSNPSharp
             node = xmlDoc.SelectSingleNode("//Data/MachineGuid");
 
             if (node != null)
-                machineguid = node.InnerText;
+                machineGuid = node.InnerText;
+#if MSNP16
+            node = xmlDoc.SelectSingleNode("//Data/SignatureSound");
+            if (node != null)
+                signatureSound = node.InnerText;
+#endif
         }
     }
 };
