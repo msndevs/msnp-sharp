@@ -52,6 +52,12 @@
   <message name="CreateRelationshipsResponseMessage">
     <part name="CreateRelationshipsResponse" element="msnss:CreateRelationshipsResponse" />
   </message>
+  <message name="DeleteRelationshipsMessage">
+    <part name="DeleteRelationships" element="msnss:DeleteRelationships" />
+  </message>
+  <message name="DeleteRelationshipsResponseMessage">
+    <part name="DeleteRelationshipsResponse" element="msnss:DeleteRelationshipsResponse" />
+  </message>
   <portType name="StorageServicePortType">
     <operation name="GetProfile">
       <input message="msnss:GetProfileMessage" />
@@ -80,6 +86,10 @@
     <operation name="CreateRelationships">
       <input message="msnss:CreateRelationshipsMessage" />
       <output message="msnss:CreateRelationshipsResponseMessage" />
+    </operation>
+    <operation name="DeleteRelationships">
+      <input message="msnss:DeleteRelationshipsMessage" />
+      <output message="msnss:DeleteRelationshipsResponseMessage" />
     </operation>
   </portType>
   <binding name="StorageServiceBinding" type="msnss:StorageServicePortType">
@@ -179,6 +189,20 @@
         <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
       </output>
     </operation>
+    <operation name="DeleteRelationships">
+      <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/DeleteRelationships" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal" />
+        <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal" />
+      </output>
+    </operation>
   </binding>
   <service name="StorageService">
     <port name="GetProfilePort" binding="msnss:StorageServiceBinding">
@@ -200,6 +224,9 @@
       <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
     </port>
     <port name="CreateRelationshipsPort" binding="msnss:StorageServiceBinding">
+      <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
+    </port>
+    <port name="DeleteRelationshipsPort" binding="msnss:StorageServiceBinding">
       <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx" />
     </port>
   </service>
