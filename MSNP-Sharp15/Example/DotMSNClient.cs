@@ -546,7 +546,7 @@ namespace MSNPSharpClient
             this.displayImageBox.Location = new System.Drawing.Point(252, 0);
             this.displayImageBox.Name = "displayImageBox";
             this.displayImageBox.Size = new System.Drawing.Size(96, 83);
-            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.displayImageBox.TabIndex = 2;
             this.displayImageBox.TabStop = false;
             this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Double click to change the photo");
@@ -608,7 +608,7 @@ namespace MSNPSharpClient
             // 
             // openImageDialog
             // 
-            this.openImageDialog.Filter = "PNG Images|*.png";
+            this.openImageDialog.Filter = "Supported Images|*.png;*.jpg;*.jpeg";
             this.openImageDialog.Multiselect = true;
             this.openImageDialog.Title = "Select display image";
             // 
