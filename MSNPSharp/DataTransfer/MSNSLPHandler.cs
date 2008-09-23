@@ -1030,7 +1030,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.CallId = transferProperties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
-            slpMessage.Body = "\r\n";
+            slpMessage.Body = "\r\n\r\n";
 
             return slpMessage;
         }

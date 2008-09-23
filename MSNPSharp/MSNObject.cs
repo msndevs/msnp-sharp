@@ -41,10 +41,11 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.DataTransfer; 
 
     /// <summary>
     /// Defines the type of MSNObject.
+    /// <para>Thanks for ZoroNaX : http://zoronax.spaces.live.com/blog/cns!4A0B813054895814!180.entry </para>
     /// </summary>
     public enum MSNObjectType
     {
@@ -52,6 +53,10 @@ namespace MSNPSharp
         /// Unknown msnobject type.
         /// </summary>
         Unknown = 0,
+        /// <summary>
+        /// Avatar, Unknown
+        /// </summary>
+        Avatar = 1,
         /// <summary>
         /// Emotion icon.
         /// </summary>
@@ -61,15 +66,48 @@ namespace MSNPSharp
         /// </summary>
         UserDisplay = 3,
         /// <summary>
+        /// ShareFile, Unknown
+        /// </summary>
+        ShareFile = 4,
+        /// <summary>
         /// Background image.
         /// </summary>
         Background = 5,
         /// <summary>
+        /// History
+        /// </summary>
+        History = 6,
+        /// <summary>
+        /// Deluxe Display Pictures
+        /// </summary>
+        DynamicPicture = 7,
+        /// <summary>
         /// flash emotion
         /// </summary>
         Wink = 8,
+        /// <summary>
+        /// Map File  A map file contains a list of items in the store.
+        /// </summary>
+        MapFile = 9,
+        /// <summary>
+        /// Dynamic Backgrounds
+        /// </summary>
+        DynamicBackground = 10,
+        /// <summary>
+        /// Voice Clip
+        /// </summary>
         VoiceClip = 11,
+        /// <summary>
+        /// Plug-In State. Saved state of Add-ins.
+        /// </summary>
         SavedState = 12,
+        /// <summary>
+        /// Roaming Objects. For example, your roaming display picture.
+        /// </summary>
+        RoamingObject = 13,
+        /// <summary>
+        /// Information about your locations (City, Country, etc).
+        /// </summary>
         Location = 14
     }
 
