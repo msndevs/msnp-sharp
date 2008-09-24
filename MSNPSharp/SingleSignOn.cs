@@ -67,7 +67,7 @@ namespace MSNPSharp
     #region MSNTicket
 
     [Serializable]
-    public sealed class MSNTicket : ICloneable
+    public sealed class MSNTicket
     {
         public static readonly MSNTicket Empty = new MSNTicket(null);
 
@@ -80,14 +80,12 @@ namespace MSNPSharp
 
         [NonSerialized]
         private int hashcode = 0;
-        [NonSerialized]
-        internal int DeleteTick = 0;
+
         internal MSNTicket(Credentials creds)
         {
             if (creds != null)
             {
                 hashcode = (creds.Account.ToLowerInvariant() + creds.Password).GetHashCode();
-                DeleteTick = unchecked(Environment.TickCount + (30 * 60000)); // Lifetime is 30 minutes
             }
         }
 
@@ -166,11 +164,6 @@ namespace MSNPSharp
         }
 
         #endregion
-
-        public object Clone()
-        {
-            return MemberwiseClone();
-        }
 
         public ExpiryState Expired(SSOTicketType tt)
         {
@@ -292,77 +285,16 @@ namespace MSNPSharp
 
     #region SingleSignOnManager
 
-    public static class SingleSignOnManager
+    internal static class SingleSignOnManager
     {
-        public static event EventHandler CleanedUp;
         private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
-        private static DateTime nextCleanup = NextCleanupTime();
-        private const double cacheCleanupInterval = 5;
-        private static object syncObject;
-        private static object SyncObject
-        {
-            get
-            {
-                if (syncObject == null)
-                {
-                    object newobj = new object();
-                    Interlocked.CompareExchange(ref syncObject, newobj, null);
-                }
-
-                return syncObject;
-            }
-        }
-
-        private static DateTime NextCleanupTime()
-        {
-            return DateTime.Now.AddMinutes(cacheCleanupInterval);
-        }
-
-        private static void CheckCleanup()
-        {
-            if (nextCleanup < DateTime.Now)
-            {
-                lock (SyncObject)
-                {
-                    if (nextCleanup < DateTime.Now)
-                    {
-                        nextCleanup = NextCleanupTime();
-                        int tickcount = Environment.TickCount;
-                        List<int> cachestodelete = new List<int>();
-                        foreach (MSNTicket t in cache.Values)
-                        {
-                            if (t.DeleteTick != 0 && t.DeleteTick < tickcount)
-                            {
-                                cachestodelete.Add(t.GetHashCode());
-                            }
-                        }
-                        foreach (int i in cachestodelete)
-                        {
-                            cache.Remove(i);
-                        }
-                        GC.Collect();
-                        try
-                        {
-                            if (CleanedUp != null)
-                                CleanedUp(typeof(SingleSignOnManager), EventArgs.Empty);
-                        }
-                        catch (Exception exception)
-                        {
-                            System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exception.Message, typeof(SingleSignOnManager).Name);
-                        }
-                    }
-                }
-            }
-        }
 
         public static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
         {
-            CheckCleanup();
-
             if (nsMessageHandler != null)
             {
                 int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-                MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : new MSNTicket(nsMessageHandler.Credentials);
+                MSNTicket ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
                 SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
                 SSOTicketType expiredtickets = SSOTicketType.None;
 
@@ -385,20 +317,18 @@ namespace MSNPSharp
                     sso.AddAuths(expiredtickets);
                     sso.Authenticate(ticket, false);
 
-                    cache[hashcode] = ticket.Clone() as MSNTicket;
+                    cache[hashcode] = ticket;
                     nsMessageHandler.MSNTicket = ticket;
                 }
             }
         }
 
-        public static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
+        internal static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
         {
-            CheckCleanup();
-
             if (nsMessageHandler != null)
             {
                 int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-                MSNTicket ticket = (cache.ContainsKey(hashcode)) ? (cache[hashcode].Clone() as MSNTicket) : new MSNTicket(nsMessageHandler.Credentials);
+                MSNTicket ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
                 ExpiryState es = ticket.Expired(renew);
 
                 if (ExpiryState.NotExpired != es)
@@ -416,7 +346,7 @@ namespace MSNPSharp
                     else
                     {
                         sso.Authenticate(ticket, false);
-                        cache[hashcode] = ticket.Clone() as MSNTicket;
+                        cache[hashcode] = ticket;
                     }
                 }
 

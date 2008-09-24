@@ -477,6 +477,7 @@ namespace MSNPSharp
                 };
 
                 FindMembershipRequestType request = new FindMembershipRequestType();
+                request.View = "Full";  // NO default!
                 request.deltasOnly = msdeltasOnly;
                 request.lastChange = serviceLastChange;
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
@@ -555,6 +556,7 @@ namespace MSNPSharp
                 };
 
                 ABFindAllRequestType request = new ABFindAllRequestType();
+                request.abView = "Full";  //NO default!
                 request.deltasOnly = deltasOnly;
                 request.lastChange = lastChange;
                 request.dynamicItemLastChange = dynamicItemLastChange;

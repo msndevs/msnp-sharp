@@ -2,17 +2,6 @@
 <!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
 <xsd:schema xmlns="http://www.msn.com/webservices/storage/w10" xmlns:msnss="http://www.msn.com/webservices/storage/w10" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.msn.com/webservices/storage/w10" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
 	<xsd:include schemaLocation="msnstorage_datatypes.xsd"/>
-	<xsd:element name="ExpressionProfile">
-		<xsd:complexType>
-			<xsd:sequence>
-				<xsd:element name="FreeText" type="xsd:string" default="Update" minOccurs="0"/>
-				<xsd:element name="DisplayName" type="xsd:string" default="Update" minOccurs="0"/>
-				<xsd:element name="PersonalStatus" type="xsd:string" default="Update" minOccurs="0"/>
-				<xsd:element name="Flags" type="xsd:int" default="0" minOccurs="0"/>
-				<xsd:element name="RoleDefinitionName" type="xsd:string" minOccurs="0"/>
-			</xsd:sequence>
-		</xsd:complexType>
-	</xsd:element>
 	<xsd:element name="StorageApplicationHeader">
 		<xsd:complexType>
 			<xsd:sequence>
@@ -96,7 +85,7 @@
 				<xsd:complexType>
 					<xsd:sequence>
 						<xsd:element name="ResourceID" type="xsd:string"/>
-						<xsd:element ref="ExpressionProfile"/>
+						<xsd:element name="ExpressionProfile" type="ExpressionProfile"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -164,7 +153,7 @@
 			<xsd:element name="profile">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="ExpressionProfile"/>
+						<xsd:element name="ExpressionProfile" type="ExpressionProfile"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -218,4 +207,18 @@
 	</xsd:complexType>
 	<xsd:element name="CreateRelationships" type="CreateRelationshipsRequestType"/>
 	<xsd:element name="CreateRelationshipsResponse"/>
+	<xsd:complexType name="DeleteRelationshipsRequestType">
+		<xsd:sequence>
+			<xsd:element name="sourceHandle" type="Handle"/>
+			<xsd:element name="targetHandles">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="ObjectHandle" type="Handle" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:element name="DeleteRelationships" type="DeleteRelationshipsRequestType"/>
+	<xsd:element name="DeleteRelationshipsResponse"/>
 </xsd:schema>

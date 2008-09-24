@@ -35,6 +35,7 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using System.Text;
+using System.Drawing;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
@@ -55,6 +56,7 @@ namespace MSNPSharp
         {
         }
 
+        #region Internal implementation
         private StorageService CreateStorageService(String scenario)
         {
             SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Storage);
@@ -110,7 +112,7 @@ namespace MSNPSharp
         /// UpdateDynamicItem - Error
         /// ABContactUpdate
         /// 
-        /// 9 steps, what the hell!!
+        /// 9 steps, what the hell!! If M$ change any protocol in their strageservice, it will be a disaster to find the difference.
         /// </summary>
         private void CreateProfile()
         {
@@ -306,7 +308,7 @@ namespace MSNPSharp
 
                 // 6.2 Get Profile again to get notification.LastChanged
                 NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService = true;
-                NSMessageHandler.ContactService.AddressBook.Profile = GetProfile();
+                NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("Initial");
 
                 //7. FindDocuments Hmm....
 
@@ -390,6 +392,172 @@ namespace MSNPSharp
             }
         }
 
+        private OwnerProfile GetProfileImpl(string scenario)
+        {
+            try
+            {
+                StorageService storageService = CreateStorageService(scenario);
+
+                GetProfileRequestType request = new GetProfileRequestType();
+                request.profileHandle = new Handle();
+                request.profileHandle.Alias = new Alias();
+                request.profileHandle.Alias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
+                request.profileHandle.Alias.NameSpace = "MyCidStuff";
+                request.profileHandle.RelationshipName = "MyProfile";
+                request.profileAttributes = new profileAttributes();
+                request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
+
+                GetProfileResponse response = storageService.GetProfile(request);
+
+                NSMessageHandler.ContactService.AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
+                NSMessageHandler.ContactService.AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
+                NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService = false;
+
+                // Display name
+                NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
+
+                // Personal status
+                NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+
+                // Display photo
+                if (null != response.GetProfileResult.ExpressionProfile.Photo)
+                {
+                    string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+                    NSMessageHandler.ContactService.AddressBook.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
+                    NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
+
+                    if (NSMessageHandler.ContactService.AddressBook.Profile.Photo.PreAthURL != url)
+                    {
+                        NSMessageHandler.ContactService.AddressBook.Profile.Photo.PreAthURL = url;
+                        if (!url.StartsWith("http"))
+                        {
+                            url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
+                        }
+
+                        // Don't urlencode t= :))
+                        Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2)));
+
+                        HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
+                        fwr.Proxy = WebProxy;
+
+                        Stream stream = fwr.GetResponse().GetResponseStream();
+                        SerializableMemoryStream ms = new SerializableMemoryStream();
+                        byte[] data = new byte[8192];
+                        int read;
+                        while ((read = stream.Read(data, 0, data.Length)) > 0)
+                        {
+                            ms.Write(data, 0, read);
+                        }
+                        stream.Close();
+                        NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage = ms;
+                    }
+
+                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage);
+                    DisplayImage displayImage = new DisplayImage();
+                    displayImage.Image = fileImage;
+
+                    NSMessageHandler.Owner.DisplayImage = displayImage;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.ToLowerInvariant().Contains("does not exist"))
+                {
+                    CreateProfile();
+                }
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+            }
+
+            return NSMessageHandler.ContactService.AddressBook.Profile;
+        }
+
+
+        private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags)
+        {
+            OwnerProfile profile = NSMessageHandler.ContactService.AddressBook.Profile;
+
+
+            NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = displayName;
+            NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage = personalStatus;
+            if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
+            {
+                StorageService storageService = CreateStorageService("RoamingIdentityChanged");
+
+                UpdateProfileRequestType request = new UpdateProfileRequestType();
+                request.profile = new UpdateProfileRequestTypeProfile();
+                request.profile.ResourceID = profile.ResourceID;
+                request.profile.ExpressionProfile = new ExpressionProfile();
+                request.profile.ExpressionProfile.FreeText = freeText;  //DONOT set any default value of this field in the xsd file, default value will make this field missing.
+                request.profile.ExpressionProfile.DisplayName = displayName;
+                request.profile.ExpressionProfile.PersonalStatus = personalStatus;
+                request.profile.ExpressionProfile.FlagsSpecified = true;
+                request.profile.ExpressionProfile.Flags = flags;   //DONOT set any default value of this field in the xsd file, default value will make this field missing.
+
+                try
+                {
+                    storageService.UpdateProfile(request);
+                }
+                catch (Exception ex)
+                {
+                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateProfile", ex));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                    return;
+                }
+
+                // And get profile again
+                NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("RoamingIdentityChanged");
+
+                // UpdateDynamicItem
+                if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+                {
+                    ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged");
+
+                    UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
+                    updateDyItemRequest.abId = Guid.Empty.ToString();
+
+                    PassportDynamicItem passportDyItem = new PassportDynamicItem();
+                    passportDyItem.Type = "Passport";
+                    passportDyItem.PassportName = NSMessageHandler.Owner.Mail;
+                    passportDyItem.Changes = "Notifications";
+                    passportDyItem.Notifications = new NotificationDataType[] { new NotificationDataType() };
+                    passportDyItem.Notifications[0].StoreService = new ServiceType();
+                    passportDyItem.Notifications[0].StoreService.Info = new InfoType();
+                    passportDyItem.Notifications[0].StoreService.Info.Handle = new HandleType();
+                    passportDyItem.Notifications[0].StoreService.Info.Handle.Id = "0";
+                    passportDyItem.Notifications[0].StoreService.Info.Handle.Type = ServiceFilterType.Profile;
+                    passportDyItem.Notifications[0].StoreService.Info.Handle.ForeignId = "MyProfile";
+                    passportDyItem.Notifications[0].StoreService.Info.IsBot = false;
+                    passportDyItem.Notifications[0].StoreService.Info.InverseRequired = false;
+                    passportDyItem.Notifications[0].StoreService.Changes = String.Empty;
+                    passportDyItem.Notifications[0].Status = "Exist Access";
+                    passportDyItem.Notifications[0].LastChanged = NSMessageHandler.ContactService.AddressBook.Profile.DateModified;
+
+                    updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
+                    try
+                    {
+                        abService.UpdateDynamicItem(updateDyItemRequest);
+                    }
+                    catch (Exception ex2)
+                    {
+                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex2));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex2.Message, GetType().Name);
+                        return;
+                    }
+                    NSMessageHandler.ContactService.handleServiceHeader(abService.ServiceHeaderValue, true);
+                    NSMessageHandler.ContactService.AddressBook.Save();
+                }
+
+            }
+            else
+            {
+                NSMessageHandler.ContactService.AddressBook.Save();
+            }
+
+        }
+
+        #endregion
+
         /// <summary>
         /// Get my profile. Display name, personal status and display photo.
         /// </summary>
@@ -399,168 +567,164 @@ namespace MSNPSharp
                 NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage) &&
                 NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService)
             {
-                try
-                {
-                    StorageService storageService = CreateStorageService("Initial");
-
-                    GetProfileRequestType request = new GetProfileRequestType();
-                    request.profileHandle = new Handle();
-                    request.profileHandle.Alias = new Alias();
-                    request.profileHandle.Alias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
-                    request.profileHandle.Alias.NameSpace = "MyCidStuff";
-                    request.profileHandle.RelationshipName = "MyProfile";
-                    request.profileAttributes = new profileAttributes();
-                    request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
-
-                    GetProfileResponse response = storageService.GetProfile(request);
-
-                    NSMessageHandler.ContactService.AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
-                    NSMessageHandler.ContactService.AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
-                    NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService = false;
-
-                    // Display name
-                    NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
-
-                    // Personal status
-                    NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
-
-                    // Display photo
-                    if (null != response.GetProfileResult.ExpressionProfile.Photo)
-                    {
-                        string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                        NSMessageHandler.ContactService.AddressBook.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
-                        NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
-
-                        if (NSMessageHandler.ContactService.AddressBook.Profile.Photo.PreAthURL != url)
-                        {
-                            NSMessageHandler.ContactService.AddressBook.Profile.Photo.PreAthURL = url;
-                            if (!url.StartsWith("http"))
-                            {
-                                url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
-                            }
-
-                            // Don't urlencode t= :))
-                            Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2)));
-
-                            HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-                            fwr.Proxy = WebProxy;
-
-                            Stream stream = fwr.GetResponse().GetResponseStream();
-                            SerializableMemoryStream ms = new SerializableMemoryStream();
-                            byte[] data = new byte[8192];
-                            int read;
-                            while ((read = stream.Read(data, 0, data.Length)) > 0)
-                            {
-                                ms.Write(data, 0, read);
-                            }
-                            stream.Close();
-                            NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage = ms;
-                        }
-
-                        System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage);
-                        DisplayImage displayImage = new DisplayImage();
-                        displayImage.Image = fileImage;
-
-                        NSMessageHandler.Owner.DisplayImage = displayImage;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (ex.Message.ToLowerInvariant().Contains("does not exist"))
-                    {
-                        CreateProfile();
-                    }
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                }
+                return GetProfileImpl("Initial");
             }
+
             return NSMessageHandler.ContactService.AddressBook.Profile;
         }
 
+        /// <summary>
+        /// Update personal displayname and status in profile
+        /// </summary>
+        /// <param name="displayName"></param>
+        /// <param name="personalStatus"></param>
         public void UpdateProfile(string displayName, string personalStatus)
         {
-            OwnerProfile profile = NSMessageHandler.ContactService.AddressBook.Profile;
-
             if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage) &&
-                (profile.DisplayName != displayName || profile.PersonalMessage != personalStatus))
+                (NSMessageHandler.ContactService.AddressBook.Profile.DisplayName != displayName ||
+                NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage != personalStatus))
             {
-                NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = displayName;
-                NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage = personalStatus;
-                if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
-                {
-                    StorageService storageService = CreateStorageService("RoamingIdentityChanged");
-                    storageService.UpdateProfileCompleted += delegate(object sender, UpdateProfileCompletedEventArgs e)
-                    {
-                        storageService = sender as StorageService;
-                        if (!e.Cancelled && e.Error == null)
-                        {
-                            // And get profile again
-                            NSMessageHandler.ContactService.AddressBook.Profile = GetProfile();
-
-                            // UpdateDynamicItem
-                            if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
-                            {
-                                ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged");
-                                abService.UpdateDynamicItemCompleted += delegate(object service, UpdateDynamicItemCompletedEventArgs ue)
-                                {
-                                    NSMessageHandler.ContactService.handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
-                                    if (!ue.Cancelled && ue.Error == null)
-                                    {
-                                        NSMessageHandler.ContactService.AddressBook.Save();
-                                    }
-                                    else if (ue.Error != null)
-                                    {
-                                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamic", ue.Error));
-                                    }
-                                };
-
-                                UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
-                                updateDyItemRequest.abId = Guid.Empty.ToString();
-
-                                PassportDynamicItem passportDyItem = new PassportDynamicItem();
-                                passportDyItem.Type = "Passport";
-                                passportDyItem.PassportName = NSMessageHandler.Owner.Mail;
-                                passportDyItem.Changes = "Notifications";
-                                passportDyItem.Notifications = new NotificationDataType[] { new NotificationDataType() };
-                                passportDyItem.Notifications[0].StoreService = new ServiceType();
-                                passportDyItem.Notifications[0].StoreService.Info = new InfoType();
-                                passportDyItem.Notifications[0].StoreService.Info.Handle = new HandleType();
-                                passportDyItem.Notifications[0].StoreService.Info.Handle.Id = "0";
-                                passportDyItem.Notifications[0].StoreService.Info.Handle.Type = ServiceFilterType.Profile;
-                                passportDyItem.Notifications[0].StoreService.Info.Handle.ForeignId = "MyProfile";
-                                passportDyItem.Notifications[0].StoreService.Info.IsBot = false;
-                                passportDyItem.Notifications[0].StoreService.Info.InverseRequired = false;
-                                passportDyItem.Notifications[0].StoreService.Changes = String.Empty;
-                                passportDyItem.Notifications[0].Status = "Exist Access";
-                                passportDyItem.Notifications[0].LastChanged = NSMessageHandler.ContactService.AddressBook.Profile.DateModified;
-
-                                updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
-
-                                abService.UpdateDynamicItemAsync(updateDyItemRequest, new object());
-                                return;
-                            }
-                        }
-                        else if (e.Error != null)
-                        {
-                            OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateProfile", e.Error));
-                        }
-                    };
-
-                    UpdateProfileRequestType request = new UpdateProfileRequestType();
-                    request.profile = new UpdateProfileRequestTypeProfile();
-                    request.profile.ResourceID = profile.ResourceID;
-                    request.profile.ExpressionProfile = new ExpressionProfile();
-                    request.profile.ExpressionProfile.FreeText = "Update";
-                    request.profile.ExpressionProfile.DisplayName = displayName;
-                    request.profile.ExpressionProfile.PersonalStatus = personalStatus;
-                    request.profile.ExpressionProfile.Flags = 0;
-                    storageService.UpdateProfileAsync(request, new object());
-                }
-                else
-                {
-                    NSMessageHandler.ContactService.AddressBook.Save();
-                }
+                UpdateProfileImpl(displayName, personalStatus, "Update", 0);
             }
+        }
+
+
+        /// <summary>
+        /// Update the display photo of current user.
+        /// <list type="bullet">
+        /// <item>GetProfile with scenario = "RoamingIdentityChanged"</item>
+        /// <item>UpdateProfile - Update the profile resource with Flags = 1</item>
+        /// <item>DeleteRelationships - delete the photo resource</item>
+        /// <item>DeleteRelationships - delete the expression profile resource (profile resource)</item>
+        /// <item>CreateDocument</item>
+        /// <item>CreateRelationships</item>
+        /// <item>UpdateProfile - Update the profile resource again with Flags = 0</item>
+        /// </list>
+        /// </summary>
+        /// <param name="photo">New photo to display</param>
+        /// <param name="photoName">The resourcename</param>
+        public bool UpdateProfile(Image photo, string photoName)
+        {
+            // 1. Getprofile
+            NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("RoamingIdentityChanged");
+
+            // 2. UpdateProfile
+            // To keep the order, we need a sync function.
+            UpdateProfileImpl(NSMessageHandler.ContactService.AddressBook.Profile.DisplayName,
+                              NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage,
+                              "Update", 1);
+            if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
+                NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage))
+            {
+                StorageService storageService = CreateStorageService("RoamingIdentityChanged");
+
+                Alias mycidAlias = new Alias();
+                mycidAlias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
+                mycidAlias.NameSpace = "MyCidStuff";
+
+                // 3. DeleteRelationships
+                if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID))
+                {
+                    // 3.1 UserTiles -> Photo
+                    DeleteRelationshipsRequestType request = new DeleteRelationshipsRequestType();
+                    request.sourceHandle = new Handle();
+                    request.sourceHandle.RelationshipName = "/UserTiles";
+                    request.sourceHandle.Alias = mycidAlias;
+                    request.targetHandles = new Handle[] { new Handle() };
+                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
+                    try
+                    {
+                        storageService.DeleteRelationships(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                        return false;
+                    }
+
+                    //3.2 Profile -> Photo
+                    request = new DeleteRelationshipsRequestType();
+                    request.sourceHandle = new Handle();
+                    request.sourceHandle.ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;
+                    request.targetHandles = new Handle[] { new Handle() };
+                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
+                    try
+                    {
+                        storageService.DeleteRelationships(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                        return false;
+                    }
+                }
+
+                // 4. CreateDocument
+                MemoryStream mem = new MemoryStream();
+                photo.Save(mem, System.Drawing.Imaging.ImageFormat.Png);
+
+                CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
+                createDocRequest.relationshipName = "Messenger User Tile";
+                createDocRequest.parentHandle = new Handle();
+                createDocRequest.parentHandle.RelationshipName = "/UserTiles";
+                createDocRequest.parentHandle.Alias = mycidAlias;
+                createDocRequest.document = new Photo();
+                createDocRequest.document.Name = photoName;
+                createDocRequest.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
+                createDocRequest.document.DocumentStreams[0].DataSize = 0;
+                createDocRequest.document.DocumentStreams[0].MimeType = "png";
+                createDocRequest.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
+                createDocRequest.document.DocumentStreams[0].Data = mem.ToArray();
+
+                DisplayImage displayImage = new DisplayImage();
+                displayImage.Image = photo;  //Set to new photo
+                NSMessageHandler.Owner.DisplayImage = displayImage;
+                NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage = new SerializableMemoryStream();
+                NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
+                NSMessageHandler.ContactService.AddressBook.Save();
+                string resId_Doc = String.Empty;
+                try
+                {
+                    CreateDocumentResponseType createDocResponse = storageService.CreateDocument(createDocRequest);
+                    resId_Doc = createDocResponse.CreateDocumentResult;
+                }
+                catch (Exception ex)
+                {
+                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("CreateDocument", ex));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateDocument error: " + ex.Message, GetType().Name);
+                    return false;
+                }
+
+                // 5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
+                CreateRelationshipsRequestType createRelationshipRequest = new CreateRelationshipsRequestType();
+                createRelationshipRequest.relationships = new Relationship[] { new Relationship() };
+                createRelationshipRequest.relationships[0].RelationshipName = "ProfilePhoto";
+                createRelationshipRequest.relationships[0].SourceType = "SubProfile"; //From SubProfile
+                createRelationshipRequest.relationships[0].TargetType = "Photo";      //To Photo
+                createRelationshipRequest.relationships[0].SourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;  //From Expression profile
+                createRelationshipRequest.relationships[0].TargetID = resId_Doc;      //To Document                
+                try
+                {
+                    storageService.CreateRelationships(createRelationshipRequest);
+                }
+                catch (Exception ex)
+                {
+                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("CreateRelationships", ex));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateRelationships error: " + ex.Message, GetType().Name);
+                    return false;
+                }
+
+                //6. ok, done - Updateprofile again
+                UpdateProfileImpl(NSMessageHandler.ContactService.AddressBook.Profile.DisplayName,
+                                  NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage,
+                                  "Update", 0);
+
+                return true;
+            }
+
+            return false;
         }
     }
 };

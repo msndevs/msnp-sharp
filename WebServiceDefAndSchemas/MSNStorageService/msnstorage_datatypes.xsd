@@ -9,8 +9,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="Handle">
 		<xsd:sequence>
-			<xsd:element name="Alias" type="msnss:Alias"/>
-			<xsd:element name="RelationshipName" type="xsd:string" default="MyProfile"/>
+			<xsd:element name="Alias" type="msnss:Alias" minOccurs="0"/>
+			<xsd:element name="RelationshipName" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="ResourceID" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="profileAttributes">
@@ -64,7 +65,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="documentBaseType">
 		<xsd:sequence>
-			<xsd:element name="Name"/>
+			<xsd:element name="Name" type="xsd:string"/>
 			<xsd:element name="DocumentStreams">
 				<xsd:complexType>
 					<xsd:sequence>
@@ -78,5 +79,14 @@
 		<xsd:complexContent mixed="false">
 			<xsd:extension base="documentBaseType"/>
 		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="ExpressionProfile">
+		<xsd:sequence>
+			<xsd:element name="FreeText" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="DisplayName" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="PersonalStatus" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="Flags" type="xsd:int" minOccurs="0"/>
+			<xsd:element name="RoleDefinitionName" type="xsd:string" minOccurs="0"/>
+		</xsd:sequence>
 	</xsd:complexType>
 </xsd:schema>
