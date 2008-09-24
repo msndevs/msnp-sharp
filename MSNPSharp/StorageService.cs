@@ -581,7 +581,7 @@ namespace MSNPSharp
         public void UpdateProfile(string displayName, string personalStatus)
         {
             if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage) &&
-                (NSMessageHandler.ContactService.AddressBook.Profile.DisplayName != displayName || 
+                (NSMessageHandler.ContactService.AddressBook.Profile.DisplayName != displayName ||
                 NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage != personalStatus))
             {
                 UpdateProfileImpl(displayName, personalStatus, "Update", 0);
@@ -608,88 +608,83 @@ namespace MSNPSharp
             // 1. Getprofile
             NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("RoamingIdentityChanged");
 
-            //2. UpdateProfile
-            //To keep the order, we need a sync function.
+            // 2. UpdateProfile
+            // To keep the order, we need a sync function.
             UpdateProfileImpl(NSMessageHandler.ContactService.AddressBook.Profile.DisplayName,
                               NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage,
                               "Update", 1);
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage))
             {
-                //3. DeleteRelationships
                 StorageService storageService = CreateStorageService("RoamingIdentityChanged");
-                Handle sourceHandle = new Handle();
-                sourceHandle.RelationshipName = "/UserTiles";
 
-                Alias alias = new Alias();
-                alias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
-                alias.NameSpace = "MyCidStuff";
+                Alias mycidAlias = new Alias();
+                mycidAlias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
+                mycidAlias.NameSpace = "MyCidStuff";
 
-                sourceHandle.Alias = alias;
-                Handle objHandle = new Handle();
-                objHandle.ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
-
-                DeleteRelationshipsRequestType request = new DeleteRelationshipsRequestType();
-                request.sourceHandle = sourceHandle;
-                request.targetHandles = new Handle[] { objHandle };
-                try
+                // 3. DeleteRelationships
+                if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID))
                 {
-                    storageService.DeleteRelationships(request);
+                    // 3.1 UserTiles -> Photo
+                    DeleteRelationshipsRequestType request = new DeleteRelationshipsRequestType();
+                    request.sourceHandle = new Handle();
+                    request.sourceHandle.RelationshipName = "/UserTiles";
+                    request.sourceHandle.Alias = mycidAlias;
+                    request.targetHandles = new Handle[] { new Handle() };
+                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
+                    try
+                    {
+                        storageService.DeleteRelationships(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                        return false;
+                    }
+
+                    //3.2 Profile -> Photo
+                    request = new DeleteRelationshipsRequestType();
+                    request.sourceHandle = new Handle();
+                    request.sourceHandle.ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;
+                    request.targetHandles = new Handle[] { new Handle() };
+                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
+                    try
+                    {
+                        storageService.DeleteRelationships(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                        return false;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                    return false;
-                }
 
-                //4. DeleteRelationships
-                sourceHandle = new Handle();
-                sourceHandle.ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;
-                objHandle = new Handle();
-                objHandle.ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
-                request = new DeleteRelationshipsRequestType();
-                request.sourceHandle = sourceHandle;
-                request.targetHandles = new Handle[] { objHandle };
-                try
-                {
-                    storageService.DeleteRelationships(request);
-                }
-                catch (Exception ex)
-                {
-                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                    return false;
-                }
-
-                //5. CreateDocument
-                CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
-                createDocRequest.relationshipName = "Messenger User Tile";
-
-                Handle parenthandle = new Handle();
-                parenthandle.RelationshipName = "/UserTiles";
-
-                parenthandle.Alias = alias;
-                createDocRequest.parentHandle = parenthandle;
-                createDocRequest.document = new Photo();
-                createDocRequest.document.Name = photoName;
-
-                PhotoStream photoStream = new PhotoStream();
-                photoStream.DataSize = 0;
-                photoStream.MimeType = "png";
-                photoStream.DocumentStreamType = "UserTileStatic";
+                // 4. CreateDocument
                 MemoryStream mem = new MemoryStream();
                 photo.Save(mem, System.Drawing.Imaging.ImageFormat.Png);
-                photoStream.Data = mem.ToArray();
-                createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
+
+                CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
+                createDocRequest.relationshipName = "Messenger User Tile";
+                createDocRequest.parentHandle = new Handle();
+                createDocRequest.parentHandle.RelationshipName = "/UserTiles";
+                createDocRequest.parentHandle.Alias = mycidAlias;
+                createDocRequest.document = new Photo();
+                createDocRequest.document.Name = photoName;
+                createDocRequest.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
+                createDocRequest.document.DocumentStreams[0].DataSize = 0;
+                createDocRequest.document.DocumentStreams[0].MimeType = "png";
+                createDocRequest.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
+                createDocRequest.document.DocumentStreams[0].Data = mem.ToArray();
 
                 DisplayImage displayImage = new DisplayImage();
                 displayImage.Image = photo;  //Set to new photo
                 NSMessageHandler.Owner.DisplayImage = displayImage;
+                NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage = new SerializableMemoryStream();
                 NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
                 NSMessageHandler.ContactService.AddressBook.Save();
-
-                string resId_Doc = "";
+                string resId_Doc = String.Empty;
                 try
                 {
                     CreateDocumentResponseType createDocResponse = storageService.CreateDocument(createDocRequest);
@@ -702,16 +697,14 @@ namespace MSNPSharp
                     return false;
                 }
 
-                //6. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
+                // 5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
                 CreateRelationshipsRequestType createRelationshipRequest = new CreateRelationshipsRequestType();
-                Relationship relationship = new Relationship();
-                relationship.RelationshipName = "ProfilePhoto";
-                relationship.SourceType = "SubProfile"; //From SubProfile
-                relationship.TargetType = "Photo";      //To Photo
-                relationship.SourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;  //From Expression profile
-                relationship.TargetID = resId_Doc;     //To Document
-
-                createRelationshipRequest.relationships = new Relationship[] { relationship };
+                createRelationshipRequest.relationships = new Relationship[] { new Relationship() };
+                createRelationshipRequest.relationships[0].RelationshipName = "ProfilePhoto";
+                createRelationshipRequest.relationships[0].SourceType = "SubProfile"; //From SubProfile
+                createRelationshipRequest.relationships[0].TargetType = "Photo";      //To Photo
+                createRelationshipRequest.relationships[0].SourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;  //From Expression profile
+                createRelationshipRequest.relationships[0].TargetID = resId_Doc;      //To Document                
                 try
                 {
                     storageService.CreateRelationships(createRelationshipRequest);
@@ -723,7 +716,7 @@ namespace MSNPSharp
                     return false;
                 }
 
-                //7. ok, done - Updateprofile again
+                //6. ok, done - Updateprofile again
                 UpdateProfileImpl(NSMessageHandler.ContactService.AddressBook.Profile.DisplayName,
                                   NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage,
                                   "Update", 0);
