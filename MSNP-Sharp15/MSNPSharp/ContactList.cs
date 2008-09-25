@@ -295,7 +295,7 @@ namespace MSNPSharp
                 {
                     // filter on the email list
                     Contact c = (Contact)BaseEnum.Value;
-                    if (c.Guid != Guid.Empty && c.IsMessengerUser == false)
+                    if (c.Guid == Guid.Empty && c.IsMessengerUser == false)
                         return true;
                 }
                 return false;
