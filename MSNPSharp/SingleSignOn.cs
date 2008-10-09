@@ -80,12 +80,15 @@ namespace MSNPSharp
 
         [NonSerialized]
         private int hashcode = 0;
+        [NonSerialized]
+        internal int DeleteTick = 0;
 
         internal MSNTicket(Credentials creds)
         {
             if (creds != null)
             {
                 hashcode = (creds.Account.ToLowerInvariant() + creds.Password).GetHashCode();
+                DeleteTick = unchecked(Environment.TickCount + (Settings.MSNTicketLifeTime * 60000)); // in minutes
             }
         }
 
@@ -288,9 +291,62 @@ namespace MSNPSharp
     internal static class SingleSignOnManager
     {
         private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
-
-        public static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
+        private static DateTime nextCleanup = NextCleanupTime();
+        private static object syncObject;
+        private static object SyncObject
         {
+            get
+            {
+                if (syncObject == null)
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncObject, newobj, null);
+                }
+
+                return syncObject;
+            }
+        }
+
+        private static DateTime NextCleanupTime()
+        {
+            return DateTime.Now.AddMinutes(Settings.MSNTicketsCleanupInterval);
+        }
+
+        private static void CheckCleanup()
+        {
+            if (nextCleanup < DateTime.Now)
+            {
+                lock (SyncObject)
+                {
+                    if (nextCleanup < DateTime.Now)
+                    {
+                        nextCleanup = NextCleanupTime();
+                        int tickcount = Environment.TickCount;
+                        List<int> cachestodelete = new List<int>();
+                        foreach (MSNTicket t in cache.Values)
+                        {
+                            if (t.DeleteTick != 0 && t.DeleteTick < tickcount)
+                            {
+                                cachestodelete.Add(t.GetHashCode());
+                            }
+                        }
+                        if (cachestodelete.Count > 0)
+                        {
+                            foreach (int i in cachestodelete)
+                            {
+                                cache.Remove(i);
+                            }
+                            GC.Collect();
+                        }
+                    }
+                }
+            }
+        }
+
+        internal static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
+        {
+            CheckCleanup();
+
             if (nsMessageHandler != null)
             {
                 int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
@@ -325,6 +381,8 @@ namespace MSNPSharp
 
         internal static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
         {
+            CheckCleanup();
+
             if (nsMessageHandler != null)
             {
                 int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
