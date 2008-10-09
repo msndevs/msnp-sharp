@@ -134,8 +134,8 @@ namespace MSNPSharp
         /// <param name="maxcharcount">Number of character in the blog post content which is shown as description.</param>
         public void GetContactCard(string account, int maximagecount, int maxcharcount)
         {
-            if (NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account) &&
-                NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Spaces))
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&
+                NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
             {
                 SpaceService service = CreateSpaceService();
                 service.GetXmlFeedCompleted += delegate(object sender, GetXmlFeedCompletedEventArgs e)

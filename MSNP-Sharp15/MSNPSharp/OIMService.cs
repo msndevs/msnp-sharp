@@ -306,7 +306,7 @@ namespace MSNPSharp
                 return;
 
             string xmlstr = message.MimeHeader["Mail-Data"];
-            if ("too-large" == xmlstr && NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if ("too-large" == xmlstr && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 RSIService rsiService = CreateRSIService();
                 rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
@@ -351,7 +351,7 @@ namespace MSNPSharp
             if (OIMReceived == null)
                 return;
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                 return;
 
             XmlDocument xdoc = new XmlDocument();
@@ -484,7 +484,7 @@ namespace MSNPSharp
 
         private void DeleteOIMMessages(string[] guids)
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                 return;
 
             RSIService rsiService = CreateRSIService();
@@ -518,7 +518,7 @@ namespace MSNPSharp
         public void SendOIMMessage(string account, string msg)
         {
             Contact contact = NSMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
-            if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.OIM) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
                     "MIME-Version: 1.0\r\n"
