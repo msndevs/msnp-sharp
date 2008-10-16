@@ -108,7 +108,7 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(nsMessage);
         }
 
-        public override void SendEmoticonDefinitions(ArrayList emoticons)
+        public override void SendEmoticonDefinitions(ArrayList emoticons, EmoticonType icontype)
         {
             throw new MSNPSharpException("Function not support.You cannot send custom emoticons to a Yahoo Messenger user.");
         }
