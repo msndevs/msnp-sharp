@@ -45,6 +45,7 @@ namespace MSNPSharp
     [Serializable()]
     public class EmoticonMessage : NetworkMessage
     {
+        private EmoticonType emoticontype = EmoticonType.StaticEmoticon;
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -57,19 +58,33 @@ namespace MSNPSharp
         /// Constructor with a single emoticon supplied.
         /// </summary>
         /// <param name="emoticon"></param>
-        public EmoticonMessage(Emoticon emoticon)
+        /// <param name="type"></param>
+        public EmoticonMessage(Emoticon emoticon, EmoticonType type)
         {
+            if (null == emoticon)
+                throw new NullReferenceException();
             emoticons = new ArrayList();
             emoticons.Add(emoticon);
+            emoticontype = type;
+        }
+
+        /// <summary>
+        /// Type of emoticons.
+        /// </summary>
+        public EmoticonType EmoticonType
+        {
+            get { return emoticontype; }
         }
 
         /// <summary>
         /// Constructor with multiple emoticons supplied.
         /// </summary>
         /// <param name="emoticons"></param>
-        public EmoticonMessage(ArrayList emoticons)
+        /// <param name="type"></param>
+        public EmoticonMessage(ArrayList emoticons, EmoticonType type)
         {
             Emoticons = (ArrayList)emoticons.Clone();
+            emoticontype = type;
         }
 
         /// <summary>
@@ -123,7 +138,10 @@ namespace MSNPSharp
             if (ParentMessage != null)
             {
                 MSGMessage msgMessage = (MSGMessage)ParentMessage;
-                msgMessage.MimeHeader["Content-Type"] = "text/x-mms-emoticon";
+                if (emoticontype == EmoticonType.StaticEmoticon)
+                    msgMessage.MimeHeader["Content-Type"] = "text/x-mms-emoticon";
+                else if (emoticontype == EmoticonType.AnimEmoticon)
+                    msgMessage.MimeHeader["Content-Type"] = "text-/x-mms-animemoticon";
             }
         }
 

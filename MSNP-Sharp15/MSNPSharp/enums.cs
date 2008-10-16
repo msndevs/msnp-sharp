@@ -714,4 +714,16 @@ namespace MSNPSharp
         /// </summary>
         AccountNotOnThisServer = 931
     }
+
+    public enum EmoticonType
+    {
+        /// <summary>
+        /// Emoticon that is a static picture
+        /// </summary>
+        StaticEmoticon,
+        /// <summary>
+        /// Emoticon that will display as a animation.
+        /// </summary>
+        AnimEmoticon
+    }
 };
