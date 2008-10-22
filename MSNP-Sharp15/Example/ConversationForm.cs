@@ -5,6 +5,8 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using MSNPSharp;
 using System.Collections.Generic;
+using System.IO;
+using System.Drawing.Imaging;
 
 namespace MSNPSharpClient
 {
@@ -30,9 +32,11 @@ namespace MSNPSharpClient
         private List<string> _leftusers = new List<string>(0);
         private List<TextMessage> _messagequene = new List<TextMessage>(0);
         private List<object> _nudgequene = new List<object>(0);
+        private List<ArrayList> _emotionqueue = new List<ArrayList>(0);
         private ClientForm _clientform = null;
         private Dictionary<string, bool> _contactStatus = new Dictionary<string, bool>(0);
         private RichTextBox richTextHistory;
+        private Button emotionTestButton;
         private bool _isChatForm = false;
 
         /// <summary>
@@ -153,6 +157,7 @@ namespace MSNPSharpClient
             this.inputTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.richTextHistory = new System.Windows.Forms.RichTextBox();
+            this.emotionTestButton = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
@@ -160,21 +165,22 @@ namespace MSNPSharpClient
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.panel1.Controls.Add(this.emotionTestButton);
             this.panel1.Controls.Add(this.sendnudgeButton);
             this.panel1.Controls.Add(this.sendButton);
             this.panel1.Controls.Add(this.inputTextBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 262);
+            this.panel1.Location = new System.Drawing.Point(0, 289);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(555, 72);
+            this.panel1.Size = new System.Drawing.Size(573, 106);
             this.panel1.TabIndex = 1;
             // 
             // sendnudgeButton
             // 
             this.sendnudgeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendnudgeButton.Location = new System.Drawing.Point(470, 38);
+            this.sendnudgeButton.Location = new System.Drawing.Point(471, 41);
             this.sendnudgeButton.Name = "sendnudgeButton";
-            this.sendnudgeButton.Size = new System.Drawing.Size(75, 23);
+            this.sendnudgeButton.Size = new System.Drawing.Size(90, 25);
             this.sendnudgeButton.TabIndex = 2;
             this.sendnudgeButton.Text = "Send &Nudge";
             this.sendnudgeButton.Click += new System.EventHandler(this.sendnudgeButton_Click);
@@ -182,9 +188,9 @@ namespace MSNPSharpClient
             // sendButton
             // 
             this.sendButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendButton.Location = new System.Drawing.Point(470, 8);
+            this.sendButton.Location = new System.Drawing.Point(471, 9);
             this.sendButton.Name = "sendButton";
-            this.sendButton.Size = new System.Drawing.Size(75, 24);
+            this.sendButton.Size = new System.Drawing.Size(90, 25);
             this.sendButton.TabIndex = 1;
             this.sendButton.Text = "&Send";
             this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
@@ -194,11 +200,11 @@ namespace MSNPSharpClient
             this.inputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.inputTextBox.Location = new System.Drawing.Point(8, 8);
+            this.inputTextBox.Location = new System.Drawing.Point(10, 9);
             this.inputTextBox.Multiline = true;
             this.inputTextBox.Name = "inputTextBox";
             this.inputTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.inputTextBox.Size = new System.Drawing.Size(437, 56);
+            this.inputTextBox.Size = new System.Drawing.Size(431, 88);
             this.inputTextBox.TabIndex = 0;
             this.inputTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.inputTextBox_KeyDown);
             this.inputTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.inputTextBox_KeyPress);
@@ -209,7 +215,7 @@ namespace MSNPSharpClient
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(555, 262);
+            this.panel2.Size = new System.Drawing.Size(573, 289);
             this.panel2.TabIndex = 2;
             // 
             // richTextHistory
@@ -221,15 +227,25 @@ namespace MSNPSharpClient
             this.richTextHistory.Name = "richTextHistory";
             this.richTextHistory.ReadOnly = true;
             this.richTextHistory.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextHistory.Size = new System.Drawing.Size(555, 262);
+            this.richTextHistory.Size = new System.Drawing.Size(573, 289);
             this.richTextHistory.TabIndex = 1;
             this.richTextHistory.TabStop = false;
             this.richTextHistory.Text = "";
             // 
+            // emotionTestButton
+            // 
+            this.emotionTestButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.emotionTestButton.Location = new System.Drawing.Point(471, 72);
+            this.emotionTestButton.Name = "emotionTestButton";
+            this.emotionTestButton.Size = new System.Drawing.Size(90, 25);
+            this.emotionTestButton.TabIndex = 3;
+            this.emotionTestButton.Text = "&Emotion Test";
+            this.emotionTestButton.Click += new System.EventHandler(this.emotionTestButton_Click);
+            // 
             // ConversationForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(555, 334);
+            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
+            this.ClientSize = new System.Drawing.Size(573, 395);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.Name = "ConversationForm";
@@ -275,32 +291,20 @@ namespace MSNPSharpClient
             inputTextBox.Focus();
 
             //All contacts left, recreate the conversation
-            if (ReInvite())
+            int ret = ReInvite();
+            if (ret == 1)
             {
                 _messagequene.Add(message);
                 return;
             }
-
-            //// if there is no switchboard available, request a new switchboard session
-            //if(Conversation.SwitchboardProcessor.Connected == false)
-            //{
-            //    Conversation.Messenger.Nameserver.RequestSwitchboard(Conversation.Switchboard, this);
-            //    _messagequene.Add(message);
-            //    return;
-            //}
-
-            //// note: you can add some code here to catch the event where the remote contact lefts due to being idle too long
-            //// in that case Conversation.Switchboard.Contacts.Count equals 0.
-            //if (Conversation.Switchboard.Contacts.Count == 0)
-            //{
-            //    foreach (string account in _leftusers)
-            //    {
-            //        _conversation.Invite(account);
-            //    }
-            //    _leftusers.Clear();
-            //    _messagequene.Add(message);
-            //    return;
-            //}
+            else if (ret == -1)  //contacts already offline, send OIM.
+            {
+                foreach (string acc in _leftusers)
+                {
+                    _clientform.Messenger.OIMService.SendOIMMessage(acc, message.Text);
+                }
+                return;
+            }
 
             Conversation.Switchboard.SendTextMessage(message);
 
@@ -311,6 +315,7 @@ namespace MSNPSharpClient
             if (Conversation != null)
             {
                 Conversation.Switchboard.TextMessageReceived -= Switchboard_TextMessageReceived;
+                Conversation.MSNObjectDataTransferCompleted -= Conversation_MSNObjectDataTransferCompleted;
                 Conversation.Switchboard.SessionClosed -= Switchboard_SessionClosed;
                 Conversation.Switchboard.ContactJoined -= Switchboard_ContactJoined;
                 Conversation.Switchboard.ContactLeft -= Switchboard_ContactLeft;
@@ -324,6 +329,7 @@ namespace MSNPSharpClient
             if (Conversation != null)
             {
                 Conversation.Switchboard.TextMessageReceived += new TextMessageReceivedEventHandler(Switchboard_TextMessageReceived);
+                Conversation.MSNObjectDataTransferCompleted += new MSNObjectDataTransferCompletedEventHandler(Conversation_MSNObjectDataTransferCompleted);
                 Conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
                 Conversation.Switchboard.ContactJoined += new ContactChangedEventHandler(Switchboard_ContactJoined);
                 Conversation.Switchboard.ContactLeft += new ContactChangedEventHandler(Switchboard_ContactLeft);
@@ -332,7 +338,28 @@ namespace MSNPSharpClient
             }
         }
 
-        private bool ReInvite()
+        void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
+        {
+            //This is just an example to tell you how to get the emoticon data.
+            FileStream fs = new FileStream("emoicon_rcv_example.png", FileMode.OpenOrCreate);
+            byte[] byt = new byte[e.ClientData.OpenStream().Length];
+            e.ClientData.OpenStream().Seek(0, SeekOrigin.Begin);
+            e.ClientData.OpenStream().Read(byt, 0, byt.Length);
+            fs.Write(byt, 0, byt.Length);
+            fs.Close();
+        }
+
+        /// <summary>
+        /// Reinvite contacts back to the conversation.
+        /// </summary>
+        /// <returns>
+        /// <list type="bullet">
+        /// <item>Contact offline returns -1</item>
+        /// <item>Contact has left the conversation returns 1</item>
+        /// <item>No need to reinvite returns 0</item>
+        /// </list>
+        /// </returns>
+        private int ReInvite()
         {
             if (_conversation == null || !Conversation.Switchboard.IsSessionEstablished)
             {
@@ -342,12 +369,14 @@ namespace MSNPSharpClient
                 AddEvent();
                 foreach (string account in _leftusers)
                 {
+                    if (_clientform.Messenger.ContactList[account, ClientType.PassportMember].Status == PresenceStatus.Offline)
+                        return -1;
                     _conversation.Invite(account, ClientType.PassportMember);
                 }
                 _leftusers.Clear();
-                return true;
+                return 1;
             }
-            return false;
+            return 0;
         }
 
         private void sendButton_Click(object sender, System.EventArgs e)
@@ -427,6 +456,7 @@ namespace MSNPSharpClient
         private void PrintNudge(ContactEventArgs e)
         {
             DisplaySystemMessage("* " + e.Contact.Name + " has sent a nudge!");
+
         }
 
 
@@ -496,6 +526,18 @@ namespace MSNPSharpClient
                     }
                     _nudgequene.Clear();
                 }
+
+                if (_emotionqueue.Count > 0)
+                {
+                    foreach (ArrayList emolist in _emotionqueue)
+                    {
+                        Conversation.Switchboard.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
+                        TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + ((Emoticon)emolist[0]).Shortcut);
+                        Conversation.Switchboard.SendTextMessage(emotxt);
+                        DisplaySystemMessage("* You send a custom emoticon with text message: Hey, this is a custom emoticon: [Emoticon].");
+                    }
+                    _emotionqueue.Clear();
+                }
             }
         }
 
@@ -538,7 +580,7 @@ namespace MSNPSharpClient
 
         private void sendnudgeButton_Click(object sender, EventArgs e)
         {
-            if (ReInvite())
+            if (ReInvite() == 1)
             {
                 _nudgequene.Add(new object());
                 return;
@@ -547,6 +589,37 @@ namespace MSNPSharpClient
             Conversation.Switchboard.SendNudge();
 
             DisplaySystemMessage("* You send a nudge.");
+        }
+
+        private void emotionTestButton_Click(object sender, EventArgs e)
+        {
+
+            MemoryStream mem = new MemoryStream();
+            Properties.Resources.inner_emoticon.Save(mem, ImageFormat.Png);
+            Emoticon emotest = new Emoticon(_clientform.Messenger.Owner.Mail, mem, "0", "test_emoicon");
+            MSNObjectCatalog.GetInstance().Add(emotest);
+            ArrayList emolist = new ArrayList();
+            emolist.Add(emotest);
+
+            if (ReInvite() == 1)
+            {
+                _emotionqueue.Add(emolist);
+                return;
+            }
+            else if (ReInvite() == -1)
+            {
+                foreach (string acc in _leftusers)
+                {
+                    //If user not online, we send an OIM with emoticon shortcut.
+                    _clientform.Messenger.OIMService.SendOIMMessage(acc, "Hey, this is a custom emoticon: " + emotest.Shortcut);
+                }
+                return;
+            }
+            
+            Conversation.Switchboard.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
+            TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
+            Conversation.Switchboard.SendTextMessage(emotxt);
+            DisplaySystemMessage("* You send a custom emoticon with text message: Hey, this is a custom emoticon: [Emoticon].");
         }
 
         

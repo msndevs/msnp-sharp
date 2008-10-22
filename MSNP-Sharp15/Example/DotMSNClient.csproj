@@ -93,6 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
+    <None Include="Resource\inner_emoicon.png" />
     <Compile Include="AddContactForm.cs">
       <SubType>Form</SubType>
     </Compile>
