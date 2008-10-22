@@ -1517,7 +1517,6 @@ namespace MSNPSharp
             throw new MSNPSharpException("Unknown MSNList type");
         }
 
-        bool firstADL = true;
         /// <summary>
         /// Called when a ADL command has been received.
         /// </summary>
@@ -1525,10 +1524,8 @@ namespace MSNPSharp
         protected virtual void OnADLReceived(NSMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK" &&
-                firstADL &&
                 ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))
             {
-                firstADL = false;
             }
             else
             {
@@ -1859,7 +1856,6 @@ namespace MSNPSharp
             Owner.Emoticons.Clear();
             externalEndPoint = null;
             isSignedIn = false;
-            firstADL = true;
             msnticket = MSNTicket.Empty;
         }
 
