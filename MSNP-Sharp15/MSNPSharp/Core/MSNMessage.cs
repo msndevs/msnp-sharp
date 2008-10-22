@@ -42,7 +42,7 @@ namespace MSNPSharp.Core
     [Serializable()]
     public class MSNMessage : NetworkMessage
     {
-        int transactionID;
+        int transactionID = -1;
         string command;
         ArrayList commandValues;
         string acknowledgement = "N";
@@ -140,8 +140,12 @@ namespace MSNPSharp.Core
 
             if (CommandValues.Count > 0)
             {
-                builder.Append(' ');
-                builder.Append(TransactionID.ToString(CultureInfo.InvariantCulture));
+                if (TransactionID.ToString() != CommandValues[0].ToString() && TransactionID != -1)
+                {
+                    builder.Append(' ');
+                    builder.Append(TransactionID.ToString(CultureInfo.InvariantCulture));
+                }
+
                 foreach (string val in CommandValues)
                 {
                     builder.Append(' ');
@@ -180,6 +184,14 @@ namespace MSNPSharp.Core
             // get the command parameters
             Command = System.Text.Encoding.UTF8.GetString(data, 0, 3);
             CommandValues = new ArrayList(System.Text.Encoding.UTF8.GetString(data, 4, cnt - 4).Split(new char[] { ' ' }));
+ 
+            if (CommandValues.Count > 0)
+            {
+                if (!int.TryParse((string)CommandValues[0], out transactionID))
+                {
+                    transactionID = -1;  //if there's no transid, set to -1
+                }
+            }
 
             // set the inner body contents, if it is available
             if (bodyStart < data.Length)

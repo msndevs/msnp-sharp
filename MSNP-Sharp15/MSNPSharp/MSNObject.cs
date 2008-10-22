@@ -82,7 +82,7 @@ namespace MSNPSharp
         /// </summary>
         DynamicPicture = 7,
         /// <summary>
-        /// flash emotion
+        /// flash emoticon
         /// </summary>
         Wink = 8,
         /// <summary>

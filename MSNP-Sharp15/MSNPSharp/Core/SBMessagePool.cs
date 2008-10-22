@@ -51,16 +51,16 @@ namespace MSNPSharp.Core
         // Buffers data.
         public override void BufferData(BinaryReader reader)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Buffering data...", GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Buffering data...: ", GetType().Name);
 
             base.BufferData(reader);
 
             if (Settings.TraceSwitch.TraceVerbose)
             {
                 if (MessageAvailable)
-                    Trace.Write("MessageAvailable", GetType().Name);
+                    Trace.Write("MessageAvailable: ", GetType().Name);
                 else
-                    Trace.Write("_not_ MessageAvailable", GetType().Name);
+                    Trace.Write("_not_ MessageAvailable: ", GetType().Name);
             }
         }
     }
