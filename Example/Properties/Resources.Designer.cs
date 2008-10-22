@@ -60,6 +60,13 @@ namespace MSNPSharpClient.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap inner_emoticon {
+            get {
+                object obj = ResourceManager.GetObject("inner_emoticon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap listbg {
             get {
                 object obj = ResourceManager.GetObject("listbg", resourceCulture);
