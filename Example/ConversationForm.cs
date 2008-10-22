@@ -26,7 +26,7 @@ namespace MSNPSharpClient
 
         /// <summary>
         /// </summary>
-        private Conversation _conversation;
+        private Conversation _conversation = null;
         private List<string> _leftusers = new List<string>(0);
         private List<TextMessage> _messagequene = new List<TextMessage>(0);
         private List<object> _nudgequene = new List<object>(0);
@@ -50,9 +50,20 @@ namespace MSNPSharpClient
         {
         }
 
-        public ConversationForm(Conversation conversation, ClientForm clientform)
+        public ConversationForm(Conversation conversation, ClientForm clientform, string account)
         {
-            _conversation = conversation;
+            if (conversation != null)
+            {
+                _contactStatus.Add(account, false);
+                _conversation = conversation;
+                AddEvent();
+            }
+            else
+            {
+                //Create by local user
+                _contactStatus.Add(account, true);
+                _leftusers.Add(account);
+            }
             _clientform = clientform;
 
             //
@@ -60,7 +71,6 @@ namespace MSNPSharpClient
             //
             InitializeComponent();
 
-            AddEvent();
         }
 
         /// <summary>
@@ -69,8 +79,14 @@ namespace MSNPSharpClient
         /// <param name="convers"></param>
         public void AttachConversation(Conversation convers)
         {
-            Conversation.Switchboard.Close();
-            RemoveEvent();
+            if (convers == null)
+                throw new NullReferenceException();
+ 
+            if (Conversation != null)
+            {
+                Conversation.Switchboard.Close();
+                RemoveEvent();
+            }
 
             _conversation = convers;
             AddEvent();
@@ -123,6 +139,7 @@ namespace MSNPSharpClient
             _isChatForm = true;
             base.OnShown(e);
         }
+
         #region Windows Form Designer generated code
         /// <summary>
         /// Required method for Designer support - do not modify
@@ -159,7 +176,7 @@ namespace MSNPSharpClient
             this.sendnudgeButton.Name = "sendnudgeButton";
             this.sendnudgeButton.Size = new System.Drawing.Size(75, 23);
             this.sendnudgeButton.TabIndex = 2;
-            this.sendnudgeButton.Text = "Send Nudge";
+            this.sendnudgeButton.Text = "Send &Nudge";
             this.sendnudgeButton.Click += new System.EventHandler(this.sendnudgeButton_Click);
             // 
             // sendButton
@@ -169,7 +186,7 @@ namespace MSNPSharpClient
             this.sendButton.Name = "sendButton";
             this.sendButton.Size = new System.Drawing.Size(75, 24);
             this.sendButton.TabIndex = 1;
-            this.sendButton.Text = "Send";
+            this.sendButton.Text = "&Send";
             this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
             // 
             // inputTextBox
@@ -291,32 +308,37 @@ namespace MSNPSharpClient
 
         private void RemoveEvent()
         {
-            Conversation.Switchboard.TextMessageReceived -= Switchboard_TextMessageReceived;
-            Conversation.Switchboard.SessionClosed -= Switchboard_SessionClosed;
-            Conversation.Switchboard.ContactJoined -= Switchboard_ContactJoined;
-            Conversation.Switchboard.ContactLeft -= Switchboard_ContactLeft;
-            Conversation.Switchboard.NudgeReceived -= Switchboard_NudgeReceived;
-            Conversation.Switchboard.AllContactsLeft -= Switchboard_AllContactsLeft;
+            if (Conversation != null)
+            {
+                Conversation.Switchboard.TextMessageReceived -= Switchboard_TextMessageReceived;
+                Conversation.Switchboard.SessionClosed -= Switchboard_SessionClosed;
+                Conversation.Switchboard.ContactJoined -= Switchboard_ContactJoined;
+                Conversation.Switchboard.ContactLeft -= Switchboard_ContactLeft;
+                Conversation.Switchboard.NudgeReceived -= Switchboard_NudgeReceived;
+                Conversation.Switchboard.AllContactsLeft -= Switchboard_AllContactsLeft;
+            }
         }
 
         private void AddEvent()
         {
-            Conversation.Switchboard.TextMessageReceived += new TextMessageReceivedEventHandler(Switchboard_TextMessageReceived);
-            Conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
-            Conversation.Switchboard.ContactJoined += new ContactChangedEventHandler(Switchboard_ContactJoined);
-            Conversation.Switchboard.ContactLeft += new ContactChangedEventHandler(Switchboard_ContactLeft);
-            Conversation.Switchboard.NudgeReceived += new ContactChangedEventHandler(Switchboard_NudgeReceived);
-            Conversation.Switchboard.AllContactsLeft += new SBChangedEventHandler(Switchboard_AllContactsLeft);
+            if (Conversation != null)
+            {
+                Conversation.Switchboard.TextMessageReceived += new TextMessageReceivedEventHandler(Switchboard_TextMessageReceived);
+                Conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
+                Conversation.Switchboard.ContactJoined += new ContactChangedEventHandler(Switchboard_ContactJoined);
+                Conversation.Switchboard.ContactLeft += new ContactChangedEventHandler(Switchboard_ContactLeft);
+                Conversation.Switchboard.NudgeReceived += new ContactChangedEventHandler(Switchboard_NudgeReceived);
+                Conversation.Switchboard.AllContactsLeft += new SBChangedEventHandler(Switchboard_AllContactsLeft);
+            }
         }
 
         private bool ReInvite()
         {
-            if (!Conversation.Switchboard.IsSessionEstablished)
+            if (_conversation == null || !Conversation.Switchboard.IsSessionEstablished)
             {
-                _clientform.Dicconversation.Remove(_conversation);
                 RemoveEvent();
-                _conversation = _conversation.Messenger.CreateConversation();
-                _clientform.Dicconversation.Add(_conversation, this);
+                _conversation = _clientform.Messenger.CreateConversation();
+
                 AddEvent();
                 foreach (string account in _leftusers)
                 {
@@ -335,7 +357,7 @@ namespace MSNPSharpClient
 
         private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            if (!Conversation.Switchboard.IsSessionEstablished) //DONOT call ReInvite here!
+            if (Conversation == null || !Conversation.Switchboard.IsSessionEstablished) //DONOT call ReInvite here!
                 return;
 
             if (_typingMessageSended == false)
@@ -505,9 +527,13 @@ namespace MSNPSharpClient
         private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             //Remember to close!
-            Conversation.Switchboard.Close();
-            RemoveEvent();
-            _clientform.Dicconversation.Remove(Conversation);
+            if (Conversation != null)
+            {
+                Conversation.Switchboard.Close();
+                RemoveEvent();
+            }
+            //_clientform.Dicconversation.Remove(Conversation);
+            _clientform.ConversationForms.Remove(this);
         }
 
         private void sendnudgeButton_Click(object sender, EventArgs e)
