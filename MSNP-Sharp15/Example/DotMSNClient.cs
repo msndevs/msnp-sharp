@@ -19,11 +19,16 @@ namespace MSNPSharpClient
     {
         // Create a Messenger object to use MSNPSharp.
         private Messenger messenger = new Messenger();
-        private Dictionary<Conversation, ConversationForm> dicconversation = new Dictionary<Conversation, ConversationForm>(0);
+        private List<ConversationForm> convforms = new List<ConversationForm>(0);
 
-        public Dictionary<Conversation, ConversationForm> Dicconversation
+        public List<ConversationForm> ConversationForms
         {
-            get { return dicconversation; }
+            get { return convforms; }
+        }
+
+        public Messenger Messenger
+        {
+            get { return messenger; }
         }
 
         #region Form controls
@@ -955,9 +960,24 @@ namespace MSNPSharpClient
                 if (newstatus == PresenceStatus.Offline)
                 {
                     PresenceStatus old = messenger.Owner.Status;
+                    //close all ConversationForms
+                    if (ConversationForms.Count == 0 ||
+                        MessageBox.Show("You are signing out from example client. All windows will be closed.","Sign out",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        if (ConversationForms.Count != 0)
+                        {
+                            for(int i =0;i<ConversationForms .Count ;i++)
+                            {
+                                ConversationForms[i].Close();
+                            }
+
+                        }                      
                     loginButton.Tag = 2;
                     loginButton.PerformClick();
                     pnlNameAndPM.Visible = false;
+                       
+                    }
                     comboStatus.SelectedIndex = comboStatus.FindString(old.ToString());
                 }
                 else
@@ -1093,23 +1113,42 @@ namespace MSNPSharpClient
 
         private ConversationForm CreateConversationForm(Conversation conversation, Contact remote)
         {
-            foreach (ConversationForm cform in Dicconversation.Values)
+            foreach (ConversationForm cform in ConversationForms)
             {
-                if (cform.CanAttach(remote.Mail) == 1)
+                if (cform.CanAttach(remote.Mail) != -1)
                 {
                     cform.AttachConversation(conversation);
                     return cform;
                 }
             }
+
             // create a new conversation. However do not show the window untill a message is received.
             // for example, a conversation will be created when the remote client sends wants to send
             // you a file. You don't want to show the conversation form in that case.
-            ConversationForm conversationForm = new ConversationForm(conversation, this);
+            ConversationForm conversationForm = new ConversationForm(conversation, this, remote.Mail);
             // do this to create the window handle. Otherwise we are not able to call Invoke() on the
             // conversation form later.
             conversationForm.Handle.ToInt32();
-            dicconversation.Add(conversation, conversationForm);
+            ConversationForms.Add(conversationForm);
             return conversationForm;
+
+            //foreach (ConversationForm cform in Dicconversation.Values)
+            //{
+            //    if (cform.CanAttach(remote.Mail) != -1)
+            //    {
+            //        cform.AttachConversation(conversation);
+            //        return cform;
+            //    }
+            //}
+            // create a new conversation. However do not show the window untill a message is received.
+            // for example, a conversation will be created when the remote client sends wants to send
+            // you a file. You don't want to show the conversation form in that case.
+            //ConversationForm conversationForm = new ConversationForm(conversation, this);
+            //// do this to create the window handle. Otherwise we are not able to call Invoke() on the
+            //// conversation form later.
+            //conversationForm.Handle.ToInt32();
+            //dicconversation.Add(conversation, conversationForm);
+            //return conversationForm;
         }
 
         private void messenger_ConversationCreated(object sender, ConversationCreatedEventArgs e)
@@ -1398,19 +1437,20 @@ namespace MSNPSharpClient
 
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (Conversation conv in Dicconversation.Keys)
+            foreach (ConversationForm conv in ConversationForms)
             {
-                int res = Dicconversation[conv].CanAttach(((Contact)treeViewFavoriteList.SelectedNode.Tag).Mail);
+                int res = conv.CanAttach(((Contact)treeViewFavoriteList.SelectedNode.Tag).Mail);
                 if (res != -1)
                 {
-                    Dicconversation[conv].Show();
+                    if (conv.WindowState == FormWindowState.Minimized)
+                        conv.Show();
+                    conv.Activate();
                     return;
                 }
 
             }
-            Conversation conversation = messenger.CreateConversation();
-            conversation.Invite(((Contact)treeViewFavoriteList.SelectedNode.Tag));
-            ConversationForm form = CreateConversationForm(conversation, ((Contact)treeViewFavoriteList.SelectedNode.Tag));
+
+            ConversationForm form = CreateConversationForm(null, ((Contact)treeViewFavoriteList.SelectedNode.Tag));
             form.Show();
         }
 
@@ -1674,6 +1714,11 @@ namespace MSNPSharpClient
 
         private void btnAddNew_Click(object sender, EventArgs e)
         {
+            if(this.loginButton.Tag.ToString() != "2")
+            {
+                MessageBox.Show("Please sign in first.");
+                return;
+            }
             AddContactForm acf = new AddContactForm();
             if (DialogResult.OK == acf.ShowDialog(this) && acf.Account != String.Empty)
             {
