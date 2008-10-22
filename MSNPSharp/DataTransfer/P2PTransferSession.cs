@@ -402,7 +402,6 @@ namespace MSNPSharp.DataTransfer
                             DataStream.Close();
 
                         OnTransferFinished();
-
                         // notify the remote client we close the direct connection
                         SendDisconnectMessage();
                     }

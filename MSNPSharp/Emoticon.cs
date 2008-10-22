@@ -65,7 +65,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The string that will be replaced by the emotion.
+        /// The string that will be replaced by the emoticons.
         /// </summary>
         public string Shortcut
         {

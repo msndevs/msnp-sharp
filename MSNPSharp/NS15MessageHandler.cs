@@ -683,7 +683,7 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
 #if MSNP16
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16 MSNP15", "CVR0" }));
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16", "MSNP15", "CVR0" }));
 #else
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
 #endif
@@ -788,7 +788,6 @@ namespace MSNPSharp
         protected virtual void OnSignedOff(SignedOffEventArgs e)
         {
             owner.SetStatus(PresenceStatus.Offline);
-
             Clear();
 
             if (SignedOff != null)
@@ -1518,6 +1517,7 @@ namespace MSNPSharp
             throw new MSNPSharpException("Unknown MSNList type");
         }
 
+        bool firstADL = true;
         /// <summary>
         /// Called when a ADL command has been received.
         /// </summary>
@@ -1525,10 +1525,10 @@ namespace MSNPSharp
         protected virtual void OnADLReceived(NSMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK" &&
-                message.TransactionID == 0 &&
+                firstADL &&
                 ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))
             {
-
+                firstADL = false;
             }
             else
             {
@@ -1856,8 +1856,10 @@ namespace MSNPSharp
             ContactGroups.Clear();
             ContactService.Clear();
             SwitchBoards.Clear();
+            Owner.Emoticons.Clear();
             externalEndPoint = null;
             isSignedIn = false;
+            firstADL = true;
             msnticket = MSNTicket.Empty;
         }
 

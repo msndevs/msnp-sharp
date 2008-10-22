@@ -756,6 +756,17 @@ namespace MSNPSharp
                 throw new NullReferenceException();
             SBMessage sbMessage = new SBMessage();
             MSGMessage msgMessage = new MSGMessage();
+
+            for (int emcount = 0; emcount < emoticons.Count; emcount++)
+            {
+                if (!NSMessageHandler.Owner.Emoticons.Contains((emoticons[emcount] as Emoticon).Sha))
+                {
+                    //Add the emotions to owner's emoticon collection.
+                    NSMessageHandler.Owner.Emoticons.Add((emoticons[emcount] as Emoticon).Sha,
+                        emoticons[emcount]);
+                }
+            }
+
             EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons, icontype);
 
             msgMessage.InnerMessage = emoticonMessage;

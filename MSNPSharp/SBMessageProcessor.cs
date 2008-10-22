@@ -72,15 +72,13 @@ namespace MSNPSharp
 
         protected override void OnMessageReceived(byte[] data)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + System.Text.UTF8Encoding.UTF8.GetString(data), GetType().Name);
-
             base.OnMessageReceived(data);
-
             // first get the general expected switchboard message
             SBMessage message = new SBMessage();
 
             message.ParseBytes(data);
 
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
             // send the message
             DispatchMessage(message);
         }
@@ -123,7 +121,7 @@ namespace MSNPSharp
 
             sbMessage.TransactionID = IncreaseTransactionID();
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + sbMessage.ToDebugString(), GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
 
             // prepare the message
             sbMessage.PrepareMessage();
