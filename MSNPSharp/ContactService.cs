@@ -55,9 +55,9 @@ namespace MSNPSharp
         private int recursiveCall = 0;
         private string applicationId = String.Empty;
         private List<int> initialADLs = new List<int>();
-        private int initialADLcount = 0;
         private bool abSynchronized = false;
 
+        internal int initialADLcount = 0;
         internal XMLContactList AddressBook = null;
         internal DeltasList Deltas = null;
 
