@@ -1523,9 +1523,15 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnADLReceived(NSMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK" &&
-                ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))
+            if (message.TransactionID != 0 &&
+                message.CommandValues[1].ToString() == "OK" &&
+                ContactService.ProcessADL(message.TransactionID))
             {
+                // All initial ADLs have processed.
+                if (0 == ContactService.initialADLcount)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
+                }
             }
             else
             {
