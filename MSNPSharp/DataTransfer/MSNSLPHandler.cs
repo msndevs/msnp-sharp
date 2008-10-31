@@ -682,7 +682,7 @@ namespace MSNPSharp.DataTransfer
                 properties.DataType = DataTransferType.DisplayImage;
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
-            byte[] contextArray = System.Text.ASCIIEncoding.ASCII.GetBytes(System.Web.HttpUtility.UrlDecode(msnObject.OriginalContext));//GetEncodedString());
+            byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(msnObject.OriginalContext);  //No need to UrlEncode any more
             string base64Context = Convert.ToBase64String(contextArray, 0, contextArray.Length);
             properties.Context = base64Context;
 

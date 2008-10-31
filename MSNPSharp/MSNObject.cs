@@ -41,7 +41,8 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer; 
+    using MSNPSharp.DataTransfer;
+    using System.Web; 
 
     /// <summary>
     /// Defines the type of MSNObject.
@@ -376,9 +377,11 @@ namespace MSNPSharp
             originalContext = context;
 
             if (base64Encoded)
-                context = System.Text.UTF8Encoding.UTF8.GetString(Convert.FromBase64String(context));
+                context = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(context));
 
-            string xmlString = System.Web.HttpUtility.UrlDecode(context);
+            string xmlString = context;
+            if (context.IndexOf(" ") == -1)
+                xmlString = GetDecodeString(context);
             MatchCollection matches = contextRe.Matches(xmlString);
 
             foreach (Match match in matches)
@@ -487,6 +490,22 @@ namespace MSNPSharp
             return dataStream;
         }
 
+        /// <summary>
+        /// Returns the "url-encoded xml" string for MSNObjects.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public virtual string GetEncodeString(string context)
+        {
+            return HttpUtility.UrlEncode(context, Encoding.UTF8).Replace("+", "%20");
+        }
+
+        public static string GetDecodeString(string context)
+        {
+            context = context.Replace("%20", "+");
+            return HttpUtility.UrlDecode(context, Encoding.UTF8);
+        }
+
 
         /// <summary>
         /// Calculates the checksum for the entire MSN Object.
@@ -498,7 +517,7 @@ namespace MSNPSharp
             string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.Type + "Location" + Location + "FriendlyAAA=SHA1D" + Sha;
 
             HashAlgorithm shaAlg = new SHA1Managed();
-            string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.ASCII.GetBytes(checksum)));
+            string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.UTF8.GetBytes(checksum)));
             return baseEncChecksum;
         }
 
@@ -543,7 +562,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetEncodedString()
         {
-            return System.Web.HttpUtility.UrlEncode(GetXmlString()).Replace("+", "%20");
+            return System.Web.HttpUtility.UrlEncode(GetXmlString(), Encoding.UTF8).Replace("+", "%20");
         }
     }
 
