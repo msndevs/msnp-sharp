@@ -124,55 +124,6 @@ namespace MSNPSharp
         {
         }
 
-        /// <summary>
-        /// Called when an PRP command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Informs about the phone numbers of the contact list owner.
-        /// <code>PRP [TransactionID] [ListVersion] PhoneType Number</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        [Obsolete]
-        protected virtual void OnPRPReceived(NSMessage message)
-        {
-            string number = String.Empty;
-            string type = String.Empty;
-            if (message.CommandValues.Count >= 4)
-            {
-                if (message.CommandValues.Count >= 4)
-                    number = HttpUtility.UrlDecode((string)message.CommandValues[3]);
-                else
-                    number = String.Empty;
-                type = message.CommandValues[1].ToString();
-            }
-            else
-            {
-                number = HttpUtility.UrlDecode((string)message.CommandValues[2]);
-                type = message.CommandValues[1].ToString();
-            }
-
-            switch (type)
-            {
-                case "PHH":
-                    Owner.SetHomePhone(number);
-                    break;
-                case "PHW":
-                    Owner.SetWorkPhone(number);
-                    break;
-                case "PHM":
-                    Owner.SetMobilePhone(number);
-                    break;
-                case "MBE":
-                    Owner.SetMobileDevice((number == "Y") ? true : false);
-                    break;
-                case "MOB":
-                    Owner.SetMobileAccess((number == "Y") ? true : false);
-                    break;
-                case "MFN":
-                    Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
-                    break;
-            }
-        }
 
         /// <summary>
         /// Called when a BPR command has been received.
