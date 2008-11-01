@@ -119,7 +119,7 @@ namespace MSNPSharp
 
             string[] values = body.Split('\t');
 
-            for (int i = 0; i < values.Length; i += 2)
+            for (int i = 0; i < values.Length - 1; i += 2)
             {
                 Emoticon emoticon = new Emoticon();
                 emoticon.Shortcut = values[i].Trim();
