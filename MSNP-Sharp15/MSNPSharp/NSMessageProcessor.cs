@@ -101,7 +101,7 @@ namespace MSNPSharp
         public override void Disconnect()
         {
             SendMessage(new NSMessage("OUT", new string[] { }));
-            System.Threading.Thread.Sleep(100);
+            System.Threading.Thread.CurrentThread.Join(100);
             base.Disconnect();
         }
 
