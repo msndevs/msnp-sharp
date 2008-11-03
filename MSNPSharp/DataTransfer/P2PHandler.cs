@@ -529,7 +529,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="processor"></param>
         protected virtual void AddSessionProcessor(P2PMessageSession session, IMessageProcessor processor)
         {
-            System.Threading.Thread.Sleep(1000);
+            System.Threading.Thread.CurrentThread.Join(1000);
             session.MessageProcessor = processor;
 
             return;

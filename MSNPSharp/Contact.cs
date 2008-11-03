@@ -319,6 +319,14 @@ namespace MSNPSharp
             }
         }
 
+        public string Hash
+        {
+            get 
+            { 
+                return MakeHash(Mail, clienttype); 
+            }
+        }
+
         public NSMessageHandler NSMessageHandler
         {
             get
@@ -602,6 +610,11 @@ namespace MSNPSharp
             }
         }
 
+        internal static string MakeHash(string account, ClientType type)
+        {
+            return account.ToLowerInvariant() + ":" + type.ToString();
+        }
+
         #endregion
 
         #region Public setters
@@ -735,18 +748,31 @@ namespace MSNPSharp
 
         #endregion
 
+        public static bool operator == (Contact contact1, Contact contact2)
+        {
+            if (((object)contact1) == null && ((object)contact2) == null) return true;
+            if (((object)contact1) == null || ((object)contact2) == null) return false;
+            return contact1.GetHashCode() == contact2.GetHashCode();
+        }
+
+        public static bool operator !=(Contact contact1, Contact contact2)
+        {
+            return !(contact1 == contact2);
+        }
+
         public override bool Equals(object obj)
         {
             if (obj == null || obj.GetType() != GetType())
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;
-            Contact contact = obj as Contact;
-            return ((Mail.ToLowerInvariant() == contact.Mail.ToLowerInvariant()) && (ClientType == contact.ClientType));
+            return obj.GetHashCode() == GetHashCode();
         }
+
+
         public override int GetHashCode()
         {
-            return mail.GetHashCode();
+            return MakeHash(Mail, ClientType).GetHashCode();
         }
     }
 };

@@ -967,7 +967,7 @@ namespace MSNPSharp.DataTransfer
         protected virtual void BufferMessage(NetworkMessage message)
         {
             if (sendMessages.Count >= 100)
-                System.Threading.Thread.Sleep(200);
+                System.Threading.Thread.CurrentThread.Join(200);
 
             sendMessages.Enqueue(message);
         }
