@@ -341,7 +341,7 @@ namespace MSNPSharpClient
         void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
         {
             //This is just an example to tell you how to get the emoticon data.
-            FileStream fs = new FileStream("emoicon_rcv_example.png", FileMode.OpenOrCreate);
+            FileStream fs = new FileStream("emoticon_rcv_example.png", FileMode.OpenOrCreate);
             byte[] byt = new byte[e.ClientData.OpenStream().Length];
             e.ClientData.OpenStream().Seek(0, SeekOrigin.Begin);
             e.ClientData.OpenStream().Read(byt, 0, byt.Length);
