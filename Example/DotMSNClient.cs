@@ -11,6 +11,7 @@ namespace MSNPSharpClient
     using MSNPSharp;
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using System.Diagnostics;
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -861,7 +862,14 @@ namespace MSNPSharpClient
 
         private void SetStatus(string status)
         {
-            this.Invoke(new SetStatusDelegate(SetStatusSynchronized), new object[] { status });
+            if (InvokeRequired)
+            {
+                this.Invoke(new SetStatusDelegate(SetStatusSynchronized), new object[] { status });
+            }
+            else
+            {
+                SetStatusSynchronized(status);
+            }
         }
 
         /// <summary>
