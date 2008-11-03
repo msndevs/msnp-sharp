@@ -414,7 +414,8 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public virtual void AbortAllTransfers()
         {
-            foreach (P2PTransferSession session in transferSessions.Values)
+            Hashtable transferSessions_copy = new Hashtable(transferSessions);
+            foreach (P2PTransferSession session in transferSessions_copy.Values)
             {
                 session.AbortTransfer();
             }
@@ -477,7 +478,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void RemoveTransferSession(P2PTransferSession session)
         {
-            transferSessions.Remove(session);
+            transferSessions.Remove(session.SessionId);
         }
 
         /// <summary>
