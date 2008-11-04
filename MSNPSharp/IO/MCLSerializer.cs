@@ -132,9 +132,10 @@ namespace MSNPSharp.IO
             // Subclass of MCLSerializer, set the default properties
             if (targettype.IsSubclassOf(typeof(MCLSerializer)))
             {
-                ((MCLSerializer)rtnobj).NoCompress = nocompress;
-                ((MCLSerializer)rtnobj).FileName = filename;
-                ((MCLSerializer)rtnobj).NSMessageHandler = handler;
+                MCLSerializer mcls = (MCLSerializer)rtnobj;
+                mcls.NoCompress = nocompress;
+                mcls.FileName = filename;
+                mcls.NSMessageHandler = handler;
             }
             return rtnobj;
         }

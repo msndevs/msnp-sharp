@@ -510,8 +510,9 @@ namespace MSNPSharp
                 }
 
                 // catch the connect event so we can start sending the USR command upon initiating
-                ((SocketMessageProcessor)value).ConnectionEstablished += processorConnectedHandler;
-                ((SocketMessageProcessor)value).ConnectionClosed += processorDisconnectedHandler;
+                SocketMessageProcessor smp = value as SocketMessageProcessor;
+                smp.ConnectionEstablished += processorConnectedHandler;
+                smp.ConnectionClosed += processorDisconnectedHandler;
 
                 if (messageProcessor != null)
                 {
@@ -520,7 +521,7 @@ namespace MSNPSharp
                     ((SocketMessageProcessor)messageProcessor).ConnectionClosed -= processorDisconnectedHandler;
                 }
 
-                messageProcessor = (SocketMessageProcessor)value;
+                messageProcessor = smp;
 
             }
         }

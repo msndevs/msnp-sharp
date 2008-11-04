@@ -332,9 +332,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            System.Diagnostics.Debug.Assert(message is P2PMessage, "Incoming message is not a P2PMessage", "");
+            P2PMessage p2pMessage = message as P2PMessage;
 
-            P2PMessage p2pMessage = (P2PMessage)message;
+            System.Diagnostics.Debug.Assert(message != null, "Incoming message is not a P2PMessage", "");
 
             // close connection flag
             //if(p2pMessage.Flags == 0x40)

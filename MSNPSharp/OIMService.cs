@@ -355,7 +355,6 @@ namespace MSNPSharp
             foreach (XmlNode m in xnodlst)
             {
                 DateTime rt = DateTime.Now;
-                Int32 size = 0;
                 Guid guid = Guid.Empty;
                 String email = String.Empty;
 
@@ -367,10 +366,6 @@ namespace MSNPSharp
                     {
                         case "RT":
                             rt = XmlConvert.ToDateTime(a.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
-                            break;
-
-                        case "SZ":
-                            size = Convert.ToInt32(a.InnerText);
                             break;
 
                         case "E":

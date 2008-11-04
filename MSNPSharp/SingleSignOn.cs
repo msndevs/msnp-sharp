@@ -701,9 +701,8 @@ namespace MSNPSharp
             des3.Mode = CipherMode.CBC;
             byte[] desinput = CombinByte(Encoding.ASCII.GetBytes(nonce), fillbyt);
             byte[] deshash = new byte[72];
-            int descount = des3.CreateEncryptor(key3, iv).TransformBlock(desinput, 0, desinput.Length, deshash, 0);
-            byte[] result = CombinByte(CombinByte(CombinByte(tagMSGRUSRKEY_struct, iv), hash), deshash);
-            return Convert.ToBase64String(result);
+            des3.CreateEncryptor(key3, iv).TransformBlock(desinput, 0, desinput.Length, deshash, 0);
+            return Convert.ToBase64String(CombinByte(CombinByte(CombinByte(tagMSGRUSRKEY_struct, iv), hash), deshash));
         }
 
         private byte[] Derive_Key(byte[] key, byte[] magic)

@@ -355,10 +355,10 @@ namespace MSNPSharp.DataTransfer
         /// <param name="message"></param>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            if (!(message is SBMessage))
-                return;
+            SBMessage sbMessage = message as SBMessage;
 
-            SBMessage sbMessage = (SBMessage)message;
+            if (sbMessage == null)
+                return;            
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message " + NSMessageHandler.Owner.Mail, GetType().Name);
 
@@ -631,10 +631,10 @@ namespace MSNPSharp.DataTransfer
             P2PMessageSession session = (P2PMessageSession)sender;
 
             // create a new switchboard to fill the hole
-            SBMessageHandler sbHandler = GetSwitchboardSession(((P2PMessageSession)sender).RemoteContact);
+            SBMessageHandler sbHandler = GetSwitchboardSession(session.RemoteContact);
 
             // if the contact is offline, there is no need to request a new switchboard. close the session.
-            if ((NSMessageHandler.ContactList[((P2PMessageSession)sender).RemoteContact, ClientType.PassportMember]).Status == PresenceStatus.Offline)
+            if ((NSMessageHandler.ContactList[session.RemoteContact, ClientType.PassportMember]).Status == PresenceStatus.Offline)
             {
                 CloseMessageSession(session);
                 return;
