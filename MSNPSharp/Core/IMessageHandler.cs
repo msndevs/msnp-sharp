@@ -36,18 +36,6 @@ namespace MSNPSharp.Core
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
 
-    #region MessageHandler Handlers
-    /// <summary>
-    /// This delegate is used when the server sends an error code. 
-    /// </summary>
-    public delegate void ErrorReceivedEventHandler(object sender, MSNErrorEventArgs e);
-
-    /// <summary>
-    /// This delegate is used when an exception was thrown inside the message handler class.
-    /// </summary>
-    public delegate void HandlerExceptionEventHandler(object sender, ExceptionEventArgs e);
-    #endregion
-
     /// <summary>
     /// IMessageHandler defines the methods required to handle incoming network messages.
     /// </summary>

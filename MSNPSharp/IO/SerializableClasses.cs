@@ -40,173 +40,6 @@ namespace MSNPSharp.IO
     using MemberRole = MSNPSharp.MSNWS.MSNABSharingService.MemberRole;
     using ServiceFilterType = MSNPSharp.MSNWS.MSNABSharingService.ServiceFilterType;
 
-    #region Contact Types
-
-    #region ContactInfo
-
-    [Serializable]
-    public class ContactInfo
-    {
-        protected ContactInfo()
-        {
-        }
-
-        private string account;
-        public string Account
-        {
-            get
-            {
-                return account;
-            }
-            set
-            {
-                account = value;
-            }
-        }
-
-        private ClientType type = ClientType.PassportMember;
-        public ClientType Type
-        {
-            get
-            {
-                return type;
-            }
-            set
-            {
-                type = value;
-            }
-        }
-
-        private string displayname;
-        public string DisplayName
-        {
-            get
-            {
-                return displayname;
-            }
-            set
-            {
-                displayname = value;
-            }
-        }
-
-        private DateTime lastchanged;
-        public DateTime LastChanged
-        {
-            get
-            {
-                return lastchanged;
-            }
-            set
-            {
-                lastchanged = value;
-            }
-        }
-
-        private ClientCapacities capability = 0;
-        public ClientCapacities Capability
-        {
-            get
-            {
-                return capability;
-            }
-            set
-            {
-                capability = value;
-            }
-        }
-
-        private object tags;
-
-        /// <summary>
-        /// Save whatever you want
-        /// </summary>
-        public object Tags
-        {
-            get
-            {
-                return tags;
-            }
-            set
-            {
-                tags = value;
-            }
-        }
-
-        /// <summary>
-        /// The string for this instance
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            string debugstr = String.Empty;
-
-            if (account != null)
-                debugstr += account + " | " + Type.ToString();
-
-            if (displayname != null)
-                debugstr += " | " + displayname;
-
-            return debugstr;
-        }
-
-        /// <summary>
-        /// Overrided. Treat contacts with same account but different clienttype as different contacts.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public override bool Equals(object obj)
-        {
-            if (obj == null || obj.GetType() != GetType())
-                return false;
-
-            if (ReferenceEquals(this, obj))
-                return true;
-
-            ContactInfo cinfo = obj as ContactInfo;
-            return ((Account.ToLowerInvariant() == cinfo.Account.ToLowerInvariant()) && (Type == cinfo.Type));
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-    }
-
-    #endregion
-
-    /// <summary>
-    /// Contact type for membership list
-    /// </summary>
-    [Serializable]
-    public class MembershipContactInfo : ContactInfo
-    {
-        protected MembershipContactInfo()
-        {
-        }
-
-        public MembershipContactInfo(string account, ClientType type)
-        {
-            Account = account;
-            Type = type;
-        }
-
-        private SerializableDictionary<MemberRole, int> memberships = new SerializableDictionary<MemberRole, int>();
-        public SerializableDictionary<MemberRole, int> Memberships
-        {
-            get
-            {
-                return memberships;
-            }
-            set
-            {
-                memberships = value;
-            }
-        }
-    }
-
-    #endregion
-
     #region Service
     /// <summary>
     /// Membership service
@@ -269,6 +102,32 @@ namespace MSNPSharp.IO
         public override string ToString()
         {
             return Convert.ToString(Type);
+        }
+
+        public static bool operator ==(Service svc1, Service svc2)
+        {
+            if (((object)svc1) == null && ((object)svc2) == null) return true;
+            if (((object)svc1) == null || ((object)svc2) == null) return false;
+            return svc1.GetHashCode() == svc2.GetHashCode();
+        }
+
+        public static bool operator !=(Service svc1, Service svc2)
+        {
+            return !(svc1 == svc2);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || obj.GetType() != GetType())
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            return obj.GetHashCode() == GetHashCode();
+        }
+
+        public override int GetHashCode()
+        {
+            return id;
         }
     }
 

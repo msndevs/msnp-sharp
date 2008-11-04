@@ -100,13 +100,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// The delegate is used when the request to a contact card returns.
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="arg"></param>
-    public delegate void ContactCardCompletedEventHandler(object sender, ContactCardCompletedEventArgs arg);
-
-    /// <summary>
     /// Provides services that related to MSN Space.
     /// </summary>
     public class ContactSpaceService : MSNService
@@ -114,7 +107,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired after GetContactCard completed its async request.
         /// </summary>
-        public event ContactCardCompletedEventHandler ContactCardCompleted;
+        public event EventHandler<ContactCardCompletedEventArgs> ContactCardCompleted;
 
         public ContactSpaceService(NSMessageHandler nshandler)
             : base(nshandler)

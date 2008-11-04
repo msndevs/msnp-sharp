@@ -74,11 +74,6 @@ namespace MSNPSharp.DataTransfer
     }
 
     /// <summary>
-    /// 
-    /// </summary>
-    public delegate void SessionChangedEventHandler(object sender, P2PSessionAffectedEventArgs e);
-
-    /// <summary>
     /// Handles incoming P2P messages from the switchboardserver.
     /// </summary>
     public class P2PHandler : IMessageHandler
@@ -131,8 +126,8 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 nsMessageHandler = value;
-                nsMessageHandler.SBCreated += new SBCreatedEventHandler(nsMessageHandler_SBCreated);
-                nsMessageHandler.ContactOffline += new ContactChangedEventHandler(nsMessageHandler_ContactOffline);
+                nsMessageHandler.SBCreated += new EventHandler<SBCreatedEventArgs>(nsMessageHandler_SBCreated);
+                nsMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(nsMessageHandler_ContactOffline);
             }
         }
 
@@ -154,12 +149,12 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Occurs when a P2P session is created.
         /// </summary>
-        public event SessionChangedEventHandler SessionCreated;
+        public event EventHandler<P2PSessionAffectedEventArgs> SessionCreated;
 
         /// <summary>
         /// Occurs when a P2P session is closed.
         /// </summary>
-        public event SessionChangedEventHandler SessionClosed;
+        public event EventHandler<P2PSessionAffectedEventArgs> SessionClosed;
 
         /// <summary>
         /// Fires the SessionCreated event.
@@ -221,7 +216,7 @@ namespace MSNPSharp.DataTransfer
             session.LocalContact = localContact;
             session.MessageProcessor = MessageProcessor;
 
-            session.ProcessorInvalid += new EventHandler(session_ProcessorInvalid);
+            session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
 
             // generate a local base identifier.
             session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
@@ -282,7 +277,7 @@ namespace MSNPSharp.DataTransfer
             session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
             session.LocalIdentifier = (uint)(session.LocalBaseIdentifier);// - (ulong)session.LocalInitialCorrection);
 
-            session.ProcessorInvalid += new EventHandler(session_ProcessorInvalid);
+            session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
 
             // setup the remote identifier
             session.RemoteBaseIdentifier = receivedMessage.Identifier;
@@ -505,9 +500,9 @@ namespace MSNPSharp.DataTransfer
             sbHandler.MessageProcessor.RegisterHandler(this);
 
             // act on these events to ensure messages are properly sent to the right switchboards
-            e.Switchboard.ContactJoined += new ContactChangedEventHandler(Switchboard_ContactJoined);
-            e.Switchboard.ContactLeft += new ContactChangedEventHandler(Switchboard_ContactLeft);
-            e.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
+            e.Switchboard.ContactJoined += new EventHandler<ContactEventArgs>(Switchboard_ContactJoined);
+            e.Switchboard.ContactLeft += new EventHandler<ContactEventArgs>(Switchboard_ContactLeft);
+            e.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
             // keep track of this switchboard
             AddSwitchboardSession(sbHandler);
         }
@@ -529,7 +524,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="processor"></param>
         protected virtual void AddSessionProcessor(P2PMessageSession session, IMessageProcessor processor)
         {
-            System.Threading.Thread.Sleep(1000);
+            System.Threading.Thread.CurrentThread.Join(1000);
             session.MessageProcessor = processor;
 
             return;

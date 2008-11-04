@@ -39,8 +39,6 @@ namespace MSNPSharp
 {
     #region ServiceOperationFailedEvent
 
-    public delegate void ServiceOperationFailedEventHandler(object sender, ServiceOperationFailedEventArgs e);
-
     public class ServiceOperationFailedEventArgs : EventArgs
     {
         private string method;
@@ -110,7 +108,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired when request to an async webservice method failed.
         /// </summary>
-        public event ServiceOperationFailedEventHandler ServiceOperationFailed;
+        public event EventHandler<ServiceOperationFailedEventArgs> ServiceOperationFailed;
 
         /// <summary>
         /// Fires ServiceOperationFailed event.

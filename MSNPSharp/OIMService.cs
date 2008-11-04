@@ -46,20 +46,7 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
 
-    #region Delegates and EventArgs
-    /// <summary>
-    /// This delegate is used when an OIM was received.
-    /// </summary>
-    /// <param name="sender">The sender's email</param>
-    /// <param name="e">OIMReceivedEventArgs</param>
-    public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
-
-    /// <summary>
-    /// This delegate is used when an OIM sends out.
-    /// </summary>
-    /// <param name="sender">Sender's email</param>
-    /// <param name="e">The event arg that indicates whether send succeed or not.</param>
-    public delegate void OIMSentCompletedEventHandler(object sender, OIMSendCompletedEventArgs e);
+    #region EventArgs
 
     [Serializable()]
     public class OIMSendCompletedEventArgs : EventArgs
@@ -262,12 +249,12 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when receive an OIM.
         /// </summary>
-        public event OIMReceivedEventHandler OIMReceived;
+        public event EventHandler<OIMReceivedEventArgs> OIMReceived;
 
         /// <summary>
         /// Fires after an OIM was sent.
         /// </summary>
-        public event OIMSentCompletedEventHandler OIMSendCompleted;
+        public event EventHandler<OIMSendCompletedEventArgs> OIMSendCompleted;
 
         public OIMService(NSMessageHandler nsHandler)
             : base(nsHandler)

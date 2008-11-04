@@ -30,31 +30,34 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.IO;
+using System.Collections;
+using System.Collections.Generic;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.IO;
-    using System.Collections;
-    using System.Collections.Generic;
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
 
-    // Buffers the incoming data from the notification server (NS).
-    // The main purpose of this class is to ensure that MSG, IPG and NOT payload commands are processed
-    // only when they are complete. Payload commands can be quite large and may be larger
-    // than the socket buffer. This pool
-    // will buffer the data and release the messages, or commands, when they are
-    // fully retrieved from the server.
+    /// <summary>
+    /// Buffers the incoming data from the notification server (NS).
+    /// </summary>
+    /// <remarks>
+    /// The main purpose of this class is to ensure that MSG, IPG and NOT payload commands are processed
+    /// only when they are complete. Payload commands can be quite large and may be larger
+    /// than the socket buffer. This pool will buffer the data and release the messages, or commands,
+    /// when they are fully retrieved from the server.
+    /// </remarks>
     public class NSMessagePool : MessagePool, IDisposable
     {
-        Queue<MemoryStream> messageQueue;
+        Queue<MemoryStream> messageQueue = new Queue<MemoryStream>();
         MemoryStream bufferStream;
         BinaryWriter bufferWriter;
         int remainingBuffer;
 
         public NSMessagePool()
         {
-            messageQueue = new Queue<MemoryStream>();
             CreateNewBuffer();
         }
 
@@ -71,7 +74,9 @@ namespace MSNPSharp.Core
             }
         }
 
-        // This points to the current message we are writing to
+        /// <summary>
+        /// This points to the current message we are writing to.
+        /// </summary>
         protected MemoryStream BufferStream
         {
             get
@@ -84,7 +89,9 @@ namespace MSNPSharp.Core
             }
         }
 
-        // This is the interface to the bufferStream
+        /// <summary>
+        /// This is the interface to the bufferStream.
+        /// </summary>
         protected BinaryWriter BufferWriter
         {
             get
@@ -97,20 +104,26 @@ namespace MSNPSharp.Core
             }
         }
 
-        // Creates a new memorystream to server as the buffer.
+        /// <summary>
+        /// Creates a new memorystream to server as the buffer.
+        /// </summary>
         private void CreateNewBuffer()
         {
             bufferStream = new MemoryStream(64);
             bufferWriter = new BinaryWriter(bufferStream);
         }
 
-        // Enques the current buffer memorystem when a message is completely retrieved.
+        /// <summary>
+        /// Enques the current buffer memorystem when a message is completely retrieved.
+        /// </summary>
         private void EnqueueCurrentBuffer()
         {
             messageQueue.Enqueue(bufferStream);
         }
 
-        // Is true when there are message available to retrieve.
+        /// <summary>
+        /// Is true when there are message available to retrieve.
+        /// </summary>
         public override bool MessageAvailable
         {
             get
@@ -119,16 +132,21 @@ namespace MSNPSharp.Core
             }
         }
 
-        // Get the next message as a byte array.
-        // The returned data includes all newlines which seperate the commands ("\r\n")
+        /// <summary>
+        /// Get the next message as a byte array. The returned data includes all newlines which seperate the commands ("\r\n")
+        /// </summary>
+        /// <returns></returns>
         public override byte[] GetNextMessageData()
         {
-            MemoryStream memStream = (MemoryStream)messageQueue.Dequeue();
+            MemoryStream memStream = messageQueue.Dequeue();
             return memStream.ToArray();
         }
 
-        // Stores the raw data in a buffer. When a full message is detected it is inserted on the internal stack.
-        // You can retrieve these messages bij calling GetNextMessageData().
+        /// <summary>
+        /// Stores the raw data in a buffer. When a full message is detected it is inserted on the internal stack.
+        /// You can retrieve these messages bij calling GetNextMessageData().
+        /// </summary>
+        /// <param name="reader"></param>
         public override void BufferData(BinaryReader reader)
         {
             int length = (int)(reader.BaseStream.Length - reader.BaseStream.Position);
@@ -174,12 +192,12 @@ namespace MSNPSharp.Core
                         cmd[1] = (byte)bufferStream.ReadByte();
                         cmd[2] = (byte)bufferStream.ReadByte();
 
-                        if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||	// MSG payload command
-                           (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||		// IPG pager command
+                        if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||    // MSG payload command
+                           (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||     // IPG pager command
                            (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||     // NOT notification command
                            (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||     // UBX personal message
                            (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||     // GCF
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||	    // UBM Yahoo messenger message
+                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||     // UBM Yahoo messenger message
                            (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||     // ADL Add List command
                            (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L') ||     // RML Remove List command
                            (cmd[0] == 'F' && cmd[1] == 'Q' && cmd[2] == 'Y'))       // FQY Forward QuerY command
