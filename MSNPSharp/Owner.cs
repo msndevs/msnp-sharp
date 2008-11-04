@@ -43,7 +43,7 @@ namespace MSNPSharp
     [Serializable()]
     public class Owner : Contact
     {
-        bool passportVerified = false;
+        bool passportVerified;
         PrivacyMode privacy = PrivacyMode.Unknown;
         NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
         RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
@@ -275,7 +275,7 @@ namespace MSNPSharp
 
 #if MSNP16
 
-        bool mpopEnabled = false;
+        bool mpopEnabled;
         internal void SetMPOP(bool enabled)
         {
             mpopEnabled = enabled;
@@ -335,9 +335,9 @@ namespace MSNPSharp
 
 
         #region Profile datafields
-        bool validProfile = false;
+        bool validProfile;
         string loginTime;
-        bool emailEnabled = false;
+        bool emailEnabled;
         string memberIdHigh;
         string memberIdLowd;
         string preferredLanguage;

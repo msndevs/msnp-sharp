@@ -95,7 +95,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private bool remoteInvited = false;
+        private bool remoteInvited;
 
         /// <summary>
         /// Defines whether the remote client has invited the transfer (true) or the local client has initiated the transfer (false).
@@ -186,7 +186,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint sessionId = 0;
+        private uint sessionId;
 
         /// <summary>
         /// The total length of the data, in bytes
@@ -205,7 +205,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint dataSize = 0;
+        private uint dataSize;
 
         /// <summary>
         /// The context send in the invitation. This informs the client about the type of transfer, filename, file-hash, msn object settings, etc.
@@ -262,7 +262,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private int lastCSeq = 0;
+        private int lastCSeq;
 
         /// <summary>
         /// The account of the local contact
@@ -368,7 +368,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private MSNObject msnObject = null;
+        private MSNObject msnObject;
 
         /// <summary>
         /// The corresponding msnobject defined in the invitation. Only available in case of an msn object transfer (image display, emoticons).
@@ -390,7 +390,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private string filename = null;
+        private string filename;
 
         /// <summary>
         /// Name of the file the remote contact wants to send. Only available in case of a filetransfer session.
@@ -409,7 +409,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private long fileSize = 0;
+        private long fileSize;
 
         /// <summary>
         /// The total size of the file in bytes. Only available in case of a filetransfer session.
@@ -478,7 +478,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private bool accept = false;
+        private bool accept;
 
         /// <summary>
         /// Defines if the transfer is accepted. This must be set by the client programmer in a event handler. By default this property is set to false, which means the invitation is rejected. If this property is set to true, the invitation is accepted.
@@ -495,7 +495,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        private bool delayprocess = false;
+        private bool delayprocess;
 
         /// <summary>
         /// Whether process the invitation request right after the event was fired.
@@ -569,7 +569,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private IPEndPoint externalEndPoint = null;
+        private IPEndPoint externalEndPoint;
 
         /// <summary>
         /// The client end-point as perceived by the server. This can differ from the actual local endpoint through the use of routers.
@@ -589,7 +589,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private IPEndPoint localEndPoint = null;
+        private IPEndPoint localEndPoint;
 
         /// <summary>
         /// The client's local end-point. This can differ from the external endpoint through the use of routers.

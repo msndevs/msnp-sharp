@@ -52,9 +52,9 @@ namespace MSNPSharp.Core
     public class NSMessagePool : MessagePool, IDisposable
     {
         Queue<MemoryStream> messageQueue = new Queue<MemoryStream>();
-        MemoryStream bufferStream = null;
-        BinaryWriter bufferWriter = null;
-        int remainingBuffer = 0;
+        MemoryStream bufferStream;
+        BinaryWriter bufferWriter;
+        int remainingBuffer;
 
         public NSMessagePool()
         {

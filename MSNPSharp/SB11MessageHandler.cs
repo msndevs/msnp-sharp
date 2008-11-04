@@ -135,29 +135,14 @@ namespace MSNPSharp
     public class SBMessageHandler : IMessageHandler
     {
         #region Private
-        /// <summary>
-        /// </summary>
-        private SocketMessageProcessor messageProcessor = null;
 
-        /// <summary>
-        /// </summary>
-        private NSMessageHandler nsMessageHandler = null;
-
-        /// <summary>
-        /// </summary>
-        protected bool invited = false;
-
-        /// <summary>
-        /// </summary>
-        private EventHandler<EventArgs> processorConnectedHandler = null;
-
-        /// <summary>
-        /// </summary>
-        private EventHandler<EventArgs> processorDisconnectedHandler = null;
-
-        /// <summary>
-        /// </summary>
+        private SocketMessageProcessor messageProcessor;
+        private NSMessageHandler nsMessageHandler;
+        protected bool invited;
         private int sessionId;
+
+        private EventHandler<EventArgs> processorConnectedHandler;
+        private EventHandler<EventArgs> processorDisconnectedHandler;
 
         /// <summary>
         /// </summary>
@@ -175,7 +160,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// </summary>
-        private string sessionHash = "";
+        private string sessionHash = String.Empty;
         /// <summary>
         /// The hash identifier used to define this switchboard session.
         /// </summary>
@@ -191,12 +176,8 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// </summary>
-        protected bool sessionEstablished = false;
 
-        /// <summary>
-        /// </summary>
+        protected bool sessionEstablished;
         private Hashtable contacts = new Hashtable();
 
         /// <summary>
@@ -207,7 +188,7 @@ namespace MSNPSharp
         /// <summary>
         /// Supports the p2p framework
         /// </summary>
-        private P2PHandler p2pHandler = null;
+        private P2PHandler p2pHandler;
 
         private Hashtable multiPacketMessages = new Hashtable();
         #endregion

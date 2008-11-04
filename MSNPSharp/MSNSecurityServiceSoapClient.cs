@@ -83,8 +83,8 @@ namespace MSNPSharp.SOAP
 
     public class FakeWebResponse : WebResponse
     {
-        WebResponse resp = null;
-        MemoryStream innerstream = null;
+        WebResponse resp;
+        MemoryStream innerstream;
 
         protected FakeWebResponse()
         {

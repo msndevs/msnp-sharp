@@ -40,9 +40,9 @@ namespace MSNPSharp.Core
     {
         #region Private
 
-        byte[] innerBody = null;
-        NetworkMessage parentMessage = null;
-        NetworkMessage innerMessage = null;
+        byte[] innerBody;
+        NetworkMessage parentMessage;
+        NetworkMessage innerMessage;
 
         #endregion
 

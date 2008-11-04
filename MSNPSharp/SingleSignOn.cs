@@ -79,9 +79,9 @@ namespace MSNPSharp
         private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
 
         [NonSerialized]
-        private int hashcode = 0;
+        private int hashcode;
         [NonSerialized]
-        internal int DeleteTick = 0;
+        internal int DeleteTick;
 
         internal MSNTicket(Credentials creds)
         {
@@ -422,9 +422,9 @@ namespace MSNPSharp
         private string user;
         private string pass;
         private string policy;
-        private int authId = 0;
+        private int authId;
         private List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
-        private WebProxy webProxy = null;
+        private WebProxy webProxy;
 
         public WebProxy WebProxy
         {

@@ -52,14 +52,14 @@ namespace MSNPSharp
     {
         #region Fields
 
-        private int recursiveCall = 0;
+        private int recursiveCall;
         private string applicationId = String.Empty;
         private List<int> initialADLs = new List<int>();
-        private bool abSynchronized = false;
+        private bool abSynchronized;
 
-        internal int initialADLcount = 0;
-        internal XMLContactList AddressBook = null;
-        internal DeltasList Deltas = null;
+        internal int initialADLcount;
+        internal XMLContactList AddressBook;
+        internal DeltasList Deltas;
 
         #endregion
 

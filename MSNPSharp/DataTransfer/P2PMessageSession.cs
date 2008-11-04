@@ -115,7 +115,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>		
-        private bool directConnected = false;
+        private bool directConnected;
 
         /// <summary>
         /// Defines whether the message session runs over a direct session or is routed via the messaging server
@@ -130,7 +130,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>		
-        private bool directConnectionAttempt = false;
+        private bool directConnectionAttempt;
 
         /// <summary>
         /// Defines whether an attempt has been made to create a direct connection
@@ -587,12 +587,12 @@ namespace MSNPSharp.DataTransfer
         /// This is the processor used before a direct connection. Usually a SB processor.
         /// It is a fallback variables in case a direct connection fails.
         /// </summary>
-        private IMessageProcessor preDCProcessor = null;
+        private IMessageProcessor preDCProcessor;
 
         /// <summary>
         /// Tracked to know when an acknowledgement for the handshake is received.
         /// </summary>
-        private uint DCHandshakeAck = 0;
+        private uint DCHandshakeAck;
 
         /// <summary>
         /// Sets the message processor back to the switchboard message processor.
@@ -674,7 +674,7 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region IMessageHandler Members
-        private IMessageProcessor messageProcessor = null;
+        private IMessageProcessor messageProcessor;
         /// <summary>
         /// The message processor that sends the P2P messages to the remote contact.
         /// </summary>

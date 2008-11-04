@@ -60,23 +60,23 @@ namespace MSNPSharp
         public static string EPName = "MSNPSharp";
 #endif
 
-        private SocketMessageProcessor messageProcessor = null;
-        private ConnectivitySettings connectivitySettings = null;
-        private IPEndPoint externalEndPoint = null;
-        private Credentials credentials = null;
+        private SocketMessageProcessor messageProcessor;
+        private ConnectivitySettings connectivitySettings;
+        private IPEndPoint externalEndPoint;
+        private Credentials credentials;
 
-        private ContactGroupList contactGroups = null;
+        private ContactGroupList contactGroups;
         private ContactList contactList = new ContactList();
 
-        private bool isSignedIn = false;
+        private bool isSignedIn;
         private Owner owner = new Owner();
         private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
 
-        private ContactService contactService = null;
-        private OIMService oimService = null;
-        private ContactSpaceService spaceService = null;
-        private MSNStorageService storageService = null;
+        private ContactService contactService;
+        private OIMService oimService;
+        private ContactSpaceService spaceService;
+        private MSNStorageService storageService;
 
         private NSMessageHandler()
         {
@@ -1812,8 +1812,8 @@ namespace MSNPSharp
 
         #region Command handler
 
-        private EventHandler<EventArgs> processorConnectedHandler = null;
-        private EventHandler<EventArgs> processorDisconnectedHandler = null;
+        private EventHandler<EventArgs> processorConnectedHandler;
+        private EventHandler<EventArgs> processorDisconnectedHandler;
 
         /// <summary>
         /// Event handler.

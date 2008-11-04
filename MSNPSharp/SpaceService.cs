@@ -50,9 +50,9 @@ namespace MSNPSharp
 
     public class ContactCardCompletedEventArgs : EventArgs
     {
-        private Exception error = null;
-        private bool changed = false;
-        private ContactCard contactCard = null;
+        private Exception error;
+        private bool changed;
+        private ContactCard contactCard;
 
         /// <summary>
         /// InnerException
