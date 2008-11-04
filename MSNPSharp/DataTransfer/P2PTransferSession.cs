@@ -52,7 +52,7 @@ namespace MSNPSharp.DataTransfer
     /// However, if the direct connection fails it will send the data messages over the switchboard session. These latter messages go via the messenger servers and is therefore quite slow compared to direct connections
     /// but it is guaranteed to work even when both machines are behind a proxy, firewall or router.
     /// </remarks>
-    public class P2PTransferSession : IMessageHandler, IMessageProcessor
+    public class P2PTransferSession : IMessageHandler, IMessageProcessor, IDisposable
     {
         #region Properties
 
@@ -242,6 +242,11 @@ namespace MSNPSharp.DataTransfer
         public P2PTransferSession()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object", GetType().Name);
+        }
+
+        ~P2PTransferSession()
+        {
+            Dispose(false);
         }
 
         /// <summary>
@@ -870,5 +875,27 @@ namespace MSNPSharp.DataTransfer
                 StartDataTransfer(false);
             }
         }
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources
+                if (dataStream != null)
+                    dataStream.Dispose();
+            }
+
+            // Free native resources
+        }
+
+        #endregion
     }
 };

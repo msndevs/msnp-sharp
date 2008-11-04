@@ -222,6 +222,7 @@ namespace MSNPSharp
     /// SenderThrottleLimitExceededException
     /// <remarks>If you get this exception, please wait at least 11 seconds then try to send the OIM again.</remarks>
     /// </summary>
+    [Serializable]
     public class SenderThrottleLimitExceededException : Exception
     {
         public override string Message

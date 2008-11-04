@@ -49,7 +49,7 @@ namespace MSNPSharp.Core
     /// than the socket buffer. This pool will buffer the data and release the messages, or commands,
     /// when they are fully retrieved from the server.
     /// </remarks>
-    public class NSMessagePool : MessagePool
+    public class NSMessagePool : MessagePool, IDisposable
     {
         Queue<MemoryStream> messageQueue = new Queue<MemoryStream>();
         MemoryStream bufferStream = null;
@@ -59,6 +59,11 @@ namespace MSNPSharp.Core
         public NSMessagePool()
         {
             CreateNewBuffer();
+        }
+
+        ~NSMessagePool()
+        {
+            Dispose(false);
         }
 
         protected Queue<MemoryStream> MessageQueue
@@ -231,5 +236,35 @@ namespace MSNPSharp.Core
                 }
             }
         }
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources
+                if (bufferWriter != null)
+                    ((IDisposable)bufferWriter).Dispose();
+
+                if (bufferStream != null)
+                    bufferStream.Dispose();
+
+                if (messageQueue.Count > 0)
+                    messageQueue.Clear();
+            }
+
+            // Free native resources
+        }
+
+
+
+        #endregion
     }
 };

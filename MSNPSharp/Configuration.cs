@@ -42,7 +42,7 @@ namespace MSNPSharp
     /// General configuration options.
     /// </summary>
     [Serializable()]
-    public class Settings
+    public static class Settings
     {
         /// <summary>
         /// Defines the verbosity of the trace messages.
