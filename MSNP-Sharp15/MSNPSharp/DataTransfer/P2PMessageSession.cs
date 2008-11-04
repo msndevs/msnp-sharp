@@ -554,13 +554,15 @@ namespace MSNPSharp.DataTransfer
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Preparing to send handshake message", GetType().Name);
 
+            SocketMessageProcessor smp = (SocketMessageProcessor)processor;
+
             if (HandshakeMessage == null)
             {
                 // don't throw an exception because the file transfer can continue over the switchboard
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Handshake could not be send because none is specified.", GetType().Name);
 
                 // but close the direct connection
-                ((SocketMessageProcessor)processor).Disconnect();
+                smp.Disconnect();
                 return;
             }
 
@@ -572,7 +574,7 @@ namespace MSNPSharp.DataTransfer
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
 
-            ((SocketMessageProcessor)processor).SendMessage(HandshakeMessage);
+            smp.SendMessage(HandshakeMessage);
         }
 
         #endregion
@@ -624,12 +626,13 @@ namespace MSNPSharp.DataTransfer
         private void OnDirectProcessorConnected(object sender, EventArgs e)
         {
             //DCHandshakeProcessor = (IMessageProcessor)sender;
+            P2PDirectProcessor p2pdp = (P2PDirectProcessor)sender;
 
-            if (((P2PDirectProcessor)sender).IsListener == false)
+            if (p2pdp.IsListener == false)
             {
                 if (AutoHandshake == true && HandshakeMessage != null)
                 {
-                    SendHandshakeMessage((P2PDirectProcessor)sender);
+                    SendHandshakeMessage(p2pdp);
                 }
             }
         }
@@ -701,9 +704,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            System.Diagnostics.Debug.Assert(message is P2PMessage, "Incoming message is not a P2PMessage", "");
+            P2PMessage p2pMessage = message as P2PMessage;
 
-            P2PMessage p2pMessage = (P2PMessage)message;
+            System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
             // check whether it is an acknowledgement to data preparation message
             if (p2pMessage.Flags == 0x100 && DCHandshakeAck != 0)

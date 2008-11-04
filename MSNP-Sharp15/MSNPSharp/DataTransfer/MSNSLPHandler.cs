@@ -1300,9 +1300,9 @@ namespace MSNPSharp.DataTransfer
         /// <param name="message"></param>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            Debug.Assert(message is P2PMessage, "Message is not a P2P message in MSNSLP handler", "");
+            P2PMessage p2pMessage = message as P2PMessage;
 
-            P2PMessage p2pMessage = ((P2PMessage)message);
+            Debug.Assert(p2pMessage != null, "Message is not a P2P message in MSNSLP handler", "");            
 
             if (p2pMessage.InnerBody.Length == 0)
             {
@@ -1409,7 +1409,7 @@ namespace MSNPSharp.DataTransfer
                     // see the SendInvitation(..) method for more info about the layout of the context string		
                     MemoryStream memStream = new MemoryStream(Convert.FromBase64String(message.MessageValues["Context"].ToString()));
                     BinaryReader reader = new BinaryReader(memStream);
-                    int previewDataLength = reader.ReadInt32();	// 4
+                    reader.ReadInt32();	// previewDataLength, 4
                     reader.ReadInt32(); // first flag, 4
                     invitationArgs.FileSize = reader.ReadInt64(); // 8
                     reader.ReadInt32(); // 2nd flag, 4
@@ -1435,8 +1435,6 @@ namespace MSNPSharp.DataTransfer
 
                 if (!invitationArgs.DelayProcess)
                 {
-                    P2PMessage replyMessage = new P2PMessage();
-
                     // check whether the client programmer wants to accept or reject this message
                     if (invitationArgs.Accept == false)
                     {
@@ -1556,7 +1554,7 @@ namespace MSNPSharp.DataTransfer
             p2pMessage.InnerMessage = slpMessage;
 
 
-            P2PTransferSession transferSession = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+            ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
             P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
             hsMessage.Guid = properties.Nonce;
             MessageSession.HandshakeMessage = hsMessage;

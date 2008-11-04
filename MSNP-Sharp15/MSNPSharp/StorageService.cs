@@ -146,11 +146,9 @@ namespace MSNPSharp
                 ShareItemRequestType shareItemRequest = new ShareItemRequestType();
                 shareItemRequest.resourceID = resId_Prof;
                 shareItemRequest.displayName = "Messenger Roaming Identity";
-                string cacheKey = "";
                 try
                 {
-                    ShareItemResponseType shareItemResponse = storageService.ShareItem(shareItemRequest);
-                    cacheKey = storageService.AffinityCacheHeaderValue.CacheKey;
+                    storageService.ShareItem(shareItemRequest);
                 }
                 catch (Exception ex)
                 {
@@ -190,7 +188,7 @@ namespace MSNPSharp
                     addMemberRequest.memberships = new Membership[] { memberShip };
                     try
                     {
-                        AddMemberResponse addMemberResponse = sharingService.AddMember(addMemberRequest);
+                        sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
                     {
@@ -376,7 +374,7 @@ namespace MSNPSharp
                     abcontactUpdateRequest.contacts = new ContactType[] { meContact };
                     try
                     {
-                        ABContactUpdateResponse abcupdateResponse = abService.ABContactUpdate(abcontactUpdateRequest);
+                        abService.ABContactUpdate(abcontactUpdateRequest);
                     }
                     catch (Exception ex)
                     {

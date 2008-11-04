@@ -289,7 +289,7 @@ namespace MSNPSharp.IO
                                             if (bm is PassportMember)
                                             {
                                                 type = ClientType.PassportMember;
-                                                PassportMember pm = (PassportMember)bm;
+                                                PassportMember pm = bm as PassportMember;
                                                 if (!pm.IsPassportNameHidden)
                                                 {
                                                     account = pm.PassportName;
@@ -642,7 +642,7 @@ namespace MSNPSharp.IO
                     }
                     else
                     {
-                        if (displayname == xmlcl.NSMessageHandler.Owner.Mail && xmlcl.NSMessageHandler.Owner.Name != String.Empty)
+                        if (displayname == xmlcl.NSMessageHandler.Owner.Mail && !String.IsNullOrEmpty(xmlcl.NSMessageHandler.Owner.Name))
                         {
                             displayname = xmlcl.NSMessageHandler.Owner.Name;
                         }
@@ -681,13 +681,14 @@ namespace MSNPSharp.IO
             {
                 foreach (BaseDynamicItemType dyItem in forwardList.DynamicItems)
                 {
-                    if (dyItem is PassportDynamicItem)
+                    PassportDynamicItem pdi = dyItem as PassportDynamicItem;
+                    if (pdi != null)
                     {
-                        if (dyItem.SpaceGleam || dyItem.ProfileGleam)
+                        if (pdi.SpaceGleam || pdi.ProfileGleam)
                         {
-                            xmlcl.NSMessageHandler.ContactService.Deltas.DynamicItems[(dyItem as PassportDynamicItem).PassportName] = dyItem;
+                            xmlcl.NSMessageHandler.ContactService.Deltas.DynamicItems[pdi.PassportName] = dyItem;
                         }
-                        else if ((dyItem as PassportDynamicItem).PassportName == xmlcl.NSMessageHandler.Owner.Mail && dyItem.Notifications != null)
+                        else if (pdi.PassportName == xmlcl.NSMessageHandler.Owner.Mail && pdi.Notifications != null)
                         {
                             foreach (NotificationDataType notifydata in dyItem.Notifications)
                             {
