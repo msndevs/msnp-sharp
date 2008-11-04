@@ -112,7 +112,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private NSMessageHandler nsMessageHandler = null;
+        private NSMessageHandler nsMessageHandler;
 
         /// <summary>
         /// The nameserver handler. This object is used to request new switchboard sessions.

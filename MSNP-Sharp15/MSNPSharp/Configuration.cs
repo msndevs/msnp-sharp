@@ -57,7 +57,7 @@ namespace MSNPSharp
         /// <summary>
         /// Don't save addressbook files.
         /// </summary>
-        public static bool NoSave = false;
+        public static bool NoSave;
 
         private static string savepath = Path.GetFullPath(".");
         public static string SavePath

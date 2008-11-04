@@ -51,11 +51,11 @@ namespace MSNPSharp
     [Serializable()]
     public class OIMSendCompletedEventArgs : EventArgs
     {
-        private Exception error = null;
+        private Exception error;
         private string sender = string.Empty;
         private string receiver = string.Empty;
         private string message = string.Empty;
-        private ulong sequence = 0;
+        private ulong sequence;
 
         /// <summary>
         /// OIM sequence number (OIMCount)
@@ -624,7 +624,7 @@ namespace MSNPSharp
 
     internal class OIMUserState
     {
-        public int RecursiveCall = 0;
+        public int RecursiveCall;
         public readonly ulong oimcount;
         public readonly string account = String.Empty;
         public OIMUserState(ulong oimCount, string account)

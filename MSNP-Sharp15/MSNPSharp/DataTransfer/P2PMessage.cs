@@ -87,7 +87,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint sessionId = 0;
+        private uint sessionId;
 
         /// <summary>
         /// The identifier of this message. Bytes 5-8 in the binary header.
@@ -106,7 +106,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint identifier = 0;
+        private uint identifier;
 
         /// <summary>
         /// The offset in bytes from the begin of the total message. Bytes 9-16 in the binary header.
@@ -125,7 +125,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private ulong offset = 0;
+        private ulong offset;
 
         /// <summary>
         /// Total message length in bytes.  Bytes 17-24 in the binary header.
@@ -144,7 +144,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private ulong totalSize = 0;
+        private ulong totalSize;
 
         /// <summary>
         /// Message length in bytes of the current message. Bytes 25-28 in the binary header.
@@ -163,7 +163,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint messageSize = 0;
+        private uint messageSize;
 
         /// <summary>
         /// Flag parameter. Bytes 29-32 in the binary header.
@@ -182,7 +182,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint flags = 0;
+        private uint flags;
 
         /// <summary>
         /// Acknowledge session identifier. Acknowledgement messages respond with this number in their acknowledge identfier. Bytes 33-36 in the binary header.
@@ -220,7 +220,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint ackIdentifier = 0;
+        private uint ackIdentifier;
 
         /// <summary>
         /// Acknowledged total message length. Set when the message is an acknowledgement to a received message. Bytes 41-48 in the binary header.
@@ -258,7 +258,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint footer = 0;
+        private uint footer;
 
         /// <summary>
         /// Indicates whether the message is an acknowledgement message

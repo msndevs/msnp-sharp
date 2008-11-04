@@ -199,7 +199,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Keeps track of the number of users using the stream.
         /// </summary>
-        private int users = 0;
+        private int users;
 
         /// <summary>
         /// The number of users using the stream.

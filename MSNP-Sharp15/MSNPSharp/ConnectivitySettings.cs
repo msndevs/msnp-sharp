@@ -175,11 +175,11 @@ namespace MSNPSharp
         private string host = "messenger.hotmail.com";
         private int port = 1863;
         private string proxyHost = String.Empty;
-        private int proxyPort = 0;
+        private int proxyPort;
         private string proxyUsername = String.Empty;
         private string proxyPassword = String.Empty;
         private ProxyType proxyType = ProxyType.None;
-        private WebProxy webProxy = null;
+        private WebProxy webProxy;
 
         #endregion
 

@@ -49,9 +49,9 @@ namespace MSNPSharp.Core
     {
         ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         byte[] socketBuffer = new byte[1500];
-        IPEndPoint proxyEndPoint = null;
-        ProxySocket socket = null;
-        MessagePool messagePool = null;
+        IPEndPoint proxyEndPoint;
+        ProxySocket socket;
+        MessagePool messagePool;
         List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
 
         public event EventHandler<EventArgs> ConnectionEstablished;

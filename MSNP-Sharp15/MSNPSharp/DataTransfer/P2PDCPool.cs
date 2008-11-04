@@ -45,15 +45,9 @@ namespace MSNPSharp.DataTransfer
     /// </remarks>
     public class P2PDCPool : MSNPSharp.Core.MessagePool
     {
-        /// <summary>
-        /// </summary>
         private Queue messages = new Queue(2);
-        /// <summary>
-        /// </summary>
-        private byte[] lastMessage = null;
-        /// <summary>
-        /// </summary>
-        private int bytesLeft = 0;
+        private byte[] lastMessage;
+        private int bytesLeft;
 
         /// <summary>
         /// Constructor.

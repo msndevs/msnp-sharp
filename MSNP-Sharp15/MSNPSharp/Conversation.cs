@@ -41,8 +41,8 @@ namespace MSNPSharp
     
     public class MSNObjectDataTransferCompletedEventArgs : EventArgs
     {
-        private MSNObject clientData = null;
-        private bool aborted = false;
+        private MSNObject clientData;
+        private bool aborted;
 
         public bool Aborted
         {

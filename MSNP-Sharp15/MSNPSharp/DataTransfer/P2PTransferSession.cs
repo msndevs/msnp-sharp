@@ -58,7 +58,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private bool autoCloseStream = false;
+        private bool autoCloseStream;
 
         /// <summary>
         /// Defines whether the stream is automatically closed after the transfer has finished or been aborted.
@@ -77,7 +77,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private object clientData = null;
+        private object clientData;
 
         /// <summary>
         /// This property can be used by the client-programmer to include application specific data
@@ -97,16 +97,16 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Tracked to know when an acknowledgement for the (switchboards) data preparation message is received
         /// </summary>
-        private uint DataPreparationAck = 0;
+        private uint DataPreparationAck;
 
         /// <summary>
         /// Tracked to send the disconnecting message (0x40 flag) with the correct datamessage identifiers as it's acknowledge identifier. (protocol)
         /// </summary>
-        private uint dataMessageIdentifier = 0;
+        private uint dataMessageIdentifier;
 
         /// <summary>
         /// </summary>
-        private uint sessionId = 0;
+        private uint sessionId;
 
         /// <summary>
         /// The session id which this object handles. P2P messages will be redirected to this object based on their session id.
@@ -125,7 +125,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private P2PMessageSession messageSession = null;
+        private P2PMessageSession messageSession;
 
         /// <summary>
         /// The message session which keeps track of the local / remote message identifiers and redirects messages to this handler based on the session id
@@ -166,7 +166,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint messageFlag = 0;
+        private uint messageFlag;
 
         /// <summary>
         /// This value is set in the flag field in a p2p header.
@@ -215,7 +215,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private bool isSender = false;
+        private bool isSender;
 
         /// <summary>
         /// Defines whether the local client is sender or receiver
@@ -311,7 +311,7 @@ namespace MSNPSharp.DataTransfer
         #region IMessageHandler Members
         /// <summary>
         /// </summary>
-        private IMessageProcessor messageProcessor = null;
+        private IMessageProcessor messageProcessor;
         /// <summary>
         /// The message processor to which p2p messages (this includes p2p data messages) will be send
         /// </summary>
@@ -652,7 +652,7 @@ namespace MSNPSharp.DataTransfer
                 TransferAborted(this, new EventArgs());
         }
 
-        bool abortThread = false;
+        bool abortThread;
         /// <summary>
         /// Entry point for the thread. This thread will send the data messages to the message processor.
         /// In case it is a direct connection P2PDCMessages will be send. If no direct connection is established
@@ -803,15 +803,15 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private Thread transferThread = null;
+        private Thread transferThread;
 
         /// <summary>
         /// </summary>
-        private ThreadStart transferThreadStart = null;
+        private ThreadStart transferThreadStart;
 
         /// <summary>
         /// </summary>
-        private bool waitingDirectConnection = false;
+        private bool waitingDirectConnection;
 
         /// <summary>
         /// Indicates whether the session is waiting for the result of a direct connection attempt

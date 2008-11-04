@@ -76,7 +76,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Returns whether this processor was initiated as listening (true) or connecting (false).
         /// </summary>
-        private bool isListener = false;
+        private bool isListener;
 
         /// <summary>
         /// Returns whether this processor was initiated as listening (true) or connecting (false).
@@ -111,7 +111,7 @@ namespace MSNPSharp.DataTransfer
             OnConnected();
         }
 
-        private Socket dcSocket = null;
+        private Socket dcSocket;
 
         /// <summary>
         /// Closes the socket connection.

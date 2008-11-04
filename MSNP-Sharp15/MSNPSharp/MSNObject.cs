@@ -118,34 +118,18 @@ namespace MSNPSharp
     [Serializable()]
     public class MSNObject
     {
-        /// <summary>
-        /// </summary>
-        private string originalContext = null;
-        /// <summary>
-        /// </summary>
-        private string oldHash = "";
-        /// <summary>
-        /// </summary>
-        [NonSerialized]
-        private PersistentStream dataStream = null;
+        private string originalContext;
+        private string oldHash = String.Empty;
 
-        /// <summary>
-        /// </summary>
-        private string fileLocation = null;
-        /// <summary>
-        /// </summary>
+        [NonSerialized]
+        private PersistentStream dataStream;
+
+
+        private string fileLocation;
         private string creator;
-        /// <summary>
-        /// </summary>
         private int size;
-        /// <summary>
-        /// </summary>
         private MSNObjectType type;
-        /// <summary>
-        /// </summary>
         private string location;
-        /// <summary>
-        /// </summary>
         private string sha;
 
         /// <summary>
