@@ -627,6 +627,12 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
         }
 
+        ~MSNSLPHandler()
+        {
+            // Finalizer calls Dispose(false)
+            Dispose(false);
+        }
+
         /// <summary>
         /// The message session to send message to. This is simply the MessageProcessor property, but explicitly casted as a P2PMessageSession.
         /// </summary>
@@ -1605,13 +1611,26 @@ namespace MSNPSharp.DataTransfer
         #region IDisposable Members
 
         /// <summary>
-        /// Closes all sessions.
+        /// Closes all sessions. Dispose() calls Dispose(true)
         /// </summary>
         public void Dispose()
         {
-            CloseAllSessions();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Free managed resources
+                CloseAllSessions();
+            }
+
+            // Free native resources if there are any.
+        }
+
+
 
         #endregion
     }
