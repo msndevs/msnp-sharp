@@ -283,7 +283,7 @@ namespace MSNPSharp.IO
     public class ProfileResource
     {
         private DateTime dateModified;
-        private string resourceID = null;
+        private string resourceID;
 
         /// <summary>
         /// Last modify time of the resource
@@ -322,8 +322,8 @@ namespace MSNPSharp.IO
     [Serializable]
     public class ProfilePhoto : ProfileResource
     {
-        private string preAthURL = null;
-        private SerializableMemoryStream displayImage = null;
+        private string preAthURL;
+        private SerializableMemoryStream displayImage;
 
         public string PreAthURL
         {

@@ -115,7 +115,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>		
-        private bool directConnected = false;
+        private bool directConnected;
 
         /// <summary>
         /// Defines whether the message session runs over a direct session or is routed via the messaging server
@@ -130,7 +130,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>		
-        private bool directConnectionAttempt = false;
+        private bool directConnectionAttempt;
 
         /// <summary>
         /// Defines whether an attempt has been made to create a direct connection
@@ -414,7 +414,8 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public virtual void AbortAllTransfers()
         {
-            foreach (P2PTransferSession session in transferSessions.Values)
+            Hashtable transferSessions_copy = new Hashtable(transferSessions);
+            foreach (P2PTransferSession session in transferSessions_copy.Values)
             {
                 session.AbortTransfer();
             }
@@ -477,7 +478,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void RemoveTransferSession(P2PTransferSession session)
         {
-            transferSessions.Remove(session);
+            transferSessions.Remove(session.SessionId);
         }
 
         /// <summary>
@@ -553,13 +554,15 @@ namespace MSNPSharp.DataTransfer
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Preparing to send handshake message", GetType().Name);
 
+            SocketMessageProcessor smp = (SocketMessageProcessor)processor;
+
             if (HandshakeMessage == null)
             {
                 // don't throw an exception because the file transfer can continue over the switchboard
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Handshake could not be send because none is specified.", GetType().Name);
 
                 // but close the direct connection
-                ((SocketMessageProcessor)processor).Disconnect();
+                smp.Disconnect();
                 return;
             }
 
@@ -571,7 +574,7 @@ namespace MSNPSharp.DataTransfer
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
 
-            ((SocketMessageProcessor)processor).SendMessage(HandshakeMessage);
+            smp.SendMessage(HandshakeMessage);
         }
 
         #endregion
@@ -586,12 +589,12 @@ namespace MSNPSharp.DataTransfer
         /// This is the processor used before a direct connection. Usually a SB processor.
         /// It is a fallback variables in case a direct connection fails.
         /// </summary>
-        private IMessageProcessor preDCProcessor = null;
+        private IMessageProcessor preDCProcessor;
 
         /// <summary>
         /// Tracked to know when an acknowledgement for the handshake is received.
         /// </summary>
-        private uint DCHandshakeAck = 0;
+        private uint DCHandshakeAck;
 
         /// <summary>
         /// Sets the message processor back to the switchboard message processor.
@@ -623,12 +626,13 @@ namespace MSNPSharp.DataTransfer
         private void OnDirectProcessorConnected(object sender, EventArgs e)
         {
             //DCHandshakeProcessor = (IMessageProcessor)sender;
+            P2PDirectProcessor p2pdp = (P2PDirectProcessor)sender;
 
-            if (((P2PDirectProcessor)sender).IsListener == false)
+            if (p2pdp.IsListener == false)
             {
                 if (AutoHandshake == true && HandshakeMessage != null)
                 {
-                    SendHandshakeMessage((P2PDirectProcessor)sender);
+                    SendHandshakeMessage(p2pdp);
                 }
             }
         }
@@ -673,7 +677,7 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region IMessageHandler Members
-        private IMessageProcessor messageProcessor = null;
+        private IMessageProcessor messageProcessor;
         /// <summary>
         /// The message processor that sends the P2P messages to the remote contact.
         /// </summary>
@@ -700,9 +704,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            System.Diagnostics.Debug.Assert(message is P2PMessage, "Incoming message is not a P2PMessage", "");
+            P2PMessage p2pMessage = message as P2PMessage;
 
-            P2PMessage p2pMessage = (P2PMessage)message;
+            System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
             // check whether it is an acknowledgement to data preparation message
             if (p2pMessage.Flags == 0x100 && DCHandshakeAck != 0)

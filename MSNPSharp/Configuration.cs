@@ -42,7 +42,7 @@ namespace MSNPSharp
     /// General configuration options.
     /// </summary>
     [Serializable()]
-    public class Settings
+    public static class Settings
     {
         /// <summary>
         /// Defines the verbosity of the trace messages.
@@ -57,7 +57,7 @@ namespace MSNPSharp
         /// <summary>
         /// Don't save addressbook files.
         /// </summary>
-        public static bool NoSave = false;
+        public static bool NoSave;
 
         private static string savepath = Path.GetFullPath(".");
         public static string SavePath
@@ -69,6 +69,43 @@ namespace MSNPSharp
             set
             {
                 savepath = value;
+            }
+        }
+
+        private static int msnTicketLifeTime = 20;
+        /// <summary>MSNTicket lifetime in minutes for the internal cache. Default is 20 minutes.</summary>
+        /// <remarks>Keep small if the client will connect to the msn network for the short time.</remarks>
+        public static int MSNTicketLifeTime
+        {
+            get
+            {
+                return msnTicketLifeTime;
+            }
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentOutOfRangeException("value");
+
+                    msnTicketLifeTime = value;
+            }
+        }
+
+        private static int msnTicketsCleanupInterval = 5;
+        /// <summary>
+        /// Run clean up code for the MSNTickets in every x minutes. Default is 5 minutes.
+        /// </summary>
+        public static int MSNTicketsCleanupInterval
+        {
+            get
+            {
+                return msnTicketsCleanupInterval;
+            }
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentOutOfRangeException("value");
+
+                msnTicketsCleanupInterval = value;
             }
         }
 

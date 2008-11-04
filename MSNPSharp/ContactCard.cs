@@ -68,9 +68,9 @@ namespace MSNPSharp
         private string displayName = string.Empty;
         private string mail = string.Empty;
         private string displayImageUrl = String.Empty;
-        private ContactCardItem space = null;
-        private Album album = null;
-        private ContactCardItem newPost = null;
+        private ContactCardItem space;
+        private Album album;
+        private ContactCardItem newPost;
         private Dictionary<ProfileType, ProfileItem> profiles = new Dictionary<ProfileType, ProfileItem>(0);
 
         #endregion

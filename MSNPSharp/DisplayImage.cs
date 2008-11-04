@@ -43,7 +43,7 @@ namespace MSNPSharp
     [Serializable()]
     public class DisplayImage : MSNObject
     {
-        Image image = null;
+        Image image;
 
         public DisplayImage()
         {

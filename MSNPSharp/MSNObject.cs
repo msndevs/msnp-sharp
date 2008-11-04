@@ -41,7 +41,8 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer; 
+    using MSNPSharp.DataTransfer;
+    using System.Web; 
 
     /// <summary>
     /// Defines the type of MSNObject.
@@ -82,7 +83,7 @@ namespace MSNPSharp
         /// </summary>
         DynamicPicture = 7,
         /// <summary>
-        /// flash emotion
+        /// flash emoticon
         /// </summary>
         Wink = 8,
         /// <summary>
@@ -117,34 +118,18 @@ namespace MSNPSharp
     [Serializable()]
     public class MSNObject
     {
-        /// <summary>
-        /// </summary>
-        private string originalContext = null;
-        /// <summary>
-        /// </summary>
-        private string oldHash = "";
-        /// <summary>
-        /// </summary>
-        [NonSerialized]
-        private PersistentStream dataStream = null;
+        private string originalContext;
+        private string oldHash = String.Empty;
 
-        /// <summary>
-        /// </summary>
-        private string fileLocation = null;
-        /// <summary>
-        /// </summary>
+        [NonSerialized]
+        private PersistentStream dataStream;
+
+
+        private string fileLocation;
         private string creator;
-        /// <summary>
-        /// </summary>
         private int size;
-        /// <summary>
-        /// </summary>
         private MSNObjectType type;
-        /// <summary>
-        /// </summary>
         private string location;
-        /// <summary>
-        /// </summary>
         private string sha;
 
         /// <summary>
@@ -376,9 +361,11 @@ namespace MSNPSharp
             originalContext = context;
 
             if (base64Encoded)
-                context = System.Text.UTF8Encoding.UTF8.GetString(Convert.FromBase64String(context));
+                context = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(context));
 
-            string xmlString = System.Web.HttpUtility.UrlDecode(context);
+            string xmlString = context;
+            if (context.IndexOf(" ") == -1)
+                xmlString = GetDecodeString(context);
             MatchCollection matches = contextRe.Matches(xmlString);
 
             foreach (Match match in matches)
@@ -487,6 +474,26 @@ namespace MSNPSharp
             return dataStream;
         }
 
+        /// <summary>
+        /// Returns the "url-encoded xml" string for MSNObjects.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public virtual string GetEncodeString(string context)
+        {
+            return HttpUtility.UrlEncode(context, Encoding.UTF8).Replace("+", "%20");
+        }
+
+        public static string GetDecodeString(string context)
+        {
+            if (context.IndexOf(" ") == -1)
+            {
+                context = context.Replace("%20", "+");
+                return HttpUtility.UrlDecode(context, Encoding.UTF8);
+            }
+            return context;
+        }
+
 
         /// <summary>
         /// Calculates the checksum for the entire MSN Object.
@@ -498,7 +505,7 @@ namespace MSNPSharp
             string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.Type + "Location" + Location + "FriendlyAAA=SHA1D" + Sha;
 
             HashAlgorithm shaAlg = new SHA1Managed();
-            string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.ASCII.GetBytes(checksum)));
+            string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.UTF8.GetBytes(checksum)));
             return baseEncChecksum;
         }
 
@@ -543,7 +550,31 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetEncodedString()
         {
-            return System.Web.HttpUtility.UrlEncode(GetXmlString()).Replace("+", "%20");
+            return System.Web.HttpUtility.UrlEncode(GetXmlString(), Encoding.UTF8).Replace("+", "%20");
+        }
+
+        public static bool operator == (MSNObject obj1, MSNObject obj2)
+        {
+            if (((object)obj1) == null && ((object)obj2) == null)
+                return true;
+            if (((object)obj1) == null || ((object)obj2) == null)
+                return false;
+            return obj1.GetHashCode() == obj2.GetHashCode();
+        }
+
+        public static bool operator != (MSNObject obj1, MSNObject obj2)
+        {
+            return !(obj1 == obj2);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return GetHashCode() == obj.GetHashCode();
+        }
+
+        public override int GetHashCode()
+        {
+            return CalculateChecksum().GetHashCode();
         }
     }
 

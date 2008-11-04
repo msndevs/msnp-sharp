@@ -112,23 +112,23 @@ namespace MSNPSharp
     {
         #region Members
 
-        private SocketMessageProcessor messageProcessor = null;
-        private ConnectivitySettings connectivitySettings = null;
-        private IPEndPoint externalEndPoint = null;
-        private Credentials credentials = null;
+        private SocketMessageProcessor messageProcessor;
+        private ConnectivitySettings connectivitySettings;
+        private IPEndPoint externalEndPoint;
+        private Credentials credentials;
 
-        private ContactGroupList contactGroups = null;
+        private ContactGroupList contactGroups;
         private ContactList contactList = new ContactList();
 
-        private bool isSignedIn = false;
+        private bool isSignedIn;
         private Owner owner = new Owner();
         private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
 
-        private ContactService contactService = null;
-        private OIMService oimService = null;
-        private ContactSpaceService spaceService = null;
-        private MSNStorageService storageService = null;
+        private ContactService contactService;
+        private OIMService oimService;
+        private ContactSpaceService spaceService;
+        private MSNStorageService storageService;
 
         private NSMessageHandler()
         {
@@ -614,6 +614,41 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Translates MSNStatus enumeration to messenger's textual status presentation.
+        /// </summary>
+        /// <param name="status">MSNStatus enum object representing the status to translate</param>
+        /// <returns>The corresponding textual value</returns>
+        internal string ParseStatus(PresenceStatus status)
+        {
+            switch (status)
+            {
+                case PresenceStatus.Online:
+                    return "NLN";
+                case PresenceStatus.Busy:
+                    return "BSY";
+                case PresenceStatus.Idle:
+                    return "IDL";
+                case PresenceStatus.BRB:
+                    return "BRB";
+                case PresenceStatus.Away:
+                    return "AWY";
+                case PresenceStatus.Phone:
+                    return "PHN";
+                case PresenceStatus.Lunch:
+                    return "LUN";
+                case PresenceStatus.Offline:
+                    return "FLN";
+                case PresenceStatus.Hidden:
+                    return "HDN";
+                default:
+                    break;
+            }
+
+            // unknown status
+            return "Unknown status";
+        }
+
+        /// <summary>
         /// Set the status of the contact list owner (the client).
         /// </summary>
         /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
@@ -771,7 +806,6 @@ namespace MSNPSharp
         protected virtual void OnSignedOff(SignedOffEventArgs e)
         {
             owner.SetStatus(PresenceStatus.Offline);
-
             Clear();
 
             if (SignedOff != null)
@@ -821,40 +855,6 @@ namespace MSNPSharp
             return PresenceStatus.Unknown;
         }
 
-        /// <summary>
-        /// Translates MSNStatus enumeration to messenger's textual status presentation.
-        /// </summary>
-        /// <param name="status">MSNStatus enum object representing the status to translate</param>
-        /// <returns>The corresponding textual value</returns>
-        protected string ParseStatus(PresenceStatus status)
-        {
-            switch (status)
-            {
-                case PresenceStatus.Online:
-                    return "NLN";
-                case PresenceStatus.Busy:
-                    return "BSY";
-                case PresenceStatus.Idle:
-                    return "IDL";
-                case PresenceStatus.BRB:
-                    return "BRB";
-                case PresenceStatus.Away:
-                    return "AWY";
-                case PresenceStatus.Phone:
-                    return "PHN";
-                case PresenceStatus.Lunch:
-                    return "LUN";
-                case PresenceStatus.Offline:
-                    return "FLN";
-                case PresenceStatus.Hidden:
-                    return "HDN";
-                default:
-                    break;
-            }
-
-            // unknown status
-            return "Unknown status";
-        }
 
         /// <summary>
         /// Called when a UBX command has been received.
@@ -1491,11 +1491,15 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnADLReceived(NSMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK" &&
-                message.TransactionID == 0 &&
-                ContactService.ProcessADL(Convert.ToInt32(message.CommandValues[0])))
+            if (message.TransactionID != 0 &&
+                message.CommandValues[1].ToString() == "OK" &&
+                ContactService.ProcessADL(message.TransactionID))
             {
-
+                // All initial ADLs have processed.
+                if (0 == ContactService.initialADLcount)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
+                }
             }
             else
             {
@@ -1688,6 +1692,56 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Called when an PRP command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Informs about the phone numbers of the contact list owner.
+        /// <code>PRP [TransactionID] [ListVersion] PhoneType Number</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnPRPReceived(NSMessage message)
+        {
+            string number = String.Empty;
+            string type = String.Empty;
+            if (message.CommandValues.Count >= 4)
+            {
+                if (message.CommandValues.Count >= 4)
+                    number = HttpUtility.UrlDecode((string)message.CommandValues[3]);
+                else
+                    number = String.Empty;
+                type = message.CommandValues[1].ToString();
+            }
+            else
+            {
+                number = HttpUtility.UrlDecode((string)message.CommandValues[2]);
+                type = message.CommandValues[1].ToString();
+            }
+
+            switch (type)
+            {
+                case "PHH":
+                    Owner.SetHomePhone(number);
+                    break;
+                case "PHW":
+                    Owner.SetWorkPhone(number);
+                    break;
+                case "PHM":
+                    Owner.SetMobilePhone(number);
+                    break;
+                case "MBE":
+                    Owner.SetMobileDevice((number == "Y") ? true : false);
+                    break;
+                case "MOB":
+                    Owner.SetMobileAccess((number == "Y") ? true : false);
+                    break;
+                case "MFN":
+                    Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
+                    break;
+            }
+        }
+
+
+        /// <summary>
         /// Called when a QRY (challenge) command message has been received.
         /// </summary>
         /// <param name="message"></param>
@@ -1782,8 +1836,8 @@ namespace MSNPSharp
 
         #region Command handler
 
-        private EventHandler processorConnectedHandler = null;
-        private EventHandler processorDisconnectedHandler = null;
+        private EventHandler processorConnectedHandler;
+        private EventHandler processorDisconnectedHandler;
 
         /// <summary>
         /// Event handler.
@@ -1823,6 +1877,7 @@ namespace MSNPSharp
             ContactGroups.Clear();
             ContactService.Clear();
             SwitchBoards.Clear();
+            Owner.Emoticons.Clear();
             externalEndPoint = null;
             isSignedIn = false;
             msnticket = MSNTicket.Empty;

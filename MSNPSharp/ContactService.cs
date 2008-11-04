@@ -52,14 +52,14 @@ namespace MSNPSharp
     {
         #region Fields
 
-        private int recursiveCall = 0;
+        private int recursiveCall;
         private string applicationId = String.Empty;
         private List<int> initialADLs = new List<int>();
-        private int initialADLcount = 0;
-        private bool abSynchronized = false;
+        private bool abSynchronized;
 
-        internal XMLContactList AddressBook = null;
-        internal DeltasList Deltas = null;
+        internal int initialADLcount;
+        internal XMLContactList AddressBook;
+        internal DeltasList Deltas;
 
         #endregion
 
@@ -396,7 +396,7 @@ namespace MSNPSharp
         /// <param name="onSuccess">The delegate to be executed after async membership request completed successfuly</param>
         internal void msRequest(string partnerScenario, FindMembershipCompletedEventHandler onSuccess)
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("No Contact Ticket")));
             }
@@ -422,7 +422,7 @@ namespace MSNPSharp
                         {
                             if (e.Error.Message.Contains("Address Book Does Not Exist"))
                             {
-                                if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+                                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                                 {
                                     OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("No Contact Ticket")));
                                 }
@@ -501,7 +501,7 @@ namespace MSNPSharp
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
         private void abRequest(string partnerScenario, ABFindAllCompletedEventHandler onSuccess)
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindAll", new MSNPSharpException("No Contact Ticket")));
             }
@@ -856,7 +856,7 @@ namespace MSNPSharp
 
         private void AddNewOrPendingContact(string account, bool pending, string invitation, ClientType network, ABContactAddCompletedEventHandler onSuccess)
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -979,7 +979,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1031,7 +1031,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABContactUpdate", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1149,7 +1149,7 @@ namespace MSNPSharp
                 annos.Add(anno);
             }
 
-            if (annos.Count > 0 && NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 ABServiceBinding abService = CreateABService("PrivacyApply");
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
@@ -1193,7 +1193,7 @@ namespace MSNPSharp
         /// <param name="groupName">The name of the group to add</param>
         internal virtual void AddContactGroup(string groupName)
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1249,7 +1249,7 @@ namespace MSNPSharp
                 }
             }
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1290,7 +1290,7 @@ namespace MSNPSharp
         /// <param name="newGroupName">The new name</param>
         public virtual void RenameGroup(ContactGroup group, string newGroupName)
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupUpdate", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1333,7 +1333,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactAdd", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1371,7 +1371,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactDelete", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1439,7 +1439,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AddMember", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1557,7 +1557,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("DeleteMember", new MSNPSharpException("No Contact Ticket")));
                 return;
@@ -1738,7 +1738,7 @@ namespace MSNPSharp
                     }
                 }
 
-                if (!String.IsNullOrEmpty(sh.PreferredHostName))
+                if (AddressBook != null && !String.IsNullOrEmpty(sh.PreferredHostName))
                 {
                     AddressBook.MyProperties["preferredhost"] = sh.PreferredHostName;
                 }

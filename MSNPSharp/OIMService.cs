@@ -64,11 +64,11 @@ namespace MSNPSharp
     [Serializable()]
     public class OIMSendCompletedEventArgs : EventArgs
     {
-        private Exception error = null;
+        private Exception error;
         private string sender = string.Empty;
         private string receiver = string.Empty;
         private string message = string.Empty;
-        private ulong sequence = 0;
+        private ulong sequence;
 
         /// <summary>
         /// OIM sequence number (OIMCount)
@@ -235,6 +235,7 @@ namespace MSNPSharp
     /// SenderThrottleLimitExceededException
     /// <remarks>If you get this exception, please wait at least 11 seconds then try to send the OIM again.</remarks>
     /// </summary>
+    [Serializable]
     public class SenderThrottleLimitExceededException : Exception
     {
         public override string Message
@@ -306,7 +307,7 @@ namespace MSNPSharp
                 return;
 
             string xmlstr = message.MimeHeader["Mail-Data"];
-            if ("too-large" == xmlstr && NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if ("too-large" == xmlstr && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 RSIService rsiService = CreateRSIService();
                 rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
@@ -351,7 +352,7 @@ namespace MSNPSharp
             if (OIMReceived == null)
                 return;
 
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                 return;
 
             XmlDocument xdoc = new XmlDocument();
@@ -367,7 +368,6 @@ namespace MSNPSharp
             foreach (XmlNode m in xnodlst)
             {
                 DateTime rt = DateTime.Now;
-                Int32 size = 0;
                 Guid guid = Guid.Empty;
                 String email = String.Empty;
 
@@ -379,10 +379,6 @@ namespace MSNPSharp
                     {
                         case "RT":
                             rt = XmlConvert.ToDateTime(a.InnerText, XmlDateTimeSerializationMode.RoundtripKind);
-                            break;
-
-                        case "SZ":
-                            size = Convert.ToInt32(a.InnerText);
                             break;
 
                         case "E":
@@ -484,7 +480,7 @@ namespace MSNPSharp
 
         private void DeleteOIMMessages(string[] guids)
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Web))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                 return;
 
             RSIService rsiService = CreateRSIService();
@@ -518,7 +514,7 @@ namespace MSNPSharp
         public void SendOIMMessage(string account, string msg)
         {
             Contact contact = NSMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
-            if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.OIM) && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
                     "MIME-Version: 1.0\r\n"
@@ -636,7 +632,7 @@ namespace MSNPSharp
 
     internal class OIMUserState
     {
-        public int RecursiveCall = 0;
+        public int RecursiveCall;
         public readonly ulong oimcount;
         public readonly string account = String.Empty;
         public OIMUserState(ulong oimCount, string account)

@@ -137,7 +137,7 @@ namespace MSNPSharp
         ulong oimcount = 1;
 
         bool hasBlog;
-        bool isMessengerUser = false;
+        bool isMessengerUser;
         DynamicItemState dynamicChanged = DynamicItemState.None;
         string comment = string.Empty;
 
@@ -150,16 +150,16 @@ namespace MSNPSharp
         MSNLists lists = MSNLists.None;
         PresenceStatus status = PresenceStatus.Offline;
 
-        DisplayImage displayImage = null;
+        DisplayImage displayImage;
 
         PersonalMessage personalMessage;
 
-        Hashtable emoticons = null;
+        Hashtable emoticons;
 
-        ClientCapacities clientCapacities = 0;
+        ClientCapacities clientCapacities;
 
-        bool mobileDevice = false;
-        bool mobileAccess = false;
+        bool mobileDevice;
+        bool mobileAccess;
 
         object clientData;
 

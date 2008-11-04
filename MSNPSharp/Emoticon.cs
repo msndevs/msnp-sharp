@@ -64,6 +64,9 @@ namespace MSNPSharp
             Shortcut = shortcut;
         }
 
+        /// <summary>
+        /// The string that will be replaced by the emoticons.
+        /// </summary>
         public string Shortcut
         {
             get

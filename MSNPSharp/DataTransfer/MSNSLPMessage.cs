@@ -101,7 +101,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private int maxForwards = 0;
+        private int maxForwards;
 
         /// <summary>
         /// </summary>

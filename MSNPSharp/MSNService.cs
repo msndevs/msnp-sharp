@@ -75,8 +75,8 @@ namespace MSNPSharp
     /// </summary>
     public abstract class MSNService
     {
-        private NSMessageHandler nsMessageHandler = null;
-        private WebProxy webProxy = null;
+        private NSMessageHandler nsMessageHandler;
+        private WebProxy webProxy;
 
         private MSNService()
         {

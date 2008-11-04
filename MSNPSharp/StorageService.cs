@@ -116,7 +116,7 @@ namespace MSNPSharp
         /// </summary>
         private void CreateProfile()
         {
-            if (!NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage))
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                 return;
 
             try
@@ -146,11 +146,9 @@ namespace MSNPSharp
                 ShareItemRequestType shareItemRequest = new ShareItemRequestType();
                 shareItemRequest.resourceID = resId_Prof;
                 shareItemRequest.displayName = "Messenger Roaming Identity";
-                string cacheKey = "";
                 try
                 {
-                    ShareItemResponseType shareItemResponse = storageService.ShareItem(shareItemRequest);
-                    cacheKey = storageService.AffinityCacheHeaderValue.CacheKey;
+                    storageService.ShareItem(shareItemRequest);
                 }
                 catch (Exception ex)
                 {
@@ -162,7 +160,7 @@ namespace MSNPSharp
                 srvHandle.ForeignId = "MyProfile";
                 srvHandle.Id = "0";
                 srvHandle.Type = ServiceFilterType.Profile;
-                if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
                     SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed");
                     sharingService.AllowAutoRedirect = true;
@@ -190,7 +188,7 @@ namespace MSNPSharp
                     addMemberRequest.memberships = new Membership[] { memberShip };
                     try
                     {
-                        AddMemberResponse addMemberResponse = sharingService.AddMember(addMemberRequest);
+                        sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
                     {
@@ -314,7 +312,7 @@ namespace MSNPSharp
 
 
                 //8. UpdateDynamicItem
-                if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
                     ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingSeed");
                     abService.AllowAutoRedirect = true;
@@ -376,7 +374,7 @@ namespace MSNPSharp
                     abcontactUpdateRequest.contacts = new ContactType[] { meContact };
                     try
                     {
-                        ABContactUpdateResponse abcupdateResponse = abService.ABContactUpdate(abcontactUpdateRequest);
+                        abService.ABContactUpdate(abcontactUpdateRequest);
                     }
                     catch (Exception ex)
                     {
@@ -509,7 +507,7 @@ namespace MSNPSharp
                 NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("RoamingIdentityChanged");
 
                 // UpdateDynamicItem
-                if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Contact))
+                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
                     ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged");
 
@@ -564,7 +562,7 @@ namespace MSNPSharp
         public OwnerProfile GetProfile()
         {
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage) &&
+                NSMessageHandler.MSNTicket != MSNTicket.Empty &&
                 NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService)
             {
                 return GetProfileImpl("Initial");
@@ -580,7 +578,7 @@ namespace MSNPSharp
         /// <param name="personalStatus"></param>
         public void UpdateProfile(string displayName, string personalStatus)
         {
-            if (NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage) &&
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&
                 (NSMessageHandler.ContactService.AddressBook.Profile.DisplayName != displayName ||
                 NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage != personalStatus))
             {
@@ -614,7 +612,7 @@ namespace MSNPSharp
                               NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage,
                               "Update", 1);
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                NSMessageHandler.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage))
+                NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 StorageService storageService = CreateStorageService("RoamingIdentityChanged");
 

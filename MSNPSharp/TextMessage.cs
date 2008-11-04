@@ -155,7 +155,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// </summary>
-        private bool rightToLeft = false;
+        private bool rightToLeft;
 
         /// <summary>
         /// Text is read right-to-left

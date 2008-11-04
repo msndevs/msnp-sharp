@@ -162,29 +162,14 @@ namespace MSNPSharp
     public class SBMessageHandler : IMessageHandler
     {
         #region Private
-        /// <summary>
-        /// </summary>
-        private SocketMessageProcessor messageProcessor = null;
 
-        /// <summary>
-        /// </summary>
-        private NSMessageHandler nsMessageHandler = null;
-
-        /// <summary>
-        /// </summary>
-        protected bool invited = false;
-
-        /// <summary>
-        /// </summary>
-        private EventHandler processorConnectedHandler = null;
-
-        /// <summary>
-        /// </summary>
-        private EventHandler processorDisconnectedHandler = null;
-
-        /// <summary>
-        /// </summary>
+        private SocketMessageProcessor messageProcessor;
+        private NSMessageHandler nsMessageHandler;
+        protected bool invited;
         private int sessionId;
+
+        private EventHandler processorConnectedHandler;
+        private EventHandler processorDisconnectedHandler;
 
         /// <summary>
         /// </summary>
@@ -202,7 +187,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// </summary>
-        private string sessionHash = "";
+        private string sessionHash = String.Empty;
         /// <summary>
         /// The hash identifier used to define this switchboard session.
         /// </summary>
@@ -218,12 +203,8 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// </summary>
-        protected bool sessionEstablished = false;
 
-        /// <summary>
-        /// </summary>
+        protected bool sessionEstablished;
         private Hashtable contacts = new Hashtable();
 
         /// <summary>
@@ -234,7 +215,7 @@ namespace MSNPSharp
         /// <summary>
         /// Supports the p2p framework
         /// </summary>
-        private P2PHandler p2pHandler = null;
+        private P2PHandler p2pHandler;
 
         private Hashtable multiPacketMessages = new Hashtable();
         #endregion
@@ -556,8 +537,9 @@ namespace MSNPSharp
                 }
 
                 // catch the connect event so we can start sending the USR command upon initiating
-                ((SocketMessageProcessor)value).ConnectionEstablished += processorConnectedHandler;
-                ((SocketMessageProcessor)value).ConnectionClosed += processorDisconnectedHandler;
+                SocketMessageProcessor smp = value as SocketMessageProcessor;
+                smp.ConnectionEstablished += processorConnectedHandler;
+                smp.ConnectionClosed += processorDisconnectedHandler;
 
                 if (messageProcessor != null)
                 {
@@ -566,7 +548,7 @@ namespace MSNPSharp
                     ((SocketMessageProcessor)messageProcessor).ConnectionClosed -= processorDisconnectedHandler;
                 }
 
-                messageProcessor = (SocketMessageProcessor)value;
+                messageProcessor = smp;
 
             }
         }
@@ -749,11 +731,25 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>Use this function before sending text messages which include the emoticon text. You can only send one emoticon message before the textmessage. So make sure that all emoticons used in the textmessage are included.</remarks>
         /// <param name="emoticons">A list of emoticon objects.</param>
-        public virtual void SendEmoticonDefinitions(ArrayList emoticons)
+        /// <param name="icontype">The type of current emoticons.</param>
+        public virtual void SendEmoticonDefinitions(ArrayList emoticons, EmoticonType icontype)
         {
+            if (emoticons == null)
+                throw new NullReferenceException();
             SBMessage sbMessage = new SBMessage();
             MSGMessage msgMessage = new MSGMessage();
-            EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons);
+
+            for (int emcount = 0; emcount < emoticons.Count; emcount++)
+            {
+                if (!NSMessageHandler.Owner.Emoticons.Contains((emoticons[emcount] as Emoticon).Sha))
+                {
+                    //Add the emotions to owner's emoticon collection.
+                    NSMessageHandler.Owner.Emoticons.Add((emoticons[emcount] as Emoticon).Sha,
+                        emoticons[emcount]);
+                }
+            }
+
+            EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons, icontype);
 
             msgMessage.InnerMessage = emoticonMessage;
             sbMessage.InnerMessage = msgMessage;

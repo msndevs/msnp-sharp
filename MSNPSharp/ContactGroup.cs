@@ -191,10 +191,8 @@ namespace MSNPSharp
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj is ContactGroup)
-                return ((ContactGroup)obj).Guid == guid;
-            return
-                false;
+            ContactGroup cg = obj as ContactGroup;
+            return cg != null && cg.Guid == guid;
         }
 
         #endregion

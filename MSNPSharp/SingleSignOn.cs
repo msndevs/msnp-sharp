@@ -79,13 +79,16 @@ namespace MSNPSharp
         private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
 
         [NonSerialized]
-        private int hashcode = 0;
+        private int hashcode;
+        [NonSerialized]
+        internal int DeleteTick;
 
         internal MSNTicket(Credentials creds)
         {
             if (creds != null)
             {
                 hashcode = (creds.Account.ToLowerInvariant() + creds.Password).GetHashCode();
+                DeleteTick = unchecked(Environment.TickCount + (Settings.MSNTicketLifeTime * 60000)); // in minutes
             }
         }
 
@@ -288,9 +291,62 @@ namespace MSNPSharp
     internal static class SingleSignOnManager
     {
         private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
-
-        public static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
+        private static DateTime nextCleanup = NextCleanupTime();
+        private static object syncObject;
+        private static object SyncObject
         {
+            get
+            {
+                if (syncObject == null)
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncObject, newobj, null);
+                }
+
+                return syncObject;
+            }
+        }
+
+        private static DateTime NextCleanupTime()
+        {
+            return DateTime.Now.AddMinutes(Settings.MSNTicketsCleanupInterval);
+        }
+
+        private static void CheckCleanup()
+        {
+            if (nextCleanup < DateTime.Now)
+            {
+                lock (SyncObject)
+                {
+                    if (nextCleanup < DateTime.Now)
+                    {
+                        nextCleanup = NextCleanupTime();
+                        int tickcount = Environment.TickCount;
+                        List<int> cachestodelete = new List<int>();
+                        foreach (MSNTicket t in cache.Values)
+                        {
+                            if (t.DeleteTick != 0 && t.DeleteTick < tickcount)
+                            {
+                                cachestodelete.Add(t.GetHashCode());
+                            }
+                        }
+                        if (cachestodelete.Count > 0)
+                        {
+                            foreach (int i in cachestodelete)
+                            {
+                                cache.Remove(i);
+                            }
+                            GC.Collect();
+                        }
+                    }
+                }
+            }
+        }
+
+        internal static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
+        {
+            CheckCleanup();
+
             if (nsMessageHandler != null)
             {
                 int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
@@ -325,6 +381,8 @@ namespace MSNPSharp
 
         internal static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
         {
+            CheckCleanup();
+
             if (nsMessageHandler != null)
             {
                 int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
@@ -364,9 +422,9 @@ namespace MSNPSharp
         private string user;
         private string pass;
         private string policy;
-        private int authId = 0;
+        private int authId;
         private List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
-        private WebProxy webProxy = null;
+        private WebProxy webProxy;
 
         public WebProxy WebProxy
         {
@@ -643,9 +701,8 @@ namespace MSNPSharp
             des3.Mode = CipherMode.CBC;
             byte[] desinput = CombinByte(Encoding.ASCII.GetBytes(nonce), fillbyt);
             byte[] deshash = new byte[72];
-            int descount = des3.CreateEncryptor(key3, iv).TransformBlock(desinput, 0, desinput.Length, deshash, 0);
-            byte[] result = CombinByte(CombinByte(CombinByte(tagMSGRUSRKEY_struct, iv), hash), deshash);
-            return Convert.ToBase64String(result);
+            des3.CreateEncryptor(key3, iv).TransformBlock(desinput, 0, desinput.Length, deshash, 0);
+            return Convert.ToBase64String(CombinByte(CombinByte(CombinByte(tagMSGRUSRKEY_struct, iv), hash), deshash));
         }
 
         private byte[] Derive_Key(byte[] key, byte[] magic)

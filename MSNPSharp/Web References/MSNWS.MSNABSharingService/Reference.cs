@@ -1839,6 +1839,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         Event,
+        
+        /// <remarks/>
+        OfficeLiveWebNotification,
     }
     
     /// <remarks/>

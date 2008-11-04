@@ -43,7 +43,7 @@ namespace MSNPSharp
     [Serializable()]
     public class Owner : Contact
     {
-        bool passportVerified = false;
+        bool passportVerified;
         PrivacyMode privacy = PrivacyMode.Unknown;
         NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
         RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
@@ -91,19 +91,25 @@ namespace MSNPSharp
             }
             set
             {
-                if (base.DisplayImage != null)
-                    MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
-
-                SetUserDisplay(value);
-
                 if (value == null)
                     return;
+
+                if (base.DisplayImage != null)
+                {
+                    if (value == base.DisplayImage )
+                    {
+                        return;
+                    }
+
+                    MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
+                }
+                SetUserDisplay(value);
 
                 value.Creator = Mail;
 
                 MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
 
-                //BroadcastDisplayImage();
+                BroadcastDisplayImage();
             }
         }
 
@@ -124,14 +130,19 @@ namespace MSNPSharp
             }
         }
 
-        /*public void BroadcastDisplayImage()
+        public void BroadcastDisplayImage()
         {
             if(NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
                 // resend the user status so other client can see the new msn object
-                NSMessageHandler.SetPresenceStatus(Status);
+                string capacities = ((long)ClientCapacities).ToString();
+                string context = String.Empty;
+
+                if (DisplayImage != null)
+                    context = DisplayImage.Context;
+                NSMessageHandler.MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { NSMessageHandler.ParseStatus(Status), capacities, context }));
             }
-        }*/
+        }
 
         public new string MobilePhone
         {
@@ -304,9 +315,9 @@ namespace MSNPSharp
 
 
         #region Profile datafields
-        bool validProfile = false;
+        bool validProfile;
         string loginTime;
-        bool emailEnabled = false;
+        bool emailEnabled;
         string memberIdHigh;
         string memberIdLowd;
         string preferredLanguage;
