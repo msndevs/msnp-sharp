@@ -502,8 +502,12 @@ namespace MSNPSharp
 
         public static string GetDecodeString(string context)
         {
-            context = context.Replace("%20", "+");
-            return HttpUtility.UrlDecode(context, Encoding.UTF8);
+            if (context.IndexOf(" ") == -1)
+            {
+                context = context.Replace("%20", "+");
+                return HttpUtility.UrlDecode(context, Encoding.UTF8);
+            }
+            return context;
         }
 
 
