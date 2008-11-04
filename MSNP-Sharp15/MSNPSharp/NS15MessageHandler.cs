@@ -623,6 +623,41 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Translates MSNStatus enumeration to messenger's textual status presentation.
+        /// </summary>
+        /// <param name="status">MSNStatus enum object representing the status to translate</param>
+        /// <returns>The corresponding textual value</returns>
+        internal string ParseStatus(PresenceStatus status)
+        {
+            switch (status)
+            {
+                case PresenceStatus.Online:
+                    return "NLN";
+                case PresenceStatus.Busy:
+                    return "BSY";
+                case PresenceStatus.Idle:
+                    return "IDL";
+                case PresenceStatus.BRB:
+                    return "BRB";
+                case PresenceStatus.Away:
+                    return "AWY";
+                case PresenceStatus.Phone:
+                    return "PHN";
+                case PresenceStatus.Lunch:
+                    return "LUN";
+                case PresenceStatus.Offline:
+                    return "FLN";
+                case PresenceStatus.Hidden:
+                    return "HDN";
+                default:
+                    break;
+            }
+
+            // unknown status
+            return "Unknown status";
+        }
+
+        /// <summary>
         /// Set the status of the contact list owner (the client).
         /// </summary>
         /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
@@ -837,40 +872,6 @@ namespace MSNPSharp
             return PresenceStatus.Unknown;
         }
 
-        /// <summary>
-        /// Translates MSNStatus enumeration to messenger's textual status presentation.
-        /// </summary>
-        /// <param name="status">MSNStatus enum object representing the status to translate</param>
-        /// <returns>The corresponding textual value</returns>
-        protected string ParseStatus(PresenceStatus status)
-        {
-            switch (status)
-            {
-                case PresenceStatus.Online:
-                    return "NLN";
-                case PresenceStatus.Busy:
-                    return "BSY";
-                case PresenceStatus.Idle:
-                    return "IDL";
-                case PresenceStatus.BRB:
-                    return "BRB";
-                case PresenceStatus.Away:
-                    return "AWY";
-                case PresenceStatus.Phone:
-                    return "PHN";
-                case PresenceStatus.Lunch:
-                    return "LUN";
-                case PresenceStatus.Offline:
-                    return "FLN";
-                case PresenceStatus.Hidden:
-                    return "HDN";
-                default:
-                    break;
-            }
-
-            // unknown status
-            return "Unknown status";
-        }
 
         /// <summary>
         /// Called when a UBX command has been received.
