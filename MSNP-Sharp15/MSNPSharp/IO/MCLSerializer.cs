@@ -59,7 +59,7 @@ namespace MSNPSharp.IO
 
         private string version = "1.0";
 
-        public MCLSerializer()
+        protected MCLSerializer()
         {
         }
 

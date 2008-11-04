@@ -140,8 +140,8 @@ namespace MSNPSharp.DataTransfer
             {
                 messageSession = value;
                 MessageProcessor = messageSession;
-                messageSession.DirectConnectionEstablished += new EventHandler(messageSession_DirectConnectionEstablished);
-                messageSession.DirectConnectionFailed += new EventHandler(messageSession_DirectConnectionFailed);
+                messageSession.DirectConnectionEstablished += new EventHandler<EventArgs>(messageSession_DirectConnectionEstablished);
+                messageSession.DirectConnectionFailed += new EventHandler<EventArgs>(messageSession_DirectConnectionFailed);
             }
         }
 
@@ -831,15 +831,15 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Occurs when the sending of data messages has started.
         /// </summary>
-        public event EventHandler TransferStarted;
+        public event EventHandler<EventArgs> TransferStarted;
         /// <summary>
         /// Occurs when the sending of data messages has finished.
         /// </summary>
-        public event EventHandler TransferFinished;
+        public event EventHandler<EventArgs> TransferFinished;
         /// <summary>
         /// Occurs when the transfer of data messages has been aborted.
         /// </summary>
-        public event EventHandler TransferAborted;
+        public event EventHandler<EventArgs> TransferAborted;
 
         #endregion
 
