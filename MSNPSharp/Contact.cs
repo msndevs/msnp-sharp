@@ -163,17 +163,15 @@ namespace MSNPSharp
 
         object clientData;
 
-        public delegate void ContactChangedEventHandler(object sender, EventArgs e);
-        public delegate void StatusChangedEventHandler(object sender, StatusChangeEventArgs e);
-        public event ContactChangedEventHandler ScreenNameChanged;
-        public event ContactChangedEventHandler PersonalMessageChanged;
-        public event ContactGroupChangedEventHandler ContactGroupAdded;
-        public event ContactGroupChangedEventHandler ContactGroupRemoved;
-        public event ContactChangedEventHandler ContactBlocked;
-        public event ContactChangedEventHandler ContactUnBlocked;
-        public event ContactChangedEventHandler ContactOnline;
-        public event StatusChangedEventHandler ContactOffline;
-        public event StatusChangedEventHandler StatusChanged;
+        public event EventHandler<EventArgs> ScreenNameChanged;
+        public event EventHandler<EventArgs> PersonalMessageChanged;
+        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
+        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
+        public event EventHandler<EventArgs> ContactBlocked;
+        public event EventHandler<EventArgs> ContactUnBlocked;
+        public event EventHandler<EventArgs> ContactOnline;
+        public event EventHandler<StatusChangeEventArgs> ContactOffline;
+        public event EventHandler<StatusChangeEventArgs> StatusChanged;
 
 
         protected Contact()

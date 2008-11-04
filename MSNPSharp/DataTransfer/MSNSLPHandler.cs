@@ -534,16 +534,6 @@ namespace MSNPSharp.DataTransfer
 
 
     /// <summary>
-    /// This delegate is used when events are fired and a transfer session is affected.
-    /// </summary>
-    public delegate void P2PTransferSessionChangedEventHandler(object sender, P2PTransferSessionEventArgs e);
-
-    /// <summary>
-    /// This delegate is used when a invitation is received.
-    /// </summary>
-    public delegate void MSNSLPInvitationReceivedEventHandler(object sender, MSNSLPInvitationEventArgs e);
-
-    /// <summary>
     /// Handles invitations and requests for file transfers, emoticons, user displays and other msn objects.
     /// </summary>
     /// <remarks>
@@ -652,17 +642,17 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Occurs when a transfer session is created.
         /// </summary>
-        public event P2PTransferSessionChangedEventHandler TransferSessionCreated;
+        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionCreated;
 
         /// <summary>
         /// Occurs when a transfer session is closed. Either because the transfer has finished or aborted.
         /// </summary>
-        public event P2PTransferSessionChangedEventHandler TransferSessionClosed;
+        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionClosed;
 
         /// <summary>
         /// Occurs when a remote client has send an invitation for a transfer session.
         /// </summary>
-        public event MSNSLPInvitationReceivedEventHandler TransferInvitationReceived;
+        public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
 
         /// <summary>
         /// Sends the remote contact a request for the given context. The invitation message is send over the current MessageProcessor.
@@ -960,8 +950,8 @@ namespace MSNPSharp.DataTransfer
         /// <param name="session"></param>
         protected virtual void OnTransferSessionCreated(P2PTransferSession session)
         {
-            session.TransferFinished += new EventHandler(MSNSLPHandler_TransferFinished);
-            session.TransferAborted += new EventHandler(MSNSLPHandler_TransferAborted);
+            session.TransferFinished += new EventHandler<EventArgs>(MSNSLPHandler_TransferFinished);
+            session.TransferAborted += new EventHandler<EventArgs>(MSNSLPHandler_TransferAborted);
 
             if (TransferSessionCreated != null)
                 TransferSessionCreated(this, new P2PTransferSessionEventArgs(session));
@@ -1620,6 +1610,7 @@ namespace MSNPSharp.DataTransfer
         public void Dispose()
         {
             CloseAllSessions();
+            GC.SuppressFinalize(this);
         }
 
         #endregion

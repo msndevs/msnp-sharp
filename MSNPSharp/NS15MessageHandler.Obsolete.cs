@@ -194,44 +194,44 @@ namespace MSNPSharp
         /// Occurs when a new contactgroup is created
         /// </summary>
         [Obsolete("Please use NSMessageHandler.ContactService.ContactGroupAdded.", true)]
-        public event ContactGroupChangedEventHandler ContactGroupAdded;
+        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
 
         /// <summary>
         /// Occurs when a contactgroup is removed
         /// </summary>
         [Obsolete("Please use NSMessageHandler.ContactService.ContactGroupRemoved.", true)]
-        public event ContactGroupChangedEventHandler ContactGroupRemoved;
+        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
 
         /// <summary>
         /// Occurs when a contact is added to any list (including reverse list)
         /// </summary>
         [Obsolete("Please use NSMessageHandler.ContactService.ContactAdded.", true)]
-        public event ListMutatedAddedEventHandler ContactAdded;
+        public event EventHandler<ListMutateEventArgs> ContactAdded;
 
         /// <summary>
         /// Occurs when a contact is removed from any list (including reverse list)
         /// </summary>
         [Obsolete("Please use NSMessageHandler.ContactService.ContactRemoved.", true)]
-        public event ListMutatedAddedEventHandler ContactRemoved;
+        public event EventHandler<ListMutateEventArgs> ContactRemoved;
 
         /// <summary>
         /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
         /// </summary>
         [Obsolete("Please use NSMessageHandler.ContactService.ReverseAdded.", true)]
-        public event ContactChangedEventHandler ReverseAdded;
+        public event EventHandler<ContactEventArgs> ReverseAdded;
 
         /// <summary>
         /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
         /// </summary>
         [Obsolete("Please use NSMessageHandler.ContactService.ReverseRemoved.", true)]
-        public event ContactChangedEventHandler ReverseRemoved;
+        public event EventHandler<ContactEventArgs> ReverseRemoved;
 
         /// <summary>
         /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
         /// This means all contact-updates are received from the server and processed.
         /// </summary>
         [Obsolete("Please use NSMessageHandler.ContactService.SynchronizationCompleted.", true)]
-        public event EventHandler SynchronizationCompleted;
+        public event EventHandler<EventArgs> SynchronizationCompleted;
         #endregion
     }
 };
