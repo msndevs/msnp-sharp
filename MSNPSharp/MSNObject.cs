@@ -568,6 +568,30 @@ namespace MSNPSharp
         {
             return System.Web.HttpUtility.UrlEncode(GetXmlString(), Encoding.UTF8).Replace("+", "%20");
         }
+
+        public static bool operator == (MSNObject obj1, MSNObject obj2)
+        {
+            if (((object)obj1) == null && ((object)obj2) == null)
+                return true;
+            if (((object)obj1) == null || ((object)obj2) == null)
+                return false;
+            return obj1.GetHashCode() == obj2.GetHashCode();
+        }
+
+        public static bool operator != (MSNObject obj1, MSNObject obj2)
+        {
+            return !(obj1 == obj2);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return GetHashCode() == obj.GetHashCode();
+        }
+
+        public override int GetHashCode()
+        {
+            return CalculateChecksum().GetHashCode();
+        }
     }
 
 
