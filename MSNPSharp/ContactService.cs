@@ -248,7 +248,7 @@ namespace MSNPSharp
                 DeleteRecordFile();
             }
 
-            bool nocompress = Settings.NoCompress;
+            bool nocompress = false;
             string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl");
             string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
             try
