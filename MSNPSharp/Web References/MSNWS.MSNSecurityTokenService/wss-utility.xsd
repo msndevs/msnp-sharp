@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" elementFormDefault="qualified" targetNamespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Expires" type="wsu:AttributedDateTime" />
+  <xs:element name="Created" type="wsu:AttributedDateTime" />
+  <xs:attribute name="Id" type="xs:string" />
+  <xs:complexType name="AttributedDateTime">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute ref="wsu:Id" use="optional" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:schema>

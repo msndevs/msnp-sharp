@@ -1,0 +1,434 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{97CB2DC7-2FE8-4AF5-84D0-6B9872A5E960}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MSNPSharp</RootNamespace>
+    <AssemblyName>MSNPSharp</AssemblyName>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>Resources\msnpsharp.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;MSNP16</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\MSNPSharp.XML</DocumentationFile>
+    <NoWarn>1591</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;MSNP16</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Configuration.cs" />
+    <Compile Include="ConnectivityException.cs" />
+    <Compile Include="ConnectivitySettings.cs" />
+    <Compile Include="Contact.cs" />
+    <Compile Include="ContactCard.cs" />
+    <Compile Include="ContactGroup.cs" />
+    <Compile Include="ContactGroupList.cs" />
+    <Compile Include="ContactList.cs" />
+    <Compile Include="Conversation.cs" />
+    <Compile Include="Core\Converter.cs" />
+    <Compile Include="Core\NSPayLoadMessage.cs" />
+    <Compile Include="Credentials.cs" />
+    <Compile Include="DisplayImage.cs" />
+    <Compile Include="Emoticon.cs" />
+    <Compile Include="EmoticonMessage.cs" />
+    <Compile Include="enums.cs" />
+    <Compile Include="EventArgs.cs" />
+    <Compile Include="Core\Factory.cs" />
+    <Compile Include="Core\IMessageHandler.cs" />
+    <Compile Include="IO\DeltasList.cs" />
+    <Compile Include="IO\IO.cs" />
+    <Compile Include="IO\MCLSerializer.cs" />
+    <Compile Include="IO\SerializableClasses.cs" />
+    <Compile Include="IO\SerializableDictionary.cs" />
+    <Compile Include="IO\SerializableMemoryStream.cs" />
+    <Compile Include="MailEventArgs.cs" />
+    <Compile Include="IO\MCLFileManager.cs" />
+    <Compile Include="Core\MessagePool.cs" />
+    <Compile Include="Core\MessageProcessor.cs" />
+    <Compile Include="Messenger.cs" />
+    <Compile Include="MobileMessage.cs" />
+    <Compile Include="Core\MSNMessage.cs" />
+    <Compile Include="MSNObject.cs" />
+    <Compile Include="MSNPSharpException.cs" />
+    <Compile Include="MSNSecurityServiceSoapClient.cs" />
+    <Compile Include="MSNService.cs" />
+    <Compile Include="DataTransfer\MSNSLPHandler.cs" />
+    <Compile Include="DataTransfer\MSNSLPMessage.cs" />
+    <Compile Include="Core\NetworkMessage.cs" />
+    <Compile Include="Core\NotificationMessage.cs" />
+    <Compile Include="NS15MessageHandler.cs" />
+    <Compile Include="NS15MessageHandler.Obsolete.cs">
+      <DependentUpon>NS15MessageHandler.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Core\NSMessage.cs" />
+    <Compile Include="Core\NSMessagePool.cs" />
+    <Compile Include="NSMessageProcessor.cs" />
+    <Compile Include="OIMService.cs" />
+    <Compile Include="Owner.cs" />
+    <Compile Include="DataTransfer\P2PDCPool.cs" />
+    <Compile Include="DataTransfer\P2PDirectProcessor.cs" />
+    <Compile Include="DataTransfer\P2PHandler.cs" />
+    <Compile Include="DataTransfer\P2PMessage.cs" />
+    <Compile Include="DataTransfer\P2PMessagePool.cs" />
+    <Compile Include="DataTransfer\P2PMessageSession.cs" />
+    <Compile Include="DataTransfer\P2PTransferSession.cs" />
+    <Compile Include="DataTransfer\PersistentStream.cs" />
+    <Compile Include="PersonalMessage.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="ProxySocket\AuthMethod.cs" />
+    <Compile Include="ProxySocket\AuthNone.cs" />
+    <Compile Include="ProxySocket\AuthUserPass.cs" />
+    <Compile Include="ProxySocket\IAsyncProxyResult.cs" />
+    <Compile Include="ProxySocket\ProxyException.cs" />
+    <Compile Include="ProxySocket\ProxySocket.cs" />
+    <Compile Include="ProxySocket\Socks4Handler.cs" />
+    <Compile Include="ProxySocket\Socks5Handler.cs" />
+    <Compile Include="ProxySocket\SocksHandler.cs" />
+    <Compile Include="QRYFactory.cs" />
+    <Compile Include="SB11MessageHandler.cs" />
+    <Compile Include="Core\SBMessage.cs" />
+    <Compile Include="Core\SBMessagePool.cs" />
+    <Compile Include="SBMessageProcessor.cs" />
+    <Compile Include="Core\SBMSGMessage.cs" />
+    <Compile Include="SingleSignOn.cs" />
+    <Compile Include="Core\SocketMessageProcessor.cs" />
+    <Compile Include="SpaceService.cs" />
+    <Compile Include="StorageService.cs" />
+    <Compile Include="StrDictionary.cs" />
+    <Compile Include="TextMessage.cs" />
+    <Compile Include="UnauthorizedException.cs" />
+    <Compile Include="ContactService.cs" />
+    <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\MSNWS.MSNOIMStoreService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\MSNWS.MSNRSIService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\MSNWS.MSNSecurityTokenService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\MSNWS.MSNSpaceService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\MSNWS.MSNStorageService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Wink.cs" />
+    <Compile Include="IO\XMLContactList.cs" />
+    <Compile Include="Core\YIMMessage.cs" />
+    <Compile Include="YIMMessageHandler.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABContactAddResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABContactUpdateResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABFindAllResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABGroupAddResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABGroupContactAddResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABGroupContactDeleteResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABGroupDeleteResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABGroupUpdateResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\AddMemberResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\DeleteMemberResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\FindMembershipResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\msnab_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\msnab_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\msnab_sharingservice.wsdl" />
+    <None Include="Web References\MSNWS.MSNABSharingService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNWS.MSNOIMStoreService\oim_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNOIMStoreService\oim_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNOIMStoreService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNWS.MSNOIMStoreService\StoreResultType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNOIMStoreService\utility.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNOIMStoreService\wsrm.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNRSIService\DeleteMessagesResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNRSIService\GetMessageResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNRSIService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNWS.MSNRSIService\rsi_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNRSIService\rsi_faulttypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNRSIService\rsi_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNRSIService\rsi_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\addressing.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ps-fault.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ps.wsdl" />
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ps.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\RequestSecurityTokenResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\soap-env.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-policy.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-secext.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-trust.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\wss-utility.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\xenc-schema.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\xmldsig-core-schema.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\FindDocumentsResultType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\GetProfileResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNStorageService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\owner.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferences Include="Web References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNOIMStoreService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNRSIService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNSpaceService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
+      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNStorageService_StorageService</CachedSettingsPropName>
+    </WebReferenceUrl>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\msnpsharp.snk" />
+    <None Include="Resources\WLXLarge_default.gif" />
+    <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNSpaceService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\MSNWS.MSNSpaceService\space_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNSpaceService\space_ws_datatype.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSpaceService\space_ws_servicetype.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\CreateDocumentResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\CreateProfileResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\ShareItemResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
