@@ -589,7 +589,10 @@ namespace MSNPSharp.IO
                             contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
 
                         if (!String.IsNullOrEmpty(displayname))
-                            contact.SetName(displayname);
+                        {
+                            if (contact.Name == contact.Mail && displayname != contact.Mail)
+                                contact.SetName(displayname);
+                        }
 
                         if (cit.phones != null)
                         {
