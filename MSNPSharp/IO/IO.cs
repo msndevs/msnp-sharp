@@ -169,7 +169,7 @@ namespace MSNPSharp.IO
         }
 
 
-        private byte[] Compress(byte[] buffer)
+        private static byte[] Compress(byte[] buffer)
         {
             MemoryStream destms = new MemoryStream();
             GZipStream zipsm = new GZipStream(destms, CompressionMode.Compress, true);
@@ -178,7 +178,7 @@ namespace MSNPSharp.IO
             return destms.ToArray();
         }
 
-        private byte[] Decompress(byte[] compresseddata)
+        private static byte[] Decompress(byte[] compresseddata)
         {
             MemoryStream destms = new MemoryStream();
             MemoryStream ms = new MemoryStream(compresseddata);

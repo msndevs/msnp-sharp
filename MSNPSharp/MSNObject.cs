@@ -312,7 +312,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="stream"></param>
         /// <returns></returns>
-        protected string GetStreamHash(Stream stream)
+        protected static string GetStreamHash(Stream stream)
         {
             stream.Seek(0, SeekOrigin.Begin);
 

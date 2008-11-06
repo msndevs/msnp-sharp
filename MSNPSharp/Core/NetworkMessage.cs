@@ -53,7 +53,7 @@ namespace MSNPSharp.Core
 
         #region Protected helper methods
 
-        public byte[] AppendArray(byte[] originalArray, byte[] appendingArray)
+        public static byte[] AppendArray(byte[] originalArray, byte[] appendingArray)
         {
             if (appendingArray != null)
             {
