@@ -275,7 +275,7 @@ namespace MSNPSharp
             }
         }
 
-        public SSOTicketType Type
+        public SSOTicketType TicketType
         {
             get
             {

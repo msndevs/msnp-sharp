@@ -45,7 +45,7 @@ namespace MSNPSharp
             : base()
         {
             //Type = MSNObjectType.Wink;	
-            Type = MSNObjectType.Unknown;
+            ObjectType = MSNObjectType.Unknown;
         }
     }
 };

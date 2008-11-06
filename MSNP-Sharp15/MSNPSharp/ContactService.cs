@@ -333,7 +333,7 @@ namespace MSNPSharp
                 List<string> hashlist = new List<string>(0);
                 foreach (Service svc in AddressBook.MembershipList.Keys)
                 {
-                    if (svc.Type == ServiceFilterType.Messenger)   //We only deal with messenger service
+                    if (svc.ServiceType == ServiceFilterType.Messenger)   //We only deal with messenger service
                     {
                         foreach (MemberRole role in AddressBook.MembershipList[svc].Keys)
                         {
@@ -1486,7 +1486,7 @@ namespace MSNPSharp
             Service messengerService = new Service();
             foreach (Service srv in AddressBook.MembershipList.Keys)
             {
-                if (srv.Type == ServiceFilterType.Messenger)
+                if (srv.ServiceType == ServiceFilterType.Messenger)
                     messengerService = srv;
             }
             addMemberRequest.serviceHandle.Id = messengerService.Id.ToString();
@@ -1633,7 +1633,7 @@ namespace MSNPSharp
             Service messengerService = new Service();
             foreach (Service srv in AddressBook.MembershipList.Keys)
             {
-                if (srv.Type == ServiceFilterType.Messenger)
+                if (srv.ServiceType == ServiceFilterType.Messenger)
                     messengerService = srv;
             }
             deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();   //Always set to 0 ??
