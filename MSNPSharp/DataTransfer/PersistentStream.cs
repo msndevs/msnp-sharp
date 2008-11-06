@@ -30,10 +30,12 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.IO;
+using System.Security.Permissions;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.IO;
     using MSNPSharp.Core;
     using MSNPSharp;
 
@@ -88,6 +90,7 @@ namespace MSNPSharp.DataTransfer
         }
         /// <summary>
         /// </summary>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.Infrastructure)]
         public override System.Runtime.Remoting.ObjRef CreateObjRef(Type requestedType)
         {
             return innerStream.CreateObjRef(requestedType);
@@ -125,6 +128,7 @@ namespace MSNPSharp.DataTransfer
         }
         /// <summary>
         /// </summary>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.Infrastructure)]
         public override object InitializeLifetimeService()
         {
             return innerStream.InitializeLifetimeService();
