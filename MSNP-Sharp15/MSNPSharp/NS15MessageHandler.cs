@@ -570,7 +570,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="status">MSNStatus enum object representing the status to translate</param>
         /// <returns>The corresponding textual value</returns>
-        internal string ParseStatus(PresenceStatus status)
+        internal static string ParseStatus(PresenceStatus status)
         {
             switch (status)
             {
@@ -785,7 +785,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="status">Textual MSN status received from server</param>
         /// <returns>The corresponding enum value</returns>
-        protected PresenceStatus ParseStatus(string status)
+        protected static PresenceStatus ParseStatus(string status)
         {
             switch (status)
             {
