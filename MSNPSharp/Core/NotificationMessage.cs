@@ -226,7 +226,7 @@ namespace MSNPSharp.Core
         /// Parses incoming byte data send from the network.
         /// </summary>
         /// <param name="data">The raw message as received from the server</param>
-        public override void ParseBytes(byte[] data)
+        public new void ParseBytes(byte[] data)
         {
             if (data != null)
             {

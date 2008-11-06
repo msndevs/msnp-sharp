@@ -30,21 +30,21 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.Text;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-    using System.Collections;
-    using System.Globalization;
-
     /// <summary>
     /// Yahoo Messenger Message
     /// </summary>
     [Serializable()]
     public class YIMMessage : MSNMessage
     {
-        string _user = "";
+        string _user = String.Empty;
         string _msgtype = "1";
 
         public YIMMessage(NSMessage message)
@@ -56,7 +56,7 @@ namespace MSNPSharp.Core
             Command = "UBM";
             //string strmessage = Encoding.UTF8.GetString(((NetworkMessage)message).InnerBody);
             //strmessage = strmessage.Substring(strmessage.IndexOf("\r\n") + 2);
-            message.Command = "";
+            message.Command = String.Empty;
             message.CommandValues.Clear();
             //message.InnerBody = Encoding.UTF8.GetBytes(strmessage);
             //message.PrepareMessage();
@@ -78,7 +78,7 @@ namespace MSNPSharp.Core
             _msgtype = commandValues[2].ToString();
         }
 
-        public override byte[] GetBytes()
+        public new byte[] GetBytes()
         {
             byte[] contents = null;
 

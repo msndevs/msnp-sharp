@@ -42,7 +42,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using System.Web; 
+    using System.Web;
 
     /// <summary>
     /// Defines the type of MSNObject.
@@ -458,7 +458,7 @@ namespace MSNPSharp
         /// a stream to the file will be opened and returned. The stream is not guaranteed to positioned at the beginning of the stream.
         /// </summary>
         /// <returns></returns>
-        public virtual Stream OpenStream()
+        public Stream OpenStream()
         {
             /*if(dataStream == null)
             {
@@ -553,7 +553,7 @@ namespace MSNPSharp
             return System.Web.HttpUtility.UrlEncode(GetXmlString(), Encoding.UTF8).Replace("+", "%20");
         }
 
-        public static bool operator == (MSNObject obj1, MSNObject obj2)
+        public static bool operator ==(MSNObject obj1, MSNObject obj2)
         {
             if (((object)obj1) == null && ((object)obj2) == null)
                 return true;
@@ -562,7 +562,7 @@ namespace MSNPSharp
             return obj1.GetHashCode() == obj2.GetHashCode();
         }
 
-        public static bool operator != (MSNObject obj1, MSNObject obj2)
+        public static bool operator !=(MSNObject obj1, MSNObject obj2)
         {
             return !(obj1 == obj2);
         }
