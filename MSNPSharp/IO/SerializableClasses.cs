@@ -60,16 +60,16 @@ namespace MSNPSharp.IO
             }
         }
 
-        private ServiceFilterType type;
-        public ServiceFilterType Type
+        private ServiceFilterType serviceType;
+        public ServiceFilterType ServiceType
         {
             get
             {
-                return type;
+                return serviceType;
             }
             set
             {
-                type = value;
+                serviceType = value;
             }
         }
 
@@ -101,7 +101,7 @@ namespace MSNPSharp.IO
 
         public override string ToString()
         {
-            return Convert.ToString(Type);
+            return Convert.ToString(ServiceType);
         }
 
         public static bool operator ==(Service svc1, Service svc2)

@@ -672,9 +672,9 @@ namespace MSNPSharp.DataTransfer
             properties.LocalContact = localContact;
             properties.RemoteContact = remoteContact;
 
-            if (msnObject.Type == MSNObjectType.Emoticon)
+            if (msnObject.ObjectType == MSNObjectType.Emoticon)
                 properties.DataType = DataTransferType.Emoticon;
-            else if (msnObject.Type == MSNObjectType.UserDisplay)
+            else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                 properties.DataType = DataTransferType.DisplayImage;
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
@@ -1051,9 +1051,9 @@ namespace MSNPSharp.DataTransfer
                     MSNObject msnObject = new MSNObject();
                     msnObject.ParseContext(message.MessageValues["Context"].ToString(), true);
 
-                    if (msnObject.Type == MSNObjectType.UserDisplay)
+                    if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                         properties.DataType = DataTransferType.DisplayImage;
-                    else if (msnObject.Type == MSNObjectType.Emoticon)
+                    else if (msnObject.ObjectType == MSNObjectType.Emoticon)
                         properties.DataType = DataTransferType.Emoticon;
                     else
                         properties.DataType = DataTransferType.Unknown;

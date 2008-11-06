@@ -116,10 +116,10 @@ namespace MSNPSharp
         {
         }
 
-        public OIMSendCompletedEventArgs(string sender_account, string receiver_account, ulong seq, string content, Exception err)
+        public OIMSendCompletedEventArgs(string senderAccount, string receiverAccount, ulong seq, string content, Exception err)
         {
-            sender = sender_account;
-            receiver = receiver_account;
+            sender = senderAccount;
+            receiver = receiverAccount;
             sequence = seq;
             message = content;
             error = err;
@@ -552,7 +552,7 @@ namespace MSNPSharp
                         if (range.Lower == userstate.oimcount && range.Upper == userstate.oimcount)
                         {
                             contact.OIMCount++; // Sent successfully.
-                            OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                            OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
                                 NSMessageHandler.Owner.Mail,
                                 userstate.account,
@@ -585,7 +585,7 @@ namespace MSNPSharp
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...", GetType().Name);
                         }
 
-                        OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                        OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
                                 NSMessageHandler.Owner.Mail,
                                 userstate.account,

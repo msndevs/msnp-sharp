@@ -128,7 +128,7 @@ namespace MSNPSharp.IO
         {
             foreach (Service svc in MembershipList.Keys)
             {
-                if (svc.Type == type)
+                if (svc.ServiceType == type)
                 {
                     return svc;
                 }
@@ -163,7 +163,7 @@ namespace MSNPSharp.IO
                     if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
                     {
                         contactlists ^= MSNLists.AllowedList;
-                        RemoveMemberhip(targetservice.Type, account, type, MemberRole.Allow);
+                        RemoveMemberhip(targetservice.ServiceType, account, type, MemberRole.Allow);
                     }
 
                 }
@@ -261,9 +261,9 @@ namespace MSNPSharp.IO
                     }
                     else
                     {
-                        currentService.Type = serviceType.Info.Handle.Type;
+                        currentService.ServiceType = serviceType.Info.Handle.Type;
                         
-                        if (ServiceFilterType.Messenger == currentService.Type)
+                        if (ServiceFilterType.Messenger == currentService.ServiceType)
                         {
                             currentService.LastChange = serviceType.LastChange;
                             currentService.ForeignId = serviceType.Info.Handle.ForeignId;
@@ -312,11 +312,11 @@ namespace MSNPSharp.IO
 
                                                 if (bm.Deleted)
                                                 {
-                                                    xmlcl.RemoveMemberhip(currentService.Type, account, type, memberrole);
+                                                    xmlcl.RemoveMemberhip(currentService.ServiceType, account, type, memberrole);
                                                 }
                                                 else
                                                 {
-                                                    xmlcl.AddMemberhip(currentService.Type, account, type, memberrole, bm);
+                                                    xmlcl.AddMemberhip(currentService.ServiceType, account, type, memberrole, bm);
                                                 }
                                             }
                                         }
