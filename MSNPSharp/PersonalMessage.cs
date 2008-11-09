@@ -45,7 +45,7 @@ namespace MSNPSharp
     public class PersonalMessage
     {
         private string personalMessage;
-#if MSNP16
+#if MSNP18
         private string signatureSound;
 #endif
         private string machineGuid;
@@ -100,14 +100,14 @@ namespace MSNPSharp
                 personalMessage = System.Web.HttpUtility.HtmlEncode(personalMessage);
 
                 string pload = String.Format("<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia><MachineGuid>{2}</MachineGuid>" +
-#if MSNP16
+#if MSNP18
  "<SignatureSound>{3}</SignatureSound>" +
 #endif
  "</Data>",
                                               personalMessage,
                                               currentmedia,
                                               machineGuid
-#if MSNP16
+#if MSNP18
 , signatureSound
 #endif
 );
@@ -135,7 +135,7 @@ namespace MSNPSharp
                 return machineGuid;
             }
         }
-#if MSNP16
+#if MSNP18
         public string SignatureSound
         {
             get
@@ -265,7 +265,7 @@ namespace MSNPSharp
 
             if (node != null)
                 machineGuid = node.InnerText;
-#if MSNP16
+#if MSNP18
             node = xmlDoc.SelectSingleNode("//Data/SignatureSound");
             if (node != null)
                 signatureSound = node.InnerText;

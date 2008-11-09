@@ -55,7 +55,7 @@ namespace MSNPSharp
     {
         #region Members
 
-#if MSNP16
+#if MSNP18
         public static readonly string MachineGuid = Guid.NewGuid().ToString();
         public static string EPName = "MSNPSharp";
 #endif
@@ -81,7 +81,7 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-#if MSNP16
+#if MSNP18
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC9
 #else
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
@@ -660,8 +660,8 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void SendInitialMessage()
         {
-#if MSNP16
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16", "MSNP15", "CVR0" }));
+#if MSNP18
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18", "CVR0" }));
 #else
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
 #endif
@@ -682,7 +682,22 @@ namespace MSNPSharp
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
             // send client information back
-            MessageProcessor.SendMessage(new NSMessage("CVR", new string[] { "0x040c", "winnt", "5.1", "i386", "MSNMSGR", "8.5.1302", "msmsgs", Credentials.Account }));
+            MessageProcessor.SendMessage(new NSMessage("CVR",
+                new string[] { 
+                    "0x" + CultureInfo.CurrentCulture.LCID.ToString("x4"), 
+                    "winnt", 
+                    "5.1", 
+                    "i386", 
+#if MSNP18
+                    Properties.Resources .MessengerClientName, 
+                    Properties.Resources.MessengerClientBuildVer, 
+#else
+                    "MSNMSGR",
+                    "8.5.1302",
+#endif
+                    "msmsgs", 
+                    Credentials.Account 
+                }));
         }
 
         /// <summary>
@@ -734,7 +749,7 @@ namespace MSNPSharp
                     mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
 
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response
-#if MSNP16
+#if MSNP18
          , MachineGuid
 #endif  
                 }));
@@ -826,8 +841,19 @@ namespace MSNPSharp
             if (message.CommandValues[1].ToString() == "0")
                 return;
 
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), 
+#if MSNP18
+                message.CommandValues[0].ToString().Split(':')[0]);
+#else
+                message.CommandValues[1].ToString());
+#endif
+            Contact contact = ContactList.GetContact(
+#if MSNP18
+                message.CommandValues[0].ToString().Split(':')[1], 
+#else
+                message.CommandValues[0].ToString(), 
+#endif
+                type);
 
             contact.SetPersonalMessage(new PersonalMessage(message));
         }
@@ -843,7 +869,13 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnILNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[3]);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), 
+#if MSNP18
+                message.CommandValues[1].ToString().Split(':')[0]
+#else
+                message.CommandValues[3].ToString()
+#endif
+                );
             Contact contact = ContactList.GetContact((string)message.CommandValues[2], type);
             contact.SetName((string)message.CommandValues[4]);
             PresenceStatus oldStatus = contact.Status;
@@ -852,7 +884,7 @@ namespace MSNPSharp
             // set the client capabilities, if available
             if (message.CommandValues.Count >= 5)
             {
-#if MSNP16
+#if MSNP18
                 contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString().Split(':')[0]);
 #else
                 contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString());
@@ -886,22 +918,40 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnNLNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[1], type);
-            contact.SetName((string)message.CommandValues[3]);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType),
+#if MSNP18
+                message.CommandValues[1].ToString().Split(':')[0]
+#else
+                message.CommandValues[2].ToString()
+#endif
+            );
+            Contact contact = ContactList.GetContact(
+#if MSNP18
+                message.CommandValues[1].ToString().Split(':')[1]
+#else
+                message.CommandValues[0].ToString()
+#endif
+                , type);
+
+            contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
             PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(ParseStatus((string)message.CommandValues[0]));
+            contact.SetStatus(ParseStatus(message.CommandValues[0].ToString()));
             if (message.CommandValues.Count >= 5)
             {
                 DisplayImage userDisplay = new DisplayImage();
+#if MSNP18
+                userDisplay.Context = message.CommandValues[4].ToString();
+#else
                 userDisplay.Context = message.CommandValues[5].ToString();
+#endif
                 contact.SetUserDisplay(userDisplay);
             }
+
             // set the client capabilities, if available
             if (message.CommandValues.Count > 4)
             {
-#if MSNP16
-                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString().Split(':')[0]);
+#if MSNP18
+                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[3].ToString().Split(':')[0]);
 #else
                 contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString());
 #endif
@@ -926,8 +976,20 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[0], type);
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), 
+#if MSNP18
+                message.CommandValues[0].ToString().Split(':')[0]
+#else
+                message.CommandValues[1].ToString()
+#endif
+);
+            Contact contact = ContactList.GetContact(
+#if MSNP18
+            message.CommandValues[0].ToString().Split(':')[1]
+#else
+                message.CommandValues[0].ToString()
+#endif
+        , type);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
 
@@ -1263,9 +1325,10 @@ namespace MSNPSharp
                     ip,
                     clientPort,
                     hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
-#if MSNP16                    
+#if MSNP18                    
                     ,
-                    hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0"
+                    hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0",
+                    hdr.ContainsKey("RouteInfo") ? hdr["RouteInfo"] : String.Empty
 #endif
                 );
 

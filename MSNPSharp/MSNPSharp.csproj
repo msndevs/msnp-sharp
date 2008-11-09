@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;MSNP16</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;MSNP18</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\MSNPSharp.XML</DocumentationFile>
@@ -273,9 +273,6 @@
     <None Include="Web References\MSNWS.MSNSecurityTokenService\RequestSecurityTokenResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNWS.MSNSecurityTokenService\soap-env.xsd">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-policy.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -286,9 +283,6 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\wss-utility.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNSecurityTokenService\xenc-schema.xsd">
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\xmldsig-core-schema.xsd">
@@ -359,10 +353,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -398,6 +392,9 @@
     <None Include="Resources\WLXLarge_default.gif" />
     <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\soap-env.xsd">
+      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>

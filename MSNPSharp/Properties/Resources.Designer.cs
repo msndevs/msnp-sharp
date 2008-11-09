@@ -87,6 +87,24 @@ namespace MSNPSharp.Properties {
             }
         }
         
+        /// <summary>
+        ///   查找类似 14.0.3921.0717 的本地化字符串。
+        /// </summary>
+        internal static string MessengerClientBuildVer {
+            get {
+                return ResourceManager.GetString("MessengerClientBuildVer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 WLMSGRBETA 的本地化字符串。
+        /// </summary>
+        internal static string MessengerClientName {
+            get {
+                return ResourceManager.GetString("MessengerClientName", resourceCulture);
+            }
+        }
+        
         internal static System.Drawing.Bitmap owner {
             get {
                 object obj = ResourceManager.GetObject("owner", resourceCulture);

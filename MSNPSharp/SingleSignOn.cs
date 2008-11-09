@@ -44,6 +44,8 @@ namespace MSNPSharp
 {
     using MSNPSharp.SOAP;
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
+    using System.IO;
+    using System.Security.Cryptography.X509Certificates;
 
     [Flags]
     public enum SSOTicketType
@@ -449,10 +451,12 @@ namespace MSNPSharp
         {
             RequestSecurityTokenType requestToken = new RequestSecurityTokenType();
             requestToken.Id = "RST" + authId.ToString();
-            requestToken.RequestType = RequestTypeOpenEnum.httpschemasxmlsoaporgws200404securitytrustIssue;
+            requestToken.RequestType = RequestTypeOpenEnum.httpschemasxmlsoaporgws200502trustIssue;
             requestToken.AppliesTo = new AppliesTo();
             requestToken.AppliesTo.EndpointReference = new EndpointReferenceType();
-            requestToken.AppliesTo.EndpointReference.Address = domain;
+            requestToken.AppliesTo.EndpointReference.Address = new AttributedURIType();
+            requestToken.AppliesTo.EndpointReference.Address.Value = domain;
+
             if (policyref != null)
             {
                 requestToken.PolicyReference = new PolicyReference();
@@ -513,18 +517,19 @@ namespace MSNPSharp
             }
         }
 
+
         public void Authenticate(MSNTicket msnticket, bool async)
         {
-            MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
+            SecurityTokenService securService = new SecurityTokenService(); 
             securService.Timeout = 60000;
             securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
             securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
-            securService.AuthInfo.BinaryVersion = "4";
+            securService.AuthInfo.BinaryVersion = "5";
             securService.AuthInfo.Cookies = string.Empty;
             securService.AuthInfo.UIVersion = "1";
-            securService.AuthInfo.RequestParams = "AQAAAAIAAABsYwQAAAAxMDU1";
+            securService.AuthInfo.RequestParams = "AQAAAAIAAABsYwQAAAAyMDUy";
 
             securService.Security = new SecurityHeaderType();
             securService.Security.UsernameToken = new UsernameTokenType();
@@ -534,11 +539,36 @@ namespace MSNPSharp
             securService.Security.UsernameToken.Password = new PasswordString();
             securService.Security.UsernameToken.Password.Value = pass;
 
+            DateTime now = DateTime.Now.ToUniversalTime();
+            DateTime begin = (new DateTime(1970, 1, 1));   //Already UTC time, no need to convert
+            TimeSpan span = now - begin;
+
+            securService.Security.Timestamp = new TimestampType();
+            securService.Security.Timestamp.Id = "Timestamp";
+            securService.Security.Timestamp.Created = new AttributedDateTime();
+            securService.Security.Timestamp.Created.Value = XmlConvert.ToString(now, "yyyy-MM-ddTHH:mm:ssZ");
+            securService.Security.Timestamp.Expires = new AttributedDateTime();
+            securService.Security.Timestamp.Expires.Value = XmlConvert.ToString(now.AddMinutes(5), "yyyy-MM-ddTHH:mm:ssZ");
+
+            securService.MessageID = new AttributedURIType();
+            securService.MessageID.Value = ((int)span.TotalSeconds).ToString();
+            
+            securService.ActionValue = new Action();
+            securService.ActionValue.MustUnderstand = true;
+            securService.ActionValue.Value = @"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue";
+
+            securService.ToValue = new To();
+            securService.ToValue.MustUnderstand = true;
+            securService.ToValue.Value = @"HTTPS://login.live.com:443//RST2.srf";
+
+            
+            
+            
             if (user.Split('@').Length > 1)
             {
                 if (user.Split('@')[1].ToLower(CultureInfo.InvariantCulture) == "msn.com")
                 {
-                    securService.Url = @"https://msnia.login.live.com/pp550/RST.srf";
+                    securService.Url = @"https://msnia.login.live.com/RST2.srf";
                 }
             }
             else
@@ -591,7 +621,7 @@ namespace MSNPSharp
             }
         }
 
-        private static void GetTickets(RequestSecurityTokenResponseType[] result, MSNSecurityServiceSoapClient securService, MSNTicket msnticket)
+        private void GetTickets(RequestSecurityTokenResponseType[] result, SecurityTokenService securService, MSNTicket msnticket)
         {
             if (securService.pp != null && securService.pp.credProperties != null)
             {
@@ -608,7 +638,7 @@ namespace MSNPSharp
             foreach (RequestSecurityTokenResponseType token in result)
             {
                 SSOTicketType ticketype = SSOTicketType.None;
-                switch (token.AppliesTo.EndpointReference.Address)
+                switch (token.AppliesTo.EndpointReference.Address.Value)
                 {
                     case "messenger.msn.com":
                         ticketype = SSOTicketType.Web;
@@ -631,8 +661,10 @@ namespace MSNPSharp
                 }
 
                 SSOTicket ssoticket = new SSOTicket(ticketype);
-                ssoticket.Domain = token.AppliesTo.EndpointReference.Address;
-                ssoticket.Ticket = token.RequestedSecurityToken.InnerText;
+                if (token.AppliesTo != null)
+                    ssoticket.Domain = token.AppliesTo.EndpointReference.Address.Value;
+                if (token.RequestedSecurityToken.BinarySecurityToken != null)
+                    ssoticket.Ticket = token.RequestedSecurityToken.BinarySecurityToken.Value;
                 if (token.RequestedProofToken != null && token.RequestedProofToken.BinarySecret != null)
                 {
                     ssoticket.BinarySecret = token.RequestedProofToken.BinarySecret.Value;
