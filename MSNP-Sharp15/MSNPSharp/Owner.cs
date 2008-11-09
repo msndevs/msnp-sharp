@@ -273,9 +273,24 @@ namespace MSNPSharp
             }
         }
 
-#if MSNP16
+#if MSNP18
 
         bool mpopEnabled;
+        string _routeInfo = string.Empty;
+
+        internal void SetRouteInfo(string info)
+        {
+            _routeInfo = info;
+        }
+
+        /// <summary>
+        /// Route address, used for PNRP??
+        /// </summary>
+        public string RouteInfo
+        {
+            get { return _routeInfo; }
+        }
+
         internal void SetMPOP(bool enabled)
         {
             mpopEnabled = enabled;
@@ -605,7 +620,8 @@ namespace MSNPSharp
         /// <param name="clientIP"></param>
         /// <param name="clientPort"></param>
         /// <param name="nick"></param>
-        /// <param name="mpopenabled"></param>
+        /// <param name="popEnabled"></param>
+        /// <param name="routeInfo"></param>
         internal void UpdateProfile(
             string loginTime, bool emailEnabled, string memberIdHigh,
             string memberIdLowd, string preferredLanguage, string preferredMail,
@@ -614,10 +630,11 @@ namespace MSNPSharp
             string wallet, string sid, string kv,
             string mspAuth, IPAddress clientIP, int clientPort,
             string nick
-#if MSNP16
-            , bool mpopenabled
+#if MSNP18
+            , bool popEnabled
+            , string routeInfo
 #endif
-            )
+)
         {
             LoginTime = loginTime;
             EmailEnabled = emailEnabled;
@@ -638,8 +655,9 @@ namespace MSNPSharp
             ClientIP = clientIP;
             ClientPort = clientPort;
             nickName = nick;
-#if MSNP16
-            mpopEnabled = mpopenabled;
+#if MSNP18
+            mpopEnabled = popEnabled;
+            _routeInfo = routeInfo;
 #endif
 
             validProfile = true;

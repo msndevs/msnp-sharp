@@ -40,6 +40,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using System.Web;
 
     #region Event argument classes
     /// <summary>
@@ -773,7 +774,7 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             string auth = NSMessageHandler.Owner.Mail;
-#if MSNP16
+#if MSNP18
             auth += ";" + NSMessageHandler.MachineGuid;
 #endif
             if (Invited)
@@ -932,7 +933,7 @@ namespace MSNPSharp
         protected virtual void OnUSRReceived(SBMessage message)
         {
             if (message.CommandValues[1].ToString() == "OK"
-#if MSNP16
+#if MSNP18
               && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant().Split(';')[0]
                 
 #else
@@ -1052,8 +1053,8 @@ namespace MSNPSharp
         {
             // the MSG command is the most versatile one. These are all the messages
             // between clients. Like normal messages, file transfer invitations, P2P messages, etc.
-
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
+
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[1].ToString());
 

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:wsse="http://schemas.xmlsoap.org/ws/2003/06/secext" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns="http://schemas.xmlsoap.org/ws/2003/06/secext" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://schemas.xmlsoap.org/ws/2003/06/secext" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import schemaLocation="xmldsig-core-schema.xsd" namespace="http://www.w3.org/2000/09/xmldsig#" />
   <xs:import schemaLocation="wss-utility.xsd" namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" />
   <xs:attribute name="Usage" type="xs:string" />
   <xs:element name="SecurityTokenReference" type="wsse:SecurityTokenReferenceType" />
   <xs:complexType name="SecurityTokenReferenceType">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
-      <xs:any processContents="lax" />
+      <xs:any minOccurs="0" namespace="##other" processContents="lax" />
+      <xs:element ref="wsse:Reference" />
     </xs:choice>
     <xs:attribute ref="wsse:Id" />
     <xs:attribute ref="wsse:Usage" />
@@ -13,7 +15,8 @@
   <xs:element name="Security" type="wsse:SecurityHeaderType" />
   <xs:complexType name="SecurityHeaderType">
     <xs:sequence>
-      <xs:element name="UsernameToken" type="wsse:UsernameTokenType" />
+      <xs:element minOccurs="0" name="UsernameToken" type="wsse:UsernameTokenType" />
+      <xs:element minOccurs="0" ref="wsu:Timestamp" />
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="UsernameTokenType">
@@ -21,7 +24,7 @@
       <xs:element name="Username" type="wsse:AttributedString" />
       <xs:element name="Password" type="wsse:PasswordString" />
     </xs:sequence>
-    <xs:attribute ref="wsse:Id" />
+    <xs:attribute ref="wsu:Id" />
   </xs:complexType>
   <xs:complexType name="AttributedString">
     <xs:simpleContent>
@@ -37,9 +40,7 @@
   </xs:complexType>
   <xs:complexType name="EncodedString">
     <xs:simpleContent>
-      <xs:extension base="wsse:AttributedString">
-        <xs:attribute name="URI" type="xs:anyURI" />
-      </xs:extension>
+      <xs:extension base="wsse:AttributedString" />
     </xs:simpleContent>
   </xs:complexType>
   <xs:element name="KeyIdentifier" type="wsse:KeyIdentifierType" />
@@ -58,9 +59,7 @@
   </xs:complexType>
   <xs:complexType name="KeyIdentifierType">
     <xs:simpleContent>
-      <xs:extension base="wsse:EncodedString">
-        <xs:attribute name="ValueType" type="xs:anyURI" />
-      </xs:extension>
+      <xs:extension base="wsse:EncodedString" />
     </xs:simpleContent>
   </xs:complexType>
   <xs:element name="BinarySecurityToken" type="wsse:BinarySecurityTokenType" />
@@ -74,5 +73,16 @@
       <xs:attribute name="URI" type="xs:anyURI" use="required" />
     </xs:complexType>
   </xs:element>
+  <xs:simpleType name="FaultcodeEnum">
+    <xs:restriction base="xs:QName">
+      <xs:enumeration value="wsse:UnsupportedSecurityToken" />
+      <xs:enumeration value="wsse:UnsupportedAlgorithm" />
+      <xs:enumeration value="wsse:InvalidSecurity" />
+      <xs:enumeration value="wsse:InvalidSecurityToken" />
+      <xs:enumeration value="wsse:FailedAuthentication" />
+      <xs:enumeration value="wsse:FailedCheck" />
+      <xs:enumeration value="wsse:SecurityTokenUnavailable" />
+    </xs:restriction>
+  </xs:simpleType>
   <xs:attribute name="Id" type="xs:string" />
 </xs:schema>
