@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.IO;
 using System.Net;
 using System.Xml;
 using System.Text;
@@ -39,13 +40,11 @@ using System.Globalization;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MSNPSharp
 {
-    using MSNPSharp.SOAP;
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
-    using System.IO;
-    using System.Security.Cryptography.X509Certificates;
 
     [Flags]
     public enum SSOTicketType
@@ -520,7 +519,7 @@ namespace MSNPSharp
 
         public void Authenticate(MSNTicket msnticket, bool async)
         {
-            SecurityTokenService securService = new SecurityTokenService(); 
+            SecurityTokenService securService = new SecurityTokenService();
             securService.Timeout = 60000;
             securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
@@ -552,7 +551,7 @@ namespace MSNPSharp
 
             securService.MessageID = new AttributedURIType();
             securService.MessageID.Value = ((int)span.TotalSeconds).ToString();
-            
+
             securService.ActionValue = new Action();
             securService.ActionValue.MustUnderstand = true;
             securService.ActionValue.Value = @"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue";
@@ -561,9 +560,6 @@ namespace MSNPSharp
             securService.ToValue.MustUnderstand = true;
             securService.ToValue.Value = @"HTTPS://login.live.com:443//RST2.srf";
 
-            
-            
-            
             if (user.Split('@').Length > 1)
             {
                 if (user.Split('@')[1].ToLower(CultureInfo.InvariantCulture) == "msn.com")
@@ -586,7 +582,7 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled)
                     {
-                        securService = sender as MSNSecurityServiceSoapClient;
+                        securService = sender as SecurityTokenService;
                         if (e.Error != null)
                         {
                             MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);

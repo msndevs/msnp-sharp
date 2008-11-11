@@ -27,7 +27,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;MSNP16</DefineConstants>
+    <DefineConstants>TRACE;MSNP18</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -75,7 +75,6 @@
     <Compile Include="Core\MSNMessage.cs" />
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
-    <Compile Include="MSNSecurityServiceSoapClient.cs" />
     <Compile Include="MSNService.cs" />
     <Compile Include="DataTransfer\MSNSLPHandler.cs" />
     <Compile Include="DataTransfer\MSNSLPMessage.cs" />
