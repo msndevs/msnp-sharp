@@ -42,66 +42,9 @@ namespace MSNPSharp
     using MSNPSharp.DataTransfer;
 
     [Serializable()]
-    public class ContactIdentifier
-    {
-        private string mail;
-        private ClientType clientType;
-
-        public string Mail
-        {
-            get
-            {
-                return mail;
-            }
-            set
-            {
-                mail = value;
-            }
-        }
-
-        public ClientType ClientType
-        {
-            get
-            {
-                return clientType;
-            }
-            set
-            {
-                clientType = value;
-            }
-        }
-
-        public ContactIdentifier()
-        {
-            mail = string.Empty;
-        }
-
-        public ContactIdentifier(string account, ClientType type)
-        {
-            mail = account.ToLowerInvariant();
-            clientType = type;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(this, obj))
-                return true;
-            ContactIdentifier ci = obj as ContactIdentifier;
-            if ((object)ci == null)
-                return false;
-            return (ci.Mail == Mail && ci.ClientType == ClientType);
-        }
-
-        public override int GetHashCode()
-        {
-            return Mail.GetHashCode() - ClientType.GetHashCode(); //This is the key line.
-        }
-    }
-
-    [Serializable()]
     public class ContactList
     {
-        Dictionary<ContactIdentifier, Contact> contacts = new Dictionary<ContactIdentifier, Contact>(10);
+        Dictionary<string, Contact> contacts = new Dictionary<string, Contact>(10);
 
         [NonSerialized]
         private object syncRoot;
@@ -444,10 +387,10 @@ namespace MSNPSharp
         /// </returns>
         internal Contact GetContact(string account, ClientType type)
         {
-            ContactIdentifier cid = new ContactIdentifier(account, type);
+            string hash = Contact.MakeHash(account, type);
             if (HasContact(account, type))
             {
-                return contacts[cid];
+                return contacts[hash];
             }
 
             Contact tmpContact = Factory.CreateContact();
@@ -457,7 +400,7 @@ namespace MSNPSharp
             tmpContact.SetClientType(type);
 
             lock (SyncRoot)
-                contacts.Add(cid, tmpContact);
+                contacts.Add(hash, tmpContact);
 
             return GetContact(account, type);
         }
@@ -508,8 +451,8 @@ namespace MSNPSharp
             account = account.ToLower(CultureInfo.InvariantCulture);
             lock (SyncRoot)
             {
-                foreach (ContactIdentifier cid in contacts.Keys)
-                    if (cid.Mail == account)
+                foreach (Contact c in contacts.Values)
+                    if (c.Mail.ToLowerInvariant() == account)
                         return true;
             }
             return false;
@@ -523,8 +466,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool HasContact(string account, ClientType type)
         {
-            ContactIdentifier cid = new ContactIdentifier(account, type);
-            return contacts.ContainsKey(cid);
+            return contacts.ContainsKey(Contact.MakeHash(account, type));
         }
 
         public void CopyTo(Contact[] array, int index)
@@ -545,18 +487,18 @@ namespace MSNPSharp
         internal void Remove(string account)
         {
             account = account.ToLower(CultureInfo.InvariantCulture);
-            List<ContactIdentifier> removecid = new List<ContactIdentifier>(0);
+            List<string> removehash = new List<string>(0);
             if (HasContact(account))
             {
                 lock (SyncRoot)
                 {
-                    foreach (ContactIdentifier cid in contacts.Keys)
+                    foreach (Contact contact in contacts.Values)
                     {
-                        if (cid.Mail == account)
-                            removecid.Add(cid);
+                        if (contact.Mail.ToLowerInvariant() == account)
+                            removehash.Add(contact.Hash);
                     }
-                    foreach (ContactIdentifier rcid in removecid)
-                        contacts.Remove(rcid);
+                    foreach (string rhash in removehash)
+                        contacts.Remove(rhash);
                 }
             }
         }
@@ -570,17 +512,18 @@ namespace MSNPSharp
         {
             lock (SyncRoot)
             {
-                contacts.Remove(new ContactIdentifier(account, type));
+                contacts.Remove(Contact.MakeHash(account, type));
             }
         }
 
         private bool HasMultiType(string account)
         {
             int typecount = 0;
+            account = account.ToLowerInvariant();
 
             lock (SyncRoot)
-                foreach (ContactIdentifier cid in contacts.Keys)
-                    if (cid.Mail == account.ToLowerInvariant())
+                foreach (Contact contact in contacts.Values)
+                    if (contact.Mail.ToLowerInvariant() == account)
                     {
                         if (++typecount == 2)
                             return true;

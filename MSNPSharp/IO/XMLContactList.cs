@@ -120,8 +120,14 @@ namespace MSNPSharp.IO
                     SerializableDictionary<MemberRole,
                     SerializableDictionary<string, BaseMember>>> MembershipList
         {
-            get { return mslist; }
-            set { mslist = value; }
+            get
+            {
+                return mslist;
+            }
+            set
+            {
+                mslist = value;
+            }
         }
 
         private Service GetTargetService(ServiceFilterType type)
@@ -136,17 +142,17 @@ namespace MSNPSharp.IO
             return null;
         }
 
-       
+
 
         public MSNLists GetMSNLists(ServiceFilterType servicetype, string account, ClientType type)
         {
             MSNLists contactlists = MSNLists.None;
-            string hash = Contact.MakeHash(account, type);
-
             Service targetservice = GetTargetService(servicetype);
 
             if (targetservice != null)
             {
+                string hash = Contact.MakeHash(account, type);
+
                 if (MembershipList[targetservice].ContainsKey(MemberRole.Allow)
                     && MembershipList[targetservice][MemberRole.Allow].ContainsKey(hash))
                     contactlists |= MSNLists.AllowedList;
@@ -173,29 +179,29 @@ namespace MSNPSharp.IO
                     contactlists |= MSNLists.ReverseList;
             }
 
-            
             return contactlists;
         }
 
         public void AddMemberhip(ServiceFilterType servicetype, string account, ClientType type, MemberRole memberrole, BaseMember member)
         {
-            string hash = Contact.MakeHash(account, type);
             Service svc = GetTargetService(servicetype);
             if (svc != null)
             {
+                string hash = Contact.MakeHash(account, type);
+
                 if (!MembershipList[svc].ContainsKey(memberrole))
                     MembershipList[svc].Add(memberrole, new SerializableDictionary<string, BaseMember>(0));
+
                 MembershipList[svc][memberrole].Add(hash, member);
             }
         }
 
         public void RemoveMemberhip(ServiceFilterType servicetype, string account, ClientType type, MemberRole memberrole)
         {
-            string hash = Contact.MakeHash(account, type);
-
             Service svc = GetTargetService(servicetype);
             if (svc != null)
             {
+                string hash = Contact.MakeHash(account, type);
                 if (MembershipList[svc].ContainsKey(memberrole) && MembershipList[svc][memberrole].ContainsKey(hash))
                 {
                     MembershipList[svc][memberrole].Remove(hash);
@@ -214,8 +220,11 @@ namespace MSNPSharp.IO
                 {
                     foreach (string hash in range[svc][role].Keys)
                     {
-                        if (!mslist.ContainsKey(svc)) mslist.Add(svc, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
-                        if (!mslist[svc].ContainsKey(role)) mslist[svc].Add(role, new SerializableDictionary<string, BaseMember>(0));
+                        if (!mslist.ContainsKey(svc))
+                            mslist.Add(svc, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
+
+                        if (!mslist[svc].ContainsKey(role))
+                            mslist[svc].Add(role, new SerializableDictionary<string, BaseMember>(0));
 
                         if (mslist[svc][role].ContainsKey(hash))
                         {
@@ -233,7 +242,7 @@ namespace MSNPSharp.IO
                     }
                 }
             }
-            
+
         }
 
         /// <summary>
@@ -251,6 +260,9 @@ namespace MSNPSharp.IO
                 {
                     Service currentService = new Service();
                     currentService.Id = int.Parse(serviceType.Info.Handle.Id);
+                    currentService.ServiceType = serviceType.Info.Handle.Type;
+                    currentService.LastChange = serviceType.LastChange;
+                    currentService.ForeignId = serviceType.Info.Handle.ForeignId;
 
                     if (serviceType.Deleted)
                     {
@@ -261,12 +273,8 @@ namespace MSNPSharp.IO
                     }
                     else
                     {
-                        currentService.ServiceType = serviceType.Info.Handle.Type;
-                        
                         if (ServiceFilterType.Messenger == currentService.ServiceType)
-                        {
-                            currentService.LastChange = serviceType.LastChange;
-                            currentService.ForeignId = serviceType.Info.Handle.ForeignId;
+                        {                            
                             MsngrService = currentService;
 
                             if (!xmlcl.MembershipList.ContainsKey(currentService))
@@ -364,7 +372,7 @@ namespace MSNPSharp.IO
                         contact.NSMessageHandler = xmlcl.NSMessageHandler;
                         MSNLists newlists = xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type);
 
-                        
+
 
                         // Set new lists.
                         contact.SetLists(newlists);
