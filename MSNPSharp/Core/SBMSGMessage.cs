@@ -175,7 +175,7 @@ namespace MSNPSharp.Core
             return table;
         }
 
-        public new void ParseBytes(byte[] data)
+        public override void ParseBytes(byte[] data)
         {
             // parse the header
             IEnumerator enumerator = data.GetEnumerator();
@@ -186,7 +186,6 @@ namespace MSNPSharp.Core
             BinaryWriter writer = new BinaryWriter(memStream);
             while (enumerator.MoveNext())
                 writer.Write((byte)enumerator.Current);
-
             InnerBody = memStream.ToArray();
             memStream.Close();
         }
