@@ -41,6 +41,11 @@ namespace MSNPSharp
     #region ConversationCreatedEvent
 
     /// <summary>
+    /// Used when a new conversation is created. 
+    /// </summary>
+    public delegate void ConversationCreatedEventHandler(object sender, ConversationCreatedEventArgs e);
+
+    /// <summary>
     /// Used when a new switchboard session is created.
     /// </summary>
     public class ConversationCreatedEventArgs : EventArgs
@@ -152,7 +157,7 @@ namespace MSNPSharp
                 Conversation c = new Conversation(this, ce.Switchboard);
 
                 // remove the conversation from the list when the conversation has ended.
-                c.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
+                c.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
 
                 tsConversations.Add(c);
 
@@ -245,12 +250,12 @@ namespace MSNPSharp
         /// This event is called after the messenger server has created a switchboard handler, so there is
         /// always a valid messageprocessor.
         /// </remarks>
-        public event EventHandler<ConversationCreatedEventArgs> ConversationCreated;
+        public event ConversationCreatedEventHandler ConversationCreated;
 
         /// <summary>
         /// Occurs when a remote client has send an invitation for a filetransfer session.
         /// </summary>
-        public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
+        public event MSNSLPInvitationReceivedEventHandler TransferInvitationReceived;
 
         #endregion
 
@@ -523,7 +528,7 @@ namespace MSNPSharp
             Conversation conversation = new Conversation(this, sbHandler);
             tsConversations.Add(conversation);
 
-            conversation.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
+            conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
             OnConversationCreated(conversation, this);
 
             return conversation;

@@ -193,7 +193,7 @@ namespace MSNPSharp
         /// <summary>
         /// The type of MSN Object
         /// </summary>
-        public MSNObjectType Type
+        public MSNObjectType ObjectType
         {
             get
             {
@@ -312,7 +312,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="stream"></param>
         /// <returns></returns>
-        protected string GetStreamHash(Stream stream)
+        protected static string GetStreamHash(Stream stream)
         {
             stream.Seek(0, SeekOrigin.Begin);
 
@@ -502,7 +502,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public string CalculateChecksum()
         {
-            string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.Type + "Location" + Location + "FriendlyAAA=SHA1D" + Sha;
+            string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.ObjectType + "Location" + Location + "FriendlyAAA=SHA1D" + Sha;
 
             HashAlgorithm shaAlg = new SHA1Managed();
             string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.UTF8.GetBytes(checksum)));
@@ -541,7 +541,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetXmlString()
         {
-            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.Type + "\" Location=\"" + Location + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() + "\"/>";
+            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + Location + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() + "\"/>";
         }
 
         /// <summary>

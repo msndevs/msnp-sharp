@@ -45,13 +45,13 @@ namespace MSNPSharp
 
         public Emoticon()
         {
-            Type = MSNObjectType.Emoticon;
+            ObjectType = MSNObjectType.Emoticon;
             Location = Guid.NewGuid().ToString();
         }
 
         public Emoticon(string creator, string shortcut)
         {
-            Type = MSNObjectType.Emoticon;
+            ObjectType = MSNObjectType.Emoticon;
             Location = Guid.NewGuid().ToString();
             Creator = creator;
             Shortcut = shortcut;
@@ -60,7 +60,7 @@ namespace MSNPSharp
         public Emoticon(string creator, Stream input, string location, string shortcut)
             : base(creator, input, location)
         {
-            Type = MSNObjectType.Emoticon;
+            ObjectType = MSNObjectType.Emoticon;
             Shortcut = shortcut;
         }
 

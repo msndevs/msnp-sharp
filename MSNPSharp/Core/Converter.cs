@@ -40,44 +40,44 @@ namespace MSNPSharp.Core
         /// <summary>
         /// Decode the QP encoded string using an encoding
         /// </summary>
-        /// <param name="quoted_printableString"></param>
+        /// <param name="value"></param>
         /// <param name="encode"></param>
         /// <returns></returns>
-        public static string ConvertFromQPString(string quoted_printableString, Encoding encode)
+        public static string ConvertFromQPString(string value, Encoding encode)
         {
-            string InputString = quoted_printableString;
+            string inputString = value;
             StringBuilder builder1 = new StringBuilder();
-            InputString = InputString.Replace("=\r\n", "");
-            for (int num1 = 0; num1 < InputString.Length; num1++)
+            inputString = inputString.Replace("=\r\n", "");
+            for (int num1 = 0; num1 < inputString.Length; num1++)
             {
-                if (InputString[num1] == '=')
+                if (inputString[num1] == '=')
                 {
                     try
                     {
-                        if (HexToDec(InputString.Substring(num1 + 1, 2)) < 0x80)
+                        if (HexToDec(inputString.Substring(num1 + 1, 2)) < 0x80)
                         {
-                            if (HexToDec(InputString.Substring(num1 + 1, 2)) >= 0)
+                            if (HexToDec(inputString.Substring(num1 + 1, 2)) >= 0)
                             {
-                                byte[] buffer1 = new byte[1] { (byte)HexToDec(InputString.Substring(num1 + 1, 2)) };
+                                byte[] buffer1 = new byte[1] { (byte)HexToDec(inputString.Substring(num1 + 1, 2)) };
                                 builder1.Append(encode.GetString(buffer1));
                                 num1 += 2;
                             }
                         }
-                        else if (InputString[num1 + 1] != '=')
+                        else if (inputString[num1 + 1] != '=')
                         {
-                            byte[] buffer2 = new byte[2] { (byte)HexToDec(InputString.Substring(num1 + 1, 2)), (byte)HexToDec(InputString.Substring(num1 + 4, 2)) };
+                            byte[] buffer2 = new byte[2] { (byte)HexToDec(inputString.Substring(num1 + 1, 2)), (byte)HexToDec(inputString.Substring(num1 + 4, 2)) };
                             builder1.Append(encode.GetString(buffer2));
                             num1 += 5;
                         }
                     }
                     catch
                     {
-                        builder1.Append(InputString.Substring(num1, 1));
+                        builder1.Append(inputString.Substring(num1, 1));
                     }
                 }
                 else
                 {
-                    builder1.Append(InputString.Substring(num1, 1));
+                    builder1.Append(inputString.Substring(num1, 1));
                 }
             }
             return builder1.ToString();

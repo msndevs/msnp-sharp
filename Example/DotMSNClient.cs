@@ -24,18 +24,12 @@ namespace MSNPSharpClient
 
         public List<ConversationForm> ConversationForms
         {
-            get
-            {
-                return convforms;
-            }
+            get { return convforms; }
         }
 
         public Messenger Messenger
         {
-            get
-            {
-                return messenger;
-            }
+            get { return messenger; }
         }
 
         #region Form controls
@@ -108,29 +102,29 @@ namespace MSNPSharpClient
             // set the events that we will handle
             // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
             // a switchboard server handles the individual conversation sessions.
-            messenger.NameserverProcessor.ConnectionEstablished += new EventHandler<EventArgs>(NameserverProcessor_ConnectionEstablished);
-            messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
-            messenger.Nameserver.SignedOff += new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff);
-            messenger.NameserverProcessor.ConnectingException += new EventHandler<ExceptionEventArgs>(NameserverProcessor_ConnectingException);
-            messenger.Nameserver.ExceptionOccurred += new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred);
-            messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
-            messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
-            messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
-            messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
-            messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
+            messenger.NameserverProcessor.ConnectionEstablished             += new EventHandler(NameserverProcessor_ConnectionEstablished);
+            messenger.Nameserver.SignedIn                                   += new EventHandler(Nameserver_SignedIn);
+            messenger.Nameserver.SignedOff                                  += new SignedOffEventHandler(Nameserver_SignedOff);
+            messenger.NameserverProcessor.ConnectingException               += new ProcessorExceptionEventHandler(NameserverProcessor_ConnectingException);
+            messenger.Nameserver.ExceptionOccurred                          += new HandlerExceptionEventHandler(Nameserver_ExceptionOccurred);
+            messenger.Nameserver.AuthenticationError                        += new HandlerExceptionEventHandler(Nameserver_AuthenticationError);
+            messenger.Nameserver.ServerErrorReceived                        += new ErrorReceivedEventHandler(Nameserver_ServerErrorReceived);
+            messenger.ConversationCreated                                   += new ConversationCreatedEventHandler(messenger_ConversationCreated);
+            messenger.TransferInvitationReceived                            += new MSNSLPInvitationReceivedEventHandler(messenger_TransferInvitationReceived);
+            messenger.Nameserver.PingAnswer                                 += new PingAnswerEventHandler(Nameserver_PingAnswer);
 
-            messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
-            messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
+            messenger.Nameserver.ContactOnline                              += new ContactChangedEventHandler(Nameserver_ContactOnline);
+            messenger.Nameserver.ContactOffline                             += new ContactChangedEventHandler(Nameserver_ContactOffline);
 
-            messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
+            messenger.Nameserver.ContactService.ReverseAdded                += new ContactChangedEventHandler(Nameserver_ReverseAdded);
 
-            messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            messenger.Nameserver.SpaceService.ContactCardCompleted += new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted);
+            messenger.Nameserver.Owner.PersonalMessageChanged               += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
+            messenger.Nameserver.Owner.ScreenNameChanged                    += new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged);
+            messenger.Nameserver.SpaceService.ContactCardCompleted          += new ContactCardCompletedEventHandler(SpaceService_ContactCardCompleted);
 
-            messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
-            messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
-
+            messenger.Nameserver.OIMService.OIMReceived                     += new OIMReceivedEventHandler(Nameserver_OIMReceived);
+            messenger.Nameserver.OIMService.OIMSendCompleted                += new OIMSentCompletedEventHandler(OIMService_OIMSendCompleted);
+          
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             if (toolStripSortByStatus.Checked)
@@ -142,11 +136,11 @@ namespace MSNPSharpClient
 
         }
 
-        void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArgs arg)
+        void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArg arg)
         {
             if (this.InvokeRequired)
             {
-                this.Invoke(new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted),
+                this.Invoke(new ContactCardCompletedEventHandler(SpaceService_ContactCardCompleted),
                     new object[] { sender, arg });
             }
             else
@@ -163,7 +157,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<EventArgs>(Owner_PersonalMessageChanged), sender, e);
+                Invoke(new Contact.ContactChangedEventHandler(Owner_PersonalMessageChanged), sender, e);
                 return;
             }
 
@@ -721,7 +715,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.OwnerPanel);
             this.Controls.Add(this.changeDisplayButton);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client (2.5)";
+            this.Text = "MSNPSharp Example Client (2.0.9)";
             this.ListPanel.ResumeLayout(false);
             this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
@@ -755,11 +749,11 @@ namespace MSNPSharpClient
 
         void Nameserver_ContactOnline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOfline), sender, e);
+            Invoke(new ContactChangedEventHandler(ContactOnlineOfline), sender, e);
         }
         void Nameserver_ContactOffline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOfline), sender, e);
+            Invoke(new ContactChangedEventHandler(ContactOnlineOfline), sender, e);
         }
 
         void ContactOnlineOfline(object sender, ContactEventArgs e)
@@ -779,7 +773,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived), sender, e);
+                Invoke(new OIMReceivedEventHandler(Nameserver_OIMReceived), sender, e);
                 return;
             }
 
@@ -793,7 +787,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted), sender, e);
+                Invoke(new OIMSentCompletedEventHandler(OIMService_OIMSendCompleted), sender, e);
                 return;
             }
 
@@ -807,7 +801,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded), sender, e);
+                Invoke(new ContactChangedEventHandler(Nameserver_ReverseAdded), sender, e);
                 return;
             }
 
@@ -974,21 +968,21 @@ namespace MSNPSharpClient
                     PresenceStatus old = messenger.Owner.Status;
                     //close all ConversationForms
                     if (ConversationForms.Count == 0 ||
-                        MessageBox.Show("You are signing out from example client. All windows will be closed.", "Sign out",
+                        MessageBox.Show("You are signing out from example client. All windows will be closed.","Sign out",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
                         if (ConversationForms.Count != 0)
                         {
-                            for (int i = 0; i < ConversationForms.Count; i++)
+                            for(int i =0;i<ConversationForms .Count ;i++)
                             {
                                 ConversationForms[i].Close();
                             }
 
-                        }
-                        loginButton.Tag = 2;
-                        loginButton.PerformClick();
-                        pnlNameAndPM.Visible = false;
-
+                        }                      
+                    loginButton.Tag = 2;
+                    loginButton.PerformClick();
+                    pnlNameAndPM.Visible = false;
+                       
                     }
                     comboStatus.SelectedIndex = comboStatus.FindString(old.ToString());
                 }
@@ -1027,7 +1021,7 @@ namespace MSNPSharpClient
 
             messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
-            Invoke(new EventHandler<EventArgs>(UpdateContactlist), sender, e);
+            Invoke(new UpdateContactlistDelegate(UpdateContactlist));
         }
 
         private void Nameserver_SignedOff(object sender, SignedOffEventArgs e)
@@ -1036,7 +1030,7 @@ namespace MSNPSharpClient
 
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff), sender, e);
+                Invoke(new SignedOffEventHandler(Nameserver_SignedOff), sender, e);
                 return;
             }
 
@@ -1070,9 +1064,14 @@ namespace MSNPSharpClient
         }
 
         /// <summary>
+        /// Used to invoke UpdateContactlist
+        /// </summary>
+        private delegate void UpdateContactlistDelegate();
+
+        /// <summary>
         /// Updates the treeView.
         /// </summary>
-        private void UpdateContactlist(object sender, EventArgs e)
+        private void UpdateContactlist()
         {
             if (messenger.Connected == false)
                 return;
@@ -1170,7 +1169,7 @@ namespace MSNPSharpClient
                 {
                     this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { e.Conversation, args.Contact });
                 };
-
+                
             }
         }
 
@@ -1335,7 +1334,7 @@ namespace MSNPSharpClient
 
                                 // as usual, via events we want to be notified when a transfer is finished.
                                 // ofcourse, optionally, you can also catch abort and error events.
-                                session.TransferFinished += new EventHandler<EventArgs>(session_TransferFinished);
+                                session.TransferFinished += new EventHandler(session_TransferFinished);
                                 session.ClientData = selectedContact.DisplayImage;
                             }
                             catch (Exception)
@@ -1451,7 +1450,6 @@ namespace MSNPSharpClient
                 {
                     if (conv.WindowState == FormWindowState.Minimized)
                         conv.Show();
-
                     conv.Activate();
                     return;
                 }
@@ -1722,7 +1720,7 @@ namespace MSNPSharpClient
 
         private void btnAddNew_Click(object sender, EventArgs e)
         {
-            if (this.loginButton.Tag.ToString() != "2")
+            if(this.loginButton.Tag.ToString() != "2")
             {
                 MessageBox.Show("Please sign in first.");
                 return;

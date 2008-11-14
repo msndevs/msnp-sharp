@@ -48,7 +48,7 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNSpaceService;
     using MSNPSharp.MSNWS.MSNABSharingService;
 
-    public class ContactCardCompletedEventArgs : EventArgs
+    public class ContactCardCompletedEventArg
     {
         private Exception error;
         private bool changed;
@@ -87,17 +87,24 @@ namespace MSNPSharp
             }
         }
 
-        protected ContactCardCompletedEventArgs()
+        protected ContactCardCompletedEventArg()
         {
         }
 
-        public ContactCardCompletedEventArgs(bool chg, Exception err, ContactCard cc)
+        public ContactCardCompletedEventArg(bool chg, Exception err, ContactCard cc)
         {
             error = err;
             changed = chg;
             contactCard = cc;
         }
     }
+
+    /// <summary>
+    /// The delegate is used when the request to a contact card returns.
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="arg"></param>
+    public delegate void ContactCardCompletedEventHandler(object sender, ContactCardCompletedEventArg arg);
 
     /// <summary>
     /// Provides services that related to MSN Space.
@@ -107,7 +114,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired after GetContactCard completed its async request.
         /// </summary>
-        public event EventHandler<ContactCardCompletedEventArgs> ContactCardCompleted;
+        public event ContactCardCompletedEventHandler ContactCardCompleted;
 
         public ContactSpaceService(NSMessageHandler nshandler)
             : base(nshandler)
@@ -138,7 +145,7 @@ namespace MSNPSharp
 
                     if (e.Error != null)
                     {
-                        OnContactCardCompleted(new ContactCardCompletedEventArgs(true, e.Error, null));
+                        OnContactCardCompleted(new ContactCardCompletedEventArg(true, e.Error, null));
                         OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("GetContactCard", e.Error));
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.Message, GetType().Name);
@@ -233,7 +240,7 @@ namespace MSNPSharp
                             if (album != null)
                                 cc.SetAlbum(album);
 
-                            OnContactCardCompleted(new ContactCardCompletedEventArgs(true, null, cc));
+                            OnContactCardCompleted(new ContactCardCompletedEventArg(true, null, cc));
                         }
 
                         BaseDynamicItemType basedyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
@@ -329,7 +336,7 @@ namespace MSNPSharp
             }
             else
             {
-                OnContactCardCompleted(new ContactCardCompletedEventArgs(false, null, null));
+                OnContactCardCompleted(new ContactCardCompletedEventArg(false, null, null));
             }
         }
 
@@ -337,7 +344,7 @@ namespace MSNPSharp
         /// Override to fire the ContactCardCompleted event.
         /// </summary>
         /// <param name="arg">Result arg.</param>
-        protected virtual void OnContactCardCompleted(ContactCardCompletedEventArgs arg)
+        protected virtual void OnContactCardCompleted(ContactCardCompletedEventArg arg)
         {
             if (ContactCardCompleted != null)
                 ContactCardCompleted(this, arg);

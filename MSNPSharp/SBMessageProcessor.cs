@@ -43,7 +43,7 @@ namespace MSNPSharp
     {
         int transactionID = 1;
 
-        public event EventHandler<ExceptionEventArgs> HandlerException;
+        public event ProcessorExceptionEventHandler HandlerException;
 
         public int TransactionID
         {

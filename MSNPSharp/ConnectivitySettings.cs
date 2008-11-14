@@ -42,7 +42,7 @@ namespace MSNPSharp
 
     public class MSNServiceCertificatePolicy : ICertificatePolicy
     {
-        public bool CheckValidationResult(ServicePoint sp, X509Certificate certificate, WebRequest request, int error)
+        public bool CheckValidationResult(ServicePoint srvPoint, X509Certificate certificate, WebRequest request, int certificateProblem)
         {
             return true;
         }

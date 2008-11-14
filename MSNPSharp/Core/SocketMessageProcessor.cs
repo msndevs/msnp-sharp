@@ -54,10 +54,10 @@ namespace MSNPSharp.Core
         MessagePool messagePool;
         List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
 
-        public event EventHandler<EventArgs> ConnectionEstablished;
-        public event EventHandler<EventArgs> ConnectionClosed;
-        public event EventHandler<ExceptionEventArgs> ConnectingException;
-        public event EventHandler<ExceptionEventArgs> ConnectionException;
+        public event EventHandler ConnectionEstablished;
+        public event EventHandler ConnectionClosed;
+        public event ProcessorExceptionEventHandler ConnectingException;
+        public event ProcessorExceptionEventHandler ConnectionException;
 
         public SocketMessageProcessor()
         {

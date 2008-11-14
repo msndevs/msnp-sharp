@@ -37,6 +37,10 @@ namespace MSNPSharp.Core
     using MSNPSharp.DataTransfer;
 
     /// <summary>
+    /// </summary>
+    public delegate void ProcessorExceptionEventHandler(object sender, ExceptionEventArgs e);
+
+    /// <summary>
     /// Defines methods to send network messages.
     /// </summary>
     /// <remarks>

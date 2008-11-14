@@ -43,7 +43,7 @@ namespace MSNPSharp
     {
         int transactionID = 1;
 
-        public event EventHandler<ExceptionEventArgs> HandlerException;
+        public event ProcessorExceptionEventHandler HandlerException;
 
         private NSMessageProcessor()
         {
@@ -101,7 +101,7 @@ namespace MSNPSharp
         public override void Disconnect()
         {
             SendMessage(new NSMessage("OUT", new string[] { }));
-            System.Threading.Thread.CurrentThread.Join(100);
+            System.Threading.Thread.Sleep(100);
             base.Disconnect();
         }
 

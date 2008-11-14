@@ -163,15 +163,17 @@ namespace MSNPSharp
 
         object clientData;
 
-        public event EventHandler<EventArgs> ScreenNameChanged;
-        public event EventHandler<EventArgs> PersonalMessageChanged;
-        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
-        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
-        public event EventHandler<EventArgs> ContactBlocked;
-        public event EventHandler<EventArgs> ContactUnBlocked;
-        public event EventHandler<EventArgs> ContactOnline;
-        public event EventHandler<StatusChangeEventArgs> ContactOffline;
-        public event EventHandler<StatusChangeEventArgs> StatusChanged;
+        public delegate void ContactChangedEventHandler(object sender, EventArgs e);
+        public delegate void StatusChangedEventHandler(object sender, StatusChangeEventArgs e);
+        public event ContactChangedEventHandler ScreenNameChanged;
+        public event ContactChangedEventHandler PersonalMessageChanged;
+        public event ContactGroupChangedEventHandler ContactGroupAdded;
+        public event ContactGroupChangedEventHandler ContactGroupRemoved;
+        public event ContactChangedEventHandler ContactBlocked;
+        public event ContactChangedEventHandler ContactUnBlocked;
+        public event ContactChangedEventHandler ContactOnline;
+        public event StatusChangedEventHandler ContactOffline;
+        public event StatusChangedEventHandler StatusChanged;
 
 
         protected Contact()
@@ -314,14 +316,6 @@ namespace MSNPSharp
             get
             {
                 return hasBlog;
-            }
-        }
-
-        public string Hash
-        {
-            get 
-            { 
-                return MakeHash(Mail, clienttype); 
             }
         }
 
@@ -608,11 +602,6 @@ namespace MSNPSharp
             }
         }
 
-        internal static string MakeHash(string account, ClientType type)
-        {
-            return account.ToLowerInvariant() + ":" + type.ToString();
-        }
-
         #endregion
 
         #region Public setters
@@ -746,31 +735,18 @@ namespace MSNPSharp
 
         #endregion
 
-        public static bool operator == (Contact contact1, Contact contact2)
-        {
-            if (((object)contact1) == null && ((object)contact2) == null) return true;
-            if (((object)contact1) == null || ((object)contact2) == null) return false;
-            return contact1.GetHashCode() == contact2.GetHashCode();
-        }
-
-        public static bool operator !=(Contact contact1, Contact contact2)
-        {
-            return !(contact1 == contact2);
-        }
-
         public override bool Equals(object obj)
         {
             if (obj == null || obj.GetType() != GetType())
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;
-            return obj.GetHashCode() == GetHashCode();
+            Contact contact = obj as Contact;
+            return ((Mail.ToLowerInvariant() == contact.Mail.ToLowerInvariant()) && (ClientType == contact.ClientType));
         }
-
-
         public override int GetHashCode()
         {
-            return MakeHash(Mail, ClientType).GetHashCode();
+            return mail.GetHashCode();
         }
     }
 };

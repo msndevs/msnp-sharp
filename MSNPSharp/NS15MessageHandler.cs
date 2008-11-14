@@ -47,6 +47,63 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
+    #region Delegates
+
+    /// <summary>
+    /// This delegate is used when events are fired and a single contact is affected. 
+    /// </summary>
+    public delegate void ContactChangedEventHandler(object sender, ContactEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when events are fired and a single contact group is affected. 
+    /// </summary>
+    public delegate void ContactGroupChangedEventHandler(object sender, ContactGroupEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when a single contact changed it's status. 
+    /// </summary>
+    public delegate void ContactStatusChangedEventHandler(object sender, ContactStatusChangeEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when a complete list has been received from the server. 
+    /// </summary>
+    public delegate void ListReceivedEventHandler(object sender, ListReceivedEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when a user signed off.
+    /// </summary>
+    public delegate void SignedOffEventHandler(object sender, SignedOffEventArgs e);
+
+    /// <summary>
+    /// This delegate is used in a ping answer event. 
+    /// </summary>
+    public delegate void PingAnswerEventHandler(object sender, PingAnswerEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when a list is mutated: a contact is added or removed from a specific list. 
+    /// </summary>
+    public delegate void ListMutatedAddedEventHandler(object sender, ListMutateEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when a new switchboard is created. 
+    /// </summary>
+    public delegate void SBCreatedEventHandler(object sender, SBCreatedEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when the mailbox status of the contact list owner has changed. 
+    /// </summary>
+    public delegate void MailboxStatusEventHandler(object sender, MailboxStatusEventArgs e);
+    /// <summary>
+    /// This delegate is used when the contact list owner has received new e-mail.
+    /// </summary>
+    public delegate void NewMailEventHandler(object sender, NewMailEventArgs e);
+    /// <summary>
+    /// This delegate is used when the contact list owner has removed or moved existing e-mail.
+    /// </summary>
+    public delegate void MailChangedEventHandler(object sender, MailChangedEventArgs e);
+
+    #endregion
+
     /// <summary>
     /// Handles the protocol messages from the notification server.
     /// NSMessageHandler implements protocol version MSNP15.
@@ -251,8 +308,8 @@ namespace MSNPSharp
 
                 if (processorConnectedHandler == null)
                 {
-                    processorConnectedHandler = new EventHandler<EventArgs>(NSMessageHandler_ProcessorConnectCallback);
-                    processorDisconnectedHandler = new EventHandler<EventArgs>(NSMessageHandler_ProcessorDisconnectCallback);
+                    processorConnectedHandler = new EventHandler(NSMessageHandler_ProcessorConnectCallback);
+                    processorDisconnectedHandler = new EventHandler(NSMessageHandler_ProcessorDisconnectCallback);
                 }
 
                 messageProcessor = (SocketMessageProcessor)value;
@@ -272,67 +329,67 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when an exception is thrown while handling the incoming or outgoing messages
         /// </summary>
-        public event EventHandler<ExceptionEventArgs> ExceptionOccurred;
+        public event HandlerExceptionEventHandler ExceptionOccurred;
 
         /// <summary>
         /// Occurs when the user could not be signed in due to authentication errors. Most likely due to an invalid account or password. Note that this event will also raise the more general <see cref="ExceptionOccurred"/> event.
         /// </summary>
-        public event EventHandler<ExceptionEventArgs> AuthenticationError;
+        public event HandlerExceptionEventHandler AuthenticationError;
 
         /// <summary>
         /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method
         /// </summary>
-        public event EventHandler<PingAnswerEventArgs> PingAnswer;
+        public event PingAnswerEventHandler PingAnswer;
 
         /// <summary>
         /// Occurs when any contact changes status
         /// </summary>
-        public event EventHandler<ContactStatusChangeEventArgs> ContactStatusChanged;
+        public event ContactStatusChangedEventHandler ContactStatusChanged;
 
         /// <summary>
         /// Occurs when any contact goes from offline status to another status
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactOnline;
+        public event ContactChangedEventHandler ContactOnline;
 
         /// <summary>
         /// Occurs when any contact goed from any status to offline status
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactOffline;
+        public event ContactChangedEventHandler ContactOffline;
 
         /// <summary>
         /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
         /// </summary>
-        public event EventHandler<EventArgs> SignedIn;
+        public event EventHandler SignedIn;
 
         /// <summary>
         /// Occurs when the message processor has disconnected, and thus the user is no longer signed in.
         /// </summary>
-        public event EventHandler<SignedOffEventArgs> SignedOff;
+        public event SignedOffEventHandler SignedOff;
 
         /// <summary>
         /// Occurs when a switchboard session has been created
         /// </summary>
-        public event EventHandler<SBCreatedEventArgs> SBCreated;
+        public event SBCreatedEventHandler SBCreated;
 
         /// <summary>
         /// Occurs when the server notifies the client with the status of the owner's mailbox.
         /// </summary>
-        public event EventHandler<MailboxStatusEventArgs> MailboxStatusReceived;
+        public event MailboxStatusEventHandler MailboxStatusReceived;
 
         /// <summary>
         /// Occurs when new mail is received by the Owner.
         /// </summary>
-        public event EventHandler<NewMailEventArgs> NewMailReceived;
+        public event NewMailEventHandler NewMailReceived;
 
         /// <summary>
         /// Occurs when unread mail is read or mail is moved by the Owner.
         /// </summary>
-        public event EventHandler<MailChangedEventArgs> MailboxChanged;
+        public event MailChangedEventHandler MailboxChanged;
 
         /// <summary>
         /// Occurs when the the server send an error.
         /// </summary>
-        public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
+        public event ErrorReceivedEventHandler ServerErrorReceived;
 
         #endregion
 
@@ -561,7 +618,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="status">MSNStatus enum object representing the status to translate</param>
         /// <returns>The corresponding textual value</returns>
-        internal string ParseStatus(PresenceStatus status)
+        internal static string ParseStatus(PresenceStatus status)
         {
             switch (status)
             {
@@ -768,7 +825,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="status">Textual MSN status received from server</param>
         /// <returns>The corresponding enum value</returns>
-        protected PresenceStatus ParseStatus(string status)
+        protected static PresenceStatus ParseStatus(string status)
         {
             switch (status)
             {
@@ -1779,8 +1836,8 @@ namespace MSNPSharp
 
         #region Command handler
 
-        private EventHandler<EventArgs> processorConnectedHandler;
-        private EventHandler<EventArgs> processorDisconnectedHandler;
+        private EventHandler processorConnectedHandler;
+        private EventHandler processorDisconnectedHandler;
 
         /// <summary>
         /// Event handler.

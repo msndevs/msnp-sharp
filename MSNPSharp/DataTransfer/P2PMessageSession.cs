@@ -146,12 +146,12 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Occurs when a direct connection is succesfully established.
         /// </summary>
-        public event EventHandler<EventArgs> DirectConnectionEstablished;
+        public event EventHandler DirectConnectionEstablished;
 
         /// <summary>
         /// Occurs when a direct connection attempt has failed.
         /// </summary>
-        public event EventHandler<EventArgs> DirectConnectionFailed;
+        public event EventHandler DirectConnectionFailed;
 
 
         /// <summary>
@@ -307,9 +307,9 @@ namespace MSNPSharp.DataTransfer
             processor.RegisterHandler(this);
 
             // inform the session of connected/disconnected events
-            processor.ConnectionEstablished += new EventHandler<EventArgs>(OnDirectProcessorConnected);
-            processor.ConnectionClosed += new EventHandler<EventArgs>(OnDirectProcessorDisconnected);
-            processor.ConnectingException += new EventHandler<ExceptionEventArgs>(OnDirectProcessorException);
+            processor.ConnectionEstablished += new EventHandler(OnDirectProcessorConnected);
+            processor.ConnectionClosed += new EventHandler(OnDirectProcessorDisconnected);
+            processor.ConnectingException += new ProcessorExceptionEventHandler(OnDirectProcessorException);
 
             lock (pendingProcessors)
             {
@@ -910,7 +910,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Occurs when the processor has been marked as invalid. Due to connection error, or message processor being null.
         /// </summary>
-        public event EventHandler<EventArgs> ProcessorInvalid;
+        public event EventHandler ProcessorInvalid;
 
         /// <summary>
         /// Keeps track of unsend messages
@@ -970,7 +970,7 @@ namespace MSNPSharp.DataTransfer
         protected virtual void BufferMessage(NetworkMessage message)
         {
             if (sendMessages.Count >= 100)
-                System.Threading.Thread.CurrentThread.Join(200);
+                System.Threading.Thread.Sleep(200);
 
             sendMessages.Enqueue(message);
         }

@@ -48,7 +48,8 @@ namespace MSNPSharp
         NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
         RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
 
-        public event EventHandler<EventArgs> ProfileReceived;
+        public delegate void ProfileReceivedEventHandler(object sender, EventArgs e);
+        public event ProfileReceivedEventHandler ProfileReceived;
 
         private void CreateDefaultDisplayImage()
         {

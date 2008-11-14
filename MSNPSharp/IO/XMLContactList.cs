@@ -93,12 +93,8 @@ namespace MSNPSharp.IO
         #region Membership
 
         DateTime msLastChange;
-
-        SerializableDictionary<Service,
-                               SerializableDictionary<MemberRole,
-                               SerializableDictionary<string, BaseMember>>> mslist = new
-                               SerializableDictionary<Service, SerializableDictionary<MemberRole,
-                               SerializableDictionary<string, BaseMember>>>(0);
+        SerializableDictionary<int, Service> services = new SerializableDictionary<int, Service>(0);
+        SerializableDictionary<ContactIdentifier, MembershipContactInfo> mscontacts = new SerializableDictionary<ContactIdentifier, MembershipContactInfo>(0);
 
         [XmlElement("MembershipLastChange")]
         public DateTime MembershipLastChange
@@ -113,127 +109,102 @@ namespace MSNPSharp.IO
             }
         }
 
-
-
-        #region New MemberShipList
-        public SerializableDictionary<Service,
-                    SerializableDictionary<MemberRole,
-                    SerializableDictionary<string, BaseMember>>> MembershipList
+        public SerializableDictionary<int, Service> Services
         {
-            get { return mslist; }
-            set { mslist = value; }
-        }
-
-        private Service GetTargetService(ServiceFilterType type)
-        {
-            foreach (Service svc in MembershipList.Keys)
+            get
             {
-                if (svc.Type == type)
-                {
-                    return svc;
-                }
+                return services;
             }
-            return null;
+
+            set
+            {
+                services = value;
+            }
         }
 
-       
+        public SerializableDictionary<ContactIdentifier, MembershipContactInfo> MembershipContacts
+        {
+            get
+            {
+                return mscontacts;
+            }
+            set
+            {
+                mscontacts = value;
+            }
+        }
 
-        public MSNLists GetMSNLists(ServiceFilterType servicetype, string account, ClientType type)
+        public MSNLists GetMSNLists(string account, ClientType type)
         {
             MSNLists contactlists = MSNLists.None;
-            string hash = Contact.MakeHash(account, type);
+            ContactIdentifier cid = new ContactIdentifier(account, type);
 
-            Service targetservice = GetTargetService(servicetype);
-
-            if (targetservice != null)
+            if (MembershipContacts.ContainsKey(cid))
             {
-                if (MembershipList[targetservice].ContainsKey(MemberRole.Allow)
-                    && MembershipList[targetservice][MemberRole.Allow].ContainsKey(hash))
+                MembershipContactInfo ci = MembershipContacts[cid];
+                if (ci.Memberships.ContainsKey(MemberRole.Allow))
                     contactlists |= MSNLists.AllowedList;
 
-                if (MembershipList[targetservice].ContainsKey(MemberRole.Pending)
-                    && MembershipList[targetservice][MemberRole.Pending].ContainsKey(hash))
+                if (ci.Memberships.ContainsKey(MemberRole.Pending))
                     contactlists |= MSNLists.PendingList;
 
-                if (MembershipList[targetservice].ContainsKey(MemberRole.Block)
-                    && MembershipList[targetservice][MemberRole.Block].ContainsKey(hash))
+                if (ci.Memberships.ContainsKey(MemberRole.Reverse))
+                    contactlists |= MSNLists.ReverseList;
+
+                if (ci.Memberships.ContainsKey(MemberRole.Block))
                 {
                     contactlists |= MSNLists.BlockedList;
 
                     if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
                     {
                         contactlists ^= MSNLists.AllowedList;
-                        RemoveMemberhip(targetservice.Type, account, type, MemberRole.Allow);
+                        RemoveMemberhip(account, type, MemberRole.Allow);
                     }
-
                 }
-
-                if (MembershipList[targetservice].ContainsKey(MemberRole.Reverse)
-                    && MembershipList[targetservice][MemberRole.Reverse].ContainsKey(hash))
-                    contactlists |= MSNLists.ReverseList;
             }
-
-            
             return contactlists;
         }
 
-        public void AddMemberhip(ServiceFilterType servicetype, string account, ClientType type, MemberRole memberrole, BaseMember member)
+        public void AddMemberhip(string account, ClientType type, MemberRole memberrole, int membershipid)
         {
-            string hash = Contact.MakeHash(account, type);
-            Service svc = GetTargetService(servicetype);
-            if (svc != null)
+            ContactIdentifier cid = new ContactIdentifier(account, type);
+
+            if (!MembershipContacts.ContainsKey(cid))
+                MembershipContacts.Add(cid, new MembershipContactInfo(account, type));
+
+            MembershipContacts[cid].Type = type;
+            MembershipContacts[cid].Memberships[memberrole] = membershipid;
+        }
+
+        public void RemoveMemberhip(string account, ClientType type, MemberRole memberrole)
+        {
+            ContactIdentifier cid = new ContactIdentifier(account, type);
+
+            if (MembershipContacts.ContainsKey(cid))
             {
-                if (!MembershipList[svc].ContainsKey(memberrole))
-                    MembershipList[svc].Add(memberrole, new SerializableDictionary<string, BaseMember>(0));
-                MembershipList[svc][memberrole].Add(hash, member);
+                MembershipContacts[cid].Memberships.Remove(memberrole);
+
+                if (0 == MembershipContacts[cid].Memberships.Count)
+                    MembershipContacts.Remove(cid);
             }
         }
 
-        public void RemoveMemberhip(ServiceFilterType servicetype, string account, ClientType type, MemberRole memberrole)
+        public virtual void Add(Dictionary<ContactIdentifier, MembershipContactInfo> range)
         {
-            string hash = Contact.MakeHash(account, type);
-
-            Service svc = GetTargetService(servicetype);
-            if (svc != null)
+            foreach (ContactIdentifier account in range.Keys)
             {
-                if (MembershipList[svc].ContainsKey(memberrole) && MembershipList[svc][memberrole].ContainsKey(hash))
+                if (mscontacts.ContainsKey(account))
                 {
-                    MembershipList[svc][memberrole].Remove(hash);
-                }
-            }
-        }
-
-        public virtual void Add(
-            Dictionary<Service,
-            Dictionary<MemberRole,
-            Dictionary<string, BaseMember>>> range)
-        {
-            foreach (Service svc in range.Keys)
-            {
-                foreach (MemberRole role in range[svc].Keys)
-                {
-                    foreach (string hash in range[svc][role].Keys)
+                    if (mscontacts[account].LastChanged.CompareTo(range[account].LastChanged) <= 0)
                     {
-                        if (!mslist.ContainsKey(svc)) mslist.Add(svc, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
-                        if (!mslist[svc].ContainsKey(role)) mslist[svc].Add(role, new SerializableDictionary<string, BaseMember>(0));
-
-                        if (mslist[svc][role].ContainsKey(hash))
-                        {
-                            if (mslist[svc][role][hash].LastChangedSpecified
-                                && mslist[svc][role][hash].LastChanged.CompareTo(
-                                range[svc][role][hash].LastChanged) <= 0)
-                            {
-                                mslist[svc][role][hash] = range[svc][role][hash];
-                            }
-                        }
-                        else
-                        {
-                            mslist[svc][role].Add(hash, range[svc][role][hash]);
-                        }
+                        mscontacts[account] = range[account];
                     }
                 }
+                else
+                {
+                    mscontacts.Add(account, range[account]);
+                }
             }
-            
         }
 
         /// <summary>
@@ -244,36 +215,25 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static XMLContactList operator +(XMLContactList xmlcl, FindMembershipResultType findMembership)
         {
-            Service MsngrService = null;
             if (null != findMembership && null != findMembership.Services)
             {
                 foreach (ServiceType serviceType in findMembership.Services)
                 {
-                    Service currentService = new Service();
-                    currentService.Id = int.Parse(serviceType.Info.Handle.Id);
-
                     if (serviceType.Deleted)
                     {
-                        if (xmlcl.MembershipList.ContainsKey(currentService))
-                        {
-                            xmlcl.MembershipList.Remove(currentService);
-                        }
+                        xmlcl.Services.Remove(int.Parse(serviceType.Info.Handle.Id));
                     }
                     else
                     {
-                        currentService.Type = serviceType.Info.Handle.Type;
-                        
-                        if (ServiceFilterType.Messenger == currentService.Type)
+                        Service currentService = new Service();
+                        currentService.LastChange = serviceType.LastChange;
+                        currentService.Id = int.Parse(serviceType.Info.Handle.Id);
+                        currentService.ServiceType = serviceType.Info.Handle.Type;
+                        currentService.ForeignId = serviceType.Info.Handle.ForeignId;
+                        xmlcl.Services[currentService.Id] = currentService;
+
+                        if (ServiceFilterType.Messenger == currentService.ServiceType)
                         {
-                            currentService.LastChange = serviceType.LastChange;
-                            currentService.ForeignId = serviceType.Info.Handle.ForeignId;
-                            MsngrService = currentService;
-
-                            if (!xmlcl.MembershipList.ContainsKey(currentService))
-                            {
-                                xmlcl.MembershipList.Add(currentService, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
-                            }
-
                             if (xmlcl.MembershipLastChange < currentService.LastChange && null != serviceType.Memberships)
                             {
                                 foreach (Membership membership in serviceType.Memberships)
@@ -312,11 +272,14 @@ namespace MSNPSharp.IO
 
                                                 if (bm.Deleted)
                                                 {
-                                                    xmlcl.RemoveMemberhip(currentService.Type, account, type, memberrole);
+                                                    xmlcl.RemoveMemberhip(account, type, memberrole);
                                                 }
                                                 else
                                                 {
-                                                    xmlcl.AddMemberhip(currentService.Type, account, type, memberrole, bm);
+                                                    xmlcl.AddMemberhip(account, type, memberrole, Convert.ToInt32(bm.MembershipId));
+                                                    ContactIdentifier cid = new ContactIdentifier(account, type);
+                                                    xmlcl.MembershipContacts[cid].LastChanged = bm.LastChanged;
+                                                    xmlcl.MembershipContacts[cid].DisplayName = String.IsNullOrEmpty(bm.DisplayName) ? account : bm.DisplayName;
                                                 }
                                             }
                                         }
@@ -330,67 +293,27 @@ namespace MSNPSharp.IO
             }
 
             // Create/Update/Delete Memberships
-            if (MsngrService != null)
+            if (xmlcl.MembershipContacts.Count > 0)
             {
-                foreach (MemberRole role in xmlcl.MembershipList[MsngrService].Keys)
+                foreach (MembershipContactInfo msci in xmlcl.MembershipContacts.Values)
                 {
-                    foreach (BaseMember bm in xmlcl.MembershipList[MsngrService][role].Values)
+                    Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(msci.Account, msci.DisplayName, msci.Type);
+                    contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                    MSNLists newlists = xmlcl.GetMSNLists(msci.Account, msci.Type);
+
+                    // Fire ReverseRemoved, Don't trust NSMessageHandler.OnRMLReceived, not fired everytime.
+                    if (contact.OnReverseList && (newlists & MSNLists.ReverseList) == MSNLists.None)
                     {
-                        string account = null;
-                        ClientType type = ClientType.PassportMember;
-
-                        if (bm is PassportMember)
-                        {
-                            type = ClientType.PassportMember;
-                            PassportMember pm = (PassportMember)bm;
-                            if (!pm.IsPassportNameHidden)
-                            {
-                                account = pm.PassportName;
-                            }
-                        }
-                        else if (bm is EmailMember)
-                        {
-                            type = ClientType.EmailMember;
-                            account = ((EmailMember)bm).Email;
-                        }
-                        else if (bm is PhoneMember)
-                        {
-                            type = ClientType.PhoneMember;
-                            account = ((PhoneMember)bm).PhoneNumber;
-                        }
-
-                        string displayname = bm.DisplayName == null ? account : bm.DisplayName;
-                        Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                        contact.NSMessageHandler = xmlcl.NSMessageHandler;
-                        MSNLists newlists = xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type);
-
-                        
-
-                        // Set new lists.
-                        contact.SetLists(newlists);
+                        xmlcl.NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                     }
-                }
 
-                if (MsngrService != null && xmlcl.MembershipList[MsngrService].ContainsKey(MemberRole.Reverse))
-                {
-                    foreach (Contact contact in xmlcl.NSMessageHandler.ContactList.All)
-                    {
-                        // Fire ReverseRemoved, Don't trust NSMessageHandler.OnRMLReceived, not fired everytime.
-                        if (xmlcl.MembershipList[MsngrService][MemberRole.Reverse].ContainsKey(Contact.MakeHash(contact.Mail, contact.ClientType))
-                            && (!contact.OnReverseList))
-                        {
-                            xmlcl.NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
-                        }
-                    }
+                    // Set new lists.
+                    contact.SetLists(newlists);
                 }
             }
 
             return xmlcl;
         }
-
-
-        #endregion
-
 
         #endregion
 

@@ -38,6 +38,13 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+
+    /// <summary>
+    /// Used when the data transfer for a MSNObject finished or aborted.
+    /// </summary>
+    /// <param name="sender">The <see cref="P2PTransferSession"/> used to tranfer the <see cref="MSNObject"/>.</param>
+    /// <param name="e">Result event arg.</param>
+    public delegate void MSNObjectDataTransferCompletedEventHandler(object sender, MSNObjectDataTransferCompletedEventArgs e);
     
     public class MSNObjectDataTransferCompletedEventArgs : EventArgs
     {
@@ -115,8 +122,8 @@ namespace MSNPSharp
                     transferSession.DataStream = e.Emoticon.OpenStream();
                     transferSession.ClientData = e.Emoticon;
 
-                    transferSession.TransferAborted += new EventHandler<EventArgs>(transferSession_TransferAborted);
-                    transferSession.TransferFinished += new EventHandler<EventArgs>(transferSession_TransferFinished);
+                    transferSession.TransferAborted += new EventHandler(transferSession_TransferAborted);
+                    transferSession.TransferFinished += new EventHandler(transferSession_TransferFinished);
 
                     MSNObjectCatalog.GetInstance().Add(e.Emoticon);
                 }
@@ -162,7 +169,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired when the data transfer for a MSNObject finished or aborted.
         /// </summary>
-        public event EventHandler<MSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
+        public event MSNObjectDataTransferCompletedEventHandler MSNObjectDataTransferCompleted;
 
         /// <summary>
         /// Indicates whether emoticons from remote contacts are automatically retrieved
@@ -235,7 +242,7 @@ namespace MSNPSharp
             _switchboard = sbHandler;
             _messenger = parent;
 
-            sbHandler.EmoticonDefinitionReceived += new EventHandler<EmoticonDefinitionEventArgs>(sbHandler_EmoticonDefinitionReceived);
+            sbHandler.EmoticonDefinitionReceived += new EmoticonDefinitionReceivedEventHandler(sbHandler_EmoticonDefinitionReceived);
         }
 
         /// <summary>

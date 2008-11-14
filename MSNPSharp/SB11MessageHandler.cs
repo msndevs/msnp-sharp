@@ -129,6 +129,33 @@ namespace MSNPSharp
     }
     #endregion
 
+    #region Delegates
+
+    /// <summary>		
+    /// Used when a switchboard is affected. 
+    /// </summary>
+    public delegate void SBChangedEventHandler(object sender, EventArgs e);
+
+    /// <summary>		
+    /// Used when a text message is received from a remote contact. 
+    /// </summary>
+    public delegate void TextMessageReceivedEventHandler(object sender, TextMessageEventArgs e);
+
+    /// <summary>		
+    /// Used when a emoticon definition is received from a remote contact. 
+    /// </summary>
+    public delegate void EmoticonDefinitionReceivedEventHandler(object sender, EmoticonDefinitionEventArgs e);
+
+    public delegate void WinkReceivedEventHandler(object sender, WinkEventArgs args);
+
+    /// <summary>
+    /// Used when a remote contact begins typing. 		
+    /// </summary>
+    public delegate void UserTypingEventHandler(object sender, ContactEventArgs e);
+
+
+    #endregion
+
     /// <summary>
     /// Handles the messages from the switchboard server.
     /// </summary>
@@ -141,8 +168,14 @@ namespace MSNPSharp
         protected bool invited;
         private int sessionId;
 
-        private EventHandler<EventArgs> processorConnectedHandler;
-        private EventHandler<EventArgs> processorDisconnectedHandler;
+        /// <summary>
+        /// </summary>
+        private EventHandler processorConnectedHandler = null;
+
+        /// <summary>
+        /// </summary>
+        private EventHandler processorDisconnectedHandler = null;
+
 
         protected int SessionId
         {
@@ -196,58 +229,58 @@ namespace MSNPSharp
         /// <summary>
         /// Fired when the owner is the only contact left. If the owner leaves too the connection is automatically closed by the server.
         /// </summary>
-        public event EventHandler<EventArgs> AllContactsLeft;
+        public event SBChangedEventHandler AllContactsLeft;
 
         /// <summary>
         /// Fired when the session is closed, either by the server or by the local client.
         /// </summary>
-        public event EventHandler<EventArgs> SessionClosed;
+        public event SBChangedEventHandler SessionClosed;
 
         /// <summary>
         /// Occurs when a switchboard connection has been made and the initial handshaking commands are send. This indicates that the session is ready to invite or accept other contacts.
         /// </summary>
-        public event EventHandler<EventArgs> SessionEstablished;
+        public event SBChangedEventHandler SessionEstablished;
 
         /// <summary>
         /// Fired when a contact joins. In case of a conversation with two people in it this event is called with the remote contact specified in the event argument.
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactJoined;
+        public event ContactChangedEventHandler ContactJoined;
         /// <summary>
         /// Fired when a contact leaves the conversation.
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactLeft;
+        public event ContactChangedEventHandler ContactLeft;
 
         /// <summary>
         /// Fired when a message is received from any of the other contacts in the conversation.
         /// </summary>
-        public event EventHandler<TextMessageEventArgs> TextMessageReceived;
+        public event TextMessageReceivedEventHandler TextMessageReceived;
 
         /// <summary>
         /// Fired when a contact sends a emoticon definition.
         /// </summary>
-        public event EventHandler<EmoticonDefinitionEventArgs> EmoticonDefinitionReceived;
+        public event EmoticonDefinitionReceivedEventHandler EmoticonDefinitionReceived;
 
-        public event EventHandler<WinkEventArgs> WinkReceived;
+        public event WinkReceivedEventHandler WinkReceived;
 
         /// <summary>
         /// Fired when a contact sends a nudge
         /// </summary>
-        public event EventHandler<ContactEventArgs> NudgeReceived;
+        public event ContactChangedEventHandler NudgeReceived;
 
         /// <summary>
         /// Fired when any of the other contacts is typing a message.
         /// </summary>
-        public event EventHandler<ContactEventArgs> UserTyping;
+        public event UserTypingEventHandler UserTyping;
 
         /// <summary>
         /// Occurs when an exception is thrown while handling the incoming or outgoing messages.
         /// </summary>
-        public event EventHandler<ExceptionEventArgs> ExceptionOccurred;
+        public event HandlerExceptionEventHandler ExceptionOccurred;
 
         /// <summary>
         /// Occurs when the MSN Switchboard Server sends us an error.
         /// </summary>
-        public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
+        public event ErrorReceivedEventHandler ServerErrorReceived;
 
 
         /// <summary>
@@ -503,8 +536,8 @@ namespace MSNPSharp
                 if (processorConnectedHandler == null)
                 {
                     // store the new eventhandlers in order to remove them in the future
-                    processorConnectedHandler = new EventHandler<EventArgs>(SB11MessageHandler_ProcessorConnectCallback);
-                    processorDisconnectedHandler = new EventHandler<EventArgs>(SB11MessageHandler_ProcessorDisconnectCallback);
+                    processorConnectedHandler = new EventHandler(SB11MessageHandler_ProcessorConnectCallback);
+                    processorDisconnectedHandler = new EventHandler(SB11MessageHandler_ProcessorDisconnectCallback);
                 }
 
                 // catch the connect event so we can start sending the USR command upon initiating

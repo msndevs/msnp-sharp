@@ -534,6 +534,16 @@ namespace MSNPSharp.DataTransfer
 
 
     /// <summary>
+    /// This delegate is used when events are fired and a transfer session is affected.
+    /// </summary>
+    public delegate void P2PTransferSessionChangedEventHandler(object sender, P2PTransferSessionEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when a invitation is received.
+    /// </summary>
+    public delegate void MSNSLPInvitationReceivedEventHandler(object sender, MSNSLPInvitationEventArgs e);
+
+    /// <summary>
     /// Handles invitations and requests for file transfers, emoticons, user displays and other msn objects.
     /// </summary>
     /// <remarks>
@@ -648,17 +658,17 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Occurs when a transfer session is created.
         /// </summary>
-        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionCreated;
+        public event P2PTransferSessionChangedEventHandler TransferSessionCreated;
 
         /// <summary>
         /// Occurs when a transfer session is closed. Either because the transfer has finished or aborted.
         /// </summary>
-        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionClosed;
+        public event P2PTransferSessionChangedEventHandler TransferSessionClosed;
 
         /// <summary>
         /// Occurs when a remote client has send an invitation for a transfer session.
         /// </summary>
-        public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
+        public event MSNSLPInvitationReceivedEventHandler TransferInvitationReceived;
 
         /// <summary>
         /// Sends the remote contact a request for the given context. The invitation message is send over the current MessageProcessor.
@@ -672,9 +682,9 @@ namespace MSNPSharp.DataTransfer
             properties.LocalContact = localContact;
             properties.RemoteContact = remoteContact;
 
-            if (msnObject.Type == MSNObjectType.Emoticon)
+            if (msnObject.ObjectType == MSNObjectType.Emoticon)
                 properties.DataType = DataTransferType.Emoticon;
-            else if (msnObject.Type == MSNObjectType.UserDisplay)
+            else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                 properties.DataType = DataTransferType.DisplayImage;
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
@@ -956,8 +966,8 @@ namespace MSNPSharp.DataTransfer
         /// <param name="session"></param>
         protected virtual void OnTransferSessionCreated(P2PTransferSession session)
         {
-            session.TransferFinished += new EventHandler<EventArgs>(MSNSLPHandler_TransferFinished);
-            session.TransferAborted += new EventHandler<EventArgs>(MSNSLPHandler_TransferAborted);
+            session.TransferFinished += new EventHandler(MSNSLPHandler_TransferFinished);
+            session.TransferAborted += new EventHandler(MSNSLPHandler_TransferAborted);
 
             if (TransferSessionCreated != null)
                 TransferSessionCreated(this, new P2PTransferSessionEventArgs(session));
@@ -1051,9 +1061,9 @@ namespace MSNPSharp.DataTransfer
                     MSNObject msnObject = new MSNObject();
                     msnObject.ParseContext(message.MessageValues["Context"].ToString(), true);
 
-                    if (msnObject.Type == MSNObjectType.UserDisplay)
+                    if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                         properties.DataType = DataTransferType.DisplayImage;
-                    else if (msnObject.Type == MSNObjectType.Emoticon)
+                    else if (msnObject.ObjectType == MSNObjectType.Emoticon)
                         properties.DataType = DataTransferType.Emoticon;
                     else
                         properties.DataType = DataTransferType.Unknown;
@@ -1150,7 +1160,7 @@ namespace MSNPSharp.DataTransfer
         /// has accepted the invitation.
         /// </summary>
         /// <returns></returns>
-        protected MSNSLPMessage CreateAcceptanceMessage(MSNSLPTransferProperties properties)
+        protected static MSNSLPMessage CreateAcceptanceMessage(MSNSLPTransferProperties properties)
         {
             MSNSLPMessage newMessage = new MSNSLPMessage();
             newMessage.StartLine = "MSNSLP/1.0 200 OK";
@@ -1170,7 +1180,7 @@ namespace MSNPSharp.DataTransfer
         /// Creates a 603 Decline message.
         /// </summary>
         /// <returns></returns>
-        protected MSNSLPMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
+        protected static MSNSLPMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
         {
             // create 603 Decline message			
             MSNSLPMessage newMessage = new MSNSLPMessage();
@@ -1218,7 +1228,7 @@ namespace MSNPSharp.DataTransfer
         /// <remarks>The context must be a plain string, no base-64 decoding will be done</remarks>
         /// <param name="context"></param>
         /// <returns></returns>
-        private string ExtractChecksum(string context)
+        private static string ExtractChecksum(string context)
         {
             Regex shaRe = new Regex("SHA1C=\"([^\"]+)\"");
             Match match = shaRe.Match(context);
@@ -1241,7 +1251,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="taggedText"></param>
         /// <returns></returns>
-        private string ExtractNameFromTag(string taggedText)
+        private static string ExtractNameFromTag(string taggedText)
         {
             int start = taggedText.IndexOf(":");
             int end = taggedText.IndexOf(">");
@@ -1614,7 +1624,6 @@ namespace MSNPSharp.DataTransfer
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)

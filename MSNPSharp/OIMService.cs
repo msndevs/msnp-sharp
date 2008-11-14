@@ -46,7 +46,20 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
 
-    #region EventArgs
+    #region Delegates and EventArgs
+    /// <summary>
+    /// This delegate is used when an OIM was received.
+    /// </summary>
+    /// <param name="sender">The sender's email</param>
+    /// <param name="e">OIMReceivedEventArgs</param>
+    public delegate void OIMReceivedEventHandler(object sender, OIMReceivedEventArgs e);
+
+    /// <summary>
+    /// This delegate is used when an OIM sends out.
+    /// </summary>
+    /// <param name="sender">Sender's email</param>
+    /// <param name="e">The event arg that indicates whether send succeed or not.</param>
+    public delegate void OIMSentCompletedEventHandler(object sender, OIMSendCompletedEventArgs e);
 
     [Serializable()]
     public class OIMSendCompletedEventArgs : EventArgs
@@ -116,10 +129,10 @@ namespace MSNPSharp
         {
         }
 
-        public OIMSendCompletedEventArgs(string sender_account, string receiver_account, ulong seq, string content, Exception err)
+        public OIMSendCompletedEventArgs(string senderAccount, string receiverAccount, ulong seq, string content, Exception err)
         {
-            sender = sender_account;
-            receiver = receiver_account;
+            sender = senderAccount;
+            receiver = receiverAccount;
             sequence = seq;
             message = content;
             error = err;
@@ -249,12 +262,12 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when receive an OIM.
         /// </summary>
-        public event EventHandler<OIMReceivedEventArgs> OIMReceived;
+        public event OIMReceivedEventHandler OIMReceived;
 
         /// <summary>
         /// Fires after an OIM was sent.
         /// </summary>
-        public event EventHandler<OIMSendCompletedEventArgs> OIMSendCompleted;
+        public event OIMSentCompletedEventHandler OIMSendCompleted;
 
         public OIMService(NSMessageHandler nsHandler)
             : base(nsHandler)
@@ -552,7 +565,7 @@ namespace MSNPSharp
                         if (range.Lower == userstate.oimcount && range.Upper == userstate.oimcount)
                         {
                             contact.OIMCount++; // Sent successfully.
-                            OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                            OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
                                 NSMessageHandler.Owner.Mail,
                                 userstate.account,
@@ -585,7 +598,7 @@ namespace MSNPSharp
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...", GetType().Name);
                         }
 
-                        OnOIMSendCompleted(NSMessageHandler.Owner.Mail,
+                        OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
                                 NSMessageHandler.Owner.Mail,
                                 userstate.account,

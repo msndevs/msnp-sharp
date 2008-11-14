@@ -117,10 +117,10 @@ namespace MSNPSharpClient
         {
             if (Visible == false)
             {
-                Invoke(new EventHandler<EventArgs>(MakeVisible), sender, e);
+                Invoke(new MakeVisibleDelegate(MakeVisible));
             }
 
-            Invoke(new EventHandler<ContactEventArgs>(PrintNudge), sender, e);
+            Invoke(new PrintNudgeDelegate(PrintNudge), e);
         }
 
         /// <summary>
@@ -328,13 +328,13 @@ namespace MSNPSharpClient
         {
             if (Conversation != null)
             {
-                Conversation.Switchboard.TextMessageReceived += new EventHandler<TextMessageEventArgs>(Switchboard_TextMessageReceived);
-                Conversation.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(Conversation_MSNObjectDataTransferCompleted);
-                Conversation.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
-                Conversation.Switchboard.ContactJoined += new EventHandler<ContactEventArgs>(Switchboard_ContactJoined);
-                Conversation.Switchboard.ContactLeft += new EventHandler<ContactEventArgs>(Switchboard_ContactLeft);
-                Conversation.Switchboard.NudgeReceived += new EventHandler<ContactEventArgs>(Switchboard_NudgeReceived);
-                Conversation.Switchboard.AllContactsLeft += new EventHandler<EventArgs>(Switchboard_AllContactsLeft);
+                Conversation.Switchboard.TextMessageReceived += new TextMessageReceivedEventHandler(Switchboard_TextMessageReceived);
+                Conversation.MSNObjectDataTransferCompleted += new MSNObjectDataTransferCompletedEventHandler(Conversation_MSNObjectDataTransferCompleted);
+                Conversation.Switchboard.SessionClosed += new SBChangedEventHandler(Switchboard_SessionClosed);
+                Conversation.Switchboard.ContactJoined += new ContactChangedEventHandler(Switchboard_ContactJoined);
+                Conversation.Switchboard.ContactLeft += new ContactChangedEventHandler(Switchboard_ContactLeft);
+                Conversation.Switchboard.NudgeReceived += new ContactChangedEventHandler(Switchboard_NudgeReceived);
+                Conversation.Switchboard.AllContactsLeft += new SBChangedEventHandler(Switchboard_AllContactsLeft);
             }
         }
 
@@ -422,12 +422,14 @@ namespace MSNPSharpClient
             }
         }
 
-        private void MakeVisible(object sender, EventArgs e)
+        private delegate void MakeVisibleDelegate();
+        private void MakeVisible()
         {
             Show();
         }
 
-        private void PrintText(object sender, TextMessageEventArgs e)
+        private delegate void PrintTextDelegate(TextMessageEventArgs e);
+        private void PrintText(TextMessageEventArgs e)
         {
             richTextHistory.SelectionColor = Color.Gray;
             richTextHistory.AppendText(e.Sender.Name + ":" + Environment.NewLine);
@@ -450,7 +452,8 @@ namespace MSNPSharpClient
             richTextHistory.ScrollToCaret();
         }
 
-        private void PrintNudge(object sender, ContactEventArgs e)
+        private delegate void PrintNudgeDelegate(ContactEventArgs e);
+        private void PrintNudge(ContactEventArgs e)
         {
             DisplaySystemMessage("* " + e.Contact.Name + " has sent a nudge!");
 
@@ -473,9 +476,9 @@ namespace MSNPSharpClient
         {
             if (Visible == false)
             {
-                this.Invoke(new EventHandler<EventArgs>(MakeVisible), sender, e);
+                this.Invoke(new MakeVisibleDelegate(MakeVisible));
             }
-            Invoke(new EventHandler<TextMessageEventArgs>(PrintText), sender, e);
+            Invoke(new PrintTextDelegate(PrintText), e);
         }
 
         private void Switchboard_SessionClosed(object sender, EventArgs e)
@@ -486,17 +489,18 @@ namespace MSNPSharpClient
             }
             else
             {
-                richTextHistory.Invoke(new EventHandler<EventArgs>(Switchboard_SessionClosed), sender, e);
+                richTextHistory.Invoke(new SBChangedEventHandler(Switchboard_SessionClosed), sender, e);
             }
         }
 
         #region These three functions causes reinvite
+        private delegate void Delegate_Switchboard_ContactJoined(object sender, ContactEventArgs e);
 
         private void Switchboard_ContactJoined(object sender, ContactEventArgs e)
         {
             if (richTextHistory.InvokeRequired)
             {
-                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(Switchboard_ContactJoined), sender, e);
+                richTextHistory.Invoke(new Delegate_Switchboard_ContactJoined(Switchboard_ContactJoined), sender, e);
             }
             else
             {
@@ -541,7 +545,7 @@ namespace MSNPSharpClient
         {
             if (richTextHistory.InvokeRequired)
             {
-                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(Switchboard_ContactLeft), sender, e);
+                richTextHistory.Invoke(new ContactChangedEventHandler(Switchboard_ContactLeft), sender, e);
             }
             else
             {

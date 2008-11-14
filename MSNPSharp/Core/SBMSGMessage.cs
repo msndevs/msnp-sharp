@@ -81,7 +81,7 @@ namespace MSNPSharp.Core
         }
 
 
-        protected StrDictionary ParseMime(IEnumerator enumerator, byte[] data)
+        protected static StrDictionary ParseMime(IEnumerator enumerator, byte[] data)
         {
             StrDictionary table = new StrDictionary();
 
@@ -130,7 +130,7 @@ namespace MSNPSharp.Core
 
 
         [Obsolete]
-        protected StrDictionary ParseMime(IEnumerator enumerator)
+        protected static StrDictionary ParseMime(IEnumerator enumerator)
         {
             StrDictionary table = new StrDictionary();
 

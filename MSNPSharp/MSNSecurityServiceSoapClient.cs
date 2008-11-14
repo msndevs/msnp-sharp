@@ -35,6 +35,7 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using System.Security.Authentication;
+using System.Security.Permissions;
 
 namespace MSNPSharp.SOAP
 {
@@ -202,6 +203,7 @@ namespace MSNPSharp.SOAP
             }
         }
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.Infrastructure)]
         public override object InitializeLifetimeService()
         {
             return resp.InitializeLifetimeService();
