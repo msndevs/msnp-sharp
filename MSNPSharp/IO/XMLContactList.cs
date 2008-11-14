@@ -253,7 +253,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static XMLContactList operator +(XMLContactList xmlcl, FindMembershipResultType findMembership)
         {
-            Service MsngrService = null;
+            // Process new SOAP deltas
             if (null != findMembership && null != findMembership.Services)
             {
                 foreach (ServiceType serviceType in findMembership.Services)
@@ -275,8 +275,6 @@ namespace MSNPSharp.IO
                     {
                         if (ServiceFilterType.Messenger == currentService.ServiceType)
                         {                            
-                            MsngrService = currentService;
-
                             if (!xmlcl.MembershipList.ContainsKey(currentService))
                             {
                                 xmlcl.MembershipList.Add(currentService, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
@@ -338,6 +336,7 @@ namespace MSNPSharp.IO
             }
 
             // Create/Update/Delete Memberships
+            Service MsngrService = xmlcl.GetTargetService(ServiceFilterType.Messenger);
             if (MsngrService != null)
             {
                 foreach (MemberRole role in xmlcl.MembershipList[MsngrService].Keys)
