@@ -42,66 +42,151 @@ namespace MSNPSharp
     using MSNPSharp.DataTransfer;
 
     [Serializable()]
-    public class ContactIdentifier
+    public class ContactList : Dictionary<int, Contact>
     {
-        private string mail;
-        private ClientType clientType;
+        private static ClientType[] clientTypes = (ClientType[])Enum.GetValues(typeof(ClientType));
 
-        public string Mail
+        public ContactList()
+            : base()
         {
-            get
+        }
+
+        #region ListEnumerators
+
+        public class ListEnumerator : IEnumerator<Contact>
+        {
+            private Enumerator baseEnum;
+            private MSNLists listFilter;
+
+            public ListEnumerator(Enumerator listEnum, MSNLists filter)
             {
-                return mail;
+                baseEnum = listEnum;
+                listFilter = filter;
             }
-            set
+
+            public virtual bool MoveNext()
             {
-                mail = value;
+                if (listFilter == MSNLists.None)
+                {
+                    return baseEnum.MoveNext();
+                }
+                else
+                {
+                    while (baseEnum.MoveNext())
+                    {
+                        if (Current.HasLists(listFilter))
+                            return true;
+                    }
+                    return false;
+                }
+            }
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    return baseEnum.Current;
+                }
+            }
+
+            public Contact Current
+            {
+                get
+                {
+                    return baseEnum.Current.Value;
+                }
+            }
+
+            public void Reset()
+            {
+            }
+
+            public void Dispose()
+            {
+                baseEnum.Dispose();
+            }
+
+            public IEnumerator<Contact> GetEnumerator()
+            {
+                return this;
             }
         }
 
-        public ClientType ClientType
+        public class EmailListEnumerator : ContactList.ListEnumerator
         {
-            get
+            public EmailListEnumerator(Enumerator listEnum)
+                : base(listEnum, MSNLists.None)
             {
-                return clientType;
             }
-            set
+
+            public override bool MoveNext()
             {
-                clientType = value;
-            }
-        }
-
-        public ContactIdentifier()
-        {
-            mail = string.Empty;
-        }
-
-        public ContactIdentifier(string account, ClientType type)
-        {
-            mail = account.ToLowerInvariant();
-            clientType = type;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(this, obj))
-                return true;
-            ContactIdentifier ci = obj as ContactIdentifier;
-            if ((object)ci == null)
+                while (base.MoveNext())
+                {
+                    if (Current.Guid != Guid.Empty && Current.IsMessengerUser == false)
+                        return true;
+                }
                 return false;
-            return (ci.Mail == Mail && ci.ClientType == ClientType);
+            }
         }
 
-        public override int GetHashCode()
+        #endregion
+
+        public ContactList.ListEnumerator Forward
         {
-            return Mail.GetHashCode() - ClientType.GetHashCode(); //This is the key line.
+            get
+            {
+                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.ForwardList);
+            }
         }
-    }
 
-    [Serializable()]
-    public class ContactList
-    {
-        Dictionary<ContactIdentifier, Contact> contacts = new Dictionary<ContactIdentifier, Contact>(10);
+        public ContactList.ListEnumerator Allowed
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.AllowedList);
+            }
+        }
+
+        public ContactList.ListEnumerator BlockedList
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.BlockedList);
+            }
+        }
+
+        public ContactList.ListEnumerator Reverse
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.ReverseList);
+            }
+        }
+
+        public ContactList.ListEnumerator Pending
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.PendingList);
+            }
+        }
+
+        public ContactList.ListEnumerator All
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.None);
+            }
+        }
+
+        public ContactList.ListEnumerator Email
+        {
+            get
+            {
+                return new ContactList.EmailListEnumerator(GetEnumerator());
+            }
+        }
 
         [NonSerialized]
         private object syncRoot;
@@ -113,248 +198,6 @@ namespace MSNPSharp
                     Interlocked.CompareExchange(ref syncRoot, new object(), null);
 
                 return syncRoot;
-            }
-        }
-
-        public class ListEnumerator : IEnumerator
-        {
-            private IDictionaryEnumerator baseEnum;
-            protected IDictionaryEnumerator BaseEnum
-            {
-                get
-                {
-                    return baseEnum;
-                }
-                set
-                {
-                    baseEnum = value;
-                }
-            }
-
-            public ListEnumerator(IDictionaryEnumerator listEnum)
-            {
-                baseEnum = listEnum;
-            }
-
-            public virtual bool MoveNext()
-            {
-                return baseEnum.MoveNext();
-            }
-
-            Object IEnumerator.Current
-            {
-                get
-                {
-                    return baseEnum.Value;
-                }
-            }
-
-            public Contact Current
-            {
-                get
-                {
-                    return (Contact)baseEnum.Value;
-                }
-            }
-
-            public void Reset()
-            {
-                baseEnum.Reset();
-            }
-
-            public IEnumerator GetEnumerator()
-            {
-                return this;
-            }
-        }
-
-        /// <summary>
-        /// Filters the forward list contacts
-        /// </summary>
-        public class ForwardListEnumerator : ContactList.ListEnumerator
-        {
-            public ForwardListEnumerator(IDictionaryEnumerator listEnum)
-                : base(listEnum)
-            {
-            }
-
-            public override bool MoveNext()
-            {
-                while (BaseEnum.MoveNext())
-                {
-                    // filter on the forward boolean
-                    if (((Contact)BaseEnum.Value).OnForwardList)
-                        return true;
-                }
-
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Filters the pending list contacts
-        /// </summary>
-        public class PendingListEnumerator : ContactList.ListEnumerator
-        {
-            public PendingListEnumerator(IDictionaryEnumerator listEnum)
-                : base(listEnum)
-            {
-            }
-
-            public override bool MoveNext()
-            {
-                while (BaseEnum.MoveNext())
-                {
-                    // filter on the forward boolean
-                    if (((Contact)BaseEnum.Value).OnPendingList)
-                        return true;
-                }
-
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Filter the reverse list contacts
-        /// </summary>
-        public class ReverseListEnumerator : ContactList.ListEnumerator
-        {
-            public ReverseListEnumerator(IDictionaryEnumerator listEnum)
-                : base(listEnum)
-            {
-            }
-
-            public override bool MoveNext()
-            {
-                while (BaseEnum.MoveNext())
-                {
-                    // filter on the forward boolean
-                    if (((Contact)BaseEnum.Value).OnReverseList)
-                        return true;
-                }
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Filters the blocked list contacts
-        /// </summary>
-        public class BlockedListEnumerator : ContactList.ListEnumerator
-        {
-            public BlockedListEnumerator(IDictionaryEnumerator listEnum)
-                : base(listEnum)
-            {
-            }
-
-            public override bool MoveNext()
-            {
-                while (BaseEnum.MoveNext())
-                {
-                    if (((Contact)BaseEnum.Value).Blocked)
-                        return true;
-                }
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Filters the allowed list contacts
-        /// </summary>
-        public class AllowedListEnumerator : ContactList.ListEnumerator
-        {
-            public AllowedListEnumerator(IDictionaryEnumerator listEnum)
-                : base(listEnum)
-            {
-            }
-
-            public override bool MoveNext()
-            {
-                while (BaseEnum.MoveNext())
-                {
-                    // filter on the allowed list
-                    if (((Contact)BaseEnum.Value).OnAllowedList)
-                        return true;
-                }
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Filters the email (not IM) contacts
-        /// </summary>
-        public class EmailListEnumerator : ContactList.ListEnumerator
-        {
-            public EmailListEnumerator(IDictionaryEnumerator listEnum)
-                : base(listEnum)
-            {
-            }
-
-            public override bool MoveNext()
-            {
-                while (BaseEnum.MoveNext())
-                {
-                    // filter on the email list
-                    Contact c = (Contact)BaseEnum.Value;
-                    if (c.Guid != Guid.Empty && c.IsMessengerUser == false)
-                        return true;
-                }
-                return false;
-            }
-        }
-
-        public ContactList.ForwardListEnumerator Forward
-        {
-            get
-            {
-                return new ContactList.ForwardListEnumerator(contacts.GetEnumerator());
-            }
-        }
-
-        public ContactList.PendingListEnumerator Pending
-        {
-            get
-            {
-                return new ContactList.PendingListEnumerator(contacts.GetEnumerator());
-            }
-        }
-
-        public ContactList.ReverseListEnumerator Reverse
-        {
-            get
-            {
-                return new ContactList.ReverseListEnumerator(contacts.GetEnumerator());
-            }
-        }
-
-        public ContactList.BlockedListEnumerator BlockedList
-        {
-            get
-            {
-                return new ContactList.BlockedListEnumerator(contacts.GetEnumerator());
-            }
-        }
-
-        public ContactList.AllowedListEnumerator Allowed
-        {
-            get
-            {
-                return new ContactList.AllowedListEnumerator(contacts.GetEnumerator());
-            }
-        }
-
-        public ContactList.EmailListEnumerator Email
-        {
-            get
-            {
-                return new ContactList.EmailListEnumerator(contacts.GetEnumerator());
-            }
-        }
-
-        public ContactList.ListEnumerator All
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(contacts.GetEnumerator());
             }
         }
 
@@ -371,20 +214,23 @@ namespace MSNPSharp
         /// <see cref="ClientType.EmailMember"/> will be returned.Then the next is <see cref="ClientType.PhoneMember"/>
         /// ,<see cref="ClientType.LCS"/> and so on...
         /// </returns>
-        internal Contact GetContact(string account)
+        public Contact GetContact(string account)
         {
-            if (!HasContact(account))
-                return null;
-            if (HasContact(account, ClientType.PassportMember))
-                return GetContact(account, ClientType.PassportMember);
-            if (HasContact(account, ClientType.EmailMember))
-                return GetContact(account, ClientType.EmailMember);
-            if (HasContact(account, ClientType.PhoneMember))
-                return GetContact(account, ClientType.PhoneMember);
-            if (HasContact(account, ClientType.LCS))
-                return GetContact(account, ClientType.LCS);
-            return null;
+            if (HasContact(account))
+            {
+                if (HasContact(account, ClientType.PassportMember))
+                    return GetContact(account, ClientType.PassportMember);
 
+                if (HasContact(account, ClientType.EmailMember))
+                    return GetContact(account, ClientType.EmailMember);
+
+                if (HasContact(account, ClientType.PhoneMember))
+                    return GetContact(account, ClientType.PhoneMember);
+
+                if (HasContact(account, ClientType.LCS))
+                    return GetContact(account, ClientType.LCS);
+            }
+            return null;
         }
 
         /// <summary>
@@ -444,10 +290,10 @@ namespace MSNPSharp
         /// </returns>
         internal Contact GetContact(string account, ClientType type)
         {
-            ContactIdentifier cid = new ContactIdentifier(account, type);
-            if (HasContact(account, type))
+            int hash = Contact.MakeHash(account, type).GetHashCode();
+            if (ContainsKey(hash))
             {
-                return contacts[cid];
+                return this[hash];
             }
 
             Contact tmpContact = Factory.CreateContact();
@@ -457,17 +303,17 @@ namespace MSNPSharp
             tmpContact.SetClientType(type);
 
             lock (SyncRoot)
-                contacts.Add(cid, tmpContact);
+                Add(hash, tmpContact);
 
             return GetContact(account, type);
         }
 
         public Contact GetContactByGuid(Guid guid)
         {
-            foreach (Contact c in contacts.Values)
+            foreach (Contact contact in Values)
             {
-                if (c.Guid == guid)
-                    return c;
+                if (contact.Guid == guid)
+                    return contact;
             }
 
             return null;
@@ -479,7 +325,6 @@ namespace MSNPSharp
             {
                 return GetContact(account);
             }
-
             set
             {
                 this[account, value.ClientType] = value;
@@ -505,12 +350,10 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool HasContact(string account)
         {
-            account = account.ToLower(CultureInfo.InvariantCulture);
-            lock (SyncRoot)
+            foreach (ClientType ct in clientTypes)
             {
-                foreach (ContactIdentifier cid in contacts.Keys)
-                    if (cid.Mail == account)
-                        return true;
+                if (HasContact(account, ct))
+                    return true;
             }
             return false;
         }
@@ -523,19 +366,13 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool HasContact(string account, ClientType type)
         {
-            ContactIdentifier cid = new ContactIdentifier(account, type);
-            return contacts.ContainsKey(cid);
+            return ContainsKey(Contact.MakeHash(account, type).GetHashCode());
         }
 
         public void CopyTo(Contact[] array, int index)
         {
-            lock (contacts)
-                contacts.Values.CopyTo(array, index);
-        }
-
-        internal void Clear()
-        {
-            contacts.Clear();
+            lock (SyncRoot)
+                Values.CopyTo(array, index);
         }
 
         /// <summary>
@@ -544,20 +381,10 @@ namespace MSNPSharp
         /// <param name="account"></param>
         internal void Remove(string account)
         {
-            account = account.ToLower(CultureInfo.InvariantCulture);
-            List<ContactIdentifier> removecid = new List<ContactIdentifier>(0);
-            if (HasContact(account))
+            foreach (ClientType ct in clientTypes)
             {
-                lock (SyncRoot)
-                {
-                    foreach (ContactIdentifier cid in contacts.Keys)
-                    {
-                        if (cid.Mail == account)
-                            removecid.Add(cid);
-                    }
-                    foreach (ContactIdentifier rcid in removecid)
-                        contacts.Remove(rcid);
-                }
+                if (HasContact(account, ct))
+                    Remove(account, ct);
             }
         }
 
@@ -570,22 +397,18 @@ namespace MSNPSharp
         {
             lock (SyncRoot)
             {
-                contacts.Remove(new ContactIdentifier(account, type));
+                Remove(Contact.MakeHash(account, type).GetHashCode());
             }
         }
 
-        private bool HasMultiType(string account)
+        public bool HasMultiType(string account)
         {
             int typecount = 0;
-
-            lock (SyncRoot)
-                foreach (ContactIdentifier cid in contacts.Keys)
-                    if (cid.Mail == account.ToLowerInvariant())
-                    {
-                        if (++typecount == 2)
-                            return true;
-                    }
-
+            foreach (ClientType ct in clientTypes)
+            {
+                if (HasContact(account, ct) && ++typecount > 1)
+                    return true;
+            }
             return false;
         }
     }

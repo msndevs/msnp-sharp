@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.IO;
 using System.Net;
 using System.Xml;
 using System.Text;
@@ -39,6 +40,7 @@ using System.Globalization;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MSNPSharp
 {
