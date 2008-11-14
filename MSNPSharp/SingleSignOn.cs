@@ -275,7 +275,7 @@ namespace MSNPSharp
             }
         }
 
-        public SSOTicketType Type
+        public SSOTicketType TicketType
         {
             get
             {
@@ -591,7 +591,7 @@ namespace MSNPSharp
             }
         }
 
-        private void GetTickets(RequestSecurityTokenResponseType[] result, MSNSecurityServiceSoapClient securService, MSNTicket msnticket)
+        private static void GetTickets(RequestSecurityTokenResponseType[] result, MSNSecurityServiceSoapClient securService, MSNTicket msnticket)
         {
             if (securService.pp != null && securService.pp.credProperties != null)
             {
@@ -705,7 +705,7 @@ namespace MSNPSharp
             return Convert.ToBase64String(CombinByte(CombinByte(CombinByte(tagMSGRUSRKEY_struct, iv), hash), deshash));
         }
 
-        private byte[] Derive_Key(byte[] key, byte[] magic)
+        private static byte[] Derive_Key(byte[] key, byte[] magic)
         {
             HMACSHA1 hmac = new HMACSHA1(key);
             byte[] hash1 = hmac.ComputeHash(magic);
@@ -717,7 +717,7 @@ namespace MSNPSharp
             return CombinByte(hash2, outbyt);
         }
 
-        private byte[] CombinByte(byte[] front, byte[] follow)
+        private static byte[] CombinByte(byte[] front, byte[] follow)
         {
             byte[] byt = new byte[front.Length + follow.Length];
             front.CopyTo(byt, 0);

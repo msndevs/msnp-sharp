@@ -326,7 +326,7 @@ namespace MSNPSharp.DataTransfer
         /// </remarks>
         /// <param name="number"></param>
         /// <returns></returns>
-        protected uint FlipEndian(uint number)
+        protected static uint FlipEndian(uint number)
         {
             return (uint)(((number & 0x000000ff) << 24) +
                 ((number & 0x0000ff00) << 8) +
@@ -342,7 +342,7 @@ namespace MSNPSharp.DataTransfer
         /// </remarks>
         /// <param name="number"></param>
         /// <returns></returns>
-        protected ulong FlipEndian(ulong number)
+        protected static ulong FlipEndian(ulong number)
         {
             return (ulong)
                 (((number & 0x00000000000000ff) << 56) +

@@ -42,7 +42,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using System.Web;
+    using System.Web; 
 
     /// <summary>
     /// Defines the type of MSNObject.
@@ -193,7 +193,7 @@ namespace MSNPSharp
         /// <summary>
         /// The type of MSN Object
         /// </summary>
-        public MSNObjectType Type
+        public MSNObjectType ObjectType
         {
             get
             {
@@ -312,7 +312,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="stream"></param>
         /// <returns></returns>
-        protected string GetStreamHash(Stream stream)
+        protected static string GetStreamHash(Stream stream)
         {
             stream.Seek(0, SeekOrigin.Begin);
 
@@ -458,7 +458,7 @@ namespace MSNPSharp
         /// a stream to the file will be opened and returned. The stream is not guaranteed to positioned at the beginning of the stream.
         /// </summary>
         /// <returns></returns>
-        public Stream OpenStream()
+        public virtual Stream OpenStream()
         {
             /*if(dataStream == null)
             {
@@ -502,7 +502,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public string CalculateChecksum()
         {
-            string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.Type + "Location" + Location + "FriendlyAAA=SHA1D" + Sha;
+            string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.ObjectType + "Location" + Location + "FriendlyAAA=SHA1D" + Sha;
 
             HashAlgorithm shaAlg = new SHA1Managed();
             string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.UTF8.GetBytes(checksum)));
@@ -541,7 +541,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetXmlString()
         {
-            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.Type + "\" Location=\"" + Location + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() + "\"/>";
+            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + Location + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() + "\"/>";
         }
 
         /// <summary>
@@ -553,7 +553,7 @@ namespace MSNPSharp
             return System.Web.HttpUtility.UrlEncode(GetXmlString(), Encoding.UTF8).Replace("+", "%20");
         }
 
-        public static bool operator ==(MSNObject obj1, MSNObject obj2)
+        public static bool operator == (MSNObject obj1, MSNObject obj2)
         {
             if (((object)obj1) == null && ((object)obj2) == null)
                 return true;
@@ -562,7 +562,7 @@ namespace MSNPSharp
             return obj1.GetHashCode() == obj2.GetHashCode();
         }
 
-        public static bool operator !=(MSNObject obj1, MSNObject obj2)
+        public static bool operator != (MSNObject obj1, MSNObject obj2)
         {
             return !(obj1 == obj2);
         }

@@ -47,13 +47,13 @@ namespace MSNPSharp
 
         public DisplayImage()
         {
-            Type = MSNObjectType.UserDisplay;
+            ObjectType = MSNObjectType.UserDisplay;
             Location = "dotmsn.png";
         }
 
         public DisplayImage(string creator)
         {
-            Type = MSNObjectType.UserDisplay;
+            ObjectType = MSNObjectType.UserDisplay;
             Location = "dotmsn.png";
             Creator = creator;
         }

@@ -672,9 +672,9 @@ namespace MSNPSharp.DataTransfer
             properties.LocalContact = localContact;
             properties.RemoteContact = remoteContact;
 
-            if (msnObject.Type == MSNObjectType.Emoticon)
+            if (msnObject.ObjectType == MSNObjectType.Emoticon)
                 properties.DataType = DataTransferType.Emoticon;
-            else if (msnObject.Type == MSNObjectType.UserDisplay)
+            else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                 properties.DataType = DataTransferType.DisplayImage;
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
@@ -1051,9 +1051,9 @@ namespace MSNPSharp.DataTransfer
                     MSNObject msnObject = new MSNObject();
                     msnObject.ParseContext(message.MessageValues["Context"].ToString(), true);
 
-                    if (msnObject.Type == MSNObjectType.UserDisplay)
+                    if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                         properties.DataType = DataTransferType.DisplayImage;
-                    else if (msnObject.Type == MSNObjectType.Emoticon)
+                    else if (msnObject.ObjectType == MSNObjectType.Emoticon)
                         properties.DataType = DataTransferType.Emoticon;
                     else
                         properties.DataType = DataTransferType.Unknown;
@@ -1150,7 +1150,7 @@ namespace MSNPSharp.DataTransfer
         /// has accepted the invitation.
         /// </summary>
         /// <returns></returns>
-        protected MSNSLPMessage CreateAcceptanceMessage(MSNSLPTransferProperties properties)
+        protected static MSNSLPMessage CreateAcceptanceMessage(MSNSLPTransferProperties properties)
         {
             MSNSLPMessage newMessage = new MSNSLPMessage();
             newMessage.StartLine = "MSNSLP/1.0 200 OK";
@@ -1170,7 +1170,7 @@ namespace MSNPSharp.DataTransfer
         /// Creates a 603 Decline message.
         /// </summary>
         /// <returns></returns>
-        protected MSNSLPMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
+        protected static MSNSLPMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
         {
             // create 603 Decline message			
             MSNSLPMessage newMessage = new MSNSLPMessage();
@@ -1218,7 +1218,7 @@ namespace MSNPSharp.DataTransfer
         /// <remarks>The context must be a plain string, no base-64 decoding will be done</remarks>
         /// <param name="context"></param>
         /// <returns></returns>
-        private string ExtractChecksum(string context)
+        private static string ExtractChecksum(string context)
         {
             Regex shaRe = new Regex("SHA1C=\"([^\"]+)\"");
             Match match = shaRe.Match(context);
@@ -1241,7 +1241,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="taggedText"></param>
         /// <returns></returns>
-        private string ExtractNameFromTag(string taggedText)
+        private static string ExtractNameFromTag(string taggedText)
         {
             int start = taggedText.IndexOf(":");
             int end = taggedText.IndexOf(">");

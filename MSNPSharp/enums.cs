@@ -409,6 +409,11 @@ namespace MSNPSharp
     public enum ClientType
     {
         /// <summary>
+        /// No client
+        /// </summary>
+        None = 0,
+
+        /// <summary>
         /// Passport member
         /// </summary>
         PassportMember = 1,
@@ -465,6 +470,10 @@ namespace MSNPSharp
     /// </summary>	
     public enum MSNError
     {
+        /// <summary>
+        /// No error
+        /// </summary>
+        None = 0,
         /// <summary>
         /// Syntax error.
         /// </summary>

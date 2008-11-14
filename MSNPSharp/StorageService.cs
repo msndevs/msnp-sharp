@@ -73,7 +73,7 @@ namespace MSNPSharp
         }
 
         //.... @_@
-        private ExpressionProfileAttributesType CreateFullExpressionProfileAttributes()
+        private static ExpressionProfileAttributesType CreateFullExpressionProfileAttributes()
         {
             ExpressionProfileAttributesType expAttrib = new ExpressionProfileAttributesType();
             expAttrib.DateModified = true;
