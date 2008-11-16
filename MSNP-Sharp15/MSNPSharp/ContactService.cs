@@ -273,7 +273,7 @@ namespace MSNPSharp
                 return;
             }
 
-            AddressBook += Deltas;
+            XMLContactList.Synchronize(AddressBook, Deltas);
 
             if (AddressBook.AddressbookLastChange != DateTime.MinValue)
             {
