@@ -302,7 +302,7 @@ namespace MSNPSharp
             if (oldHash.Length != 0)
                 MSNObjectCatalog.GetInstance().Remove(oldHash);
 
-            oldHash = Context;
+            oldHash = CalculateChecksum();
 
             MSNObjectCatalog.GetInstance().Add(oldHash, this);
         }
