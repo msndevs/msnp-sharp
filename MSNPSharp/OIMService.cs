@@ -399,7 +399,7 @@ namespace MSNPSharp
 
                             if (strdecode.ToLowerInvariant() == "q")
                             {
-                                nick = Converter.ConvertFromQPString(strencodenick, encode);
+                                nick = MSNHttpUtility.QPDecode(strencodenick, encode);
                             }
 
                             if (regmsg.Match(e.Result.GetMessageResult).Success)

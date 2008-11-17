@@ -227,6 +227,10 @@ namespace MSNPSharp
             set
             {
                 clientCapacities = value;
+                if ((clientCapacities & ClientCapacities.HasMSNSpaces) != 0)
+                {
+                    SetHasBlog(true);
+                }
             }
         }
 

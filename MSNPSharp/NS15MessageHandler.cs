@@ -57,7 +57,7 @@ namespace MSNPSharp
 
 #if MSNP18
         public static readonly string MachineGuid = Guid.NewGuid().ToString();
-        public static string EPName = "MSNPSharp";
+        public static string EPName = Environment.MachineName;
 #endif
 
         private SocketMessageProcessor messageProcessor;
@@ -506,7 +506,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", HttpUtility.UrlEncode(contact.Name).Replace("+", "%20") }));
+            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", MSNHttpUtility.UrlEncode(contact.Name) }));
         }
 
         /// <summary>
@@ -518,7 +518,7 @@ namespace MSNPSharp
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.UrlEncode(newName) }));
 
             StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
@@ -625,6 +625,12 @@ namespace MSNPSharp
                 string capacities = ((long)owner.ClientCapacities).ToString();
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
+#if MSNP18
+                MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
+                    "<PrivateEndpointData><EpName>" + MSNHttpUtility.UrlEncode(EPName)
+                    + "</EpName><Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false")
+                    + "</Idle><State>" + ParseStatus(status) + "</State></PrivateEndpointData>"));
+#endif
             }
         }
 
