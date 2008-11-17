@@ -619,7 +619,7 @@ namespace MSNPSharp.IO
                         Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
                         contact.NSMessageHandler = xmlcl.NSMessageHandler;
                         contact.SetGuid(new Guid(ct.contactId));
-                        contact.SetHasBlog(cit.hasSpace);
+                        //contact.SetHasBlog(cit.hasSpace);   //DONOT trust this
                         contact.SetComment(cit.comment);
                         contact.SetIsMessengerUser(ismessengeruser);
                         contact.SetMobileAccess(cit.isMobileIMEnabled);

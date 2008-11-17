@@ -259,6 +259,8 @@ namespace MSNPSharp
         CanMultiPacketMSG = 0x20,
         IsMobileDevice = 0x40,
         IsDirectDevice = 0x80,
+        IsWebClient = 0x200,
+        IsTGWClient = 0x800,
         HasMSNSpaces = 0x1000, // 0x001000
         UsingXPMediaCenter = 0x2000,
         CanDirectIM = 0x4000,

@@ -239,7 +239,7 @@ namespace MSNPSharp
         protected string GetStyleString()
         {
             StringBuilder builder = new StringBuilder();
-            builder.Append("FN=").Append(HttpUtility.UrlEncode(Font.ToString())).Replace("+", "%20");
+            builder.Append("FN=").Append(MSNHttpUtility.UrlEncode(Font.ToString()));
             builder.Append("; EF=");
             if (((int)Decorations & (int)TextDecorations.Italic) > 0)
                 builder.Append('I');

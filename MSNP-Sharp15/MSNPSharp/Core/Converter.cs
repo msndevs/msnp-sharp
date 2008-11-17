@@ -32,18 +32,81 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Text;
+using System.Web;
 
 namespace MSNPSharp.Core
 {
-    public static class Converter
+
+    /// <summary>
+    /// Provides methods for encoding and decoding URLs when processing Web requests. This class cannot be inherited. 
+    /// </summary>
+    public sealed class MSNHttpUtility
     {
+        /// <summary>
+        /// Encodes a URL string using UTF-8 encoding by default.
+        /// </summary>
+        /// <param name="str">The text to encode.</param>
+        /// <returns>An encoded string.</returns>
+        public static string UrlEncode(string str)
+        {
+            return UrlEncode(str, Encoding.UTF8);
+        }
+
+        /// <summary>
+        /// Encodes a URL string using the specified encoding object.
+        /// </summary>
+        /// <param name="str">The text to encode.</param>
+        /// <param name="e">The <see cref="Encoding"/> object that specifies the encoding scheme. </param>
+        /// <returns>An encoded string.</returns>
+        public static string UrlEncode(string str, Encoding e)
+        {
+            string tmp = HttpUtility.UrlEncode(str, e);
+            tmp = tmp.Replace("+", "%20");
+            tmp = tmp.Replace("%7B", "&#x7B;");
+            tmp = tmp.Replace("%7b", "&#x7b;");
+            tmp = tmp.Replace("%7D", "&#x7D;");
+            tmp = tmp.Replace("%7d", "&#x7d;");
+            return tmp;
+        }
+
+        /// <summary>
+        /// Converts a string that has been encoded for transmission in a URL into a decoded string using UTF-8 encoding by default.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <returns>A decoded string.</returns>
+        public static string UrlDecode(string str)
+        {
+            return UrlDecode(str, Encoding.UTF8);
+        }
+
+        /// <summary>
+        /// Converts a URL-encoded string into a decoded string, using the specified encoding object.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <param name="e">The <see cref="Encoding"/> that specifies the decoding scheme.</param>
+        /// <returns>A decoded string.</returns>
+        public static string UrlDecode(string str, Encoding e)
+        {
+            return HttpUtility.UrlDecode(str.Replace("%20", "+"), e);
+        }
+
+        /// <summary>
+        /// Decode the QP encoded string.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <returns>A decoded string.</returns>
+        public static string QPDecode(string str)
+        {
+            return QPDecode(str, Encoding.Default);
+        }
+
         /// <summary>
         /// Decode the QP encoded string using an encoding
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="encode"></param>
-        /// <returns></returns>
-        public static string ConvertFromQPString(string value, Encoding encode)
+        /// <param name="value">The string to decode.</param>
+        /// <param name="encode">The <see cref="Encoding"/> that specifies the decoding scheme.</param>
+        /// <returns>A decoded string.</returns>
+        public static string QPDecode(string value, Encoding encode)
         {
             string inputString = value;
             StringBuilder builder1 = new StringBuilder();
@@ -97,5 +160,6 @@ namespace MSNPSharp.Core
             }
             return num1;
         }
+
     }
 }
