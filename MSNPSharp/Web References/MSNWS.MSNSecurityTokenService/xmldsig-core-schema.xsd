@@ -64,10 +64,10 @@
   </complexType>
   <element name="Transform" type="ds:TransformType" />
   <complexType name="TransformType" mixed="true">
-    <choice minOccurs="0" maxOccurs="unbounded">
-      <any namespace="##other" processContents="lax" />
-      <element name="XPath" type="string" />
-    </choice>
+    <sequence>
+      <element minOccurs="0" name="XPath" type="string" />
+      <any minOccurs="0" maxOccurs="unbounded" namespace="##other" />
+    </sequence>
     <attribute name="Algorithm" type="anyURI" use="required" />
   </complexType>
   <element name="DigestMethod" type="ds:DigestMethodType" />
