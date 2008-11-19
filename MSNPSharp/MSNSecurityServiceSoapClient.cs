@@ -44,6 +44,15 @@ namespace MSNPSharp.SOAP
     /// <summary>
     /// Just go and ask M$ why they just send a ContentType header as "text/html" instead of "text/xml"!
     /// </summary>
+    [System.Web.Services.WebServiceBindingAttribute(Name = "SecurityTokenServicePortBinding", Namespace = "http://schemas.microsoft.com/Passport/SoapServices/PPCRL")]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Fault))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Envelope))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AgreementMethodType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EncryptedType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SignaturePropertiesType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ManifestType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SignatureType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SecurityTokenReferenceType))]
     public class MSNSecurityServiceSoapClient : SecurityTokenService
     {
         /// <summary>
