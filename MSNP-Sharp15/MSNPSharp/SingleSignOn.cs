@@ -469,14 +469,7 @@ namespace MSNPSharp
 
         public void AddDefaultAuths()
         {
-            AuthenticationAdd(@"http://Passport.NET/tb", null);
-
-            AuthenticationAdd("messengerclear.live.com", policy);
-            AuthenticationAdd("messenger.msn.com", "?id=507");
-            AuthenticationAdd("contacts.msn.com", "MBI");
-            AuthenticationAdd("messengersecure.live.com", "MBI_SSL");
-            AuthenticationAdd("spaces.live.com", "MBI");
-            AuthenticationAdd("storage.msn.com", "MBI");
+            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.OIM | SSOTicketType.Spaces | SSOTicketType.Storage | SSOTicketType.Web);
         }
 
         public void AddAuths(SSOTicketType ssott)
@@ -547,7 +540,7 @@ namespace MSNPSharp
             securService.Security.Timestamp.Created = new AttributedDateTime();
             securService.Security.Timestamp.Created.Value = XmlConvert.ToString(now, "yyyy-MM-ddTHH:mm:ssZ");
             securService.Security.Timestamp.Expires = new AttributedDateTime();
-            securService.Security.Timestamp.Expires.Value = XmlConvert.ToString(now.AddMinutes(5), "yyyy-MM-ddTHH:mm:ssZ");
+            securService.Security.Timestamp.Expires.Value = XmlConvert.ToString(now.AddMinutes(Settings.MSNTicketLifeTime), "yyyy-MM-ddTHH:mm:ssZ");
 
             securService.MessageID = new AttributedURIType();
             securService.MessageID.Value = ((int)span.TotalSeconds).ToString();
@@ -558,7 +551,7 @@ namespace MSNPSharp
 
             securService.ToValue = new To();
             securService.ToValue.MustUnderstand = true;
-            securService.ToValue.Value = @"HTTPS://login.live.com:443//RST2.srf";
+            securService.ToValue.Value = @"HTTPS://login.live.com:443/RST2.srf";
 
             if (user.Split('@').Length > 1)
             {
@@ -665,10 +658,10 @@ namespace MSNPSharp
                 {
                     ssoticket.BinarySecret = token.RequestedProofToken.BinarySecret.Value;
                 }
-                if (token.LifeTime != null)
+                if (token.Lifetime != null)
                 {
-                    ssoticket.Created = XmlConvert.ToDateTime(token.LifeTime.Created.Value, XmlDateTimeSerializationMode.Local);
-                    ssoticket.Expires = XmlConvert.ToDateTime(token.LifeTime.Expires.Value, XmlDateTimeSerializationMode.Local);
+                    ssoticket.Created = XmlConvert.ToDateTime(token.Lifetime.Created.Value, XmlDateTimeSerializationMode.Local);
+                    ssoticket.Expires = XmlConvert.ToDateTime(token.Lifetime.Expires.Value, XmlDateTimeSerializationMode.Local);
                 }
 
                 msnticket.SSOTickets[ticketype] = ssoticket;
