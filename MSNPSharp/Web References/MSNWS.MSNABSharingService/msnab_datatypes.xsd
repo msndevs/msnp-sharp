@@ -140,6 +140,15 @@
       </xsd:extension>
     </xsd:complexContent>
   </xsd:complexType>
+  <xsd:complexType name="DomainMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="DomainName" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
   <xsd:complexType name="EveryoneMember">
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnab:BaseMember" />
