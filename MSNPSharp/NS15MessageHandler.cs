@@ -631,7 +631,7 @@ namespace MSNPSharp
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
 #if MSNP18
                 MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                    "<PrivateEndpointData><EpName>" + MSNHttpUtility.UrlEncode(EPName)
+                    "<PrivateEndpointData><EpName>" + MSNHttpUtility.XmlEncode(EPName)
                     + "</EpName><Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false")
                     + "</Idle><State>" + ParseStatus(status) + "</State></PrivateEndpointData>"));
 #endif
