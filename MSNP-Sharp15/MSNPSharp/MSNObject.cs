@@ -481,14 +481,14 @@ namespace MSNPSharp
         /// <returns></returns>
         public virtual string GetEncodeString(string context)
         {
-            return MSNHttpUtility.UrlEncode(context, Encoding.UTF8);
+            return MSNHttpUtility.UrlEncode(context);
         }
 
         public static string GetDecodeString(string context)
         {
             if (context.IndexOf(" ") == -1)
             {
-                return MSNHttpUtility.UrlDecode(context, Encoding.UTF8);
+                return MSNHttpUtility.UrlDecode(context);
             }
             return context;
         }

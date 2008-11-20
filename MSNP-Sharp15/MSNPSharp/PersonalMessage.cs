@@ -108,9 +108,7 @@ namespace MSNPSharp
                 string currentmedia = String.Empty;
 
                 if (mediaType != MediaType.None)
-                    currentmedia = System.Web.HttpUtility.HtmlEncode(String.Join(@"\0", content));
-
-                personalMessage = System.Web.HttpUtility.HtmlEncode(personalMessage);
+                    currentmedia = MSNHttpUtility.XmlEncode(String.Join(@"\0", content));
 
                 string pload = String.Format("<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia>" +
 #if MSNP18
@@ -118,12 +116,12 @@ namespace MSNPSharp
                     "<SignatureSound>{3}</SignatureSound>" +
 #endif
  "</Data>",
-                                              personalMessage,
-                                              currentmedia
+                                              MSNHttpUtility.XmlEncode(personalMessage),
+                                              MSNHttpUtility.XmlEncode(currentmedia)
                                               
 #if MSNP18
-                                              , MSNHttpUtility.UrlEncode("{" + machineGuid.ToString() +"}"),
-                                              signatureSound
+                                              , MSNHttpUtility.XmlEncode(machineGuid.ToString("B")),
+                                              MSNHttpUtility.XmlEncode(signatureSound)
 #endif
 );
 

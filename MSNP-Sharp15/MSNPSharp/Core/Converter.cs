@@ -42,6 +42,59 @@ namespace MSNPSharp.Core
     /// </summary>
     public sealed class MSNHttpUtility
     {
+        private enum UnSafe
+        {
+            /// <summary>
+            /// For url encode
+            /// </summary>
+            UrlEscape  = 0x1,
+            /// <summary>
+            /// For XML encode
+            /// </summary>
+            XMLEscape  = 0x2,
+            /// <summary>
+            /// For HTML encode
+            /// </summary>
+            HTMLEscape = 0x4 
+        }
+
+        private static uint[] ASCII_CLASS;
+        private static string strUrlUnsafe = " \"#%&+,/:;<=>?@[\\]^`{|}";
+        private static string strXmlUnsafe = "&:;<=>?[]\\^{|}";
+        private static string strHtmlUnsafe = "&'<> ;\"";
+
+        static MSNHttpUtility()
+        {
+            ASCII_CLASS = new uint[256];
+            int c = 0;
+            for (c = 0; c < ASCII_CLASS.Length; c++)
+            {
+                if ((c >= 0 && c <= 32) || c >= 126)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.UrlEscape;
+                }
+
+                if (c >= 0 && c <= 32)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.XMLEscape;
+                }
+
+                if (strUrlUnsafe.IndexOf((char)c) != -1)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.UrlEscape;
+                }
+                if (strXmlUnsafe.IndexOf((char)c) != -1)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.XMLEscape;
+                }
+                if (strHtmlUnsafe.IndexOf((char)c) != -1)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.HTMLEscape;
+                }
+            }
+
+        }
+
         /// <summary>
         /// Encodes a URL string using UTF-8 encoding by default.
         /// </summary>
@@ -60,13 +113,32 @@ namespace MSNPSharp.Core
         /// <returns>An encoded string.</returns>
         public static string UrlEncode(string str, Encoding e)
         {
-            string tmp = HttpUtility.UrlEncode(str, e);
-            tmp = tmp.Replace("+", "%20");
-            tmp = tmp.Replace("%7B", "&#x7B;");
-            tmp = tmp.Replace("%7b", "&#x7b;");
-            tmp = tmp.Replace("%7D", "&#x7D;");
-            tmp = tmp.Replace("%7d", "&#x7d;");
-            return tmp;
+            if (str == null) return string.Empty;
+            byte[] byt = e.GetBytes(str);
+            StringBuilder result = new StringBuilder(256);
+            for (int c = 0; c < byt.Length; c++)
+            {
+                byte chr = byt[c];
+                if((ASCII_CLASS[chr] & (uint)UnSafe.UrlEscape) != 0)
+                {
+                    switch (chr)
+                    {
+                        case (byte)'+':
+                            result.Append("%20");
+                            break;
+                        default:
+                            result.Append("%" + ((int)chr).ToString("X2"));
+                            break;
+
+                    }
+                }
+                else
+                {
+                    result.Append((char)chr);
+                }
+            }
+
+            return result.ToString();
         }
 
         /// <summary>
@@ -89,6 +161,40 @@ namespace MSNPSharp.Core
         {
             return HttpUtility.UrlDecode(str.Replace("%20", "+"), e);
         }
+
+        /// <summary>
+        /// Encodes a Xml string using the specified encoding object.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <param name="e">The <see cref="Encoding"/> that specifies the decoding scheme.</param>
+        /// <returns>A decoded string.</returns>
+        public static string XmlEncode(string str)
+        {
+            if (str == null)
+                return string.Empty;
+
+            char[] chrArr = str.ToCharArray();
+            char chr;
+            StringBuilder result = new StringBuilder(256);
+            for (int c = 0; c < chrArr.Length; c++)
+            {
+                chr = chrArr[c];
+                
+                if (chr < 128)
+                {
+                    if ((ASCII_CLASS[chr] & (uint)UnSafe.XMLEscape) != 0)
+                    {
+                        result.Append("&#x" + ((int)chr).ToString("X2") + ";");
+                        continue;
+                    }
+                }
+
+                result.Append(chr);
+            }
+
+            return result.ToString();
+        }
+
 
         /// <summary>
         /// Decode the QP encoded string.
