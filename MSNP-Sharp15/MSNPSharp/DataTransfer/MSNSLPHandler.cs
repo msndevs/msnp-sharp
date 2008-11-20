@@ -756,6 +756,20 @@ namespace MSNPSharp.DataTransfer
         /// <param name="activityID">The ID of activity, that was register by Microsoft.</param>
         /// <param name="activityName">The name of Activity.</param>
         /// <returns></returns>
+        /// <example>
+        /// <code language="C#">
+        /// //An example that invites a remote user to attend the "Music Mix" activity.
+        /// 
+        /// String remoteAccount = @"remoteUser@hotmail.com";
+        /// 
+        /// String activityID = "20521364";        //The activityID of Music Mix activity.
+        /// String activityName = "Music Mix";     //Th name of acticvity
+        /// 
+        /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.Owner.Mail, remoteAccount);
+        /// MSNSLPHandler slpHandler =  session.GetHandler(typeof(MSNSLPHandler)) as MSNSLPHandler ;
+        /// slpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, remoteaccount, activityID, activityName);
+        /// </code>
+        /// </example>
         public P2PTransferSession SendInvitation(string localContact, string remoteContact, string activityID, string activityName)
         {
             // set class variables
