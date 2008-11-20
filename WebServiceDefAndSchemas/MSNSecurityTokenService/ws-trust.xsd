@@ -33,7 +33,7 @@
 		<xs:sequence>
 			<xs:element ref="wst:TokenType" minOccurs="0"/>
 			<xs:element ref="wsp:AppliesTo" minOccurs="0"/>
-			<xs:element ref="wst:LifeTime" minOccurs="0"/>
+			<xs:element ref="wst:Lifetime" minOccurs="0"/>
 			<xs:element ref="wst:RequestedSecurityToken" minOccurs="0"/>
 			<xs:element ref="wst:RequestedAttachedReference" minOccurs="0"/>
 			<xs:element ref="wst:RequestedUnattachedReference" minOccurs="0"/>
@@ -92,7 +92,7 @@
 			<xs:element ref="wsse:BinarySecurityToken" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
-	<xs:element name="LifeTime" type="wst:LifetimeType"/>
+	<xs:element name="Lifetime" type="wst:LifetimeType"/>
 	<xs:complexType name="LifetimeType">
 		<xs:sequence>
 			<xs:element ref="wsu:Created" minOccurs="0"/>
