@@ -765,6 +765,7 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(sbMessage);
         }
 
+
         /// <summary>
         /// Send the first message to the server.
         /// </summary>
@@ -978,15 +979,21 @@ namespace MSNPSharp
                 return;
 
             // get the contact and update it's name
+#if MSNP18
+            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString().Split(';')[0]);
+#else
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
+#endif
             //contact.SetName(message.CommandValues[1].ToString());
 
 
-            if (Contacts.Contains(contact.Mail) == false)
+            if (Contacts.Contains(contact.Mail) == false && contact.Mail != NSMessageHandler.Owner.Mail)
+            {
                 Contacts.Add(contact.Mail, contact);
 
-            // notify the client programmer
-            OnContactJoined(contact);
+                // notify the client programmer
+                OnContactJoined(contact);
+            }
 
         }
 
@@ -1005,6 +1012,7 @@ namespace MSNPSharp
             {
                 // get the contact and update it's name
                 Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
+
                 Contacts.Remove(contact.Mail);
 
                 // notify the client programmer
@@ -1030,7 +1038,11 @@ namespace MSNPSharp
             if (NSMessageHandler.Owner.Mail == message.CommandValues[3].ToString())
                 return;
 
+#if MSNP18
+            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString().Split(';')[0]);
+#else
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString());
+#endif
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[4].ToString());
 

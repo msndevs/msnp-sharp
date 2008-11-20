@@ -622,7 +622,11 @@ namespace MSNPSharp
             //don't set the same status or it will result in disconnection
             else if (status != owner.Status)
             {
+#if MSNP18
+                string capacities = ((long)owner.ClientCapacities).ToString() + ":48";
+#else
                 string capacities = ((long)owner.ClientCapacities).ToString();
+#endif
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
 #if MSNP18

@@ -61,7 +61,11 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages defines data for a filetransfer.
         /// </summary>
-        FileData = 0x01000030
+        FileData = 0x01000030,
+        /// <summary>
+        /// 
+        /// </summary>
+        Activity = 0x01000000
     }
 
     /// <summary>
@@ -287,7 +291,7 @@ namespace MSNPSharp.DataTransfer
             P2PMessage ack = new P2PMessage();
 
             ack.TotalSize = TotalSize;
-            ack.Flags = 0x2;//P2PFlag.Acknowledgement;			
+            ack.Flags = (uint)P2PFlag.Acknowledgement;			
             ack.AckSessionId = Identifier;
             ack.AckIdentifier = AckSessionId;
             ack.AckTotalSize = TotalSize;
