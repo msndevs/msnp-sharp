@@ -141,7 +141,7 @@ namespace MSNPSharp
             nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
             {
                 ce.Switchboard.MessageProcessor.RegisterHandler(P2PHandler);
-
+                ce.Switchboard.P2PHandler = P2PHandler;
                 // check if the request is remote or on our initiative
                 if (ce.Initiator != null && (ce.Initiator == this || ce.Initiator == p2pHandler))
                 {

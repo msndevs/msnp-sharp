@@ -134,7 +134,11 @@ namespace MSNPSharp
             if(NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
                 // resend the user status so other client can see the new msn object
+#if MSNP18
+                string capacities = ((long)ClientCapacities).ToString() + ":48";
+#else
                 string capacities = ((long)ClientCapacities).ToString();
+#endif
                 string context = String.Empty;
 
                 if (DisplayImage != null)

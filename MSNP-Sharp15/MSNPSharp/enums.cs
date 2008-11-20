@@ -263,6 +263,9 @@ namespace MSNPSharp
         IsTGWClient = 0x800,
         HasMSNSpaces = 0x1000, // 0x001000
         UsingXPMediaCenter = 0x2000,
+        /// <summary>
+        /// Activity support.
+        /// </summary>
         CanDirectIM = 0x4000,
         CanReceiveWinks = 0x8000,
         CanMSNSearch = 0x10000,

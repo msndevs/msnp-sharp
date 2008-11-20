@@ -312,7 +312,11 @@ namespace MSNPSharp
 
             // Set display name, personal status and photo
             string mydispName = String.IsNullOrEmpty(AddressBook.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : AddressBook.Profile.DisplayName;
+#if MSNP18
             PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
+#else
+            PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null);
+#endif
             NSMessageHandler.Owner.SetName(mydispName);
             NSMessageHandler.Owner.SetPersonalMessage(pm);
 
