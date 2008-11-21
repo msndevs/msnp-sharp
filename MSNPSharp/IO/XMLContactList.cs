@@ -120,15 +120,21 @@ namespace MSNPSharp.IO
                     SerializableDictionary<MemberRole,
                     SerializableDictionary<string, BaseMember>>> MembershipList
         {
-            get { return mslist; }
-            set { mslist = value; }
+            get
+            {
+                return mslist;
+            }
+            set
+            {
+                mslist = value;
+            }
         }
 
         private Service GetTargetService(ServiceFilterType type)
         {
             foreach (Service svc in MembershipList.Keys)
             {
-                if (svc.Type == type)
+                if (svc.ServiceType == type)
                 {
                     return svc;
                 }
@@ -136,17 +142,17 @@ namespace MSNPSharp.IO
             return null;
         }
 
-       
+
 
         public MSNLists GetMSNLists(ServiceFilterType servicetype, string account, ClientType type)
         {
             MSNLists contactlists = MSNLists.None;
-            string hash = Contact.MakeHash(account, type);
-
             Service targetservice = GetTargetService(servicetype);
 
             if (targetservice != null)
             {
+                string hash = Contact.MakeHash(account, type);
+
                 if (MembershipList[targetservice].ContainsKey(MemberRole.Allow)
                     && MembershipList[targetservice][MemberRole.Allow].ContainsKey(hash))
                     contactlists |= MSNLists.AllowedList;
@@ -163,7 +169,7 @@ namespace MSNPSharp.IO
                     if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
                     {
                         contactlists ^= MSNLists.AllowedList;
-                        RemoveMemberhip(targetservice.Type, account, type, MemberRole.Allow);
+                        RemoveMemberhip(targetservice.ServiceType, account, type, MemberRole.Allow);
                     }
 
                 }
@@ -173,29 +179,29 @@ namespace MSNPSharp.IO
                     contactlists |= MSNLists.ReverseList;
             }
 
-            
             return contactlists;
         }
 
         public void AddMemberhip(ServiceFilterType servicetype, string account, ClientType type, MemberRole memberrole, BaseMember member)
         {
-            string hash = Contact.MakeHash(account, type);
             Service svc = GetTargetService(servicetype);
             if (svc != null)
             {
+                string hash = Contact.MakeHash(account, type);
+
                 if (!MembershipList[svc].ContainsKey(memberrole))
                     MembershipList[svc].Add(memberrole, new SerializableDictionary<string, BaseMember>(0));
-                MembershipList[svc][memberrole].Add(hash, member);
+
+                MembershipList[svc][memberrole][hash] = member;
             }
         }
 
         public void RemoveMemberhip(ServiceFilterType servicetype, string account, ClientType type, MemberRole memberrole)
         {
-            string hash = Contact.MakeHash(account, type);
-
             Service svc = GetTargetService(servicetype);
             if (svc != null)
             {
+                string hash = Contact.MakeHash(account, type);
                 if (MembershipList[svc].ContainsKey(memberrole) && MembershipList[svc][memberrole].ContainsKey(hash))
                 {
                     MembershipList[svc][memberrole].Remove(hash);
@@ -214,8 +220,11 @@ namespace MSNPSharp.IO
                 {
                     foreach (string hash in range[svc][role].Keys)
                     {
-                        if (!mslist.ContainsKey(svc)) mslist.Add(svc, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
-                        if (!mslist[svc].ContainsKey(role)) mslist[svc].Add(role, new SerializableDictionary<string, BaseMember>(0));
+                        if (!mslist.ContainsKey(svc))
+                            mslist.Add(svc, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
+
+                        if (!mslist[svc].ContainsKey(role))
+                            mslist[svc].Add(role, new SerializableDictionary<string, BaseMember>(0));
 
                         if (mslist[svc][role].ContainsKey(hash))
                         {
@@ -233,7 +242,7 @@ namespace MSNPSharp.IO
                     }
                 }
             }
-            
+
         }
 
         /// <summary>
@@ -244,13 +253,16 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static XMLContactList operator +(XMLContactList xmlcl, FindMembershipResultType findMembership)
         {
-            Service MsngrService = null;
+            // Process new SOAP deltas
             if (null != findMembership && null != findMembership.Services)
             {
                 foreach (ServiceType serviceType in findMembership.Services)
                 {
                     Service currentService = new Service();
                     currentService.Id = int.Parse(serviceType.Info.Handle.Id);
+                    currentService.ServiceType = serviceType.Info.Handle.Type;
+                    currentService.LastChange = serviceType.LastChange;
+                    currentService.ForeignId = serviceType.Info.Handle.ForeignId;
 
                     if (serviceType.Deleted)
                     {
@@ -261,14 +273,8 @@ namespace MSNPSharp.IO
                     }
                     else
                     {
-                        currentService.Type = serviceType.Info.Handle.Type;
-                        
-                        if (ServiceFilterType.Messenger == currentService.Type)
-                        {
-                            currentService.LastChange = serviceType.LastChange;
-                            currentService.ForeignId = serviceType.Info.Handle.ForeignId;
-                            MsngrService = currentService;
-
+                        if (ServiceFilterType.Messenger == currentService.ServiceType)
+                        {                            
                             if (!xmlcl.MembershipList.ContainsKey(currentService))
                             {
                                 xmlcl.MembershipList.Add(currentService, new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0));
@@ -312,11 +318,11 @@ namespace MSNPSharp.IO
 
                                                 if (bm.Deleted)
                                                 {
-                                                    xmlcl.RemoveMemberhip(currentService.Type, account, type, memberrole);
+                                                    xmlcl.RemoveMemberhip(currentService.ServiceType, account, type, memberrole);
                                                 }
                                                 else
                                                 {
-                                                    xmlcl.AddMemberhip(currentService.Type, account, type, memberrole, bm);
+                                                    xmlcl.AddMemberhip(currentService.ServiceType, account, type, memberrole, bm);
                                                 }
                                             }
                                         }
@@ -330,6 +336,7 @@ namespace MSNPSharp.IO
             }
 
             // Create/Update/Delete Memberships
+            Service MsngrService = xmlcl.GetTargetService(ServiceFilterType.Messenger);
             if (MsngrService != null)
             {
                 foreach (MemberRole role in xmlcl.MembershipList[MsngrService].Keys)
@@ -364,7 +371,7 @@ namespace MSNPSharp.IO
                         contact.NSMessageHandler = xmlcl.NSMessageHandler;
                         MSNLists newlists = xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type);
 
-                        
+
 
                         // Set new lists.
                         contact.SetLists(newlists);
