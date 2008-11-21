@@ -192,7 +192,7 @@ namespace MSNPSharp.IO
                 if (!MembershipList[svc].ContainsKey(memberrole))
                     MembershipList[svc].Add(memberrole, new SerializableDictionary<string, BaseMember>(0));
 
-                MembershipList[svc][memberrole].Add(hash, member);
+                MembershipList[svc][memberrole][hash] = member;
             }
         }
 
