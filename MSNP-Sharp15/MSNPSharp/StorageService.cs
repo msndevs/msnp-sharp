@@ -305,7 +305,6 @@ namespace MSNPSharp
                 }
 
                 // 6.2 Get Profile again to get notification.LastChanged
-                NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService = true;
                 NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("Initial");
 
                 //7. FindDocuments Hmm....
@@ -409,7 +408,6 @@ namespace MSNPSharp
 
                 NSMessageHandler.ContactService.AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
                 NSMessageHandler.ContactService.AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
-                NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService = false;
 
                 // Display name
                 NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
@@ -563,7 +561,7 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                NSMessageHandler.ContactService.AddressBook.Profile.GetFromStorageService)
+                Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]) > NSMessageHandler.ContactService.AddressBook.Profile.DateModified)
             {
                 return GetProfileImpl("Initial");
             }
