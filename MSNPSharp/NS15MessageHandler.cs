@@ -1107,10 +1107,13 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="switchboard">The switchboard created</param>
         /// <param name="initiator">The object that initiated the switchboard request.</param>
-        protected virtual void OnSBCreated(SBMessageHandler switchboard, object initiator)
+        /// <param name="account"></param>
+        /// <param name="name"></param>
+        /// <param name="anonymous">Indecates that whether it is an anonymous request.</param>
+        protected virtual void OnSBCreated(SBMessageHandler switchboard, object initiator, string account, string name, bool anonymous)
         {
             if (SBCreated != null)
-                SBCreated(this, new SBCreatedEventArgs(switchboard, initiator));
+                SBCreated(this, new SBCreatedEventArgs(switchboard, initiator, account, name, anonymous));
         }
 
         /// <summary>
@@ -1119,7 +1122,7 @@ namespace MSNPSharp
         /// <remarks>
         /// Indicates that the user receives a switchboard session (chatsession) request. A connection to the switchboard will be established
         /// and the corresponding events and objects are created.
-        /// <code>RNG [Session] [IP:Port] 'CKI' [Hash] [Account] [Name]</code>
+        /// <code>RNG [Session] [IP:Port] 'CKI' [Hash] [Account] [Name] U messenger.msn.com 1</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnRNGReceived(NSMessage message)
@@ -1143,7 +1146,26 @@ namespace MSNPSharp
             processor.Connect();
 
             // notify the client
-            OnSBCreated(handler, null);
+            string account = string.Empty;
+            string name = string.Empty;
+            bool anonymous = false;
+
+            if (message.CommandValues.Count >= 5)
+            {
+                account = message.CommandValues[4].ToString();
+            }
+
+            if (message.CommandValues.Count >= 6)
+            {
+                name = message.CommandValues[5].ToString();
+            }
+
+            if (ContactList.GetContact(account) == null)
+            {
+                anonymous = true;
+            }
+
+            OnSBCreated(handler, null, account, name, anonymous);
         }
 
         /// <summary>
@@ -1209,7 +1231,7 @@ namespace MSNPSharp
                     processor.RegisterHandler(queueItem.SwitchboardHandler);
 
                     // notify the client
-                    OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator);
+                    OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator, string.Empty, string.Empty, false);
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB created event handler called", GetType().Name);
 
@@ -1230,40 +1252,42 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that the notification server has send us a UBM. This is usually a message from Yahoo Messenger.
-        /// <code>UBM [Account] 32 [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
+        /// <code>UBM [Remote user account] 32 [Destination user account] [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnUBMReceived(NSMessage message)
         {
             string sender = message.CommandValues[0].ToString();
-            YIMMessage msg = new YIMMessage(message);
+            NSMessage messageClone = ((ICloneable)message).Clone() as NSMessage;  //Always pass the clone ones into messagehandler.
 
             if (sender == null)
             {
                 sender = message.CommandValues[0].ToString();
             }
 
-            if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))
+            YIMMessage msg = new YIMMessage(message);
+            if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))   //filter the typing message
                 && ContactList.HasContact(sender, ClientType.EmailMember))
             {
                 foreach (YIMMessageHandler YimHandler in SwitchBoards)
                 {
                     if (YimHandler.Contacts.Contains(sender))
                     {
-                        return;
+                        return;  //The handler have been registered, return.
                     }
                 }
 
+                //YIMMessageHandler not found, we create a new one and register it.
                 YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
                 switchboard.NSMessageHandler = this;
                 switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
                 switchboard.MessageProcessor = MessageProcessor;
                 SwitchBoards.Add(switchboard);
 
-                OnSBCreated(switchboard, null);
+                OnSBCreated(switchboard, null, sender, sender, false);
                 switchboard.ForceJoin(ContactList[sender, ClientType.EmailMember]);
                 MessageProcessor.RegisterHandler(switchboard);
-                switchboard.HandleMessage(MessageProcessor, msg);
+                switchboard.HandleMessage(MessageProcessor, messageClone);
             }
         }
 

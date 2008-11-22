@@ -84,6 +84,9 @@ namespace MSNPSharp
         /// <summary>
         /// </summary>
         private SBMessageHandler switchboard;
+        private string account = string.Empty;
+        private string name = string.Empty;
+        private bool anonymous = false;
 
         /// <summary>
         /// The affected switchboard
@@ -113,19 +116,42 @@ namespace MSNPSharp
             {
                 return initiator;
             }
-            set
-            {
-                initiator = value;
-            }
+        }
+
+        /// <summary>
+        /// The account of user that requested the switchboard.
+        /// </summary>
+        public string Account
+        {
+            get { return account; }
+        }
+
+        /// <summary>
+        ///  The nick name of user that requested the switchboard.
+        /// </summary>
+        public string Name
+        {
+            get { return name; }
+        }
+
+        /// <summary>
+        /// Anonymous request, usually from webchat users.
+        /// </summary>
+        public bool Anonymous
+        {
+            get { return anonymous; }
         }
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public SBCreatedEventArgs(SBMessageHandler switchboard, object initiator)
+        public SBCreatedEventArgs(SBMessageHandler switchboard, object initiator, string account, string name, bool anonymous)
         {
             this.switchboard = switchboard;
             this.initiator = initiator;
+            this.account = account;
+            this.name = name;
+            this.anonymous = anonymous;
         }
     }
     #endregion
@@ -751,6 +777,21 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Send a keep-alive message to avoid the switchboard closing. This is useful for bots.
+        /// </summary>
+        public virtual void SendKeepAliveMessage()
+        {
+            SBMessage sbMessage = new SBMessage();
+
+            MSGMessage msgMessage = new MSGMessage();
+            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
+            sbMessage.InnerMessage = msgMessage;
+
+            // send it over the network
+            MessageProcessor.SendMessage(sbMessage);
+        }
+
+        /// <summary>
         /// Sends a 'nudge' message to the switchboard, and is received by all participants.
         /// </summary>
         public virtual void SendNudge()
@@ -1039,18 +1080,33 @@ namespace MSNPSharp
                 return;
 
 #if MSNP18
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString().Split(';')[0]);
+            string account = message.CommandValues[3].ToString().Split(';')[0];
+            
 #else
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString());
+            string account = message.CommandValues[3].ToString();
 #endif
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[4].ToString());
+            Contact contact = NSMessageHandler.ContactList.GetContact(account);
 
-            if (Contacts.Contains(contact.Mail) == false)
+            if (contact == null)  //anonymous request
+            {
+                contact = NSMessageHandler.ContactList.GetContact(account, ClientType.LCS);
+                contact.NSMessageHandler = NSMessageHandler;
+                if (message.CommandValues.Count >= 5)
+                {
+                    contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
+                }
+                contact.SetLists(MSNLists.None);
+            }
+
+            if (Contacts.Contains(contact.Mail) == false && contact.Mail != NSMessageHandler.Owner.Mail)
+            {
                 Contacts.Add(contact.Mail, contact);
 
-            // notify the client programmer
-            OnContactJoined(contact);
+                // notify the client programmer
+                OnContactJoined(contact);
+            }
         }
 
         /// <summary>

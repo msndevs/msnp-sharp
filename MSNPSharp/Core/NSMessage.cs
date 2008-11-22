@@ -40,7 +40,7 @@ namespace MSNPSharp.Core
     using MSNPSharp.DataTransfer;
 
     [Serializable()]
-    public class NSMessage : MSNMessage
+    public class NSMessage : MSNMessage, ICloneable
     {
         public NSMessage()
             : base()
@@ -79,5 +79,16 @@ namespace MSNPSharp.Core
 
             }
         }
+
+        #region ICloneable ≥…‘±
+
+        object ICloneable.Clone()
+        {
+            NSMessage messageClone = new NSMessage();
+            messageClone.ParseBytes(GetBytes());
+            return messageClone;
+        }
+
+        #endregion
     }
 };

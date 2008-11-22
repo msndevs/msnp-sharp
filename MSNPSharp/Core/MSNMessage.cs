@@ -40,12 +40,14 @@ namespace MSNPSharp.Core
     using MSNPSharp.DataTransfer;
 
     [Serializable()]
-    public class MSNMessage : NetworkMessage
+    public class MSNMessage : NetworkMessage, ICloneable
     {
         int transactionID = -1;
         string command;
         ArrayList commandValues;
         string acknowledgement = "N";
+        bool dataChanged = false;
+        byte[] rawData = null;
 
         public MSNMessage()
         {
@@ -60,6 +62,7 @@ namespace MSNPSharp.Core
 
         public override void PrepareMessage()
         {
+            bool changed = dataChanged;
             if (InnerMessage != null)
             {
                 Command = "";
@@ -67,6 +70,8 @@ namespace MSNPSharp.Core
             }
 
             base.PrepareMessage();
+            if (!changed)
+                dataChanged = changed;
         }
 
         public string Acknowledgement
@@ -77,6 +82,8 @@ namespace MSNPSharp.Core
             }
             set
             {
+                if (value != acknowledgement)
+                    dataChanged = true;
                 acknowledgement = value;
             }
         }
@@ -89,6 +96,8 @@ namespace MSNPSharp.Core
             }
             set
             {
+                if (value != transactionID)
+                    dataChanged = true;
                 transactionID = value;
             }
         }
@@ -101,6 +110,8 @@ namespace MSNPSharp.Core
             }
             set
             {
+                if (value != command)
+                    dataChanged = true;
                 command = value;
             }
         }
@@ -113,12 +124,17 @@ namespace MSNPSharp.Core
             }
             set
             {
+                if (commandValues != value)
+                    dataChanged = true;
                 commandValues = value;
             }
         }
 
         public override byte[] GetBytes()
         {
+            if (dataChanged == false && rawData != null)
+                return rawData;
+
             byte[] contents = null;
 
             //FIXME: maybe move this to SBMessage?
@@ -163,6 +179,8 @@ namespace MSNPSharp.Core
 
         public override void ParseBytes(byte[] data)
         {
+            rawData = data;
+
             int cnt = 0;
             int bodyStart = 0;
 
@@ -201,6 +219,8 @@ namespace MSNPSharp.Core
                 InnerBody = new byte[newLength];
                 Array.Copy(data, startIndex, InnerBody, 0, newLength);
             }
+
+            dataChanged = false;
         }
 
         public override string ToString()
@@ -215,5 +235,16 @@ namespace MSNPSharp.Core
             PrepareMessage();
             return base.ToDebugString();
         }
+
+        #region ICloneable Member
+
+        object ICloneable.Clone()
+        {
+            MSNMessage messageClone = new MSNMessage();
+            messageClone.ParseBytes(GetBytes());
+            return messageClone;
+        }
+
+        #endregion
     }
 };

@@ -116,7 +116,12 @@ namespace MSNPSharp
             {
                 try
                 {
-                    handler.HandleMessage(this, message);
+                    //I think the person who first write this make a big mistake, C# is NOT C++,
+                    //message class passes as reference, one change, all changed.
+                    //Mabe we need to review all HandleMessage calling.
+                    ICloneable imessageClone = (message as NSMessage) as ICloneable;
+                    NSMessage messageClone = imessageClone.Clone() as NSMessage;
+                    handler.HandleMessage(this, messageClone);
                 }
                 catch (Exception e)
                 {

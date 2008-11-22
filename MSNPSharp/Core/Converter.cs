@@ -163,10 +163,9 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
-        /// Encodes a Xml string using the specified encoding object.
+        /// Encodes a Xml string.
         /// </summary>
         /// <param name="str">The string to decode.</param>
-        /// <param name="e">The <see cref="Encoding"/> that specifies the decoding scheme.</param>
         /// <returns>A decoded string.</returns>
         public static string XmlEncode(string str)
         {
