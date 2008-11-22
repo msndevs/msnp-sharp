@@ -1809,7 +1809,13 @@ namespace MSNPSharpClient
                 messenger.Nameserver.Owner.Name = dn;
 
             if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
+            {
+#if MSNP18
                 messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
+#else
+                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null);
+#endif
+                }
         }
 
         private void viewContactCardToolStripMenuItem_Click(object sender, EventArgs e)
