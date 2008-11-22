@@ -430,7 +430,7 @@ namespace MSNPSharpClient
         private void PrintText(object sender, TextMessageEventArgs e)
         {
             richTextHistory.SelectionColor = Color.Gray;
-            richTextHistory.AppendText(e.Sender.Name + ":" + Environment.NewLine);
+            richTextHistory.AppendText(e.Sender.Name + "(" + e.Sender.Mail + "):" + Environment.NewLine);
 
             TextDecorations td = e.Message.Decorations;
             FontStyle fs = FontStyle.Regular;
