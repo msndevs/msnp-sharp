@@ -38,11 +38,12 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using System.Diagnostics;
 
     /// <summary>
     /// Handler for YIM messages
     /// </summary>
-    public class YIMMessageHandler : SBMessageHandler
+    public class YIMMessageHandler :SBMessageHandler
     {
         protected YIMMessageHandler()
             : base()
@@ -123,6 +124,7 @@ namespace MSNPSharp
             OnSessionClosed();
             NSMessageHandler.MessageProcessor.UnregisterHandler(this);
             NSMessageHandler.SwitchBoards.Remove(this);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A YIMMessageHandler has been removed.");
 
         }
 
@@ -130,15 +132,14 @@ namespace MSNPSharp
         {
             try
             {
-                if (message.InnerMessage == null)
-                    return;
-                YIMMessage nsMessage = (YIMMessage)(message.InnerMessage.ParentMessage);
+                NSMessage nsMessage = message as NSMessage;
 
                 switch (nsMessage.Command)
                 {
                     case "UBM":
                         {
-                            OnUBMReceived(nsMessage);
+                            YIMMessage yimMessage = new YIMMessage(nsMessage);
+                            OnUBMReceived(yimMessage);
                             break;
                         }
                 }
@@ -156,40 +157,41 @@ namespace MSNPSharp
             OnContactJoined(contact);
         }
 
-
-        protected virtual void OnUBMReceived(YIMMessage message)
+        /// <summary>
+        /// Called when a UBM command has been received, this message was sent by a Yahoo Messenger client.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the notification server has send us a UBM. This is usually a message from Yahoo Messenger.
+        /// <code>UBM [Remote user account] 32 [Destination user account] [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnUBMReceived(NetworkMessage message)
         {
-            MSGMessage sbMSGMessage = message.InnerMessage;
+            YIMMessage yimMessage = message as YIMMessage;
 
-            if (!NSMessageHandler.ContactList.HasContact(message.CommandValues[0].ToString(), ClientType.EmailMember))
+            if (!NSMessageHandler.ContactList.HasContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember))
             {
                 return;
             }
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString(), ClientType.EmailMember);
-            if (sbMSGMessage.MimeHeader.ContainsKey("Content-Type"))
+            Contact contact = NSMessageHandler.ContactList.GetContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember);
+            if (yimMessage.InnerMessage.MimeHeader.ContainsKey("Content-Type"))
             {
-                switch (sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture))
+                switch (yimMessage.InnerMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "text/x-msmsgscontrol":
                         // make sure we don't parse the rest of the message in the next loop											
-                        OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"]));
+                        OnUserTyping(NSMessageHandler.ContactList.GetContact(yimMessage.InnerMessage.MimeHeader["TypingUser"]));
                         break;
-
-                    /*case "text/x-msmsgsinvite":
-                        break;
-					
-                    case "application/x-msnmsgrp2p":
-                        break;*/
 
                     case "text/x-msnmsgr-datacast":
                         OnNudgeReceived(contact);
                         break;
 
                     default:
-                        if (sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
+                        if (yimMessage.InnerMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                         {
                             TextMessage msg = new TextMessage();
-                            msg.CreateFromMessage(sbMSGMessage);
+                            msg.CreateFromMessage(yimMessage.InnerMessage);
                             OnTextMessageReceived(msg, contact);
                         }
                         break;
@@ -204,6 +206,11 @@ namespace MSNPSharp
 
         protected override void ProcessInvitations()
         {
+        }
+
+        public override string ToString()
+        {
+            return GetType().ToString();
         }
     }
 };

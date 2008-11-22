@@ -51,15 +51,16 @@ namespace MSNPSharp.Core
             : base("UBM", (ArrayList)message.CommandValues.Clone())
         {
             _user = message.CommandValues[0].ToString();
+#if MSNP18
+            _msgtype = message.CommandValues[3].ToString();
+#else
             _msgtype = message.CommandValues[2].ToString();
+#endif
 
             Command = "UBM";
-            //string strmessage = Encoding.UTF8.GetString(((NetworkMessage)message).InnerBody);
-            //strmessage = strmessage.Substring(strmessage.IndexOf("\r\n") + 2);
+
             message.Command = "";
             message.CommandValues.Clear();
-            //message.InnerBody = Encoding.UTF8.GetBytes(strmessage);
-            //message.PrepareMessage();
             InnerMessage = new MSGMessage(message);
             InnerBody = GetBytes();
         }
