@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:ps="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" xmlns:wst="http://schemas.xmlsoap.org/ws/2004/04/trust" elementFormDefault="qualified" targetNamespace="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <xs:import schemaLocation="ws-trust.xsd" namespace="http://schemas.xmlsoap.org/ws/2004/04/trust" />
-  <xs:element name="RequestMultipleSecurityTokens" type="ps:RequestMultipleSecurityTokensType" />
+<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
+<xs:schema xmlns:ps="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" xmlns:wst="http://schemas.xmlsoap.org/ws/2004/04/trust" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" elementFormDefault="qualified">
+  <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/04/trust" schemaLocation="ws-trust.xsd"/>
+  <xs:element name="RequestMultipleSecurityTokens" type="ps:RequestMultipleSecurityTokensType"/>
   <xs:complexType name="RequestMultipleSecurityTokensType">
     <xs:sequence>
-      <xs:element maxOccurs="unbounded" ref="wst:RequestSecurityToken" />
+      <xs:element ref="wst:RequestSecurityToken" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute ref="ps:Id" />
+    <xs:attribute ref="ps:Id"/>
   </xs:complexType>
-  <xs:element name="AuthInfo" type="ps:AuthInfoType" />
+  <xs:element name="AuthInfo" type="ps:AuthInfoType"/>
   <xs:complexType name="AuthInfoType">
     <xs:sequence>
-      <xs:element default="{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}" name="HostingApp" type="xs:string" />
-      <xs:element default="4" name="BinaryVersion" type="xs:string" />
-      <xs:element default="1" name="UIVersion" type="xs:string" />
-      <xs:element name="Cookies" type="xs:string" />
-      <xs:element default="AQAAAAIAAABsYwQAAAAzMDg0" name="RequestParams" type="xs:string" />
+      <xs:element name="HostingApp" type="xs:string" default="{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}"/>
+      <xs:element name="BinaryVersion" type="xs:string" default="4"/>
+      <xs:element name="UIVersion" type="xs:string" default="1"/>
+      <xs:element name="Cookies" type="xs:string"/>
+      <xs:element name="RequestParams" type="xs:string" default="AQAAAAIAAABsYwQAAAAzMDg0"/>
     </xs:sequence>
-    <xs:attribute ref="ps:Id" />
+    <xs:attribute ref="ps:Id"/>
   </xs:complexType>
-  <xs:attribute name="Id" type="xs:string" />
+  <xs:attribute name="Id" type="xs:string"/>
 </xs:schema>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema xmlns="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:wsu="http://schemas.xmlsoap.org/ws/2002/07/utility" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://schemas.xmlsoap.org/ws/2002/07/utility" version="0.1" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
+<xsd:schema xmlns="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:wsu="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://schemas.xmlsoap.org/ws/2002/07/utility" elementFormDefault="qualified" attributeFormDefault="unqualified" version="0.1">
   <xsd:simpleType name="tTimestampFault">
     <xsd:annotation>
       <xsd:documentation>
@@ -7,7 +8,7 @@ This type defines the fault code value for Timestamp message expiration.
           </xsd:documentation>
     </xsd:annotation>
     <xsd:restriction base="xsd:QName">
-      <xsd:enumeration value="wsu:MessageExpired" />
+      <xsd:enumeration value="wsu:MessageExpired"/>
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:simpleType name="tContextFault">
@@ -17,11 +18,11 @@ This type defines the fault code values for context-related faults.
           </xsd:documentation>
     </xsd:annotation>
     <xsd:restriction base="xsd:QName">
-      <xsd:enumeration value="wsu:ContextEstablished" />
-      <xsd:enumeration value="wsu:ContextUnknown" />
-      <xsd:enumeration value="wsu:ContextNotSupported" />
-      <xsd:enumeration value="wsu:ContextRefused" />
-      <xsd:enumeration value="wsu:ContextExpired" />
+      <xsd:enumeration value="wsu:ContextEstablished"/>
+      <xsd:enumeration value="wsu:ContextUnknown"/>
+      <xsd:enumeration value="wsu:ContextNotSupported"/>
+      <xsd:enumeration value="wsu:ContextRefused"/>
+      <xsd:enumeration value="wsu:ContextExpired"/>
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:attribute name="Id" type="xsd:ID">
@@ -44,8 +45,8 @@ This global attribute is used on extensions to distinguish mandatory vs. optiona
 Convenience attribute group used to simplify this schema.
           </xsd:documentation>
     </xsd:annotation>
-    <xsd:attribute ref="wsu:Id" use="optional" />
-    <xsd:anyAttribute namespace="##other" processContents="lax" />
+    <xsd:attribute ref="wsu:Id" use="optional"/>
+    <xsd:anyAttribute namespace="##other" processContents="lax"/>
   </xsd:attributeGroup>
   <xsd:complexType name="AttributedDateTime">
     <xsd:annotation>
@@ -64,7 +65,7 @@ If the ValueType attribute is absent, the implied value of this attribute is xsd
             </xsd:documentation>
           </xsd:annotation>
         </xsd:attribute>
-        <xsd:attributeGroup ref="wsu:commonAtts" />
+        <xsd:attributeGroup ref="wsu:commonAtts"/>
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
@@ -101,7 +102,7 @@ This type is for elements whose [children] is an anyURI and can have arbitrary a
     </xsd:annotation>
     <xsd:simpleContent>
       <xsd:extension base="xsd:anyURI">
-        <xsd:attributeGroup ref="wsu:commonAtts" />
+        <xsd:attributeGroup ref="wsu:commonAtts"/>
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
@@ -112,14 +113,14 @@ This complex type ties together the timestamp related elements into a composite 
             </xsd:documentation>
     </xsd:annotation>
     <xsd:sequence>
-      <xsd:element minOccurs="0" ref="wsu:Created" />
-      <xsd:element minOccurs="0" ref="wsu:Expires" />
-      <xsd:choice minOccurs="0" maxOccurs="unbounded">
-        <xsd:element ref="wsu:Received" />
-        <xsd:any namespace="##other" processContents="lax" />
-      </xsd:choice>
+      <xsd:element ref="wsu:Created" minOccurs="0"/>
+      <xsd:element ref="wsu:Expires" minOccurs="0"/>
+      <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+        <xsd:element ref="wsu:Received" minOccurs="0"/>
+        <xsd:any namespace="##other" processContents="lax" minOccurs="0"/>
+      </xsd:sequence>
     </xsd:sequence>
-    <xsd:attributeGroup ref="wsu:commonAtts" />
+    <xsd:attributeGroup ref="wsu:commonAtts"/>
   </xsd:complexType>
   <xsd:element name="Timestamp" type="wsu:TimestampType">
     <xsd:annotation>
@@ -150,7 +151,7 @@ This element allows the ReceviedType to be applied anywhere element wildcards ar
             </xsd:documentation>
     </xsd:annotation>
   </xsd:element>
-  <xsd:element name="Identifier" type="wsu:AttributedURI" />
+  <xsd:element name="Identifier" type="wsu:AttributedURI"/>
   <xsd:complexType name="ContextType" abstract="true">
     <xsd:annotation>
       <xsd:documentation>
@@ -158,10 +159,10 @@ This type is the generic base type for context headers.
             </xsd:documentation>
     </xsd:annotation>
     <xsd:sequence>
-      <xsd:element minOccurs="0" ref="wsu:Expires" />
-      <xsd:element ref="wsu:Identifier" />
+      <xsd:element ref="wsu:Expires" minOccurs="0"/>
+      <xsd:element ref="wsu:Identifier"/>
     </xsd:sequence>
-    <xsd:attributeGroup ref="wsu:commonAtts" />
+    <xsd:attributeGroup ref="wsu:commonAtts"/>
   </xsd:complexType>
   <xsd:element name="Context">
     <xsd:annotation>
@@ -170,11 +171,11 @@ This element allows Contexts to be applied anywhere element wildcards are presen
 including as a SOAP header.
             </xsd:documentation>
     </xsd:annotation>
-    <xsd:complexType>
+    <xsd:complexType mixed="false">
       <xsd:complexContent mixed="false">
         <xsd:extension base="wsu:ContextType">
           <xsd:sequence>
-            <xsd:any minOccurs="0" maxOccurs="unbounded" namespace="##other" processContents="lax" />
+            <xsd:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
           </xsd:sequence>
         </xsd:extension>
       </xsd:complexContent>
@@ -187,10 +188,10 @@ This complex type defines a lightweight type for transmitting ports.
             </xsd:documentation>
     </xsd:annotation>
     <xsd:sequence>
-      <xsd:element name="Address" type="wsu:AttributedURI" />
-      <xsd:any minOccurs="0" maxOccurs="unbounded" namespace="##any" processContents="lax" />
+      <xsd:element name="Address" type="wsu:AttributedURI"/>
+      <xsd:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
     </xsd:sequence>
-    <xsd:attributeGroup ref="wsu:commonAtts" />
+    <xsd:attributeGroup ref="wsu:commonAtts"/>
   </xsd:complexType>
   <xsd:element name="PortReference" type="wsu:PortReferenceType">
     <xsd:annotation>

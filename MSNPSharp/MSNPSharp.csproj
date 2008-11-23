@@ -256,6 +256,111 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNRSIService\rsi_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNStorageService\FindDocumentsResultType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\GetProfileResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNStorageService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\owner.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferences Include="Web References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas\MSNSecurityTokenService\ps.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas\MSNSecurityTokenService\ps.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNOIMStoreService\</RelPath>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNRSIService\</RelPath>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNSpaceService\</RelPath>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNStorageService_StorageService</CachedSettingsPropName>
+    </WebReferenceUrl>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\msnpsharp.snk" />
+    <None Include="Resources\WLXLarge_default.gif" />
+    <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\addressing.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -293,111 +398,6 @@
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\xmldsig-core-schema.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNStorageService\FindDocumentsResultType.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNStorageService\GetProfileResponse.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_datatypes.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_servicetypes.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNStorageService\msnstorage_ws.wsdl" />
-    <None Include="Web References\MSNWS.MSNStorageService\Reference.map">
-      <Generator>MSDiscoCodeGenerator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <SubType>Designer</SubType>
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\owner.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <WebReferences Include="Web References\" />
-  </ItemGroup>
-  <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
-      <ServiceLocationURL>
-      </ServiceLocationURL>
-      <CachedDynamicPropName>
-      </CachedDynamicPropName>
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
-    </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNOIMStoreService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
-      <ServiceLocationURL>
-      </ServiceLocationURL>
-      <CachedDynamicPropName>
-      </CachedDynamicPropName>
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService</CachedSettingsPropName>
-    </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNRSIService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
-      <ServiceLocationURL>
-      </ServiceLocationURL>
-      <CachedDynamicPropName>
-      </CachedDynamicPropName>
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
-    </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
-      <ServiceLocationURL>
-      </ServiceLocationURL>
-      <CachedDynamicPropName>
-      </CachedDynamicPropName>
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
-    </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNSpaceService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
-      <ServiceLocationURL>
-      </ServiceLocationURL>
-      <CachedDynamicPropName>
-      </CachedDynamicPropName>
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
-    </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
-      <ServiceLocationURL>
-      </ServiceLocationURL>
-      <CachedDynamicPropName>
-      </CachedDynamicPropName>
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNStorageService_StorageService</CachedSettingsPropName>
-    </WebReferenceUrl>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\msnpsharp.snk" />
-    <None Include="Resources\WLXLarge_default.gif" />
-    <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>

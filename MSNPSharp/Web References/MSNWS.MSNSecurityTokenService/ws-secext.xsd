@@ -4,9 +4,9 @@
   <xs:attribute name="Usage" type="xs:string" />
   <xs:element name="SecurityTokenReference" type="wsse:SecurityTokenReferenceType" />
   <xs:complexType name="SecurityTokenReferenceType">
-    <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:sequence minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax" />
-    </xs:choice>
+    </xs:sequence>
     <xs:attribute ref="wsse:Id" />
     <xs:attribute ref="wsse:Usage" />
   </xs:complexType>
