@@ -288,10 +288,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="G:\程序\MSNSharp\branches\MSNPSHARP_25_STABLE\WebServiceDefAndSchemas\MSNSecurityTokenService\ps.wsdl">
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas\MSNSecurityTokenService\ps.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
-      <UpdateFromURL>G:\程序\MSNSharp\branches\MSNPSHARP_25_STABLE\WebServiceDefAndSchemas\MSNSecurityTokenService\ps.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas\MSNSecurityTokenService\ps.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -299,10 +299,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -310,10 +310,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNOIMStoreService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -321,10 +321,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNRSIService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -332,10 +332,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNSpaceService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -343,10 +343,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
+    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
-      <UpdateFromURL>http://localhost/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

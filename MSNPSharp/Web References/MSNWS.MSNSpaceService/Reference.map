@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DiscoveryClientResultsFile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Results>
-    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws_servicetype.xsd" filename="space_ws_servicetype.xsd" />
-    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl" filename="space_ws.wsdl" />
-    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://localhost/msnws/WebServiceDefAndSchemas/MSNSpaceService/space_ws_datatype.xsd" filename="space_ws_datatype.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl" filename="space_ws.wsdl" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws_servicetype.xsd" filename="space_ws_servicetype.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws_datatype.xsd" filename="space_ws_datatype.xsd" />
   </Results>
 </DiscoveryClientResultsFile>
