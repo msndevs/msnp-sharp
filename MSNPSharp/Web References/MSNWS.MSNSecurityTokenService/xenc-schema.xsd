@@ -26,16 +26,16 @@
   </simpleType>
   <element name="CipherData" type="xenc:CipherDataType" />
   <complexType name="CipherDataType">
-    <choice>
-      <element name="CipherValue" type="base64Binary" />
-      <element ref="xenc:CipherReference" />
-    </choice>
+    <sequence>
+      <element minOccurs="0" name="CipherValue" type="base64Binary" />
+      <element minOccurs="0" ref="xenc:CipherReference" />
+    </sequence>
   </complexType>
   <element name="CipherReference" type="xenc:CipherReferenceType" />
   <complexType name="CipherReferenceType">
-    <choice>
+    <sequence>
       <element minOccurs="0" name="Transforms" type="xenc:TransformsType" />
-    </choice>
+    </sequence>
     <attribute name="URI" type="anyURI" use="required" />
   </complexType>
   <complexType name="TransformsType">
@@ -73,10 +73,10 @@
   </complexType>
   <element name="ReferenceList">
     <complexType>
-      <choice maxOccurs="unbounded">
-        <element name="DataReference" type="xenc:ReferenceType" />
-        <element name="KeyReference" type="xenc:ReferenceType" />
-      </choice>
+      <sequence maxOccurs="unbounded">
+        <element minOccurs="0" name="DataReference" type="xenc:ReferenceType" />
+        <element minOccurs="0" name="KeyReference" type="xenc:ReferenceType" />
+      </sequence>
     </complexType>
   </element>
   <complexType name="ReferenceType">
@@ -94,9 +94,9 @@
   </complexType>
   <element name="EncryptionProperty" type="xenc:EncryptionPropertyType" />
   <complexType name="EncryptionPropertyType" mixed="true">
-    <choice maxOccurs="unbounded">
+    <sequence maxOccurs="unbounded">
       <any namespace="##other" processContents="lax" />
-    </choice>
+    </sequence>
     <attribute name="Target" type="anyURI" use="optional" />
     <attribute name="Id" type="ID" use="optional" />
     <anyAttribute namespace="http://www.w3.org/XML/1998/namespace" />

@@ -64,9 +64,9 @@
   </complexType>
   <element name="Transform" type="ds:TransformType" />
   <complexType name="TransformType" mixed="true">
-    <sequence>
+    <sequence maxOccurs="unbounded">
       <element minOccurs="0" name="XPath" type="string" />
-      <any minOccurs="0" maxOccurs="unbounded" namespace="##other" />
+      <any minOccurs="0" namespace="##other" />
     </sequence>
     <attribute name="Algorithm" type="anyURI" use="required" />
   </complexType>
@@ -83,27 +83,27 @@
   </simpleType>
   <element name="KeyInfo" type="ds:KeyInfoType" />
   <complexType name="KeyInfoType" mixed="true">
-    <choice maxOccurs="unbounded">
-      <element ref="ds:KeyName" />
-      <element ref="ds:KeyValue" />
-      <element ref="ds:RetrievalMethod" />
-      <element ref="ds:X509Data" />
-      <element ref="ds:PGPData" />
-      <element ref="ds:SPKIData" />
-      <element ref="ds:MgmtData" />
-      <any namespace="##other" processContents="lax" />
-    </choice>
+    <sequence maxOccurs="unbounded">
+      <element minOccurs="0" ref="ds:KeyName" />
+      <element minOccurs="0" ref="ds:KeyValue" />
+      <element minOccurs="0" ref="ds:RetrievalMethod" />
+      <element minOccurs="0" ref="ds:X509Data" />
+      <element minOccurs="0" ref="ds:PGPData" />
+      <element minOccurs="0" ref="ds:SPKIData" />
+      <element minOccurs="0" ref="ds:MgmtData" />
+      <any minOccurs="0" namespace="##other" processContents="lax" />
+    </sequence>
     <attribute name="Id" type="ID" use="optional" />
   </complexType>
   <element name="KeyName" type="string" />
   <element name="MgmtData" type="string" />
   <element name="KeyValue" type="ds:KeyValueType" />
   <complexType name="KeyValueType" mixed="true">
-    <choice>
-      <element ref="ds:DSAKeyValue" />
-      <element ref="ds:RSAKeyValue" />
-      <any namespace="##other" processContents="lax" />
-    </choice>
+    <sequence>
+      <element minOccurs="0" ref="ds:DSAKeyValue" />
+      <element minOccurs="0" ref="ds:RSAKeyValue" />
+      <any minOccurs="0" namespace="##other" processContents="lax" />
+    </sequence>
   </complexType>
   <element name="RetrievalMethod" type="ds:RetrievalMethodType" />
   <complexType name="RetrievalMethodType">
@@ -116,14 +116,14 @@
   <element name="X509Data" type="ds:X509DataType" />
   <complexType name="X509DataType">
     <sequence maxOccurs="unbounded">
-      <choice>
-        <element name="X509IssuerSerial" type="ds:X509IssuerSerialType" />
-        <element name="X509SKI" type="base64Binary" />
-        <element name="X509SubjectName" type="string" />
-        <element name="X509Certificate" type="base64Binary" />
-        <element name="X509CRL" type="base64Binary" />
-        <any namespace="##other" processContents="lax" />
-      </choice>
+      <sequence>
+        <element minOccurs="0" name="X509IssuerSerial" type="ds:X509IssuerSerialType" />
+        <element minOccurs="0" name="X509SKI" type="base64Binary" />
+        <element minOccurs="0" name="X509SubjectName" type="string" />
+        <element minOccurs="0" name="X509Certificate" type="base64Binary" />
+        <element minOccurs="0" name="X509CRL" type="base64Binary" />
+        <any minOccurs="0" namespace="##other" processContents="lax" />
+      </sequence>
     </sequence>
   </complexType>
   <complexType name="X509IssuerSerialType">
@@ -134,17 +134,11 @@
   </complexType>
   <element name="PGPData" type="ds:PGPDataType" />
   <complexType name="PGPDataType">
-    <choice>
-      <sequence>
-        <element name="PGPKeyID" type="base64Binary" />
-        <element minOccurs="0" name="PGPKeyPacket" type="base64Binary" />
-        <any minOccurs="0" maxOccurs="unbounded" namespace="##other" processContents="lax" />
-      </sequence>
-      <sequence>
-        <element name="PGPKeyPacket" type="base64Binary" />
-        <any minOccurs="0" maxOccurs="unbounded" namespace="##other" processContents="lax" />
-      </sequence>
-    </choice>
+    <sequence>
+      <element minOccurs="0" name="PGPKeyID" type="base64Binary" />
+      <element minOccurs="0" name="PGPKeyPacket" type="base64Binary" />
+      <any minOccurs="0" maxOccurs="unbounded" namespace="##other" processContents="lax" />
+    </sequence>
   </complexType>
   <element name="SPKIData" type="ds:SPKIDataType" />
   <complexType name="SPKIDataType">
@@ -178,9 +172,9 @@
   </complexType>
   <element name="SignatureProperty" type="ds:SignaturePropertyType" />
   <complexType name="SignaturePropertyType" mixed="true">
-    <choice maxOccurs="unbounded">
-      <any namespace="##other" processContents="lax" />
-    </choice>
+    <sequence maxOccurs="unbounded">
+      <any minOccurs="0" namespace="##other" processContents="lax" />
+    </sequence>
     <attribute name="Target" type="anyURI" use="required" />
     <attribute name="Id" type="ID" use="optional" />
   </complexType>
