@@ -168,7 +168,7 @@ namespace MSNPSharp.SOAP
         {
             get
             {
-                return resp.ContentType;
+                return "text/xml; charset=utf-8";  //We cheat the underlying framework.
             }
             set
             {
