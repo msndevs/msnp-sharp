@@ -641,8 +641,9 @@ namespace MSNPSharp
                 }
                 if (token.LifeTime != null)
                 {
-                    ssoticket.Created = XmlConvert.ToDateTime(token.LifeTime.Created.Value, XmlDateTimeSerializationMode.Local);
-                    ssoticket.Expires = XmlConvert.ToDateTime(token.LifeTime.Expires.Value, XmlDateTimeSerializationMode.Local);
+                    // Format : "yyyy-MM-ddTHH:mm:ssZ"
+                    ssoticket.Created = XmlConvert.ToDateTime(token.LifeTime.Created.Value, "yyyy-MM-ddTHH:mm:ssZ");
+                    ssoticket.Expires = XmlConvert.ToDateTime(token.LifeTime.Expires.Value, "yyyy-MM-ddTHH:mm:ssZ");
                 }
 
                 msnticket.SSOTickets[ticketype] = ssoticket;
