@@ -146,7 +146,7 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return To.Replace("<msnmsgr:", "").Replace(">", "");
+                return From.Replace("<msnmsgr:", "").Replace(">", "");
             }
         }
         /// <summary>
