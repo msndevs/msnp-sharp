@@ -114,10 +114,10 @@ This complex type ties together the timestamp related elements into a composite 
     <xsd:sequence>
       <xsd:element minOccurs="0" ref="wsu:Created" />
       <xsd:element minOccurs="0" ref="wsu:Expires" />
-      <xsd:choice minOccurs="0" maxOccurs="unbounded">
-        <xsd:element ref="wsu:Received" />
-        <xsd:any namespace="##other" processContents="lax" />
-      </xsd:choice>
+      <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+        <xsd:element minOccurs="0" ref="wsu:Received" />
+        <xsd:any minOccurs="0" namespace="##other" processContents="lax" />
+      </xsd:sequence>
     </xsd:sequence>
     <xsd:attributeGroup ref="wsu:commonAtts" />
   </xsd:complexType>
