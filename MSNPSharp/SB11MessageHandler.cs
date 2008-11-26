@@ -750,6 +750,21 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Send a keep-alive message to avoid the switchboard closing. This is useful for bots.
+        /// </summary>
+        public virtual void SendKeepAliveMessage()
+        {
+            SBMessage sbMessage = new SBMessage();
+
+            MSGMessage msgMessage = new MSGMessage();
+            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
+            sbMessage.InnerMessage = msgMessage;
+
+            // send it over the network
+            MessageProcessor.SendMessage(sbMessage);
+        }
+
+        /// <summary>
         /// Sends a 'nudge' message to the switchboard, and is received by all participants.
         /// </summary>
         public virtual void SendNudge()

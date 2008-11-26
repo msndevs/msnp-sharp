@@ -65,7 +65,11 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Displayimage transfer.
         /// </summary>
-        DisplayImage
+        DisplayImage,
+        /// <summary>
+        /// Activity invitation.
+        /// </summary>
+        Activity
     }
 
     /// <summary>
@@ -614,10 +618,21 @@ namespace MSNPSharp.DataTransfer
         /// The guid used in invitations for a filetransfer.
         /// </summary>
         public const string FileTransferGuid = "{5D3E02AB-6190-11D3-BBBB-00C04F795683}";
+
         /// <summary>
         /// The guid used in invitations for a user display transfer.
         /// </summary>
         public const string UserDisplayGuid = "{A4268EEC-FEC5-49E5-95C3-F126696BDBF6}";
+
+        /// <summary>
+        /// The guid used in invitations for a share photo.
+        /// </summary>
+        public const string SharePhotoGuid = "{41D3E74E-04A2-4B37-96F8-08ACDB610874}";
+
+        /// <summary>
+        /// The guid used in invitations for an activity.
+        /// </summary>
+        public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
         /// <summary>
         /// Constructor.
@@ -733,6 +748,94 @@ namespace MSNPSharp.DataTransfer
             return session;
         }
 
+        /// <summary>
+        /// Sends the remote contact a invitation for the activity. The invitation message is send over the current MessageProcessor.
+        /// </summary>
+        /// <param name="localContact"></param>
+        /// <param name="remoteContact"></param>
+        /// <param name="activityID">The ID of activity, that was register by Microsoft.</param>
+        /// <param name="activityName">The name of Activity.</param>
+        /// <returns></returns>
+        /// <example>
+        /// <code language="C#">
+        /// //An example that invites a remote user to attend the "Music Mix" activity.
+        /// 
+        /// String remoteAccount = @"remoteUser@hotmail.com";
+        /// 
+        /// String activityID = "20521364";        //The activityID of Music Mix activity.
+        /// String activityName = "Music Mix";     //Th name of acticvity
+        /// 
+        /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.Owner.Mail, remoteAccount);
+        /// MSNSLPHandler slpHandler =  session.GetHandler(typeof(MSNSLPHandler)) as MSNSLPHandler ;
+        /// slpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, remoteaccount, activityID, activityName);
+        /// </code>
+        /// </example>
+        public P2PTransferSession SendInvitation(string localContact, string remoteContact, string activityID, string activityName)
+        {
+            // set class variables
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties();
+            properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
+
+            properties.LocalContact = localContact;
+            properties.RemoteContact = remoteContact;
+
+            properties.DataType = DataTransferType.Activity;
+
+            MSNSLPMessage slpMessage = new MSNSLPMessage();
+            //byte[] contextArray  = System.Text.ASCIIEncoding.ASCII.GetBytes(System.Web.HttpUtility.UrlDecode(msnObject.OriginalContext));//GetEncodedString());
+            //string base64Context = Convert.ToBase64String(contextArray, 0, contextArray.Length);
+            //string activityUrl = "99991065" + ";1;" + Tip;
+            string activityUrl = activityID + ";1;" + activityName;
+            byte[] contextData = System.Text.UnicodeEncoding.Unicode.GetBytes(activityUrl);
+            string base64Context = Convert.ToBase64String(contextData, 0, contextData.Length);
+
+            properties.Context = base64Context;
+
+            properties.LastBranch = Guid.NewGuid();
+            properties.CallId = Guid.NewGuid();
+
+            slpMessage.StartLine = "INVITE MSNMSGR:" + remoteContact + " MSNSLP/1.0";
+            slpMessage.To = "<msnmsgr:" + remoteContact + ">";
+            slpMessage.From = "<msnmsgr:" + localContact + ">";
+            slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CSeq = 0;
+            slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.MaxForwards = 0;
+            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+
+            slpMessage.Body = "EUF-GUID: " + ActivityGuid + "\r\n" +
+                          "SessionID: " + properties.SessionId + "\r\n" +
+                          "SChannelState: 0\r\n" +
+                          "Capabilities-Flags: 1\r\n" +
+                          "AppID: " + activityID.ToString() + "\r\n" +
+                          "Context: " + base64Context + "\r\n\r\n";
+            //slpMessage.Body = "EUF-GUID: {6A13AF9C-5308-4F35-923A-67E8DDA40C2F}\r\nSessionID: " + properties.SessionId + "\r\nAppID: 1\r\n" + "Context: " + base64Context + "\r\n\r\n" + "\r\nRobot-Command: auto-accept#" + localContact + "#\r\n";
+
+
+            P2PMessage p2pMessage = new P2PMessage();
+            p2pMessage.InnerMessage = slpMessage;
+
+            // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
+            p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
+            // store the transferproperties
+            TransferProperties[properties.CallId] = properties;
+
+            // create a transfer session to handle the actual data transfer
+            P2PTransferSession session = Factory.CreateP2PTransferSession();
+            session.MessageSession = (P2PMessageSession)MessageProcessor;
+            session.SessionId = properties.SessionId;
+
+            MessageSession.AddTransferSession(session);
+
+            session.IsSender = false;
+            session.CallId = properties.CallId;
+
+            OnTransferSessionCreated(session);
+
+            MessageSession.SendMessage(p2pMessage);
+
+            return session;
+        }
 
         /// <summary>
         /// Sends the remote contact a request for the filetransfer. The invitation message is send over the current MessageProcessor.
@@ -1034,6 +1137,29 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Creates an 500 internal error message.
+        /// </summary>
+        /// <param name="transferProperties"></param>
+        /// <returns></returns>
+        protected virtual MSNSLPMessage CreateInernalErrorMessage(MSNSLPTransferProperties transferProperties)
+        {
+            MSNSLPMessage slpMessage = new MSNSLPMessage();
+
+            slpMessage.StartLine = "MSNSLP/1.0 500 Inernal Error";
+            slpMessage.To = "<msnmsgr:" + transferProperties.RemoteContact + ">";
+            slpMessage.From = "<msnmsgr:" + transferProperties.LocalContact + ">";
+            slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + transferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CSeq = transferProperties.LastCSeq;
+            slpMessage.CallId = transferProperties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.MaxForwards = 0;
+            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+            slpMessage.Body = "SessionID: " + transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n" +
+                              "SChannelState: 0\r\n\r\n";
+
+            return slpMessage;
+        }
+
+        /// <summary>
         /// Parses the incoming invitation message. This will set the class's properties for later retrieval in following messages.
         /// </summary>
         /// <param name="message"></param>
@@ -1048,22 +1174,36 @@ namespace MSNPSharp.DataTransfer
                 if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
                 {
                     // create a temporary msn object to extract the data type
-                    MSNObject msnObject = new MSNObject();
-                    msnObject.ParseContext(message.MessageValues["Context"].ToString(), true);
+                    if (message.MessageValues.ContainsKey("Context"))
+                    {
+                        MSNObject msnObject = new MSNObject();
+                        msnObject.ParseContext(message.MessageValues["Context"].ToString(), true);
 
-                    if (msnObject.ObjectType == MSNObjectType.UserDisplay)
-                        properties.DataType = DataTransferType.DisplayImage;
-                    else if (msnObject.ObjectType == MSNObjectType.Emoticon)
-                        properties.DataType = DataTransferType.Emoticon;
+                        if (msnObject.ObjectType == MSNObjectType.UserDisplay)
+                            properties.DataType = DataTransferType.DisplayImage;
+                        else if (msnObject.ObjectType == MSNObjectType.Emoticon)
+                            properties.DataType = DataTransferType.Emoticon;
+                        else
+                            properties.DataType = DataTransferType.Unknown;
+
+                        properties.Context = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(message.MessageValues["Context"].ToString()));
+                        properties.Checksum = ExtractChecksum(properties.Context);
+                    }
                     else
+                    {
                         properties.DataType = DataTransferType.Unknown;
-
-                    properties.Context = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(message.MessageValues["Context"].ToString()));
-                    properties.Checksum = ExtractChecksum(properties.Context);
-                }
-                if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
+                    }
+                }else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
                 {
                     properties.DataType = DataTransferType.File;
+                }
+                else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.ActivityGuid)
+                {
+                    properties.DataType = DataTransferType.Activity;
+                }
+                else
+                {
+                    properties.DataType = DataTransferType.Unknown;
                 }
 
                 // store the branch for use in the OK Message
@@ -1403,6 +1543,15 @@ namespace MSNPSharp.DataTransfer
                 MSNSLPInvitationEventArgs invitationArgs =
                     new MSNSLPInvitationEventArgs(properties, message, p2pTransfer, this);
 
+                if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
+                {
+                    P2PMessage replyMessage = new P2PMessage ();
+                    replyMessage.Flags = 0x01000000;
+                    replyMessage.InnerMessage = CreateInernalErrorMessage(properties);
+                    MessageProcessor.SendMessage(replyMessage);
+                    return;
+                }
+
                 if (properties.DataType == DataTransferType.File)
                 {
                     // set the filetransfer values in the EventArgs object.
@@ -1424,7 +1573,8 @@ namespace MSNPSharp.DataTransfer
                     }
                     invitationArgs.Filename = System.Text.UnicodeEncoding.Unicode.GetString(filenameStream.ToArray());
                 }
-                else
+                else if (properties.DataType == DataTransferType.DisplayImage ||
+                    properties.DataType == DataTransferType.Emoticon)
                 {
                     // create a MSNObject based upon the send context
                     invitationArgs.MSNObject = new MSNObject();
