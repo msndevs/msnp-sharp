@@ -4,6 +4,7 @@
     <xsd:sequence>
       <xsd:element minOccurs="0" name="name" type="xsd:string" />
       <xsd:element name="ownerPuid" type="xsd:string" />
+      <xsd:element minOccurs="0" name="OwnerCID" type="xsd:integer" />
       <xsd:element name="ownerEmail" type="xsd:string" />
       <xsd:element name="fDefault" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="joinedNamespace" type="xsd:boolean" />
@@ -13,7 +14,7 @@
       <xsd:element minOccurs="0" name="NotifyExternalPartner" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="AddressBookType" type="xsd:string" />
       <xsd:element minOccurs="0" name="MessengerApplicationServiceCreated" type="xsd:boolean" />
-      <xsd:element minOccurs="0" name="OwnerCID" type="xsd:integer" />
+      <xsd:element minOccurs="0" name="IsBetaMigrated" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="HandleType">
@@ -211,6 +212,8 @@
       </xsd:element>
       <xsd:element minOccurs="0" name="fDeleted" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="lastChange" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="CreateDate" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="LastModifiedBy" type="xsd:integer" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ContactIdType">
@@ -323,7 +326,9 @@
       </xsd:element>
       <xsd:element minOccurs="0" name="Gender" type="xsd:string" />
       <xsd:element minOccurs="0" name="TimeZone" type="xsd:string" />
+      <xsd:element minOccurs="0" name="IsAutoUpdateDisabled" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="MessengerMemberInfo" type="msnab:MessengerMemberInfo" />
+      <xsd:element minOccurs="0" name="PropertiesChanged" type="xsd:anyType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="contactEmailType">
@@ -432,6 +437,7 @@
       <xsd:element minOccurs="0" name="name" type="xsd:string" />
       <xsd:element minOccurs="0" name="IsNotMobileVisible" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="IsPrivate" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="IsFavorite" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="fMessenger" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
@@ -540,6 +546,22 @@
         </xsd:complexType>
       </xsd:element>
       <xsd:element minOccurs="0" name="LiveContactLastChanged" type="xsd:dateTime" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="abType">
+    <xsd:sequence>
+      <xsd:element name="abId" type="msnab:Guid" />
+      <xsd:element name="abInfo" type="msnab:abInfoType" />
+      <xsd:element name="lastChange" type="xsd:dateTime" />
+      <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime" />
+      <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime" />
+      <xsd:element name="createDate" type="xsd:dateTime" />
+      <xsd:element name="propertiesChanged" type="xsd:anyType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CircleResultType">
+    <xsd:sequence>
+      <xsd:element name="CircleTicket" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
 </xsd:schema>

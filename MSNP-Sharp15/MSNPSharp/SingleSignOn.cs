@@ -551,7 +551,7 @@ namespace MSNPSharp
 
             securService.ToValue = new To();
             securService.ToValue.MustUnderstand = true;
-            securService.ToValue.Value = @"HTTPS://login.live.com:443/RST2.srf";
+            securService.ToValue.Value = @"HTTPS://login.live.com:443//RST2.srf";  //There are two "/" here
 
             if (user.Split('@').Length > 1)
             {
@@ -660,8 +660,8 @@ namespace MSNPSharp
                 }
                 if (token.Lifetime != null)
                 {
-                    ssoticket.Created = XmlConvert.ToDateTime(token.Lifetime.Created.Value, XmlDateTimeSerializationMode.Local);
-                    ssoticket.Expires = XmlConvert.ToDateTime(token.Lifetime.Expires.Value, XmlDateTimeSerializationMode.Local);
+                    ssoticket.Created = XmlConvert.ToDateTime(token.Lifetime.Created.Value, "yyyy-MM-ddTHH:mm:ssZ");
+                    ssoticket.Expires = XmlConvert.ToDateTime(token.Lifetime.Expires.Value, "yyyy-MM-ddTHH:mm:ssZ");
                 }
 
                 msnticket.SSOTickets[ticketype] = ssoticket;
