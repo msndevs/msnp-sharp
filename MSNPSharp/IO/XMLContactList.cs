@@ -441,12 +441,12 @@ namespace MSNPSharp.IO
                                                 }
                                                 else
                                                 {
+                                                    xmlcl.AddMemberhip(currentService.ServiceType, account, type, memberrole, bm);
+
                                                     string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                                                     Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                                     contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                     contact.SetLists(xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type));
-
-                                                    xmlcl.AddMemberhip(currentService.ServiceType, account, type, memberrole, bm);
 
                                                     // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
                                                     if (memberrole == MemberRole.Pending)
