@@ -205,7 +205,8 @@ namespace MSNPSharp
 
 
         protected bool sessionEstablished;
-        private Hashtable contacts = new Hashtable();
+        private Dictionary<string, ContactConversationState> contacts 
+            = new Dictionary<string, ContactConversationState>(0);
 
         /// <summary>
         /// Holds track of the invitations we have yet to issue
@@ -284,6 +285,7 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnSessionClosed()
         {
+            ClearAll();  //Session closed, force all contact left this conversation.
             if (SessionClosed != null)
                 SessionClosed(this, new EventArgs());
         }
@@ -326,6 +328,7 @@ namespace MSNPSharp
         /// <param name="contact">The contact who joined the session.</param>
         protected virtual void OnContactJoined(Contact contact)
         {
+            Contacts[contact.Mail] = ContactConversationState.Joined;
             if (ContactJoined != null)
             {
                 ContactJoined(this, new ContactEventArgs(contact));
@@ -337,7 +340,8 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="contact">The contact who left the session.</param>
         protected virtual void OnContactLeft(Contact contact)
-        {
+        {                
+            Contacts[contact.Mail] = ContactConversationState.Left;
             if (ContactLeft != null)
             {
                 ContactLeft(this, new ContactEventArgs(contact));
@@ -499,7 +503,7 @@ namespace MSNPSharp
         /// <summary>
         /// A collection of all <i>remote</i> contacts present in this session
         /// </summary>
-        public Hashtable Contacts
+        public Dictionary<string, ContactConversationState> Contacts
         {
             get
             {
@@ -559,7 +563,9 @@ namespace MSNPSharp
         public virtual void Close()
         {
             if (MessageProcessor != null)
+            {
                 ((SocketMessageProcessor)MessageProcessor).Disconnect();
+            }
         }
 
         /// <summary>
@@ -614,6 +620,15 @@ namespace MSNPSharp
             OnProcessorDisconnectCallback((IMessageProcessor)sender);
         }
 
+        private void ClearAll()
+        {
+            Dictionary<string, ContactConversationState> cp = new Dictionary<string, ContactConversationState>(contacts);
+            foreach (string account in cp.Keys)
+            {
+                Contacts[account] = ContactConversationState.Left;
+            }
+        }
+
         #region Protected helper methods
 
         /// <summary>
@@ -656,9 +671,16 @@ namespace MSNPSharp
         /// <param name="contact">The contact's account to invite.</param>
         public virtual void Invite(string contact)
         {
-            if (Contacts.Contains(contact))
-                return;
+            if (Contacts.ContainsKey(contact))
+            {
+                //If already invited or joined, do nothing.
+                if (Contacts[contact] == ContactConversationState.Joined || Contacts[contact] == ContactConversationState.Invited)
+                {
+                    return;
+                }
+            }
 
+            Contacts[contact] = ContactConversationState.Invited;
             invitationQueue.Enqueue(contact);
             ProcessInvitations();
         }
@@ -1028,12 +1050,14 @@ namespace MSNPSharp
             //contact.SetName(message.CommandValues[1].ToString());
 
 
-            if (Contacts.Contains(contact.Mail) == false && contact.Mail != NSMessageHandler.Owner.Mail)
+            if (contact.Mail != NSMessageHandler.Owner.Mail)
             {
-                Contacts.Add(contact.Mail, contact);
-
-                // notify the client programmer
-                OnContactJoined(contact);
+                if (Contacts.ContainsKey(contact.Mail) == false ||
+                    Contacts[contact.Mail] != ContactConversationState.Joined)
+                {
+                    // notify the client programmer
+                    OnContactJoined(contact);
+                }
             }
 
         }
@@ -1059,10 +1083,13 @@ namespace MSNPSharp
                 // notify the client programmer
                 OnContactLeft(contact);
 
-                if (Contacts.Count == 0)
+                foreach (ContactConversationState state in Contacts.Values)
                 {
-                    OnAllContactsLeft();
+                    if (state != ContactConversationState.Left)
+                        return;
                 }
+
+                OnAllContactsLeft();  //Indicates whe should end the conversation.
             }
         }
 
@@ -1100,12 +1127,14 @@ namespace MSNPSharp
                 contact.SetLists(MSNLists.None);
             }
 
-            if (Contacts.Contains(contact.Mail) == false && contact.Mail != NSMessageHandler.Owner.Mail)
+            if (contact.Mail != NSMessageHandler.Owner.Mail)
             {
-                Contacts.Add(contact.Mail, contact);
-
-                // notify the client programmer
-                OnContactJoined(contact);
+                if (Contacts.ContainsKey(contact.Mail) == false ||
+                    Contacts[contact.Mail] != ContactConversationState.Joined)
+                {
+                    // notify the client programmer
+                    OnContactJoined(contact);
+                }
             }
         }
 

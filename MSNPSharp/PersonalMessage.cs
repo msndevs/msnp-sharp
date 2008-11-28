@@ -276,7 +276,7 @@ namespace MSNPSharp
 
             node = xmlDoc.SelectSingleNode("//Data/MachineGuid");
 #if MSNP18
-            if (node != null)
+            if (node != null && node.InnerText != "")
                 machineGuid = new Guid(node.InnerText);
 
             node = xmlDoc.SelectSingleNode("//Data/SignatureSound");

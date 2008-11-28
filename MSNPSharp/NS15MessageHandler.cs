@@ -1266,12 +1266,13 @@ namespace MSNPSharp
             }
 
             YIMMessage msg = new YIMMessage(message);
+
             if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))   //filter the typing message
                 && ContactList.HasContact(sender, ClientType.EmailMember))
             {
                 foreach (YIMMessageHandler YimHandler in SwitchBoards)
                 {
-                    if (YimHandler.Contacts.Contains(sender))
+                    if (YimHandler.Contacts.ContainsKey(sender))
                     {
                         return;  //The handler have been registered, return.
                     }
@@ -1280,13 +1281,13 @@ namespace MSNPSharp
                 //YIMMessageHandler not found, we create a new one and register it.
                 YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
                 switchboard.NSMessageHandler = this;
-                switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
+                //switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
                 switchboard.MessageProcessor = MessageProcessor;
                 SwitchBoards.Add(switchboard);
 
                 OnSBCreated(switchboard, null, sender, sender, false);
                 switchboard.ForceJoin(ContactList[sender, ClientType.EmailMember]);
-                MessageProcessor.RegisterHandler(switchboard);
+                //MessageProcessor.RegisterHandler(switchboard);
                 switchboard.HandleMessage(MessageProcessor, messageClone);
             }
         }

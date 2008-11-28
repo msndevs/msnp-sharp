@@ -729,6 +729,9 @@ namespace MSNPSharp
         AccountNotOnThisServer = 931
     }
 
+    /// <summary>
+    /// Custom emoticon type.
+    /// </summary>
     public enum EmoticonType
     {
         /// <summary>
@@ -739,5 +742,25 @@ namespace MSNPSharp
         /// Emoticon that will display as a animation.
         /// </summary>
         AnimEmoticon
+    }
+
+
+    /// <summary>
+    /// The state of contact in a conversation.
+    /// </summary>
+    public enum ContactConversationState
+    {
+        /// <summary>
+        /// The contact is invited, but not join in yet.
+        /// </summary>
+        Invited,
+        /// <summary>
+        /// The contact is in the conversation.
+        /// </summary>
+        Joined,
+        /// <summary>
+        /// The contact has left the conversation.
+        /// </summary>
+        Left
     }
 };

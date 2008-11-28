@@ -459,14 +459,22 @@ namespace MSNPSharp.DataTransfer
                 if (NSMessageHandler == null)
                     throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
 
+                handler.SessionEstablished += delegate(object sender, EventArgs e)
+                {
+                    handler.Invite(((Contact)NSMessageHandler.ContactList[remoteContact, ClientType.PassportMember]).Mail);
+
+                };
                 NSMessageHandler.RequestSwitchboard(handler, this);
                 handler.NSMessageHandler = NSMessageHandler;
-                handler.Invite(((Contact)NSMessageHandler.ContactList[remoteContact, ClientType.PassportMember]).Mail);
-
 
                 return handler;
             }
             return null;
+        }
+
+        void handler_SessionEstablished(object sender, EventArgs e)
+        {
+            throw new Exception("The method or operation is not implemented.");
         }
 
         /// <summary>
