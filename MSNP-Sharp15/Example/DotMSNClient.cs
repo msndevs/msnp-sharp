@@ -1123,33 +1123,28 @@ namespace MSNPSharpClient
 
         private ConversationForm CreateConversationForm(Conversation conversation, Contact remote)
         {
-            foreach (ConversationForm cform in ConversationForms)
+            if (remote.ClientType == ClientType.PassportMember)  //Other type of users can't attach
             {
-                if (cform.CanAttach(remote.Mail) != -1)
+                foreach (ConversationForm cform in ConversationForms)
                 {
-                    cform.AttachConversation(conversation);
-                    return cform;
+                    if (cform.CanAttach(remote.Mail) == 1)
+                    {
+                        cform.AttachConversation(conversation);
+                        return cform;
+                    }
                 }
             }
 
             // create a new conversation. However do not show the window untill a message is received.
             // for example, a conversation will be created when the remote client sends wants to send
             // you a file. You don't want to show the conversation form in that case.
-            ConversationForm conversationForm = new ConversationForm(conversation, this, remote.Mail);
+            ConversationForm conversationForm = new ConversationForm(conversation, this, remote);
             // do this to create the window handle. Otherwise we are not able to call Invoke() on the
             // conversation form later.
             conversationForm.Handle.ToInt32();
             ConversationForms.Add(conversationForm);
             return conversationForm;
 
-            //foreach (ConversationForm cform in Dicconversation.Values)
-            //{
-            //    if (cform.CanAttach(remote.Mail) != -1)
-            //    {
-            //        cform.AttachConversation(conversation);
-            //        return cform;
-            //    }
-            //}
             // create a new conversation. However do not show the window untill a message is received.
             // for example, a conversation will be created when the remote client sends wants to send
             // you a file. You don't want to show the conversation form in that case.
@@ -1168,12 +1163,22 @@ namespace MSNPSharpClient
             // form is already created and we don't need to create another one.
             if (e.Initiator == null)
             {
-                // use the invoke method to create the form in the main thread, ONLY create the form after a contact joined our conversation.
-                e.Conversation.Switchboard.ContactJoined += delegate(object switchboard, ContactEventArgs args)
+                if (e.Conversation.SwitchBoardInitialized)
                 {
-                    this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { e.Conversation, args.Contact });
-                };
+                    // use the invoke method to create the form in the main thread, ONLY create the form after a contact joined our conversation.
+                    e.Conversation.Switchboard.ContactJoined += delegate(object switchboard, ContactEventArgs args)
+                    {
+                        this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { e.Conversation, args.Contact });
+                    };
+                }
+                else if (e.Conversation.YimHandlerInitialized)
+                {
 
+                    e.Conversation.YIMHandler.ContactJoined += delegate(object switchboard, ContactEventArgs args)
+                    {
+                        this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { e.Conversation, args.Contact });
+                    };
+                }
             }
         }
 
@@ -1447,21 +1452,56 @@ namespace MSNPSharpClient
 
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            //foreach (ConversationForm conv in ConversationForms)
+            //{
+            //    int res = conv.CanAttach(((Contact)treeViewFavoriteList.SelectedNode.Tag).Mail);
+            //    if (res != -1)
+            //    {
+            //        if (conv.WindowState == FormWindowState.Minimized)
+            //            conv.Show();
+
+            //        conv.Activate();
+            //        return;
+            //    }
+
+            //}
+            Contact contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+
             foreach (ConversationForm conv in ConversationForms)
             {
-                int res = conv.CanAttach(((Contact)treeViewFavoriteList.SelectedNode.Tag).Mail);
-                if (res != -1)
+                if (contact.ClientType == ClientType.EmailMember)
                 {
-                    if (conv.WindowState == FormWindowState.Minimized)
-                        conv.Show();
+                    if (conv.Conversation != null)  //Search the valid conversations.
+                    {
+                        if (conv.Conversation.YIMHandler.Contacts.ContainsKey(contact.Mail))
+                        {
+                            if (conv.WindowState == FormWindowState.Minimized)
+                                conv.Show();
 
-                    conv.Activate();
-                    return;
+                            conv.Activate();
+                            return;
+                        }
+                    }
                 }
+                else if (contact.ClientType == ClientType.PassportMember ||
+                    contact.ClientType == ClientType.LCS)
+                {
+                    if (conv.Conversation != null)  //Search the valid conversations.
+                    {
+                        if (conv.Conversation.Switchboard.Contacts.ContainsKey(contact.Mail))
+                        {
+                            if (conv.WindowState == FormWindowState.Minimized)
+                                conv.Show();
 
+                            conv.Activate();
+                            return;
+                        }
+                    }
+                }
             }
 
-            ConversationForm form = CreateConversationForm(null, ((Contact)treeViewFavoriteList.SelectedNode.Tag));
+            Conversation convers = messenger.CreateConversation();
+            ConversationForm form = CreateConversationForm(convers, contact);
             form.Show();
         }
 

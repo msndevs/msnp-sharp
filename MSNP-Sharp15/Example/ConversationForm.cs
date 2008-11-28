@@ -29,12 +29,12 @@ namespace MSNPSharpClient
         /// <summary>
         /// </summary>
         private Conversation _conversation = null;
-        private List<string> _leftusers = new List<string>(0);
         private List<TextMessage> _messagequene = new List<TextMessage>(0);
         private List<object> _nudgequene = new List<object>(0);
         private List<ArrayList> _emotionqueue = new List<ArrayList>(0);
         private ClientForm _clientform = null;
-        private Dictionary<string, bool> _contactStatus = new Dictionary<string, bool>(0);
+        private List<string> _contacts = new List<string>(0);
+
         private RichTextBox richTextHistory;
         private Button emotionTestButton;
         private bool _isChatForm = false;
@@ -48,31 +48,27 @@ namespace MSNPSharpClient
             {
                 return _conversation;
             }
+
+        }
+
+        public List<string> Contacts
+        {
+            get { return _contacts; }
         }
 
         protected ConversationForm()
         {
         }
 
-        public ConversationForm(Conversation conversation, ClientForm clientform, string account)
+        public ConversationForm(Conversation conversation, ClientForm clientform, Contact contact)
         {
-            if (conversation != null)
-            {
-                _contactStatus.Add(account, false);
-                _conversation = conversation;
-                AddEvent();
-            }
-            else
-            {
-                //Create by local user
-                _contactStatus.Add(account, true);
-                _leftusers.Add(account);
-            }
+
+            _conversation = conversation;
+            AddEvent();
+            _conversation.Invite(contact);
+
             _clientform = clientform;
 
-            //
-            // Required for Windows Form Designer support
-            //
             InitializeComponent();
 
         }
@@ -83,34 +79,26 @@ namespace MSNPSharpClient
         /// <param name="convers"></param>
         public void AttachConversation(Conversation convers)
         {
-            if (convers == null)
-                throw new NullReferenceException();
- 
-            if (Conversation != null)
-            {
-                Conversation.Switchboard.Close();
-                RemoveEvent();
-            }
+            if (_conversation != null)
+                throw new MSNPSharpException("Conversation not expired.");  //Must have something wrong.
 
             _conversation = convers;
             AddEvent();
         }
 
-        public int CanAttach(string account)
+        public int CanAttach(string account)  //Contact will not be a YIM user.
         {
             if (_isChatForm)
             {
-                if (_contactStatus.ContainsKey(account.ToLowerInvariant()))
+                if (_conversation == null)
                 {
-                    // If the remote contact is still in the conversation, return false.
-                    // If the remote contact has left, return true.
-                    if (!_contactStatus[account.ToLowerInvariant()])
-                        return 1;
+                    if (Contacts.Contains(account))
+                        return 1;   //The conversation expired, and now need to be attached again.
                     else
-                        return 0;
+                        return 0;   //The conversation expired, but the form is not for this contact.
                 }
             }
-            return -1;
+            return -1;  //The conversation for this form is still available.
         }
 
         void Switchboard_NudgeReceived(object sender, ContactEventArgs e)
@@ -291,22 +279,29 @@ namespace MSNPSharpClient
             inputTextBox.Focus();
 
             //All contacts left, recreate the conversation
-            int ret = ReInvite();
-            if (ret == 1)
+            NeedReinvite res = ReInvite();
+            if (res.ReInvite == true)
             {
                 _messagequene.Add(message);
                 return;
             }
-            else if (ret == -1)  //contacts already offline, send OIM.
+            else if (res.OfflineList.Count > 0)  //contacts already offline, send OIM.
             {
-                foreach (string acc in _leftusers)
+                foreach (string acc in res.OfflineList)
                 {
                     _clientform.Messenger.OIMService.SendOIMMessage(acc, message.Text);
                 }
                 return;
             }
 
-            Conversation.Switchboard.SendTextMessage(message);
+            if (Conversation.SwitchBoardInitialized)
+            {
+                Conversation.Switchboard.SendTextMessage(message);
+            }
+            else if (Conversation.YimHandlerInitialized)
+            {
+                Conversation.YIMHandler.SendTextMessage(message);
+            }
 
         }
 
@@ -320,7 +315,9 @@ namespace MSNPSharpClient
                 Conversation.Switchboard.ContactJoined -= Switchboard_ContactJoined;
                 Conversation.Switchboard.ContactLeft -= Switchboard_ContactLeft;
                 Conversation.Switchboard.NudgeReceived -= Switchboard_NudgeReceived;
-                Conversation.Switchboard.AllContactsLeft -= Switchboard_AllContactsLeft;
+                Conversation.ConversationEnded -= Conversation_ConversationEnded;
+                Conversation.YIMHandler.TextMessageReceived -= YIMHandler_TextMessageReceived;
+                Conversation.YIMHandler.NudgeReceived -= YIMHandler_NudgeReceived;
             }
         }
 
@@ -334,8 +331,28 @@ namespace MSNPSharpClient
                 Conversation.Switchboard.ContactJoined += new EventHandler<ContactEventArgs>(Switchboard_ContactJoined);
                 Conversation.Switchboard.ContactLeft += new EventHandler<ContactEventArgs>(Switchboard_ContactLeft);
                 Conversation.Switchboard.NudgeReceived += new EventHandler<ContactEventArgs>(Switchboard_NudgeReceived);
-                Conversation.Switchboard.AllContactsLeft += new EventHandler<EventArgs>(Switchboard_AllContactsLeft);
+                Conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(Conversation_ConversationEnded);
+                Conversation.YIMHandler.TextMessageReceived += new EventHandler<TextMessageEventArgs>(YIMHandler_TextMessageReceived);
+                Conversation.YIMHandler.NudgeReceived += new EventHandler<ContactEventArgs>(YIMHandler_NudgeReceived);
             }
+        }
+
+        void YIMHandler_NudgeReceived(object sender, ContactEventArgs e)
+        {
+            Switchboard_NudgeReceived(sender, e);
+        }
+
+        void YIMHandler_TextMessageReceived(object sender, TextMessageEventArgs e)
+        {
+            Switchboard_TextMessageReceived(sender, e);
+        }
+
+        void Conversation_ConversationEnded(object sender, ConversationEndEventArgs e)
+        {
+            //The conversation has been expired.
+            RemoveEvent();  //Detach events.
+            _contacts = new List<string>(_conversation.Switchboard.Contacts.Keys);  //Save the users in the expired conversation.
+            _conversation = null;
         }
 
         void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
@@ -349,6 +366,11 @@ namespace MSNPSharpClient
             fs.Close();
         }
 
+        private struct NeedReinvite
+        {
+            public bool ReInvite;
+            public List<string> OfflineList;
+        }
         /// <summary>
         /// Reinvite contacts back to the conversation.
         /// </summary>
@@ -359,24 +381,49 @@ namespace MSNPSharpClient
         /// <item>No need to reinvite returns 0</item>
         /// </list>
         /// </returns>
-        private int ReInvite()
+        private NeedReinvite ReInvite()
         {
-            if (_conversation == null || !Conversation.Switchboard.IsSessionEstablished)
-            {
-                RemoveEvent();
-                _conversation = _clientform.Messenger.CreateConversation();
+            NeedReinvite res = new NeedReinvite();
+            res.OfflineList = new List<string>(0);
 
-                AddEvent();
-                foreach (string account in _leftusers)
+            if (_conversation == null)  //The conversation has been expired.
+            {
+                _conversation = _clientform.Messenger.CreateConversation();  //Create a new conversation.
+                AddEvent();  //Attach events.
+                foreach (string account in _contacts)
                 {
                     if (_clientform.Messenger.ContactList[account, ClientType.PassportMember].Status == PresenceStatus.Offline)
-                        return -1;
-                    _conversation.Invite(account, ClientType.PassportMember);
+                    {
+                        res.OfflineList.Add(account);
+                    }
+                    else
+                    {
+                        _conversation.Invite(account, ClientType.PassportMember);
+                        res.ReInvite = true;
+                    }
                 }
-                _leftusers.Clear();
-                return 1;
+                return res;
             }
-            return 0;
+
+
+            //the conversation is still available.
+            Dictionary<string, ContactConversationState> cts = new Dictionary<string, ContactConversationState>(_conversation.Switchboard.Contacts);
+            foreach (string account in cts.Keys)
+            {
+                if (cts[account] == ContactConversationState.Left)
+                {
+                    if (_clientform.Messenger.ContactList[account, ClientType.PassportMember].Status == PresenceStatus.Offline)
+                    {
+                        res.OfflineList.Add(account);
+                    }
+                    else
+                    {
+                        _conversation.Invite(account, ClientType.PassportMember);
+                        res.ReInvite = true;
+                    }
+                }
+            }
+            return res;
         }
 
         private void sendButton_Click(object sender, System.EventArgs e)
@@ -391,7 +438,14 @@ namespace MSNPSharpClient
 
             if (_typingMessageSended == false)
             {
-                Conversation.Switchboard.SendTypingMessage();
+                if (Conversation.SwitchBoardInitialized)
+                {
+                    Conversation.Switchboard.SendTypingMessage();
+                }
+                else if (Conversation.YimHandlerInitialized)
+                {
+                    Conversation.YIMHandler.SendTypingMessage();
+                }
                 _typingMessageSended = true;
             }
 
@@ -502,8 +556,6 @@ namespace MSNPSharpClient
             {
                 DisplaySystemMessage("* " + e.Contact.Name + " joined the conversation");
 
-                _contactStatus[e.Contact.Mail.ToLowerInvariant()] = true;
-
                 //Send all messages and nudges
                 if (_messagequene.Count > 0)
                 {
@@ -546,18 +598,7 @@ namespace MSNPSharpClient
             else
             {
                 DisplaySystemMessage("* " + e.Contact.Name + " left the conversation");
-
-                if (!_leftusers.Contains(e.Contact.Mail))
-                    _leftusers.Add(e.Contact.Mail);
-
-                _contactStatus[e.Contact.Mail.ToLowerInvariant()] = false;
             }
-        }
-
-        void Switchboard_AllContactsLeft(object sender, EventArgs e)
-        {
-            RemoveEvent();
-            Conversation.Switchboard.Close();
         }
 
 
@@ -567,8 +608,7 @@ namespace MSNPSharpClient
             //Remember to close!
             if (Conversation != null)
             {
-                Conversation.Switchboard.Close();
-                RemoveEvent();
+                Conversation.End();
             }
             //_clientform.Dicconversation.Remove(Conversation);
             _clientform.ConversationForms.Remove(this);
@@ -576,13 +616,20 @@ namespace MSNPSharpClient
 
         private void sendnudgeButton_Click(object sender, EventArgs e)
         {
-            if (ReInvite() == 1)
+            if (ReInvite().ReInvite)
             {
                 _nudgequene.Add(new object());
                 return;
             }
 
-            Conversation.Switchboard.SendNudge();
+            if (Conversation.SwitchBoardInitialized)
+            {
+                Conversation.Switchboard.SendNudge();
+            }
+            else if (Conversation.YimHandlerInitialized)
+            {
+                Conversation.YIMHandler.SendNudge();
+            }
 
             DisplaySystemMessage("* You send a nudge.");
         }
@@ -597,14 +644,15 @@ namespace MSNPSharpClient
             ArrayList emolist = new ArrayList();
             emolist.Add(emotest);
 
-            if (ReInvite() == 1)
+            NeedReinvite res = ReInvite();
+            if (res.ReInvite)
             {
                 _emotionqueue.Add(emolist);
                 return;
             }
-            else if (ReInvite() == -1)
+            else if (res.OfflineList.Count > 0)
             {
-                foreach (string acc in _leftusers)
+                foreach (string acc in res.OfflineList)
                 {
                     //If user not online, we send an OIM with emoticon shortcut.
                     _clientform.Messenger.OIMService.SendOIMMessage(acc, "Hey, this is a custom emoticon: " + emotest.Shortcut);
