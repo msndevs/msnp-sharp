@@ -37,6 +37,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using System.Diagnostics;
 
     #region ConversationCreatedEvent
 
@@ -152,7 +153,8 @@ namespace MSNPSharp
                 Conversation c = new Conversation(this, ce.Switchboard);
 
                 // remove the conversation from the list when the conversation has ended.
-                c.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
+                //c.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
+                c.ConversationEnded += new EventHandler<ConversationEndEventArgs>(conversation_ConversationEnd);
 
                 tsConversations.Add(c);
 
@@ -518,16 +520,17 @@ namespace MSNPSharp
         /// <returns></returns>
         public Conversation CreateConversation()
         {
-            SBMessageHandler sbHandler = nsMessageHandler.RequestSwitchboard(this);
+            //SBMessageHandler sbHandler = nsMessageHandler.RequestSwitchboard(this);
 
-            Conversation conversation = new Conversation(this, sbHandler);
+            Conversation conversation = new Conversation(this);
             tsConversations.Add(conversation);
 
-            conversation.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
+            conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(conversation_ConversationEnd);
             OnConversationCreated(conversation, this);
 
             return conversation;
         }
+
 
         /// <summary>
         /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send or receive invitations from the remote contact.
@@ -567,6 +570,7 @@ namespace MSNPSharp
             if (ConversationCreated != null)
                 ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
         }
+
 
         /// <summary>
         /// Cleans up resources.
@@ -617,19 +621,20 @@ namespace MSNPSharp
         #endregion
 
         /// <summary>
-        /// Removes a conversation object from the list when the session is closed.
+        ///  Removes a conversation object from the list when the conversation is ended.
         /// </summary>
-        /// <param name="sender"></param>
+        /// <param name="sender">The conversation that was ended.</param>
         /// <param name="e"></param>
-        internal void Switchboard_SessionClosed(object sender, EventArgs e)
+        private void conversation_ConversationEnd(object sender, ConversationEndEventArgs e)
         {
             lock (tsConversations.SyncRoot)
             {
                 foreach (Conversation conversation in tsConversations)
                 {
-                    if (conversation.Switchboard == sender)
+                    if (e.Conversation == conversation)
                     {
-                        tsConversations.Remove(conversation);
+                        tsConversations.Remove(e.Conversation);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A conversation has been removed from list.");
                         return;
                     }
                 }

@@ -44,6 +44,9 @@ namespace MSNPSharp
         private MSNObject clientData;
         private bool aborted;
 
+        /// <summary>
+        /// Transfer failed.
+        /// </summary>
         public bool Aborted
         {
             get { return aborted; }
@@ -71,6 +74,26 @@ namespace MSNPSharp
         }
     }
 
+    public class ConversationEndEventArgs : EventArgs
+    {
+        private Conversation conversation = null;
+
+        public Conversation Conversation
+        {
+            get { return conversation; }
+        }
+
+        protected ConversationEndEventArgs()
+            : base()
+        {
+        }
+
+        public ConversationEndEventArgs(Conversation convers)
+        {
+            conversation = convers;
+        }
+    }
+
     /// <summary>
     /// A facade to the underlying switchboard session.
     /// </summary>
@@ -78,14 +101,19 @@ namespace MSNPSharp
     /// Conversation implements a few features for the ease of the application programmer. It provides
     /// directly basic common functionality. However, if you need to perform more advanced actions, or catch
     /// other events you have to directly use the underlying switchboard handler, or switchboard processor.
-    /// 
+    /// </b>
     /// Conversation automatically requests emoticons used by remote contacts.
     /// </remarks>
     public class Conversation
     {
         #region Private
         private Messenger _messenger = null;
-        private SBMessageHandler _switchboard = null;
+        private SBMessageHandler _switchboard = Factory.CreateSwitchboardHandler();
+        private YIMMessageHandler _yimHandler = Factory.CreateYIMMessageHandler();
+        private bool sbInitialized = false;
+
+        private bool yimInitialized = false;
+
         private bool autoRequestEmoticons = true;
 
         /// <summary>
@@ -145,6 +173,12 @@ namespace MSNPSharp
 
         }
 
+        void _switchboard_AllContactsLeft(object sender, EventArgs e)
+        {
+            _switchboard.AllContactsLeft -= _switchboard_AllContactsLeft;
+            End();
+        }
+
         #endregion
 
 
@@ -156,6 +190,15 @@ namespace MSNPSharp
                 MSNObjectDataTransferCompleted(sender, e);
         }
 
+
+        protected virtual void OnConversationEnded(Conversation conversation)
+        {
+            if (ConversationEnded != null)
+            {
+                ConversationEnded(this, new ConversationEndEventArgs(conversation));
+            }
+        }
+
         #endregion
 
         #region Public
@@ -163,6 +206,11 @@ namespace MSNPSharp
         /// Fired when the data transfer for a MSNObject finished or aborted.
         /// </summary>
         public event EventHandler<MSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
+
+        /// <summary>
+        /// Occurs when a new conversation is ended (all contacts in the conversation have left or <see cref="Conversation.End()"/> is called).
+        /// </summary>
+        public event EventHandler<ConversationEndEventArgs> ConversationEnded;
 
         /// <summary>
         /// Indicates whether emoticons from remote contacts are automatically retrieved
@@ -192,6 +240,17 @@ namespace MSNPSharp
             {
                 _messenger = value;
             }
+        }
+
+        public bool SwitchBoardInitialized
+        {
+            get { return sbInitialized; }
+        }
+
+
+        public bool YimHandlerInitialized
+        {
+            get { return yimInitialized; }
         }
 
         /// <summary>
@@ -224,6 +283,13 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Yahoo! Message handler.
+        /// </summary>
+        public YIMMessageHandler YIMHandler
+        {
+            get { return _yimHandler; }
+        }
 
         /// <summary>
         /// Constructor.
@@ -232,10 +298,34 @@ namespace MSNPSharp
         /// <param name="sbHandler">The switchboard to interface to.</param>		
         public Conversation(Messenger parent, SBMessageHandler sbHandler)
         {
-            _switchboard = sbHandler;
+            if (sbHandler is YIMMessageHandler)
+            {
+                _yimHandler = sbHandler as YIMMessageHandler;
+                sbInitialized = false;
+                yimInitialized = true;
+            }
+            else
+            {
+                _switchboard = sbHandler;
+                sbInitialized = true;
+                yimInitialized = false;
+            }
             _messenger = parent;
+            _switchboard.EmoticonDefinitionReceived += new EventHandler<EmoticonDefinitionEventArgs>(sbHandler_EmoticonDefinitionReceived);
+            _switchboard.AllContactsLeft += new EventHandler<EventArgs>(_switchboard_AllContactsLeft);
+        }
 
-            sbHandler.EmoticonDefinitionReceived += new EventHandler<EmoticonDefinitionEventArgs>(sbHandler_EmoticonDefinitionReceived);
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="parent">The messenger object that requests the conversation.</param>
+        public Conversation(Messenger parent)
+        {
+            _messenger = parent;
+            sbInitialized = false;
+            yimInitialized = false;
+            _switchboard.EmoticonDefinitionReceived += new EventHandler<EmoticonDefinitionEventArgs>(sbHandler_EmoticonDefinitionReceived);
+            _switchboard.AllContactsLeft +=new EventHandler<EventArgs>(_switchboard_AllContactsLeft);
         }
 
         /// <summary>
@@ -245,21 +335,46 @@ namespace MSNPSharp
         /// <param name="type"></param>
         public void Invite(string contactMail, ClientType type)
         {
+
             if (Switchboard != null)
             {
                 if (type == ClientType.EmailMember)
                 {
-                    Switchboard.SessionClosed -= Messenger.Switchboard_SessionClosed;
-                    SBMessageHandler tmpsb = Switchboard;
-                    Switchboard = Factory.CreateYIMMessageHandler();
-                    Switchboard.NSMessageHandler = Messenger.Nameserver;
-                    Switchboard.MessageProcessor = Messenger.Nameserver.MessageProcessor;
-                    tmpsb.CopyAndClearEventHandler(Switchboard);
-                    Messenger.Nameserver.SwitchBoards.Add(Switchboard);
-                    Messenger.Nameserver.MessageProcessor.RegisterHandler(Switchboard);
+                    if (!yimInitialized)
+                    {
+                        _yimHandler.NSMessageHandler = Messenger.Nameserver;
+                        _yimHandler.MessageProcessor = Messenger.Nameserver.MessageProcessor;
+                        Messenger.Nameserver.SwitchBoards.Add(_yimHandler);
+                        Messenger.Nameserver.MessageProcessor.RegisterHandler(_yimHandler);
+                        yimInitialized = true;
+                        _yimHandler.Invite(contactMail);
+                    }
+                    
+                    return;
                 }
+
                 if (Switchboard.NSMessageHandler == null)
                     Switchboard.NSMessageHandler = Messenger.Nameserver;
+
+                if (sbInitialized == false)
+                {
+                    Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
+                    _switchboard.SessionEstablished += delegate(object sender, EventArgs e)
+                    {
+                        Switchboard.Invite(contactMail);
+                    };
+
+                    _switchboard.SessionClosed += delegate(object sender, EventArgs e)
+                    {
+                        sbInitialized = false;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard session closed.");
+                        return;
+                    };
+
+                    sbInitialized = true;
+                    return;
+                }
+                
                 Switchboard.Invite(contactMail);
             }
         }
@@ -271,6 +386,27 @@ namespace MSNPSharp
         public void Invite(Contact contact)
         {
             Invite(contact.Mail, contact.ClientType);
+        }
+
+        /// <summary>
+        /// End this conversation.
+        /// </summary>
+        public void End()
+        {
+            
+            if (sbInitialized)
+            {
+                Switchboard.Close();
+                sbInitialized = false;
+            }
+
+            if (yimInitialized)
+            {
+                YIMHandler.Close();
+                yimInitialized = false;
+            }
+
+            OnConversationEnded(this);
         }
 
         #endregion
