@@ -433,7 +433,7 @@ namespace MSNPSharpClient
 
         private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            if (Conversation == null || !Conversation.Switchboard.IsSessionEstablished) //DONOT call ReInvite here!
+            if (Conversation == null) //DONOT call ReInvite here!
                 return;
 
             if (_typingMessageSended == false)

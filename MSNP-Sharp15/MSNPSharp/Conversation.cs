@@ -95,7 +95,7 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// A facade to the underlying switchboard session.
+    /// A facade to the underlying switchboard and YIM session.
     /// </summary>
     /// <remarks>
     /// Conversation implements a few features for the ease of the application programmer. It provides
@@ -242,12 +242,17 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Indicates whether the switchboard is available for sending messages.
+        /// </summary>
         public bool SwitchBoardInitialized
         {
             get { return sbInitialized; }
         }
 
-
+        /// <summary>
+        /// Indicates whether the YIM Message Handler is available for sending messages.
+        /// </summary>
         public bool YimHandlerInitialized
         {
             get { return yimInitialized; }
@@ -344,10 +349,14 @@ namespace MSNPSharp
                     {
                         _yimHandler.NSMessageHandler = Messenger.Nameserver;
                         _yimHandler.MessageProcessor = Messenger.Nameserver.MessageProcessor;
-                        Messenger.Nameserver.SwitchBoards.Add(_yimHandler);
+                        if (!Messenger.Nameserver.SwitchBoards.Contains(_yimHandler))
+                        {
+                            Messenger.Nameserver.SwitchBoards.Add(_yimHandler);
+                        }
                         Messenger.Nameserver.MessageProcessor.RegisterHandler(_yimHandler);
                         yimInitialized = true;
                         _yimHandler.Invite(contactMail);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "YIM hanlder inviting user: " + contactMail);
                     }
                     
                     return;
@@ -362,6 +371,7 @@ namespace MSNPSharp
                     _switchboard.SessionEstablished += delegate(object sender, EventArgs e)
                     {
                         Switchboard.Invite(contactMail);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard inviting user: " + contactMail);
                     };
 
                     _switchboard.SessionClosed += delegate(object sender, EventArgs e)
@@ -376,6 +386,7 @@ namespace MSNPSharp
                 }
                 
                 Switchboard.Invite(contactMail);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard inviting user: " + contactMail);
             }
         }
 
