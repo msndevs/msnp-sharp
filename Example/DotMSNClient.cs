@@ -1332,19 +1332,22 @@ namespace MSNPSharpClient
                         {
                             try
                             {
-                                // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
-                                // The MSNSLPHandler makes use of the underlying P2P framework.					
-                                MSNSLPHandler msnslpHandler = messenger.GetMSNSLPHandler(selectedContact.Mail);
+                                if (selectedContact.ClientType == ClientType.PassportMember)
+                                {
+                                    // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
+                                    // The MSNSLPHandler makes use of the underlying P2P framework.					
+                                    MSNSLPHandler msnslpHandler = messenger.GetMSNSLPHandler(selectedContact.Mail);
 
-                                // by sending an invitation a P2PTransferSession is automatically created.
-                                // the session object takes care of the actual data transfer to the remote client,
-                                // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                                P2PTransferSession session = msnslpHandler.SendInvitation(messenger.Owner.Mail, selectedContact.Mail, selectedContact.DisplayImage);
+                                    // by sending an invitation a P2PTransferSession is automatically created.
+                                    // the session object takes care of the actual data transfer to the remote client,
+                                    // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
+                                    P2PTransferSession session = msnslpHandler.SendInvitation(messenger.Owner.Mail, selectedContact.Mail, selectedContact.DisplayImage);
 
-                                // as usual, via events we want to be notified when a transfer is finished.
-                                // ofcourse, optionally, you can also catch abort and error events.
-                                session.TransferFinished += new EventHandler<EventArgs>(session_TransferFinished);
-                                session.ClientData = selectedContact.DisplayImage;
+                                    // as usual, via events we want to be notified when a transfer is finished.
+                                    // ofcourse, optionally, you can also catch abort and error events.
+                                    session.TransferFinished += new EventHandler<EventArgs>(session_TransferFinished);
+                                    session.ClientData = selectedContact.DisplayImage;
+                                }
                             }
                             catch (Exception)
                             {
@@ -1452,53 +1455,50 @@ namespace MSNPSharpClient
 
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //foreach (ConversationForm conv in ConversationForms)
-            //{
-            //    int res = conv.CanAttach(((Contact)treeViewFavoriteList.SelectedNode.Tag).Mail);
-            //    if (res != -1)
-            //    {
-            //        if (conv.WindowState == FormWindowState.Minimized)
-            //            conv.Show();
 
-            //        conv.Activate();
-            //        return;
-            //    }
-
-            //}
             Contact contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
-
+            bool activate = false;
+            ConversationForm activeForm = null;
             foreach (ConversationForm conv in ConversationForms)
             {
-                if (contact.ClientType == ClientType.EmailMember)
+                if (conv.Conversation != null)
                 {
-                    if (conv.Conversation != null)  //Search the valid conversations.
+                    if (conv.Conversation.Switchboard.Contacts.ContainsKey(contact.Mail))
                     {
-                        if (conv.Conversation.YIMHandler.Contacts.ContainsKey(contact.Mail))
-                        {
-                            if (conv.WindowState == FormWindowState.Minimized)
-                                conv.Show();
+                        activeForm = conv;
+                        activate = true;
+                        break;
 
-                            conv.Activate();
-                            return;
-                        }
+                    }
+
+                    if (conv.Conversation.YIMHandler.Contacts.ContainsKey(contact.Mail))
+                    {
+                        activeForm = conv;
+                        activate = true;
+                        break;
                     }
                 }
-                else if (contact.ClientType == ClientType.PassportMember ||
-                    contact.ClientType == ClientType.LCS)
+                else  // Conversations in these forms are expired.
                 {
-                    if (conv.Conversation != null)  //Search the valid conversations.
+                    if(conv.Contacts.Contains (contact.Mail))
                     {
-                        if (conv.Conversation.Switchboard.Contacts.ContainsKey(contact.Mail))
-                        {
-                            if (conv.WindowState == FormWindowState.Minimized)
-                                conv.Show();
-
-                            conv.Activate();
-                            return;
-                        }
+                        activeForm = conv;
+                        activate = true;
+                        break;
                     }
                 }
+
             }
+
+            if (activate)
+            {
+                if (activeForm.WindowState == FormWindowState.Minimized)
+                    activeForm.Show();
+
+                activeForm.Activate();
+                return;
+            }
+
 
             Conversation convers = messenger.CreateConversation();
             ConversationForm form = CreateConversationForm(convers, contact);
