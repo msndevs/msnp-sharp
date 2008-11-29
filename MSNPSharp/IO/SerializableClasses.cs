@@ -219,8 +219,6 @@ namespace MSNPSharp.IO
         private string displayName = string.Empty;
         private string personalMessage = string.Empty;
         private ProfilePhoto photo = new ProfilePhoto();
-        
-        public bool GetFromStorageService = true;
 
         /// <summary>
         /// DisplayImage of owner.

@@ -273,7 +273,7 @@ namespace MSNPSharp
                 return;
             }
 
-            XMLContactList.Synchronize(AddressBook, Deltas);
+            AddressBook.Synchronize(Deltas);
 
             if (AddressBook.AddressbookLastChange != DateTime.MinValue)
             {
@@ -516,7 +516,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
-        private void abRequest(string partnerScenario, ABFindAllCompletedEventHandler onSuccess)
+        internal void abRequest(string partnerScenario, ABFindAllCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
@@ -814,13 +814,7 @@ namespace MSNPSharp
                     System.Threading.Thread.CurrentThread.Join(100);
 
                     // Get all information. LivePending will be Live :)
-                    abRequest(
-                        "ContactSave",
-                        delegate
-                        {
-                            contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                            NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
-                        });
+                    abRequest("ContactSave", null);
                 }
             );
         }
@@ -872,14 +866,7 @@ namespace MSNPSharp
                                 System.Threading.Thread.CurrentThread.Join(100);
                             }
 
-                            // abrequest(ContactMsgrAPI)
-                            abRequest(
-                                "ContactMsgrAPI",
-                                delegate
-                                {
-                                    contact = NSMessageHandler.ContactList.GetContact(contact.Mail, contact.ClientType);
-                                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.AllowedList | MSNLists.ForwardList));
-                                });
+                            abRequest("ContactMsgrAPI", null);
                         }
                     );
                 }
@@ -1023,19 +1010,7 @@ namespace MSNPSharp
                 handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
                 if (!e.Cancelled && e.Error == null)
                 {
-                    contact.OnForwardList = false;
-
-                    AddressBook.AddressbookContacts.Remove(contact.Guid);
-                    if (MSNLists.None == AddressBook.GetMSNLists(ServiceFilterType.Messenger, contact.Mail, contact.ClientType))
-                    {
-                        //AddressBook.MembershipContacts.Remove(new ContactIdentifier(contact.Mail, contact.ClientType));
-                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
-                        contact.NSMessageHandler = null;
-                    }
-
-                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
-                    contact.SetGuid(Guid.Empty);
-                    contact.SetIsMessengerUser(false);
+                    abRequest("ContactSave", null);
                 }
                 else if (e.Error != null)
                 {
@@ -1781,7 +1756,7 @@ namespace MSNPSharp
 
         #endregion
 
-        protected virtual MemberRole GetMemberRole(MSNLists list)
+        public virtual MemberRole GetMemberRole(MSNLists list)
         {
             switch (list)
             {
@@ -1798,6 +1773,23 @@ namespace MSNPSharp
                     return MemberRole.Reverse;
             }
             return MemberRole.ProfilePersonalContact;
+        }
+
+
+        public virtual MSNLists GetMSNList(MemberRole memberRole)
+        {
+            switch (memberRole)
+            {
+                case MemberRole.Allow:
+                    return MSNLists.AllowedList;
+                case MemberRole.Block:
+                    return MSNLists.BlockedList;
+                case MemberRole.Reverse:
+                    return MSNLists.ReverseList;
+                case MemberRole.Pending:
+                    return MSNLists.PendingList;
+            }
+            throw new MSNPSharpException("Unknown MemberRole type");
         }
 
         internal void Clear()

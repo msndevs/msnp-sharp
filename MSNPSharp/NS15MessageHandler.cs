@@ -1480,52 +1480,38 @@ namespace MSNPSharp
             else
             {
                 NetworkMessage networkMessage = message as NetworkMessage;
-                XmlDocument xmlDoc = new XmlDocument();
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
-                    xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                    XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                    string domain = String.Empty;
-                    foreach (XmlNode domainNode in domains)
+                    ContactService.msRequest("MessengerPendingList", null);
+
+                    if (Settings.TraceSwitch.TraceVerbose)
                     {
-                        domain = domainNode.Attributes["n"].Value;
-                        XmlNode contactNode = domainNode.FirstChild;
-                        do
+                        XmlDocument xmlDoc = new XmlDocument();
+                        xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                        XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                        string domain = String.Empty;
+                        foreach (XmlNode domainNode in domains)
                         {
-                            string account = contactNode.Attributes["n"].Value + "@" + domain;
-                            ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                            string displayName = account;
-                            try
+                            domain = domainNode.Attributes["n"].Value;
+                            XmlNode contactNode = domainNode.FirstChild;
+                            do
                             {
-                                displayName = contactNode.Attributes["f"].Value;
-                            }
-                            catch (Exception)
-                            {
-                            }
-
-                            MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
-                            account = account.ToLower(CultureInfo.InvariantCulture);
-
-                            // Get all memberships
-                            ContactService.msRequest(
-                                "MessengerPendingList",
-                                delegate
+                                string account = contactNode.Attributes["n"].Value + "@" + domain;
+                                ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                                MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                                string displayName = account;
+                                try
                                 {
-                                    // If this contact on Pending list other person added us, otherwise we added and other person accepted.
-                                    Contact contact = ContactList.GetContact(account, type);
-                                    contact.SetName(displayName);
-                                    contact.NSMessageHandler = this;
-
-                                    if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
-                                    {
-                                        ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                    }
+                                    displayName = contactNode.Attributes["f"].Value;
                                 }
-                            );
+                                catch (Exception)
+                                {
+                                }
 
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " was added to your " + list.ToString(), GetType().Name);
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
 
-                        } while (contactNode.NextSibling != null);
+                            } while (contactNode.NextSibling != null);
+                        }
                     }
                 }
             }
@@ -1540,33 +1526,31 @@ namespace MSNPSharp
         protected virtual void OnRMLReceived(NSMessage nsMessage)
         {
             NetworkMessage networkMessage = nsMessage as NetworkMessage;
-            XmlDocument xmlDoc = new XmlDocument();
             if (networkMessage.InnerBody != null)   //Payload RML command.
             {
-                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                string domain = String.Empty;
-                foreach (XmlNode domainNode in domains)
-                {
-                    domain = domainNode.Attributes["n"].Value;
-                    XmlNode contactNode = domainNode.FirstChild;
-                    do
-                    {
-                        string account = contactNode.Attributes["n"].Value + "@" + domain;
-                        ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                        MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
-                        account = account.ToLower(CultureInfo.InvariantCulture);
-                        if (ContactList.HasContact(account, type))
-                        {
-                            Contact contact = ContactList.GetContact(account, type);
-                            if ((list & MSNLists.ReverseList) == MSNLists.ReverseList)
-                            {
-                                ContactService.OnReverseRemoved(new ContactEventArgs(contact));
-                            }
-                        }
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " has removed you from his/her " + list.ToString(), GetType().Name);
+                ContactService.msRequest("Initial", null);
 
-                    } while (contactNode.NextSibling != null);
+                if (Settings.TraceSwitch.TraceVerbose)
+                {
+                    XmlDocument xmlDoc = new XmlDocument();
+                    xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                    XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                    string domain = String.Empty;
+                    foreach (XmlNode domainNode in domains)
+                    {
+                        domain = domainNode.Attributes["n"].Value;
+                        XmlNode contactNode = domainNode.FirstChild;
+                        do
+                        {
+                            string account = contactNode.Attributes["n"].Value + "@" + domain;
+                            ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                            MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                            account = account.ToLower(CultureInfo.InvariantCulture);
+
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " has removed you from his/her " + list.ToString(), GetType().Name);
+
+                        } while (contactNode.NextSibling != null);
+                    }
                 }
             }
         }
@@ -1582,14 +1566,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnADGReceived(NSMessage message)
         {
-            string guid = message.CommandValues[2].ToString();
-
-            // add a new group									
-            ContactGroups.AddGroup(new ContactGroup(System.Web.HttpUtility.UrlDecode((string)message.CommandValues[1]), guid, this));
-
-            // fire the event
-            ContactService.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)ContactGroups[guid]));
-
+            ContactService.abRequest("ContactSave", null);
         }
 
         /// <summary>
@@ -1603,12 +1580,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnRMGReceived(NSMessage message)
         {
-            string guid = message.CommandValues[1].ToString();
-
-            ContactGroup contactGroup = (ContactGroup)contactGroups[guid];
-            ContactGroups.RemoveGroup(contactGroup);
-
-            ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
+            ContactService.abRequest("ContactSave", null);
         }
 
         /// <summary>Called when a FQY command has been received.

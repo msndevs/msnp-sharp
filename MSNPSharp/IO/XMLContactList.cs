@@ -49,46 +49,129 @@ namespace MSNPSharp.IO
     [XmlRoot("ContactList")]
     public class XMLContactList : MCLSerializer
     {
-        [NonSerialized]
-        private bool synchronized;
-
         public static XMLContactList LoadFromFile(string filename, bool nocompress, NSMessageHandler handler)
         {
             return LoadFromFile(filename, nocompress, typeof(XMLContactList), handler) as XMLContactList;
         }
 
         /// <summary>
-        /// Merge the deltas list into current AddressBook and MemberShipList.
+        /// Loads contacts from saved mcl file, merges the deltas list saved into current AddressBook and MemberShipList.
         /// </summary>
-        /// <param name="xmlcl"></param>
         /// <param name="deltas"></param>
-        internal static void Synchronize(XMLContactList xmlcl, DeltasList deltas)
+        internal void Synchronize(DeltasList deltas)
         {
+            // Create Memberships
+            Service msngrService = GetTargetService(ServiceFilterType.Messenger);
+            if (msngrService != null)
+            {
+                foreach (MemberRole role in MembershipList[msngrService].Keys)
+                {
+                    foreach (BaseMember bm in MembershipList[msngrService][role].Values)
+                    {
+                        string account = null;
+                        ClientType type = ClientType.None;
+
+                        if (bm is PassportMember)
+                        {
+                            type = ClientType.PassportMember;
+                            PassportMember pm = (PassportMember)bm;
+                            if (!pm.IsPassportNameHidden)
+                            {
+                                account = pm.PassportName;
+                            }
+                        }
+                        else if (bm is EmailMember)
+                        {
+                            type = ClientType.EmailMember;
+                            account = ((EmailMember)bm).Email;
+                        }
+                        else if (bm is PhoneMember)
+                        {
+                            type = ClientType.PhoneMember;
+                            account = ((PhoneMember)bm).PhoneNumber;
+                        }
+
+                        if (account != null && type != ClientType.None)
+                        {
+                            string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                            Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                            contact.NSMessageHandler = NSMessageHandler;
+
+                            MSNLists newlists = GetMSNLists(ServiceFilterType.Messenger, account, type);
+
+                            // Set new lists.
+                            contact.SetLists(newlists);
+                        }
+                    }
+                }
+
+                if (MembershipList[msngrService].ContainsKey(MemberRole.Reverse))
+                {
+                    foreach (Contact contact in NSMessageHandler.ContactList.All)
+                    {
+                        // Fire ReverseRemoved, Don't trust NSMessageHandler.OnRMLReceived, not fired everytime.
+                        if (MembershipList[msngrService][MemberRole.Reverse].ContainsKey(Contact.MakeHash(contact.Mail, contact.ClientType))
+                            && (!contact.OnReverseList))
+                        {
+                            NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
+                        }
+                    }
+                }
+            }
+
+            // Create Groups
+            foreach (GroupType group in Groups.Values)
+            {
+                NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, NSMessageHandler));
+            }
+
+            // Create the Forward List and Email Contacts
+            foreach (ContactType contactType in AddressbookContacts.Values)
+            {
+                UpdateContact(contactType);
+            }
+
+            foreach (PassportDynamicItem dyItem in NSMessageHandler.ContactService.Deltas.DynamicItems.Values)
+            {
+                if (NSMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
+                {
+                    if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam) ||
+                        (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam))
+                    {
+                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.HasNew); //TODO: Type
+                    }
+
+                    if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam == false) ||
+                        (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam == false))
+                    {
+                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.Viewed); //TODO: Type
+                    }
+
+                    if (dyItem.ProfileStatus == null && dyItem.SpaceStatus == null)  //"Exist Access" means the contact has space or profile
+                    {
+                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.None); //TODO: Type
+                    }
+                }
+            }
+
+            // Merge deltas
+            XMLContactList ops = this;
             if (deltas.MembershipDeltas.Count > 0)
             {
                 foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
                 {
-                    xmlcl += membershipResult;
+                    ops += membershipResult;
                 }
-            }
-            else
-            {
-                xmlcl += new FindMembershipResultType();
             }
 
             if (deltas.AddressBookDeltas.Count > 0)
             {
                 foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
                 {
-                    xmlcl += abfindallResult;
+                    ops += abfindallResult;
                 }
             }
-            else
-            {
-                xmlcl += new ABFindAllResultType();
-            }
 
-            xmlcl.synchronized = true;
         }
 
         #region Membership
@@ -271,66 +354,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public static XMLContactList operator +(XMLContactList xmlcl, FindMembershipResultType findMembership)
         {
-            Service msngrService = xmlcl.GetTargetService(ServiceFilterType.Messenger);
-            if (msngrService != null && xmlcl.synchronized == false)
-            {
-                // Load contacts from saved mcl file.
-                foreach (MemberRole role in xmlcl.MembershipList[msngrService].Keys)
-                {
-                    foreach (BaseMember bm in xmlcl.MembershipList[msngrService][role].Values)
-                    {
-                        string account = null;
-                        ClientType type = ClientType.None;
-
-                        if (bm is PassportMember)
-                        {
-                            type = ClientType.PassportMember;
-                            PassportMember pm = (PassportMember)bm;
-                            if (!pm.IsPassportNameHidden)
-                            {
-                                account = pm.PassportName;
-                            }
-                        }
-                        else if (bm is EmailMember)
-                        {
-                            type = ClientType.EmailMember;
-                            account = ((EmailMember)bm).Email;
-                        }
-                        else if (bm is PhoneMember)
-                        {
-                            type = ClientType.PhoneMember;
-                            account = ((PhoneMember)bm).PhoneNumber;
-                        }
-
-                        if (account != null && type != ClientType.None)
-                        {
-                            string displayname = bm.DisplayName == null ? account : bm.DisplayName;
-                            Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                            contact.NSMessageHandler = xmlcl.NSMessageHandler;
-
-                            MSNLists newlists = xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type);
-
-                            // Set new lists.
-                            contact.SetLists(newlists);
-                        }
-                    }
-                }
-
-                if (xmlcl.MembershipList[msngrService].ContainsKey(MemberRole.Reverse))
-                {
-                    foreach (Contact contact in xmlcl.NSMessageHandler.ContactList.All)
-                    {
-                        // Fire ReverseRemoved, Don't trust NSMessageHandler.OnRMLReceived, not fired everytime.
-                        if (xmlcl.MembershipList[msngrService][MemberRole.Reverse].ContainsKey(Contact.MakeHash(contact.Mail, contact.ClientType))
-                            && (!contact.OnReverseList))
-                        {
-                            xmlcl.NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
-                        }
-                    }
-                }
-            }
-
-            // Process new FindMemberships (deltas) now
+            // Process new FindMemberships (deltas)
             if (null != findMembership && null != findMembership.Services)
             {
                 foreach (ServiceType serviceType in findMembership.Services)
@@ -392,25 +416,46 @@ namespace MSNPSharp.IO
                                             if (account != null && type != ClientType.None)
                                             {
                                                 account = account.ToLowerInvariant();
-                                                string displayname = bm.DisplayName == null ? account : bm.DisplayName;
-                                                Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                                                contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                                                MSNLists msnlist = xmlcl.NSMessageHandler.ContactService.GetMSNList(memberrole);
 
                                                 if (bm.Deleted)
                                                 {
                                                     xmlcl.RemoveMemberhip(currentService.ServiceType, account, type, memberrole);
-                                                    MSNLists newlists = xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type);
-                                                    contact.SetLists(newlists);
-                                                    if (memberrole == MemberRole.Reverse)
+
+                                                    if (xmlcl.NSMessageHandler.ContactList.HasContact(account, type))
                                                     {
-                                                        xmlcl.NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
+                                                        Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
+                                                        contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                                                        contact.RemoveFromList(msnlist);
+                                                        contact.SetLists(xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type));
+
+                                                        // Fire ReverseRemoved
+                                                        if (memberrole == MemberRole.Reverse)
+                                                        {
+                                                            xmlcl.NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
+                                                        }
+
+                                                        // Send a list remove event
+                                                        xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
                                                     }
                                                 }
                                                 else
                                                 {
                                                     xmlcl.AddMemberhip(currentService.ServiceType, account, type, memberrole, bm);
-                                                    MSNLists newlists = xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type);
-                                                    contact.SetLists(newlists);
+
+                                                    string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                                                    Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                                                    contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                                                    contact.SetLists(xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type));
+
+                                                    // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
+                                                    if (memberrole == MemberRole.Pending)
+                                                    {
+                                                        xmlcl.NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                                    }
+
+                                                    // Send a list add event
+                                                    xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
                                                 }
                                             }
                                         }
@@ -542,24 +587,6 @@ namespace MSNPSharp.IO
         {
             if (forwardList.ab != null && xmlcl.AddressbookLastChange < forwardList.ab.lastChange)
             {
-                if (null != forwardList.contacts)
-                {
-                    foreach (ContactType contactType in forwardList.contacts)
-                    {
-                        if (null != contactType.contactInfo)
-                        {
-                            if (contactType.fDeleted)
-                            {
-                                xmlcl.AddressbookContacts.Remove(new Guid(contactType.contactId));
-                            }
-                            else
-                            {
-                                xmlcl.AddressbookContacts[new Guid(contactType.contactId)] = contactType;
-                            }
-                        }
-                    }
-                }
-
                 if (null != forwardList.groups)
                 {
                     foreach (GroupType groupType in forwardList.groups)
@@ -568,10 +595,63 @@ namespace MSNPSharp.IO
                         if (groupType.fDeleted)
                         {
                             xmlcl.Groups.Remove(key);
+
+                            ContactGroup contactGroup = (ContactGroup)xmlcl.NSMessageHandler.ContactGroups[groupType.groupId];
+                            if (contactGroup != null)
+                            {
+                                xmlcl.NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
+                                xmlcl.NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
+                            }
                         }
                         else
                         {
                             xmlcl.Groups[key] = groupType;
+
+                            // Add a new group									
+                            xmlcl.NSMessageHandler.ContactGroups.AddGroup(
+                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, xmlcl.NSMessageHandler));
+
+                            // Fire the event
+                            xmlcl.NSMessageHandler.ContactService.OnContactGroupAdded(
+                                new ContactGroupEventArgs(xmlcl.NSMessageHandler.ContactGroups[groupType.groupId]));
+                        }
+                    }
+                }
+
+                if (null != forwardList.contacts)
+                {
+                    foreach (ContactType contactType in forwardList.contacts)
+                    {
+                        if (null != contactType.contactInfo)
+                        {
+                            Contact contact = xmlcl.NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
+
+                            if (contactType.fDeleted)
+                            {
+                                xmlcl.AddressbookContacts.Remove(new Guid(contactType.contactId));
+
+                                if (contact != null)
+                                {
+                                    contact.OnForwardList = false;
+
+                                    xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+
+                                    contact.SetGuid(Guid.Empty);
+                                    contact.SetIsMessengerUser(false);
+
+                                    if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(ServiceFilterType.Messenger, contact.Mail, contact.ClientType))
+                                    {
+                                        xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                        contact.NSMessageHandler = null;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                xmlcl.AddressbookContacts[new Guid(contactType.contactId)] = contactType;
+                                xmlcl.UpdateContact(contactType);
+                                xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                            }
                         }
                     }
                 }
@@ -579,142 +659,6 @@ namespace MSNPSharp.IO
                 // Update lastchange
                 xmlcl.AddressbookLastChange = forwardList.ab.lastChange;
                 xmlcl.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
-            }
-
-            // Create Groups
-            foreach (GroupType group in xmlcl.Groups.Values)
-            {
-                xmlcl.NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, xmlcl.NSMessageHandler));
-            }
-
-            // Create the Forward List and Email Contacts
-            foreach (ContactType ct in xmlcl.AddressbookContacts.Values)
-            {
-                contactInfoType cit = ct.contactInfo;
-                ClientType type = ClientType.PassportMember;
-                string account = cit.passportName;
-                string displayname = cit.displayName;
-                bool ismessengeruser = cit.isMessengerUser;
-
-                if (cit.emails != null && account == null)
-                {
-                    type = ClientType.EmailMember;
-                    account = cit.emails[0].email;
-                    ismessengeruser |= cit.emails[0].isMessengerEnabled;
-                    displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
-                }
-
-                if (cit.phones != null && account == null)
-                {
-                    type = ClientType.PhoneMember;
-                    account = cit.phones[0].number;
-                    ismessengeruser |= cit.phones[0].isMessengerEnabled;
-                    displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
-                }
-
-                if (account != null)
-                {
-                    if (cit.contactType != contactInfoTypeContactType.Me)
-                    {
-                        Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
-                        contact.NSMessageHandler = xmlcl.NSMessageHandler;
-                        contact.SetGuid(new Guid(ct.contactId));
-                        contact.SetHasBlog(cit.hasSpace);
-                        contact.SetComment(cit.comment);
-                        contact.SetIsMessengerUser(ismessengeruser);
-                        contact.SetMobileAccess(cit.isMobileIMEnabled);
-                        if (contact.IsMessengerUser)
-                            contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
-
-                        if (!String.IsNullOrEmpty(displayname))
-                        {
-                            if (contact.Name == contact.Mail && displayname != contact.Mail)
-                                contact.SetName(displayname);
-                        }
-
-                        if (cit.phones != null)
-                        {
-                            foreach (contactPhoneType cp in cit.phones)
-                            {
-                                switch (cp.contactPhoneType1)
-                                {
-                                    case ContactPhoneTypeType.ContactPhoneMobile:
-                                        contact.SetMobilePhone(cp.number);
-                                        break;
-
-                                    case ContactPhoneTypeType.ContactPhonePersonal:
-                                        contact.SetHomePhone(cp.number);
-                                        break;
-
-                                    case ContactPhoneTypeType.ContactPhoneBusiness:
-                                        contact.SetWorkPhone(cp.number);
-                                        break;
-                                }
-                            }
-                        }
-
-                        if (null != cit.annotations)
-                        {
-                            foreach (Annotation anno in cit.annotations)
-                            {
-                                if (anno.Name == "AB.NickName" && anno.Value != null)
-                                {
-                                    displayname = anno.Value;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (cit.groupIds != null)
-                        {
-                            foreach (string groupId in cit.groupIds)
-                            {
-                                contact.ContactGroups.Add(xmlcl.NSMessageHandler.ContactGroups[groupId]);
-                            }
-                        }
-
-                        if (cit.groupIdsDeleted != null)
-                        {
-                            foreach (string groupId in cit.groupIdsDeleted)
-                            {
-                                contact.ContactGroups.Remove(xmlcl.NSMessageHandler.ContactGroups[groupId]);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (displayname == xmlcl.NSMessageHandler.Owner.Mail && !String.IsNullOrEmpty(xmlcl.NSMessageHandler.Owner.Name))
-                        {
-                            displayname = xmlcl.NSMessageHandler.Owner.Name;
-                        }
-
-                        xmlcl.Profile.DisplayName = displayname;
-                        xmlcl.Profile.CID = cit.CID;
-
-                        if (null != cit.annotations)
-                        {
-                            foreach (Annotation anno in cit.annotations)
-                            {
-                                string name = anno.Name;
-                                string value = anno.Value;
-                                name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                                xmlcl.MyProperties[name] = value;
-                            }
-                        }
-
-                        if (!xmlcl.MyProperties.ContainsKey("mbea"))
-                            xmlcl.MyProperties["mbea"] = "0";
-
-                        if (!xmlcl.MyProperties.ContainsKey("gtc"))
-                            xmlcl.MyProperties["gtc"] = "1";
-
-                        if (!xmlcl.MyProperties.ContainsKey("blp"))
-                            xmlcl.MyProperties["blp"] = "0";
-
-                        if (!xmlcl.MyProperties.ContainsKey("roamliveproperties"))
-                            xmlcl.MyProperties["roamliveproperties"] = "1";
-                    }
-                }
             }
 
             //Update dynamic items
@@ -737,7 +681,7 @@ namespace MSNPSharp.IO
                                 {
                                     if (xmlcl.Profile.DateModified < notifydata.LastChanged)
                                     {
-                                        xmlcl.Profile.GetFromStorageService = true;
+                                        xmlcl.NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = notifydata.LastChanged.ToString();
                                     }
                                 }
                             }
@@ -746,30 +690,140 @@ namespace MSNPSharp.IO
                 }
             }
 
-            foreach (PassportDynamicItem dyItem in xmlcl.NSMessageHandler.ContactService.Deltas.DynamicItems.Values)
-            {
-                if (xmlcl.NSMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
-                {
-                    if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam) ||
-                        (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam))
-                    {
-                        xmlcl.NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.HasNew); //TODO: Type
-                    }
-
-                    if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam == false) ||
-                        (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam == false))
-                    {
-                        xmlcl.NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.Viewed); //TODO: Type
-                    }
-
-                    if (dyItem.ProfileStatus == null && dyItem.SpaceStatus == null)  //"Exist Access" means the contact has space or profile
-                    {
-                        xmlcl.NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.None); //TODO: Type
-                    }
-                }
-            }
 
             return xmlcl;
+        }
+
+        private void UpdateContact(ContactType contactType)
+        {
+            contactInfoType cit = contactType.contactInfo;
+            ClientType type = ClientType.PassportMember;
+            string account = cit.passportName;
+            string displayname = cit.displayName;
+            bool ismessengeruser = cit.isMessengerUser;
+
+            if (cit.emails != null && account == null)
+            {
+                type = ClientType.EmailMember;
+                account = cit.emails[0].email;
+                ismessengeruser |= cit.emails[0].isMessengerEnabled;
+                displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
+            }
+
+            if (cit.phones != null && account == null)
+            {
+                type = ClientType.PhoneMember;
+                account = cit.phones[0].number;
+                ismessengeruser |= cit.phones[0].isMessengerEnabled;
+                displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
+            }
+
+            if (account != null)
+            {
+                if (cit.contactType != contactInfoTypeContactType.Me)
+                {
+                    Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
+                    contact.NSMessageHandler = NSMessageHandler;
+                    contact.SetGuid(new Guid(contactType.contactId));
+                    //contact.SetHasBlog(cit.hasSpace);   //DONOT trust this
+                    contact.SetComment(cit.comment);
+                    contact.SetIsMessengerUser(ismessengeruser);
+                    contact.SetMobileAccess(cit.isMobileIMEnabled);
+                    if (contact.IsMessengerUser)
+                        contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+
+                    if (!String.IsNullOrEmpty(displayname))
+                    {
+                        if (contact.Name == contact.Mail && displayname != contact.Mail)
+                            contact.SetName(displayname);
+                    }
+
+                    if (cit.phones != null)
+                    {
+                        foreach (contactPhoneType cp in cit.phones)
+                        {
+                            switch (cp.contactPhoneType1)
+                            {
+                                case ContactPhoneTypeType.ContactPhoneMobile:
+                                    contact.SetMobilePhone(cp.number);
+                                    break;
+
+                                case ContactPhoneTypeType.ContactPhonePersonal:
+                                    contact.SetHomePhone(cp.number);
+                                    break;
+
+                                case ContactPhoneTypeType.ContactPhoneBusiness:
+                                    contact.SetWorkPhone(cp.number);
+                                    break;
+                            }
+                        }
+                    }
+
+                    if (null != cit.annotations)
+                    {
+                        foreach (Annotation anno in cit.annotations)
+                        {
+                            if (anno.Name == "AB.NickName" && anno.Value != null)
+                            {
+                                displayname = anno.Value;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (cit.groupIds != null)
+                    {
+                        foreach (string groupId in cit.groupIds)
+                        {
+                            contact.ContactGroups.Add(NSMessageHandler.ContactGroups[groupId]);
+                        }
+                    }
+
+                    if (cit.groupIdsDeleted != null)
+                    {
+                        foreach (string groupId in cit.groupIdsDeleted)
+                        {
+                            contact.ContactGroups.Remove(NSMessageHandler.ContactGroups[groupId]);
+                        }
+                    }
+                }
+                else
+                {
+                    if (displayname == NSMessageHandler.Owner.Mail && !String.IsNullOrEmpty(NSMessageHandler.Owner.Name))
+                    {
+                        displayname = NSMessageHandler.Owner.Name;
+                    }
+
+                    Profile.DisplayName = displayname;
+                    Profile.CID = cit.CID;
+
+                    if (null != cit.annotations)
+                    {
+                        foreach (Annotation anno in cit.annotations)
+                        {
+                            string name = anno.Name;
+                            string value = anno.Value;
+                            name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
+                            MyProperties[name] = value;
+                        }
+                    }
+
+                    if (!MyProperties.ContainsKey("mbea"))
+                        MyProperties["mbea"] = "0";
+
+                    if (!MyProperties.ContainsKey("gtc"))
+                        MyProperties["gtc"] = "1";
+
+                    if (!MyProperties.ContainsKey("blp"))
+                        MyProperties["blp"] = "0";
+
+                    if (!MyProperties.ContainsKey("roamliveproperties"))
+                        MyProperties["roamliveproperties"] = "1";
+
+                    if (!MyProperties.ContainsKey("lastchanged"))
+                        MyProperties["lastchanged"] = DateTime.MinValue.ToString();
+                }
+            }
         }
 
         #endregion
