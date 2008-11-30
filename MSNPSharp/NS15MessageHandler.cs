@@ -1041,6 +1041,36 @@ namespace MSNPSharp
                 OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
         }
 
+#if MSNP18
+        /// <summary>
+        /// Called when a UBN command has been received.
+        /// </summary>
+        /// <remarks>
+        /// <code>UBN [account;{GUID}] [1:xml data,2:sip invite, 3: MSNP2P SLP data, 4:logout, 10: unknown] [PayloadLegth]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnUBNReceived(NSMessage message)
+        {
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (message.InnerBody != null)
+            {
+                switch (message.CommandValues[1].ToString())
+                {
+                    case "4":
+                        {
+                            string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
+                            if (logoutMsg == "goawyplzthxbye" || logoutMsg == "gtfo")
+                            {
+                                // Logout here...
+                                OnSignedOff(new SignedOffEventArgs(SignedOffReason.OtherClient));
+                            }
+                            return;
+                        }
+                }
+            }
+        }
+#endif
+
         /// <summary>
         /// Called when a CHG command has been received.
         /// </summary>
@@ -2016,6 +2046,11 @@ namespace MSNPSharp
                     case "UBM":
                         OnUBMReceived(nsMessage);
                         break;
+#if MSNP18
+                    case "UBN":
+                        OnUBNReceived(nsMessage);
+                        break;
+#endif
                     case "UBX":
                         OnUBXReceived(nsMessage);
                         break;

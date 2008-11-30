@@ -71,19 +71,26 @@ namespace MSNPSharp.Core
     /// <item>IPG</item>
     /// <item>UUX</item>
     /// <item>MSG</item>
+    /// <item>UBN</item>
     /// </list>
     /// </para>
     /// </remarks>
     /// </summary>
     [Serializable()]
-    public class NSPayLoadMessage:NSMessage
+    public class NSPayLoadMessage : NSMessage
     {
         private string payLoad = string.Empty;
 
         public string PayLoad
         {
-            get { return payLoad; }
-            set { payLoad = value; }
+            get
+            {
+                return payLoad;
+            }
+            set
+            {
+                payLoad = value;
+            }
         }
 
         public NSPayLoadMessage()
@@ -92,7 +99,7 @@ namespace MSNPSharp.Core
 
         }
 
-        public NSPayLoadMessage(string command, ArrayList commandValues,string payload)
+        public NSPayLoadMessage(string command, ArrayList commandValues, string payload)
             : base(command, commandValues)
         {
             payLoad = payload;
@@ -104,7 +111,7 @@ namespace MSNPSharp.Core
             payLoad = payload;
         }
 
-        public NSPayLoadMessage(string command,string payload)
+        public NSPayLoadMessage(string command, string payload)
             : base(command)
         {
             payLoad = payload;
@@ -132,4 +139,4 @@ namespace MSNPSharp.Core
             return System.Text.Encoding.UTF8.GetBytes(cmdBuilder.ToString());
         }
     }
-}
+};
