@@ -128,7 +128,7 @@ namespace MSNPSharp
         public void GetContactCard(string account, int maximagecount, int maxcharcount)
         {
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
+                NSMessageHandler.ContactList.HasContact(account, ClientType.PassportMember))
             {
                 SpaceService service = CreateSpaceService();
                 service.GetXmlFeedCompleted += delegate(object sender, GetXmlFeedCompletedEventArgs e)
@@ -236,92 +236,104 @@ namespace MSNPSharp
                             OnContactCardCompleted(new ContactCardCompletedEventArgs(true, null, cc));
                         }
 
-                        BaseDynamicItemType basedyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
-                        basedyItem.ProfileGleamSpecified = true;
-                        basedyItem.ProfileGleam = false;
-
-                        basedyItem.SpaceGleamSpecified = true;
-                        basedyItem.SpaceGleam = false;
-
-                        if (NSMessageHandler.ContactList.HasContact(account, ClientType.PassportMember))
+                        if (NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
                         {
+                            BaseDynamicItemType basedyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
+                            basedyItem.ProfileGleamSpecified = true;
+                            basedyItem.ProfileGleam = false;
+
+                            basedyItem.SpaceGleamSpecified = true;
+                            basedyItem.SpaceGleam = false;
+
                             if (basedyItem.SpaceStatus == "Exist Access" || basedyItem.ProfileStatus == "Exist Access")
                             {
                                 NSMessageHandler.ContactList[account, ClientType.PassportMember].SetdynamicItemChanged(DynamicItemState.Viewed);
                             }
+
                             NSMessageHandler.ContactService.Deltas.Save();
                         }
                     }
                 };
 
-                BaseDynamicItemType dyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
+                //"1753-01-01T00:00:00.0000000-00:00"
+                DateTime defaultTime = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.Utc);
+                Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
+
                 GetXmlFeedRequestType request = new GetXmlFeedRequestType();
                 request.refreshInformation = new refreshInformationType();
+                request.refreshInformation.cid = Convert.ToString(contact.CID);
                 request.refreshInformation.applicationId = Properties.Resources.ApplicationStrId;
-                request.refreshInformation.cid = dyItem.CID;
                 request.refreshInformation.market = CultureInfo.CurrentCulture.Name;
                 request.refreshInformation.updateAccessedTime = true;
                 request.refreshInformation.brand = String.Empty;
                 request.refreshInformation.storageAuthCache = String.Empty;
                 request.refreshInformation.maxCharacterCount = maxcharcount.ToString();
                 request.refreshInformation.maxImageCount = maximagecount.ToString();
-                //"1753-01-01T00:00:00.0000000-00:00"
-                DateTime defaultTime = XmlConvert.ToDateTime("1753-01-01T00:00:00.0000000-00:00", XmlDateTimeSerializationMode.Utc);
 
-                //Active contact
-                if (dyItem.LiveContactLastChangedSpecified)
+                if (NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
                 {
+                    BaseDynamicItemType dyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
+
+                    // Active contact
                     request.refreshInformation.isActiveContact = true;
                     request.refreshInformation.activeContactLastChanged = dyItem.LiveContactLastChanged;
                     request.refreshInformation.activeContactLastChangedSpecified = true;
+
+                    // Profile
+                    if (dyItem.ProfileGleam && dyItem.ProfileStatus == "Exist Access")
+                    {
+                        if (dyItem.ProfileLastViewSpecified)
+                        {
+                            request.refreshInformation.profileLastViewed = dyItem.ProfileLastView;
+                        }
+                        else
+                        {
+                            request.refreshInformation.profileLastViewed = defaultTime;
+                        }
+                        request.refreshInformation.profileLastViewedSpecified = true;
+                    }
+
+                    // Space
+                    if (dyItem.SpaceGleam && dyItem.SpaceStatus == "Exist Access")
+                    {
+                        if (dyItem.SpaceLastViewedSpecified)
+                        {
+                            request.refreshInformation.spaceLastViewed = dyItem.SpaceLastViewed;
+                        }
+                        else
+                        {
+                            request.refreshInformation.spaceLastViewed = defaultTime;
+                        }
+                        request.refreshInformation.spaceLastViewedSpecified = true;
+                    }
+
+                    // ContactProfile
+                    if (dyItem.ContactProfileStatus == "Exist Access")
+                    {
+                        if (dyItem.ContactProfileLastViewedSpecified)
+                        {
+                            request.refreshInformation.contactProfileLastViewed = dyItem.ContactProfileLastViewed;
+                        }
+                        else
+                        {
+                            request.refreshInformation.contactProfileLastViewed = defaultTime;
+                        }
+
+                        request.refreshInformation.contactProfileLastViewedSpecified = true;
+                    }
                 }
                 else
                 {
                     request.refreshInformation.isActiveContact = false;
                     request.refreshInformation.activeContactLastChangedSpecified = false;
-                }
 
-                //Profile
-                if (dyItem.ProfileGleam && dyItem.ProfileStatus == "Exist Access")
-                {
-                    if (dyItem.ProfileLastViewSpecified)
-                    {
-                        request.refreshInformation.profileLastViewed = dyItem.ProfileLastView;
-                    }
-                    else
-                    {
-                        request.refreshInformation.profileLastViewed = defaultTime;
-                    }
+                    request.refreshInformation.profileLastViewed = defaultTime;
                     request.refreshInformation.profileLastViewedSpecified = true;
-                }
 
-                //Space
-                if (dyItem.SpaceGleam && dyItem.SpaceStatus == "Exist Access")
-                {
-                    if (dyItem.SpaceLastViewedSpecified)
-                    {
-                        request.refreshInformation.spaceLastViewed = dyItem.SpaceLastViewed;
-                    }
-                    else
-                    {
-                        request.refreshInformation.spaceLastViewed = defaultTime;
-                    }
+                    request.refreshInformation.spaceLastViewed = defaultTime;
                     request.refreshInformation.spaceLastViewedSpecified = true;
-                }
 
-
-                //ContactProfile
-                if (dyItem.ContactProfileStatus == "Exist Access")
-                {
-                    if (dyItem.ContactProfileLastViewedSpecified)
-                    {
-                        request.refreshInformation.contactProfileLastViewed = dyItem.ContactProfileLastViewed;
-                    }
-                    else
-                    {
-                        request.refreshInformation.contactProfileLastViewed = defaultTime;
-                    }
-
+                    request.refreshInformation.contactProfileLastViewed = defaultTime;
                     request.refreshInformation.contactProfileLastViewedSpecified = true;
                 }
 

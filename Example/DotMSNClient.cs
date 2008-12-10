@@ -1393,10 +1393,7 @@ namespace MSNPSharpClient
                         toolStripMenuItem2.Visible = false;
                     }
 
-                    if (contact.DynamicChanged == DynamicItemState.None)
-                        viewContactCardMenuItem.Visible = false;
-                    else
-                        viewContactCardMenuItem.Visible = true;
+                    viewContactCardMenuItem.Visible = (contact.ClientType == ClientType.PassportMember);
 
                     deleteMenuItem.Visible = contact.Guid != Guid.Empty;
 

@@ -79,7 +79,7 @@ namespace MSNPSharp
 
         internal void SetRoamLiveProperty(RoamLiveProperty mode)
         {
-            RoamLiveProperty = mode;
+            roamLiveProperty = mode;
         }
 
         public new DisplayImage DisplayImage
@@ -95,7 +95,7 @@ namespace MSNPSharp
 
                 if (base.DisplayImage != null)
                 {
-                    if (value == base.DisplayImage )
+                    if (value == base.DisplayImage)
                     {
                         return;
                     }
@@ -131,7 +131,7 @@ namespace MSNPSharp
 
         public void BroadcastDisplayImage()
         {
-            if(NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
+            if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
                 // resend the user status so other client can see the new msn object
 #if MSNP18
@@ -143,6 +143,7 @@ namespace MSNPSharp
 
                 if (DisplayImage != null)
                     context = DisplayImage.Context;
+
                 NSMessageHandler.MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { NSMessageHandler.ParseStatus(Status), capacities, context }));
             }
         }
@@ -292,7 +293,10 @@ namespace MSNPSharp
         /// </summary>
         public string RouteInfo
         {
-            get { return _routeInfo; }
+            get
+            {
+                return _routeInfo;
+            }
         }
 
         internal void SetMPOP(bool enabled)
@@ -624,7 +628,7 @@ namespace MSNPSharp
         /// <param name="clientIP"></param>
         /// <param name="clientPort"></param>
         /// <param name="nick"></param>
-        /// <param name="popEnabled"></param>
+        /// <param name="mpop"></param>
         /// <param name="routeInfo"></param>
         internal void UpdateProfile(
             string loginTime, bool emailEnabled, string memberIdHigh,
@@ -635,7 +639,7 @@ namespace MSNPSharp
             string mspAuth, IPAddress clientIP, int clientPort,
             string nick
 #if MSNP18
-            , bool popEnabled
+            , bool mpop
             , string routeInfo
 #endif
 )
@@ -660,7 +664,7 @@ namespace MSNPSharp
             ClientPort = clientPort;
             nickName = nick;
 #if MSNP18
-            mpopEnabled = popEnabled;
+            mpopEnabled = mpop;
             _routeInfo = routeInfo;
 #endif
 

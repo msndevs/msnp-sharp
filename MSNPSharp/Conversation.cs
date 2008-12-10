@@ -101,7 +101,6 @@ namespace MSNPSharp
     /// Conversation implements a few features for the ease of the application programmer. It provides
     /// directly basic common functionality. However, if you need to perform more advanced actions, or catch
     /// other events you have to directly use the underlying switchboard handler, or switchboard processor.
-    /// </b>
     /// Conversation automatically requests emoticons used by remote contacts.
     /// </remarks>
     public class Conversation

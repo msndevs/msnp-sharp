@@ -31,52 +31,13 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Xml.Serialization;
+using System.Collections.Generic;
 
 namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
-
-    internal class AddressBookDeltasComparer : IComparer<ABFindAllResultType>
-    {
-        private AddressBookDeltasComparer()
-        {
-        }
-
-        public static IComparer<ABFindAllResultType> Default = new AddressBookDeltasComparer();
-        public int Compare(ABFindAllResultType x, ABFindAllResultType y)
-        {
-            return x.ab.lastChange.CompareTo(y.ab.lastChange);
-        }
-    }
-
-    internal class MembershipDeltasComparer : IComparer<FindMembershipResultType>
-    {
-        private MembershipDeltasComparer()
-        {
-        }
-
-        public static IComparer<FindMembershipResultType> Default = new MembershipDeltasComparer();
-        public int Compare(FindMembershipResultType x, FindMembershipResultType y)
-        {
-            foreach (ServiceType serviceTypeX in x.Services)
-            {
-                if (serviceTypeX.Info.Handle.Type == ServiceFilterType.Messenger)
-                {
-                    foreach (ServiceType serviceTypeY in y.Services)
-                    {
-                        if (serviceTypeY.Info.Handle.Type == ServiceFilterType.Messenger)
-                        {
-                            return serviceTypeX.LastChange.CompareTo(serviceTypeY.LastChange);
-                        }
-                    }
-                }
-            }
-
-            return 0;
-        }
-    }
 
     /// <summary>
     /// Storage class for deltas request
@@ -93,8 +54,14 @@ namespace MSNPSharp.IO
         /// </summary>
         public SerializableDictionary<string, BaseDynamicItemType> DynamicItems
         {
-            get { return dynamicItems; }
-            set { dynamicItems = value; }
+            get
+            {
+                return dynamicItems;
+            }
+            set
+            {
+                dynamicItems = value;
+            }
         }
 
 
@@ -102,7 +69,7 @@ namespace MSNPSharp.IO
         {
             get
             {
-                addressBookDeltas.Sort(AddressBookDeltasComparer.Default);
+                addressBookDeltas.Sort(CompareAddressBookDeltas);
                 return addressBookDeltas;
             }
             set
@@ -115,7 +82,7 @@ namespace MSNPSharp.IO
         {
             get
             {
-                membershipDeltas.Sort(MembershipDeltasComparer.Default);
+                membershipDeltas.Sort(CompareMembershipDeltas);
                 return membershipDeltas;
             }
             set
@@ -123,6 +90,27 @@ namespace MSNPSharp.IO
                 membershipDeltas = value;
             }
         }
+
+        #region Profile
+        private OwnerProfile profile = new OwnerProfile();
+
+        /// <summary>
+        /// Profile of current user.
+        /// </summary>
+        [XmlElement("Profile")]
+        public OwnerProfile Profile
+        {
+            get
+            {
+                return profile;
+            }
+            set
+            {
+                profile = value;
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// Empty all of the lists
@@ -154,6 +142,30 @@ namespace MSNPSharp.IO
             return LoadFromFile(filename, nocompress, typeof(DeltasList), handler) as DeltasList;
         }
 
+        public static int CompareAddressBookDeltas(ABFindAllResultType x, ABFindAllResultType y)
+        {
+            return x.ab.lastChange.CompareTo(y.ab.lastChange);
+        }
+
+        public static int CompareMembershipDeltas(FindMembershipResultType x, FindMembershipResultType y)
+        {
+            foreach (ServiceType serviceTypeX in x.Services)
+            {
+                if (serviceTypeX.Info.Handle.Type == ServiceFilterType.Messenger)
+                {
+                    foreach (ServiceType serviceTypeY in y.Services)
+                    {
+                        if (serviceTypeY.Info.Handle.Type == ServiceFilterType.Messenger)
+                        {
+                            return serviceTypeX.LastChange.CompareTo(serviceTypeY.LastChange);
+                        }
+                    }
+                }
+            }
+
+            return 0;
+        }
+
         #region Overrides
 
         /// <summary>
@@ -167,4 +179,4 @@ namespace MSNPSharp.IO
         }
         #endregion
     }
-}
+};

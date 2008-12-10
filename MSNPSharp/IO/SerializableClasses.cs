@@ -215,7 +215,6 @@ namespace MSNPSharp.IO
     [Serializable]
     public class OwnerProfile : ProfileResource
     {
-        private string cID = string.Empty;
         private string displayName = string.Empty;
         private string personalMessage = string.Empty;
         private ProfilePhoto photo = new ProfilePhoto();
@@ -232,21 +231,6 @@ namespace MSNPSharp.IO
             set
             {
                 photo = value;
-            }
-        }
-
-        /// <summary>
-        /// CID of owner.
-        /// </summary>
-        public string CID
-        {
-            get
-            {
-                return cID;
-            }
-            set
-            {
-                cID = value;
             }
         }
 
