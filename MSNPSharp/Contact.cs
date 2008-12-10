@@ -39,6 +39,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     [Serializable()]
     public class ContactStatusChangeEventArgs : EventArgs
@@ -143,6 +144,7 @@ namespace MSNPSharp
         string comment = string.Empty;
 
         ClientType clienttype = ClientType.PassportMember;
+        contactInfoTypeContactType? contactType = null;
 
         [NonSerialized]
         NSMessageHandler nsMessageHandler;
@@ -279,6 +281,14 @@ namespace MSNPSharp
             }
         }
 
+        public contactInfoTypeContactType? ContactType
+        {
+            get
+            {
+                return contactType;
+            }
+        }
+
         public PersonalMessage PersonalMessage
         {
             get
@@ -385,6 +395,40 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Receive updated contact information automatically.
+        /// <remarks>Contact details like address and phone numbers are automatically downloaded to your Address Book.</remarks>
+        /// </summary>
+        public bool AutoSubscribeToUpdates
+        {
+            get
+            {
+                return (contactType == contactInfoTypeContactType.Live || contactType == contactInfoTypeContactType.LivePending);
+            }
+            set
+            {
+                if (NSMessageHandler != null && Guid != Guid.Empty && ClientType == ClientType.PassportMember)
+                {
+                    if (value)
+                    {
+                        if (AutoSubscribeToUpdates)
+                            return;
+
+                        contactType = contactInfoTypeContactType.LivePending;
+                        NSMessageHandler.ContactService.UpdateContact(this);
+                    }
+                    else
+                    {
+                        if (!AutoSubscribeToUpdates)
+                            return;
+
+                        contactType = contactInfoTypeContactType.Regular;
+                        NSMessageHandler.ContactService.UpdateContact(this);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Indicates whether the contact is a mail contact or a messenger buddy.
         /// </summary>
         public bool IsMessengerUser
@@ -399,7 +443,8 @@ namespace MSNPSharp
                 {
                     if (IsMessengerUser != value)
                     {
-                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, value, Comment);
+                        isMessengerUser = value;
+                        NSMessageHandler.ContactService.UpdateContact(this);
                     }
                 }
             }
@@ -417,7 +462,8 @@ namespace MSNPSharp
                 {
                     if (Comment != value)
                     {
-                        NSMessageHandler.ContactService.UpdateContact(this, String.Empty, IsMessengerUser, value);
+                        comment = value;
+                        NSMessageHandler.ContactService.UpdateContact(this);
                     }
                 }
             }
@@ -436,6 +482,12 @@ namespace MSNPSharp
 
 
         #region Internal setters
+
+        internal void SetContactType(contactInfoTypeContactType ct)
+        {
+            contactType = ct;
+        }
+
         internal void SetName(string newName)
         {
             if (name != newName)
