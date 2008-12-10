@@ -326,6 +326,14 @@
       </xsd:element>
       <xsd:element minOccurs="0" name="Gender" type="xsd:string" />
       <xsd:element minOccurs="0" name="TimeZone" type="xsd:string" />
+      <xsd:element minOccurs="0" name="NetworkInfoList">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="NetworkInfo" type="msnab:NetworkInfoType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="PublicDisplayName" type="xsd:string" />
       <xsd:element minOccurs="0" name="IsAutoUpdateDisabled" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="MessengerMemberInfo" type="msnab:MessengerMemberInfo" />
       <xsd:element minOccurs="0" name="PropertiesChanged" type="xsd:anyType" />
@@ -562,6 +570,24 @@
   <xsd:complexType name="CircleResultType">
     <xsd:sequence>
       <xsd:element name="CircleTicket" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="NetworkInfoType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="DomainId" type="xsd:int" />
+      <xsd:element minOccurs="0" name="DomainTag" type="xsd:string" />
+      <xsd:element minOccurs="0" name="UserTileURL" type="xsd:string" />
+      <xsd:element minOccurs="0" name="ProfileURL" type="xsd:string" />
+      <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="RelationshipType" type="xsd:int" />
+      <xsd:element minOccurs="0" name="RelationshipState" type="xsd:int" />
+      <xsd:element minOccurs="0" name="RelationshipStateDate" type="xsd:string" />
+      <xsd:element minOccurs="0" name="RelationshipRole" type="xsd:int" />
+      <xsd:element minOccurs="0" name="NDRCount" type="xsd:int" />
+      <xsd:element minOccurs="0" name="InviterCID" type="xsd:int" />
+      <xsd:element minOccurs="0" name="CreateDate" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="LastChanged" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="PropertiesChanged" type="xsd:anyType" />
     </xsd:sequence>
   </xsd:complexType>
 </xsd:schema>

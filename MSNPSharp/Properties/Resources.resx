@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ApplicationId" xml:space="preserve">
-    <value>CFE80F9D-180F-4399-82AB-413F33A1FA11</value>
+    <value>AAD9B99B-58E6-4F23-B975-D9EC1F9EC24A</value>
   </data>
   <data name="ApplicationStrId" xml:space="preserve">
     <value>Messenger Client 8.5</value>
@@ -127,7 +127,7 @@
     <value>3.0.0</value>
   </data>
   <data name="MessengerClientBuildVer" xml:space="preserve">
-    <value>14.0.3921.0717</value>
+    <value>14.0.5072.818</value>
   </data>
   <data name="MessengerClientName" xml:space="preserve">
     <value>WLMSGRBETA</value>
@@ -140,6 +140,6 @@
     <value>..\Resources\WLXLarge_default.gif;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="XMLContactListVersion" xml:space="preserve">
-    <value>3.0.0</value>
+    <value>3.0.1</value>
   </data>
 </root>

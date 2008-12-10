@@ -1495,7 +1495,8 @@ namespace MSNPSharp.DataTransfer
             // remove the resources
             RemoveTransferSession(session);
             // and close the connection
-            //session.MessageSession.CloseDirectConnection();
+            if (session.MessageSession.DirectConnected)
+                session.MessageSession.CloseDirectConnection();
 
         }
 

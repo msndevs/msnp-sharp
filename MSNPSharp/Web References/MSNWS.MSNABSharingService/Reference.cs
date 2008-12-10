@@ -2809,6 +2809,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string timeZoneField;
         
+        private NetworkInfoType[] networkInfoListField;
+        
+        private string publicDisplayNameField;
+        
         private bool isAutoUpdateDisabledField;
         
         private bool isAutoUpdateDisabledFieldSpecified;
@@ -3330,6 +3334,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("NetworkInfo", IsNullable=false)]
+        public NetworkInfoType[] NetworkInfoList {
+            get {
+                return this.networkInfoListField;
+            }
+            set {
+                this.networkInfoListField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string PublicDisplayName {
+            get {
+                return this.publicDisplayNameField;
+            }
+            set {
+                this.publicDisplayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
         public bool IsAutoUpdateDisabled {
             get {
                 return this.isAutoUpdateDisabledField;
@@ -3784,6 +3809,287 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         LiveDropped,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1433")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class NetworkInfoType {
+        
+        private int domainIdField;
+        
+        private bool domainIdFieldSpecified;
+        
+        private string domainTagField;
+        
+        private string userTileURLField;
+        
+        private string profileURLField;
+        
+        private string displayNameField;
+        
+        private int relationshipTypeField;
+        
+        private bool relationshipTypeFieldSpecified;
+        
+        private int relationshipStateField;
+        
+        private bool relationshipStateFieldSpecified;
+        
+        private string relationshipStateDateField;
+        
+        private int relationshipRoleField;
+        
+        private bool relationshipRoleFieldSpecified;
+        
+        private int nDRCountField;
+        
+        private bool nDRCountFieldSpecified;
+        
+        private int inviterCIDField;
+        
+        private bool inviterCIDFieldSpecified;
+        
+        private System.DateTime createDateField;
+        
+        private bool createDateFieldSpecified;
+        
+        private System.DateTime lastChangedField;
+        
+        private bool lastChangedFieldSpecified;
+        
+        private object propertiesChangedField;
+        
+        /// <remarks/>
+        public int DomainId {
+            get {
+                return this.domainIdField;
+            }
+            set {
+                this.domainIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool DomainIdSpecified {
+            get {
+                return this.domainIdFieldSpecified;
+            }
+            set {
+                this.domainIdFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string DomainTag {
+            get {
+                return this.domainTagField;
+            }
+            set {
+                this.domainTagField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string UserTileURL {
+            get {
+                return this.userTileURLField;
+            }
+            set {
+                this.userTileURLField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ProfileURL {
+            get {
+                return this.profileURLField;
+            }
+            set {
+                this.profileURLField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int RelationshipType {
+            get {
+                return this.relationshipTypeField;
+            }
+            set {
+                this.relationshipTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool RelationshipTypeSpecified {
+            get {
+                return this.relationshipTypeFieldSpecified;
+            }
+            set {
+                this.relationshipTypeFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int RelationshipState {
+            get {
+                return this.relationshipStateField;
+            }
+            set {
+                this.relationshipStateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool RelationshipStateSpecified {
+            get {
+                return this.relationshipStateFieldSpecified;
+            }
+            set {
+                this.relationshipStateFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string RelationshipStateDate {
+            get {
+                return this.relationshipStateDateField;
+            }
+            set {
+                this.relationshipStateDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int RelationshipRole {
+            get {
+                return this.relationshipRoleField;
+            }
+            set {
+                this.relationshipRoleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool RelationshipRoleSpecified {
+            get {
+                return this.relationshipRoleFieldSpecified;
+            }
+            set {
+                this.relationshipRoleFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int NDRCount {
+            get {
+                return this.nDRCountField;
+            }
+            set {
+                this.nDRCountField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool NDRCountSpecified {
+            get {
+                return this.nDRCountFieldSpecified;
+            }
+            set {
+                this.nDRCountFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int InviterCID {
+            get {
+                return this.inviterCIDField;
+            }
+            set {
+                this.inviterCIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool InviterCIDSpecified {
+            get {
+                return this.inviterCIDFieldSpecified;
+            }
+            set {
+                this.inviterCIDFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime CreateDate {
+            get {
+                return this.createDateField;
+            }
+            set {
+                this.createDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool CreateDateSpecified {
+            get {
+                return this.createDateFieldSpecified;
+            }
+            set {
+                this.createDateFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime LastChanged {
+            get {
+                return this.lastChangedField;
+            }
+            set {
+                this.lastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool LastChangedSpecified {
+            get {
+                return this.lastChangedFieldSpecified;
+            }
+            set {
+                this.lastChangedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object PropertiesChanged {
+            get {
+                return this.propertiesChangedField;
+            }
+            set {
+                this.propertiesChangedField = value;
+            }
+        }
     }
     
     /// <remarks/>

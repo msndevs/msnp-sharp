@@ -116,7 +116,6 @@ namespace MSNPSharp
 
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials();
-        private ArrayList tsConversations = ArrayList.Synchronized(new ArrayList());
         private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
 
         #endregion
@@ -152,12 +151,6 @@ namespace MSNPSharp
                 // create a conversation object to handle with the switchboard
                 Conversation c = new Conversation(this, ce.Switchboard);
 
-                // remove the conversation from the list when the conversation has ended.
-                //c.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
-                c.ConversationEnded += new EventHandler<ConversationEndEventArgs>(conversation_ConversationEnd);
-
-                tsConversations.Add(c);
-
                 // fire event to notify client programmer
                 OnConversationCreated(c, ce.Initiator);
                 return;
@@ -172,15 +165,18 @@ namespace MSNPSharp
                 tsMsnslpHandlers.Add(msnslpHandler);
 
                 // set the correct switchboard to send messages to
-                lock (tsConversations.SyncRoot)
+                lock (Nameserver.SwitchBoards)
                 {
-                    foreach (Conversation c in tsConversations)
-                    {
-                        if (c.Switchboard.Contacts.ContainsKey(see.Session.RemoteContact))
+                    foreach (SBMessageHandler sb in Nameserver.SwitchBoards)
                         {
-                            see.Session.MessageProcessor = c.SwitchboardProcessor;
+                            if (sb.GetType() == typeof(SBMessageHandler))
+                            {
+                                if (sb.Contacts.ContainsKey(see.Session.RemoteContact))
+                                {
+                                    see.Session.MessageProcessor = sb.MessageProcessor;
+                                }
+                            }
                         }
-                    }
                 }
                 // Accepts by default owner display images and contact emoticons.
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
@@ -520,12 +516,9 @@ namespace MSNPSharp
         /// <returns></returns>
         public Conversation CreateConversation()
         {
-            //SBMessageHandler sbHandler = nsMessageHandler.RequestSwitchboard(this);
 
             Conversation conversation = new Conversation(this);
-            tsConversations.Add(conversation);
-
-            conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(conversation_ConversationEnd);
+            
             OnConversationCreated(conversation, this);
 
             return conversation;
@@ -577,7 +570,6 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void CleanUp()
         {
-            tsConversations.Clear();
             tsMsnslpHandlers.Clear();
 
             if (null != p2pHandler)
@@ -620,25 +612,5 @@ namespace MSNPSharp
 
         #endregion
 
-        /// <summary>
-        ///  Removes a conversation object from the list when the conversation is ended.
-        /// </summary>
-        /// <param name="sender">The conversation that was ended.</param>
-        /// <param name="e"></param>
-        private void conversation_ConversationEnd(object sender, ConversationEndEventArgs e)
-        {
-            lock (tsConversations.SyncRoot)
-            {
-                foreach (Conversation conversation in tsConversations)
-                {
-                    if (e.Conversation == conversation)
-                    {
-                        tsConversations.Remove(e.Conversation);
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A conversation has been removed from list.");
-                        return;
-                    }
-                }
-            }
-        }
     }
 };

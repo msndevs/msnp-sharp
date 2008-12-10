@@ -132,8 +132,7 @@ namespace MSNPSharp
 
         public override void Disconnect()
         {
-            SendMessage(new SBMessage("OUT", new string[] { }));
-            System.Threading.Thread.CurrentThread.Join(100);
+
             base.Disconnect();
         }
     }
