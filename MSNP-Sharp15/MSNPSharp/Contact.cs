@@ -128,6 +128,7 @@ namespace MSNPSharp
     [Serializable()]
     public class Contact
     {
+        long? cID;
         Guid guid;
         string mail;
         string name;
@@ -287,13 +288,24 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The contactId of contact, NOT CID.
+        /// The Guid of contact, NOT CID.
         /// </summary>
         public Guid Guid
         {
             get
             {
                 return guid;
+            }
+        }
+
+        /// <summary>
+        /// The contact id of contact, PassportMembers have CID only.
+        /// </summary>
+        public long? CID
+        {
+            get
+            {
+                return cID;
             }
         }
 
@@ -458,6 +470,11 @@ namespace MSNPSharp
         internal void SetGuid(Guid guid)
         {
             this.guid = guid;
+        }
+
+        internal void SetCID(long? cid)
+        {
+            this.cID = cid;
         }
 
         internal void SetLists(MSNLists lists)

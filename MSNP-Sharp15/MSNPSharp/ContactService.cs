@@ -306,23 +306,23 @@ namespace MSNPSharp
             NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
             NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
 
-            AddressBook.Profile = NSMessageHandler.StorageService.GetProfile();
+            Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
             AddressBook.Save(); // The first and the last AddressBook.Save()
             Deltas.Truncate();
 
             // Set display name, personal status and photo
-            string mydispName = String.IsNullOrEmpty(AddressBook.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : AddressBook.Profile.DisplayName;
+            string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
 #if MSNP18
-            PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
+            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
 #else
             PersonalMessage pm = new PersonalMessage(AddressBook.Profile.PersonalMessage, MediaType.None, null);
 #endif
             NSMessageHandler.Owner.SetName(mydispName);
             NSMessageHandler.Owner.SetPersonalMessage(pm);
 
-            if (AddressBook.Profile.Photo != null && AddressBook.Profile.Photo.DisplayImage != null)
+            if (Deltas.Profile.Photo != null && Deltas.Profile.Photo.DisplayImage != null)
             {
-                System.Drawing.Image fileImage = System.Drawing.Image.FromStream(AddressBook.Profile.Photo.DisplayImage);
+                System.Drawing.Image fileImage = System.Drawing.Image.FromStream(Deltas.Profile.Photo.DisplayImage);
                 DisplayImage displayImage = new DisplayImage();
                 displayImage.Image = fileImage;
                 NSMessageHandler.Owner.DisplayImage = displayImage;
