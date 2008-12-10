@@ -167,6 +167,7 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler;
         protected bool invited;
         private int sessionId;
+        private object syncObject = new object();
 
         private EventHandler<EventArgs> processorConnectedHandler;
         private EventHandler<EventArgs> processorDisconnectedHandler;
@@ -205,7 +206,7 @@ namespace MSNPSharp
 
 
         protected bool sessionEstablished;
-        private Dictionary<string, ContactConversationState> contacts 
+        private Dictionary<string, ContactConversationState> contacts
             = new Dictionary<string, ContactConversationState>(0);
 
         /// <summary>
@@ -328,7 +329,7 @@ namespace MSNPSharp
         /// <param name="contact">The contact who joined the session.</param>
         protected virtual void OnContactJoined(Contact contact)
         {
-            Contacts[contact.Mail] = ContactConversationState.Joined;
+            SetContactState(contact.Mail, ContactConversationState.Joined);
             if (ContactJoined != null)
             {
                 ContactJoined(this, new ContactEventArgs(contact));
@@ -340,8 +341,8 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="contact">The contact who left the session.</param>
         protected virtual void OnContactLeft(Contact contact)
-        {                
-            Contacts[contact.Mail] = ContactConversationState.Left;
+        {
+            SetContactState(contact.Mail, ContactConversationState.Left);
             if (ContactLeft != null)
             {
                 ContactLeft(this, new ContactEventArgs(contact));
@@ -594,8 +595,12 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnProcessorDisconnectCallback(IMessageProcessor processor)
         {
-            sessionEstablished = false;
-            OnSessionClosed();
+            lock (syncObject)
+            {
+                if (sessionEstablished)
+                    OnSessionClosed();
+                sessionEstablished = false;
+            }
         }
 
         /// <summary>
@@ -625,7 +630,15 @@ namespace MSNPSharp
             Dictionary<string, ContactConversationState> cp = new Dictionary<string, ContactConversationState>(contacts);
             foreach (string account in cp.Keys)
             {
-                Contacts[account] = ContactConversationState.Left;
+                SetContactState(account, ContactConversationState.Left);
+            }
+        }
+
+        private void SetContactState(string account, ContactConversationState state)
+        {
+            lock (contacts)
+            {
+                contacts[account] = state;
             }
         }
 
@@ -674,13 +687,14 @@ namespace MSNPSharp
             if (Contacts.ContainsKey(contact))
             {
                 //If already invited or joined, do nothing.
-                if (Contacts[contact] == ContactConversationState.Joined || Contacts[contact] == ContactConversationState.Invited)
+                if (Contacts[contact] == ContactConversationState.Joined ||
+                    Contacts[contact] == ContactConversationState.Invited)
                 {
                     return;
                 }
             }
 
-            Contacts[contact] = ContactConversationState.Invited;
+            SetContactState(contact, ContactConversationState.Invited);
             invitationQueue.Enqueue(contact);
             ProcessInvitations();
         }
@@ -790,7 +804,11 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
             msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail;
+#if MSNP18
+            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail + "\r\n";
+#else
+            msgMessage.MimeHeader["TypingUser"] += NSMessageHandler.Owner.Mail;
+#endif
 
             sbMessage.InnerMessage = msgMessage;
 
@@ -806,7 +824,11 @@ namespace MSNPSharp
             SBMessage sbMessage = new SBMessage();
 
             MSGMessage msgMessage = new MSGMessage();
+#if MSNP18
+            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
+#else
             msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
+#endif
             sbMessage.InnerMessage = msgMessage;
 
             // send it over the network
@@ -938,35 +960,6 @@ namespace MSNPSharp
             }
         }
 
-        internal virtual void CopyAndClearEventHandler(SBMessageHandler HandlerTo)
-        {
-            HandlerTo.AllContactsLeft += AllContactsLeft;
-            HandlerTo.ContactLeft += ContactLeft;
-            HandlerTo.ContactJoined += ContactJoined;
-            HandlerTo.EmoticonDefinitionReceived += EmoticonDefinitionReceived;
-            HandlerTo.ExceptionOccurred += ExceptionOccurred;
-            HandlerTo.NudgeReceived += NudgeReceived;
-            HandlerTo.ServerErrorReceived += ServerErrorReceived;
-            HandlerTo.SessionClosed += SessionClosed;
-            HandlerTo.SessionEstablished += SessionEstablished;
-            HandlerTo.TextMessageReceived += TextMessageReceived;
-            HandlerTo.UserTyping += UserTyping;
-            HandlerTo.WinkReceived += WinkReceived;
-
-            AllContactsLeft = null;
-            ContactLeft = null;
-            ContactJoined = null;
-            EmoticonDefinitionReceived = null;
-            ExceptionOccurred = null;
-            NudgeReceived = null;
-            ServerErrorReceived = null;
-            SessionClosed = null;
-            SessionEstablished = null;
-            TextMessageReceived = null;
-            UserTyping = null;
-            WinkReceived = null;
-        }
-
         #region Message handlers
 
         /// <summary>
@@ -1068,19 +1061,41 @@ namespace MSNPSharp
         /// <remarks>
         /// Indicates that a remote contact has leaved the session.
         /// This will fire the <see cref="ContactLeft"/> event. Or, if all contacts have left, the <see cref="AllContactsLeft"/> event.
-        /// <code>BYE [account]</code>
+        /// <code>BYE [account];[Machine GUID] [Client Type]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnBYEReceived(SBMessage message)
         {
-            if (Contacts.ContainsKey(message.CommandValues[0].ToString()))
+            string account = string.Empty;
+#if MSNP18
+            account = message.CommandValues[0].ToString().Split(';')[0];
+#else
+            account = message.CommandValues[0].ToString();
+#endif
+            if (Contacts.ContainsKey(account))
             {
                 // get the contact and update it's name
-                Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
+#if MSNP18
+                Contact contact = null;
+                if (message.CommandValues.Count >= 2)
+                {
+                    contact = NSMessageHandler.ContactList.GetContact(account, (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString()));
+                }
+                else
+                {
+                    contact = NSMessageHandler.ContactList.GetContact(account);
+                }
 
-                Contacts.Remove(contact.Mail);
+                if (contact == null)
+                    return;
+#else
+                Contact contact = NSMessageHandler.ContactList.GetContact(account);
+#endif
 
                 // notify the client programmer
+                if (Contacts[contact.Mail] == ContactConversationState.Left)
+                    return;
+
                 OnContactLeft(contact);
 
                 foreach (ContactConversationState state in Contacts.Values)

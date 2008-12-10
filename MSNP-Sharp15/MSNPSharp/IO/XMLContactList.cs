@@ -827,6 +827,9 @@ namespace MSNPSharp.IO
                     if (!MyProperties.ContainsKey("blp"))
                         MyProperties["blp"] = "0";
 
+                    if (!MyProperties.ContainsKey("mpop"))
+                        MyProperties["mpop"] = "0";
+
                     if (!MyProperties.ContainsKey("roamliveproperties"))
                         MyProperties["roamliveproperties"] = "1";
 
