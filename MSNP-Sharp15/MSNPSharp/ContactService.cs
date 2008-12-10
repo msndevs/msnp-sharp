@@ -1037,7 +1037,7 @@ namespace MSNPSharp
 
         #region UpdateContact
 
-        internal void UpdateContact(Contact contact, string displayName, bool isMessengerUser, string comment)
+        internal void UpdateContact(Contact contact)
         {
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
@@ -1048,22 +1048,10 @@ namespace MSNPSharp
                 return;
             }
 
-            ABServiceBinding abService = CreateABService(isMessengerUser ? "ContactSave" : "Timer");
-            abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
-            {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
-                if (!e.Cancelled && e.Error == null)
-                {
-                    abRequest("ContactSave", null);
-                }
-                else if (e.Error != null)
-                {
-                    OnServiceOperationFailed(abService,
-                        new ServiceOperationFailedEventArgs("UpdateContact", e.Error));
-                }
-                ((IDisposable)service).Dispose();
+            if (!AddressBook.AddressbookContacts.ContainsKey(contact.Guid))
                 return;
-            };
+
+            ContactType abContactType = AddressBook.AddressbookContacts[contact.Guid];
 
             List<string> propertiesChanged = new List<string>();
             ABContactUpdateRequestType request = new ABContactUpdateRequestType();
@@ -1072,50 +1060,117 @@ namespace MSNPSharp
             request.contacts[0].contactId = contact.Guid.ToString();
             request.contacts[0].contactInfo = new contactInfoType();
 
-            if (isMessengerUser != contact.IsMessengerUser)
-            {
-                switch (contact.ClientType)
-                {
-                    case ClientType.PassportMember:
-                        propertiesChanged.Add("IsMessengerUser");
-                        request.contacts[0].contactInfo.isMessengerUser = isMessengerUser;
-                        request.contacts[0].contactInfo.isMessengerUserSpecified = true;
-                        break;
-
-                    case ClientType.EmailMember:
-                        propertiesChanged.Add("ContactEmail");
-                        request.contacts[0].contactInfo.emails = new contactEmailType[] { new contactEmailType() };
-                        request.contacts[0].contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
-                        request.contacts[0].contactInfo.emails[0].isMessengerEnabled = isMessengerUser;
-                        request.contacts[0].contactInfo.emails[0].propertiesChanged = "IsMessengerEnabled";
-                        break;
-
-                    case ClientType.PhoneMember:
-                        propertiesChanged.Add("ContactPhone");
-                        request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
-                        request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
-                        request.contacts[0].contactInfo.phones[0].isMessengerEnabled = isMessengerUser;
-                        request.contacts[0].contactInfo.phones[0].propertiesChanged = "IsMessengerEnabled";
-                        break;
-                }
-            }
-
-            if (displayName != String.Empty && displayName != contact.Name)
-            {
-                propertiesChanged.Add("Annotation");
-                request.contacts[0].contactInfo.annotations = new Annotation[] { new Annotation() };
-                request.contacts[0].contactInfo.annotations[0].Name = "AB.NickName";
-                request.contacts[0].contactInfo.annotations[0].Value = displayName;
-            }
-
-            if (comment != null && comment != contact.Comment)
+            // Comment
+            if (abContactType.contactInfo.comment != contact.Comment)
             {
                 propertiesChanged.Add("Comment");
-                request.contacts[0].contactInfo.comment = comment;
+                request.contacts[0].contactInfo.comment = contact.Comment;
+            }
+
+            // DisplayName
+            /*
+            if (abContactType.contactInfo.displayName != contact.Name)
+            {
+                propertiesChanged.Add("DisplayName");
+                request.contacts[0].contactInfo.displayName = contact.Name;
+            }*/
+
+            // NickName = AB.NickName, TODO: Implement nickname
+            /*
+            if (abContactType.contactInfo.annotations != null)
+            {
+                foreach (Annotation anno in abContactType.contactInfo.annotations)
+                {
+                    if (anno.Name == "AB.NickName" && anno.Value != contact.NickName)
+                    {
+                        propertiesChanged.Add("Annotation");
+                        request.contacts[0].contactInfo.annotations = new Annotation[] { new Annotation() };
+                        request.contacts[0].contactInfo.annotations[0].Name = "AB.NickName";
+                        request.contacts[0].contactInfo.annotations[0].Value = contact.NickName;
+                        break;
+                    }
+                }
+            }*/
+
+            // ClientType changes
+            switch (contact.ClientType)
+            {
+                case ClientType.PassportMember:
+                    {
+                        // IsMessengerUser
+                        if (abContactType.contactInfo.isMessengerUser != contact.IsMessengerUser)
+                        {
+                            propertiesChanged.Add("IsMessengerUser");
+                            request.contacts[0].contactInfo.isMessengerUser = contact.IsMessengerUser;
+                            request.contacts[0].contactInfo.isMessengerUserSpecified = true;
+                        }
+
+                        // ContactType
+                        if (abContactType.contactInfo.contactType != contact.ContactType)
+                        {
+                            propertiesChanged.Add("ContactType");
+                            request.contacts[0].contactInfo.contactType = (contactInfoTypeContactType)contact.ContactType;
+                            request.contacts[0].contactInfo.contactTypeSpecified = true;
+                        }
+                    }
+                    break;
+
+                case ClientType.EmailMember:
+                    {
+                        if (abContactType.contactInfo.emails != null)
+                        {
+                            foreach (contactEmailType em in abContactType.contactInfo.emails)
+                            {
+                                if (em.email.ToLowerInvariant() == contact.Mail.ToLowerInvariant() && em.isMessengerEnabled != contact.IsMessengerUser)
+                                {
+                                    propertiesChanged.Add("ContactEmail");
+                                    request.contacts[0].contactInfo.emails = new contactEmailType[] { new contactEmailType() };
+                                    request.contacts[0].contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
+                                    request.contacts[0].contactInfo.emails[0].isMessengerEnabled = contact.IsMessengerUser;
+                                    request.contacts[0].contactInfo.emails[0].propertiesChanged = "IsMessengerEnabled";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case ClientType.PhoneMember:
+                    {
+                        if (abContactType.contactInfo.phones != null)
+                        {
+                            foreach (contactPhoneType ph in abContactType.contactInfo.phones)
+                            {
+                                if (ph.number == contact.Mail && ph.isMessengerEnabled != contact.IsMessengerUser)
+                                {
+                                    propertiesChanged.Add("ContactPhone");
+                                    request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
+                                    request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
+                                    request.contacts[0].contactInfo.phones[0].isMessengerEnabled = contact.IsMessengerUser;
+                                    request.contacts[0].contactInfo.phones[0].propertiesChanged = "IsMessengerEnabled";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
             }
 
             if (propertiesChanged.Count > 0)
             {
+                ABServiceBinding abService = CreateABService(contact.IsMessengerUser ? "ContactSave" : "Timer");
+                abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
+                {
+                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                    if (!e.Cancelled && e.Error == null)
+                    {
+                        abRequest("ContactSave", null);
+                    }
+                    else if (e.Error != null)
+                    {
+                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateContact", e.Error));
+                    }
+                };
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
                 abService.ABContactUpdateAsync(request, new object());
             }

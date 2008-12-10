@@ -707,7 +707,6 @@ namespace MSNPSharp.IO
             string account = cit.passportName;
             string displayname = cit.displayName;
             bool ismessengeruser = cit.isMessengerUser;
-            long? cid = null;
 
             if (cit.emails != null && account == null)
             {
@@ -733,6 +732,7 @@ namespace MSNPSharp.IO
                     contact.NSMessageHandler = NSMessageHandler;
                     contact.SetGuid(new Guid(contactType.contactId));
                     contact.SetCID(Convert.ToInt64(cit.CID));
+                    contact.SetContactType(cit.contactType);
                     //contact.SetHasBlog(cit.hasSpace);   //DONOT trust this
                     contact.SetComment(cit.comment);
                     contact.SetIsMessengerUser(ismessengeruser);
@@ -804,6 +804,7 @@ namespace MSNPSharp.IO
 
                     NSMessageHandler.Owner.SetGuid(new Guid(contactType.contactId));
                     NSMessageHandler.Owner.SetCID(Convert.ToInt64(cit.CID));
+                    NSMessageHandler.Owner.SetContactType(cit.contactType);
                     NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayname;
 
                     if (null != cit.annotations)
