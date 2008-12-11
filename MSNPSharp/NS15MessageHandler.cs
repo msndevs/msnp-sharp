@@ -97,8 +97,6 @@ using System.Text.RegularExpressions;
             oimService = new OIMService(this);
             spaceService = new ContactSpaceService(this);
             storageService = new MSNStorageService(this);
-
-            owner.ClientCapacities = (ClientCapacities)2524237868;
         }
 
         #endregion
