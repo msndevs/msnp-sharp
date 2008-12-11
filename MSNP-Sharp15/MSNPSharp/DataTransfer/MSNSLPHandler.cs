@@ -78,6 +78,14 @@ namespace MSNPSharp.DataTransfer
     [Serializable()]
     public class MSNSLPTransferProperties
     {
+        private string dataTypeGuid = string.Empty;
+
+        internal string DataTypeGuid
+        {
+            get { return dataTypeGuid; }
+            set { dataTypeGuid = value; }
+        }
+
         /// <summary>
         /// The kind of data that will be transferred
         /// </summary>
@@ -1171,6 +1179,7 @@ namespace MSNPSharp.DataTransfer
 
             if (message.MessageValues.ContainsKey("EUF-GUID"))
             {
+                properties.DataTypeGuid = message.MessageValues["EUF-GUID"].ToString();
                 if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
                 {
                     // create a temporary msn object to extract the data type
@@ -1550,6 +1559,8 @@ namespace MSNPSharp.DataTransfer
                     replyMessage.Flags = 0x01000000;
                     replyMessage.InnerMessage = CreateInernalErrorMessage(properties);
                     MessageProcessor.SendMessage(replyMessage);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
+                        properties.DataTypeGuid + ". 500 INTERNAL ERROR send.", GetType().ToString());
                     return;
                 }
 

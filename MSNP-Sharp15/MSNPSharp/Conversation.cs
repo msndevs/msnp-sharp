@@ -312,10 +312,9 @@ namespace MSNPSharp
             {
                 if ((bool)param == false)
                 {
-                    Switchboard.MessageProcessor.SendMessage(new SBMessage("OUT", new string[] { }));
-                    System.Threading.Thread.CurrentThread.Join(100);
+                    Switchboard.Left();
                 }
-                Switchboard.Close();
+                
             }
             catch (Exception)
             {
@@ -879,7 +878,8 @@ namespace MSNPSharp
 
             if ((_type & ConversationType.YIM) == ConversationType.YIM && type == ClientType.EmailMember)
             {
-                throw new NotSupportedException("Mutiple user not supported in YIM conversation.");
+                if (_contacts.Count > 1)
+                    throw new NotSupportedException("Mutiple user not supported in YIM conversation.");
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard &&
@@ -997,7 +997,7 @@ namespace MSNPSharp
 
             if (yimInitialized)
             {
-                YIMHandler.Close();
+                YIMHandler.Left();
                 yimInitialized = false;
             }
 

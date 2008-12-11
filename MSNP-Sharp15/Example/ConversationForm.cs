@@ -63,7 +63,11 @@ namespace MSNPSharpClient
             InitializeComponent();
             _conversation = conversation;
             AddEvent();
-            _conversation.Invite(contact);
+
+            if (contact != null)
+            {
+                _conversation.Invite(contact);
+            }
 
             _clientform = clientform;
 
@@ -260,7 +264,6 @@ namespace MSNPSharpClient
 
 
                 Conversation.MSNObjectDataTransferCompleted -= Conversation_MSNObjectDataTransferCompleted;
-                //Conversation.ConversationEnded -= Conversation_ConversationEnded;
             }
         }
 
@@ -275,16 +278,6 @@ namespace MSNPSharpClient
             Conversation.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(Conversation_MSNObjectDataTransferCompleted);
             //Conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(Conversation_ConversationEnded);
 
-        }
-
-        void Conversation_ConversationEnded(object sender, ConversationEndEventArgs e)
-        {
-            //The conversation has been expired.
-
-            //if ((_conversation.Type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
-            //{
-            //    _contacts = new List<string>(_conversation.Switchboard.Contacts.Keys);  //Save the users in the expired conversation.
-            //}
         }
 
         void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)

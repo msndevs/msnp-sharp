@@ -97,6 +97,8 @@ using System.Text.RegularExpressions;
             oimService = new OIMService(this);
             spaceService = new ContactSpaceService(this);
             storageService = new MSNStorageService(this);
+
+            owner.ClientCapacities = (ClientCapacities)2524237868;
         }
 
         #endregion
@@ -465,7 +467,7 @@ using System.Text.RegularExpressions;
 
         #region RequestSwitchboard & SendPing
 
-        internal List<SBMessageHandler> SwitchBoards = new List<SBMessageHandler>();
+        internal List<SBMessageHandler> SwitchBoards = new List<SBMessageHandler>(0);
 
         /// <summary>
         /// Sends a request to the server to start a new switchboard session.
@@ -1325,14 +1327,13 @@ using System.Text.RegularExpressions;
                 //YIMMessageHandler not found, we create a new one and register it.
                 YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
                 switchboard.NSMessageHandler = this;
-                //switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
+
                 switchboard.MessageProcessor = MessageProcessor;
                 lock (SwitchBoards)
                     SwitchBoards.Add(switchboard);
-
+                messageProcessor.RegisterHandler(switchboard);
                 OnSBCreated(switchboard, null, sender, sender, false);
-                switchboard.ForceJoin(ContactList[sender, ClientType.EmailMember]);
-                //MessageProcessor.RegisterHandler(switchboard);
+
                 switchboard.HandleMessage(MessageProcessor, messageClone);
             }
         }

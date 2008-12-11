@@ -1150,17 +1150,15 @@ namespace MSNPSharpClient
             // form is already created and we don't need to create another one.
             if (e.Initiator == null)
             {
-                if ((e.Conversation.Type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
-                {
-                    // use the invoke method to create the form in the main thread, ONLY create the form after a contact joined our conversation.
-                    e.Conversation.ContactJoined += new EventHandler<ContactEventArgs>(Conversation_ContactJoined);
-                }
+                // use the invoke method to create the form in the main thread, ONLY create the form after a contact joined our conversation.
+                e.Conversation.ContactJoined += new EventHandler<ContactEventArgs>(Conversation_ContactJoined);
             }
         }
 
         void Conversation_ContactJoined(object sender, ContactEventArgs e)
         {
-            this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { sender, e.Contact });
+            //The request is initiated by remote user, so we needn't invite anyone.
+            this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { sender, null });
             Conversation convers = sender as Conversation;
             convers.ContactJoined -= Conversation_ContactJoined; //We don't care any further join event anymore.
         }
