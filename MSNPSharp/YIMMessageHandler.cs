@@ -115,17 +115,19 @@ namespace MSNPSharp
 
         #endregion
 
-        public override void Close()
+        public override void Left()
         {
             IEnumerator ienum = Contacts.Keys.GetEnumerator();
             ienum.MoveNext();
             OnContactLeft(NSMessageHandler.ContactList[(string)(ienum.Current), ClientType.EmailMember]);
+            Close();
+        }
+
+        public override void Close()
+        {
             OnSessionClosed();
             NSMessageHandler.MessageProcessor.UnregisterHandler(this);
-            lock (NSMessageHandler.SwitchBoards)
-                NSMessageHandler.SwitchBoards.Remove(this);
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A YIMMessageHandler has been removed.");
-
+            RemoveFromSwitchBoardList();
         }
 
         public override void HandleMessage(IMessageProcessor sender, NetworkMessage message)

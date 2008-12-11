@@ -359,6 +359,9 @@ namespace MSNPSharp
             {
                 AllContactsLeft(this, new EventArgs());
             }
+
+            Close();  //After we receive all of the BYE commands, disconnect.
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ToString() + " all contacts left, disconnect automately.", GetType().ToString());
         }
 
         /// <summary>
@@ -426,6 +429,20 @@ namespace MSNPSharp
         {
             if (TextMessageReceived != null)
                 TextMessageReceived(this, new TextMessageEventArgs(message, contact));
+        }
+
+        protected void RemoveFromSwitchBoardList()
+        {
+            if (NSMessageHandler != null)
+            {
+                lock (NSMessageHandler.SwitchBoards)
+                    NSMessageHandler.SwitchBoards.Remove(this);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A " + GetType().ToString() + " has been removed.");
+            }
+            else
+            {
+                throw new MSNPSharpException("NSMessageHandler not set, this switchboard will not be removed.");
+            }
         }
 
         #endregion
@@ -563,9 +580,32 @@ namespace MSNPSharp
         /// </summary>
         public virtual void Close()
         {
+            RemoveFromSwitchBoardList();
             if (MessageProcessor != null)
             {
                 ((SocketMessageProcessor)MessageProcessor).Disconnect();
+            }
+        }
+
+        /// <summary>
+        /// Left the conversation then closes the switchboard session by disconnecting from the server. 
+        /// </summary>
+        public virtual void Left()
+        {
+            if (MessageProcessor != null)
+            {
+                SocketMessageProcessor processor = messageProcessor as SocketMessageProcessor;
+                try
+                {
+                    processor.SendMessage(new SBMessage("OUT", new string[] { }));
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().ToString());
+                }
+
+                System.Threading.Thread.CurrentThread.Join(100);
+                Close();
             }
         }
 
@@ -575,14 +615,14 @@ namespace MSNPSharp
         /// <returns></returns>
         public override string ToString()
         {
-            return SessionHash;
+            return GetType().ToString() + " SessionHash: " + SessionHash;
         }
 
         #endregion
 
         /// <summary>
         /// Called when the message processor has established a connection. This function will 
-        /// begin the login procedure by sending the VER command.
+        /// begin the login procedure by sending the USR or ANS command.
         /// </summary>
         protected virtual void OnProcessorConnectCallback(IMessageProcessor processor)
         {
@@ -1104,7 +1144,7 @@ namespace MSNPSharp
                         return;
                 }
 
-                OnAllContactsLeft();  //Indicates whe should end the conversation.
+                OnAllContactsLeft();  //Indicates whe should end the conversation and disconnect.
             }
         }
 

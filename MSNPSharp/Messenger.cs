@@ -153,6 +153,13 @@ namespace MSNPSharp
 
                 // fire event to notify client programmer
                 OnConversationCreated(c, ce.Initiator);
+
+                if (ce.Switchboard is YIMMessageHandler)
+                {
+                    //We must ensure that ContactJoined event fired after ConversationCreated.
+                    (ce.Switchboard as YIMMessageHandler).ForceJoin(ContactList.GetContact(ce.Account, ClientType.EmailMember));
+                }
+
                 return;
             };
 
