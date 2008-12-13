@@ -808,20 +808,20 @@ namespace MSNPSharp
         /// <remarks>Use this function before sending text messages which include the emoticon text. You can only send one emoticon message before the textmessage. So make sure that all emoticons used in the textmessage are included.</remarks>
         /// <param name="emoticons">A list of emoticon objects.</param>
         /// <param name="icontype">The type of current emoticons.</param>
-        public virtual void SendEmoticonDefinitions(ArrayList emoticons, EmoticonType icontype)
+        public virtual void SendEmoticonDefinitions(List<Emoticon> emoticons, EmoticonType icontype)
         {
             if (emoticons == null)
-                throw new NullReferenceException();
+                throw new ArgumentNullException("emoticons");
+
             SBMessage sbMessage = new SBMessage();
             MSGMessage msgMessage = new MSGMessage();
 
-            for (int emcount = 0; emcount < emoticons.Count; emcount++)
+            foreach (Emoticon emoticon in emoticons)
             {
-                if (!NSMessageHandler.Owner.Emoticons.Contains((emoticons[emcount] as Emoticon).Sha))
+                if (!NSMessageHandler.Owner.Emoticons.ContainsKey(emoticon.Shortcut))
                 {
-                    //Add the emotions to owner's emoticon collection.
-                    NSMessageHandler.Owner.Emoticons.Add((emoticons[emcount] as Emoticon).Sha,
-                        emoticons[emcount]);
+                    // Add the emotions to owner's emoticon collection.
+                    NSMessageHandler.Owner.Emoticons.Add(emoticon.Shortcut, emoticon);
                 }
             }
 

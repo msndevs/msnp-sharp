@@ -33,6 +33,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Text;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
@@ -51,7 +52,7 @@ namespace MSNPSharp
         /// </summary>
         public EmoticonMessage()
         {
-            emoticons = new ArrayList();
+            emoticons = new List<Emoticon>();
         }
 
         /// <summary>
@@ -62,8 +63,9 @@ namespace MSNPSharp
         public EmoticonMessage(Emoticon emoticon, EmoticonType type)
         {
             if (null == emoticon)
-                throw new NullReferenceException();
-            emoticons = new ArrayList();
+                throw new ArgumentNullException("emoticon");
+
+            emoticons = new List<Emoticon>();
             emoticons.Add(emoticon);
             emoticontype = type;
         }
@@ -81,20 +83,20 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="emoticons"></param>
         /// <param name="type"></param>
-        public EmoticonMessage(ArrayList emoticons, EmoticonType type)
+        public EmoticonMessage(List<Emoticon> emoticons, EmoticonType type)
         {
-            Emoticons = (ArrayList)emoticons.Clone();
+            Emoticons = new List<Emoticon>(emoticons);
             emoticontype = type;
         }
 
         /// <summary>
         /// </summary>
-        private ArrayList emoticons;
+        private List<Emoticon> emoticons;
 
         /// <summary>
         /// The emoticon that is defined in this message
         /// </summary>
-        public ArrayList Emoticons
+        public List<Emoticon> Emoticons
         {
             get
             {
@@ -115,7 +117,7 @@ namespace MSNPSharp
             // set the text property for easy retrieval
             string body = System.Text.Encoding.UTF8.GetString(data).Trim();
 
-            Emoticons = new ArrayList();
+            Emoticons = new List<Emoticon>();
 
             string[] values = body.Split('\t');
 

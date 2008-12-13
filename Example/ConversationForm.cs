@@ -492,7 +492,7 @@ namespace MSNPSharpClient
             Properties.Resources.inner_emoticon.Save(mem, ImageFormat.Png);
             Emoticon emotest = new Emoticon(_clientform.Messenger.Owner.Mail, mem, "0", "test_emoicon");
             MSNObjectCatalog.GetInstance().Add(emotest);
-            ArrayList emolist = new ArrayList();
+            List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
 
             try
