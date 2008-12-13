@@ -395,12 +395,11 @@ namespace MSNPSharp
                                         // Fire the ReverseAdded event (just reverse)
                                         lock (NSMessageHandler.ContactList.SyncRoot)
                                         {
-                                            foreach (Contact contact in NSMessageHandler.ContactList.Reverse)
+                                            foreach (Contact contact in NSMessageHandler.ContactList.All)
                                             {
-                                                if (!(contact.OnAllowedList || contact.OnBlockedList || contact.OnPendingList))
+                                                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
                                                 {
                                                     NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ReverseList));
                                                 }
                                             }
                                         }
