@@ -31,12 +31,11 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.Text;
 using System.Web;
+using System.Text;
 
 namespace MSNPSharp.Core
 {
-
     /// <summary>
     /// Provides methods for encoding and decoding URLs when processing Web requests. This class cannot be inherited. 
     /// </summary>
@@ -47,15 +46,15 @@ namespace MSNPSharp.Core
             /// <summary>
             /// For url encode
             /// </summary>
-            UrlEscape  = 0x1,
+            UrlEscape = 0x1,
             /// <summary>
             /// For XML encode
             /// </summary>
-            XMLEscape  = 0x2,
+            XMLEscape = 0x2,
             /// <summary>
             /// For HTML encode
             /// </summary>
-            HTMLEscape = 0x4 
+            HTMLEscape = 0x4
         }
 
         private static uint[] ASCII_CLASS;
@@ -113,13 +112,14 @@ namespace MSNPSharp.Core
         /// <returns>An encoded string.</returns>
         public static string UrlEncode(string str, Encoding e)
         {
-            if (str == null) return string.Empty;
+            if (str == null)
+                return string.Empty;
             byte[] byt = e.GetBytes(str);
             StringBuilder result = new StringBuilder(256);
             for (int c = 0; c < byt.Length; c++)
             {
                 byte chr = byt[c];
-                if((ASCII_CLASS[chr] & (uint)UnSafe.UrlEscape) != 0)
+                if ((ASCII_CLASS[chr] & (uint)UnSafe.UrlEscape) != 0)
                 {
                     switch (chr)
                     {
@@ -178,7 +178,7 @@ namespace MSNPSharp.Core
             for (int c = 0; c < chrArr.Length; c++)
             {
                 chr = chrArr[c];
-                
+
                 if (chr < 128)
                 {
                     if ((ASCII_CLASS[chr] & (uint)UnSafe.XMLEscape) != 0)
@@ -267,4 +267,4 @@ namespace MSNPSharp.Core
         }
 
     }
-}
+};

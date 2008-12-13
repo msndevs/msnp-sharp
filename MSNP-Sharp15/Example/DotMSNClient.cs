@@ -815,43 +815,46 @@ namespace MSNPSharpClient
             }
 
             Contact contact = e.Contact;
-            if (contact.OnPendingList && contact.NSMessageHandler.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
+            if (contact.NSMessageHandler.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
             {
-                ReverseAddedForm form = new ReverseAddedForm(contact);
-                form.FormClosed += delegate(object f, FormClosedEventArgs fce)
+                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList && !contact.OnPendingList))
                 {
-                    form = f as ReverseAddedForm;
-                    if (DialogResult.OK == form.DialogResult)
+                    ReverseAddedForm form = new ReverseAddedForm(contact);
+                    form.FormClosed += delegate(object f, FormClosedEventArgs fce)
                     {
-                        if (form.AddToContactList)
+                        form = f as ReverseAddedForm;
+                        if (DialogResult.OK == form.DialogResult)
                         {
-                            contact.NSMessageHandler.ContactService.AddNewContact(contact.Mail);
-                            System.Threading.Thread.Sleep(200);
+                            if (form.AddToContactList)
+                            {
+                                contact.NSMessageHandler.ContactService.AddNewContact(contact.Mail);
+                                System.Threading.Thread.Sleep(200);
 
-                            if (form.Blocked)
+                                if (form.Blocked)
+                                {
+                                    contact.Blocked = true;
+                                }
+                            }
+                            else if (form.Blocked)
                             {
                                 contact.Blocked = true;
                             }
-                        }
-                        else if (form.Blocked)
-                        {
-                            contact.Blocked = true;
-                        }
-                        else
-                        {
-                            contact.OnAllowedList = true;
-                        }
+                            else
+                            {
+                                contact.OnAllowedList = true;
+                            }
 
-                        System.Threading.Thread.Sleep(200);
-                        contact.OnPendingList = false;
-                    }
-                    return;
-                };
-                form.Show(this);
-            }
-            else
-            {
-                MessageBox.Show(contact.Mail + " accepted your invitation and added you their contact list.");
+                            System.Threading.Thread.Sleep(200);
+                            contact.OnPendingList = false;
+                        }
+                        return;
+                    };
+                    form.Show(this);
+                }
+                else
+                {
+                    MessageBox.Show(contact.Mail + " accepted your invitation and added you their contact list.");
+                }
             }
         }
 

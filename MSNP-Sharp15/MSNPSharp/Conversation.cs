@@ -71,7 +71,8 @@ namespace MSNPSharp
         public MSNObjectDataTransferCompletedEventArgs(MSNObject clientdata, bool abort)
         {
             if (clientdata == null)
-                throw new NullReferenceException();
+                throw new ArgumentNullException("clientdata");
+
             clientData = clientdata;
             aborted = abort;
         }
@@ -129,7 +130,7 @@ namespace MSNPSharp
         {
             get { return type; }
         }
-        public EmoticonObject(ArrayList iconlist, EmoticonType icontype)
+        public EmoticonObject(List<Emoticon> iconlist, EmoticonType icontype)
         {
             innerObject = iconlist;
             type = icontype;
@@ -493,7 +494,7 @@ namespace MSNPSharp
 
                             if (msgobj is EmoticonObject)
                             {
-                                SendEmoticonDefinitions(msgobj.InnerObject as ArrayList, (msgobj as EmoticonObject).Type);
+                                SendEmoticonDefinitions(msgobj.InnerObject as List<Emoticon>, (msgobj as EmoticonObject).Type);
                             }
                         }
                     }
@@ -1157,7 +1158,7 @@ namespace MSNPSharp
         /// <param name="icontype">The type of current emoticons.</param>
         /// <exception cref="InvalidOperationException">Operating on an ended conversation.</exception>
         /// <exception cref="NotSupportedException">Sending custom emoticons from a YIM conversation.</exception>
-        public void SendEmoticonDefinitions(ArrayList emoticons, EmoticonType icontype)
+        public void SendEmoticonDefinitions(List<Emoticon> emoticons, EmoticonType icontype)
         {
             _type |= ConversationType.Chat;
             if (Ended)
