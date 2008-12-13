@@ -1295,8 +1295,8 @@ namespace MSNPSharp
                 propertiesChanged.Add("Annotation");
 
             // DisplayName
-            if (owner.Name != NSMessageHandler.ContactService.Deltas.Profile.DisplayName)
-                propertiesChanged.Add("DisplayName");
+            //if (owner.Name != NSMessageHandler.ContactService.Deltas.Profile.DisplayName)
+            //    propertiesChanged.Add("DisplayName");
 
             if (propertiesChanged.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
@@ -1326,7 +1326,7 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo = new contactInfoType();
                 request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.Me;
                 request.contacts[0].contactInfo.contactTypeSpecified = true;
-                request.contacts[0].contactInfo.displayName = owner.Name;
+                //request.contacts[0].contactInfo.displayName = owner.Name;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
                 abService.ABContactUpdateAsync(request, new object());
