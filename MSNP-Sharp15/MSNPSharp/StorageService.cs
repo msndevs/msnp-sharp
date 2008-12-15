@@ -541,13 +541,13 @@ namespace MSNPSharp
                         return;
                     }
                     NSMessageHandler.ContactService.handleServiceHeader(abService.ServiceHeaderValue, true);
-                    NSMessageHandler.ContactService.AddressBook.Save();
+                    NSMessageHandler.ContactService.Deltas.Save();
                 }
 
             }
             else
             {
-                NSMessageHandler.ContactService.AddressBook.Save();
+                NSMessageHandler.ContactService.Deltas.Save();
             }
 
         }
@@ -679,7 +679,7 @@ namespace MSNPSharp
                 NSMessageHandler.Owner.DisplayImage = displayImage;
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
-                NSMessageHandler.ContactService.AddressBook.Save();
+                NSMessageHandler.ContactService.Deltas.Save();
                 string resId_Doc = String.Empty;
                 try
                 {

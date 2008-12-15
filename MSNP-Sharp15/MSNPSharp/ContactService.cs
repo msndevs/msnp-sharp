@@ -336,13 +336,13 @@ namespace MSNPSharp
             if (sendinitialADL)
             {
                 List<string> hashlist = new List<string>(0);
-                foreach (Service svc in AddressBook.MembershipList.Keys)
+                foreach (ServiceFilterType sft in AddressBook.MembershipList.Keys)
                 {
-                    if (svc.ServiceType == ServiceFilterType.Messenger)   //We only deal with messenger service
+                    if (sft == ServiceFilterType.Messenger) //We only deal with messenger service
                     {
-                        foreach (MemberRole role in AddressBook.MembershipList[svc].Keys)
+                        foreach (MemberRole role in AddressBook.MembershipList[sft].Memberships.Keys)
                         {
-                            foreach (string hash in AddressBook.MembershipList[svc][role].Keys)
+                            foreach (string hash in AddressBook.MembershipList[sft].Memberships[role].Keys)
                             {
                                 if (!hashlist.Contains(hash))
                                 {
@@ -429,10 +429,11 @@ namespace MSNPSharp
             {
                 bool msdeltasOnly = false;
                 DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
-                if (AddressBook.MembershipLastChange != DateTime.MinValue)
+                DateTime msLastChange = AddressBook.MembershipLastChange;
+                if (msLastChange != serviceLastChange)
                 {
                     msdeltasOnly = true;
-                    serviceLastChange = AddressBook.MembershipLastChange;
+                    serviceLastChange = msLastChange;
                 }
 
                 SharingServiceBinding sharingService = CreateSharingService(partnerScenario);
@@ -508,12 +509,11 @@ namespace MSNPSharp
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
                 request.serviceFilter.Types = new ServiceFilterType[]
                 {
-                    ServiceFilterType.Messenger
-                    /*ServiceFilterType.Invitation,
+                    ServiceFilterType.Messenger,
+                    ServiceFilterType.Invitation,
                     ServiceFilterType.SocialNetwork,
                     ServiceFilterType.Space,
                     ServiceFilterType.Profile
-                     * */
                 };
                 sharingService.FindMembershipAsync(request, partnerScenario);
             }
@@ -683,7 +683,7 @@ namespace MSNPSharp
                 if (initial)
                 {
                     sendlist = MSNLists.None;
-                    lists = AddressBook.GetMSNLists(ServiceFilterType.Messenger, arr[0], clitype);
+                    lists = AddressBook.GetMSNLists(arr[0], clitype);
                     if (NSMessageHandler.ContactList.GetContact(arr[0], clitype).IsMessengerUser)
                         sendlist |= MSNLists.ForwardList;
                     if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
@@ -982,7 +982,7 @@ namespace MSNPSharp
                 }
             }
 
-            if (MSNLists.PendingList == (AddressBook.GetMSNLists(ServiceFilterType.Messenger, account, network) & MSNLists.PendingList))
+            if (MSNLists.PendingList == (AddressBook.GetMSNLists(account, network) & MSNLists.PendingList))
             {
                 AddPendingContact(NSMessageHandler.ContactList.GetContact(account, network));
             }
@@ -1600,14 +1600,9 @@ namespace MSNPSharp
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
 
-            Service messengerService = new Service();
-            foreach (Service srv in AddressBook.MembershipList.Keys)
-            {
-                if (srv.ServiceType == ServiceFilterType.Messenger)
-                    messengerService = srv;
-            }
+            Service messengerService = AddressBook.GetTargetService(ServiceFilterType.Messenger);
             addMemberRequest.serviceHandle.Id = messengerService.Id.ToString();
-            addMemberRequest.serviceHandle.Type = ServiceFilterType.Messenger;
+            addMemberRequest.serviceHandle.Type = messengerService.ServiceType;
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = GetMemberRole(list);
@@ -1747,14 +1742,9 @@ namespace MSNPSharp
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
             deleteMemberRequest.serviceHandle = new HandleType();
 
-            Service messengerService = new Service();
-            foreach (Service srv in AddressBook.MembershipList.Keys)
-            {
-                if (srv.ServiceType == ServiceFilterType.Messenger)
-                    messengerService = srv;
-            }
+            Service messengerService = AddressBook.GetTargetService(ServiceFilterType.Messenger);
             deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();   //Always set to 0 ??
-            deleteMemberRequest.serviceHandle.Type = ServiceFilterType.Messenger;
+            deleteMemberRequest.serviceHandle.Type = messengerService.ServiceType;
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = GetMemberRole(list);
