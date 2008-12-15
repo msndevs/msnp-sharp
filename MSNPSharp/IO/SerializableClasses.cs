@@ -37,15 +37,15 @@ using System.Collections.Generic;
 
 namespace MSNPSharp.IO
 {
-    using MemberRole = MSNPSharp.MSNWS.MSNABSharingService.MemberRole;
-    using ServiceFilterType = MSNPSharp.MSNWS.MSNABSharingService.ServiceFilterType;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     #region Service
+
     /// <summary>
     /// Membership service
     /// </summary>
     [Serializable]
-    public class Service
+    public class Service : ICloneable, IComparable, IComparable<Service>
     {
         private int id;
         public int Id
@@ -99,6 +99,18 @@ namespace MSNPSharp.IO
             }
         }
 
+        public Service()
+        {
+        }
+
+        public Service(Service copy)
+        {
+            Id = copy.Id;
+            ServiceType = copy.ServiceType;
+            LastChange = copy.LastChange;
+            ForeignId = String.Copy(copy.ForeignId);
+        }
+
         public override string ToString()
         {
             return Convert.ToString(ServiceType);
@@ -106,8 +118,12 @@ namespace MSNPSharp.IO
 
         public static bool operator ==(Service svc1, Service svc2)
         {
-            if (((object)svc1) == null && ((object)svc2) == null) return true;
-            if (((object)svc1) == null || ((object)svc2) == null) return false;
+            if (((object)svc1) == null && ((object)svc2) == null)
+                return true;
+
+            if (((object)svc1) == null || ((object)svc2) == null)
+                return false;
+
             return svc1.GetHashCode() == svc2.GetHashCode();
         }
 
@@ -120,8 +136,10 @@ namespace MSNPSharp.IO
         {
             if (obj == null || obj.GetType() != GetType())
                 return false;
+
             if (ReferenceEquals(this, obj))
                 return true;
+
             return obj.GetHashCode() == GetHashCode();
         }
 
@@ -129,8 +147,92 @@ namespace MSNPSharp.IO
         {
             return id;
         }
+
+        #region ICloneable Members
+
+        public object Clone()
+        {
+            return new Service(this);
+        }
+
+        #endregion
+
+        #region IComparable Members
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null)
+            {
+                return 1;
+            }
+
+            if (!(obj is Service))
+            {
+                throw new ArgumentException("obj");
+            }
+
+            return CompareTo((Service)obj);
+        }
+
+        #endregion
+
+        #region IComparable<Service> Members
+
+        public int CompareTo(Service other)
+        {
+            if (other == null)
+            {
+                return 1;
+            }
+
+            return DateTime.Compare(LastChange, other.LastChange);
+        }
+
+        #endregion
     }
 
+    #endregion
+
+    #region ServiceMembership
+    [Serializable]
+    public class ServiceMembership
+    {
+        private Service service;
+        private SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>> memberships = new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0);
+
+        public Service Service
+        {
+            get
+            {
+                return service;
+            }
+            set
+            {
+                service = value;
+            }
+        }
+
+        public SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>> Memberships
+        {
+            get
+            {
+                return memberships;
+            }
+            set
+            {
+                memberships = value;
+            }
+        }
+
+        public ServiceMembership()
+        {
+        }
+
+        public ServiceMembership(Service srvc)
+        {
+            service = srvc;
+        }
+    }
     #endregion
 
     #region Owner properties
@@ -267,4 +369,4 @@ namespace MSNPSharp.IO
 
     }
     #endregion
-}
+};
