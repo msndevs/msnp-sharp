@@ -513,7 +513,9 @@ namespace MSNPSharp
                     ServiceFilterType.Invitation,
                     ServiceFilterType.SocialNetwork,
                     ServiceFilterType.Space,
-                    ServiceFilterType.Profile
+                    ServiceFilterType.Profile,
+                    ServiceFilterType.Folder,
+                    ServiceFilterType.OfficeLiveWebNotification
                 };
                 sharingService.FindMembershipAsync(request, partnerScenario);
             }
