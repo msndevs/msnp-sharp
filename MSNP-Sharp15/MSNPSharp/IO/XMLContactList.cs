@@ -185,7 +185,7 @@ namespace MSNPSharp.IO
 
                 List<Service> services = new List<Service>();
                 foreach (ServiceFilterType sft in MembershipList.Keys)
-                    services.Add(MembershipList[sft].Service);
+                    services.Add(new Service(MembershipList[sft].Service));
 
                 services.Sort();
                 return services[services.Count - 1].LastChange;
@@ -488,11 +488,9 @@ namespace MSNPSharp.IO
                                                         break;
 
                                                     case "Role":
-                                                        account = ((RoleMember)bm).DefiningService.Type;
-                                                        break;
-
                                                     case "Service":
-                                                        account = Convert.ToString(((ServiceMember)bm).Service.Type);
+                                                    case "Everyone":
+                                                        account = bm.Type + "/" + bm.MembershipId;
                                                         break;
 
                                                     case "Domain":
@@ -529,8 +527,6 @@ namespace MSNPSharp.IO
 
 
         #endregion
-
-
 
         #region Addressbook
 
