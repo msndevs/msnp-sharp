@@ -1263,11 +1263,12 @@ namespace MSNPSharp
                     ip,
                     clientPort,
                     hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
-#if MSNP16                    
-                    ,
-                    hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0"
+#if MSNP16
+,
+                    hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0",
+                    hdr.ContainsKey("RouteInfo") ? hdr["RouteInfo"] : String.Empty
 #endif
-                );
+);
 
                 if (IPAddress.None != ip)
                 {

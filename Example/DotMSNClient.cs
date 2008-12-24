@@ -721,7 +721,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.OwnerPanel);
             this.Controls.Add(this.changeDisplayButton);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client (2.5.1)";
+            this.Text = "MSNPSharp Example Client (2.5.2)";
             this.ListPanel.ResumeLayout(false);
             this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
@@ -1385,10 +1385,7 @@ namespace MSNPSharpClient
                         toolStripMenuItem2.Visible = false;
                     }
 
-                    if (contact.DynamicChanged == DynamicItemState.None)
-                        viewContactCardMenuItem.Visible = false;
-                    else
-                        viewContactCardMenuItem.Visible = true;
+                    viewContactCardMenuItem.Visible = (contact.ClientType == ClientType.PassportMember);
 
                     deleteMenuItem.Visible = contact.Guid != Guid.Empty;
 
@@ -1809,7 +1806,13 @@ namespace MSNPSharpClient
                 messenger.Nameserver.Owner.Name = dn;
 
             if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
+            {
+#if MSNP16
+                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
+#else
                 messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null);
+#endif
+            }
         }
 
         private void viewContactCardToolStripMenuItem_Click(object sender, EventArgs e)

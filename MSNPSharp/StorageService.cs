@@ -135,7 +135,7 @@ namespace MSNPSharp
                 {
                     CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
                     resId_Prof = createResponse.CreateProfileResult;
-                    NSMessageHandler.ContactService.AddressBook.Profile.ResourceID = resId_Prof;
+                    NSMessageHandler.ContactService.Deltas.Profile.ResourceID = resId_Prof;
                 }
                 catch (Exception ex)
                 {
@@ -201,7 +201,7 @@ namespace MSNPSharp
 
                 Alias alias = new Alias();
                 alias.NameSpace = "MyCidStuff";
-                alias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
+                alias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
 
                 Handle pHandle = new Handle();
                 pHandle.RelationshipName = "MyProfile";
@@ -305,7 +305,7 @@ namespace MSNPSharp
                 }
 
                 // 6.2 Get Profile again to get notification.LastChanged
-                NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("Initial");
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl("Initial");
 
                 //7. FindDocuments Hmm....
 
@@ -328,7 +328,7 @@ namespace MSNPSharp
                     notification.Status = "Exist Access";
                     //notification.InstanceId = "0";
                     //notification.Gleam = false;
-                    notification.LastChanged = NSMessageHandler.ContactService.AddressBook.Profile.DateModified;
+                    notification.LastChanged = NSMessageHandler.ContactService.Deltas.Profile.DateModified;
 
                     ServiceType srvInfo = new ServiceType();
                     srvInfo.Changes = "";
@@ -398,7 +398,7 @@ namespace MSNPSharp
                 GetProfileRequestType request = new GetProfileRequestType();
                 request.profileHandle = new Handle();
                 request.profileHandle.Alias = new Alias();
-                request.profileHandle.Alias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
+                request.profileHandle.Alias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
                 request.profileHandle.Alias.NameSpace = "MyCidStuff";
                 request.profileHandle.RelationshipName = "MyProfile";
                 request.profileAttributes = new profileAttributes();
@@ -406,25 +406,25 @@ namespace MSNPSharp
 
                 GetProfileResponse response = storageService.GetProfile(request);
 
-                NSMessageHandler.ContactService.AddressBook.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
-                NSMessageHandler.ContactService.AddressBook.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
+                NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
+                NSMessageHandler.ContactService.Deltas.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
 
                 // Display name
-                NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
+                NSMessageHandler.ContactService.Deltas.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
 
                 // Personal status
-                NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+                NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
 
                 // Display photo
                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                 {
                     string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                    NSMessageHandler.ContactService.AddressBook.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
-                    NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
+                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
+                    NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
 
-                    if (NSMessageHandler.ContactService.AddressBook.Profile.Photo.PreAthURL != url)
+                    if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL != url)
                     {
-                        NSMessageHandler.ContactService.AddressBook.Profile.Photo.PreAthURL = url;
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = url;
                         if (!url.StartsWith("http"))
                         {
                             url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
@@ -445,10 +445,10 @@ namespace MSNPSharp
                             ms.Write(data, 0, read);
                         }
                         stream.Close();
-                        NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage = ms;
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
                     }
 
-                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage);
+                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
                     DisplayImage displayImage = new DisplayImage();
                     displayImage.Image = fileImage;
 
@@ -465,17 +465,17 @@ namespace MSNPSharp
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
             }
 
-            return NSMessageHandler.ContactService.AddressBook.Profile;
+            return NSMessageHandler.ContactService.Deltas.Profile;
         }
 
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags)
         {
-            OwnerProfile profile = NSMessageHandler.ContactService.AddressBook.Profile;
+            OwnerProfile profile = NSMessageHandler.ContactService.Deltas.Profile;
 
 
-            NSMessageHandler.ContactService.AddressBook.Profile.DisplayName = displayName;
-            NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage = personalStatus;
+            NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
+            NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
             {
                 StorageService storageService = CreateStorageService("RoamingIdentityChanged");
@@ -502,7 +502,7 @@ namespace MSNPSharp
                 }
 
                 // And get profile again
-                NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("RoamingIdentityChanged");
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl("RoamingIdentityChanged");
 
                 // UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
@@ -527,7 +527,7 @@ namespace MSNPSharp
                     passportDyItem.Notifications[0].StoreService.Info.InverseRequired = false;
                     passportDyItem.Notifications[0].StoreService.Changes = String.Empty;
                     passportDyItem.Notifications[0].Status = "Exist Access";
-                    passportDyItem.Notifications[0].LastChanged = NSMessageHandler.ContactService.AddressBook.Profile.DateModified;
+                    passportDyItem.Notifications[0].LastChanged = NSMessageHandler.ContactService.Deltas.Profile.DateModified;
 
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
@@ -561,12 +561,12 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]) > NSMessageHandler.ContactService.AddressBook.Profile.DateModified)
+                Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]) > NSMessageHandler.ContactService.Deltas.Profile.DateModified)
             {
                 return GetProfileImpl("Initial");
             }
 
-            return NSMessageHandler.ContactService.AddressBook.Profile;
+            return NSMessageHandler.ContactService.Deltas.Profile;
         }
 
         /// <summary>
@@ -577,8 +577,8 @@ namespace MSNPSharp
         public void UpdateProfile(string displayName, string personalStatus)
         {
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                (NSMessageHandler.ContactService.AddressBook.Profile.DisplayName != displayName ||
-                NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage != personalStatus))
+                (NSMessageHandler.ContactService.Deltas.Profile.DisplayName != displayName ||
+                NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage != personalStatus))
             {
                 UpdateProfileImpl(displayName, personalStatus, "Update", 0);
             }
@@ -602,12 +602,12 @@ namespace MSNPSharp
         public bool UpdateProfile(Image photo, string photoName)
         {
             // 1. Getprofile
-            NSMessageHandler.ContactService.AddressBook.Profile = GetProfileImpl("RoamingIdentityChanged");
+            NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl("RoamingIdentityChanged");
 
             // 2. UpdateProfile
             // To keep the order, we need a sync function.
-            UpdateProfileImpl(NSMessageHandler.ContactService.AddressBook.Profile.DisplayName,
-                              NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage,
+            UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
+                              NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
                               "Update", 1);
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty)
@@ -615,11 +615,11 @@ namespace MSNPSharp
                 StorageService storageService = CreateStorageService("RoamingIdentityChanged");
 
                 Alias mycidAlias = new Alias();
-                mycidAlias.Name = NSMessageHandler.ContactService.AddressBook.Profile.CID;
+                mycidAlias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
                 mycidAlias.NameSpace = "MyCidStuff";
 
                 // 3. DeleteRelationships
-                if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID))
+                if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
                 {
                     // 3.1 UserTiles -> Photo
                     DeleteRelationshipsRequestType request = new DeleteRelationshipsRequestType();
@@ -627,7 +627,7 @@ namespace MSNPSharp
                     request.sourceHandle.RelationshipName = "/UserTiles";
                     request.sourceHandle.Alias = mycidAlias;
                     request.targetHandles = new Handle[] { new Handle() };
-                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
+                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID;
                     try
                     {
                         storageService.DeleteRelationships(request);
@@ -642,9 +642,9 @@ namespace MSNPSharp
                     //3.2 Profile -> Photo
                     request = new DeleteRelationshipsRequestType();
                     request.sourceHandle = new Handle();
-                    request.sourceHandle.ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;
+                    request.sourceHandle.ResourceID = NSMessageHandler.ContactService.Deltas.Profile.ResourceID;
                     request.targetHandles = new Handle[] { new Handle() };
-                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.AddressBook.Profile.Photo.ResourceID;
+                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID;
                     try
                     {
                         storageService.DeleteRelationships(request);
@@ -677,8 +677,8 @@ namespace MSNPSharp
                 DisplayImage displayImage = new DisplayImage();
                 displayImage.Image = photo;  //Set to new photo
                 NSMessageHandler.Owner.DisplayImage = displayImage;
-                NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage = new SerializableMemoryStream();
-                NSMessageHandler.ContactService.AddressBook.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
+                NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
+                NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
                 NSMessageHandler.ContactService.AddressBook.Save();
                 string resId_Doc = String.Empty;
                 try
@@ -699,7 +699,7 @@ namespace MSNPSharp
                 createRelationshipRequest.relationships[0].RelationshipName = "ProfilePhoto";
                 createRelationshipRequest.relationships[0].SourceType = "SubProfile"; //From SubProfile
                 createRelationshipRequest.relationships[0].TargetType = "Photo";      //To Photo
-                createRelationshipRequest.relationships[0].SourceID = NSMessageHandler.ContactService.AddressBook.Profile.ResourceID;  //From Expression profile
+                createRelationshipRequest.relationships[0].SourceID = NSMessageHandler.ContactService.Deltas.Profile.ResourceID;  //From Expression profile
                 createRelationshipRequest.relationships[0].TargetID = resId_Doc;      //To Document                
                 try
                 {
@@ -713,8 +713,8 @@ namespace MSNPSharp
                 }
 
                 //6. ok, done - Updateprofile again
-                UpdateProfileImpl(NSMessageHandler.ContactService.AddressBook.Profile.DisplayName,
-                                  NSMessageHandler.ContactService.AddressBook.Profile.PersonalMessage,
+                UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
+                                  NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
                                   "Update", 0);
 
                 return true;

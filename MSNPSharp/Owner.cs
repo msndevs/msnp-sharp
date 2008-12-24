@@ -79,7 +79,7 @@ namespace MSNPSharp
 
         internal void SetRoamLiveProperty(RoamLiveProperty mode)
         {
-            RoamLiveProperty = mode;
+            roamLiveProperty = mode;
         }
 
         public new DisplayImage DisplayImage
@@ -95,7 +95,7 @@ namespace MSNPSharp
 
                 if (base.DisplayImage != null)
                 {
-                    if (value == base.DisplayImage )
+                    if (value == base.DisplayImage)
                     {
                         return;
                     }
@@ -131,7 +131,7 @@ namespace MSNPSharp
 
         public void BroadcastDisplayImage()
         {
-            if(NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
+            if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
                 // resend the user status so other client can see the new msn object
                 string capacities = ((long)ClientCapacities).ToString();
@@ -139,6 +139,7 @@ namespace MSNPSharp
 
                 if (DisplayImage != null)
                     context = DisplayImage.Context;
+
                 NSMessageHandler.MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { NSMessageHandler.ParseStatus(Status), capacities, context }));
             }
         }
@@ -276,6 +277,24 @@ namespace MSNPSharp
 #if MSNP16
 
         bool mpopEnabled;
+        string _routeInfo = string.Empty;
+
+        internal void SetRouteInfo(string info)
+        {
+            _routeInfo = info;
+        }
+
+        /// <summary>
+        /// Route address, used for PNRP??
+        /// </summary>
+        public string RouteInfo
+        {
+            get
+            {
+                return _routeInfo;
+            }
+        }
+
         internal void SetMPOP(bool enabled)
         {
             mpopEnabled = enabled;
@@ -605,7 +624,8 @@ namespace MSNPSharp
         /// <param name="clientIP"></param>
         /// <param name="clientPort"></param>
         /// <param name="nick"></param>
-        /// <param name="mpopenabled"></param>
+        /// <param name="mpop"></param>
+        /// <param name="routeInfo"></param>
         internal void UpdateProfile(
             string loginTime, bool emailEnabled, string memberIdHigh,
             string memberIdLowd, string preferredLanguage, string preferredMail,
@@ -615,7 +635,8 @@ namespace MSNPSharp
             string mspAuth, IPAddress clientIP, int clientPort,
             string nick
 #if MSNP16
-            , bool mpopenabled
+            , bool mpop
+            , string routeInfo
 #endif
             )
         {
@@ -639,7 +660,8 @@ namespace MSNPSharp
             ClientPort = clientPort;
             nickName = nick;
 #if MSNP16
-            mpopEnabled = mpopenabled;
+            mpopEnabled = mpop;
+            _routeInfo = routeInfo;
 #endif
 
             validProfile = true;

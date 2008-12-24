@@ -46,9 +46,9 @@ namespace MSNPSharp
     {
         private string personalMessage;
 #if MSNP16
+        private Guid machineGuid;
         private string signatureSound;
-#endif
-        private string machineGuid;
+#endif        
         private string appName;
         private string format;
         private MediaType mediaType;
@@ -58,17 +58,29 @@ namespace MSNPSharp
 
         private string[] content;
 
-        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent)
+        public PersonalMessage(string personalmsg,
+            MediaType mediatype,
+            string[] currentmediacontent
+#if MSNP16
+            , Guid machineguid
+#endif
+)
         {
             Message = personalmsg;
             mediaType = mediatype;
             content = currentmediacontent;
+#if MSNP16
+            machineGuid = machineguid;
+#endif
         }
 
         internal PersonalMessage(NSMessage message)
         {
             nsMessage = message;
             mediaType = MediaType.None;
+#if MSNP16
+            machineGuid = Guid.Empty;
+#endif
 
             try
             {
@@ -128,14 +140,15 @@ namespace MSNPSharp
             }
         }
 
-        public string MachineGuid
+#if MSNP16
+        public Guid MachineGuid
         {
             get
             {
                 return machineGuid;
             }
         }
-#if MSNP16
+
         public string SignatureSound
         {
             get
@@ -263,9 +276,10 @@ namespace MSNPSharp
 
             node = xmlDoc.SelectSingleNode("//Data/MachineGuid");
 
-            if (node != null)
-                machineGuid = node.InnerText;
 #if MSNP16
+            if (node != null && node.InnerText != "")
+                machineGuid = new Guid(node.InnerText);
+
             node = xmlDoc.SelectSingleNode("//Data/SignatureSound");
             if (node != null)
                 signatureSound = node.InnerText;

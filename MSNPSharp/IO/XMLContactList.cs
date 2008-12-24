@@ -68,6 +68,7 @@ namespace MSNPSharp.IO
                 {
                     foreach (BaseMember bm in MembershipList[msngrService][role].Values)
                     {
+                        long? cid = null;
                         string account = null;
                         ClientType type = ClientType.None;
 
@@ -79,6 +80,7 @@ namespace MSNPSharp.IO
                             {
                                 account = pm.PassportName;
                             }
+                            cid = Convert.ToInt64(pm.CID);
                         }
                         else if (bm is EmailMember)
                         {
@@ -95,6 +97,7 @@ namespace MSNPSharp.IO
                         {
                             string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                            contact.SetCID(cid);
                             contact.NSMessageHandler = NSMessageHandler;
 
                             MSNLists newlists = GetMSNLists(ServiceFilterType.Messenger, account, type);
@@ -390,6 +393,7 @@ namespace MSNPSharp.IO
                                         MemberRole memberrole = membership.MemberRole;
                                         foreach (BaseMember bm in membership.Members)
                                         {
+                                            long? cid = null;
                                             string account = null;
                                             ClientType type = ClientType.None;
 
@@ -401,6 +405,7 @@ namespace MSNPSharp.IO
                                                 {
                                                     account = pm.PassportName;
                                                 }
+                                                cid = Convert.ToInt64(pm.CID);
                                             }
                                             else if (bm is EmailMember)
                                             {
@@ -446,6 +451,7 @@ namespace MSNPSharp.IO
                                                     string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                                                     Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                                     contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                                                    contact.SetCID(cid);
                                                     contact.SetLists(xmlcl.GetMSNLists(ServiceFilterType.Messenger, account, type));
 
                                                     // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
@@ -679,7 +685,7 @@ namespace MSNPSharp.IO
                             {
                                 if (notifydata.StoreService.Info.Handle.Type == ServiceFilterType.Profile)
                                 {
-                                    if (xmlcl.Profile.DateModified < notifydata.LastChanged)
+                                    if (xmlcl.NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
                                     {
                                         xmlcl.NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = notifydata.LastChanged.ToString();
                                     }
@@ -725,6 +731,8 @@ namespace MSNPSharp.IO
                     Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
                     contact.NSMessageHandler = NSMessageHandler;
                     contact.SetGuid(new Guid(contactType.contactId));
+                    contact.SetCID(Convert.ToInt64(cit.CID));
+                    contact.SetContactType(cit.contactType);
                     //contact.SetHasBlog(cit.hasSpace);   //DONOT trust this
                     contact.SetComment(cit.comment);
                     contact.SetIsMessengerUser(ismessengeruser);
@@ -794,8 +802,10 @@ namespace MSNPSharp.IO
                         displayname = NSMessageHandler.Owner.Name;
                     }
 
-                    Profile.DisplayName = displayname;
-                    Profile.CID = cit.CID;
+                    NSMessageHandler.Owner.SetGuid(new Guid(contactType.contactId));
+                    NSMessageHandler.Owner.SetCID(Convert.ToInt64(cit.CID));
+                    NSMessageHandler.Owner.SetContactType(cit.contactType);
+                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayname;
 
                     if (null != cit.annotations)
                     {
@@ -823,27 +833,6 @@ namespace MSNPSharp.IO
                     if (!MyProperties.ContainsKey("lastchanged"))
                         MyProperties["lastchanged"] = DateTime.MinValue.ToString();
                 }
-            }
-        }
-
-        #endregion
-
-        #region Profile
-        private OwnerProfile profile = new OwnerProfile();
-
-        /// <summary>
-        /// Profile of current user.
-        /// </summary>
-        [XmlElement("Profile")]
-        public OwnerProfile Profile
-        {
-            get
-            {
-                return profile;
-            }
-            set
-            {
-                profile = value;
             }
         }
 
