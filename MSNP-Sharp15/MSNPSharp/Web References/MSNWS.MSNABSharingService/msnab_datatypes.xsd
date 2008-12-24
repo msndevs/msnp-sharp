@@ -173,8 +173,9 @@
       <xsd:enumeration value="ProfileProfessionalContact" />
       <xsd:enumeration value="ProfileSocial" />
       <xsd:enumeration value="ProfileExpression" />
-      <xsd:enumeration value="TwoWayRelationship" />
+      <xsd:enumeration value="ProfileEducation" />
       <xsd:enumeration value="OneWayRelationship" />
+      <xsd:enumeration value="TwoWayRelationship" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="MemberType">
