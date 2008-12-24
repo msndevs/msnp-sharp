@@ -484,6 +484,7 @@ namespace MSNPSharp
                             else
                             {
                                 OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("SynchronizeContactList", e.Error));
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
                             }
                         }
                         else
@@ -564,6 +565,7 @@ namespace MSNPSharp
                             else
                             {
                                 OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ABFindAll", e.Error));
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
                             }
                         }
                         else
