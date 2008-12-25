@@ -1068,6 +1068,7 @@ using System.Text.RegularExpressions;
                 switch (message.CommandValues[1].ToString())
                 {
                     case "4":
+                    case "8":
                         {
                             string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
                             if (logoutMsg == "goawyplzthxbye" || logoutMsg == "gtfo")
