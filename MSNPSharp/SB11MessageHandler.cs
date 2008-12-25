@@ -360,7 +360,17 @@ namespace MSNPSharp
                 AllContactsLeft(this, new EventArgs());
             }
 
-            Close();  //After we receive all of the BYE commands, disconnect.
+            if (contacts.Count == 1)  //MSNP18: owner in the switch
+            {
+                Left();
+                lock (contacts)
+                    contacts.Clear();
+            }
+            else
+            {
+                Close();
+            }
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ToString() + " all contacts left, disconnect automately.", GetType().ToString());
         }
 
@@ -1041,6 +1051,12 @@ namespace MSNPSharp
                 // update the owner's name. Just to be sure.
                 //NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
 
+#if MSNP18
+                if (NSMessageHandler != null)
+                {
+                    Invite(NSMessageHandler.Owner.Mail);
+                }
+#endif
                 // we are now ready to invite other contacts. Notify the client of this.
                 OnSessionEstablished();
             }
@@ -1083,14 +1099,11 @@ namespace MSNPSharp
             //contact.SetName(message.CommandValues[1].ToString());
 
 
-            if (contact.Mail != NSMessageHandler.Owner.Mail)
+            if (Contacts.ContainsKey(contact.Mail) == false ||
+                Contacts[contact.Mail] != ContactConversationState.Joined)
             {
-                if (Contacts.ContainsKey(contact.Mail) == false ||
-                    Contacts[contact.Mail] != ContactConversationState.Joined)
-                {
-                    // notify the client programmer
-                    OnContactJoined(contact);
-                }
+                // notify the client programmer
+                OnContactJoined(contact);
             }
 
         }
@@ -1138,10 +1151,20 @@ namespace MSNPSharp
 
                 OnContactLeft(contact);
 
-                foreach (ContactConversationState state in Contacts.Values)
+                foreach (string  acc in Contacts.Keys)
                 {
-                    if (state != ContactConversationState.Left)
-                        return;
+                    if (contacts[acc] != ContactConversationState.Left)
+                    {
+                        if (NSMessageHandler != null)
+                        {
+                            if (acc != NSMessageHandler.Owner.Mail)
+                                return;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
                 }
 
                 OnAllContactsLeft();  //Indicates whe should end the conversation and disconnect.
@@ -1163,7 +1186,7 @@ namespace MSNPSharp
 
 #if MSNP18
             string account = message.CommandValues[3].ToString().Split(';')[0];
-            
+
 #else
             string account = message.CommandValues[3].ToString();
 #endif
@@ -1182,14 +1205,12 @@ namespace MSNPSharp
                 contact.SetLists(MSNLists.None);
             }
 
-            if (contact.Mail != NSMessageHandler.Owner.Mail)
+
+            if (Contacts.ContainsKey(contact.Mail) == false ||
+                Contacts[contact.Mail] != ContactConversationState.Joined)
             {
-                if (Contacts.ContainsKey(contact.Mail) == false ||
-                    Contacts[contact.Mail] != ContactConversationState.Joined)
-                {
-                    // notify the client programmer
-                    OnContactJoined(contact);
-                }
+                // notify the client programmer
+                OnContactJoined(contact);
             }
         }
 

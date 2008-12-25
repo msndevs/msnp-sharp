@@ -939,9 +939,21 @@ namespace MSNPSharp
                 if (Switchboard.NSMessageHandler == null)
                     Switchboard.NSMessageHandler = Messenger.Nameserver;
 
-                if (_switchboard.Contacts.Count > 1)
+                foreach (string acc in _switchboard.Contacts.Keys)
                 {
-                    _type |= ConversationType.MutipleUsers;
+                    if (acc != Messenger.Nameserver.Owner.Mail)  //MSNP18: owner in switch
+                    {
+                        _type |= ConversationType.MutipleUsers;
+                        break;
+                    }
+                }
+
+                lock (Messenger.Nameserver.SwitchBoards)
+                {
+                    if (!Messenger.Nameserver.SwitchBoards.Contains(_switchboard))
+                    {
+                        Messenger.Nameserver.SwitchBoards.Add(_switchboard);
+                    }
                 }
 
                 if (sbInitialized == false)

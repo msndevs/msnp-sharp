@@ -622,25 +622,6 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region Public
-        /// <summary>
-        /// The guid used in invitations for a filetransfer.
-        /// </summary>
-        public const string FileTransferGuid = "{5D3E02AB-6190-11D3-BBBB-00C04F795683}";
-
-        /// <summary>
-        /// The guid used in invitations for a user display transfer.
-        /// </summary>
-        public const string UserDisplayGuid = "{A4268EEC-FEC5-49E5-95C3-F126696BDBF6}";
-
-        /// <summary>
-        /// The guid used in invitations for a share photo.
-        /// </summary>
-        public const string SharePhotoGuid = "{41D3E74E-04A2-4B37-96F8-08ACDB610874}";
-
-        /// <summary>
-        /// The guid used in invitations for an activity.
-        /// </summary>
-        public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
         /// <summary>
         /// Constructor.
@@ -718,7 +699,9 @@ namespace MSNPSharp.DataTransfer
             slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.Body = "EUF-GUID: " + MSNSLPHandler.UserDisplayGuid + "\r\nSessionID: " + properties.SessionId + "\r\nAppID: 1\r\n" +
+            slpMessage.Body = "EUF-GUID: " + P2PConst.UserDisplayGuid + "\r\n" +
+                "SessionID: " + properties.SessionId + "\r\n" +
+                "AppID: " + P2PConst.MSNObjectAppID.ToString() +"\r\n" +
                 "Context: " + base64Context + "\r\n\r\n";
 
             P2PMessage p2pMessage = new P2PMessage();
@@ -730,6 +713,9 @@ namespace MSNPSharp.DataTransfer
             // store the transferproperties
             TransferProperties[properties.CallId] = properties;
 
+#if MSNP18
+            p2pMessage.Flags = 0x01000000;
+#endif
             // create a transfer session to handle the actual data transfer
             P2PTransferSession session = Factory.CreateP2PTransferSession();
             session.MessageSession = (P2PMessageSession)MessageProcessor;
@@ -811,7 +797,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
 
-            slpMessage.Body = "EUF-GUID: " + ActivityGuid + "\r\n" +
+            slpMessage.Body = "EUF-GUID: " + P2PConst.ActivityGuid + "\r\n" +
                           "SessionID: " + properties.SessionId + "\r\n" +
                           "SChannelState: 0\r\n" +
                           "Capabilities-Flags: 1\r\n" +
@@ -917,7 +903,9 @@ namespace MSNPSharp.DataTransfer
             slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.Body = "EUF-GUID: " + MSNSLPHandler.FileTransferGuid + "\r\nSessionID: " + properties.SessionId + "\r\nAppID: 2\r\n" +
+            slpMessage.Body = "EUF-GUID: " + P2PConst.FileTransferGuid + "\r\n" + 
+                "SessionID: " + properties.SessionId + "\r\n" + 
+                "AppID: " + P2PConst.FileTransAppID.ToString() + "\r\n" +
                 "Context: " + base64Context + "\r\n\r\n";
 
             P2PMessage p2pMessage = new P2PMessage();
@@ -990,7 +978,7 @@ namespace MSNPSharp.DataTransfer
 
 
             // check for a msn object request
-            if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
+            if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
             {
                 // for some kind of weird behavior, our local identifier must now subtract 4 ?
                 ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
@@ -1004,7 +992,7 @@ namespace MSNPSharp.DataTransfer
             }
             p2pTransfer.DataStream = objectToSend.OpenStream();*/
 
-            if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
+            if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
             {
                 p2pTransfer.MessageFlag = 0x1000030;
                 p2pTransfer.IsSender = false;
@@ -1180,7 +1168,7 @@ namespace MSNPSharp.DataTransfer
             if (message.MessageValues.ContainsKey("EUF-GUID"))
             {
                 properties.DataTypeGuid = message.MessageValues["EUF-GUID"].ToString();
-                if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.UserDisplayGuid)
+                if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
                 {
                     // create a temporary msn object to extract the data type
                     if (message.MessageValues.ContainsKey("Context"))
@@ -1202,11 +1190,12 @@ namespace MSNPSharp.DataTransfer
                     {
                         properties.DataType = DataTransferType.Unknown;
                     }
-                }else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.FileTransferGuid)
+                }
+                else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
                 {
                     properties.DataType = DataTransferType.File;
                 }
-                else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == MSNSLPHandler.ActivityGuid)
+                else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.ActivityGuid)
                 {
                     properties.DataType = DataTransferType.Activity;
                 }

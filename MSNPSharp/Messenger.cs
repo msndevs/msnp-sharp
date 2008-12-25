@@ -175,15 +175,16 @@ namespace MSNPSharp
                 lock (Nameserver.SwitchBoards)
                 {
                     foreach (SBMessageHandler sb in Nameserver.SwitchBoards)
+                    {
+                        if (sb.GetType() == typeof(SBMessageHandler))
                         {
-                            if (sb.GetType() == typeof(SBMessageHandler))
+                            if (sb.Contacts.ContainsKey(see.Session.RemoteContact))
                             {
-                                if (sb.Contacts.ContainsKey(see.Session.RemoteContact))
-                                {
-                                    see.Session.MessageProcessor = sb.MessageProcessor;
-                                }
+                                see.Session.MessageProcessor = sb.MessageProcessor;
+                                break;
                             }
                         }
+                    }
                 }
                 // Accepts by default owner display images and contact emoticons.
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
@@ -294,10 +295,6 @@ namespace MSNPSharp
             {
                 return nsMessageProcessor;
             }
-            set
-            {
-                nsMessageProcessor = value;
-            }
         }
 
         /// <summary>
@@ -348,10 +345,6 @@ namespace MSNPSharp
             get
             {
                 return nsMessageHandler;
-            }
-            set
-            {
-                nsMessageHandler = value;
             }
         }
 
