@@ -602,10 +602,7 @@ namespace MSNPSharpClient
             this.comboStatus.Items.AddRange(new object[] {
             "Online",
             "Busy",
-            "BRB",
             "Away",
-            "Phone",
-            "Lunch",
             "Hidden",
             "Offline"});
             this.comboStatus.Location = new System.Drawing.Point(7, 54);
