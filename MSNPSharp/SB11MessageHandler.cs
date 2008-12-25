@@ -214,11 +214,6 @@ namespace MSNPSharp
         /// </summary>
         private Queue invitationQueue = new Queue();
 
-        /// <summary>
-        /// Supports the p2p framework
-        /// </summary>
-        private P2PHandler p2pHandler;
-
         private Hashtable multiPacketMessages = new Hashtable();
         #endregion
 
@@ -441,20 +436,6 @@ namespace MSNPSharp
                 TextMessageReceived(this, new TextMessageEventArgs(message, contact));
         }
 
-        protected void RemoveFromSwitchBoardList()
-        {
-            if (NSMessageHandler != null)
-            {
-                lock (NSMessageHandler.SwitchBoards)
-                    NSMessageHandler.SwitchBoards.Remove(this);
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A " + GetType().ToString() + " has been removed.");
-            }
-            else
-            {
-                throw new MSNPSharpException("NSMessageHandler not set, this switchboard will not be removed.");
-            }
-        }
-
         #endregion
 
         #region Public
@@ -505,15 +486,16 @@ namespace MSNPSharp
         /// <summary>
         /// Implements the P2P framework. This object is automatically created when a succesfull connection was made to the switchboard.
         /// </summary>
+        [Obsolete("Please use Messenger.P2PHandler.", true)]
         public P2PHandler P2PHandler
         {
             get
             {
-                return p2pHandler;
+                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
             }
             set
             {
-                p2pHandler = value;
+                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
             }
         }
 
@@ -590,7 +572,6 @@ namespace MSNPSharp
         /// </summary>
         public virtual void Close()
         {
-            RemoveFromSwitchBoardList();
             if (MessageProcessor != null)
             {
                 ((SocketMessageProcessor)MessageProcessor).Disconnect();
