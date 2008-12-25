@@ -598,41 +598,6 @@ using System.Text.RegularExpressions;
         }
 
         /// <summary>
-        /// Translates MSNStatus enumeration to messenger's textual status presentation.
-        /// </summary>
-        /// <param name="status">MSNStatus enum object representing the status to translate</param>
-        /// <returns>The corresponding textual value</returns>
-        internal static string ParseStatus(PresenceStatus status)
-        {
-            switch (status)
-            {
-                case PresenceStatus.Online:
-                    return "NLN";
-                case PresenceStatus.Busy:
-                    return "BSY";
-                case PresenceStatus.Idle:
-                    return "IDL";
-                case PresenceStatus.BRB:
-                    return "BRB";
-                case PresenceStatus.Away:
-                    return "AWY";
-                case PresenceStatus.Phone:
-                    return "PHN";
-                case PresenceStatus.Lunch:
-                    return "LUN";
-                case PresenceStatus.Offline:
-                    return "FLN";
-                case PresenceStatus.Hidden:
-                    return "HDN";
-                default:
-                    break;
-            }
-
-            // unknown status
-            return "Unknown status";
-        }
-
-        /// <summary>
         /// Set the status of the contact list owner (the client).
         /// </summary>
         /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
@@ -837,38 +802,78 @@ using System.Text.RegularExpressions;
 
         #region Status
 
+
+        /// <summary>
+        /// Translates MSNStatus enumeration to messenger's textual status presentation.
+        /// </summary>
+        /// <param name="status">MSNStatus enum object representing the status to translate</param>
+        /// <returns>The corresponding textual value</returns>
+        internal protected static string ParseStatus(PresenceStatus status)
+        {
+            switch (status)
+            {
+                case PresenceStatus.Online:
+                    return "NLN";
+
+                case PresenceStatus.Busy:
+                case PresenceStatus.Phone:
+                    return "BSY";
+
+                case PresenceStatus.Idle:
+                    return "IDL";
+
+                case PresenceStatus.BRB:
+                case PresenceStatus.Away:
+                case PresenceStatus.Lunch:
+                    return "AWY";
+
+                case PresenceStatus.Offline:
+                    return "FLN";
+
+                case PresenceStatus.Hidden:
+                    return "HDN";
+
+                default:
+                    break;
+            }
+
+            return "Unknown status";
+        }
+
         /// <summary>
         /// Translates messenger's textual status to the corresponding value of the Status enum.
         /// </summary>
         /// <param name="status">Textual MSN status received from server</param>
         /// <returns>The corresponding enum value</returns>
-        protected static PresenceStatus ParseStatus(string status)
+        internal protected static PresenceStatus ParseStatus(string status)
         {
             switch (status)
             {
                 case "NLN":
                     return PresenceStatus.Online;
+
                 case "BSY":
+                case "PHN":
                     return PresenceStatus.Busy;
+
                 case "IDL":
                     return PresenceStatus.Idle;
+
                 case "BRB":
-                    return PresenceStatus.BRB;
                 case "AWY":
-                    return PresenceStatus.Away;
-                case "PHN":
-                    return PresenceStatus.Phone;
                 case "LUN":
-                    return PresenceStatus.Lunch;
+                    return PresenceStatus.Away;
+
                 case "FLN":
                     return PresenceStatus.Offline;
+
                 case "HDN":
                     return PresenceStatus.Hidden;
+
                 default:
                     break;
             }
 
-            // unknown status
             return PresenceStatus.Unknown;
         }
 
