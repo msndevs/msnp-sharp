@@ -1195,6 +1195,7 @@ namespace MSNPSharpClient
                     e.TransferSession.DataStream = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
                     //e.Handler.AcceptTransfer (e);
                     e.Accept = true;
+                    e.TransferSession.AutoCloseStream = true;
                 }
             }
         }
