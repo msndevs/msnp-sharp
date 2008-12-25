@@ -362,8 +362,9 @@ namespace MSNPSharp.DataTransfer
 
             // check if it is a content message
             // if it is not a file transfer message, and the footer is not set to 1 (for emoticons/user displays), ignore it.
-            if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
-                && (p2pMessage.Flags == 0x1000030 || p2pMessage.Footer == 1))
+            if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0 &&
+               ((p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.MSNObjectFooter) ||
+               (p2pMessage.Flags == (uint)P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter)))
             {
                 // indicates whether we must stream this message
                 bool writeToStream = true;
@@ -481,8 +482,8 @@ namespace MSNPSharp.DataTransfer
                     chunkMessage.AckTotalSize = p2pMessage.AckTotalSize;
                     chunkMessage.Flags = p2pMessage.Flags;
                     chunkMessage.Footer = p2pMessage.Footer;
-                    if (p2pMessage.Flags == 0x1000030)
-                        chunkMessage.Footer = 2;//p2pMessage.Footer;
+                    if (p2pMessage.Flags == (uint)P2PFlag.FileData)
+                        chunkMessage.Footer = (uint)P2PFlag.FileTransFooter;
                     chunkMessage.Identifier = p2pMessage.Identifier;
                     chunkMessage.MessageSize = (uint)Math.Min((uint)1202, (uint)(p2pMessage.TotalSize - bytesSend));
                     chunkMessage.Offset = bytesSend;

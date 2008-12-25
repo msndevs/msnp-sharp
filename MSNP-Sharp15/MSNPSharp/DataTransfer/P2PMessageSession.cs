@@ -693,7 +693,8 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 messageProcessor = value;
-                if (messageProcessor != null && messageProcessor.GetType() != typeof(NSMessageProcessor))
+
+                if (MessageProcessor != null && MessageProcessor.GetType() != typeof(NSMessageProcessor))
                 {
                     ValidateProcessor();
                     SendBuffer();

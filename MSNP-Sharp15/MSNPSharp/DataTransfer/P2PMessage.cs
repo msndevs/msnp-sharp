@@ -65,7 +65,60 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// 
         /// </summary>
-        Activity = 0x01000000
+        Activity = 0x01000000,
+        /// <summary>
+        /// Footer for a msn object p2pMessage.
+        /// </summary>
+#if MSNP18
+        MSNObjectFooter = 0xc,
+#else
+        MSNObjectFooter = 0x1,
+#endif
+        /// <summary>
+        /// Footer for a filetransfer p2pMessage.
+        /// </summary>
+#if MSNP18
+        FileTransFooter = 0x2
+#else
+        MSNObjectFooter = 0x1
+#endif
+    }
+
+    internal static class P2PConst
+    {
+        /// <summary>
+        /// The guid used in invitations for a filetransfer.
+        /// </summary>
+        public const string FileTransferGuid = "{5D3E02AB-6190-11D3-BBBB-00C04F795683}";
+
+        /// <summary>
+        /// The guid used in invitations for a user display transfer.
+        /// </summary>
+        public const string UserDisplayGuid = "{A4268EEC-FEC5-49E5-95C3-F126696BDBF6}";
+
+        /// <summary>
+        /// The guid used in invitations for a share photo.
+        /// </summary>
+        public const string SharePhotoGuid = "{41D3E74E-04A2-4B37-96F8-08ACDB610874}";
+
+        /// <summary>
+        /// The guid used in invitations for an activity.
+        /// </summary>
+        public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
+
+        /// <summary>
+        /// The AppID used in invitations for any msnobject p2p transfer.
+        /// </summary>
+#if MSNP18
+        public const uint MSNObjectAppID = 12;
+#else
+        public const uint MSNObjectAppID = 1;
+#endif
+
+        /// <summary>
+        /// The AppID(footer) used in invitations for a filetransfer.
+        /// </summary>
+        public const uint FileTransAppID = 2;
     }
 
     /// <summary>
