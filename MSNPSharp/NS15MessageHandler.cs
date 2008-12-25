@@ -58,7 +58,28 @@ using System.Text.RegularExpressions;
 
 #if MSNP18
         public static readonly string MachineGuid = Guid.NewGuid().ToString("B");
-        public static string EPName = Environment.MachineName;
+
+        private Dictionary<string, Guid> places = new Dictionary<string, Guid>(0);
+        public Dictionary<string, Guid> Places
+        {
+            get
+            {
+                return places;
+            }
+        }
+
+        private string epName = Environment.MachineName;
+        public string EpName
+        {
+            get
+            {
+                return epName;
+            }
+            set
+            {
+                epName = value;
+            }
+        }
 #endif
 
         private SocketMessageProcessor messageProcessor;
@@ -642,7 +663,7 @@ using System.Text.RegularExpressions;
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
 #if MSNP18
                 MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                    "<PrivateEndpointData><EpName>" + MSNHttpUtility.XmlEncode(EPName)
+                    "<PrivateEndpointData><EpName>" + MSNHttpUtility.XmlEncode(EpName)
                     + "</EpName><Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false")
                     + "</Idle><State>" + ParseStatus(status) + "</State></PrivateEndpointData>"));
 #endif
@@ -862,21 +883,42 @@ using System.Text.RegularExpressions;
             if (message.CommandValues[1].ToString() == "0")
                 return;
 
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), 
 #if MSNP18
-                message.CommandValues[0].ToString().Split(':')[0]);
+            string account = message.CommandValues[0].ToString().Split(':')[1];
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
 #else
-                message.CommandValues[1].ToString());
+            string account = message.CommandValues[0].ToString();
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
 #endif
-            Contact contact = ContactList.GetContact(
-#if MSNP18
-                message.CommandValues[0].ToString().Split(':')[1], 
-#else
-                message.CommandValues[0].ToString(), 
-#endif
-                type);
 
-            contact.SetPersonalMessage(new PersonalMessage(message));
+            if (account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(new MemoryStream(message.InnerBody));
+                XmlNodeList privateendpoints = xmlDoc.GetElementsByTagName("PrivateEndpointData");
+
+                if (privateendpoints.Count > 0)
+                {
+                    Places.Clear();
+
+                    foreach (XmlNode pepdNode in privateendpoints)
+                    {
+                        string id = pepdNode.Attributes["id"].Value;
+                        string epname = pepdNode["EpName"].InnerText;
+
+                        Places[epname] = new Guid(id);
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
+                    }
+                }
+
+                Owner.SetPersonalMessage(new PersonalMessage(message));
+            }
+            else
+            {
+                Contact contact = ContactList.GetContact(account, type);
+                contact.SetPersonalMessage(new PersonalMessage(message));
+            }
         }
 
         /// <summary>
