@@ -128,6 +128,7 @@ namespace MSNPSharp
         {
             nsMessageProcessor = Factory.CreateNameserverProcessor();
             nsMessageHandler = Factory.CreateNameserverHandler();
+            nsMessageHandler.Messenger = this;
 
             p2pHandler = Factory.CreateP2PHandler();
             p2pHandler.NSMessageHandler = nsMessageHandler;
@@ -140,8 +141,9 @@ namespace MSNPSharp
 
             nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
             {
+                //Register the p2phandler to handle all incoming p2p message through this switchboard.
                 ce.Switchboard.MessageProcessor.RegisterHandler(P2PHandler);
-                ce.Switchboard.P2PHandler = P2PHandler;
+
                 // check if the request is remote or on our initiative
                 if (ce.Initiator != null && (ce.Initiator == this || ce.Initiator == p2pHandler))
                 {
@@ -172,9 +174,9 @@ namespace MSNPSharp
                 tsMsnslpHandlers.Add(msnslpHandler);
 
                 // set the correct switchboard to send messages to
-                lock (Nameserver.SwitchBoards)
+                lock (p2pHandler.SwitchboardSessions)
                 {
-                    foreach (SBMessageHandler sb in Nameserver.SwitchBoards)
+                    foreach (SBMessageHandler sb in p2pHandler.SwitchboardSessions)
                     {
                         if (sb.GetType() == typeof(SBMessageHandler))
                         {

@@ -916,11 +916,11 @@ namespace MSNPSharp
                 _yimHandler.NSMessageHandler = Messenger.Nameserver;
                 _yimHandler.MessageProcessor = Messenger.Nameserver.MessageProcessor;
 
-                lock (Messenger.Nameserver.SwitchBoards)
+                lock (Messenger.P2PHandler.SwitchboardSessions)
                 {
-                    if (!Messenger.Nameserver.SwitchBoards.Contains(_yimHandler))
+                    if (!Messenger.P2PHandler.SwitchboardSessions.Contains(_yimHandler))
                     {
-                        Messenger.Nameserver.SwitchBoards.Add(_yimHandler);
+                        Messenger.P2PHandler.SwitchboardSessions.Add(_yimHandler);
                     }
                 }
 
@@ -948,11 +948,11 @@ namespace MSNPSharp
                     }
                 }
 
-                lock (Messenger.Nameserver.SwitchBoards)
+                lock (Messenger.P2PHandler.SwitchboardSessions)
                 {
-                    if (!Messenger.Nameserver.SwitchBoards.Contains(_switchboard))
+                    if (!Messenger.P2PHandler.SwitchboardSessions.Contains(_switchboard))
                     {
-                        Messenger.Nameserver.SwitchBoards.Add(_switchboard);
+                        Messenger.P2PHandler.SwitchboardSessions.Add(_switchboard);
                     }
                 }
 

@@ -101,6 +101,7 @@ using System.Text.RegularExpressions;
         private MSNStorageService storageService;
 
         private List<Regex> censorWords = new List<Regex>(0);
+        private Messenger messenger = null;
 
         private NSMessageHandler()
         {
@@ -306,6 +307,32 @@ using System.Text.RegularExpressions;
             }
         }
 
+        internal MSNTicket MSNTicket
+        {
+            get
+            {
+                return msnticket;
+            }
+            set
+            {
+                msnticket = value;
+            }
+        }
+
+        internal Messenger Messenger
+        {
+            get 
+            {
+                if (messenger == null)
+                {
+                    throw new NullReferenceException();
+                }
+
+                return messenger; 
+            }
+            set { messenger = value; }
+        }
+
         #endregion
 
         #region Public Events
@@ -486,7 +513,7 @@ using System.Text.RegularExpressions;
 
         #region RequestSwitchboard & SendPing
 
-        internal List<SBMessageHandler> SwitchBoards = new List<SBMessageHandler>(0);
+        // List<SBMessageHandler> SwitchBoards = new List<SBMessageHandler>(0);
 
         /// <summary>
         /// Sends a request to the server to start a new switchboard session.
@@ -718,18 +745,6 @@ using System.Text.RegularExpressions;
         protected virtual void OnCVRReceived(NSMessage message)
         {
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
-        }
-
-        internal MSNTicket MSNTicket
-        {
-            get
-            {
-                return msnticket;
-            }
-            set
-            {
-                msnticket = value;
-            }
         }
 
         /// <summary>
@@ -1359,9 +1374,9 @@ using System.Text.RegularExpressions;
             if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))   //filter the typing message
                 && ContactList.HasContact(sender, ClientType.EmailMember))
             {
-                lock (SwitchBoards)
+                lock (messenger.P2PHandler.SwitchboardSessions)
                 {
-                    foreach (YIMMessageHandler YimHandler in SwitchBoards)
+                    foreach (YIMMessageHandler YimHandler in messenger.P2PHandler.SwitchboardSessions)
                     {
                         if (YimHandler.Contacts.ContainsKey(sender))
                         {
@@ -1375,8 +1390,11 @@ using System.Text.RegularExpressions;
                 switchboard.NSMessageHandler = this;
 
                 switchboard.MessageProcessor = MessageProcessor;
-                lock (SwitchBoards)
-                    SwitchBoards.Add(switchboard);
+                lock (messenger.P2PHandler.SwitchboardSessions)
+                {
+                    messenger.P2PHandler.SwitchboardSessions.Add(switchboard);
+                }
+
                 messageProcessor.RegisterHandler(switchboard);
                 OnSBCreated(switchboard, null, sender, sender, false);
 
@@ -2015,7 +2033,7 @@ using System.Text.RegularExpressions;
             ContactList.Clear();
             ContactGroups.Clear();
             ContactService.Clear();
-            SwitchBoards.Clear();
+            ////SwitchBoards.Clear();
             Owner.Emoticons.Clear();
             externalEndPoint = null;
             isSignedIn = false;

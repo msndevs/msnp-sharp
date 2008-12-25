@@ -38,6 +38,7 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Used in events where a P2PMessageSession object is created, or in another way affected.
@@ -132,12 +133,12 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private ArrayList switchboardSessions = new ArrayList();
+        private List<SBMessageHandler> switchboardSessions = new List<SBMessageHandler>(0);
 
         /// <summary>
         /// A collection of all available switchboard sessions
         /// </summary>
-        protected ArrayList SwitchboardSessions
+        internal List<SBMessageHandler> SwitchboardSessions
         {
             get
             {
@@ -480,7 +481,6 @@ namespace MSNPSharp.DataTransfer
                 handler = Factory.CreateSwitchboardHandler();
                 if (NSMessageHandler == null)
                     throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
-                nsMessageHandler.SwitchBoards.Add(handler);
 
                 NSMessageHandler.RequestSwitchboard(handler, this);
                 handler.NSMessageHandler = NSMessageHandler;
@@ -497,8 +497,11 @@ namespace MSNPSharp.DataTransfer
         /// <param name="session"></param>
         protected virtual void AddSwitchboardSession(SBMessageHandler session)
         {
-            if (SwitchboardSessions.Contains(session) == false)
-                SwitchboardSessions.Add(session);
+            lock (SwitchboardSessions)
+            {
+                if (SwitchboardSessions.Contains(session) == false)
+                    SwitchboardSessions.Add(session);
+            }
         }
 
         /// <summary>
@@ -507,7 +510,14 @@ namespace MSNPSharp.DataTransfer
         /// <param name="session"></param>
         protected virtual void RemoveSwitchboardSession(SBMessageHandler session)
         {
-            SwitchboardSessions.Remove(session);
+            int remainCount = 0;
+            lock (SwitchboardSessions)
+            {
+                SwitchboardSessions.Remove(session);
+                remainCount = SwitchboardSessions.Count;
+            }
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A " + session.GetType().ToString() + " has been removed.");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "There is/are " + remainCount.ToString() + " switchboard(s) remain(s) unclosed.");
         }
 
         /// <summary>

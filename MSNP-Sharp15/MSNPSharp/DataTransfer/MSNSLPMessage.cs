@@ -445,10 +445,6 @@ namespace MSNPSharp.DataTransfer
         {
             if (Body == null)
                 Body = "";
-            if (To == "")
-            {
-                int b = 0;
-            }
             return "[MSNSLPMessage] " + System.Text.Encoding.UTF8.GetString(this.GetBytes()) + "\r\n";
         }
     }

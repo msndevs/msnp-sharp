@@ -127,7 +127,6 @@ namespace MSNPSharp
         {
             OnSessionClosed();
             NSMessageHandler.MessageProcessor.UnregisterHandler(this);
-            RemoveFromSwitchBoardList();
         }
 
         public override void HandleMessage(IMessageProcessor sender, NetworkMessage message)
