@@ -42,11 +42,11 @@ using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-using System.Text.RegularExpressions;
 
     /// <summary>
     /// Handles the protocol messages from the notification server.
@@ -60,26 +60,7 @@ using System.Text.RegularExpressions;
         public static readonly string MachineGuid = Guid.NewGuid().ToString("B");
 
         private Dictionary<string, Guid> places = new Dictionary<string, Guid>(0);
-        public Dictionary<string, Guid> Places
-        {
-            get
-            {
-                return places;
-            }
-        }
-
         private string epName = Environment.MachineName;
-        public string EpName
-        {
-            get
-            {
-                return epName;
-            }
-            set
-            {
-                epName = value;
-            }
-        }
 #endif
 
         private SocketMessageProcessor messageProcessor;
@@ -174,7 +155,10 @@ using System.Text.RegularExpressions;
         /// </summary>
         public List<Regex> CensorWords
         {
-            get { return censorWords; }
+            get
+            {
+                return censorWords;
+            }
         }
 
         /// <summary>
@@ -274,6 +258,38 @@ using System.Text.RegularExpressions;
             }
         }
 
+#if MSNP18
+
+        public string EpName
+        {
+            get
+            {
+                return epName;
+            }
+            set
+            {
+                if (epName != value)
+                {
+                    MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", "<PrivateEndpointData>" +
+                        "<EpName>" + MSNHttpUtility.XmlEncode(value) + "</EpName>" +
+                        "<Idle>" + ((Owner.Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
+                        "<State>" + ParseStatus(Owner.Status) + "</State>" +
+                        "</PrivateEndpointData>"));
+
+                    epName = value;
+                }
+            }
+        }
+
+        public Dictionary<string, Guid> Places
+        {
+            get
+            {
+                return places;
+            }
+        }
+
+#endif
         /// <summary>
         /// The processor to handle the messages
         /// </summary>
@@ -321,16 +337,19 @@ using System.Text.RegularExpressions;
 
         internal Messenger Messenger
         {
-            get 
+            get
             {
                 if (messenger == null)
                 {
                     throw new NullReferenceException();
                 }
 
-                return messenger; 
+                return messenger;
             }
-            set { messenger = value; }
+            set
+            {
+                messenger = value;
+            }
         }
 
         #endregion
@@ -952,13 +971,13 @@ using System.Text.RegularExpressions;
         /// <param name="message"></param>
         protected virtual void OnILNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), 
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType),
 #if MSNP18
-                message.CommandValues[1].ToString().Split(':')[0]
+ message.CommandValues[1].ToString().Split(':')[0]
 #else
                 message.CommandValues[3].ToString()
 #endif
-                );
+);
             Contact contact = ContactList.GetContact((string)message.CommandValues[2], type);
             contact.SetName((string)message.CommandValues[4]);
             PresenceStatus oldStatus = contact.Status;
@@ -1003,18 +1022,18 @@ using System.Text.RegularExpressions;
         {
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType),
 #if MSNP18
-                message.CommandValues[1].ToString().Split(':')[0]
+ message.CommandValues[1].ToString().Split(':')[0]
 #else
                 message.CommandValues[2].ToString()
 #endif
-            );
+);
             Contact contact = ContactList.GetContact(
 #if MSNP18
-                message.CommandValues[1].ToString().Split(':')[1]
+message.CommandValues[1].ToString().Split(':')[1]
 #else
                 message.CommandValues[0].ToString()
 #endif
-                , type);
+, type);
 
             contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
             PresenceStatus oldStatus = contact.Status;
@@ -1059,20 +1078,20 @@ using System.Text.RegularExpressions;
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), 
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType),
 #if MSNP18
-                message.CommandValues[0].ToString().Split(':')[0]
+ message.CommandValues[0].ToString().Split(':')[0]
 #else
                 message.CommandValues[1].ToString()
 #endif
 );
             Contact contact = ContactList.GetContact(
 #if MSNP18
-            message.CommandValues[0].ToString().Split(':')[1]
+message.CommandValues[0].ToString().Split(':')[1]
 #else
                 message.CommandValues[0].ToString()
 #endif
-        , type);
+, type);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
 
@@ -1475,7 +1494,7 @@ using System.Text.RegularExpressions;
                     hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0",
                     hdr.ContainsKey("RouteInfo") ? hdr["RouteInfo"] : String.Empty
 #endif
-                    );
+);
 
                 if (IPAddress.None != ip)
                 {
