@@ -54,7 +54,7 @@ namespace MSNPSharp
         {
             if (DisplayImage == null)
             {
-                System.Drawing.Image pngImage = Properties.Resources.owner;
+                System.Drawing.Image pngImage = Properties.Resources.WLXLarge_default;
                 DisplayImage image = new DisplayImage(Mail);
                 image.Image = pngImage;
                 DisplayImage = image;

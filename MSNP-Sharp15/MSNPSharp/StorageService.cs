@@ -36,6 +36,7 @@ using System.Net;
 using System.Xml;
 using System.Text;
 using System.Drawing;
+using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
@@ -72,7 +73,6 @@ namespace MSNPSharp
             return storageService;
         }
 
-        //.... @_@
         private static ExpressionProfileAttributesType CreateFullExpressionProfileAttributes()
         {
             ExpressionProfileAttributesType expAttrib = new ExpressionProfileAttributesType();
@@ -418,41 +418,64 @@ namespace MSNPSharp
                 // Display photo
                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                 {
-                    string url = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
-                    NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
-
-                    if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL != url)
+                    
+                    if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL)
                     {
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = url;
-                        if (!url.StartsWith("http"))
+                        System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
+                        DisplayImage displayImage = new DisplayImage();
+                        displayImage.Image = fileImage;
+
+                        NSMessageHandler.Owner.DisplayImage = displayImage;
+                    }
+                    else
+                    {
+                        string requesturi = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+                        if (requesturi.StartsWith("/"))
                         {
-                            url = "http://blufiles.storage.msn.com" + url;  //I found it http://byfiles.storage.msn.com is also ok
+                            requesturi = "http://blufiles.storage.msn.com" + requesturi;  //I found it http://byfiles.storage.msn.com is also ok
                         }
 
                         // Don't urlencode t= :))
-                        Uri uri = new Uri(url + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2)));
+                        Uri uri = new Uri(requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2)));
 
                         HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
                         fwr.Proxy = WebProxy;
-
-                        Stream stream = fwr.GetResponse().GetResponseStream();
-                        SerializableMemoryStream ms = new SerializableMemoryStream();
-                        byte[] data = new byte[8192];
-                        int read;
-                        while ((read = stream.Read(data, 0, data.Length)) > 0)
+                        fwr.Timeout = 30000;
+                        fwr.BeginGetResponse(delegate(IAsyncResult result)
                         {
-                            ms.Write(data, 0, read);
-                        }
-                        stream.Close();
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+                            try
+                            {
+                                Stream stream = ((WebRequest)result.AsyncState).EndGetResponse(result).GetResponseStream();
+                                SerializableMemoryStream ms = new SerializableMemoryStream();
+                                byte[] data = new byte[8192];
+                                int read;
+                                while ((read = stream.Read(data, 0, data.Length)) > 0)
+                                {
+                                    ms.Write(data, 0, read);
+                                }
+                                stream.Close();
+
+                                NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
+                                NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
+                                NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+                                NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+
+                                System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
+                                DisplayImage displayImage = new DisplayImage();
+                                displayImage.Image = fileImage;
+
+                                NSMessageHandler.Owner.DisplayImage = displayImage;
+                            }
+                            catch (Exception ex)
+                            {
+                                if (ex is ThreadAbortException)
+                                    return;
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "DisplayImage error: " + ex.Message, GetType().Name);
+                            }
+
+                        }, fwr);
                     }
-
-                    System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
-                    DisplayImage displayImage = new DisplayImage();
-                    displayImage.Image = fileImage;
-
-                    NSMessageHandler.Owner.DisplayImage = displayImage;
                 }
             }
             catch (Exception ex)

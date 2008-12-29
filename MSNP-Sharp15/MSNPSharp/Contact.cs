@@ -177,6 +177,7 @@ namespace MSNPSharp
 
         public event EventHandler<EventArgs> ScreenNameChanged;
         public event EventHandler<EventArgs> PersonalMessageChanged;
+        public event EventHandler<EventArgs> DisplayImageChanged;
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
         public event EventHandler<EventArgs> ContactBlocked;
@@ -688,7 +689,15 @@ namespace MSNPSharp
 
         internal void SetUserDisplay(DisplayImage userDisplay)
         {
-            displayImage = userDisplay;
+            if (displayImage != userDisplay)
+            {
+                displayImage = userDisplay;
+
+                if (DisplayImageChanged != null)
+                {
+                    DisplayImageChanged(this, EventArgs.Empty);
+                }
+            }
         }
 
         internal void SetWorkPhone(string number)
