@@ -40,7 +40,7 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
 
-    [Serializable()]
+    [Serializable]
     public class Owner : Contact
     {
         bool passportVerified;
@@ -52,13 +52,13 @@ namespace MSNPSharp
 
         private void CreateDefaultDisplayImage()
         {
-            if (DisplayImage != null)
-                return;
-
-            System.Drawing.Image pngImage = Properties.Resources.owner;
-            DisplayImage image = new DisplayImage(Mail);
-            image.Image = pngImage;
-            DisplayImage = image;
+            if (DisplayImage == null)
+            {
+                System.Drawing.Image pngImage = Properties.Resources.owner;
+                DisplayImage image = new DisplayImage(Mail);
+                image.Image = pngImage;
+                DisplayImage = image;
+            }
         }
 
         internal void SetPassportVerified(bool verified)
@@ -90,25 +90,26 @@ namespace MSNPSharp
             }
             set
             {
-                if (value == null)
-                    return;
-
-                if (base.DisplayImage != null)
+                if (value != null)
                 {
-                    if (value == base.DisplayImage)
+                    if (base.DisplayImage != null)
                     {
-                        return;
+                        if (value == base.DisplayImage)
+                        {
+                            return;
+                        }
+
+                        MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
                     }
 
-                    MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
+                    SetUserDisplay(value);
+
+                    value.Creator = Mail;
+
+                    MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
+
+                    BroadcastDisplayImage();
                 }
-                SetUserDisplay(value);
-
-                value.Creator = Mail;
-
-                MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
-
-                BroadcastDisplayImage();
             }
         }
 
@@ -124,6 +125,7 @@ namespace MSNPSharp
                 {
                     NSMessageHandler.SetPersonalMessage(value);
                 }
+
                 if (value != null)
                     base.SetPersonalMessage(value);
             }
@@ -307,7 +309,10 @@ namespace MSNPSharp
         /// </summary>
         public bool MPOPEnable
         {
-            get { return mpopEnabled; }
+            get
+            {
+                return mpopEnabled;
+            }
         }
 
 
@@ -330,7 +335,7 @@ namespace MSNPSharp
                     {
                         if (NSMessageHandler.ContactService.AddressBook != null)
                         {
-                            if(NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey("mpop"))
+                            if (NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey("mpop"))
                                 mpopMode = NSMessageHandler.ContactService.AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
 
                         }
@@ -346,7 +351,7 @@ namespace MSNPSharp
                 {
                     mpopMode = value;
                     NSMessageHandler.ContactService.UpdateMe();
-                    
+
                 }
             }
         }
@@ -383,12 +388,11 @@ namespace MSNPSharp
             }
         }
 
-        string nickName;
-        public string NickName
+        new public string NickName
         {
             get
             {
-                return nickName;
+                return base.NickName;
             }
         }
 
@@ -698,12 +702,11 @@ namespace MSNPSharp
             MSPAuth = mspAuth;
             ClientIP = clientIP;
             ClientPort = clientPort;
-            nickName = nick;
 #if MSNP16
             mpopEnabled = mpop;
             _routeInfo = routeInfo;
 #endif
-
+            SetNickName(nick);
             validProfile = true;
 
             OnProfileReceived(EventArgs.Empty);
@@ -713,7 +716,7 @@ namespace MSNPSharp
         /// Called when the server has send a profile description.
         /// </summary>
         /// <param name="e"></param>
-        protected internal virtual void OnProfileReceived(EventArgs e)
+        protected virtual void OnProfileReceived(EventArgs e)
         {
             if (ProfileReceived != null)
                 ProfileReceived(this, e);

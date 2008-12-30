@@ -522,18 +522,6 @@ namespace MSNPSharpClient
                     }
                     _nudgequene.Clear();
                 }
-
-                if (_emotionqueue.Count > 0)
-                {
-                    foreach (ArrayList emolist in _emotionqueue)
-                    {
-                        Conversation.Switchboard.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
-                        TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + ((Emoticon)emolist[0]).Shortcut);
-                        Conversation.Switchboard.SendTextMessage(emotxt);
-                        DisplaySystemMessage("* You send a custom emoticon with text message: Hey, this is a custom emoticon: [Emoticon].");
-                    }
-                    _emotionqueue.Clear();
-                }
             }
         }
 
@@ -594,12 +582,12 @@ namespace MSNPSharpClient
             Properties.Resources.inner_emoticon.Save(mem, ImageFormat.Png);
             Emoticon emotest = new Emoticon(_clientform.Messenger.Owner.Mail, mem, "0", "test_emoicon");
             MSNObjectCatalog.GetInstance().Add(emotest);
-            ArrayList emolist = new ArrayList();
+            List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
 
             if (ReInvite() == 1)
             {
-                _emotionqueue.Add(emolist);
+                //_emotionqueue.Add(emolist);
                 return;
             }
             else if (ReInvite() == -1)

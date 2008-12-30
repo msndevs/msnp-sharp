@@ -34,6 +34,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
@@ -129,42 +130,50 @@ namespace MSNPSharp
     [Serializable()]
     public class Contact
     {
-        long? cID;
-        Guid guid;
-        string mail;
-        string name;
-        string homePhone;
-        string workPhone;
-        string mobilePhone;
-        ulong oimcount = 1;
+        #region Fields
 
-        bool hasBlog;
-        bool isMessengerUser;
-        DynamicItemState dynamicChanged = DynamicItemState.None;
-        string comment = string.Empty;
+        private Guid guid;
+        private long? cid;
+        private string mail;
+        private string name;
+        private string nickName;
 
-        ClientType clienttype = ClientType.PassportMember;
-        contactInfoTypeContactType? contactType = null;
+        private string homePhone;
+        private string workPhone;
+        private string mobilePhone;
+
+        private bool hasBlog;
+        private bool mobileDevice;
+        private bool mobileAccess;
+        private bool isMessengerUser;
+
+        private ClientCapacities clientCapacities = ClientCapacities.None;
+        private DynamicItemState dynamicChanged = DynamicItemState.None;
+        private PresenceStatus status = PresenceStatus.Offline;
+        private ClientType clientType = ClientType.PassportMember;
+        private contactInfoTypeContactType? contactType;
+
+        private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
+        private MSNLists lists = MSNLists.None;
+
+        private DisplayImage displayImage;
+        private PersonalMessage personalMessage;
+        private string comment = string.Empty;
+
+        private Dictionary<string, Emoticon> emoticons = new Dictionary<string, Emoticon>(0);
+        private ulong oimCount = 1;
+        private object clientData;
 
         [NonSerialized]
-        NSMessageHandler nsMessageHandler;
+        private NSMessageHandler nsMessageHandler;
 
-        ArrayList contactGroups = new ArrayList();
-        MSNLists lists = MSNLists.None;
-        PresenceStatus status = PresenceStatus.Offline;
+        #endregion
 
-        DisplayImage displayImage;
+        protected Contact()
+        {
+        }
 
-        PersonalMessage personalMessage;
-
-        Hashtable emoticons;
-
-        ClientCapacities clientCapacities;
-
-        bool mobileDevice;
-        bool mobileAccess;
-
-        object clientData;
+        #region Events
 
         public event EventHandler<EventArgs> ScreenNameChanged;
         public event EventHandler<EventArgs> PersonalMessageChanged;
@@ -176,24 +185,57 @@ namespace MSNPSharp
         public event EventHandler<StatusChangeEventArgs> ContactOffline;
         public event EventHandler<StatusChangeEventArgs> StatusChanged;
 
+        #endregion
 
-        protected Contact()
-        {
-        }
+        #region Contact Properties
 
-        public bool MobileDevice
+        public NSMessageHandler NSMessageHandler
         {
             get
             {
-                return mobileDevice;
+                return nsMessageHandler;
+            }
+            set
+            {
+                nsMessageHandler = value;
             }
         }
 
-        public bool MobileAccess
+        /// <summary>
+        /// The Guid of contact, NOT CID.
+        /// </summary>
+        public Guid Guid
         {
             get
             {
-                return mobileAccess;
+                return guid;
+            }
+        }
+
+        /// <summary>
+        /// The contact id of contact, PassportMembers have CID only.
+        /// </summary>
+        public long? CID
+        {
+            get
+            {
+                return cid;
+            }
+        }
+
+        public string Mail
+        {
+            get
+            {
+                return mail;
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return name;
             }
         }
 
@@ -221,6 +263,30 @@ namespace MSNPSharp
             }
         }
 
+        public bool MobileDevice
+        {
+            get
+            {
+                return mobileDevice;
+            }
+        }
+
+        public bool MobileAccess
+        {
+            get
+            {
+                return mobileAccess;
+            }
+        }
+
+        public bool HasBlog
+        {
+            get
+            {
+                return hasBlog;
+            }
+        }
+
         public ClientCapacities ClientCapacities
         {
             get
@@ -230,88 +296,22 @@ namespace MSNPSharp
             set
             {
                 clientCapacities = value;
-            }
-        }
 
-        public string Mail
-        {
-            get
-            {
-                return mail;
-            }
-        }
-
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-        }
-
-        /// <summary>
-        /// The amount of OIMs sent in a session.
-        /// </summary>
-        internal ulong OIMCount
-        {
-            get
-            {
-                return oimcount;
-            }
-
-            set
-            {
-                if (value < 1)
+                if ((clientCapacities & ClientCapacities.HasMSNSpaces) == ClientCapacities.HasMSNSpaces)
                 {
-                    value = 1;
+                    SetHasBlog(true);
                 }
-                oimcount = value;
-            }
-        }
-
-        public ClientType ClientType
-        {
-            get
-            {
-                return clienttype;
-            }
-        }
-
-        public contactInfoTypeContactType? ContactType
-        {
-            get
-            {
-                return contactType;
-            }
-        }
-
-        public PersonalMessage PersonalMessage
-        {
-            get
-            {
-                return personalMessage;
             }
         }
 
         /// <summary>
-        /// The Guid of contact, NOT CID.
+        /// When DynamicChanged = HasNew, the official client will show a gleam before the contact.
         /// </summary>
-        public Guid Guid
+        public DynamicItemState DynamicChanged
         {
             get
             {
-                return guid;
-            }
-        }
-
-        /// <summary>
-        /// The contact id of contact, PassportMembers have CID only.
-        /// </summary>
-        public long? CID
-        {
-            get
-            {
-                return cID;
+                return dynamicChanged;
             }
         }
 
@@ -331,31 +331,27 @@ namespace MSNPSharp
             }
         }
 
-        public bool HasBlog
+        public ClientType ClientType
         {
             get
             {
-                return hasBlog;
+                return clientType;
             }
         }
 
-        public string Hash
-        {
-            get 
-            { 
-                return MakeHash(Mail, clienttype); 
-            }
-        }
-
-        public NSMessageHandler NSMessageHandler
+        public contactInfoTypeContactType? ContactType
         {
             get
             {
-                return nsMessageHandler;
+                return contactType;
             }
-            set
+        }
+
+        public List<ContactGroup> ContactGroups
+        {
+            get
             {
-                nsMessageHandler = value;
+                return contactGroups;
             }
         }
 
@@ -367,14 +363,27 @@ namespace MSNPSharp
             }
         }
 
-        public Hashtable Emoticons
+        public PersonalMessage PersonalMessage
         {
             get
             {
-                if (emoticons == null)
-                    emoticons = new Hashtable();
+                return personalMessage;
+            }
+        }
 
+        public Dictionary<string, Emoticon> Emoticons
+        {
+            get
+            {
                 return emoticons;
+            }
+        }
+
+        public string Hash
+        {
+            get
+            {
+                return MakeHash(Mail, ClientType);
             }
         }
 
@@ -406,11 +415,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        if (AutoSubscribeToUpdates)
-                            return;
-
-                        contactType = contactInfoTypeContactType.LivePending;
-                        NSMessageHandler.ContactService.UpdateContact(this);
+                        if (!AutoSubscribeToUpdates)
+                        {
+                            contactType = contactInfoTypeContactType.LivePending;
+                            NSMessageHandler.ContactService.UpdateContact(this);
+                        }
                     }
                     else
                     {
@@ -435,13 +444,10 @@ namespace MSNPSharp
             }
             set
             {
-                if (NSMessageHandler != null && Guid != Guid.Empty)
+                if (NSMessageHandler != null && Guid != Guid.Empty && IsMessengerUser != value)
                 {
-                    if (IsMessengerUser != value)
-                    {
-                        isMessengerUser = value;
-                        NSMessageHandler.ContactService.UpdateContact(this);
-                    }
+                    isMessengerUser = value;
+                    NSMessageHandler.ContactService.UpdateContact(this);
                 }
             }
         }
@@ -454,277 +460,65 @@ namespace MSNPSharp
             }
             set
             {
-                if (NSMessageHandler != null && Guid != Guid.Empty)
+                if (NSMessageHandler != null && Guid != Guid.Empty && Comment != value)
                 {
-                    if (Comment != value)
-                    {
-                        comment = value;
-                        NSMessageHandler.ContactService.UpdateContact(this);
-                    }
+                    comment = value;
+                    NSMessageHandler.ContactService.UpdateContact(this);
                 }
             }
         }
 
-        /// <summary>
-        /// When DynamicChanged = true, the official client will show a gleam before the contact.
-        /// </summary>
-        public DynamicItemState DynamicChanged
+        public string NickName
         {
             get
             {
-                return dynamicChanged;
+                return nickName;
             }
-        }
-
-
-        #region Internal setters
-
-        internal void SetContactType(contactInfoTypeContactType ct)
-        {
-            contactType = ct;
-        }
-
-        internal void SetName(string newName)
-        {
-            if (name != newName)
+            set
             {
-                name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);
-                if (ScreenNameChanged != null)
+                if (NSMessageHandler != null && Guid != Guid.Empty && NickName != value)
                 {
-                    // notify the user we changed our name
-                    ScreenNameChanged(this, new EventArgs());
+                    nickName = value;
+                    NSMessageHandler.ContactService.UpdateContact(this);
                 }
             }
         }
 
-        internal void SetPersonalMessage(PersonalMessage newpmessage)
+
+        /// <summary>
+        /// The amount of OIMs sent in a session.
+        /// </summary>
+        internal ulong OIMCount
         {
-            if (personalMessage != newpmessage)
+            get
             {
-                personalMessage = newpmessage;
-                if (PersonalMessageChanged != null)
+                return oimCount;
+            }
+            set
+            {
+                if (value < 1)
                 {
-                    // notify the user we changed our display message
-                    PersonalMessageChanged(this, new EventArgs());
+                    value = 1;
                 }
+                oimCount = value;
             }
-        }
-
-        internal void SetHasBlog(bool hasblog)
-        {
-            this.hasBlog = hasblog;
-        }
-
-        internal void SetGuid(Guid guid)
-        {
-            this.guid = guid;
-        }
-
-        internal void SetCID(long? cid)
-        {
-            this.cID = cid;
-        }
-
-        internal void SetLists(MSNLists lists)
-        {
-            this.lists = lists;
-        }
-
-        internal void SetMobileDevice(bool enabled)
-        {
-            mobileDevice = enabled;
-        }
-
-        internal void SetMobileAccess(bool enabled)
-        {
-            mobileAccess = enabled;
-        }
-
-        internal void SetHomePhone(string number)
-        {
-            homePhone = number;
-        }
-
-        internal void SetMobilePhone(string number)
-        {
-            mobilePhone = number;
-        }
-
-        internal void SetWorkPhone(string number)
-        {
-            workPhone = number;
-        }
-
-        internal void SetStatus(PresenceStatus newStatus)
-        {
-            if (status != newStatus)
-            {
-                PresenceStatus oldStatus = this.status;
-                status = newStatus;
-
-                // raise an event									
-                if (StatusChanged != null)
-                    StatusChanged(this, new StatusChangeEventArgs(oldStatus));
-
-                // raise the online/offline events
-                if (oldStatus == PresenceStatus.Offline && ContactOnline != null)
-                    ContactOnline(this, new EventArgs());
-
-                if (newStatus == PresenceStatus.Offline && ContactOffline != null)
-                    ContactOffline(this, new StatusChangeEventArgs(oldStatus));
-            }
-        }
-
-        internal void AddContactToGroup(ContactGroup group)
-        {
-            if (contactGroups.Contains(group))
-                return;
-
-            contactGroups.Add(group);
-
-            if (ContactGroupAdded != null)
-                ContactGroupAdded(this, new ContactGroupEventArgs(group));
-        }
-
-        internal void RemoveContactFromGroup(ContactGroup group)
-        {
-            if (contactGroups.Contains(group))
-            {
-                contactGroups.Remove(group);
-
-                if (ContactGroupRemoved != null)
-                    ContactGroupRemoved(this, new ContactGroupEventArgs(group));
-            }
-        }
-
-        internal void AddToList(MSNLists list)
-        {
-            if (list == MSNLists.BlockedList && !Blocked)
-            {
-                lists |= MSNLists.BlockedList;
-                if (ContactBlocked != null)
-                    ContactBlocked(this, new EventArgs());
-
-            }
-            else
-            {
-                lists |= list;
-            }
-        }
-
-        internal void RemoveFromList(MSNLists list)
-        {
-            if (list == MSNLists.BlockedList && Blocked)
-            {
-                lists ^= MSNLists.BlockedList;
-                if (ContactUnBlocked != null)
-                    ContactUnBlocked(this, new EventArgs());
-            }
-            else
-            {
-                lists ^= list;
-
-                // set this contact to offline when it is neither on the allow list or on the forward list
-                if (OnForwardList == false && OnAllowedList == false)
-                {
-                    status = PresenceStatus.Offline;
-                    //also clear the groups, becase msn loose them when removed from the two lists
-                    contactGroups.Clear();
-                }
-            }
-        }
-
-        internal void SetMail(string account)
-        {
-            mail = account;
-        }
-
-        internal void SetUserDisplay(DisplayImage userDisplay)
-        {
-            displayImage = userDisplay;
-        }
-
-        internal void RemoveFromList()
-        {
-            if (NSMessageHandler != null)
-            {
-                this.OnAllowedList = false;
-                this.OnForwardList = false;
-            }
-        }
-
-        internal void SetClientType(ClientType type)
-        {
-            clienttype = type;
-        }
-
-        internal void SetIsMessengerUser(bool isMessengerEnabled)
-        {
-            isMessengerUser = isMessengerEnabled;
-        }
-
-        internal void SetComment(string note)
-        {
-            comment = note;
-        }
-
-        internal void SetdynamicItemChanged(DynamicItemState changed)
-        {
-            dynamicChanged = changed;
-            if (mail != null && changed == DynamicItemState.None)
-            {
-                nsMessageHandler.ContactService.Deltas.DynamicItems.Remove(mail);
-            }
-        }
-
-        internal static string MakeHash(string account, ClientType type)
-        {
-            return account.ToLowerInvariant() + ":" + type.ToString();
         }
 
         #endregion
 
-        #region Public setters
-
-        public ArrayList ContactGroups
-        {
-            get
-            {
-                return contactGroups;
-            }
-        }
-
-        public bool HasGroup(ContactGroup group)
-        {
-            return contactGroups.Contains(group);
-        }
-
-        internal bool HasLists(MSNLists msnlists)
-        {
-            return ((lists & msnlists) == msnlists);
-        }
-
-        public void UpdateScreenName()
-        {
-            if (NSMessageHandler != null)
-            {
-                NSMessageHandler.RequestScreenName(this);
-            }
-            else
-                throw new MSNPSharpException("No valid message handler object");
-        }
+        #region List Properties
 
         public bool Blocked
         {
             get
             {
-                return (lists & MSNLists.BlockedList) > 0;
+                return (lists & MSNLists.BlockedList) == MSNLists.BlockedList;
             }
             set
             {
                 if (NSMessageHandler != null)
                 {
-                    if (value == true)
+                    if (value)
                         NSMessageHandler.ContactService.BlockContact(this);
                     else
                         NSMessageHandler.ContactService.UnBlockContact(this);
@@ -815,10 +609,256 @@ namespace MSNPSharp
 
         #endregion
 
-        public static bool operator == (Contact contact1, Contact contact2)
+        #region Internal setters
+
+        internal void SetdynamicItemChanged(DynamicItemState changed)
         {
-            if (((object)contact1) == null && ((object)contact2) == null) return true;
-            if (((object)contact1) == null || ((object)contact2) == null) return false;
+            dynamicChanged = changed;
+
+            if (mail != null && changed == DynamicItemState.None)
+            {
+                nsMessageHandler.ContactService.Deltas.DynamicItems.Remove(mail);
+            }
+        }
+
+        internal void SetGuid(Guid guid)
+        {
+            this.guid = guid;
+        }
+
+        internal void SetCID(long? cid)
+        {
+            this.cid = cid;
+        }
+
+        internal void SetClientType(ClientType type)
+        {
+            clientType = type;
+        }
+
+        internal void SetComment(string note)
+        {
+            comment = note;
+        }
+
+        internal void SetContactType(contactInfoTypeContactType ct)
+        {
+            contactType = ct;
+        }
+
+        internal void SetHasBlog(bool hasblog)
+        {
+            this.hasBlog = hasblog;
+        }
+
+        internal void SetHomePhone(string number)
+        {
+            homePhone = number;
+        }
+
+        internal void SetIsMessengerUser(bool isMessengerEnabled)
+        {
+            isMessengerUser = isMessengerEnabled;
+        }
+
+        internal void SetLists(MSNLists lists)
+        {
+            this.lists = lists;
+        }
+
+        internal void SetMail(string account)
+        {
+            mail = account;
+        }
+
+        internal void SetMobileAccess(bool enabled)
+        {
+            mobileAccess = enabled;
+        }
+
+        internal void SetMobileDevice(bool enabled)
+        {
+            mobileDevice = enabled;
+        }
+
+        internal void SetMobilePhone(string number)
+        {
+            mobilePhone = number;
+        }
+
+        internal void SetUserDisplay(DisplayImage userDisplay)
+        {
+            displayImage = userDisplay;
+        }
+
+        internal void SetWorkPhone(string number)
+        {
+            workPhone = number;
+        }
+
+        internal void SetName(string newName)
+        {
+            if (name != newName)
+            {
+                name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);
+
+                if (ScreenNameChanged != null)
+                {
+                    // notify the user we changed our name
+                    ScreenNameChanged(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        internal void SetNickName(string newNick)
+        {
+            nickName = newNick;
+        }
+
+        internal void SetPersonalMessage(PersonalMessage newpmessage)
+        {
+            if (personalMessage != newpmessage)
+            {
+                personalMessage = newpmessage;
+
+                if (PersonalMessageChanged != null)
+                {
+                    // notify the user we changed our display message
+                    PersonalMessageChanged(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        internal void SetStatus(PresenceStatus newStatus)
+        {
+            if (status != newStatus)
+            {
+                PresenceStatus oldStatus = status;
+                status = newStatus;
+
+                // raise an event									
+                if (StatusChanged != null)
+                    StatusChanged(this, new StatusChangeEventArgs(oldStatus));
+
+                // raise the online/offline events
+                if (oldStatus == PresenceStatus.Offline && ContactOnline != null)
+                    ContactOnline(this, EventArgs.Empty);
+
+                if (newStatus == PresenceStatus.Offline && ContactOffline != null)
+                    ContactOffline(this, new StatusChangeEventArgs(oldStatus));
+            }
+        }
+
+        #endregion
+
+        #region Internal contact operations
+
+        internal void AddContactToGroup(ContactGroup group)
+        {
+            if (!contactGroups.Contains(group))
+            {
+                contactGroups.Add(group);
+
+                if (ContactGroupAdded != null)
+                    ContactGroupAdded(this, new ContactGroupEventArgs(group));
+            }
+        }
+
+        internal void RemoveContactFromGroup(ContactGroup group)
+        {
+            if (contactGroups.Contains(group))
+            {
+                contactGroups.Remove(group);
+
+                if (ContactGroupRemoved != null)
+                    ContactGroupRemoved(this, new ContactGroupEventArgs(group));
+            }
+        }
+
+        internal void AddToList(MSNLists list)
+        {
+            if (list == MSNLists.BlockedList && !Blocked)
+            {
+                lists |= MSNLists.BlockedList;
+
+                if (ContactBlocked != null)
+                    ContactBlocked(this, new EventArgs());
+            }
+            else
+            {
+                lists |= list;
+            }
+        }
+
+        internal void RemoveFromList(MSNLists list)
+        {
+            if (list == MSNLists.BlockedList && Blocked)
+            {
+                lists ^= MSNLists.BlockedList;
+
+                if (ContactUnBlocked != null)
+                    ContactUnBlocked(this, EventArgs.Empty);
+            }
+            else
+            {
+                lists ^= list;
+
+                // set this contact to offline when it is neither on the allow list or on the forward list
+                if (!(OnForwardList || OnAllowedList))
+                {
+                    status = PresenceStatus.Offline;
+                    //also clear the groups, becase msn loose them when removed from the two lists
+                    contactGroups.Clear();
+                }
+            }
+        }
+
+        internal void RemoveFromList()
+        {
+            if (NSMessageHandler != null)
+            {
+                OnAllowedList = false;
+                OnForwardList = false;
+            }
+        }
+
+        internal static string MakeHash(string account, ClientType type)
+        {
+            return account.ToLowerInvariant() + ":" + type.ToString();
+        }
+
+        internal bool HasLists(MSNLists msnlists)
+        {
+            return ((lists & msnlists) == msnlists);
+        }
+
+
+        #endregion
+
+        public bool HasGroup(ContactGroup group)
+        {
+            return contactGroups.Contains(group);
+        }
+
+        public void UpdateScreenName()
+        {
+            if (NSMessageHandler == null)
+                throw new MSNPSharpException("No valid message handler object");
+
+            NSMessageHandler.RequestScreenName(this);
+        }
+
+        public override int GetHashCode()
+        {
+            return Hash.GetHashCode();
+        }
+
+        public static bool operator ==(Contact contact1, Contact contact2)
+        {
+            if (((object)contact1) == null && ((object)contact2) == null)
+                return true;
+            if (((object)contact1) == null || ((object)contact2) == null)
+                return false;
             return contact1.GetHashCode() == contact2.GetHashCode();
         }
 
@@ -831,15 +871,11 @@ namespace MSNPSharp
         {
             if (obj == null || obj.GetType() != GetType())
                 return false;
+
             if (ReferenceEquals(this, obj))
                 return true;
+
             return obj.GetHashCode() == GetHashCode();
-        }
-
-
-        public override int GetHashCode()
-        {
-            return MakeHash(Mail, ClientType).GetHashCode();
         }
     }
 };

@@ -65,7 +65,8 @@ namespace MSNPSharp
         public MSNObjectDataTransferCompletedEventArgs(MSNObject clientdata,bool abort)
         {
             if (clientdata == null)
-                throw new NullReferenceException();
+                throw new ArgumentNullException("clientdata");
+
             clientData = clientdata;
             aborted = abort;
         }
@@ -272,6 +273,8 @@ namespace MSNPSharp
         {
             Invite(contact.Mail, contact.ClientType);
         }
+
+
 
         #endregion
 

@@ -99,24 +99,7 @@ namespace MSNPSharp.IO
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
                             contact.SetCID(cid);
                             contact.NSMessageHandler = NSMessageHandler;
-
-                            MSNLists newlists = GetMSNLists(ServiceFilterType.Messenger, account, type);
-
-                            // Set new lists.
-                            contact.SetLists(newlists);
-                        }
-                    }
-                }
-
-                if (MembershipList[msngrService].ContainsKey(MemberRole.Reverse))
-                {
-                    foreach (Contact contact in NSMessageHandler.ContactList.All)
-                    {
-                        // Fire ReverseRemoved, Don't trust NSMessageHandler.OnRMLReceived, not fired everytime.
-                        if (MembershipList[msngrService][MemberRole.Reverse].ContainsKey(Contact.MakeHash(contact.Mail, contact.ClientType))
-                            && (!contact.OnReverseList))
-                        {
-                            NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
+                            contact.SetLists(GetMSNLists(ServiceFilterType.Messenger, account, type));
                         }
                     }
                 }
@@ -687,7 +670,8 @@ namespace MSNPSharp.IO
                                 {
                                     if (xmlcl.NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
                                     {
-                                        xmlcl.NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = notifydata.LastChanged.ToString();
+                                        xmlcl.NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] =
+                                            XmlConvert.ToString(notifydata.LastChanged, "yyyy-MM-ddTHH:mm:ssZ");
                                     }
                                 }
                             }
@@ -713,7 +697,7 @@ namespace MSNPSharp.IO
                 type = ClientType.EmailMember;
                 account = cit.emails[0].email;
                 ismessengeruser |= cit.emails[0].isMessengerEnabled;
-                displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
+                displayname = account;
             }
 
             if (cit.phones != null && account == null)
@@ -771,10 +755,11 @@ namespace MSNPSharp.IO
                     {
                         foreach (Annotation anno in cit.annotations)
                         {
-                            if (anno.Name == "AB.NickName" && anno.Value != null)
+                            switch (anno.Name)
                             {
-                                displayname = anno.Value;
-                                break;
+                                case "AB.NickName":
+                                    contact.SetNickName(anno.Value);
+                                    break;
                             }
                         }
                     }
@@ -805,7 +790,9 @@ namespace MSNPSharp.IO
                     NSMessageHandler.Owner.SetGuid(new Guid(contactType.contactId));
                     NSMessageHandler.Owner.SetCID(Convert.ToInt64(cit.CID));
                     NSMessageHandler.Owner.SetContactType(cit.contactType);
-                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayname;
+                    NSMessageHandler.Owner.SetName(displayname);
+
+                    //NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayname;
 
                     if (null != cit.annotations)
                     {
@@ -834,7 +821,7 @@ namespace MSNPSharp.IO
                         MyProperties["roamliveproperties"] = "1";
 
                     if (!MyProperties.ContainsKey("lastchanged"))
-                        MyProperties["lastchanged"] = DateTime.MinValue.ToString();
+                        MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ssZ");
                 }
             }
         }

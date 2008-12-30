@@ -561,7 +561,7 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]) > NSMessageHandler.ContactService.Deltas.Profile.DateModified)
+                NSMessageHandler.ContactService.Deltas.Profile.DateModified < Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
             {
                 return GetProfileImpl("Initial");
             }

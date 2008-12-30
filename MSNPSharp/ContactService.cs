@@ -120,7 +120,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        ///  Fires the <see cref="ReverseAdded"/> event.
+        /// Fires the <see cref="ReverseAdded"/> event.
         /// </summary>
         /// <param name="e"></param>
         internal virtual void OnReverseAdded(ContactEventArgs e)
@@ -392,12 +392,15 @@ namespace MSNPSharp
 
                                         OnSynchronizationCompleted(EventArgs.Empty);
 
-                                        // Fire the ReverseAdded event (pending)
+                                        // Fire the ReverseAdded event (just reverse)
                                         lock (NSMessageHandler.ContactList.SyncRoot)
                                         {
-                                            foreach (Contact pendingContact in NSMessageHandler.ContactList.Pending)
+                                            foreach (Contact contact in NSMessageHandler.ContactList.All)
                                             {
-                                                OnReverseAdded(new ContactEventArgs(pendingContact));
+                                                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                                {
+                                                    NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                                }
                                             }
                                         }
                                     }
@@ -1069,29 +1072,39 @@ namespace MSNPSharp
             }
 
             // DisplayName
-            /*
             if (abContactType.contactInfo.displayName != contact.Name)
             {
                 propertiesChanged.Add("DisplayName");
                 request.contacts[0].contactInfo.displayName = contact.Name;
-            }*/
+            }
 
-            // NickName = AB.NickName, TODO: Implement nickname
-            /*
+            // Annotations
+            List<Annotation> annotationsChanged = new List<Annotation>();
+            Dictionary<string, string> oldAnnotations = new Dictionary<string, string>();
             if (abContactType.contactInfo.annotations != null)
             {
                 foreach (Annotation anno in abContactType.contactInfo.annotations)
                 {
-                    if (anno.Name == "AB.NickName" && anno.Value != contact.NickName)
-                    {
-                        propertiesChanged.Add("Annotation");
-                        request.contacts[0].contactInfo.annotations = new Annotation[] { new Annotation() };
-                        request.contacts[0].contactInfo.annotations[0].Name = "AB.NickName";
-                        request.contacts[0].contactInfo.annotations[0].Value = contact.NickName;
-                        break;
-                    }
+                    oldAnnotations[anno.Name] = anno.Value;
                 }
-            }*/
+            }
+
+            // Annotations: AB.NickName
+            string oldNickName = oldAnnotations.ContainsKey("AB.NickName") ? oldAnnotations["AB.NickName"] : String.Empty;
+            if (oldNickName != contact.NickName)
+            {
+                Annotation anno = new Annotation();
+                anno.Name = "AB.NickName";
+                anno.Value = contact.NickName;
+                annotationsChanged.Add(anno);
+            }
+
+            if (annotationsChanged.Count > 0)
+            {
+                propertiesChanged.Add("Annotation");
+                request.contacts[0].contactInfo.annotations = annotationsChanged.ToArray();
+            }
+
 
             // ClientType changes
             switch (contact.ClientType)
@@ -1246,9 +1259,9 @@ namespace MSNPSharp
 
             PrivacyMode oldPrivacy = AddressBook.MyProperties["blp"] == "1" ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed;
             NotifyPrivacy oldNotify = AddressBook.MyProperties["gtc"] == "1" ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd;
-
             RoamLiveProperty oldRoaming = AddressBook.MyProperties["roamliveproperties"] == "1" ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled;
             List<Annotation> annos = new List<Annotation>();
+            List<string> propertiesChanged = new List<string>();
 
             if (oldPrivacy != owner.Privacy)
             {
@@ -1277,7 +1290,14 @@ namespace MSNPSharp
                 annos.Add(anno);
             }
 
-            if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            if (annos.Count > 0)
+                propertiesChanged.Add("Annotation");
+
+            // DisplayName
+            //if (owner.Name != NSMessageHandler.ContactService.Deltas.Profile.DisplayName)
+            //    propertiesChanged.Add("DisplayName");
+
+            if (propertiesChanged.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 ABServiceBinding abService = CreateABService("PrivacyApply");
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
@@ -1305,8 +1325,9 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo = new contactInfoType();
                 request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.Me;
                 request.contacts[0].contactInfo.contactTypeSpecified = true;
+                //request.contacts[0].contactInfo.displayName = owner.Name;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
-                request.contacts[0].propertiesChanged = "Annotation";
+                request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1632,7 +1653,7 @@ namespace MSNPSharp
                     }
 
                     contact.AddToList(list);
-                    AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), member); 
+                    AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), member);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, list));
 
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
@@ -1649,7 +1670,7 @@ namespace MSNPSharp
                 }
             };
             sharingService.AddMemberAsync(addMemberRequest, new object());
-            
+
         }
 
         #endregion
