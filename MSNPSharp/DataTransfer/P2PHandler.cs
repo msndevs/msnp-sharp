@@ -91,7 +91,6 @@ namespace MSNPSharp.DataTransfer
             {
                 return messageSessions;
             }
-            //set { messageSessions = value;}
         }
 
 
@@ -192,7 +191,8 @@ namespace MSNPSharp.DataTransfer
 
             // no session available, create a new session
             P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
-            MessageSessions.Add(newSession);
+            lock (MessageSessions)
+                MessageSessions.Add(newSession);
 
             // fire event
             OnSessionCreated(newSession);
@@ -361,6 +361,27 @@ namespace MSNPSharp.DataTransfer
                 return;            
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message " + NSMessageHandler.Owner.Mail, GetType().Name);
+            
+            //Clean the MessageSessions, or it will lead to memory leak.
+            if (sbMessage.Command == "BYE")
+            {
+                string account = sbMessage.CommandValues[0].ToString();
+                lock (messageSessions)
+                {
+                    ArrayList list = new ArrayList(messageSessions);
+                    foreach (P2PMessageSession p2psession in list)
+                    {
+                        if (p2psession.RemoteContact == account)
+                        {
+                            messageSessions.Remove(p2psession);
+                            p2psession.CleanUp();
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed : " + p2psession.RemoteContact + ", remain session count: " + messageSessions.Count.ToString());
+                        }
+                    }
+                }
+                return;
+            }
+
 
             if (sbMessage.Command != "MSG")
             {

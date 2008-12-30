@@ -140,6 +140,7 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler;
         protected bool invited;
         private int sessionId;
+        private object syncObject = new object();
 
         private EventHandler<EventArgs> processorConnectedHandler;
         private EventHandler<EventArgs> processorDisconnectedHandler;
@@ -299,6 +300,7 @@ namespace MSNPSharp
         /// <param name="contact">The contact who joined the session.</param>
         protected virtual void OnContactJoined(Contact contact)
         {
+            SetContactState(contact.Mail, ContactConversationState.Joined);
             if (ContactJoined != null)
             {
                 ContactJoined(this, new ContactEventArgs(contact));
@@ -311,6 +313,7 @@ namespace MSNPSharp
         /// <param name="contact">The contact who left the session.</param>
         protected virtual void OnContactLeft(Contact contact)
         {
+            SetContactState(contact.Mail, ContactConversationState.Left);
             if (ContactLeft != null)
             {
                 ContactLeft(this, new ContactEventArgs(contact));
@@ -561,8 +564,12 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnProcessorDisconnectCallback(IMessageProcessor processor)
         {
-            sessionEstablished = false;
-            OnSessionClosed();
+            lock (syncObject)
+            {
+                if (sessionEstablished)
+                    OnSessionClosed();
+                sessionEstablished = false;
+            }
         }
 
         /// <summary>
@@ -585,6 +592,14 @@ namespace MSNPSharp
         private void SB11MessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
         {
             OnProcessorDisconnectCallback((IMessageProcessor)sender);
+        }
+
+        private void SetContactState(string account, ContactConversationState state)
+        {
+            lock (contacts)
+            {
+                contacts[account] = state;
+            }
         }
 
         #region Protected helper methods
@@ -629,9 +644,11 @@ namespace MSNPSharp
         /// <param name="contact">The contact's account to invite.</param>
         public virtual void Invite(string contact)
         {
-            if (Contacts.Contains(contact))
+            if (Contacts.ContainsKey(contact))
+            {
                 return;
-
+            }
+            SetContactState(contact, ContactConversationState.Invited);
             invitationQueue.Enqueue(contact);
             ProcessInvitations();
         }
@@ -741,7 +758,11 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
             msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail;
+#if MSNP16
+            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail + "\r\n";
+#else
+            msgMessage.MimeHeader["TypingUser"] += NSMessageHandler.Owner.Mail;
+#endif
 
             sbMessage.InnerMessage = msgMessage;
 
@@ -757,7 +778,11 @@ namespace MSNPSharp
             SBMessage sbMessage = new SBMessage();
 
             MSGMessage msgMessage = new MSGMessage();
+#if MSNP16
+            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
+#else
             msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
+#endif
             sbMessage.InnerMessage = msgMessage;
 
             // send it over the network
@@ -995,10 +1020,6 @@ namespace MSNPSharp
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
             //contact.SetName(message.CommandValues[1].ToString());
 
-
-            if (Contacts.Contains(contact.Mail) == false)
-                Contacts.Add(contact.Mail, contact);
-
             // notify the client programmer
             OnContactJoined(contact);
 
@@ -1010,16 +1031,35 @@ namespace MSNPSharp
         /// <remarks>
         /// Indicates that a remote contact has leaved the session.
         /// This will fire the <see cref="ContactLeft"/> event. Or, if all contacts have left, the <see cref="AllContactsLeft"/> event.
-        /// <code>BYE [account]</code>
+        /// <code>BYE [account];[Machine GUID] [Client Type]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnBYEReceived(SBMessage message)
         {
-            if (Contacts.ContainsKey(message.CommandValues[0].ToString()))
+            string account = string.Empty;
+#if MSNP16
+            account = message.CommandValues[0].ToString().Split(';')[0];
+#else
+            account = message.CommandValues[0].ToString();
+#endif
+            if (Contacts.ContainsKey(account))
             {
                 // get the contact and update it's name
-                Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
-                Contacts.Remove(contact.Mail);
+#if MSNP16
+                Contact contact = null;
+                if (message.CommandValues.Count >= 2)
+                {
+                    contact = NSMessageHandler.ContactList.GetContact(account, (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString()));
+                }
+                else
+                {
+                    contact = NSMessageHandler.ContactList.GetContact(account);
+                }
+                if (contact == null)
+                    return;
+#else
+                Contact contact = NSMessageHandler.ContactList.GetContact(account);
+#endif
 
                 // notify the client programmer
                 OnContactLeft(contact);
@@ -1047,9 +1087,6 @@ namespace MSNPSharp
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString());
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[4].ToString());
-
-            if (Contacts.Contains(contact.Mail) == false)
-                Contacts.Add(contact.Mail, contact);
 
             // notify the client programmer
             OnContactJoined(contact);

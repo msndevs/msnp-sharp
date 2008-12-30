@@ -122,7 +122,8 @@ namespace MSNPSharp
             OnContactLeft(NSMessageHandler.ContactList[(string)(ienum.Current), ClientType.EmailMember]);
             OnSessionClosed();
             NSMessageHandler.MessageProcessor.UnregisterHandler(this);
-            NSMessageHandler.SwitchBoards.Remove(this);
+            lock (NSMessageHandler.SwitchBoards)
+                NSMessageHandler.SwitchBoards.Remove(this);
 
         }
 

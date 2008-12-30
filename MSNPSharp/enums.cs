@@ -245,6 +245,27 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
+    /// </summary>
+    public enum MPOP
+    {
+        /// <summary>
+        /// Unspecified
+        /// </summary>
+        Unspecified,
+
+        /// <summary>
+        /// When the same user sign in at another place, sign the owner out.
+        /// </summary>
+        AutoLogoff,
+
+        /// <summary>
+        /// When the same user sign in at another place, keep the owner sign in.
+        /// </summary>
+        KeepOnline
+    }
+
+    /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
     [FlagsAttribute]
@@ -734,5 +755,54 @@ namespace MSNPSharp
         /// Emoticon that will display as a animation.
         /// </summary>
         AnimEmoticon
+    }
+
+
+    /// <summary>
+    /// The state of contact in a conversation.
+    /// </summary>
+    public enum ContactConversationState
+    {
+        None,
+        /// <summary>
+        /// The contact is invited, but not join in yet.
+        /// </summary>
+        Invited,
+        /// <summary>
+        /// The contact is in the conversation.
+        /// </summary>
+        Joined,
+        /// <summary>
+        /// The contact has left the conversation.
+        /// </summary>
+        Left
+    }
+
+    /// <summary>
+    /// Types of different conversations.
+    /// </summary>
+    [Flags]
+    public enum ConversationType : long
+    {
+        /// <summary>
+        /// Unspecified
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// MSN user conversation.
+        /// </summary>
+        SwitchBoard = 1,
+        /// <summary>
+        /// Yahoo Messenger conversation
+        /// </summary>
+        YIM = 2,
+        /// <summary>
+        /// A conversation that contains more than 2 users.
+        /// </summary>
+        MutipleUsers = 4,
+        /// <summary>
+        /// A conversation use for chatting.
+        /// </summary>
+        Chat = 8
     }
 };

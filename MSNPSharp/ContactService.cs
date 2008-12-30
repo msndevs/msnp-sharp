@@ -305,6 +305,7 @@ namespace MSNPSharp
             NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
             NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
             NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+            NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
 
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
             AddressBook.Save(); // The first and the last AddressBook.Save()
@@ -1178,6 +1179,66 @@ namespace MSNPSharp
 
         internal void UpdateMe()
         {
+            UpdatePrivacySettings();
+#if MSNP16
+            UpdateGeneralDialogSettings();
+#endif
+        }
+
+        private void UpdateGeneralDialogSettings()
+        {
+            Owner owner = NSMessageHandler.Owner;
+
+            if (owner == null)
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
+            MPOP oldMPOP = AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
+
+            List<Annotation> annos = new List<Annotation>();
+
+
+            if (oldMPOP != owner.MPOPMode)
+            {
+                Annotation anno = new Annotation();
+                anno.Name = "MSN.IM.MPOP";
+                anno.Value = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
+                annos.Add(anno);
+            }
+
+
+            if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            {
+                ABServiceBinding abService = CreateABService("RoamingIdentityChanged");  //In msnp17 this is "GeneralDialogApply"
+                abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
+                {
+                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                    if (!e.Cancelled && e.Error == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateGeneralDialogSetting completed.", GetType().Name);
+                        AddressBook.MyProperties["mpop"] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
+                    }
+                    else if (e.Error != null)
+                    {
+                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateGeneralDialogSetting", e.Error));
+                    }
+                    ((IDisposable)service).Dispose();
+                    return;
+                };
+
+                ABContactUpdateRequestType request = new ABContactUpdateRequestType();
+                request.abId = "00000000-0000-0000-0000-000000000000";
+                request.contacts = new ContactType[] { new ContactType() };
+                request.contacts[0].contactInfo = new contactInfoType();
+                request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.Me;
+                request.contacts[0].contactInfo.contactTypeSpecified = true;
+                request.contacts[0].contactInfo.annotations = annos.ToArray();
+                request.contacts[0].propertiesChanged = "Annotation";
+                abService.ABContactUpdateAsync(request, new object());
+            }
+        }
+
+        private void UpdatePrivacySettings()
+        {
             Owner owner = NSMessageHandler.Owner;
 
             if (owner == null)
@@ -1185,6 +1246,7 @@ namespace MSNPSharp
 
             PrivacyMode oldPrivacy = AddressBook.MyProperties["blp"] == "1" ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed;
             NotifyPrivacy oldNotify = AddressBook.MyProperties["gtc"] == "1" ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd;
+
             RoamLiveProperty oldRoaming = AddressBook.MyProperties["roamliveproperties"] == "1" ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled;
             List<Annotation> annos = new List<Annotation>();
 

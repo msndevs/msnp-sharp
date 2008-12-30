@@ -277,6 +277,8 @@ namespace MSNPSharp
 #if MSNP16
 
         bool mpopEnabled;
+        MPOP mpopMode = MPOP.Unspecified;
+
         string _routeInfo = string.Empty;
 
         internal void SetRouteInfo(string info)
@@ -295,19 +297,57 @@ namespace MSNPSharp
             }
         }
 
-        internal void SetMPOP(bool enabled)
+        internal void SetMPOPEnable(bool enable)
         {
-            mpopEnabled = enabled;
+            mpopEnabled = enable;
         }
 
         /// <summary>
         /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
         /// </summary>
-        public bool MPOPEnabled
+        public bool MPOPEnable
+        {
+            get { return mpopEnabled; }
+        }
+
+
+        internal void SetMPOP(MPOP mpop)
+        {
+            MPOPMode = mpop;
+        }
+
+
+        /// <summary>
+        /// Reaction when sign in at another place.
+        /// </summary>
+        public MPOP MPOPMode
         {
             get
             {
-                return mpopEnabled;
+                if (mpopMode == MPOP.Unspecified && mpopEnabled)  //If unspecified, we get it from profile.
+                {
+                    if (NSMessageHandler != null)
+                    {
+                        if (NSMessageHandler.ContactService.AddressBook != null)
+                        {
+                            if(NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey("mpop"))
+                                mpopMode = NSMessageHandler.ContactService.AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
+
+                        }
+                    }
+                }
+
+                return mpopMode;
+            }
+
+            set
+            {
+                if (NSMessageHandler != null && MPOPEnable)
+                {
+                    mpopMode = value;
+                    NSMessageHandler.ContactService.UpdateMe();
+                    
+                }
             }
         }
 

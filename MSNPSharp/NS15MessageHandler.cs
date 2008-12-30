@@ -46,6 +46,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+using System.Text.RegularExpressions;
 
     /// <summary>
     /// Handles the protocol messages from the notification server.
@@ -56,7 +57,7 @@ namespace MSNPSharp
         #region Members
 
 #if MSNP16
-        public static readonly string MachineGuid = Guid.NewGuid().ToString();
+        public static readonly string MachineGuid = Guid.NewGuid().ToString("B");
         public static string EPName = "MSNPSharp";
 #endif
 
@@ -77,6 +78,8 @@ namespace MSNPSharp
         private OIMService oimService;
         private ContactSpaceService spaceService;
         private MSNStorageService storageService;
+
+        private List<Regex> censorWords = new List<Regex>(0);
 
         private NSMessageHandler()
         {
@@ -142,6 +145,14 @@ namespace MSNPSharp
             {
                 return contactList;
             }
+        }
+
+        /// <summary>
+        /// Censors that cannot contain in text messages.
+        /// </summary>
+        public List<Regex> CensorWords
+        {
+            get { return censorWords; }
         }
 
         /// <summary>
@@ -1174,11 +1185,14 @@ namespace MSNPSharp
             if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))
                 && ContactList.HasContact(sender, ClientType.EmailMember))
             {
-                foreach (YIMMessageHandler YimHandler in SwitchBoards)
+                lock (SwitchBoards)
                 {
-                    if (YimHandler.Contacts.Contains(sender))
+                    foreach (YIMMessageHandler YimHandler in SwitchBoards)
                     {
-                        return;
+                        if (YimHandler.Contacts.ContainsKey(sender))
+                        {
+                            return;  //The handler have been registered, return.
+                        }
                     }
                 }
 
@@ -1186,7 +1200,8 @@ namespace MSNPSharp
                 switchboard.NSMessageHandler = this;
                 switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
                 switchboard.MessageProcessor = MessageProcessor;
-                SwitchBoards.Add(switchboard);
+                lock (SwitchBoards)
+                    SwitchBoards.Add(switchboard);
 
                 OnSBCreated(switchboard, null);
                 switchboard.ForceJoin(ContactList[sender, ClientType.EmailMember]);
@@ -1268,7 +1283,7 @@ namespace MSNPSharp
                     hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0",
                     hdr.ContainsKey("RouteInfo") ? hdr["RouteInfo"] : String.Empty
 #endif
-);
+                    );
 
                 if (IPAddress.None != ip)
                 {
@@ -1767,13 +1782,14 @@ namespace MSNPSharp
             NetworkMessage networkMessage = message as NetworkMessage;
             if (networkMessage.InnerBody != null)
             {
+                censorWords.Clear();
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
                 XmlNodeList imtexts = xmlDoc.GetElementsByTagName("imtext");
                 foreach (XmlNode imtextNode in imtexts)
                 {
                     string censor = Encoding.UTF8.GetString(Convert.FromBase64String(imtextNode.Attributes["value"].Value));
-
+                    censorWords.Add(new Regex(censor));
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Censor: " + censor, GetType().Name);
                 }
             }
