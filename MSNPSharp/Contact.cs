@@ -423,11 +423,11 @@ namespace MSNPSharp
                     }
                     else
                     {
-                        if (!AutoSubscribeToUpdates)
-                            return;
-
-                        contactType = contactInfoTypeContactType.Regular;
-                        NSMessageHandler.ContactService.UpdateContact(this);
+                        if (contactType != contactInfoTypeContactType.Regular)
+                        {
+                            contactType = contactInfoTypeContactType.Regular;
+                            NSMessageHandler.ContactService.UpdateContact(this);
+                        }
                     }
                 }
             }
