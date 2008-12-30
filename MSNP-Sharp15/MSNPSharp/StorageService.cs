@@ -241,8 +241,7 @@ namespace MSNPSharp
                 photoStream.DataSize = 0;
                 photoStream.MimeType = "png";
                 photoStream.DocumentStreamType = "UserTileStatic";
-                MemoryStream mem = new MemoryStream();
-                Properties.Resources.WLXLarge_default.Save(mem, System.Drawing.Imaging.ImageFormat.Png);
+                MemoryStream mem = (SerializableMemoryStream)Properties.Resources.WLXLarge_default;
                 photoStream.Data = mem.ToArray();
                 createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
 
@@ -681,9 +680,7 @@ namespace MSNPSharp
                 }
 
                 // 4. CreateDocument
-                MemoryStream mem = new MemoryStream();
-                photo.Save(mem, System.Drawing.Imaging.ImageFormat.Png);
-
+                SerializableMemoryStream mem = (SerializableMemoryStream)photo;
                 CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
                 createDocRequest.relationshipName = "Messenger User Tile";
                 createDocRequest.parentHandle = new Handle();
