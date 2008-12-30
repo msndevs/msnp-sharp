@@ -87,13 +87,6 @@ namespace MSNPSharp.Properties {
             }
         }
         
-        internal static System.Drawing.Bitmap owner {
-            get {
-                object obj = ResourceManager.GetObject("owner", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
         internal static System.Drawing.Bitmap WLXLarge_default {
             get {
                 object obj = ResourceManager.GetObject("WLXLarge_default", resourceCulture);

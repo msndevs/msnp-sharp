@@ -37,6 +37,7 @@ using System.Collections;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.IO;
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
 
@@ -50,21 +51,17 @@ namespace MSNPSharp
 
         public event EventHandler<EventArgs> ProfileReceived;
 
-        private void CreateDefaultDisplayImage()
+        internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
-            if (DisplayImage == null)
-            {
-                System.Drawing.Image pngImage = Properties.Resources.owner;
-                DisplayImage image = new DisplayImage(Mail);
-                image.Image = pngImage;
-                DisplayImage = image;
-            }
+            DisplayImage displayImage = new DisplayImage();
+            displayImage.Image = (sms == null) ? Properties.Resources.WLXLarge_default : (System.Drawing.Image)sms;
+
+            this.DisplayImage = displayImage;
         }
 
         internal void SetPassportVerified(bool verified)
         {
             passportVerified = verified;
-            CreateDefaultDisplayImage();
         }
 
         internal void SetPrivacy(PrivacyMode mode)

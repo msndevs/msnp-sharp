@@ -320,14 +320,7 @@ namespace MSNPSharp
 #endif
             NSMessageHandler.Owner.SetName(mydispName);
             NSMessageHandler.Owner.SetPersonalMessage(pm);
-
-            if (Deltas.Profile.Photo != null && Deltas.Profile.Photo.DisplayImage != null)
-            {
-                System.Drawing.Image fileImage = System.Drawing.Image.FromStream(Deltas.Profile.Photo.DisplayImage);
-                DisplayImage displayImage = new DisplayImage();
-                displayImage.Image = fileImage;
-                NSMessageHandler.Owner.DisplayImage = displayImage;
-            }
+            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
 
             // Send BLP
             NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
