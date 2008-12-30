@@ -54,7 +54,7 @@ namespace MSNPSharp
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
             DisplayImage displayImage = new DisplayImage();
-            displayImage.Image = (sms == null) ? Properties.Resources.WLXLarge_default : System.Drawing.Image.FromStream(sms);
+            displayImage.Image = (sms == null) ? Properties.Resources.WLXLarge_default : (System.Drawing.Image)sms;
 
             this.DisplayImage = displayImage;
         }

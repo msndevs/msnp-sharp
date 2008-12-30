@@ -31,50 +31,64 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
 using System.IO;
 using System.Xml;
+using System.Text;
+using System.Drawing;
+using System.Xml.Schema;
+using System.Xml.Serialization;
+using System.Collections.Generic;
 
 namespace MSNPSharp.IO
 {
     /// <summary>
     /// Serializable MemoryStream
     /// </summary>
-    [XmlRoot("Stream"), Serializable]
-    public class SerializableMemoryStream : MemoryStream,IXmlSerializable
+    [Serializable]
+    [XmlRoot("Stream")]
+    public class SerializableMemoryStream : MemoryStream, IXmlSerializable
     {
         #region IXmlSerializable Members
 
-        public System.Xml.Schema.XmlSchema GetSchema()
+        public XmlSchema GetSchema()
         {
             return null;
         }
 
-        public void ReadXml(System.Xml.XmlReader reader)
+        public void ReadXml(XmlReader reader)
         {
             if (reader.IsEmptyElement)
                 return;
+
             reader.Read();
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(byte[]));
-            byte[] byt = (byte[])valueSerializer.Deserialize(reader);
+            byte[] byt = (byte[])new XmlSerializer(typeof(byte[])).Deserialize(reader);
             reader.ReadEndElement();
 
             Write(byt, 0, byt.Length);
             Flush();
         }
 
-        public void WriteXml(System.Xml.XmlWriter writer)
+        public void WriteXml(XmlWriter writer)
         {
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(byte[]));
-            // I just can't imagine what will happen if the stream size exceed 1 mega byte
-            if (ToArray() != null)
+            byte[] data = ToArray();
+            if (data != null)
             {
-                valueSerializer.Serialize(writer, ToArray());
+                new XmlSerializer(typeof(byte[])).Serialize(writer, data);
             }
+        }
+
+        public static explicit operator Image(SerializableMemoryStream ms)
+        {
+            return Image.FromStream(ms);
+        }
+
+        public static explicit operator SerializableMemoryStream(Image image)
+        {
+            SerializableMemoryStream ret = new SerializableMemoryStream();
+            image.Save(ret, System.Drawing.Imaging.ImageFormat.Png);
+            return ret;
         }
 
         #endregion
     }
-}
+};
