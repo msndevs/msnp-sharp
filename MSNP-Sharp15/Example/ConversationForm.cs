@@ -152,16 +152,16 @@ namespace MSNPSharpClient
             this.panel1 = new System.Windows.Forms.Panel();
             this.pnlActions = new System.Windows.Forms.Panel();
             this.btnSendFile = new System.Windows.Forms.Button();
-            this.btnEmotion = new System.Windows.Forms.Button();
             this.sendButton = new System.Windows.Forms.Button();
             this.sendnudgeButton = new System.Windows.Forms.Button();
             this.emotionTestButton = new System.Windows.Forms.Button();
             this.inputTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.displayUser = new System.Windows.Forms.PictureBox();
-            this.displayOwner = new System.Windows.Forms.PictureBox();
-            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
+            this.displayUser = new System.Windows.Forms.PictureBox();
+            this.btnEmotion = new System.Windows.Forms.Button();
+            this.displayOwner = new System.Windows.Forms.PictureBox();
             this.panel1.SuspendLayout();
             this.pnlActions.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -206,17 +206,6 @@ namespace MSNPSharpClient
             this.btnSendFile.Text = "Send &File";
             this.btnSendFile.UseVisualStyleBackColor = true;
             this.btnSendFile.Click += new System.EventHandler(this.btnSendFile_Click);
-            // 
-            // btnEmotion
-            // 
-            this.btnEmotion.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnEmotion.Image = global::MSNPSharpClient.Properties.Resources.smiley;
-            this.btnEmotion.Location = new System.Drawing.Point(3, 3);
-            this.btnEmotion.Name = "btnEmotion";
-            this.btnEmotion.Size = new System.Drawing.Size(41, 23);
-            this.btnEmotion.TabIndex = 7;
-            this.btnEmotion.UseVisualStyleBackColor = true;
-            this.btnEmotion.Click += new System.EventHandler(this.btnEmotion_Click);
             // 
             // sendButton
             // 
@@ -277,29 +266,9 @@ namespace MSNPSharpClient
             this.panel2.Size = new System.Drawing.Size(573, 268);
             this.panel2.TabIndex = 0;
             // 
-            // displayUser
+            // openFileDialog
             // 
-            this.displayUser.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.displayUser.BackColor = System.Drawing.Color.White;
-            this.displayUser.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayUser.Location = new System.Drawing.Point(3, 144);
-            this.displayUser.Name = "displayUser";
-            this.displayUser.Size = new System.Drawing.Size(118, 118);
-            this.displayUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.displayUser.TabIndex = 0;
-            this.displayUser.TabStop = false;
-            // 
-            // displayOwner
-            // 
-            this.displayOwner.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.displayOwner.BackColor = System.Drawing.Color.White;
-            this.displayOwner.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayOwner.Location = new System.Drawing.Point(3, 6);
-            this.displayOwner.Name = "displayOwner";
-            this.displayOwner.Size = new System.Drawing.Size(118, 118);
-            this.displayOwner.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.displayOwner.TabIndex = 0;
-            this.displayOwner.TabStop = false;
+            this.openFileDialog.Multiselect = true;
             // 
             // richTextHistory
             // 
@@ -319,9 +288,40 @@ namespace MSNPSharpClient
             this.richTextHistory.Text = "";
             this.richTextHistory.TextColor = MSNPSharpClient.RtfRichTextBox.RtfColor.Black;
             // 
-            // openFileDialog
+            // displayUser
             // 
-            this.openFileDialog.Multiselect = true;
+            this.displayUser.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.displayUser.BackColor = System.Drawing.Color.White;
+            this.displayUser.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.displayUser.Location = new System.Drawing.Point(3, 144);
+            this.displayUser.Name = "displayUser";
+            this.displayUser.Size = new System.Drawing.Size(118, 118);
+            this.displayUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.displayUser.TabIndex = 0;
+            this.displayUser.TabStop = false;
+            // 
+            // btnEmotion
+            // 
+            this.btnEmotion.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnEmotion.Image = global::MSNPSharpClient.Properties.Resources.smiley;
+            this.btnEmotion.Location = new System.Drawing.Point(3, 3);
+            this.btnEmotion.Name = "btnEmotion";
+            this.btnEmotion.Size = new System.Drawing.Size(41, 23);
+            this.btnEmotion.TabIndex = 7;
+            this.btnEmotion.UseVisualStyleBackColor = true;
+            this.btnEmotion.Click += new System.EventHandler(this.btnEmotion_Click);
+            // 
+            // displayOwner
+            // 
+            this.displayOwner.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.displayOwner.BackColor = System.Drawing.Color.White;
+            this.displayOwner.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.displayOwner.Location = new System.Drawing.Point(3, 6);
+            this.displayOwner.Name = "displayOwner";
+            this.displayOwner.Size = new System.Drawing.Size(118, 118);
+            this.displayOwner.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.displayOwner.TabIndex = 0;
+            this.displayOwner.TabStop = false;
             // 
             // ConversationForm
             // 
@@ -667,6 +667,8 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Load(object sender, EventArgs e)
         {
+            Text = "Conversation with " + _firstInvitedContact.Mail + " - MSNPSharp";
+            Icon = (Icon)((_firstInvitedContact.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
             displayOwner.Image = _clientform.Messenger.Owner.DisplayImage.Image;
 
             lock (richTextHistory.Emotions)
@@ -721,7 +723,7 @@ namespace MSNPSharpClient
 
                 if (contacts.Count == 0)
                 {
-                    MessageBox.Show("All contacts are offline");
+                    DisplaySystemMessage("* All contacts are offline or this contact doesn't support receiving files.");
                     return;
                 }
 

@@ -88,6 +88,13 @@ namespace MSNPSharpClient.Properties {
             }
         }
         
+        internal static System.Drawing.Icon msn_ico {
+            get {
+                object obj = ResourceManager.GetObject("msn_ico", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap sad {
             get {
                 object obj = ResourceManager.GetObject("sad", resourceCulture);
@@ -113,6 +120,13 @@ namespace MSNPSharpClient.Properties {
             get {
                 object obj = ResourceManager.GetObject("wink", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Icon yahoo_ico {
+            get {
+                object obj = ResourceManager.GetObject("yahoo_ico", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
             }
         }
     }
