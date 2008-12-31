@@ -57,7 +57,6 @@ namespace MSNPSharpClient
         private ToolStripMenuItem unblockMenuItem;
         private ToolStripMenuItem sendOIMMenuItem;
         private ToolStripSeparator toolStripMenuItem3;
-        private ToolStripMenuItem sendFileMenuItem;
         private ToolStripMenuItem sendMIMMenuItem;
         private StatusBar statusBar;
         private Panel OwnerPanel;
@@ -111,7 +110,6 @@ namespace MSNPSharpClient
             this.sendOIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sendMIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
-            this.sendFileMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -282,7 +280,6 @@ namespace MSNPSharpClient
             this.sendOIMMenuItem,
             this.sendMIMMenuItem,
             this.toolStripMenuItem3,
-            this.sendFileMenuItem,
             this.importContactsMenuItem,
             this.toolStripMenuItem2,
             this.blockMenuItem,
@@ -321,13 +318,6 @@ namespace MSNPSharpClient
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
             this.toolStripMenuItem3.Size = new System.Drawing.Size(197, 6);
-            // 
-            // sendFileMenuItem
-            // 
-            this.sendFileMenuItem.Name = "sendFileMenuItem";
-            this.sendFileMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.sendFileMenuItem.Text = "Send File";
-            this.sendFileMenuItem.Click += new System.EventHandler(this.sendFileMenuItem_Click);
             // 
             // importContactsMenuItem
             // 
@@ -1295,7 +1285,6 @@ namespace MSNPSharpClient
                         sendIMMenuItem.Visible = true;
                         sendOIMMenuItem.Visible = false;
 
-                        sendFileMenuItem.Visible = true;
                         toolStripMenuItem2.Visible = true;
                     }
                     else
@@ -1303,7 +1292,6 @@ namespace MSNPSharpClient
                         sendIMMenuItem.Visible = false;
                         sendOIMMenuItem.Visible = true;
 
-                        sendFileMenuItem.Visible = false;
                         toolStripMenuItem2.Visible = false;
                     }
 
@@ -1402,30 +1390,6 @@ namespace MSNPSharpClient
             this.propertyGrid.SelectedObject = selectedContact;
 
             messenger.Nameserver.OIMService.SendOIMMessage(selectedContact.Mail, "MSNP message");
-        }
-
-        private void sendFileMenuItem_Click(object sender, EventArgs e)
-        {
-            Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
-            this.propertyGrid.SelectedObject = selectedContact;
-
-            // open a dialog box to select the file
-            if (selectedContact.Online && openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    foreach (string filename in openFileDialog.FileNames)
-                    {
-                        MSNSLPHandler msnslpHandler = messenger.GetMSNSLPHandler(selectedContact.Mail);
-                        FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        P2PTransferSession session = msnslpHandler.SendInvitation(messenger.Owner.Mail, selectedContact.Mail, Path.GetFileName(filename), fileStream);
-                    }
-                }
-                catch (MSNPSharpException ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-            }
         }
 
         private void sendMIMMenuItem_Click(object sender, EventArgs e)

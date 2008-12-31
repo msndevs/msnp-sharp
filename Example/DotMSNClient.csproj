@@ -93,6 +93,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
+    <None Include="Resource\smileys\tongueout.gif" />
+    <None Include="Resource\smileys\smiley.gif" />
+    <None Include="Resource\smileys\sad.gif" />
+    <None Include="Resource\smileys\biggrin.gif" />
+    <None Include="Resource\smileys\wink.gif" />
     <None Include="Resource\inner_emoicon.png" />
     <Compile Include="AddContactForm.cs">
       <SubType>Form</SubType>
@@ -137,6 +142,9 @@
     </Compile>
     <Compile Include="ReverseAddedForm.Designer.cs">
       <DependentUpon>ReverseAddedForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RtfRichTextBox.cs">
+      <SubType>Component</SubType>
     </Compile>
     <EmbeddedResource Include="AddContactForm.resx">
       <SubType>Designer</SubType>

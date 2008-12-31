@@ -26,14 +26,20 @@ namespace MSNPSharpClient
         private Button sendButton;
         private Button sendnudgeButton;
         private Panel panel2;
-        private RichTextBox richTextHistory;
+        private RtfRichTextBox richTextHistory;
         private PictureBox displayOwner;
         private PictureBox displayUser;
         private Button emotionTestButton;
 
         private Conversation _conversation = null;
         private ClientForm _clientform = null;
+        private Panel pnlActions;
+        private Button btnEmotion;
+        private Button btnSendFile;
+        private ToolStripDropDown emotionDropDown = new ToolStripDropDown();
         private List<string> _contacts = new List<string>(0);
+        private OpenFileDialog openFileDialog;
+        private Contact _firstInvitedContact;
 
         /// <summary>
         /// The conversation object which is associated with the form.
@@ -71,6 +77,7 @@ namespace MSNPSharpClient
             }
 
             _clientform = clientform;
+            _firstInvitedContact = contact;
         }
 
         /// <summary>
@@ -143,86 +150,119 @@ namespace MSNPSharpClient
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
-            this.displayOwner = new System.Windows.Forms.PictureBox();
-            this.emotionTestButton = new System.Windows.Forms.Button();
-            this.sendnudgeButton = new System.Windows.Forms.Button();
+            this.pnlActions = new System.Windows.Forms.Panel();
+            this.btnSendFile = new System.Windows.Forms.Button();
+            this.btnEmotion = new System.Windows.Forms.Button();
             this.sendButton = new System.Windows.Forms.Button();
+            this.sendnudgeButton = new System.Windows.Forms.Button();
+            this.emotionTestButton = new System.Windows.Forms.Button();
             this.inputTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.displayUser = new System.Windows.Forms.PictureBox();
-            this.richTextHistory = new System.Windows.Forms.RichTextBox();
+            this.displayOwner = new System.Windows.Forms.PictureBox();
+            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
+            this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
+            this.pnlActions.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayUser)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
             this.SuspendLayout();
             // 
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.panel1.Controls.Add(this.pnlActions);
             this.panel1.Controls.Add(this.displayOwner);
-            this.panel1.Controls.Add(this.emotionTestButton);
-            this.panel1.Controls.Add(this.sendnudgeButton);
-            this.panel1.Controls.Add(this.sendButton);
             this.panel1.Controls.Add(this.inputTextBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 287);
+            this.panel1.Location = new System.Drawing.Point(0, 268);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(573, 108);
+            this.panel1.Size = new System.Drawing.Size(573, 127);
             this.panel1.TabIndex = 0;
             // 
-            // displayOwner
+            // pnlActions
             // 
-            this.displayOwner.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.displayOwner.BackColor = System.Drawing.Color.White;
-            this.displayOwner.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayOwner.Location = new System.Drawing.Point(3, 5);
-            this.displayOwner.Name = "displayOwner";
-            this.displayOwner.Size = new System.Drawing.Size(100, 100);
-            this.displayOwner.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.displayOwner.TabIndex = 0;
-            this.displayOwner.TabStop = false;
+            this.pnlActions.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlActions.Controls.Add(this.btnSendFile);
+            this.pnlActions.Controls.Add(this.btnEmotion);
+            this.pnlActions.Controls.Add(this.sendButton);
+            this.pnlActions.Controls.Add(this.sendnudgeButton);
+            this.pnlActions.Controls.Add(this.emotionTestButton);
+            this.pnlActions.Location = new System.Drawing.Point(127, 6);
+            this.pnlActions.Name = "pnlActions";
+            this.pnlActions.Size = new System.Drawing.Size(443, 28);
+            this.pnlActions.TabIndex = 5;
             // 
-            // emotionTestButton
+            // btnSendFile
             // 
-            this.emotionTestButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.emotionTestButton.Location = new System.Drawing.Point(486, 82);
-            this.emotionTestButton.Name = "emotionTestButton";
-            this.emotionTestButton.Size = new System.Drawing.Size(84, 23);
-            this.emotionTestButton.TabIndex = 3;
-            this.emotionTestButton.Text = "&Emotion Test";
-            this.emotionTestButton.Click += new System.EventHandler(this.SendEmoticonTest);
+            this.btnSendFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSendFile.Location = new System.Drawing.Point(261, 3);
+            this.btnSendFile.Name = "btnSendFile";
+            this.btnSendFile.Size = new System.Drawing.Size(72, 23);
+            this.btnSendFile.TabIndex = 6;
+            this.btnSendFile.Text = "Send &File";
+            this.btnSendFile.UseVisualStyleBackColor = true;
+            this.btnSendFile.Click += new System.EventHandler(this.btnSendFile_Click);
             // 
-            // sendnudgeButton
+            // btnEmotion
             // 
-            this.sendnudgeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendnudgeButton.Location = new System.Drawing.Point(486, 53);
-            this.sendnudgeButton.Name = "sendnudgeButton";
-            this.sendnudgeButton.Size = new System.Drawing.Size(84, 23);
-            this.sendnudgeButton.TabIndex = 4;
-            this.sendnudgeButton.Text = "Send &Nudge";
-            this.sendnudgeButton.Click += new System.EventHandler(this.SendNudge);
+            this.btnEmotion.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnEmotion.Image = global::MSNPSharpClient.Properties.Resources.smiley;
+            this.btnEmotion.Location = new System.Drawing.Point(3, 3);
+            this.btnEmotion.Name = "btnEmotion";
+            this.btnEmotion.Size = new System.Drawing.Size(41, 23);
+            this.btnEmotion.TabIndex = 7;
+            this.btnEmotion.UseVisualStyleBackColor = true;
+            this.btnEmotion.Click += new System.EventHandler(this.btnEmotion_Click);
             // 
             // sendButton
             // 
             this.sendButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendButton.Location = new System.Drawing.Point(486, 6);
+            this.sendButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.sendButton.Location = new System.Drawing.Point(339, 3);
             this.sendButton.Name = "sendButton";
-            this.sendButton.Size = new System.Drawing.Size(84, 41);
+            this.sendButton.Size = new System.Drawing.Size(101, 23);
             this.sendButton.TabIndex = 2;
             this.sendButton.Text = "&Send";
+            this.sendButton.UseVisualStyleBackColor = true;
             this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
+            // 
+            // sendnudgeButton
+            // 
+            this.sendnudgeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.sendnudgeButton.Location = new System.Drawing.Point(47, 3);
+            this.sendnudgeButton.Name = "sendnudgeButton";
+            this.sendnudgeButton.Size = new System.Drawing.Size(63, 23);
+            this.sendnudgeButton.TabIndex = 4;
+            this.sendnudgeButton.Text = "&Nudge";
+            this.sendnudgeButton.UseVisualStyleBackColor = true;
+            this.sendnudgeButton.Click += new System.EventHandler(this.SendNudge);
+            // 
+            // emotionTestButton
+            // 
+            this.emotionTestButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.emotionTestButton.Location = new System.Drawing.Point(116, 2);
+            this.emotionTestButton.Name = "emotionTestButton";
+            this.emotionTestButton.Size = new System.Drawing.Size(93, 24);
+            this.emotionTestButton.TabIndex = 5;
+            this.emotionTestButton.Text = "Custom &Emotion";
+            this.emotionTestButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.emotionTestButton.UseVisualStyleBackColor = true;
+            this.emotionTestButton.Click += new System.EventHandler(this.SendEmoticonTest);
             // 
             // inputTextBox
             // 
             this.inputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.inputTextBox.Location = new System.Drawing.Point(109, 3);
+            this.inputTextBox.Location = new System.Drawing.Point(127, 38);
             this.inputTextBox.Multiline = true;
             this.inputTextBox.Name = "inputTextBox";
             this.inputTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.inputTextBox.Size = new System.Drawing.Size(371, 102);
+            this.inputTextBox.Size = new System.Drawing.Size(443, 86);
             this.inputTextBox.TabIndex = 1;
             this.inputTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.inputTextBox_KeyDown);
             this.inputTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.inputTextBox_KeyPress);
@@ -234,7 +274,7 @@ namespace MSNPSharpClient
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(573, 287);
+            this.panel2.Size = new System.Drawing.Size(573, 268);
             this.panel2.TabIndex = 0;
             // 
             // displayUser
@@ -242,12 +282,24 @@ namespace MSNPSharpClient
             this.displayUser.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.displayUser.BackColor = System.Drawing.Color.White;
             this.displayUser.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayUser.Location = new System.Drawing.Point(3, 181);
+            this.displayUser.Location = new System.Drawing.Point(3, 144);
             this.displayUser.Name = "displayUser";
-            this.displayUser.Size = new System.Drawing.Size(100, 100);
+            this.displayUser.Size = new System.Drawing.Size(118, 118);
             this.displayUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.displayUser.TabIndex = 0;
             this.displayUser.TabStop = false;
+            // 
+            // displayOwner
+            // 
+            this.displayOwner.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.displayOwner.BackColor = System.Drawing.Color.White;
+            this.displayOwner.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.displayOwner.Location = new System.Drawing.Point(3, 6);
+            this.displayOwner.Name = "displayOwner";
+            this.displayOwner.Size = new System.Drawing.Size(118, 118);
+            this.displayOwner.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.displayOwner.TabIndex = 0;
+            this.displayOwner.TabStop = false;
             // 
             // richTextHistory
             // 
@@ -256,14 +308,20 @@ namespace MSNPSharpClient
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.richTextHistory.BackColor = System.Drawing.Color.Snow;
             this.richTextHistory.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.richTextHistory.Location = new System.Drawing.Point(109, 3);
+            this.richTextHistory.HiglightColor = MSNPSharpClient.RtfRichTextBox.RtfColor.White;
+            this.richTextHistory.Location = new System.Drawing.Point(127, 3);
             this.richTextHistory.Name = "richTextHistory";
             this.richTextHistory.ReadOnly = true;
             this.richTextHistory.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextHistory.Size = new System.Drawing.Size(464, 278);
+            this.richTextHistory.Size = new System.Drawing.Size(446, 259);
             this.richTextHistory.TabIndex = 0;
             this.richTextHistory.TabStop = false;
             this.richTextHistory.Text = "";
+            this.richTextHistory.TextColor = MSNPSharpClient.RtfRichTextBox.RtfColor.Black;
+            // 
+            // openFileDialog
+            // 
+            this.openFileDialog.Multiselect = true;
             // 
             // ConversationForm
             // 
@@ -277,9 +335,10 @@ namespace MSNPSharpClient
             this.Closing += new System.ComponentModel.CancelEventHandler(this.ConversationForm_Closing);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).EndInit();
+            this.pnlActions.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.displayUser)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -313,13 +372,30 @@ namespace MSNPSharpClient
 
         void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
         {
-            //This is just an example to tell you how to get the emoticon data.
-            FileStream fs = new FileStream("emoticon_rcv_example.png", FileMode.OpenOrCreate);
-            byte[] byt = new byte[e.ClientData.OpenStream().Length];
-            e.ClientData.OpenStream().Seek(0, SeekOrigin.Begin);
-            e.ClientData.OpenStream().Read(byt, 0, byt.Length);
-            fs.Write(byt, 0, byt.Length);
-            fs.Close();
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<MSNObjectDataTransferCompletedEventArgs>(Conversation_MSNObjectDataTransferCompleted), sender, e);
+                return;
+            }
+
+            Emoticon emo = e.ClientData as Emoticon;
+            if (emo != null)
+            {
+                MemoryStream ms = new MemoryStream();
+                byte[] byt = new byte[e.ClientData.OpenStream().Length];
+                e.ClientData.OpenStream().Seek(0, SeekOrigin.Begin);
+                e.ClientData.OpenStream().Read(byt, 0, byt.Length);
+                ms.Write(byt, 0, byt.Length);
+
+                richTextHistory.Emotions[emo.Shortcut] = new Bitmap(Image.FromStream(ms));
+
+                ms.Close();
+            }
+
+            while (richTextHistory.HasEmotion)
+            {
+                richTextHistory.InsertEmotion();
+            }
         }
 
         private void sendButton_Click(object sender, System.EventArgs e)
@@ -369,7 +445,7 @@ namespace MSNPSharpClient
         private void PrintText(object sender, TextMessageEventArgs e)
         {
             richTextHistory.SelectionColor = Color.Gray;
-            richTextHistory.AppendText(e.Sender.Name + "(" + e.Sender.Mail + "):" + Environment.NewLine);
+            richTextHistory.AppendText(e.Sender.Name + " (" + e.Sender.Mail + "):" + Environment.NewLine);
 
             TextDecorations td = e.Message.Decorations;
             FontStyle fs = FontStyle.Regular;
@@ -386,6 +462,10 @@ namespace MSNPSharpClient
             richTextHistory.SelectionFont = new Font(e.Message.Font, 8f, fs);
             richTextHistory.AppendText(e.Message.Text);
             richTextHistory.AppendText(Environment.NewLine);
+            while (richTextHistory.HasEmotion)
+            {
+                richTextHistory.InsertEmotion();
+            }
             richTextHistory.ScrollToCaret();
         }
 
@@ -541,6 +621,11 @@ namespace MSNPSharpClient
             inputTextBox.Clear();
             inputTextBox.Focus();
 
+            while (richTextHistory.HasEmotion)
+            {
+                richTextHistory.InsertEmotion();
+            }
+
             //All contacts left, recreate the conversation
             Conversation.SendTextMessage(message);
 
@@ -561,6 +646,11 @@ namespace MSNPSharpClient
             List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
 
+            if (!richTextHistory.Emotions.ContainsKey(emotest.Shortcut))
+            {
+                richTextHistory.Emotions[emotest.Shortcut] = Properties.Resources.inner_emoticon;
+            }           
+
             try
             {
                 Conversation.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
@@ -578,6 +668,83 @@ namespace MSNPSharpClient
         private void ConversationForm_Load(object sender, EventArgs e)
         {
             displayOwner.Image = _clientform.Messenger.Owner.DisplayImage.Image;
+
+            lock (richTextHistory.Emotions)
+            {
+                richTextHistory.Emotions[":)"] = Properties.Resources.smiley;
+                richTextHistory.Emotions[":d"] = Properties.Resources.biggrin;
+                richTextHistory.Emotions[":("] = Properties.Resources.sad;
+                richTextHistory.Emotions[";)"] = Properties.Resources.wink;
+                richTextHistory.Emotions[":p"] = Properties.Resources.tongueout;
+            }
+
+            emotionDropDown.ImageScalingSize = new Size(15, 15);
+            emotionDropDown.LayoutStyle = ToolStripLayoutStyle.Table;
+            foreach (string str in richTextHistory.Emotions.Keys)
+            {
+                emotionDropDown.Items.Add(null, richTextHistory.Emotions[str], emotionDropDown_Click).ToolTipText = str;
+            }            
+            ((TableLayoutSettings)emotionDropDown.LayoutSettings).ColumnCount = 3;
+        }
+
+        private void btnEmotion_Click(object sender, EventArgs e)
+        {
+            int x = Location.X + richTextHistory.Location.X + btnEmotion.Location.X;
+            int y = Location.Y + richTextHistory.Height + emotionDropDown.Height + 20;
+            emotionDropDown.Show(x, y);
+            emotionDropDown.Focus();
+        }
+
+        private void emotionDropDown_Click(object sender, EventArgs args)
+        {
+            ToolStripItem item = (ToolStripItem)sender;
+            inputTextBox.AppendText(item.ToolTipText);
+            inputTextBox.Focus();
+        }
+
+        private void btnSendFile_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                List<Contact> contacts = new List<Contact>();
+                foreach (Contact contact in _conversation.Contacts)
+                {
+                    if (contact.Online && contact.ClientType == ClientType.PassportMember && contact.Mail != Conversation.Messenger.Owner.Mail)
+                    {
+                        contacts.Add(contact);
+                    }
+                }
+                if (contacts.Count == 0 && _firstInvitedContact != null && _firstInvitedContact.ClientType == ClientType.PassportMember && _firstInvitedContact.Online)
+                {
+                    contacts.Add(_firstInvitedContact);
+                }
+
+                if (contacts.Count == 0)
+                {
+                    MessageBox.Show("All contacts are offline");
+                    return;
+                }
+
+                try
+                {
+                    foreach (Contact contact in contacts)
+                    {
+                        foreach (string filename in openFileDialog.FileNames)
+                        {
+                            MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact.Mail);
+                            FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, contact.Mail, Path.GetFileName(filename), fileStream);
+                        }
+                    }
+                }
+                catch (MSNPSharpException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+
+
+                
+            }
         }
 
     }
