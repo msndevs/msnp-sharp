@@ -67,6 +67,13 @@ namespace MSNPSharpClient.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap file {
+            get {
+                object obj = ResourceManager.GetObject("file", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap inner_emoticon {
             get {
                 object obj = ResourceManager.GetObject("inner_emoticon", resourceCulture);
@@ -92,6 +99,13 @@ namespace MSNPSharpClient.Properties {
             get {
                 object obj = ResourceManager.GetObject("msn_ico", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap nudge {
+            get {
+                object obj = ResourceManager.GetObject("nudge", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

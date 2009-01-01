@@ -93,6 +93,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
+    <None Include="Resource\file.png" />
+    <None Include="Resource\nudge.png" />
     <None Include="Resource\yahoo_ico.ico" />
     <None Include="Resource\msn_ico.ico" />
     <None Include="Resource\smileys\tongueout.gif" />
