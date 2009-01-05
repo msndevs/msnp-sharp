@@ -118,6 +118,8 @@ namespace MSNPSharp.IO
                 UpdateContact(contactType);
             }
 
+            // Update dynamic items
+            List<string> dyItemsToRemove = new List<string>();
             foreach (PassportDynamicItem dyItem in NSMessageHandler.ContactService.Deltas.DynamicItems.Values)
             {
                 if (NSMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
@@ -125,21 +127,46 @@ namespace MSNPSharp.IO
                     if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam) ||
                         (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam))
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.HasNew; //TODO: Type
+                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.HasNew;
                     }
 
                     if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam == false) ||
                         (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam == false))
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.Viewed; //TODO: Type
+                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.None;
+                        dyItemsToRemove.Add(dyItem.PassportName);
                     }
 
                     if (dyItem.ProfileStatus == null && dyItem.SpaceStatus == null)  //"Exist Access" means the contact has space or profile
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.None; //TODO: Type
+                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.None;
+                        dyItemsToRemove.Add(dyItem.PassportName);
                     }
                 }
+                else if (dyItem.PassportName == NSMessageHandler.Owner.Mail && dyItem.Notifications != null)
+                {
+                    foreach (NotificationDataType notifydata in dyItem.Notifications)
+                    {
+                        if (notifydata.StoreService.Info.Handle.Type == ServiceFilterType.Profile)
+                        {
+                            if (NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
+                            {
+                                NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] =
+                                    XmlConvert.ToString(notifydata.LastChanged, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                            }
+                        }
+                    }
+                    dyItemsToRemove.Add(dyItem.PassportName);
+                }
             }
+            lock (NSMessageHandler.ContactService.Deltas.DynamicItems)
+            {
+                foreach (string account in dyItemsToRemove)
+                {
+                    NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
+                }
+            }
+            
 
             // Merge deltas
             XMLContactList ops = this;
@@ -712,7 +739,7 @@ namespace MSNPSharp.IO
                 xmlcl.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
             }
 
-            //Update dynamic items
+            // Update dynamic items
             if (forwardList.DynamicItems != null)
             {
                 foreach (BaseDynamicItemType dyItem in forwardList.DynamicItems)
