@@ -333,11 +333,6 @@ namespace MSNPSharp
             internal set
             {
                 dynamicChanged = value;
-
-                if (mail != null && value == DynamicItemState.None)
-                {
-                    nsMessageHandler.ContactService.Deltas.DynamicItems.Remove(mail);
-                }
             }
         }
 
