@@ -648,6 +648,18 @@ namespace MSNPSharp
             }
         }
 
+        public MSNLists Lists
+        {
+            get
+            {
+                return lists;
+            }
+            protected internal set
+            {
+                lists = value;
+            }
+        }
+
         #endregion
 
         #region Internal setters
@@ -665,11 +677,6 @@ namespace MSNPSharp
         internal void SetIsMessengerUser(bool isMessengerEnabled)
         {
             isMessengerUser = isMessengerEnabled;
-        }
-
-        internal void SetLists(MSNLists lists)
-        {
-            this.lists = lists;
         }
 
         internal void SetMobileAccess(bool enabled)

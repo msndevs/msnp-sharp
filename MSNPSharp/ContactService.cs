@@ -944,27 +944,38 @@ namespace MSNPSharp
         /// <summary>
         /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
         /// </summary>
-        /// <param name="account">An e-mail adress to add</param>
+        /// <param name="account">An account, email address or phone number, to add</param>
         /// <param name="network">The service type of target contact</param>
-        /// <param name="invitation"></param>
+        /// <param name="invitation">The reason of the adding contact</param>
         public void AddNewContact(string account, ClientType network, string invitation)
         {
-            account = account.ToLower(CultureInfo.InvariantCulture);
-
             if (NSMessageHandler.ContactList.HasContact(account, network))
             {
                 Contact contact = NSMessageHandler.ContactList.GetContact(account, network);
-                if (contact.Guid != Guid.Empty)
-                {
-                    RemoveContactFromList(contact, MSNLists.PendingList, null);
-                    contact.RemoveFromList(MSNLists.PendingList);
-                    return;
-                }
-            }
 
-            if (MSNLists.PendingList == (AddressBook.GetMSNLists(account, network) & MSNLists.PendingList))
-            {
-                AddPendingContact(NSMessageHandler.ContactList.GetContact(account, network));
+                if (contact.OnPendingList)
+                {
+                    AddPendingContact(contact);
+                }
+                else if (contact.Guid == Guid.Empty) // This user is on AL or BL or RL.
+                {
+                    AddNonPendingContact(account, network, invitation);
+                }
+                else if (contact.Guid != Guid.Empty) // Email or Messenger buddy.
+                {
+                    if (!contact.IsMessengerUser) // Email buddy, just update
+                    {
+                        contact.IsMessengerUser = true;
+                    }
+                    else // Messenger buddy. Not in AL nor BL. Add to AL.
+                    {
+                        contact.OnAllowedList = true;
+                    }
+                }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Cannot add contact: " + contact.Hash, GetType().Name);
+                }
             }
             else
             {
