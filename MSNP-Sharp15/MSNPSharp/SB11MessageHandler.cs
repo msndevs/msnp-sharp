@@ -1183,7 +1183,7 @@ namespace MSNPSharp
                 {
                     contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
                 }
-                contact.SetLists(MSNLists.None);
+                contact.Lists = MSNLists.None;
             }
 
 

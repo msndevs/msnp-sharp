@@ -100,7 +100,7 @@ namespace MSNPSharp.IO
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
                             contact.CID = cid;
                             contact.NSMessageHandler = NSMessageHandler;
-                            contact.SetLists(GetMSNLists(account, type));
+                            contact.Lists = GetMSNLists(account, type, contact.IsMessengerUser);
                         }
                     }
                 }
@@ -166,7 +166,7 @@ namespace MSNPSharp.IO
                     NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
                 }
             }
-            
+
 
             // Merge deltas
             XMLContactList ops = this;
@@ -237,7 +237,7 @@ namespace MSNPSharp.IO
 
 
 
-        public MSNLists GetMSNLists(string account, ClientType type)
+        public MSNLists GetMSNLists(string account, ClientType type, bool isMessengerUser)
         {
             MSNLists contactlists = MSNLists.None;
             Service targetservice = GetTargetService(ServiceFilterType.Messenger);
@@ -287,6 +287,9 @@ namespace MSNPSharp.IO
                         contactlists |= MSNLists.ReverseList;
                 }
             }
+
+            if (isMessengerUser)
+                contactlists |= MSNLists.ForwardList;
 
             return contactlists;
         }
@@ -442,7 +445,7 @@ namespace MSNPSharp.IO
                                                             Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
                                                             contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                             contact.RemoveFromList(msnlist);
-                                                            contact.SetLists(xmlcl.GetMSNLists(account, type));
+                                                            contact.Lists = xmlcl.GetMSNLists(account, type, contact.IsMessengerUser);
 
                                                             // Fire ReverseRemoved
                                                             if (memberrole == MemberRole.Reverse)
@@ -462,7 +465,7 @@ namespace MSNPSharp.IO
                                                         Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                                         contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                         contact.CID = cid;
-                                                        contact.SetLists(xmlcl.GetMSNLists(account, type));
+                                                        contact.Lists = xmlcl.GetMSNLists(account, type, contact.IsMessengerUser);
 
                                                         // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
                                                         if (memberrole == MemberRole.Pending)
@@ -717,7 +720,7 @@ namespace MSNPSharp.IO
                                     contact.Guid = Guid.Empty;
                                     contact.SetIsMessengerUser(false);
 
-                                    if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(contact.Mail, contact.ClientType))
+                                    if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(contact.Mail, contact.ClientType, contact.IsMessengerUser))
                                     {
                                         xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
                                         contact.NSMessageHandler = null;
