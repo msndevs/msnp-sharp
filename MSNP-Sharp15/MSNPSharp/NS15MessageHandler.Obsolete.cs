@@ -174,7 +174,7 @@ namespace MSNPSharp
                         contact.SetMobileDevice((number == "Y"));
                         break;
                     case "HSB":
-                        contact.SetHasBlog((number == "1"));
+                        contact.HasBlog = (number == "1");
                         break;
                 }
             }
