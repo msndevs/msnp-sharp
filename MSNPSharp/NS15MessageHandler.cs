@@ -798,8 +798,8 @@ namespace MSNPSharp
             else if ((string)message.CommandValues[1] == "OK")
             {
                 // we sucesfully logged in, set the owner's name
-                Owner.SetMail(message.CommandValues[2].ToString());
-                Owner.SetPassportVerified(message.CommandValues[3].Equals("1"));
+                Owner.Mail = message.CommandValues[2].ToString();
+                Owner.PassportVerified = message.CommandValues[3].Equals("1");
             }
         }
 
@@ -998,7 +998,7 @@ namespace MSNPSharp
             {
                 DisplayImage userDisplay = new DisplayImage();
                 userDisplay.Context = message.CommandValues[6].ToString();
-                contact.SetUserDisplay(userDisplay);
+                contact.DisplayImage = userDisplay;
             }
 
             if (oldStatus == PresenceStatus.Unknown || oldStatus == PresenceStatus.Offline)
@@ -1046,7 +1046,7 @@ message.CommandValues[1].ToString().Split(':')[1]
 #else
                 userDisplay.Context = message.CommandValues[5].ToString();
 #endif
-                contact.SetUserDisplay(userDisplay);
+                contact.DisplayImage = userDisplay;
             }
 
             // set the client capabilities, if available

@@ -298,9 +298,9 @@ namespace MSNPSharp
 
             Contact tmpContact = Factory.CreateContact();
 
-            tmpContact.SetMail(account);
+            tmpContact.Mail = account;
+            tmpContact.ClientType = type;
             tmpContact.SetName(account);
-            tmpContact.SetClientType(type);
 
             lock (SyncRoot)
                 Add(hash, tmpContact);

@@ -59,11 +59,6 @@ namespace MSNPSharp
             this.DisplayImage = displayImage;
         }
 
-        internal void SetPassportVerified(bool verified)
-        {
-            passportVerified = verified;
-        }
-
         internal void SetPrivacy(PrivacyMode mode)
         {
             privacy = mode;
@@ -99,8 +94,7 @@ namespace MSNPSharp
                         MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
                     }
 
-                    SetUserDisplay(value);
-
+                    base.DisplayImage = value;
                     value.Creator = Mail;
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
@@ -229,6 +223,10 @@ namespace MSNPSharp
             {
                 return passportVerified;
             }
+            internal set
+            {
+                passportVerified = value;
+            }
         }
 
         public PrivacyMode Privacy
@@ -281,13 +279,7 @@ namespace MSNPSharp
 
         bool mpopEnabled;
         MPOP mpopMode = MPOP.Unspecified;
-
         string _routeInfo = string.Empty;
-
-        internal void SetRouteInfo(string info)
-        {
-            _routeInfo = info;
-        }
 
         /// <summary>
         /// Route address, used for PNRP??
@@ -298,11 +290,10 @@ namespace MSNPSharp
             {
                 return _routeInfo;
             }
-        }
-
-        internal void SetMPOPEnable(bool enable)
-        {
-            mpopEnabled = enable;
+            internal set
+            {
+                _routeInfo = value;
+            }
         }
 
         /// <summary>
@@ -313,6 +304,10 @@ namespace MSNPSharp
             get
             {
                 return mpopEnabled;
+            }
+            internal set
+            {
+                mpopEnabled = value;
             }
         }
 
@@ -342,17 +337,14 @@ namespace MSNPSharp
                         }
                     }
                 }
-
                 return mpopMode;
             }
-
             set
             {
                 if (NSMessageHandler != null && MPOPEnable)
                 {
                     mpopMode = value;
                     NSMessageHandler.ContactService.UpdateMe();
-
                 }
             }
         }
@@ -424,6 +416,10 @@ namespace MSNPSharp
             get
             {
                 return validProfile;
+            }
+            internal set
+            {
+                validProfile = value;
             }
         }
 
@@ -704,11 +700,11 @@ namespace MSNPSharp
             ClientIP = clientIP;
             ClientPort = clientPort;
 #if MSNP18
-            mpopEnabled = mpop;
-            _routeInfo = routeInfo;
+            MPOPEnable = mpop;
+            RouteInfo = routeInfo;
 #endif
             SetNickName(nick);
-            validProfile = true;
+            ValidProfile = true;
 
             OnProfileReceived(EventArgs.Empty);
         }

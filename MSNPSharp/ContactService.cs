@@ -328,25 +328,25 @@ namespace MSNPSharp
             // Send ADL
             if (sendinitialADL)
             {
-                List<string> hashlist = new List<string>(0);
-                foreach (ServiceFilterType sft in AddressBook.MembershipList.Keys)
+                Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
+                lock (NSMessageHandler.ContactList.SyncRoot)
                 {
-                    if (sft == ServiceFilterType.Messenger) //We only deal with messenger service
+                    foreach (Contact contact in NSMessageHandler.ContactList.All)
                     {
-                        foreach (MemberRole role in AddressBook.MembershipList[sft].Memberships.Keys)
-                        {
-                            foreach (string hash in AddressBook.MembershipList[sft].Memberships[role].Keys)
-                            {
-                                if (!hashlist.Contains(hash))
-                                {
-                                    hashlist.Add(hash);
-                                }
-                            }
-                        }
+                        string ch = contact.Hash;
+                        MSNLists l = MSNLists.None;
+                        if (contact.IsMessengerUser)
+                            l |= MSNLists.ForwardList;
+                        if (contact.OnAllowedList)
+                            l |= MSNLists.AllowedList;
+                        else if (contact.OnBlockedList)
+                            l |= MSNLists.BlockedList;
+
+                        if (l != MSNLists.None && !hashlist.ContainsKey(ch))
+                            hashlist.Add(ch, l);
                     }
                 }
-                string[] adls = ConstructLists(hashlist, true, MSNLists.None);
-
+                string[] adls = ConstructLists(hashlist, true);
                 initialADLcount = adls.Length;
                 foreach (string payload in adls)
                 {
@@ -630,7 +630,7 @@ namespace MSNPSharp
         }
 
 
-        internal string[] ConstructLists(List<string> contacts, bool initial, MSNLists lists)
+        internal string[] ConstructLists(Dictionary<string, MSNLists> contacts, bool initial)
         {
             List<string> mls = new List<string>();
             XmlDocument xmlDoc = new XmlDocument();
@@ -644,7 +644,7 @@ namespace MSNPSharp
                 return mls.ToArray();
             }
 
-            List<string> sortedContacts = new List<string>(contacts);
+            List<string> sortedContacts = new List<string>(contacts.Keys);
             sortedContacts.Sort(CompareContactsHash);
 
             int domaincontactcount = 0;
@@ -653,10 +653,10 @@ namespace MSNPSharp
 
             foreach (string contact_hash in sortedContacts)
             {
-                string[] arr = contact_hash.Split(':');
                 String name;
                 String domain;
-                MSNLists sendlist = lists;
+                string[] arr = contact_hash.Split(':');
+                MSNLists sendlist = contacts[contact_hash];
                 String type = ClientType.EmailMember.ToString();
 
                 if (arr.Length > 0)
@@ -675,18 +675,6 @@ namespace MSNPSharp
                     String[] usernameanddomain = arr[0].Split('@');
                     domain = usernameanddomain[1];
                     name = usernameanddomain[0];
-                }
-
-                if (initial)
-                {
-                    sendlist = MSNLists.None;
-                    lists = AddressBook.GetMSNLists(arr[0], clitype);
-                    if (NSMessageHandler.ContactList.GetContact(arr[0], clitype).IsMessengerUser)
-                        sendlist |= MSNLists.ForwardList;
-                    if ((lists & MSNLists.AllowedList) == MSNLists.AllowedList)
-                        sendlist |= MSNLists.AllowedList;
-                    else if ((lists & MSNLists.BlockedList) == MSNLists.BlockedList)
-                        sendlist |= MSNLists.BlockedList;
                 }
 
                 if (sendlist != MSNLists.None)
@@ -718,8 +706,8 @@ namespace MSNPSharp
                     domtelElement.AppendChild(contactElement);
                     domaincontactcount++;
                 }
-                //domaincontactcount > 100 will leads to bug if it's less than 100 and mlElement.OuterXml.Length > 7300, it's possible...someone just report this problem..
-                if (/*domaincontactcount > 100 &&*/ mlElement.OuterXml.Length > 7300)
+
+                if (mlElement.OuterXml.Length > 7300)
                 {
                     mlElement.AppendChild(domtelElement);
                     mls.Add(mlElement.OuterXml);
@@ -792,18 +780,16 @@ namespace MSNPSharp
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     Contact contact = NSMessageHandler.ContactList.GetContact(account, ct);
-                    contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
+                    contact.Guid = new Guid(e.Result.ABContactAddResult.guid);
                     contact.NSMessageHandler = NSMessageHandler;
 
                     // Add to AL
                     if (ct == ClientType.PassportMember)
                     {
                         // without membership
-
-                        List<string> hashlist = new List<string>(0);
-                        hashlist.Add(Contact.MakeHash(account, ct));
-
-                        string payload = ConstructLists(hashlist, false, MSNLists.AllowedList)[0];
+                        Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+                        hashlist.Add(contact.Hash, MSNLists.AllowedList);
+                        string payload = ConstructLists(hashlist, false)[0];
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                         contact.AddToList(MSNLists.AllowedList);
                     }
@@ -838,7 +824,7 @@ namespace MSNPSharp
                 contact.ClientType,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
-                    contact.SetGuid(new Guid(e.Result.ABContactAddResult.guid));
+                    contact.Guid = new Guid(e.Result.ABContactAddResult.guid);
                     contact.NSMessageHandler = NSMessageHandler;
 
                     // FL
@@ -859,12 +845,9 @@ namespace MSNPSharp
                             else
                             {
                                 // ADL AL without membership, so the user can see our status...
-
-                                List<string> hashlist = new List<string>(0);
-                                hashlist.Add(Contact.MakeHash(contact.Mail, contact.ClientType));
-
-                                string payload = ConstructLists(hashlist, false, MSNLists.AllowedList)[0];
-
+                                Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+                                hashlist.Add(contact.Hash, MSNLists.AllowedList);
+                                string payload = ConstructLists(hashlist, false)[0];
                                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                                 contact.AddToList(MSNLists.AllowedList);
 
@@ -1568,10 +1551,9 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            List<string> hashlist = new List<string>(0);
-            hashlist.Add(Contact.MakeHash(contact.Mail, contact.ClientType));
-
-            string payload = ConstructLists(hashlist, false, list)[0];
+            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+            hashlist.Add(contact.Hash, list);
+            string payload = ConstructLists(hashlist, false)[0];
 
             if (list == MSNLists.ForwardList)
             {
@@ -1684,9 +1666,9 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
-            List<string> hashlist = new List<string>(0);
-            hashlist.Add(Contact.MakeHash(contact.Mail, contact.ClientType));
-            string payload = ConstructLists(hashlist, false, list)[0];
+            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+            hashlist.Add(contact.Hash, list);
+            string payload = ConstructLists(hashlist, false)[0];
 
             if (list == MSNLists.ForwardList)
             {
