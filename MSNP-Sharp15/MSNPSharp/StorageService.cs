@@ -417,7 +417,6 @@ namespace MSNPSharp
                 // Display photo
                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                 {
-                    
                     if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL)
                     {
                         System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);

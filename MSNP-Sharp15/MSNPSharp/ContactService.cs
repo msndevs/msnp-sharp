@@ -275,28 +275,21 @@ namespace MSNPSharp
 
             AddressBook.Synchronize(Deltas);
 
-            if (AddressBook.AddressbookLastChange != DateTime.MinValue)
-            {
-                SetDefaults(true);
-            }
-            else
-            {
-                msRequest(
-                    "Initial",
-                    delegate
-                    {
-                        abRequest("Initial",
-                            delegate
-                            {
-                                SetDefaults(true);
-                            }
-                        );
-                    }
-                );
-            }
+            msRequest(
+                "Initial",
+                delegate
+                {
+                    abRequest("Initial",
+                        delegate
+                        {
+                            SetDefaults();
+                        }
+                    );
+                }
+            );
         }
 
-        private void SetDefaults(bool sendinitialADL)
+        private void SetDefaults()
         {
             // Reset
             recursiveCall = 0;
@@ -323,35 +316,32 @@ namespace MSNPSharp
             // Send BLP
             NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
 
-            // Send ADL
-            if (sendinitialADL)
+            // Send Initial ADL
+            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
+            lock (NSMessageHandler.ContactList.SyncRoot)
             {
-                Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
-                lock (NSMessageHandler.ContactList.SyncRoot)
+                foreach (Contact contact in NSMessageHandler.ContactList.All)
                 {
-                    foreach (Contact contact in NSMessageHandler.ContactList.All)
-                    {
-                        string ch = contact.Hash;
-                        MSNLists l = MSNLists.None;
-                        if (contact.IsMessengerUser)
-                            l |= MSNLists.ForwardList;
-                        if (contact.OnAllowedList)
-                            l |= MSNLists.AllowedList;
-                        else if (contact.OnBlockedList)
-                            l |= MSNLists.BlockedList;
+                    string ch = contact.Hash;
+                    MSNLists l = MSNLists.None;
+                    if (contact.IsMessengerUser)
+                        l |= MSNLists.ForwardList;
+                    if (contact.OnAllowedList)
+                        l |= MSNLists.AllowedList;
+                    else if (contact.OnBlockedList)
+                        l |= MSNLists.BlockedList;
 
-                        if (l != MSNLists.None && !hashlist.ContainsKey(ch))
-                            hashlist.Add(ch, l);
-                    }
+                    if (l != MSNLists.None && !hashlist.ContainsKey(ch))
+                        hashlist.Add(ch, l);
                 }
-                string[] adls = ConstructLists(hashlist, true);
-                initialADLcount = adls.Length;
-                foreach (string payload in adls)
-                {
-                    NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                    NSMessageHandler.MessageProcessor.SendMessage(message);
-                    initialADLs.Add(message.TransactionID);
-                }
+            }
+            string[] adls = ConstructLists(hashlist, true);
+            initialADLcount = adls.Length;
+            foreach (string payload in adls)
+            {
+                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                NSMessageHandler.MessageProcessor.SendMessage(message);
+                initialADLs.Add(message.TransactionID);
             }
         }
 
@@ -365,42 +355,26 @@ namespace MSNPSharp
                     initialADLcount = 0;
 
                     NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
-                    NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
-
                     NSMessageHandler.OnSignedIn(EventArgs.Empty);
+                    NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);                    
 
                     if (!AddressBookSynchronized)
                     {
-                        msRequest(
-                            "Initial",
-                            delegate
+                        // This is very important to synchronize (5 STEPS)
+                        abSynchronized = true;                          // 1: Set AddressBookSynchronized
+                        AddressBook.Save();                             // 2: The first and the last AddressBook.Save()
+                        Deltas.Truncate();                              // 3: Call this after AddressBook.Save()
+                        OnSynchronizationCompleted(EventArgs.Empty);    // 4: Fire SynchronizationCompleted
+                        lock (NSMessageHandler.ContactList.SyncRoot)    // 5: ContactList synchronization
+                        {
+                            foreach (Contact contact in NSMessageHandler.ContactList.All)
                             {
-                                abRequest("Initial",
-                                    delegate
-                                    {
-                                        // This is very important to synchronize (4 steps):
-                                        abSynchronized = true;  // 1: Set AddressBookSynchronized
-                                        SetDefaults(false);     // 2: Then SetDefaults()
-                                        AddressBook.Save();     // 3: The first and the last AddressBook.Save()
-                                        Deltas.Truncate();      // 4: Call this after AddressBook.Save()
-
-                                        OnSynchronizationCompleted(EventArgs.Empty);
-
-                                        // Fire the ReverseAdded event (just reverse)
-                                        lock (NSMessageHandler.ContactList.SyncRoot)
-                                        {
-                                            foreach (Contact contact in NSMessageHandler.ContactList.All)
-                                            {
-                                                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
-                                                {
-                                                    NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                                }
-                                            }
-                                        }
-                                    }
-                                );
+                                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                {
+                                    NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                }
                             }
-                        );
+                        }
                     }
                 }
                 return true;
@@ -1942,5 +1916,5 @@ namespace MSNPSharp
             AddressBook = null;
             Deltas = null;
         }
-    }
+    };
 };
