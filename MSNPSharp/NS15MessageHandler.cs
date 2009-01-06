@@ -58,9 +58,6 @@ namespace MSNPSharp
 
 #if MSNP18
         public static readonly string MachineGuid = Guid.NewGuid().ToString("B");
-
-        private Dictionary<string, Guid> places = new Dictionary<string, Guid>(0);
-        private string epName = Environment.MachineName;
 #endif
 
         private SocketMessageProcessor messageProcessor;
@@ -258,38 +255,6 @@ namespace MSNPSharp
             }
         }
 
-#if MSNP18
-
-        public string EpName
-        {
-            get
-            {
-                return epName;
-            }
-            set
-            {
-                if (epName != value)
-                {
-                    MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", "<PrivateEndpointData>" +
-                        "<EpName>" + MSNHttpUtility.XmlEncode(value) + "</EpName>" +
-                        "<Idle>" + ((Owner.Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
-                        "<State>" + ParseStatus(Owner.Status) + "</State>" +
-                        "</PrivateEndpointData>"));
-
-                    epName = value;
-                }
-            }
-        }
-
-        public Dictionary<string, Guid> Places
-        {
-            get
-            {
-                return places;
-            }
-        }
-
-#endif
         /// <summary>
         /// The processor to handle the messages
         /// </summary>
@@ -670,14 +635,7 @@ namespace MSNPSharp
 #else
                 string capacities = ((long)owner.ClientCapacities).ToString();
 #endif
-
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
-#if MSNP18
-                MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                    "<PrivateEndpointData><EpName>" + MSNHttpUtility.XmlEncode(EpName)
-                    + "</EpName><Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false")
-                    + "</Idle><State>" + ParseStatus(status) + "</State></PrivateEndpointData>"));
-#endif
             }
         }
 
@@ -938,14 +896,14 @@ namespace MSNPSharp
 
                 if (privateendpoints.Count > 0)
                 {
-                    Places.Clear();
+                    Owner.Places.Clear();
 
                     foreach (XmlNode pepdNode in privateendpoints)
                     {
                         string id = pepdNode.Attributes["id"].Value;
                         string epname = pepdNode["EpName"].InnerText;
 
-                        Places[epname] = new Guid(id);
+                        Owner.Places[epname] = new Guid(id);
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
                     }
@@ -1162,6 +1120,11 @@ message.CommandValues[0].ToString().Split(':')[1]
                 }
             }
         }
+
+        protected virtual void OnUUNReceived(NSMessage message)
+        {
+        }
+
 #endif
 
         /// <summary>
@@ -1176,6 +1139,9 @@ message.CommandValues[0].ToString().Split(':')[1]
         protected virtual void OnCHGReceived(NSMessage message)
         {
             Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
+#if MSNP18
+            Owner.EpName = Owner.EpName;
+#endif
         }
 
         #endregion
@@ -2066,6 +2032,7 @@ message.CommandValues[0].ToString().Split(':')[1]
             ContactService.Clear();
             ////SwitchBoards.Clear();
             Owner.Emoticons.Clear();
+            Owner.Places.Clear();
             externalEndPoint = null;
             isSignedIn = false;
             msnticket = MSNTicket.Empty;
@@ -2161,6 +2128,10 @@ message.CommandValues[0].ToString().Split(':')[1]
 #if MSNP18
                     case "UBN":
                         OnUBNReceived(nsMessage);
+                        break;
+
+                    case "UUN":
+                        OnUUNReceived(nsMessage);
                         break;
 #endif
                     case "UBX":

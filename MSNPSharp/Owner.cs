@@ -34,6 +34,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
@@ -44,11 +45,16 @@ namespace MSNPSharp
     [Serializable]
     public class Owner : Contact
     {
-        bool passportVerified;
-        PrivacyMode privacy = PrivacyMode.Unknown;
-        NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
-        RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
+#if MSNP18
+        private Dictionary<string, Guid> places = new Dictionary<string, Guid>(0);
+        private string epName = Environment.MachineName;
+#endif
 
+        private bool passportVerified;
+        private PrivacyMode privacy = PrivacyMode.Unknown;
+        private NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
+        private RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
+        
         public event EventHandler<EventArgs> ProfileReceived;
 
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
@@ -73,6 +79,57 @@ namespace MSNPSharp
         {
             roamLiveProperty = mode;
         }
+
+#if MSNP18
+
+        public string EpName
+        {
+            get
+            {
+                return epName;
+            }
+            set
+            {
+                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
+                    "<PrivateEndpointData>" +
+                    "<EpName>" + MSNHttpUtility.XmlEncode(value) + "</EpName>" +
+                    "<Idle>" + ((Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
+                    "<State>" + NSMessageHandler.ParseStatus(Status) + "</State>" +
+                    "</PrivateEndpointData>"));
+
+                epName = value;
+            }
+        }
+
+        public Dictionary<string, Guid> Places
+        {
+            get
+            {
+                return places;
+            }
+        }
+
+        public void SignoutFromEverywhere()
+        {
+            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail, "8" }, "gtfo"));
+            Status = PresenceStatus.Offline;
+        }
+
+        public void SignoutFrom(string place)
+        {
+            if (place == EpName)
+            {
+                Status = PresenceStatus.Offline;
+            }
+            else if (Places.ContainsKey(place))
+            {
+                NSMessageHandler.MessageProcessor.SendMessage(
+                    new NSPayLoadMessage("UUN",
+                    new string[] { Mail + ";" + Places[place], "4" },
+                    "goawyplzthxbye"));
+            }
+        }
+#endif
 
         public new DisplayImage DisplayImage
         {
