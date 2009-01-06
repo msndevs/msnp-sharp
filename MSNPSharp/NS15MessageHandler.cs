@@ -58,7 +58,6 @@ using System.Text.RegularExpressions;
 
 #if MSNP16
         public static readonly string MachineGuid = Guid.NewGuid().ToString("B");
-        public static string EPName = "MSNPSharp";
 #endif
 
         private SocketMessageProcessor messageProcessor;
@@ -634,7 +633,6 @@ using System.Text.RegularExpressions;
             else if (status != owner.Status)
             {
                 string capacities = ((long)owner.ClientCapacities).ToString();
-
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
         }
@@ -753,8 +751,8 @@ using System.Text.RegularExpressions;
             else if ((string)message.CommandValues[1] == "OK")
             {
                 // we sucesfully logged in, set the owner's name
-                Owner.SetMail(message.CommandValues[2].ToString());
-                Owner.SetPassportVerified(message.CommandValues[3].Equals("1"));
+                Owner.Mail = message.CommandValues[2].ToString();
+                Owner.PassportVerified = message.CommandValues[3].Equals("1");
             }
         }
 
@@ -838,9 +836,36 @@ using System.Text.RegularExpressions;
                 return;
 
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
-            Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
 
-            contact.SetPersonalMessage(new PersonalMessage(message));
+
+            if (message.InnerBody != null && message.CommandValues[0].ToString().ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(new MemoryStream(message.InnerBody));
+                XmlNodeList privateendpoints = xmlDoc.GetElementsByTagName("PrivateEndpointData");
+
+                if (privateendpoints.Count > 0)
+                {
+                    Owner.Places.Clear();
+
+                    foreach (XmlNode pepdNode in privateendpoints)
+                    {
+                        string id = pepdNode.Attributes["id"].Value;
+                        string epname = pepdNode["EpName"].InnerText;
+
+                        Owner.Places[epname] = new Guid(id);
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
+                    }
+                }
+
+                Owner.SetPersonalMessage(new PersonalMessage(message));
+            }
+            else
+            {
+                Contact contact = ContactList.GetContact(message.CommandValues[0].ToString(), type);
+                contact.SetPersonalMessage(new PersonalMessage(message));
+            }
         }
 
         /// <summary>
@@ -875,7 +900,7 @@ using System.Text.RegularExpressions;
             {
                 DisplayImage userDisplay = new DisplayImage();
                 userDisplay.Context = message.CommandValues[6].ToString();
-                contact.SetUserDisplay(userDisplay);
+                contact.DisplayImage = userDisplay;
             }
 
             if (oldStatus == PresenceStatus.Unknown || oldStatus == PresenceStatus.Offline)
@@ -906,7 +931,7 @@ using System.Text.RegularExpressions;
             {
                 DisplayImage userDisplay = new DisplayImage();
                 userDisplay.Context = message.CommandValues[5].ToString();
-                contact.SetUserDisplay(userDisplay);
+                contact.DisplayImage = userDisplay;
             }
             // set the client capabilities, if available
             if (message.CommandValues.Count > 4)
@@ -981,6 +1006,40 @@ using System.Text.RegularExpressions;
         }
 
         /// <summary>
+        /// Called when a UBN command has been received.
+        /// </summary>
+        /// <remarks>
+        /// <code>UBN [account;{GUID}] [1:xml data,2:sip invite, 3: MSNP2P SLP data, 4:logout, 10: unknown] [PayloadLegth]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnUBNReceived(NSMessage message)
+        {
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (message.InnerBody != null)
+            {
+                switch (message.CommandValues[1].ToString())
+                {
+                    case "4":
+                    case "8":
+                        {
+                            string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
+                            if (logoutMsg == "goawyplzthxbye" || logoutMsg == "gtfo")
+                            {
+                                // Logout here...
+                                OnSignedOff(new SignedOffEventArgs(SignedOffReason.OtherClient));
+                            }
+                            return;
+                        }
+                }
+            }
+        }
+
+        protected virtual void OnUUNReceived(NSMessage message)
+        {
+        }
+
+
+        /// <summary>
         /// Called when a CHG command has been received.
         /// </summary>
         /// <remarks>
@@ -992,6 +1051,9 @@ using System.Text.RegularExpressions;
         protected virtual void OnCHGReceived(NSMessage message)
         {
             Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
+#if MSNP16
+            Owner.EpName = Owner.EpName;
+#endif
         }
 
         #endregion
@@ -1498,37 +1560,49 @@ using System.Text.RegularExpressions;
                 NetworkMessage networkMessage = message as NetworkMessage;
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
-                    ContactService.msRequest("MessengerPendingList", null);
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                    {
-                        XmlDocument xmlDoc = new XmlDocument();
-                        xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                        XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                        string domain = String.Empty;
-                        foreach (XmlNode domainNode in domains)
+                    ContactService.msRequest(
+                        "MessengerPendingList",
+                        delegate
                         {
-                            domain = domainNode.Attributes["n"].Value;
-                            XmlNode contactNode = domainNode.FirstChild;
-                            do
+                            XmlDocument xmlDoc = new XmlDocument();
+                            xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                            XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                            string domain = String.Empty;
+                            foreach (XmlNode domainNode in domains)
                             {
-                                string account = contactNode.Attributes["n"].Value + "@" + domain;
-                                ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                                MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
-                                string displayName = account;
-                                try
+                                domain = domainNode.Attributes["n"].Value;
+                                XmlNode contactNode = domainNode.FirstChild;
+                                do
                                 {
-                                    displayName = contactNode.Attributes["f"].Value;
-                                }
-                                catch (Exception)
-                                {
-                                }
+                                    string account = contactNode.Attributes["n"].Value + "@" + domain;
+                                    ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                                    MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                                    string displayName = account;
+                                    try
+                                    {
+                                        displayName = contactNode.Attributes["f"].Value;
+                                    }
+                                    catch (Exception)
+                                    {
+                                    }
 
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
+                                    if (ContactList.HasContact(account, type))
+                                    {
+                                        Contact contact = ContactList.GetContact(account, type);
 
-                            } while (contactNode.NextSibling != null);
-                        }
-                    }
+                                        // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
+                                        if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                        {
+                                            ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                        }
+                                    }
+
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
+
+                                } while (contactNode.NextSibling != null);
+                            }
+
+                        });
                 }
             }
         }
@@ -1843,6 +1917,7 @@ using System.Text.RegularExpressions;
             ContactService.Clear();
             SwitchBoards.Clear();
             Owner.Emoticons.Clear();
+            Owner.Places.Clear();
             externalEndPoint = null;
             isSignedIn = false;
             msnticket = MSNTicket.Empty;
@@ -1935,6 +2010,15 @@ using System.Text.RegularExpressions;
                     case "UBM":
                         OnUBMReceived(nsMessage);
                         break;
+#if MSNP16
+                    case "UBN":
+                        OnUBNReceived(nsMessage);
+                        break;
+
+                    case "UUN":
+                        OnUUNReceived(nsMessage);
+                        break;
+#endif
                     case "UBX":
                         OnUBXReceived(nsMessage);
                         break;

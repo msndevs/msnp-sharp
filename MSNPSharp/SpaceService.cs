@@ -247,7 +247,8 @@ namespace MSNPSharp
 
                             if (basedyItem.SpaceStatus == "Exist Access" || basedyItem.ProfileStatus == "Exist Access")
                             {
-                                NSMessageHandler.ContactList[account, ClientType.PassportMember].SetdynamicItemChanged(DynamicItemState.Viewed);
+                                NSMessageHandler.ContactList[account, ClientType.PassportMember].DynamicChanged = DynamicItemState.None;
+                                NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
                             }
 
                             NSMessageHandler.ContactService.Deltas.Save();

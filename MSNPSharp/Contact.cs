@@ -211,6 +211,10 @@ namespace MSNPSharp
             {
                 return guid;
             }
+            internal set
+            {
+                guid = value;
+            }
         }
 
         /// <summary>
@@ -222,6 +226,10 @@ namespace MSNPSharp
             {
                 return cid;
             }
+            internal set
+            {
+                cid = value;
+            }
         }
 
         public string Mail
@@ -229,6 +237,10 @@ namespace MSNPSharp
             get
             {
                 return mail;
+            }
+            internal set
+            {
+                mail = value;
             }
         }
 
@@ -286,6 +298,10 @@ namespace MSNPSharp
             {
                 return hasBlog;
             }
+            internal set
+            {
+                hasBlog = value;
+            }
         }
 
         public ClientCapacities ClientCapacities
@@ -300,7 +316,7 @@ namespace MSNPSharp
 
                 if ((clientCapacities & ClientCapacities.HasMSNSpaces) == ClientCapacities.HasMSNSpaces)
                 {
-                    SetHasBlog(true);
+                    HasBlog = true;
                 }
             }
         }
@@ -313,6 +329,10 @@ namespace MSNPSharp
             get
             {
                 return dynamicChanged;
+            }
+            internal set
+            {
+                dynamicChanged = value;
             }
         }
 
@@ -338,6 +358,10 @@ namespace MSNPSharp
             {
                 return clientType;
             }
+            internal set
+            {
+                clientType = value;
+            }
         }
 
         public contactInfoTypeContactType? ContactType
@@ -345,6 +369,10 @@ namespace MSNPSharp
             get
             {
                 return contactType;
+            }
+            internal set
+            {
+                contactType = value;
             }
         }
 
@@ -361,6 +389,18 @@ namespace MSNPSharp
             get
             {
                 return displayImage;
+            }
+            set
+            {
+                if (displayImage != value)
+                {
+                    displayImage = value;
+
+                    if (DisplayImageChanged != null)
+                    {
+                        DisplayImageChanged(this, EventArgs.Empty);
+                    }
+                }
             }
         }
 
@@ -608,48 +648,25 @@ namespace MSNPSharp
             }
         }
 
+        public MSNLists Lists
+        {
+            get
+            {
+                return lists;
+            }
+            protected internal set
+            {
+                lists = value;
+            }
+        }
+
         #endregion
 
         #region Internal setters
 
-        internal void SetdynamicItemChanged(DynamicItemState changed)
-        {
-            dynamicChanged = changed;
-
-            if (mail != null && changed == DynamicItemState.None)
-            {
-                nsMessageHandler.ContactService.Deltas.DynamicItems.Remove(mail);
-            }
-        }
-
-        internal void SetGuid(Guid guid)
-        {
-            this.guid = guid;
-        }
-
-        internal void SetCID(long? cid)
-        {
-            this.cid = cid;
-        }
-
-        internal void SetClientType(ClientType type)
-        {
-            clientType = type;
-        }
-
         internal void SetComment(string note)
         {
             comment = note;
-        }
-
-        internal void SetContactType(contactInfoTypeContactType ct)
-        {
-            contactType = ct;
-        }
-
-        internal void SetHasBlog(bool hasblog)
-        {
-            this.hasBlog = hasblog;
         }
 
         internal void SetHomePhone(string number)
@@ -660,16 +677,6 @@ namespace MSNPSharp
         internal void SetIsMessengerUser(bool isMessengerEnabled)
         {
             isMessengerUser = isMessengerEnabled;
-        }
-
-        internal void SetLists(MSNLists lists)
-        {
-            this.lists = lists;
-        }
-
-        internal void SetMail(string account)
-        {
-            mail = account;
         }
 
         internal void SetMobileAccess(bool enabled)
@@ -685,19 +692,6 @@ namespace MSNPSharp
         internal void SetMobilePhone(string number)
         {
             mobilePhone = number;
-        }
-
-        internal void SetUserDisplay(DisplayImage userDisplay)
-        {
-            if (displayImage != userDisplay)
-            {
-                displayImage = userDisplay;
-
-                if (DisplayImageChanged != null)
-                {
-                    DisplayImageChanged(this, EventArgs.Empty);
-                }
-            }
         }
 
         internal void SetWorkPhone(string number)

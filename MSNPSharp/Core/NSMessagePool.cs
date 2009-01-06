@@ -193,14 +193,16 @@ namespace MSNPSharp.Core
                         cmd[2] = (byte)bufferStream.ReadByte();
 
                         if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||    // MSG payload command
-                           (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||     // IPG pager command
-                           (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||     // NOT notification command
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||     // UBX personal message
-                           (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||     // GCF
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||     // UBM Yahoo messenger message
-                           (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||     // ADL Add List command
-                           (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L') ||     // RML Remove List command
-                           (cmd[0] == 'F' && cmd[1] == 'Q' && cmd[2] == 'Y'))       // FQY Forward QuerY command
+                          (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||     // IPG pager command
+                          (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||     // NOT notification command
+                          (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||     // UBX personal message
+                          (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||     // GCF privacy settings
+                          (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||     // UBM Yahoo messenger message
+                          (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'N') ||     // UBN SIP request
+                          (cmd[0] == 'U' && cmd[1] == 'U' && cmd[2] == 'N') ||     // UUN ?
+                          (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||     // ADL Add List command
+                          (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L') ||     // RML Remove List command
+                          (cmd[0] == 'F' && cmd[1] == 'Q' && cmd[2] == 'Y'))       // FQY Forward QuerY command
                         {
                             bufferStream.Seek(-3, SeekOrigin.End);
 

@@ -466,7 +466,7 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// State of dynamicitems.
+    /// State of dynamic items.
     /// </summary>
     public enum DynamicItemState
     {
@@ -478,12 +478,7 @@ namespace MSNPSharp
         /// <summary>
         /// The contact has changed his/her space or profiles. 
         /// </summary>
-        HasNew,
-
-        /// <summary>
-        /// The contact has dynamic items but all of them are read.
-        /// </summary>
-        Viewed
+        HasNew
     }
 
     /// <summary>

@@ -1733,10 +1733,7 @@ namespace MSNPSharpClient
             AddContactForm acf = new AddContactForm();
             if (DialogResult.OK == acf.ShowDialog(this) && acf.Account != String.Empty)
             {
-                messenger.Nameserver.ContactService.AddNewContact(
-                    acf.Account,
-                    ClientType.PassportMember,
-                    acf.InvitationMessage);
+                messenger.Nameserver.ContactService.AddNewContact(acf.Account);
             }
         }
 

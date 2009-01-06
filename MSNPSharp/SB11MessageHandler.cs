@@ -973,8 +973,8 @@ namespace MSNPSharp
         {
             if (message.CommandValues[1].ToString() == "OK"
 #if MSNP16
-              && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant().Split(';')[0]
-                
+ && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant().Split(';')[0]
+
 #else
               && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant()  
 #endif

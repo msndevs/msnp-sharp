@@ -98,9 +98,9 @@ namespace MSNPSharp.IO
                         {
                             string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                            contact.SetCID(cid);
+                            contact.CID = cid;
                             contact.NSMessageHandler = NSMessageHandler;
-                            contact.SetLists(GetMSNLists(account, type));
+                            contact.Lists = GetMSNLists(account, type, contact.IsMessengerUser);
                         }
                     }
                 }
@@ -118,6 +118,8 @@ namespace MSNPSharp.IO
                 UpdateContact(contactType);
             }
 
+            // Update dynamic items
+            List<string> dyItemsToRemove = new List<string>();
             foreach (PassportDynamicItem dyItem in NSMessageHandler.ContactService.Deltas.DynamicItems.Values)
             {
                 if (NSMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
@@ -125,21 +127,46 @@ namespace MSNPSharp.IO
                     if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam) ||
                         (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam))
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.HasNew); //TODO: Type
+                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.HasNew;
                     }
 
                     if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam == false) ||
                         (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam == false))
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.Viewed); //TODO: Type
+                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.None;
+                        dyItemsToRemove.Add(dyItem.PassportName);
                     }
 
                     if (dyItem.ProfileStatus == null && dyItem.SpaceStatus == null)  //"Exist Access" means the contact has space or profile
                     {
-                        NSMessageHandler.ContactList[dyItem.PassportName].SetdynamicItemChanged(DynamicItemState.None); //TODO: Type
+                        NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.None;
+                        dyItemsToRemove.Add(dyItem.PassportName);
                     }
                 }
+                else if (dyItem.PassportName == NSMessageHandler.Owner.Mail && dyItem.Notifications != null)
+                {
+                    foreach (NotificationDataType notifydata in dyItem.Notifications)
+                    {
+                        if (notifydata.StoreService.Info.Handle.Type == ServiceFilterType.Profile)
+                        {
+                            if (NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
+                            {
+                                NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] =
+                                    XmlConvert.ToString(notifydata.LastChanged, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                            }
+                        }
+                    }
+                    dyItemsToRemove.Add(dyItem.PassportName);
+                }
             }
+            lock (NSMessageHandler.ContactService.Deltas.DynamicItems)
+            {
+                foreach (string account in dyItemsToRemove)
+                {
+                    NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
+                }
+            }
+
 
             // Merge deltas
             XMLContactList ops = this;
@@ -210,7 +237,7 @@ namespace MSNPSharp.IO
 
 
 
-        public MSNLists GetMSNLists(string account, ClientType type)
+        public MSNLists GetMSNLists(string account, ClientType type, bool isMessengerUser)
         {
             MSNLists contactlists = MSNLists.None;
             Service targetservice = GetTargetService(ServiceFilterType.Messenger);
@@ -260,6 +287,9 @@ namespace MSNPSharp.IO
                         contactlists |= MSNLists.ReverseList;
                 }
             }
+
+            if (isMessengerUser)
+                contactlists |= MSNLists.ForwardList;
 
             return contactlists;
         }
@@ -415,7 +445,7 @@ namespace MSNPSharp.IO
                                                             Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
                                                             contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                             contact.RemoveFromList(msnlist);
-                                                            contact.SetLists(xmlcl.GetMSNLists(account, type));
+                                                            contact.Lists = xmlcl.GetMSNLists(account, type, contact.IsMessengerUser);
 
                                                             // Fire ReverseRemoved
                                                             if (memberrole == MemberRole.Reverse)
@@ -434,14 +464,12 @@ namespace MSNPSharp.IO
                                                         string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                                                         Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                                         contact.NSMessageHandler = xmlcl.NSMessageHandler;
-                                                        contact.SetCID(cid);
-                                                        contact.SetLists(xmlcl.GetMSNLists(account, type));
-
-                                                        // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
-                                                        if (memberrole == MemberRole.Pending)
-                                                        {
-                                                            xmlcl.NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                                        }
+                                                        contact.CID = cid;
+                                                        contact.Lists = xmlcl.GetMSNLists(account, type, contact.IsMessengerUser);
+                                                        // Don't fire ReverseAdded(contact.Pending) here... It fires 2 times:
+                                                        // The first is OnConnect after abSynchronized
+                                                        // The second is here, not anymore here :)
+                                                        // The correct place is in OnADLReceived.
 
                                                         // Send a list add event
                                                         xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
@@ -687,10 +715,10 @@ namespace MSNPSharp.IO
 
                                     xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
 
-                                    contact.SetGuid(Guid.Empty);
+                                    contact.Guid = Guid.Empty;
                                     contact.SetIsMessengerUser(false);
 
-                                    if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(contact.Mail, contact.ClientType))
+                                    if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(contact.Mail, contact.ClientType, contact.IsMessengerUser))
                                     {
                                         xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
                                         contact.NSMessageHandler = null;
@@ -712,7 +740,7 @@ namespace MSNPSharp.IO
                 xmlcl.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
             }
 
-            //Update dynamic items
+            // Update dynamic items
             if (forwardList.DynamicItems != null)
             {
                 foreach (BaseDynamicItemType dyItem in forwardList.DynamicItems)
@@ -776,9 +804,9 @@ namespace MSNPSharp.IO
                 {
                     Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
                     contact.NSMessageHandler = NSMessageHandler;
-                    contact.SetGuid(new Guid(contactType.contactId));
-                    contact.SetCID(Convert.ToInt64(cit.CID));
-                    contact.SetContactType(cit.contactType);
+                    contact.Guid = new Guid(contactType.contactId);
+                    contact.CID = Convert.ToInt64(cit.CID);
+                    contact.ContactType = cit.contactType;
                     //contact.SetHasBlog(cit.hasSpace);   //DONOT trust this
                     contact.SetComment(cit.comment);
                     contact.SetIsMessengerUser(ismessengeruser);
@@ -849,9 +877,9 @@ namespace MSNPSharp.IO
                         displayname = NSMessageHandler.Owner.Name;
                     }
 
-                    NSMessageHandler.Owner.SetGuid(new Guid(contactType.contactId));
-                    NSMessageHandler.Owner.SetCID(Convert.ToInt64(cit.CID));
-                    NSMessageHandler.Owner.SetContactType(cit.contactType);
+                    NSMessageHandler.Owner.Guid = new Guid(contactType.contactId);
+                    NSMessageHandler.Owner.CID = Convert.ToInt64(cit.CID);
+                    NSMessageHandler.Owner.ContactType = cit.contactType;
                     NSMessageHandler.Owner.SetName(displayname);
 
                     //NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayname;
