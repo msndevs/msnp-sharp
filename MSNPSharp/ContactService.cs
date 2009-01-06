@@ -308,8 +308,6 @@ namespace MSNPSharp
             NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
 
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
-            AddressBook.Save(); // The first and the last AddressBook.Save()
-            Deltas.Truncate();
 
             // Set display name, personal status and photo
             string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
@@ -380,8 +378,11 @@ namespace MSNPSharp
                                 abRequest("Initial",
                                     delegate
                                     {
-                                        abSynchronized = true;
-                                        SetDefaults(false);
+                                        // This is very important to synchronize (4 steps):
+                                        abSynchronized = true;  // 1: Set AddressBookSynchronized
+                                        SetDefaults(false);     // 2: Then SetDefaults()
+                                        AddressBook.Save();     // 3: The first and the last AddressBook.Save()
+                                        Deltas.Truncate();      // 4: Call this after AddressBook.Save()
 
                                         OnSynchronizationCompleted(EventArgs.Empty);
 
@@ -935,10 +936,23 @@ namespace MSNPSharp
         /// <summary>
         /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
         /// </summary>
-        /// <param name="account">An e-mail adress to add</param>
+        /// <param name="account">An account, email address or phone number, to add</param>
+        /// <remarks>The phone format is +CC1234567890, CC is Country Code</remarks>
         public virtual void AddNewContact(string account)
         {
-            AddNewContact(account, ClientType.PassportMember, String.Empty);
+            long test;
+            if (long.TryParse(account, out test) || (account.StartsWith("+") && long.TryParse(account.Substring(1), out test)))
+            {
+                if (account.StartsWith("00"))
+                {
+                    account = "+" + account.Substring(2);
+                }
+                AddNewContact(account, ClientType.PhoneMember, String.Empty);
+            }
+            else
+            {
+                AddNewContact(account, ClientType.PassportMember, String.Empty);
+            }
         }
 
         /// <summary>
@@ -1819,7 +1833,11 @@ namespace MSNPSharp
 
                 System.Threading.Thread.CurrentThread.Join(100);
                 RemoveContactFromList(contact, MSNLists.BlockedList, null);
+                System.Threading.Thread.CurrentThread.Join(100);
             }
+
+            if (!contact.OnAllowedList)
+                AddContactToList(contact, MSNLists.AllowedList, null);
         }
 
 
