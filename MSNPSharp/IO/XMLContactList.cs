@@ -466,12 +466,10 @@ namespace MSNPSharp.IO
                                                         contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                         contact.CID = cid;
                                                         contact.Lists = xmlcl.GetMSNLists(account, type, contact.IsMessengerUser);
-
-                                                        // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
-                                                        if (memberrole == MemberRole.Pending)
-                                                        {
-                                                            xmlcl.NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                                        }
+                                                        // Don't fire ReverseAdded(contact.Pending) here... It fires 2 times:
+                                                        // The first is OnConnect after abSynchronized
+                                                        // The second is here, not anymore here :)
+                                                        // The correct place is in OnADLReceived.
 
                                                         // Send a list add event
                                                         xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));

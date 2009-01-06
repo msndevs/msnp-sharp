@@ -1709,37 +1709,49 @@ message.CommandValues[0].ToString().Split(':')[1]
                 NetworkMessage networkMessage = message as NetworkMessage;
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
-                    ContactService.msRequest("MessengerPendingList", null);
-
-                    if (Settings.TraceSwitch.TraceVerbose)
-                    {
-                        XmlDocument xmlDoc = new XmlDocument();
-                        xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                        XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                        string domain = String.Empty;
-                        foreach (XmlNode domainNode in domains)
+                    ContactService.msRequest(
+                        "MessengerPendingList",
+                        delegate
                         {
-                            domain = domainNode.Attributes["n"].Value;
-                            XmlNode contactNode = domainNode.FirstChild;
-                            do
+                            XmlDocument xmlDoc = new XmlDocument();
+                            xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                            XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                            string domain = String.Empty;
+                            foreach (XmlNode domainNode in domains)
                             {
-                                string account = contactNode.Attributes["n"].Value + "@" + domain;
-                                ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                                MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
-                                string displayName = account;
-                                try
+                                domain = domainNode.Attributes["n"].Value;
+                                XmlNode contactNode = domainNode.FirstChild;
+                                do
                                 {
-                                    displayName = contactNode.Attributes["f"].Value;
-                                }
-                                catch (Exception)
-                                {
-                                }
+                                    string account = contactNode.Attributes["n"].Value + "@" + domain;
+                                    ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                                    MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                                    string displayName = account;
+                                    try
+                                    {
+                                        displayName = contactNode.Attributes["f"].Value;
+                                    }
+                                    catch (Exception)
+                                    {
+                                    }
 
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
+                                    if (ContactList.HasContact(account, type))
+                                    {
+                                        Contact contact = ContactList.GetContact(account, type);
 
-                            } while (contactNode.NextSibling != null);
-                        }
-                    }
+                                        // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
+                                        if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                        {
+                                            ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                        }
+                                    }
+
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
+
+                                } while (contactNode.NextSibling != null);
+                            }
+
+                        });
                 }
             }
         }
