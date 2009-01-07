@@ -890,10 +890,8 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void SendInitialMessage()
         {
-            string auth = NSMessageHandler.Owner.Mail;
-#if MSNP18
-            auth += ";" + NSMessageHandler.MachineGuid;
-#endif
+            string auth = NSMessageHandler.Owner.Mail + ";" + NSMessageHandler.MachineGuid.ToString("B");
+
             if (Invited)
                 MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { auth, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
             else

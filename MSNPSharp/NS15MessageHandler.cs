@@ -54,11 +54,9 @@ namespace MSNPSharp
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
-        #region Members
+        public static readonly Guid MachineGuid = Guid.NewGuid();
 
-#if MSNP18
-        public static readonly string MachineGuid = Guid.NewGuid().ToString("B");
-#endif
+        #region Members
 
         private SocketMessageProcessor messageProcessor;
         private ConnectivitySettings connectivitySettings;
@@ -747,11 +745,7 @@ namespace MSNPSharp
                     MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
                     mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
 
-                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response
-#if MSNP18
-         , MachineGuid
-#endif  
-                }));
+                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
             }
             else if ((string)message.CommandValues[1] == "OK")
             {
@@ -888,7 +882,7 @@ namespace MSNPSharp
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
 #endif
 
-            if (account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+            if (message.InnerBody!= null && account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(new MemoryStream(message.InnerBody));
@@ -896,17 +890,18 @@ namespace MSNPSharp
 
                 if (privateendpoints.Count > 0)
                 {
-                    Owner.Places.Clear();
-
+                    Dictionary<string, Guid> newPlaces = new Dictionary<string, Guid>(privateendpoints.Count);
                     foreach (XmlNode pepdNode in privateendpoints)
                     {
                         string id = pepdNode.Attributes["id"].Value;
                         string epname = pepdNode["EpName"].InnerText;
 
-                        Owner.Places[epname] = new Guid(id);
+                        newPlaces[epname] = new Guid(id);
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
                     }
+                    Owner.Places.Clear();
+                    Owner.Places = newPlaces;
                 }
 
                 Owner.SetPersonalMessage(new PersonalMessage(message));
@@ -1091,7 +1086,6 @@ message.CommandValues[0].ToString().Split(':')[1]
                 OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
         }
 
-#if MSNP18
         /// <summary>
         /// Called when a UBN command has been received.
         /// </summary>
@@ -1125,7 +1119,6 @@ message.CommandValues[0].ToString().Split(':')[1]
         {
         }
 
-#endif
 
         /// <summary>
         /// Called when a CHG command has been received.
@@ -1454,13 +1447,10 @@ message.CommandValues[0].ToString().Split(':')[1]
                     hdr["MSPAuth"],
                     ip,
                     clientPort,
-                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
-#if MSNP18
-,
+                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty,
                     hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0",
                     hdr.ContainsKey("RouteInfo") ? hdr["RouteInfo"] : String.Empty
-#endif
-);
+                );
 
                 if (IPAddress.None != ip)
                 {
@@ -2125,15 +2115,12 @@ message.CommandValues[0].ToString().Split(':')[1]
                     case "UBM":
                         OnUBMReceived(nsMessage);
                         break;
-#if MSNP18
                     case "UBN":
                         OnUBNReceived(nsMessage);
                         break;
-
                     case "UUN":
                         OnUUNReceived(nsMessage);
                         break;
-#endif
                     case "UBX":
                         OnUBXReceived(nsMessage);
                         break;

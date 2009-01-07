@@ -80,7 +80,7 @@ namespace MSNPSharp.DataTransfer
 #if MSNP18
         FileTransFooter = 0x2
 #else
-        MSNObjectFooter = 0x1
+        FileTransFooter = 0x1
 #endif
     }
 
