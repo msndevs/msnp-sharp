@@ -457,6 +457,7 @@ namespace MSNPSharp
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+                                NSMessageHandler.ContactService.Deltas.Save();
 
                                 System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
                                 DisplayImage displayImage = new DisplayImage();
