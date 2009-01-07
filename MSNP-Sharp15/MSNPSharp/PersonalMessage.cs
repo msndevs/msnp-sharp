@@ -45,8 +45,9 @@ namespace MSNPSharp
     public class PersonalMessage
     {
         private string personalMessage;
-#if MSNP18
         private Guid machineGuid;
+
+#if MSNP18
         private string signatureSound;
 #endif
 
@@ -59,29 +60,19 @@ namespace MSNPSharp
 
         private string[] content;
 
-        public PersonalMessage(string personalmsg, 
-            MediaType mediatype, 
-            string[] currentmediacontent
-#if MSNP18
-            , Guid machineguid
-#endif
-            )
+        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, Guid machineguid)
         {
             Message = personalmsg;
             mediaType = mediatype;
             content = currentmediacontent;
-#if MSNP18
             machineGuid = machineguid;
-#endif
         }
 
         internal PersonalMessage(NSMessage message)
         {
             nsMessage = message;
             mediaType = MediaType.None;
-#if MSNP18
             machineGuid = Guid.Empty;
-#endif
 
             try
             {
@@ -110,18 +101,19 @@ namespace MSNPSharp
                 if (mediaType != MediaType.None)
                     currentmedia = MSNHttpUtility.XmlEncode(String.Join(@"\0", content));
 
-                string pload = String.Format("<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia>" +
-#if MSNP18
+                string pload = String.Format(
+                    "<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia>" +
                     "<MachineGuid>{2}</MachineGuid>" +
-                    "<SignatureSound>{3}</SignatureSound>" +
+
+#if MSNP18
+ "<SignatureSound>{3}</SignatureSound>" +
 #endif
  "</Data>",
-                                              MSNHttpUtility.XmlEncode(personalMessage),
-                                              MSNHttpUtility.XmlEncode(currentmedia)
-                                              
+                    MSNHttpUtility.XmlEncode(personalMessage),
+                    MSNHttpUtility.XmlEncode(currentmedia),
+                    MSNHttpUtility.XmlEncode(machineGuid.ToString("B"))
 #if MSNP18
-                                              , MSNHttpUtility.XmlEncode(machineGuid.ToString("B")),
-                                              MSNHttpUtility.XmlEncode(signatureSound)
+ ,MSNHttpUtility.XmlEncode(signatureSound)
 #endif
 );
 
@@ -140,7 +132,7 @@ namespace MSNPSharp
                 personalMessage = value;
             }
         }
-#if MSNP18
+
         public Guid MachineGuid
         {
             get
@@ -149,6 +141,7 @@ namespace MSNPSharp
             }
         }
 
+#if MSNP18
         public string SignatureSound
         {
             get
@@ -275,10 +268,10 @@ namespace MSNPSharp
             }
 
             node = xmlDoc.SelectSingleNode("//Data/MachineGuid");
-#if MSNP18
-            if (node != null && node.InnerText != "")
+            if (node != null && node.InnerText != String.Empty)
                 machineGuid = new Guid(node.InnerText);
 
+#if MSNP18
             node = xmlDoc.SelectSingleNode("//Data/SignatureSound");
             if (node != null)
                 signatureSound = node.InnerText;

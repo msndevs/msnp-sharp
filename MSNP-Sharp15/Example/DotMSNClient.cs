@@ -85,6 +85,8 @@ namespace MSNPSharpClient
         private TextBox lblPM;
         private ToolStripMenuItem viewContactCardMenuItem;
         private ToolTip toolTipChangePhoto;
+        private ComboBox comboPlaces;
+        private Label lblStatus;
         private IContainer components;
         #endregion
 
@@ -120,6 +122,8 @@ namespace MSNPSharpClient
             this.ContactPanel = new System.Windows.Forms.Panel();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.comboPlaces = new System.Windows.Forms.ComboBox();
+            this.lblStatus = new System.Windows.Forms.Label();
             this.pnlNameAndPM = new System.Windows.Forms.Panel();
             this.lblPM = new System.Windows.Forms.TextBox();
             this.lblName = new System.Windows.Forms.TextBox();
@@ -164,7 +168,7 @@ namespace MSNPSharpClient
             this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ListPanel.Location = new System.Drawing.Point(239, 88);
             this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(300, 522);
+            this.ListPanel.Size = new System.Drawing.Size(300, 473);
             this.ListPanel.TabIndex = 0;
             // 
             // treeViewPanel
@@ -174,7 +178,7 @@ namespace MSNPSharpClient
             this.treeViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
             this.treeViewPanel.Name = "treeViewPanel";
-            this.treeViewPanel.Size = new System.Drawing.Size(300, 495);
+            this.treeViewPanel.Size = new System.Drawing.Size(300, 446);
             this.treeViewPanel.TabIndex = 2;
             // 
             // treeViewFavoriteList
@@ -192,7 +196,7 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.ShowLines = false;
             this.treeViewFavoriteList.ShowPlusMinus = false;
             this.treeViewFavoriteList.ShowRootLines = false;
-            this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 495);
+            this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 446);
             this.treeViewFavoriteList.TabIndex = 0;
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
@@ -216,7 +220,7 @@ namespace MSNPSharpClient
             this.treeViewFilterList.ShowLines = false;
             this.treeViewFilterList.ShowPlusMinus = false;
             this.treeViewFilterList.ShowRootLines = false;
-            this.treeViewFilterList.Size = new System.Drawing.Size(300, 495);
+            this.treeViewFilterList.Size = new System.Drawing.Size(300, 446);
             this.treeViewFilterList.TabIndex = 0;
             this.treeViewFilterList.Visible = false;
             this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
@@ -288,7 +292,7 @@ namespace MSNPSharpClient
             this.toolStripMenuItem4,
             this.viewContactCardMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 220);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 198);
             // 
             // sendIMMenuItem
             // 
@@ -371,7 +375,7 @@ namespace MSNPSharpClient
             this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Left;
             this.ContactPanel.Location = new System.Drawing.Point(0, 88);
             this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(239, 522);
+            this.ContactPanel.Size = new System.Drawing.Size(239, 473);
             this.ContactPanel.TabIndex = 2;
             // 
             // propertyGrid
@@ -382,13 +386,15 @@ namespace MSNPSharpClient
             this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
             this.propertyGrid.Location = new System.Drawing.Point(0, 0);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(239, 522);
+            this.propertyGrid.Size = new System.Drawing.Size(239, 473);
             this.propertyGrid.TabIndex = 4;
             // 
             // panel1
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.panel1.Controls.Add(this.comboPlaces);
+            this.panel1.Controls.Add(this.lblStatus);
             this.panel1.Controls.Add(this.pnlNameAndPM);
             this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.accountTextBox);
@@ -399,6 +405,27 @@ namespace MSNPSharpClient
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(290, 77);
             this.panel1.TabIndex = 5;
+            // 
+            // comboPlaces
+            // 
+            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboPlaces.DropDownWidth = 155;
+            this.comboPlaces.FormattingEnabled = true;
+            this.comboPlaces.Location = new System.Drawing.Point(134, 53);
+            this.comboPlaces.Name = "comboPlaces";
+            this.comboPlaces.Size = new System.Drawing.Size(70, 21);
+            this.comboPlaces.TabIndex = 5;
+            this.comboPlaces.Visible = false;
+            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
+            // 
+            // lblStatus
+            // 
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.Location = new System.Drawing.Point(144, 57);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(37, 13);
+            this.lblStatus.TabIndex = 5;
+            this.lblStatus.Text = "Status";
             // 
             // pnlNameAndPM
             // 
@@ -453,9 +480,9 @@ namespace MSNPSharpClient
             // 
             // loginButton
             // 
-            this.loginButton.Location = new System.Drawing.Point(148, 28);
+            this.loginButton.Location = new System.Drawing.Point(134, 28);
             this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(56, 21);
+            this.loginButton.Size = new System.Drawing.Size(70, 21);
             this.loginButton.TabIndex = 4;
             this.loginButton.Tag = "0";
             this.loginButton.Text = "> Sign in";
@@ -467,7 +494,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.Location = new System.Drawing.Point(7, 28);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(135, 20);
+            this.passwordTextBox.Size = new System.Drawing.Size(121, 20);
             this.passwordTextBox.TabIndex = 2;
             this.passwordTextBox.Text = "123456";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
@@ -484,7 +511,7 @@ namespace MSNPSharpClient
             "Offline"});
             this.comboStatus.Location = new System.Drawing.Point(7, 54);
             this.comboStatus.Name = "comboStatus";
-            this.comboStatus.Size = new System.Drawing.Size(197, 21);
+            this.comboStatus.Size = new System.Drawing.Size(121, 21);
             this.comboStatus.TabIndex = 3;
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
@@ -522,7 +549,7 @@ namespace MSNPSharpClient
             this.OwnerPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.OwnerPanel.Controls.Add(this.statusBar);
             this.OwnerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.OwnerPanel.Location = new System.Drawing.Point(0, 610);
+            this.OwnerPanel.Location = new System.Drawing.Point(0, 561);
             this.OwnerPanel.Name = "OwnerPanel";
             this.OwnerPanel.Size = new System.Drawing.Size(539, 26);
             this.OwnerPanel.TabIndex = 1;
@@ -587,7 +614,7 @@ namespace MSNPSharpClient
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(539, 636);
+            this.ClientSize = new System.Drawing.Size(539, 587);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.ListPanel);
             this.Controls.Add(this.ContactPanel);
@@ -653,6 +680,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            messenger.Nameserver.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
             messenger.Nameserver.SpaceService.ContactCardCompleted += new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted);
 
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
@@ -666,7 +694,6 @@ namespace MSNPSharpClient
                 SortByGroup();
 
             comboStatus.SelectedIndex = 0;
-
         }
 
         void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArgs arg)
@@ -920,6 +947,7 @@ namespace MSNPSharpClient
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = false;
+                        comboPlaces.Visible = false;
                     }
                     break;
 
@@ -937,6 +965,7 @@ namespace MSNPSharpClient
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = true;
+                        comboPlaces.Visible = true;
                     }
                     break;
             }
@@ -982,6 +1011,7 @@ namespace MSNPSharpClient
                         loginButton.Tag = 2;
                         loginButton.PerformClick();
                         pnlNameAndPM.Visible = false;
+                        comboPlaces.Visible = false;
 
                     }
                     comboStatus.SelectedIndex = comboStatus.FindString(old.ToString());
@@ -995,6 +1025,56 @@ namespace MSNPSharpClient
             {
                 MessageBox.Show("You can not login as Offline :)");
                 comboStatus.SelectedIndex = 0;
+            }
+        }
+
+        private void comboPlaces_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboPlaces.SelectedIndex > 0)
+            {
+                string place = comboPlaces.Text.Split(' ')[comboPlaces.Text.Split(' ').Length - 1];
+                if (comboPlaces.SelectedIndex == 1)
+                {
+                    messenger.Owner.Status = PresenceStatus.Offline;
+                    comboPlaces.Visible = false;
+                }
+                else if (comboPlaces.SelectedIndex == comboPlaces.Items.Count - 1)
+                {
+                    messenger.Owner.SignoutFromEverywhere();
+                    comboPlaces.Visible = false;
+                }
+                else
+                {
+                    messenger.Owner.SignoutFrom(place);
+                }
+            }
+        }
+
+        private void Owner_PlacesChanged(object sender, EventArgs e)
+        {
+            if (comboPlaces.InvokeRequired)
+            {
+                comboPlaces.Invoke(new EventHandler(Owner_PlacesChanged), sender, e);
+                return;
+            }
+
+            // if (messenger.Owner.Places.Count > 1)
+            {
+                comboPlaces.BeginUpdate();
+                comboPlaces.Items.Clear();
+                comboPlaces.Items.Add("(" + messenger.Owner.Places.Count + ") Places");
+                comboPlaces.Items.Add("Signout from here");
+                foreach (string ep in messenger.Owner.Places.Keys)
+                {
+                    if (ep != messenger.Owner.EpName)
+                    {
+                        comboPlaces.Items.Add("Signout from " + ep);
+                    }
+                }
+                comboPlaces.Items.Add("Signout from everywhere");
+                comboPlaces.SelectedIndex = 0;
+                comboPlaces.Visible = true;
+                comboPlaces.EndUpdate();
             }
         }
 
@@ -1017,6 +1097,7 @@ namespace MSNPSharpClient
             loginButton.Tag = 2;
             loginButton.Text = "Sign off";
             pnlNameAndPM.Visible = true;
+            comboPlaces.Visible = true;
 
             messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
@@ -1039,6 +1120,7 @@ namespace MSNPSharpClient
             loginButton.Tag = 0;
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
+            comboPlaces.Visible = false;
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
@@ -1702,12 +1784,8 @@ namespace MSNPSharpClient
 
             if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
             {
-#if MSNP18
-                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
-#else
-                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null);
-#endif
-                }
+                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, NSMessageHandler.MachineGuid);
+            }
         }
 
         private void viewContactCardToolStripMenuItem_Click(object sender, EventArgs e)
