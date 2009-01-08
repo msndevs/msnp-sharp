@@ -1,17 +1,18 @@
+using System;
+using System.IO;
+using System.Data;
+using System.Drawing;
+using System.Collections;
+using System.Diagnostics;
+using System.Windows.Forms;
+using System.ComponentModel;
+using System.Collections.Generic;
+
 namespace MSNPSharpClient
 {
-    using System;
-    using System.IO;
-    using System.Drawing;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.Windows.Forms;
-    using System.Data;
     using MSNPSharp;
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using System.Diagnostics;
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -45,7 +46,6 @@ namespace MSNPSharpClient
         private PictureBox displayImageBox;
         private OpenFileDialog openFileDialog;
         private SaveFileDialog saveFileDialog;
-        private Button changeDisplayButton;
         private OpenFileDialog openImageDialog;
         private Timer tmrKeepOnLine;
         private TreeView treeViewFavoriteList;
@@ -86,109 +86,10 @@ namespace MSNPSharpClient
         private TextBox lblPM;
         private ToolStripMenuItem viewContactCardMenuItem;
         private ToolTip toolTipChangePhoto;
+        private ComboBox comboPlaces;
+        private Label lblStatus;
         private IContainer components;
         #endregion
-
-        public ClientForm()
-        {
-            //
-            // Required for Windows Form Designer support
-            //
-            InitializeComponent();
-            // You can set proxy settings here
-            // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
-
-            // by default this example will emulate the official microsoft windows messenger client
-            messenger.Credentials.ClientID = "PROD0119GSJUC$18";
-            messenger.Credentials.ClientCode = "ILTXC!4IXB5FB*PX";
-
-            // uncomment this to enable verbose output for debugging
-            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
-
-            // set the events that we will handle
-            // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
-            // a switchboard server handles the individual conversation sessions.
-            messenger.NameserverProcessor.ConnectionEstablished += new EventHandler<EventArgs>(NameserverProcessor_ConnectionEstablished);
-            messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
-            messenger.Nameserver.SignedOff += new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff);
-            messenger.NameserverProcessor.ConnectingException += new EventHandler<ExceptionEventArgs>(NameserverProcessor_ConnectingException);
-            messenger.Nameserver.ExceptionOccurred += new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred);
-            messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
-            messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
-            messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
-            messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
-            messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
-
-            messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
-            messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
-
-            messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
-
-            messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            messenger.Nameserver.SpaceService.ContactCardCompleted += new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted);
-
-            messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
-            messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
-
-            treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
-
-            if (toolStripSortByStatus.Checked)
-                SortByStatus();
-            else
-                SortByGroup();
-
-            comboStatus.SelectedIndex = 0;
-
-        }
-
-        void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArgs arg)
-        {
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted),
-                    new object[] { sender, arg });
-            }
-            else
-            {
-                if (arg.Error == null && arg.Changed)
-                {
-                    ContactCardForm ccform = new ContactCardForm(arg.ContactCard);
-                    ccform.Show();
-                }
-            }
-        }
-
-        void Owner_PersonalMessageChanged(object sender, EventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new EventHandler<EventArgs>(Owner_PersonalMessageChanged), sender, e);
-                return;
-            }
-
-            lblName.Text = messenger.Owner.Name;
-
-            if (messenger.Owner.PersonalMessage != null && messenger.Owner.PersonalMessage.Message != null)
-            {
-                lblPM.Text = System.Web.HttpUtility.HtmlDecode(messenger.Owner.PersonalMessage.Message);
-            }
-        }
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (components != null)
-                {
-                    components.Dispose();
-                }
-            }
-            base.Dispose(disposing);
-        }
 
         #region Windows Form Designer generated code
 
@@ -220,10 +121,11 @@ namespace MSNPSharpClient
             this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
             this.viewContactCardMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.changeDisplayButton = new System.Windows.Forms.Button();
             this.ContactPanel = new System.Windows.Forms.Panel();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.comboPlaces = new System.Windows.Forms.ComboBox();
+            this.lblStatus = new System.Windows.Forms.Label();
             this.pnlNameAndPM = new System.Windows.Forms.Panel();
             this.lblPM = new System.Windows.Forms.TextBox();
             this.lblName = new System.Windows.Forms.TextBox();
@@ -268,7 +170,7 @@ namespace MSNPSharpClient
             this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ListPanel.Location = new System.Drawing.Point(239, 88);
             this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(300, 522);
+            this.ListPanel.Size = new System.Drawing.Size(300, 473);
             this.ListPanel.TabIndex = 0;
             // 
             // treeViewPanel
@@ -278,7 +180,7 @@ namespace MSNPSharpClient
             this.treeViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
             this.treeViewPanel.Name = "treeViewPanel";
-            this.treeViewPanel.Size = new System.Drawing.Size(300, 495);
+            this.treeViewPanel.Size = new System.Drawing.Size(300, 446);
             this.treeViewPanel.TabIndex = 2;
             // 
             // treeViewFavoriteList
@@ -296,7 +198,7 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.ShowLines = false;
             this.treeViewFavoriteList.ShowPlusMinus = false;
             this.treeViewFavoriteList.ShowRootLines = false;
-            this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 495);
+            this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 446);
             this.treeViewFavoriteList.TabIndex = 0;
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
@@ -320,7 +222,7 @@ namespace MSNPSharpClient
             this.treeViewFilterList.ShowLines = false;
             this.treeViewFilterList.ShowPlusMinus = false;
             this.treeViewFilterList.ShowRootLines = false;
-            this.treeViewFilterList.Size = new System.Drawing.Size(300, 495);
+            this.treeViewFilterList.Size = new System.Drawing.Size(300, 446);
             this.treeViewFilterList.TabIndex = 0;
             this.treeViewFilterList.Visible = false;
             this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
@@ -393,7 +295,7 @@ namespace MSNPSharpClient
             this.toolStripMenuItem4,
             this.viewContactCardMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 220);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 198);
             // 
             // sendIMMenuItem
             // 
@@ -476,18 +378,6 @@ namespace MSNPSharpClient
             this.viewContactCardMenuItem.Text = "View Contact Card";
             this.viewContactCardMenuItem.Click += new System.EventHandler(this.viewContactCardToolStripMenuItem_Click);
             // 
-            // changeDisplayButton
-            // 
-            this.changeDisplayButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.changeDisplayButton.BackColor = System.Drawing.SystemColors.Control;
-            this.changeDisplayButton.Location = new System.Drawing.Point(359, 59);
-            this.changeDisplayButton.Name = "changeDisplayButton";
-            this.changeDisplayButton.Size = new System.Drawing.Size(85, 23);
-            this.changeDisplayButton.TabIndex = 7;
-            this.changeDisplayButton.Text = "Display image";
-            this.changeDisplayButton.UseVisualStyleBackColor = true;
-            this.changeDisplayButton.Click += new System.EventHandler(this.changeDisplayButton_Click);
-            // 
             // ContactPanel
             // 
             this.ContactPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
@@ -495,7 +385,7 @@ namespace MSNPSharpClient
             this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Left;
             this.ContactPanel.Location = new System.Drawing.Point(0, 88);
             this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(239, 522);
+            this.ContactPanel.Size = new System.Drawing.Size(239, 473);
             this.ContactPanel.TabIndex = 2;
             // 
             // propertyGrid
@@ -506,13 +396,15 @@ namespace MSNPSharpClient
             this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
             this.propertyGrid.Location = new System.Drawing.Point(0, 0);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(239, 522);
+            this.propertyGrid.Size = new System.Drawing.Size(239, 473);
             this.propertyGrid.TabIndex = 4;
             // 
             // panel1
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.panel1.Controls.Add(this.comboPlaces);
+            this.panel1.Controls.Add(this.lblStatus);
             this.panel1.Controls.Add(this.pnlNameAndPM);
             this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.accountTextBox);
@@ -523,6 +415,27 @@ namespace MSNPSharpClient
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(290, 77);
             this.panel1.TabIndex = 5;
+            // 
+            // comboPlaces
+            // 
+            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboPlaces.DropDownWidth = 155;
+            this.comboPlaces.FormattingEnabled = true;
+            this.comboPlaces.Location = new System.Drawing.Point(134, 53);
+            this.comboPlaces.Name = "comboPlaces";
+            this.comboPlaces.Size = new System.Drawing.Size(70, 21);
+            this.comboPlaces.TabIndex = 5;
+            this.comboPlaces.Visible = false;
+            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
+            // 
+            // lblStatus
+            // 
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.Location = new System.Drawing.Point(144, 57);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(37, 13);
+            this.lblStatus.TabIndex = 5;
+            this.lblStatus.Text = "Status";
             // 
             // pnlNameAndPM
             // 
@@ -555,15 +468,16 @@ namespace MSNPSharpClient
             // 
             this.displayImageBox.BackColor = System.Drawing.Color.White;
             this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
             this.displayImageBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.displayImageBox.Location = new System.Drawing.Point(210, 0);
+            this.displayImageBox.Location = new System.Drawing.Point(213, 0);
             this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(80, 77);
+            this.displayImageBox.Size = new System.Drawing.Size(77, 77);
             this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.displayImageBox.TabIndex = 2;
             this.displayImageBox.TabStop = false;
-            this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Double click to change the photo");
-            this.displayImageBox.DoubleClick += new System.EventHandler(this.displayImageBox_DoubleClick);
+            this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Click to change the photo");
+            this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
             // 
             // accountTextBox
             // 
@@ -576,9 +490,9 @@ namespace MSNPSharpClient
             // 
             // loginButton
             // 
-            this.loginButton.Location = new System.Drawing.Point(148, 28);
+            this.loginButton.Location = new System.Drawing.Point(134, 28);
             this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(56, 21);
+            this.loginButton.Size = new System.Drawing.Size(70, 21);
             this.loginButton.TabIndex = 4;
             this.loginButton.Tag = "0";
             this.loginButton.Text = "> Sign in";
@@ -590,7 +504,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.Location = new System.Drawing.Point(7, 28);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(135, 20);
+            this.passwordTextBox.Size = new System.Drawing.Size(121, 20);
             this.passwordTextBox.TabIndex = 2;
             this.passwordTextBox.Text = "123456";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
@@ -602,15 +516,12 @@ namespace MSNPSharpClient
             this.comboStatus.Items.AddRange(new object[] {
             "Online",
             "Busy",
-            "BRB",
             "Away",
-            "Phone",
-            "Lunch",
             "Hidden",
             "Offline"});
             this.comboStatus.Location = new System.Drawing.Point(7, 54);
             this.comboStatus.Name = "comboStatus";
-            this.comboStatus.Size = new System.Drawing.Size(197, 21);
+            this.comboStatus.Size = new System.Drawing.Size(121, 21);
             this.comboStatus.TabIndex = 3;
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
@@ -648,7 +559,7 @@ namespace MSNPSharpClient
             this.OwnerPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.OwnerPanel.Controls.Add(this.statusBar);
             this.OwnerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.OwnerPanel.Location = new System.Drawing.Point(0, 610);
+            this.OwnerPanel.Location = new System.Drawing.Point(0, 561);
             this.OwnerPanel.Name = "OwnerPanel";
             this.OwnerPanel.Size = new System.Drawing.Size(539, 26);
             this.OwnerPanel.TabIndex = 1;
@@ -713,15 +624,14 @@ namespace MSNPSharpClient
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(539, 636);
+            this.ClientSize = new System.Drawing.Size(539, 587);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.ListPanel);
             this.Controls.Add(this.ContactPanel);
             this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.OwnerPanel);
-            this.Controls.Add(this.changeDisplayButton);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client (2.5.2)";
+            this.Text = "MSNPSharp Example Client (2.5.3)";
             this.ListPanel.ResumeLayout(false);
             this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
@@ -741,6 +651,121 @@ namespace MSNPSharpClient
 
         }
         #endregion
+
+        public ClientForm()
+        {
+            //
+            // Required for Windows Form Designer support
+            //
+            InitializeComponent();
+            // You can set proxy settings here
+            // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
+
+            // by default this example will emulate the official microsoft windows messenger client
+            messenger.Credentials.ClientID = "PROD0119GSJUC$18";
+            messenger.Credentials.ClientCode = "ILTXC!4IXB5FB*PX";
+
+            // uncomment this to enable verbose output for debugging
+            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
+
+            // set the events that we will handle
+            // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
+            // a switchboard server handles the individual conversation sessions.
+            messenger.NameserverProcessor.ConnectionEstablished += new EventHandler<EventArgs>(NameserverProcessor_ConnectionEstablished);
+            messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
+            messenger.Nameserver.SignedOff += new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff);
+            messenger.NameserverProcessor.ConnectingException += new EventHandler<ExceptionEventArgs>(NameserverProcessor_ConnectingException);
+            messenger.Nameserver.ExceptionOccurred += new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred);
+            messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
+            messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
+            messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
+            messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
+            messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
+
+            messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
+            messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
+
+            messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
+
+            messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
+            messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            messenger.Nameserver.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
+            messenger.Nameserver.SpaceService.ContactCardCompleted += new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted);
+
+            messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
+            messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
+
+            treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
+
+            if (toolStripSortByStatus.Checked)
+                SortByStatus();
+            else
+                SortByGroup();
+
+            comboStatus.SelectedIndex = 0;
+        }
+
+        void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArgs arg)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted),
+                    new object[] { sender, arg });
+            }
+            else
+            {
+                if (arg.Error == null && arg.Changed)
+                {
+                    ContactCardForm ccform = new ContactCardForm(arg.ContactCard);
+                    ccform.Show();
+                }
+            }
+        }
+
+        void Owner_PersonalMessageChanged(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<EventArgs>(Owner_PersonalMessageChanged), sender, e);
+                return;
+            }
+
+            lblName.Text = messenger.Owner.Name;
+
+            if (messenger.Owner.PersonalMessage != null && messenger.Owner.PersonalMessage.Message != null)
+            {
+                lblPM.Text = System.Web.HttpUtility.HtmlDecode(messenger.Owner.PersonalMessage.Message);
+            }
+        }
+
+        void Owner_DisplayImageChanged(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<EventArgs>(Owner_DisplayImageChanged), sender, e);
+                return;
+            }
+
+            displayImageBox.Image = messenger.Owner.DisplayImage.Image;
+        }
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+            }
+            base.Dispose(disposing);
+        }
+
+        
 
         /// <summary>
         /// The main entry point for the application.
@@ -932,6 +957,7 @@ namespace MSNPSharpClient
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = false;
+                        comboPlaces.Visible = false;
                     }
                     break;
 
@@ -949,6 +975,7 @@ namespace MSNPSharpClient
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = true;
+                        comboPlaces.Visible = true;
                     }
                     break;
             }
@@ -994,6 +1021,7 @@ namespace MSNPSharpClient
                         loginButton.Tag = 2;
                         loginButton.PerformClick();
                         pnlNameAndPM.Visible = false;
+                        comboPlaces.Visible = false;
 
                     }
                     comboStatus.SelectedIndex = comboStatus.FindString(old.ToString());
@@ -1007,6 +1035,56 @@ namespace MSNPSharpClient
             {
                 MessageBox.Show("You can not login as Offline :)");
                 comboStatus.SelectedIndex = 0;
+            }
+        }
+
+        private void comboPlaces_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboPlaces.SelectedIndex > 0)
+            {
+                string place = comboPlaces.Text.Split(' ')[comboPlaces.Text.Split(' ').Length - 1];
+                if (comboPlaces.SelectedIndex == 1)
+                {
+                    messenger.Owner.Status = PresenceStatus.Offline;
+                    comboPlaces.Visible = false;
+                }
+                else if (comboPlaces.SelectedIndex == comboPlaces.Items.Count - 1)
+                {
+                    messenger.Owner.SignoutFromEverywhere();
+                    comboPlaces.Visible = false;
+                }
+                else
+                {
+                    messenger.Owner.SignoutFrom(place);
+                }
+            }
+        }
+
+        private void Owner_PlacesChanged(object sender, EventArgs e)
+        {
+            if (comboPlaces.InvokeRequired)
+            {
+                comboPlaces.Invoke(new EventHandler(Owner_PlacesChanged), sender, e);
+                return;
+            }
+
+            // if (messenger.Owner.Places.Count > 1)
+            {
+                comboPlaces.BeginUpdate();
+                comboPlaces.Items.Clear();
+                comboPlaces.Items.Add("(" + messenger.Owner.Places.Count + ") Places");
+                comboPlaces.Items.Add("Signout from here");
+                foreach (string ep in messenger.Owner.Places.Keys)
+                {
+                    if (ep != messenger.Owner.EpName)
+                    {
+                        comboPlaces.Items.Add("Signout from " + ep);
+                    }
+                }
+                comboPlaces.Items.Add("Signout from everywhere");
+                comboPlaces.SelectedIndex = 0;
+                comboPlaces.Visible = true;
+                comboPlaces.EndUpdate();
             }
         }
 
@@ -1026,10 +1104,10 @@ namespace MSNPSharpClient
             }
 
             // set our presence status
-            displayImageBox.Image = messenger.Owner.DisplayImage.Image;
             loginButton.Tag = 2;
             loginButton.Text = "Sign off";
             pnlNameAndPM.Visible = true;
+            comboPlaces.Visible = true;
 
             messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
@@ -1052,6 +1130,7 @@ namespace MSNPSharpClient
             loginButton.Tag = 0;
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
+            comboPlaces.Visible = false;
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
@@ -1144,24 +1223,6 @@ namespace MSNPSharpClient
             conversationForm.Handle.ToInt32();
             ConversationForms.Add(conversationForm);
             return conversationForm;
-
-            //foreach (ConversationForm cform in Dicconversation.Values)
-            //{
-            //    if (cform.CanAttach(remote.Mail) != -1)
-            //    {
-            //        cform.AttachConversation(conversation);
-            //        return cform;
-            //    }
-            //}
-            // create a new conversation. However do not show the window untill a message is received.
-            // for example, a conversation will be created when the remote client sends wants to send
-            // you a file. You don't want to show the conversation form in that case.
-            //ConversationForm conversationForm = new ConversationForm(conversation, this);
-            //// do this to create the window handle. Otherwise we are not able to call Invoke() on the
-            //// conversation form later.
-            //conversationForm.Handle.ToInt32();
-            //dicconversation.Add(conversation, conversationForm);
-            //return conversationForm;
         }
 
         private void messenger_ConversationCreated(object sender, ConversationCreatedEventArgs e)
@@ -1176,7 +1237,6 @@ namespace MSNPSharpClient
                 {
                     this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { e.Conversation, args.Contact });
                 };
-
             }
         }
 
@@ -1209,28 +1269,8 @@ namespace MSNPSharpClient
                     e.TransferSession.DataStream = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
                     //e.Handler.AcceptTransfer (e);
                     e.Accept = true;
+                    e.TransferSession.AutoCloseStream = true;
                 }
-            }
-        }
-
-
-        /// <summary>
-        /// Change the current owner's display image.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void changeDisplayButton_Click(object sender, EventArgs e)
-        {
-            //messenger.Owner.DisplayImage.FileLocation = @"C:\icon.png";
-            //messenger.Owner.BroadcastDisplayImage();
-
-            if (openImageDialog.ShowDialog() == DialogResult.OK)
-            {
-                Image fileImage = Image.FromFile(openImageDialog.FileName);
-                DisplayImage displayImage = new DisplayImage();
-                displayImage.Image = fileImage;
-                messenger.Owner.DisplayImage = displayImage;
-                messenger.Nameserver.StorageService.UpdateProfile(fileImage, "MyPhoto");
             }
         }
 
@@ -1807,11 +1847,7 @@ namespace MSNPSharpClient
 
             if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
             {
-#if MSNP16
-                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
-#else
-                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null);
-#endif
+                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, NSMessageHandler.MachineGuid);
             }
         }
 
@@ -1829,26 +1865,15 @@ namespace MSNPSharpClient
             }
         }
 
-        private void displayImageBox_DoubleClick(object sender, EventArgs e)
+        private void displayImageBox_Click(object sender, EventArgs e)
         {
             if (messenger.Connected)
             {
                 if (openImageDialog.ShowDialog() == DialogResult.OK)
                 {
-                    Image fileImage = Image.FromFile(openImageDialog.FileName);
-                    /*
-                    DisplayImage displayImage = new DisplayImage();
-                    displayImage.Image = fileImage;
-                    messenger.Owner.DisplayImage = displayImage;
-                     * */
-
-                    if (messenger.Nameserver.StorageService.UpdateProfile(fileImage, "MyPhoto"))
-                    {
-                        displayImageBox.Image = fileImage;
-                    }
+                    messenger.Nameserver.StorageService.UpdateProfile(Image.FromFile(openImageDialog.FileName), "MyPhoto");
                 }
             }
         }
-
     }
 }

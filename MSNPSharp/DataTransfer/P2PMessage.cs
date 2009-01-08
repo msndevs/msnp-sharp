@@ -61,7 +61,27 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages defines data for a filetransfer.
         /// </summary>
-        FileData = 0x01000030
+        FileData = 0x01000030,
+        /// <summary>
+        /// 
+        /// </summary>
+        Activity = 0x01000000,
+        /// <summary>
+        /// Footer for a msn object p2pMessage.
+        /// </summary>
+#if MSNP16
+        MSNObjectFooter = 0xc,
+#else
+        MSNObjectFooter = 0x1,
+#endif
+        /// <summary>
+        /// Footer for a filetransfer p2pMessage.
+        /// </summary>
+#if MSNP16
+        FileTransFooter = 0x2
+#else
+        FileTransFooter = 0x1
+#endif
     }
 
     /// <summary>

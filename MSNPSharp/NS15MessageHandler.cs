@@ -54,11 +54,9 @@ using System.Text.RegularExpressions;
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
-        #region Members
+        public static readonly Guid MachineGuid = Guid.NewGuid();
 
-#if MSNP16
-        public static readonly string MachineGuid = Guid.NewGuid().ToString("B");
-#endif
+        #region Members
 
         private SocketMessageProcessor messageProcessor;
         private ConnectivitySettings connectivitySettings;
@@ -744,7 +742,7 @@ using System.Text.RegularExpressions;
 
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response
 #if MSNP16
-         , MachineGuid
+         , MachineGuid.ToString("B")
 #endif  
                 }));
             }
@@ -837,7 +835,6 @@ using System.Text.RegularExpressions;
 
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[1]);
 
-
             if (message.InnerBody != null && message.CommandValues[0].ToString().ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
             {
                 XmlDocument xmlDoc = new XmlDocument();
@@ -846,17 +843,18 @@ using System.Text.RegularExpressions;
 
                 if (privateendpoints.Count > 0)
                 {
-                    Owner.Places.Clear();
-
+                    Dictionary<string, Guid> newPlaces = new Dictionary<string, Guid>(privateendpoints.Count);
                     foreach (XmlNode pepdNode in privateendpoints)
                     {
                         string id = pepdNode.Attributes["id"].Value;
                         string epname = pepdNode["EpName"].InnerText;
 
-                        Owner.Places[epname] = new Guid(id);
+                        newPlaces[epname] = new Guid(id);
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
                     }
+                    Owner.Places.Clear();
+                    Owner.Places = newPlaces;
                 }
 
                 Owner.SetPersonalMessage(new PersonalMessage(message));
@@ -1339,13 +1337,10 @@ using System.Text.RegularExpressions;
                     hdr["MSPAuth"],
                     ip,
                     clientPort,
-                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty
-#if MSNP16
-,
+                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty,
                     hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0",
                     hdr.ContainsKey("RouteInfo") ? hdr["RouteInfo"] : String.Empty
-#endif
-                    );
+                );
 
                 if (IPAddress.None != ip)
                 {
@@ -2010,15 +2005,12 @@ using System.Text.RegularExpressions;
                     case "UBM":
                         OnUBMReceived(nsMessage);
                         break;
-#if MSNP16
                     case "UBN":
                         OnUBNReceived(nsMessage);
                         break;
-
                     case "UUN":
                         OnUUNReceived(nsMessage);
                         break;
-#endif
                     case "UBX":
                         OnUBXReceived(nsMessage);
                         break;

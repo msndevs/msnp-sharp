@@ -304,11 +304,8 @@ namespace MSNPSharp
 
             // Set display name, personal status and photo
             string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
-#if MSNP16
-            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage, MediaType.None, null, new Guid(NSMessageHandler.MachineGuid));
-#else
-            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage, MediaType.None, null);
-#endif
+            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage, MediaType.None, null, NSMessageHandler.MachineGuid);
+
             NSMessageHandler.Owner.SetName(mydispName);
             NSMessageHandler.Owner.SetPersonalMessage(pm);
             NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
@@ -1169,9 +1166,7 @@ namespace MSNPSharp
         internal void UpdateMe()
         {
             UpdatePrivacySettings();
-#if MSNP16
             UpdateGeneralDialogSettings();
-#endif
         }
 
         private void UpdateGeneralDialogSettings()
@@ -1197,7 +1192,7 @@ namespace MSNPSharp
 
             if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                ABServiceBinding abService = CreateABService("RoamingIdentityChanged");  //In msnp17 this is "GeneralDialogApply"
+                ABServiceBinding abService = CreateABService("PrivacyApply");  //In msnp17 this is "GeneralDialogApply"
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
                     handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);

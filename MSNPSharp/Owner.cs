@@ -45,17 +45,23 @@ namespace MSNPSharp
     [Serializable]
     public class Owner : Contact
     {
-#if MSNP16
         private Dictionary<string, Guid> places = new Dictionary<string, Guid>(0);
         private string epName = Environment.MachineName;
-#endif
 
         private bool passportVerified;
         private PrivacyMode privacy = PrivacyMode.Unknown;
         private NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
         private RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
-        
+
+        /// <summary>
+        /// Fired when owner profile received.
+        /// </summary>
         public event EventHandler<EventArgs> ProfileReceived;
+
+        /// <summary>
+        /// Fired when owner places changed.
+        /// </summary>
+        public event EventHandler<EventArgs> PlacesChanged;
 
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
@@ -80,8 +86,9 @@ namespace MSNPSharp
             roamLiveProperty = mode;
         }
 
-#if MSNP16
-
+        /// <summary>
+        /// This place's name
+        /// </summary>
         public string EpName
         {
             get
@@ -101,20 +108,35 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The end points.
+        /// </summary>
         public Dictionary<string, Guid> Places
         {
             get
             {
                 return places;
             }
+            internal set
+            {
+                places = value;
+                OnPlacesChanged(EventArgs.Empty);
+            }
         }
 
+        /// <summary>
+        /// Sign the owner out from every place.
+        /// </summary>
         public void SignoutFromEverywhere()
         {
             NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail, "8" }, "gtfo"));
             Status = PresenceStatus.Offline;
         }
 
+        /// <summary>
+        /// Sign the owner out from the specificed place.
+        /// </summary>
+        /// <param name="place">The place name to be signed out</param>
         public void SignoutFrom(string place)
         {
             if (place == EpName)
@@ -129,7 +151,6 @@ namespace MSNPSharp
                     "goawyplzthxbye"));
             }
         }
-#endif
 
         public new DisplayImage DisplayImage
         {
@@ -328,8 +349,6 @@ namespace MSNPSharp
             }
         }
 
-#if MSNP16
-
         bool mpopEnabled;
         MPOP mpopMode = MPOP.Unspecified;
         string _routeInfo = string.Empty;
@@ -370,7 +389,6 @@ namespace MSNPSharp
             MPOPMode = mpop;
         }
 
-
         /// <summary>
         /// Reaction when sign in at another place.
         /// </summary>
@@ -401,8 +419,6 @@ namespace MSNPSharp
                 }
             }
         }
-
-#endif
 
         new public PresenceStatus Status
         {
@@ -727,12 +743,9 @@ namespace MSNPSharp
             string kid, string age, string birthday,
             string wallet, string sid, string kv,
             string mspAuth, IPAddress clientIP, int clientPort,
-            string nick
-#if MSNP16
-            , bool mpop
-            , string routeInfo
-#endif
-            )
+            string nick,
+            bool mpop,
+            string routeInfo)
         {
             LoginTime = loginTime;
             EmailEnabled = emailEnabled;
@@ -752,10 +765,8 @@ namespace MSNPSharp
             MSPAuth = mspAuth;
             ClientIP = clientIP;
             ClientPort = clientPort;
-#if MSNP16
             MPOPEnable = mpop;
             RouteInfo = routeInfo;
-#endif
             SetNickName(nick);
             ValidProfile = true;
 
@@ -770,6 +781,16 @@ namespace MSNPSharp
         {
             if (ProfileReceived != null)
                 ProfileReceived(this, e);
+        }
+
+        /// <summary>
+        /// Called when the <see cref="Places "/> (End Points) changed.
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void OnPlacesChanged(EventArgs e)
+        {
+            if (PlacesChanged != null)
+                PlacesChanged(this, e);
         }
     }
 };
