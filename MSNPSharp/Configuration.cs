@@ -52,7 +52,7 @@ namespace MSNPSharp
         /// <summary>
         /// Don't use compression when saving addressbook files.
         /// </summary>
-        public static bool NoCompress = true;
+        public static bool NoCompress = false;
 
         /// <summary>
         /// Don't save addressbook files.
