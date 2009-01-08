@@ -149,21 +149,22 @@ namespace MSNPSharp.IO
 
         public static int CompareMembershipDeltas(FindMembershipResultType x, FindMembershipResultType y)
         {
+            DateTime serviceTypeXMinLastChange = DateTime.MaxValue;
+            DateTime serviceTypeYMinLastChange = DateTime.MaxValue;
+
             foreach (ServiceType serviceTypeX in x.Services)
             {
-                if (serviceTypeX.Info.Handle.Type == ServiceFilterType.Messenger)
-                {
-                    foreach (ServiceType serviceTypeY in y.Services)
-                    {
-                        if (serviceTypeY.Info.Handle.Type == ServiceFilterType.Messenger)
-                        {
-                            return serviceTypeX.LastChange.CompareTo(serviceTypeY.LastChange);
-                        }
-                    }
-                }
+                if (serviceTypeX.LastChange < serviceTypeXMinLastChange)
+                    serviceTypeXMinLastChange = serviceTypeX.LastChange;
             }
 
-            return 0;
+            foreach (ServiceType serviceTypeY in y.Services)
+            {
+                if (serviceTypeY.LastChange < serviceTypeYMinLastChange)
+                    serviceTypeYMinLastChange = serviceTypeY.LastChange;
+            }
+
+            return serviceTypeXMinLastChange.CompareTo(serviceTypeYMinLastChange);
         }
 
         #region Overrides
