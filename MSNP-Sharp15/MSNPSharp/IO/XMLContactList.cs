@@ -271,12 +271,6 @@ namespace MSNPSharp.IO
                         contactlists ^= MSNLists.BlockedList;
                     else
                         contactlists |= MSNLists.BlockedList;
-
-                    if ((contactlists & MSNLists.AllowedList) == MSNLists.AllowedList)
-                    {
-                        contactlists ^= MSNLists.AllowedList;
-                        RemoveMemberhip(targetservice.ServiceType, account, type, MemberRole.Allow);
-                    }
                 }
 
                 if (ms.ContainsKey(MemberRole.Reverse) && ms[MemberRole.Reverse].ContainsKey(hash))
@@ -720,8 +714,8 @@ namespace MSNPSharp.IO
 
                                     if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(contact.Mail, contact.ClientType, contact.IsMessengerUser))
                                     {
-                                        xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
-                                        contact.NSMessageHandler = null;
+                                        //xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                        //contact.NSMessageHandler = null;
                                     }
                                 }
                             }
