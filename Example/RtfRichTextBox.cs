@@ -15,6 +15,22 @@ namespace MSNPSharpClient
     {
         [DllImport("gdiplus.dll")]
         private static extern uint GdipEmfToWmfBits(IntPtr _hEmf, uint _bufferSize, byte[] _buffer, int _mappingMode, EmfToWmfBitsFlags _flags);
+        
+        #region .cctor
+        static bool hasGdiPlus = false;
+        static RtfRichTextBox()
+        {
+            try
+            {
+                GdipEmfToWmfBits(IntPtr.Zero, 0, null, 0, 0);
+                hasGdiPlus = true;
+            }
+            catch (Exception)
+            {
+            }
+        }
+        #endregion
+
 
         private float xDpi;
         private float yDpi;
@@ -246,27 +262,33 @@ namespace MSNPSharpClient
 
         public void InsertEmotion()
         {
-            foreach (string emoticon in emotions.Keys)
+            if (hasGdiPlus)
             {
-                int start = Find(emoticon, RichTextBoxFinds.None);
-                if (start > -1)
+                foreach (string emoticon in emotions.Keys)
                 {
-                    Select(start, emoticon.Length);
-                    InsertImage(emotions[emoticon]);
+                    int start = Find(emoticon, RichTextBoxFinds.None);
+                    if (start > -1)
+                    {
+                        Select(start, emoticon.Length);
+                        InsertImage(emotions[emoticon]);
+                    }
                 }
             }
         }
 
         public void InsertImage(Image _image)
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append(@"{\rtf1\ansi\ansicpg1252\deff0\deflang1033");
-            builder.Append(GetFontTable(Font));
-            builder.Append(GetImagePrefix(_image));
-            builder.Append(GetRtfImage(_image));
-            builder.Append(@"}");
+            if (hasGdiPlus)
+            {
+                StringBuilder builder = new StringBuilder();
+                builder.Append(@"{\rtf1\ansi\ansicpg1252\deff0\deflang1033");
+                builder.Append(GetFontTable(Font));
+                builder.Append(GetImagePrefix(_image));
+                builder.Append(GetRtfImage(_image));
+                builder.Append(@"}");
 
-            SelectedRtf = builder.ToString();
+                SelectedRtf = builder.ToString();
+            }
         }
 
         public void InsertRtf(string _rtf)
@@ -317,11 +339,14 @@ namespace MSNPSharpClient
         {
             get
             {
-                foreach (string emoticon in emotions.Keys)
+                if (hasGdiPlus)
                 {
-                    if (Text.IndexOf(emoticon, StringComparison.CurrentCultureIgnoreCase) > -1)
+                    foreach (string emoticon in emotions.Keys)
                     {
-                        return true;
+                        if (Text.IndexOf(emoticon, StringComparison.CurrentCultureIgnoreCase) > -1)
+                        {
+                            return true;
+                        }
                     }
                 }
                 return false;
