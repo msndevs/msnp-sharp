@@ -675,12 +675,30 @@ namespace MSNPSharp.DataTransfer
 
             properties.LocalContact = localContact;
             properties.RemoteContact = remoteContact;
+            string AppID = string.Empty;
+            P2PMessage p2pMessage = new P2PMessage();
+            P2PTransferSession session = Factory.CreateP2PTransferSession();
 
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
+            {
                 properties.DataType = DataTransferType.Emoticon;
+                AppID = "AppID: " + P2PConst.CustomEmoticonAppID.ToString();
+#if MSNP18
+                session.MessageFooter = (uint)P2PFlag.CustomEmoticonFooter;
+#endif
+            }
             else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
+            {
                 properties.DataType = DataTransferType.DisplayImage;
-
+                AppID = "AppID: " + P2PConst.DisplayImageAppID.ToString();
+#if MSNP18
+                session.MessageFooter = (uint)P2PFlag.DisplayImageFooter;
+#endif
+            }
+#if MSNP18
+            p2pMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            session.MessageFlag = (uint)P2PFlag.MSNObjectData;
+#endif
             MSNSLPMessage slpMessage = new MSNSLPMessage();
 
             byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(MSNObject.GetDecodeString(msnObject.OriginalContext));//GetEncodedString());
@@ -701,10 +719,9 @@ namespace MSNPSharp.DataTransfer
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
             slpMessage.Body = "EUF-GUID: " + P2PConst.UserDisplayGuid + "\r\n" +
                 "SessionID: " + properties.SessionId + "\r\n" +
-                "AppID: " + P2PConst.MSNObjectAppID.ToString() +"\r\n" +
+                AppID +"\r\n" +
                 "Context: " + base64Context + "\r\n\r\n";
 
-            P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
 
             // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
@@ -713,11 +730,7 @@ namespace MSNPSharp.DataTransfer
             // store the transferproperties
             TransferProperties[properties.CallId] = properties;
 
-#if MSNP18
-            p2pMessage.Flags = 0x01000000;
-#endif
             // create a transfer session to handle the actual data transfer
-            P2PTransferSession session = Factory.CreateP2PTransferSession();
             session.MessageSession = (P2PMessageSession)MessageProcessor;
             session.SessionId = properties.SessionId;
 
@@ -920,7 +933,8 @@ namespace MSNPSharp.DataTransfer
             session.SessionId = properties.SessionId;
 
             MessageSession.AddTransferSession(session);
-            session.MessageFlag = 0x1000030;
+            session.MessageFlag = (uint)P2PFlag.FileData;
+            session.MessageFooter = (uint)P2PFlag.FileTransFooter;
 
             // set the data stream to read from
             session.DataStream = file;
@@ -943,9 +957,16 @@ namespace MSNPSharp.DataTransfer
 
             P2PMessage replyMessage = new P2PMessage();
             replyMessage.InnerMessage = CreateDeclineMessage(properties);
+#if MSNP18
+            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
+
             MessageProcessor.SendMessage(replyMessage);
 
             replyMessage.InnerMessage = CreateClosingMessage(properties);
+#if MSNP18
+            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
             MessageProcessor.SendMessage(replyMessage);
         }
 
@@ -975,6 +996,9 @@ namespace MSNPSharp.DataTransfer
             p2pTransfer.DataStream = invitationArgs.TransferSession.DataStream;
 
             replyMessage.InnerMessage = CreateAcceptanceMessage(properties);
+#if MSNP18
+            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
 
 
             // check for a msn object request
@@ -983,6 +1007,8 @@ namespace MSNPSharp.DataTransfer
                 // for some kind of weird behavior, our local identifier must now subtract 4 ?
                 ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
                 p2pTransfer.IsSender = true;
+                p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
+                p2pTransfer.MessageFooter = (uint)P2PFlag.DisplayImageFooter;
             }
 
             /*MSNObject objectToSend = MSNObjectCollection.Get(properties.Checksum);
@@ -994,7 +1020,8 @@ namespace MSNPSharp.DataTransfer
 
             if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
             {
-                p2pTransfer.MessageFlag = 0x1000030;
+                p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
+                p2pTransfer.MessageFooter = (uint)P2PFlag.FileTransFooter;
                 p2pTransfer.IsSender = false;
             }
 
@@ -1020,6 +1047,9 @@ namespace MSNPSharp.DataTransfer
                 P2PMessageSession session = (P2PMessageSession)MessageProcessor;
                 P2PTransferSession transferSession = session.GetTransferSession(properties.SessionId);
                 P2PMessage closeMessage = new P2PMessage();
+#if MSNP18
+                closeMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
                 closeMessage.InnerMessage = CreateClosingMessage(properties);
                 MessageProcessor.SendMessage(closeMessage);
                 if (transferSession != null)
@@ -1038,6 +1068,9 @@ namespace MSNPSharp.DataTransfer
             MSNSLPTransferProperties property = GetTransferProperties(session.CallId);
             P2PMessage closeMessage = new P2PMessage();
             closeMessage.InnerMessage = CreateClosingMessage(property);
+#if MSNP18
+            closeMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
             MessageProcessor.SendMessage(closeMessage);
             if (session != null)
             {
@@ -1406,6 +1439,9 @@ namespace MSNPSharp.DataTransfer
                 // we are the receiver. send close message back
                 P2PMessage p2pMessage = new P2PMessage();
                 p2pMessage.InnerMessage = CreateClosingMessage(GetTransferProperties(session.CallId));
+#if MSNP18
+                p2pMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
                 session.SendMessage(p2pMessage);
 
                 // close it
@@ -1545,7 +1581,9 @@ namespace MSNPSharp.DataTransfer
                 if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
                 {
                     P2PMessage replyMessage = new P2PMessage ();
-                    replyMessage.Flags = 0x01000000;
+#if MSNP18
+                    replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
                     replyMessage.InnerMessage = CreateInernalErrorMessage(properties);
                     MessageProcessor.SendMessage(replyMessage);
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +

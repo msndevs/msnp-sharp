@@ -59,29 +59,50 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         MSNObject = 0x20,
         /// <summary>
+        /// Messages for info data, such as INVITE, 200 OK, 500 INTERNAL ERROR
+        /// </summary>
+        MSNSLPInfo = 0x01000000,
+        /// <summary>
         /// Messages defines data for a filetransfer.
         /// </summary>
         FileData = 0x01000030,
         /// <summary>
-        /// 
+        /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        Activity = 0x01000000,
-        /// <summary>
-        /// Footer for a msn object p2pMessage.
-        /// </summary>
+        MSNObjectData = 0x01000020,
+        
 #if MSNP18
-        MSNObjectFooter = 0xc,
-#else
-        MSNObjectFooter = 0x1,
-#endif
+        /// <summary>
+        /// Footer for a msn DisplayImage p2pMessage.
+        /// </summary>
+        DisplayImageFooter = 0xc,
+
         /// <summary>
         /// Footer for a filetransfer p2pMessage.
         /// </summary>
-#if MSNP18
-        FileTransFooter = 0x2
+        FileTransFooter = 0x2,
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        CustomEmoticonFooter = 0x0b
 #else
+        /// <summary>
+        /// Footer for a msn object p2pMessage.
+        /// </summary>
+        DisplayImageFooter = 0x1,
+
+        /// <summary>
+        /// Footer for a filetransfer p2pMessage.
+        /// </summary>
         FileTransFooter = 0x1
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        CustomEmoticonFooter = 0x1
 #endif
+
     }
 
     internal static class P2PConst
@@ -106,13 +127,28 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
-        /// <summary>
-        /// The AppID used in invitations for any msnobject p2p transfer.
-        /// </summary>
+        
 #if MSNP18
-        public const uint MSNObjectAppID = 12;
+        /// <summary>
+        /// The AppID used in invitations for DisplayImage p2p transfer.
+        /// </summary>
+        public const uint DisplayImageAppID = 12;
+
+        /// <summary>
+        /// The AppID used in invitations for CustomEmoticon p2p transfer.
+        /// </summary>
+        public const uint CustomEmoticonAppID = 11;
 #else
-        public const uint MSNObjectAppID = 1;
+
+        /// <summary>
+        /// The AppID used in invitations for DisplayImage p2p transfer.
+        /// </summary>
+        public const uint DisplayImageAppID = 1;
+
+        /// <summary>
+        /// The AppID used in invitations for CustomEmoticon p2p transfer.
+        /// </summary>
+        public const uint CustomEmoticonAppID = 1;
 #endif
 
         /// <summary>
