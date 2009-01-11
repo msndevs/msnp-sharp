@@ -61,7 +61,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to AAD9B99B-58E6-4F23-B975-D9EC1F9EC24A.
+        ///   Looks up a localized string similar to 3B119D87-1D76-4474-91AD-0D7267E86D04.
         /// </summary>
         internal static string ApplicationId {
             get {
@@ -79,7 +79,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 3.0.0.
+        ///   Looks up a localized string similar to 3.0.0.0.
         /// </summary>
         internal static string DeltasListVersion {
             get {
@@ -88,7 +88,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 14.0.5072.818.
+        ///   Looks up a localized string similar to 14.0.8050.1202.
         /// </summary>
         internal static string MessengerClientBuildVer {
             get {
@@ -113,7 +113,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 3.0.1.
+        ///   Looks up a localized string similar to 3.0.0.0.
         /// </summary>
         internal static string XMLContactListVersion {
             get {
