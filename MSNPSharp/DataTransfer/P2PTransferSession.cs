@@ -186,6 +186,17 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private uint messageFooter;
+
+        /// <summary>
+        /// This value is set in the footer field in a p2p header.
+        /// </summary>
+        public uint MessageFooter
+        {
+            get { return messageFooter; }
+            set { messageFooter = value; }
+        }
+
 
         /// <summary>
         /// The stream to read from when data is send, or to write to when data is received.
@@ -361,10 +372,16 @@ namespace MSNPSharp.DataTransfer
             }
 
             // check if it is a content message
-            // if it is not a file transfer message, and the footer is not set to 1 (for emoticons/user displays), ignore it.
+            // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
+#if MSNP18
             if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0 &&
-               ((p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.MSNObjectFooter) ||
-               (p2pMessage.Flags == (uint)P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter)))
+               ((p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.DisplayImageFooter) ||  //DisplayImage
+               (p2pMessage.Flags == (uint)P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter) ||       //File
+               (p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.CustomEmoticonFooter)))  //CustomEmoticon
+#else
+                if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
+                && (p2pMessage.Flags == (uint)P2PFlag.FileData || p2pMessage.Footer == 1))
+#endif
             {
                 // indicates whether we must stream this message
                 bool writeToStream = true;
@@ -719,11 +736,9 @@ namespace MSNPSharp.DataTransfer
                         currentPosition += bytesWritten;
                     }
 
-                    p2pDataMessage.Flags = messageFlag;
+                    p2pDataMessage.Flags = MessageFlag;
 
-                    // set this footer so we know 
-                    if (messageFlag == 0x1000030)
-                        p2pDataMessage.Footer = 2;
+                    p2pDataMessage.Footer = MessageFooter;
 
                     p2pDataMessage.Identifier = messageIdentifier;
 
