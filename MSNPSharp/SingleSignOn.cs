@@ -55,7 +55,8 @@ namespace MSNPSharp
         OIM = 0x04,
         Spaces = 0x08,
         Storage = 0x10,
-        Web = 0x20
+        Web = 0x20,
+        WhatsUp = 0x40
     }
 
     public enum ExpiryState
@@ -469,7 +470,7 @@ namespace MSNPSharp
 
         public void AddDefaultAuths()
         {
-            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.OIM | SSOTicketType.Spaces | SSOTicketType.Storage | SSOTicketType.Web);
+            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.OIM | SSOTicketType.Spaces | SSOTicketType.Storage | SSOTicketType.Web | SSOTicketType.WhatsUp);
         }
 
         public void AddAuths(SSOTicketType ssott)
@@ -504,6 +505,10 @@ namespace MSNPSharp
 
                     case SSOTicketType.Web:
                         AuthenticationAdd("messenger.msn.com", "?id=507");
+                        break;
+
+                    case SSOTicketType.WhatsUp:
+                        AuthenticationAdd("sup.live.com", "MBI");
                         break;
                 }
             }
