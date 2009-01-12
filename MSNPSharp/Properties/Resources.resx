@@ -126,6 +126,9 @@
   <data name="DeltasListVersion" xml:space="preserve">
     <value>3.0.0.0</value>
   </data>
+  <data name="HostingApp" xml:space="preserve">
+    <value>{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}</value>
+  </data>
   <data name="MessengerClientBuildVer" xml:space="preserve">
     <value>14.0.8050.1202</value>
   </data>
