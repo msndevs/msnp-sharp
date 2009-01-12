@@ -957,9 +957,32 @@ namespace MSNPSharp.IO
 
         #endregion
 
-        #region Other
-        private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
+        #region Overrides
 
+        /// <summary>
+        /// Save the <see cref="XMLContactList"/> into a specified file.
+        /// </summary>
+        /// <param name="filename"></param>
+        public override void Save(string filename)
+        {
+            Version = Properties.Resources.XMLContactListVersion;
+            base.Save(filename);
+        }
+        #endregion
+
+    }
+
+    [Serializable]
+    [XmlRoot("CacheInfo")]
+    public class CacheInfo : MCLSerializer
+    {
+        private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
+        private SerializableDictionary<string, string> preferredHosts = new SerializableDictionary<string, string>(0);
+
+        public static CacheInfo LoadFromFile(string filename, bool nocompress)
+        {
+            return LoadFromFile(filename, nocompress, typeof(CacheInfo), null) as CacheInfo;
+        }
         /// <summary>
         /// CacheKeys for webservices.
         /// </summary>
@@ -975,19 +998,23 @@ namespace MSNPSharp.IO
             }
         }
 
-        #endregion
-        #region Overrides
+        /// <summary>
+        /// Preferred hosts for different methods.
+        /// </summary>
+        public SerializableDictionary<string, string> PreferredHosts
+        {
+            get { return preferredHosts; }
+            set { preferredHosts = value; }
+        }
 
         /// <summary>
-        /// Save the <see cref="XMLContactList"/> into a specified file.
+        /// Save the <see cref="CacheInfo"/> into a specified file.
         /// </summary>
         /// <param name="filename"></param>
         public override void Save(string filename)
         {
-            Version = Properties.Resources.XMLContactListVersion;
+            Version = Properties.Resources.CacheInfoVersion;
             base.Save(filename);
         }
-        #endregion
-
     }
 };

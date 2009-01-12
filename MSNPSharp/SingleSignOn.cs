@@ -106,14 +106,9 @@ namespace MSNPSharp
 
         private void InitializeCacheKeys()
         {
-            if (!cacheKeys.ContainsKey(CacheKeyType.ABServiceCacheKey))
+            if (!cacheKeys.ContainsKey(CacheKeyType.OmegaContactServiceCacheKey))
             {
-                cacheKeys.Add(CacheKeyType.ABServiceCacheKey, String.Empty);
-            }
-
-            if (!cacheKeys.ContainsKey(CacheKeyType.SharingServiceCacheKey))
-            {
-                cacheKeys.Add(CacheKeyType.SharingServiceCacheKey, String.Empty);
+                cacheKeys.Add(CacheKeyType.OmegaContactServiceCacheKey, String.Empty);
             }
 
             if (!cacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey))

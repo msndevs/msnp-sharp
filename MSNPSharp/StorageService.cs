@@ -566,7 +566,7 @@ namespace MSNPSharp
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex2.Message, GetType().Name);
                         return;
                     }
-                    NSMessageHandler.ContactService.handleServiceHeader(abService.ServiceHeaderValue, true);
+                    NSMessageHandler.ContactService.handleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
                     NSMessageHandler.ContactService.Deltas.Save();
                 }
 

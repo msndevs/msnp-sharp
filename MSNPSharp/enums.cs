@@ -816,17 +816,12 @@ namespace MSNPSharp
     public enum CacheKeyType
     {
         /// <summary>
-        /// CacheKey for AddressBook service
+        /// CacheKey for contact service, which url is ***.omega.contacts.msn.com
         /// </summary>
-        ABServiceCacheKey,
+        OmegaContactServiceCacheKey,
 
         /// <summary>
-        /// CacheKey for SharingService
-        /// </summary>
-        SharingServiceCacheKey,
-
-        /// <summary>
-        /// CacheKey for profile storage service
+        /// CacheKey for profile storage service, which url is ***.storage.msn.com
         /// </summary>
         StorageServiceCacheKey
     }

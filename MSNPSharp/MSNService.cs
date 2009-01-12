@@ -71,34 +71,25 @@ namespace MSNPSharp
     /// <summary>
     /// Redirect service URL
     /// </summary>
-    public static class RDRServiceUrl
+    public static class RDRServiceHost
     {
-        private static string byrdrSharingServiceUrl = @"https://byrdr.omega.contacts.msn.com/abservice/SharingService.asmx";
-        private static string byrdrABServiceUrl = @"https://byrdr.omega.contacts.msn.com/abservice/abservice.asmx";
-        private static string tkrdrSharingServiceUrl = @"https://tkrdr.storage.msn.com/storageservice/schematizedstore.asmx";
+        private static string omegaContactRDRServiceHost = @"byrdr.omega.contacts.msn.com";
+        private static string storageRDRServiceHost = @"tkrdr.storage.msn.com";
 
         /// <summary>
-        /// Redirect URL for Sharing Service
+        /// Redirection host for service on *.omega.contacts.msn.com
         /// </summary>
-        public static string SharingServiceUrl
+        public static string OmegaContactRDRServiceHost
         {
-            get { return RDRServiceUrl.byrdrSharingServiceUrl; }
+            get { return RDRServiceHost.omegaContactRDRServiceHost; }
         }
 
         /// <summary>
-        /// Redirect URL for AddressBook Service
+        /// Redirection host for service on *.storage.msn.com
         /// </summary>
-        public static string ABServiceUrl
+        public static string StorageRDRServiceHost
         {
-            get { return RDRServiceUrl.byrdrABServiceUrl; }
-        }
-
-        /// <summary>
-        /// Redirect URL for Profile Storage Service
-        /// </summary>
-        public static string StorageServiceUrl
-        {
-            get { return RDRServiceUrl.tkrdrSharingServiceUrl; }
+            get { return RDRServiceHost.storageRDRServiceHost; }
         }
     }
 
