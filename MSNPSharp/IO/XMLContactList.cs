@@ -958,15 +958,21 @@ namespace MSNPSharp.IO
         #endregion
 
         #region Other
-        private MSNTicket ticket = MSNTicket.Empty;
+        private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
 
         /// <summary>
-        /// All the tickets for webservices.
+        /// CacheKeys for webservices.
         /// </summary>
-        public MSNTicket Ticket
+        public SerializableDictionary<CacheKeyType, string> CacheKeys
         {
-            get { return ticket; }
-            set { ticket = value; }
+            get
+            {
+                return cacheKeys;
+            }
+            set
+            {
+                cacheKeys = value;
+            }
         }
 
         #endregion

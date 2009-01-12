@@ -267,7 +267,14 @@ namespace MSNPSharp
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, NSMessageHandler);
 
-                NSMessageHandler.MSNTicket.CacheKeys = AddressBook.Ticket.CacheKeys;
+                if (recursiveCall == 0)
+                {
+                    NSMessageHandler.MSNTicket.CacheKeys = AddressBook.CacheKeys;
+                }
+                else
+                {
+                    AddressBook.CacheKeys = NSMessageHandler.MSNTicket.CacheKeys;
+                }
 
                 if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
                     || Deltas.Version != Properties.Resources.DeltasListVersion)
@@ -550,10 +557,7 @@ namespace MSNPSharp
             {
                 bool deltasOnly = false;
 
-                if (AddressBook.AddressbookLastChange != DateTime.MinValue)
-                {
-                    deltasOnly = true;
-                }
+
 
                 ABServiceBinding abService = CreateABService(partnerScenario);
                 ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
@@ -563,11 +567,24 @@ namespace MSNPSharp
                 request.filterOptions = new filterOptionsType();
                 request.filterOptions.ContactFilter = new ContactFilterType();
 
+                if (AddressBook.AddressbookLastChange != DateTime.MinValue)
+                {
+                    deltasOnly = true;
+                    request.filterOptions.LastChanged = AddressBook.AddressbookLastChange;
+                }
+
                 request.filterOptions.DeltasOnly = deltasOnly;
                 request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
 
                 if (NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.ABServiceCacheKey] == String.Empty)
                 {
+                    if (NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.SharingServiceCacheKey] != String.Empty)
+                    {
+                        //If sharing service has a key, check whether it is changed.
+                        abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.SharingServiceCacheKey];
+                        NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.ABServiceCacheKey] = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.SharingServiceCacheKey];
+                    }
+
                     abService.Url = RDRServiceUrl.ABServiceUrl;
                     try
                     {
@@ -587,6 +604,8 @@ namespace MSNPSharp
                         }
 
                         findnodelist = errdoc.GetElementsByTagName("CacheKey");
+
+                        //If there's no cachekey node, abservice and sharingservice use the same cachekey.
                         if (findnodelist.Count > 0)
                         {
                             NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.ABServiceCacheKey] = findnodelist[0].InnerText;
