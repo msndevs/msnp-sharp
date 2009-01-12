@@ -88,6 +88,15 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
+        ///   查找类似 {7108E71A-9926-4FCB-BCC9-9A9D3F32E423} 的本地化字符串。
+        /// </summary>
+        internal static string HostingApp {
+            get {
+                return ResourceManager.GetString("HostingApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 14.0.8050.1202 的本地化字符串。
         /// </summary>
         internal static string MessengerClientBuildVer {
