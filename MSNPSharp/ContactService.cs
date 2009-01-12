@@ -1799,6 +1799,7 @@ namespace MSNPSharp
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
                     {
+                        // XXX But the response is OK
                         OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
                         return;
                     }
@@ -1874,6 +1875,7 @@ namespace MSNPSharp
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
                     {
+                        // XXX But the response is OK
                         OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
                         return;
                     }
