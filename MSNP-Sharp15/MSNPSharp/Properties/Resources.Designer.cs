@@ -81,6 +81,15 @@ namespace MSNPSharp.Properties {
         /// <summary>
         ///   查找类似 3.0.0.0 的本地化字符串。
         /// </summary>
+        internal static string CacheInfoVersion {
+            get {
+                return ResourceManager.GetString("CacheInfoVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 3.0.0.0 的本地化字符串。
+        /// </summary>
         internal static string DeltasListVersion {
             get {
                 return ResourceManager.GetString("DeltasListVersion", resourceCulture);
