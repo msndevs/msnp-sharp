@@ -3152,6 +3152,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deltasOnlyField;
         
+        private System.DateTime lastChangedField;
+        
         private ContactFilterType contactFilterField;
         
         /// <remarks/>
@@ -3161,6 +3163,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.deltasOnlyField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime LastChanged {
+            get {
+                return this.lastChangedField;
+            }
+            set {
+                this.lastChangedField = value;
             }
         }
         

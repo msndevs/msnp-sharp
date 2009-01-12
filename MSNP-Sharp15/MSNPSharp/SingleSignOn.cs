@@ -232,6 +232,10 @@ namespace MSNPSharp
         private DateTime expires = DateTime.MinValue;
         private SSOTicketType type = SSOTicketType.None;
 
+        internal SSOTicket()
+        {
+        }
+
         public SSOTicket(SSOTicketType tickettype)
         {
             type = tickettype;
