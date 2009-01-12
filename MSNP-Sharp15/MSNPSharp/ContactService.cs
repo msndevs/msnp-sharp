@@ -208,7 +208,6 @@ namespace MSNPSharp
                 }
                 return "contacts.msn.com";
             }
-
             set
             {
                 if (AddressBook != null && AddressBook.MyProperties != null)
@@ -368,7 +367,7 @@ namespace MSNPSharp
 
                     NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
                     NSMessageHandler.OnSignedIn(EventArgs.Empty);
-                    NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);                    
+                    NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
 
                     if (!AddressBookSynchronized)
                     {
@@ -462,7 +461,7 @@ namespace MSNPSharp
                     }
                 }
 
-
+                sharingService = CreateSharingService(partnerScenario);
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     sharingService = sender as SharingServiceBinding;
@@ -596,6 +595,7 @@ namespace MSNPSharp
                     }
                 }
 
+                abService = CreateABService(partnerScenario);
                 abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
                 {
                     abService = sender as ABServiceBinding;
@@ -913,7 +913,7 @@ namespace MSNPSharp
         private void AddNonPendingContact(string account, ClientType ct, string invitation)
         {
             // Query other networks and add as new contact if available
-            if (ct == ClientType.PassportMember)
+            if (ct == ClientType.PassportMember && account.Contains("@"))
             {
                 string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
                 fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
@@ -933,21 +933,23 @@ namespace MSNPSharp
                     contact.Guid = new Guid(e.Result.ABContactAddResult.guid);
                     contact.NSMessageHandler = NSMessageHandler;
 
-                    // Add to AL
-                    if (ct == ClientType.PassportMember)
+                    if (!contact.OnBlockedList)
                     {
-                        // without membership
-                        Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
-                        hashlist.Add(contact.Hash, MSNLists.AllowedList);
-                        string payload = ConstructLists(hashlist, false)[0];
-                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-                        contact.AddToList(MSNLists.AllowedList);
-                    }
-                    else
-                    {
-                        // with membership
-                        contact.OnAllowedList = true;
-                        contact.AddToList(MSNLists.AllowedList);
+                        // Add to AL
+                        if (ct == ClientType.PassportMember)
+                        {
+                            // without membership, contact service adds this contact to AL automatically.
+                            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+                            hashlist.Add(contact.Hash, MSNLists.AllowedList);
+                            string payload = ConstructLists(hashlist, false)[0];
+                            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                            contact.AddToList(MSNLists.AllowedList);
+                        }
+                        else
+                        {
+                            // with membership
+                            contact.OnAllowedList = true;
+                        }
                     }
 
                     // Add to Forward List
@@ -986,22 +988,25 @@ namespace MSNPSharp
                         MSNLists.ReverseList,
                         delegate
                         {
-                            // AL: Extra work for EmailMember: Add allow membership
-                            if (ClientType.EmailMember == contact.ClientType)
+                            if (!contact.OnBlockedList)
                             {
-                                AddContactToList(contact, MSNLists.AllowedList, null);
-                                System.Threading.Thread.CurrentThread.Join(100);
-                            }
-                            else
-                            {
-                                // ADL AL without membership, so the user can see our status...
-                                Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
-                                hashlist.Add(contact.Hash, MSNLists.AllowedList);
-                                string payload = ConstructLists(hashlist, false)[0];
-                                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-                                contact.AddToList(MSNLists.AllowedList);
+                                // AL: Extra work for EmailMember: Add allow membership
+                                if (ClientType.EmailMember == contact.ClientType)
+                                {
+                                    contact.OnAllowedList = true;
+                                    System.Threading.Thread.CurrentThread.Join(100);
+                                }
+                                else
+                                {
+                                    // without membership, contact service adds this contact to AL automatically.
+                                    Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+                                    hashlist.Add(contact.Hash, MSNLists.AllowedList);
+                                    string payload = ConstructLists(hashlist, false)[0];
+                                    NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                                    contact.AddToList(MSNLists.AllowedList);
 
-                                System.Threading.Thread.CurrentThread.Join(100);
+                                    System.Threading.Thread.CurrentThread.Join(100);
+                                }
                             }
 
                             abRequest("ContactMsgrAPI", null);
@@ -1058,7 +1063,7 @@ namespace MSNPSharp
                     }
                     request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = NSMessageHandler.Owner.Name;
                     request.options = new ABContactAddRequestTypeOptions();
-                    request.options.EnableAllowListManagement = true;
+                    request.options.EnableAllowListManagement = true; //contact service adds this contact to AL automatically if not blocked. 
                     break;
 
                 case ClientType.EmailMember:
@@ -1126,11 +1131,11 @@ namespace MSNPSharp
                 }
                 else if (contact.Guid != Guid.Empty) // Email or Messenger buddy.
                 {
-                    if (!contact.IsMessengerUser) // Email buddy, just update
+                    if (!contact.IsMessengerUser) // Email buddy, make Messenger :)
                     {
                         contact.IsMessengerUser = true;
                     }
-                    else // Messenger buddy. Not in AL nor BL. Add to AL.
+                    if (!contact.OnBlockedList) // Messenger buddy. Not in AL.
                     {
                         contact.OnAllowedList = true;
                     }
@@ -1937,6 +1942,11 @@ namespace MSNPSharp
 
         #region BlockContact & UnBlockContact
 
+        /// <summary>
+        /// Block this contact. After this you aren't able to receive messages from this contact. This contact
+        /// will be placed in your block list and removed from your allowed list.
+        /// </summary>
+        /// <param name="contact">Contact to block</param>
         public virtual void BlockContact(Contact contact)
         {
             if (contact.OnAllowedList)
@@ -1946,6 +1956,8 @@ namespace MSNPSharp
                     MSNLists.AllowedList,
                     delegate
                     {
+                        System.Threading.Thread.CurrentThread.Join(100);
+
                         if (!contact.OnBlockedList)
                             AddContactToList(contact, MSNLists.BlockedList, null);
                     }
@@ -1955,9 +1967,10 @@ namespace MSNPSharp
                 // from the allow list which will give an error
                 System.Threading.Thread.CurrentThread.Join(100);
             }
-
-            if (!contact.OnBlockedList)
+            else if (!contact.OnBlockedList)
+            {
                 AddContactToList(contact, MSNLists.BlockedList, null);
+            }
         }
 
         /// <summary>
@@ -1969,22 +1982,24 @@ namespace MSNPSharp
         {
             if (contact.OnBlockedList)
             {
-                AddContactToList(
+                RemoveContactFromList(
                     contact,
-                    MSNLists.AllowedList,
+                    MSNLists.BlockedList,
                     delegate
                     {
-                        RemoveContactFromList(contact, MSNLists.BlockedList, null);
+                        System.Threading.Thread.CurrentThread.Join(100);
+
+                        if (!contact.OnAllowedList)
+                            AddContactToList(contact, MSNLists.AllowedList, null);
                     }
                 );
 
                 System.Threading.Thread.CurrentThread.Join(100);
-                RemoveContactFromList(contact, MSNLists.BlockedList, null);
-                System.Threading.Thread.CurrentThread.Join(100);
             }
-
-            if (!contact.OnAllowedList)
+            else if (!contact.OnAllowedList)
+            {
                 AddContactToList(contact, MSNLists.AllowedList, null);
+            }
         }
 
 
