@@ -571,6 +571,7 @@ namespace MSNPSharp
                 {
                     deltasOnly = true;
                     request.filterOptions.LastChanged = AddressBook.AddressbookLastChange;
+                    request.filterOptions.LastChangedSpecified = true;
                 }
 
                 request.filterOptions.DeltasOnly = deltasOnly;
