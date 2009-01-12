@@ -549,32 +549,6 @@ namespace MSNPSharp
 
         #region List Properties
 
-        public bool Blocked
-        {
-            get
-            {
-                return (lists & MSNLists.BlockedList) == MSNLists.BlockedList;
-            }
-            set
-            {
-                if (NSMessageHandler != null)
-                {
-                    if (value)
-                        NSMessageHandler.ContactService.BlockContact(this);
-                    else
-                        NSMessageHandler.ContactService.UnBlockContact(this);
-                }
-            }
-        }
-
-        public bool OnBlockedList
-        {
-            get
-            {
-                return ((lists & MSNLists.BlockedList) == MSNLists.BlockedList);
-            }
-        }
-
         public bool OnForwardList
         {
             get
@@ -588,17 +562,44 @@ namespace MSNPSharp
                     if (value)
                     {
                         NSMessageHandler.ContactService.AddContactToList(this, MSNLists.ForwardList, null);
-                        AddToList(MSNLists.ForwardList);
                     }
                     else
                     {
                         NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.ForwardList, null);
-                        RemoveFromList(MSNLists.ForwardList);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Blocks/unblocks this contact. If blocked, will be placed in your BL and removed
+        /// from your AL; otherwise, will be removed from your BL and placed in your AL.
+        /// If this contact is not in ReverseList and you want to delete forever,
+        /// set the <see cref="OnAllowedList"/> or <see cref="OnBlockedList"/> to false.
+        /// </summary>
+        public bool Blocked
+        {
+            get
+            {
+                return OnBlockedList;
+            }
+            set
+            {
+                if (NSMessageHandler != null)
+                {
+                    if (value)
+                        NSMessageHandler.ContactService.BlockContact(this);
+                    else
+                        NSMessageHandler.ContactService.UnBlockContact(this);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds or removes this contact into/from your AL.
+        /// If this contact is not in ReverseList and you want to delete forever,
+        /// set this property to false.
+        /// </summary>
         public bool OnAllowedList
         {
             get
@@ -611,18 +612,46 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.AllowedList, null);
-                        AddToList(MSNLists.AllowedList);
+                        Blocked = false;
                     }
-                    else
+                    else if (!OnReverseList)
                     {
                         NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.AllowedList, null);
-                        RemoveFromList(MSNLists.AllowedList);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Adds or removes this contact into/from your BL.
+        /// If this contact is not in ReverseList and you want to delete forever,
+        /// set this property to false.
+        /// </summary>
+        public bool OnBlockedList
+        {
+            get
+            {
+                return ((lists & MSNLists.BlockedList) == MSNLists.BlockedList);
+            }
+            set
+            {
+                if (value != OnBlockedList)
+                {
+                    if (value)
+                    {
+                        Blocked = true;
+                    }
+                    else if (!OnReverseList)
+                    {
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.BlockedList, null);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether the contact have you on their contact list. 
+        /// </summary>
         public bool OnReverseList
         {
             get
@@ -631,7 +660,9 @@ namespace MSNPSharp
             }
         }
 
-
+        /// <summary>
+        /// Indicates whether the contact have you on their contact list and pending your approval. 
+        /// </summary>
         public bool OnPendingList
         {
             get
@@ -643,11 +674,13 @@ namespace MSNPSharp
                 if (value != OnPendingList && value == false)
                 {
                     NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.PendingList, null);
-                    RemoveFromList(MSNLists.PendingList);
                 }
             }
         }
 
+        /// <summary>
+        /// The msn lists this contact has.
+        /// </summary>
         public MSNLists Lists
         {
             get
@@ -780,7 +813,7 @@ namespace MSNPSharp
 
         internal void AddToList(MSNLists list)
         {
-            if (list == MSNLists.BlockedList && !Blocked)
+            if (list == MSNLists.BlockedList && !OnBlockedList)
             {
                 lists |= MSNLists.BlockedList;
 
@@ -795,7 +828,7 @@ namespace MSNPSharp
 
         internal void RemoveFromList(MSNLists list)
         {
-            if (list == MSNLists.BlockedList && Blocked)
+            if (list == MSNLists.BlockedList && OnBlockedList)
             {
                 lists ^= MSNLists.BlockedList;
 
