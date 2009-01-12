@@ -78,6 +78,8 @@ namespace MSNPSharp
         private string oimLockKey = String.Empty;
         private string abServiceCacheKey = String.Empty;
         private string sharingServiceCacheKey = String.Empty;
+        private string schematizedStoreCacheKey = String.Empty;
+
         private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
 
         [NonSerialized]
@@ -144,6 +146,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// CacheKey used for AdddressBok Service
+        /// </summary>
         public string ABServiceCacheKey
         {
             get
@@ -156,6 +161,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// CacheKey used for Sharing Service
+        /// </summary>
         public string SharingServiceCacheKey
         {
             get
@@ -166,6 +174,15 @@ namespace MSNPSharp
             {
                 sharingServiceCacheKey = value;
             }
+        }
+
+        /// <summary>
+        /// CacheKey used for profile storage Service
+        /// </summary>
+        public string SchematizedStoreCacheKey
+        {
+            get { return schematizedStoreCacheKey; }
+            set { schematizedStoreCacheKey = value; }
         }
 
         #endregion

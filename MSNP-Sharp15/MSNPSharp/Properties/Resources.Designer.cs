@@ -114,6 +114,15 @@ namespace MSNPSharp.Properties {
             }
         }
         
+        /// <summary>
+        ///   查找类似 MSN Explorer/9.0 (MSN 8.0; TmstmpExt) 的本地化字符串。
+        /// </summary>
+        internal static string WebServiceUserAgent {
+            get {
+                return ResourceManager.GetString("WebServiceUserAgent", resourceCulture);
+            }
+        }
+        
         internal static System.Drawing.Bitmap WLXLarge_default {
             get {
                 object obj = ResourceManager.GetObject("WLXLarge_default", resourceCulture);

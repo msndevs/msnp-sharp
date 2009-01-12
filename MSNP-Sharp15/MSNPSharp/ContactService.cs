@@ -66,7 +66,11 @@ namespace MSNPSharp
         public ContactService(NSMessageHandler nsHandler)
             : base(nsHandler)
         {
+#if MSNP18
             applicationId = Properties.Resources.ApplicationId;
+#else
+            applicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";  //This must be strictly matched now.
+#endif
         }
 
         #region Events
@@ -203,6 +207,14 @@ namespace MSNPSharp
                     return AddressBook.MyProperties["preferredhost"];
                 }
                 return "contacts.msn.com";
+            }
+
+            set
+            {
+                if (AddressBook != null && AddressBook.MyProperties != null)
+                {
+                    AddressBook.MyProperties["preferredhost"] = value;
+                }
             }
         }
 
@@ -402,6 +414,52 @@ namespace MSNPSharp
                 }
 
                 SharingServiceBinding sharingService = CreateSharingService(partnerScenario);
+                FindMembershipRequestType request = new FindMembershipRequestType();
+                request.View = "Full";  // NO default!
+                request.deltasOnly = msdeltasOnly;
+                request.lastChange = serviceLastChange;
+                request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
+                request.serviceFilter.Types = new ServiceFilterType[]
+                {
+                    ServiceFilterType.Messenger,
+                    ServiceFilterType.Invitation,
+                    ServiceFilterType.SocialNetwork,
+                    ServiceFilterType.Space,
+                    ServiceFilterType.Profile,
+                    ServiceFilterType.Folder,
+                    ServiceFilterType.OfficeLiveWebNotification
+                };
+
+                if (NSMessageHandler.MSNTicket.SharingServiceCacheKey == string.Empty)
+                {
+                    sharingService.Url = RDRServiceUrl.SharingServiceUrl;
+                    try
+                    {
+                        sharingService.FindMembership(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        XmlDocument errdoc = new XmlDocument();
+                        string xmlstr = ex.Message.Substring(ex.Message.IndexOf("<?xml"));
+                        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+                        errdoc.LoadXml(xmlstr);
+                        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
+                        if (findnodelist.Count > 0)
+                        {
+                            PreferredHost = findnodelist[0].InnerText;
+                            sharingService.Url = @"https://" + PreferredHost + @"/abservice/SharingService.asmx";;
+                        }
+
+                        findnodelist = errdoc.GetElementsByTagName("CacheKey");
+                        if (findnodelist.Count > 0)
+                        {
+                            NSMessageHandler.MSNTicket.SharingServiceCacheKey = findnodelist[0].InnerText;
+                            sharingService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
+                        }
+                    }
+                }
+
+
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     sharingService = sender as SharingServiceBinding;
@@ -468,22 +526,9 @@ namespace MSNPSharp
                     }
                 };
 
-                FindMembershipRequestType request = new FindMembershipRequestType();
-                request.View = "Full";  // NO default!
-                request.deltasOnly = msdeltasOnly;
-                request.lastChange = serviceLastChange;
-                request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
-                request.serviceFilter.Types = new ServiceFilterType[]
-                {
-                    ServiceFilterType.Messenger,
-                    ServiceFilterType.Invitation,
-                    ServiceFilterType.SocialNetwork,
-                    ServiceFilterType.Space,
-                    ServiceFilterType.Profile,
-                    ServiceFilterType.Folder,
-                    ServiceFilterType.OfficeLiveWebNotification
-                };
+                
                 sharingService.FindMembershipAsync(request, partnerScenario);
+
             }
         }
 
@@ -492,6 +537,104 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
+#if MSNP18
+        internal void abRequest(string partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindAll", new MSNPSharpException("No Contact Ticket")));
+            }
+            else
+            {
+                bool deltasOnly = false;
+
+                if (AddressBook.AddressbookLastChange != DateTime.MinValue)
+                {
+                    deltasOnly = true;
+                }
+
+                ABServiceBinding abService = CreateABService(partnerScenario);
+                ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
+                request.abView = "MessengerClient8";  //NO default!
+                request.extendedContent = "AB AllGroups CircleResult";
+
+                request.filterOptions = new filterOptionsType();
+                request.filterOptions.ContactFilter = new ContactFilterType();
+
+                request.filterOptions.DeltasOnly = deltasOnly;
+                request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+
+                if (NSMessageHandler.MSNTicket.ABServiceCacheKey == String.Empty)
+                {
+                    abService.Url = RDRServiceUrl.ABServiceUrl;
+                    try
+                    {
+                        abService.ABFindContactsPaged(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        XmlDocument errdoc = new XmlDocument();
+                        string xmlstr = ex.Message.Substring(ex.Message.IndexOf("<?xml"));
+                        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+                        errdoc.LoadXml(xmlstr);
+                        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
+                        if (findnodelist.Count > 0)
+                        {
+                            PreferredHost = findnodelist[0].InnerText;
+                            abService.Url = @"https://" + PreferredHost + @"/abservice/abservice.asmx"; ;
+                        }
+
+                        findnodelist = errdoc.GetElementsByTagName("CacheKey");
+                        if (findnodelist.Count > 0)
+                        {
+                            NSMessageHandler.MSNTicket.ABServiceCacheKey = findnodelist[0].InnerText;
+                            abService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
+                        }
+                    }
+                }
+
+                abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
+                {
+                    abService = sender as ABServiceBinding;
+                    handleServiceHeader(abService.ServiceHeaderValue, true);
+                    string abpartnerScenario = e.UserState.ToString();
+
+                    if (!e.Cancelled)
+                    {
+                        if (e.Error != null)
+                        {
+                            if ((recursiveCall == 0 && abpartnerScenario == "Initial")
+                                || (e.Error.Message.Contains("Need to do full sync")))
+                            {
+                                recursiveCall++;
+                                SynchronizeContactList();
+                            }
+                            else
+                            {
+                                OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ABFindContactsPaged", e.Error));
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
+                            }
+                        }
+                        else
+                        {
+                            if (null != e.Result.ABFindContactsPagedResult)
+                            {
+                                AddressBook += e.Result.ABFindContactsPagedResult;
+                                Deltas.AddressBookDeltas.Add(e.Result.ABFindContactsPagedResult);
+                                Deltas.Save();
+                            }
+                            if (onSuccess != null)
+                            {
+                                onSuccess(abService, e);
+                            }
+                        }
+                    }
+                };
+
+                abService.ABFindContactsPagedAsync(request, partnerScenario);
+            }
+        }
+#else
         internal void abRequest(string partnerScenario, ABFindAllCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
@@ -511,6 +654,42 @@ namespace MSNPSharp
                 }
 
                 ABServiceBinding abService = CreateABService(partnerScenario);
+                ABFindAllRequestType request = new ABFindAllRequestType();
+                request.abView = "Full";  //NO default!
+                request.deltasOnly = deltasOnly;
+                request.lastChange = lastChange;
+                request.dynamicItemLastChange = dynamicItemLastChange;
+                request.dynamicItemView = "Gleam";
+
+                if (NSMessageHandler.MSNTicket.ABServiceCacheKey == String.Empty)
+                {
+                    abService.Url = RDRServiceUrl.ABServiceUrl;
+                    try
+                    {
+                        abService.ABFindAll(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        XmlDocument errdoc = new XmlDocument();
+                        string xmlstr = ex.Message.Substring(ex.Message.IndexOf("<?xml"));
+                        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+                        errdoc.LoadXml(xmlstr);
+                        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
+                        if (findnodelist.Count > 0)
+                        {
+                            PreferredHost = findnodelist[0].InnerText;
+                            abService.Url = @"https://" + PreferredHost + @"/abservice/abservice.asmx"; ;
+                        }
+
+                        findnodelist = errdoc.GetElementsByTagName("CacheKey");
+                        if (findnodelist.Count > 0)
+                        {
+                            NSMessageHandler.MSNTicket.ABServiceCacheKey = findnodelist[0].InnerText;
+                            abService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
+                        }
+                    }
+                }
+
                 abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
                 {
                     abService = sender as ABServiceBinding;
@@ -549,17 +728,10 @@ namespace MSNPSharp
                     }
                 };
 
-                ABFindAllRequestType request = new ABFindAllRequestType();
-                request.abView = "Full";  //NO default!
-                request.deltasOnly = deltasOnly;
-                request.lastChange = lastChange;
-                request.dynamicItemLastChange = dynamicItemLastChange;
-                request.dynamicItemView = "Gleam";
-
                 abService.ABFindAllAsync(request, partnerScenario);
             }
         }
-
+#endif
         internal SharingServiceBinding CreateSharingService(string partnerScenario)
         {
             SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
@@ -568,6 +740,7 @@ namespace MSNPSharp
             sharingService.Proxy = WebProxy;
             sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
+            sharingService.UserAgent = Properties.Resources.WebServiceUserAgent;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = applicationId;
             sharingService.ABApplicationHeaderValue.IsMigration = false;
@@ -577,6 +750,7 @@ namespace MSNPSharp
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
+
 
             return sharingService;
         }
@@ -588,6 +762,7 @@ namespace MSNPSharp
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = WebProxy;
             abService.Timeout = Int32.MaxValue;
+            abService.UserAgent = Properties.Resources.WebServiceUserAgent;
             abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = applicationId;

@@ -69,6 +69,40 @@ namespace MSNPSharp
     #endregion
 
     /// <summary>
+    /// Redirect service URL
+    /// </summary>
+    public static class RDRServiceUrl
+    {
+        private static string byrdrSharingServiceUrl = @"https://byrdr.omega.contacts.msn.com/abservice/SharingService.asmx";
+        private static string byrdrABServiceUrl = @"https://byrdr.omega.contacts.msn.com/abservice/abservice.asmx";
+        private static string tkrdrSharingServiceUrl = @"https://tkrdr.storage.msn.com/storageservice/schematizedstore.asmx";
+
+        /// <summary>
+        /// Redirect URL for Sharing Service
+        /// </summary>
+        public static string SharingServiceUrl
+        {
+            get { return RDRServiceUrl.byrdrSharingServiceUrl; }
+        }
+
+        /// <summary>
+        /// Redirect URL for AddressBook Service
+        /// </summary>
+        public static string ABServiceUrl
+        {
+            get { return RDRServiceUrl.byrdrABServiceUrl; }
+        }
+
+        /// <summary>
+        /// Redirect URL for Profile Storage Service
+        /// </summary>
+        public static string StorageServiceUrl
+        {
+            get { return RDRServiceUrl.tkrdrSharingServiceUrl; }
+        }
+    }
+
+    /// <summary>
     /// Base class of webservice-related classes
     /// </summary>
     public abstract class MSNService

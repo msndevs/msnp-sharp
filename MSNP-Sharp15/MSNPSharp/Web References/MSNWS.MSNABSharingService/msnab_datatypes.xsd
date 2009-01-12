@@ -591,4 +591,15 @@
       <xsd:element minOccurs="0" name="PropertiesChanged" type="xsd:anyType" />
     </xsd:sequence>
   </xsd:complexType>
+  <xsd:complexType name="ContactFilterType">
+    <xsd:sequence>
+      <xsd:element name="IncludeHiddenContacts" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="filterOptionsType">
+    <xsd:sequence>
+      <xsd:element name="DeltasOnly" type="xsd:boolean" />
+      <xsd:element name="ContactFilter" type="msnab:ContactFilterType" />
+    </xsd:sequence>
+  </xsd:complexType>
 </xsd:schema>
