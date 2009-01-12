@@ -100,6 +100,12 @@
     <message name="UpdateDynamicItemResponseMessage">
         <part name="UpdateDynamicItemResponse" element="msnab:UpdateDynamicItemResponse"/>
     </message>
+    <message name="ABFindContactsPagedMessage">
+        <part name="ABFindContactsPagedRequest" element="msnab:ABFindContactsPaged"/>
+    </message>
+    <message name="ABFindContactsPagedResponseMessage">
+        <part name="ABFindContactsPagedResponse" element="msnab:ABFindContactsPagedResponse"/>
+    </message>
     <portType name="SharingServicePortType">
         <operation name="FindMembership">
             <input message="msnab:FindMembershipMessage"/>
@@ -161,6 +167,10 @@
         <operation name="UpdateDynamicItem">
             <input message="msnab:UpdateDynamicItemMessage"/>
             <output message="msnab:UpdateDynamicItemResponseMessage"/>
+        </operation>
+        <operation name="ABFindContactsPaged">
+            <input message="msnab:ABFindContactsPagedMessage"/>
+            <output message="msnab:ABFindContactsPagedResponseMessage"/>
         </operation>
     </portType>
     <binding name="SharingServiceBinding" type="msnab:SharingServicePortType">
@@ -345,6 +355,18 @@
                 <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
             </output>
         </operation>
+        <operation name="ABFindContactsPaged">
+            <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ABFindContactsPaged"/>
+            <input>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal"/>
+                <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
+            </output>
+        </operation>
     </binding>
     <service name="SharingService">
         <port name="FindMembershipPort" binding="msnab:SharingServiceBinding">
@@ -389,6 +411,9 @@
             <soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
         </port>
         <port name="UpdateDynamicItemPort" binding="msnab:ABServiceBinding">
+            <soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
+        </port>
+        <port name="ABFindContactsPagedPort" binding="msnab:ABServiceBinding">
             <soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
         </port>
     </service>

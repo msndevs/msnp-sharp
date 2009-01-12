@@ -399,4 +399,57 @@
     </xsd:complexType>
     <xsd:element name="UpdateDynamicItem" type="msnab:UpdateDynamicItemRequestType"/>
     <xsd:element name="UpdateDynamicItemResponse"/>
+    <xsd:element name="ABFindContactsPaged" type="msnab:ABFindContactsPagedRequestType"/>
+    <xsd:complexType name="ABFindContactsPagedRequestType">
+        <xsd:sequence>
+            <xsd:element name="filterOptions" type="msnab:filterOptionsType"/>
+            <xsd:element name="abView" type="xsd:string"/>
+            <xsd:element name="extendedContent" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ABFindContactsPagedResultType">
+        <xsd:sequence>
+            <xsd:element name="Groups" minOccurs="0">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="Group" type="msnab:GroupType" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="Contacts">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="Contact" type="msnab:ContactType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="CircleResult">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="CircleTicket" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="Ab">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="abId" type="msnab:Guid"/>
+                        <xsd:element name="abInfo" type="msnab:abInfoType"/>
+                        <xsd:element name="lastChange" type="xsd:dateTime"/>
+                        <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime"/>
+                        <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime"/>
+                        <xsd:element name="createDate" type="xsd:dateTime"/>
+                        <xsd:element name="propertiesChanged" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:element name="ABFindContactsPagedResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ABFindContactsPagedResult" type="msnab:ABFindContactsPagedResultType"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
 </xsd:schema>
