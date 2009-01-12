@@ -152,12 +152,12 @@ namespace MSNPSharpClient
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
+            this.emotionTestButton = new System.Windows.Forms.Button();
             this.sendnudgeButton = new System.Windows.Forms.Button();
             this.sendButton = new System.Windows.Forms.Button();
             this.inputTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.richTextHistory = new System.Windows.Forms.RichTextBox();
-            this.emotionTestButton = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
@@ -170,17 +170,27 @@ namespace MSNPSharpClient
             this.panel1.Controls.Add(this.sendButton);
             this.panel1.Controls.Add(this.inputTextBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 289);
+            this.panel1.Location = new System.Drawing.Point(0, 296);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(573, 106);
+            this.panel1.Size = new System.Drawing.Size(573, 99);
             this.panel1.TabIndex = 1;
+            // 
+            // emotionTestButton
+            // 
+            this.emotionTestButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.emotionTestButton.Location = new System.Drawing.Point(488, 67);
+            this.emotionTestButton.Name = "emotionTestButton";
+            this.emotionTestButton.Size = new System.Drawing.Size(75, 23);
+            this.emotionTestButton.TabIndex = 3;
+            this.emotionTestButton.Text = "&Emotion Test";
+            this.emotionTestButton.Click += new System.EventHandler(this.emotionTestButton_Click);
             // 
             // sendnudgeButton
             // 
             this.sendnudgeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendnudgeButton.Location = new System.Drawing.Point(471, 41);
+            this.sendnudgeButton.Location = new System.Drawing.Point(488, 38);
             this.sendnudgeButton.Name = "sendnudgeButton";
-            this.sendnudgeButton.Size = new System.Drawing.Size(90, 25);
+            this.sendnudgeButton.Size = new System.Drawing.Size(75, 23);
             this.sendnudgeButton.TabIndex = 2;
             this.sendnudgeButton.Text = "Send &Nudge";
             this.sendnudgeButton.Click += new System.EventHandler(this.sendnudgeButton_Click);
@@ -188,9 +198,9 @@ namespace MSNPSharpClient
             // sendButton
             // 
             this.sendButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.sendButton.Location = new System.Drawing.Point(471, 9);
+            this.sendButton.Location = new System.Drawing.Point(488, 8);
             this.sendButton.Name = "sendButton";
-            this.sendButton.Size = new System.Drawing.Size(90, 25);
+            this.sendButton.Size = new System.Drawing.Size(75, 24);
             this.sendButton.TabIndex = 1;
             this.sendButton.Text = "&Send";
             this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
@@ -200,11 +210,11 @@ namespace MSNPSharpClient
             this.inputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.inputTextBox.Location = new System.Drawing.Point(10, 9);
+            this.inputTextBox.Location = new System.Drawing.Point(8, 8);
             this.inputTextBox.Multiline = true;
             this.inputTextBox.Name = "inputTextBox";
             this.inputTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.inputTextBox.Size = new System.Drawing.Size(431, 88);
+            this.inputTextBox.Size = new System.Drawing.Size(455, 82);
             this.inputTextBox.TabIndex = 0;
             this.inputTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.inputTextBox_KeyDown);
             this.inputTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.inputTextBox_KeyPress);
@@ -215,7 +225,7 @@ namespace MSNPSharpClient
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(573, 289);
+            this.panel2.Size = new System.Drawing.Size(573, 296);
             this.panel2.TabIndex = 2;
             // 
             // richTextHistory
@@ -227,24 +237,14 @@ namespace MSNPSharpClient
             this.richTextHistory.Name = "richTextHistory";
             this.richTextHistory.ReadOnly = true;
             this.richTextHistory.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextHistory.Size = new System.Drawing.Size(573, 289);
+            this.richTextHistory.Size = new System.Drawing.Size(573, 296);
             this.richTextHistory.TabIndex = 1;
             this.richTextHistory.TabStop = false;
             this.richTextHistory.Text = "";
             // 
-            // emotionTestButton
-            // 
-            this.emotionTestButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.emotionTestButton.Location = new System.Drawing.Point(471, 72);
-            this.emotionTestButton.Name = "emotionTestButton";
-            this.emotionTestButton.Size = new System.Drawing.Size(90, 25);
-            this.emotionTestButton.TabIndex = 3;
-            this.emotionTestButton.Text = "&Emotion Test";
-            this.emotionTestButton.Click += new System.EventHandler(this.emotionTestButton_Click);
-            // 
             // ConversationForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
+            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(573, 395);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
