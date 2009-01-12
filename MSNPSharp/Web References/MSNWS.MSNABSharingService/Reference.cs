@@ -3154,6 +3154,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private System.DateTime lastChangedField;
         
+        private bool lastChangedFieldSpecified;
+        
         private ContactFilterType contactFilterField;
         
         /// <remarks/>
@@ -3173,6 +3175,17 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.lastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool LastChangedSpecified {
+            get {
+                return this.lastChangedFieldSpecified;
+            }
+            set {
+                this.lastChangedFieldSpecified = value;
             }
         }
         
