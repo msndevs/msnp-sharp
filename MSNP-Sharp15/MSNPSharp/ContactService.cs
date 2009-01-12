@@ -2117,11 +2117,15 @@ using System.Web.Services.Protocols;
                 if (sh.CacheKeyChanged)
                 {
                     NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
-                    if (!String.IsNullOrEmpty(sh.PreferredHostName))
-                    {
-                        PreferredHosts[requestType.ToString()] = sh.PreferredHostName;
-                    }
+
                 }
+
+                if (!String.IsNullOrEmpty(sh.PreferredHostName))
+                {
+                    PreferredHosts[requestType.ToString()] = sh.PreferredHostName;
+                }
+
+                CachedInformation.Save();
             }
         }
 
