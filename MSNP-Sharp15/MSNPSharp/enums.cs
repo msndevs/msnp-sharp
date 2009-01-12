@@ -808,4 +808,26 @@ namespace MSNPSharp
         /// </summary>
         Chat = 8
     }
+
+    /// <summary>
+    /// CacheKey for webservices
+    /// </summary>
+    [Serializable()]
+    public enum CacheKeyType
+    {
+        /// <summary>
+        /// CacheKey for AddressBook service
+        /// </summary>
+        ABServiceCacheKey,
+
+        /// <summary>
+        /// CacheKey for SharingService
+        /// </summary>
+        SharingServiceCacheKey,
+
+        /// <summary>
+        /// CacheKey for profile storage service
+        /// </summary>
+        StorageServiceCacheKey
+    }
 };

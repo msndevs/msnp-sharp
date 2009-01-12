@@ -37,6 +37,7 @@ using System.Xml;
 using System.Text;
 using System.Threading;
 using System.Globalization;
+using System.Xml.Serialization;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Authentication;
@@ -45,6 +46,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace MSNPSharp
 {
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
+    using MSNPSharp.IO;
 
     [Flags]
     public enum SSOTicketType
@@ -76,16 +78,17 @@ namespace MSNPSharp
         private string policy = "MBI_KEY_OLD";
         private string mainBrandID = "MSFT";
         private string oimLockKey = String.Empty;
-        private string abServiceCacheKey = String.Empty;
-        private string sharingServiceCacheKey = String.Empty;
-        private string schematizedStoreCacheKey = String.Empty;
 
-        private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
+        [NonSerialized()]
+        private SerializableDictionary<SSOTicketType, SSOTicket> ssoTickets = new SerializableDictionary<SSOTicketType, SSOTicket>();
+        private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
 
         [NonSerialized]
         private int hashcode;
         [NonSerialized]
         internal int DeleteTick;
+
+        public MSNTicket() { }
 
         internal MSNTicket(Credentials creds)
         {
@@ -98,7 +101,47 @@ namespace MSNPSharp
 
         #region Properties
 
-        public Dictionary<SSOTicketType, SSOTicket> SSOTickets
+        #region CacheKey
+
+
+        private void InitializeCacheKeys()
+        {
+            if (!cacheKeys.ContainsKey(CacheKeyType.ABServiceCacheKey))
+            {
+                cacheKeys.Add(CacheKeyType.ABServiceCacheKey, String.Empty);
+            }
+
+            if (!cacheKeys.ContainsKey(CacheKeyType.SharingServiceCacheKey))
+            {
+                cacheKeys.Add(CacheKeyType.SharingServiceCacheKey, String.Empty);
+            }
+
+            if (!cacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey))
+            {
+                cacheKeys.Add(CacheKeyType.StorageServiceCacheKey, String.Empty);
+            }
+        }
+
+        /// <summary>
+        /// CacheKeys for webservices.
+        /// </summary>
+        public SerializableDictionary<CacheKeyType, string> CacheKeys
+        {
+            get
+            {
+                InitializeCacheKeys();
+                return cacheKeys;
+            }
+            set
+            {
+                cacheKeys = value ;
+            }
+        }
+
+        #endregion
+
+        [NonSerialized()]
+        public SerializableDictionary<SSOTicketType, SSOTicket> SSOTickets
         {
             get
             {
@@ -144,45 +187,6 @@ namespace MSNPSharp
             {
                 oimLockKey = value;
             }
-        }
-
-        /// <summary>
-        /// CacheKey used for AdddressBok Service
-        /// </summary>
-        public string ABServiceCacheKey
-        {
-            get
-            {
-                return abServiceCacheKey;
-            }
-            set
-            {
-                abServiceCacheKey = value;
-            }
-        }
-
-        /// <summary>
-        /// CacheKey used for Sharing Service
-        /// </summary>
-        public string SharingServiceCacheKey
-        {
-            get
-            {
-                return sharingServiceCacheKey;
-            }
-            set
-            {
-                sharingServiceCacheKey = value;
-            }
-        }
-
-        /// <summary>
-        /// CacheKey used for profile storage Service
-        /// </summary>
-        public string SchematizedStoreCacheKey
-        {
-            get { return schematizedStoreCacheKey; }
-            set { schematizedStoreCacheKey = value; }
         }
 
         #endregion
@@ -299,6 +303,11 @@ namespace MSNPSharp
             get
             {
                 return type;
+            }
+
+            internal set
+            {
+                type = value;
             }
         }
     }

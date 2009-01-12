@@ -198,7 +198,7 @@ namespace MSNPSharp
         /// <summary>
         /// Preferred host of the contact service. The default is "contacts.msn.com".
         /// </summary>
-        private string PreferredHost
+        internal string PreferredHost
         {
             get
             {
@@ -267,6 +267,9 @@ namespace MSNPSharp
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, NSMessageHandler);
+
+                NSMessageHandler.MSNTicket.CacheKeys = AddressBook.Ticket.CacheKeys;
+
                 if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
                     || Deltas.Version != Properties.Resources.DeltasListVersion)
                     && recursiveCall == 0)
@@ -430,7 +433,7 @@ namespace MSNPSharp
                     ServiceFilterType.OfficeLiveWebNotification
                 };
 
-                if (NSMessageHandler.MSNTicket.SharingServiceCacheKey == string.Empty)
+                if (NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.SharingServiceCacheKey] == string.Empty)
                 {
                     sharingService.Url = RDRServiceUrl.SharingServiceUrl;
                     try
@@ -453,7 +456,7 @@ namespace MSNPSharp
                         findnodelist = errdoc.GetElementsByTagName("CacheKey");
                         if (findnodelist.Count > 0)
                         {
-                            NSMessageHandler.MSNTicket.SharingServiceCacheKey = findnodelist[0].InnerText;
+                            NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.SharingServiceCacheKey] = findnodelist[0].InnerText;
                             sharingService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
                         }
                     }
@@ -542,7 +545,7 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
             {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindAll", new MSNPSharpException("No Contact Ticket")));
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", new MSNPSharpException("No Contact Ticket")));
             }
             else
             {
@@ -564,7 +567,7 @@ namespace MSNPSharp
                 request.filterOptions.DeltasOnly = deltasOnly;
                 request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
 
-                if (NSMessageHandler.MSNTicket.ABServiceCacheKey == String.Empty)
+                if (NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.ABServiceCacheKey] == String.Empty)
                 {
                     abService.Url = RDRServiceUrl.ABServiceUrl;
                     try
@@ -587,7 +590,7 @@ namespace MSNPSharp
                         findnodelist = errdoc.GetElementsByTagName("CacheKey");
                         if (findnodelist.Count > 0)
                         {
-                            NSMessageHandler.MSNTicket.ABServiceCacheKey = findnodelist[0].InnerText;
+                            NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.ABServiceCacheKey] = findnodelist[0].InnerText;
                             abService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
                         }
                     }
@@ -746,7 +749,7 @@ namespace MSNPSharp
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
             sharingService.ABApplicationHeaderValue.BrandId = NSMessageHandler.MSNTicket.MainBrandID;
-            sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.SharingServiceCacheKey;
+            sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.SharingServiceCacheKey];
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -768,7 +771,7 @@ namespace MSNPSharp
             abService.ABApplicationHeaderValue.ApplicationId = applicationId;
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
-            abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.ABServiceCacheKey;
+            abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.ABServiceCacheKey];
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -2023,11 +2026,11 @@ namespace MSNPSharp
                 {
                     if (isABServiceBinding)
                     {
-                        NSMessageHandler.MSNTicket.ABServiceCacheKey = sh.CacheKey;
+                        NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.ABServiceCacheKey] = sh.CacheKey;
                     }
                     else
                     {
-                        NSMessageHandler.MSNTicket.SharingServiceCacheKey = sh.CacheKey;
+                        NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.SharingServiceCacheKey] = sh.CacheKey;
                     }
                 }
 
