@@ -600,6 +600,7 @@
     <xsd:complexType name="filterOptionsType">
         <xsd:sequence>
             <xsd:element name="DeltasOnly" type="xsd:boolean"/>
+            <xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
             <xsd:element name="ContactFilter" type="msnab:ContactFilterType"/>
         </xsd:sequence>
     </xsd:complexType>
