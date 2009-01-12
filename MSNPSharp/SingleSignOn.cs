@@ -470,7 +470,7 @@ namespace MSNPSharp
 
             AuthenticationAdd("messengerclear.live.com", policy);
             AuthenticationAdd("messenger.msn.com", "?id=507");
-            AuthenticationAdd("contacts.msn.com", "MBI");
+            AuthenticationAdd("contacts.msn.com", "?fs=1&id=24000&kv=7&rn=93S9SWWw&tw=0&ver=2.1.6000.1");
             AuthenticationAdd("messengersecure.live.com", "MBI_SSL");
             AuthenticationAdd("spaces.live.com", "MBI");
             AuthenticationAdd("storage.msn.com", "MBI");
@@ -487,7 +487,7 @@ namespace MSNPSharp
                 switch (sso & ssott)
                 {
                     case SSOTicketType.Contact:
-                        AuthenticationAdd("contacts.msn.com", "MBI");
+                        AuthenticationAdd("contacts.msn.com", "?fs=1&id=24000&kv=7&rn=93S9SWWw&tw=0&ver=2.1.6000.1");
                         break;
 
                     case SSOTicketType.OIM:
