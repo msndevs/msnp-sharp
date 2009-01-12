@@ -140,7 +140,6 @@ namespace MSNPSharp
 
         #endregion
 
-        [NonSerialized()]
         public SerializableDictionary<SSOTicketType, SSOTicket> SSOTickets
         {
             get

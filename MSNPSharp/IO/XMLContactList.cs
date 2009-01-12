@@ -61,12 +61,14 @@ namespace MSNPSharp.IO
         internal void Synchronize(DeltasList deltas)
         {
             // Create Memberships
-            Service msngrService = GetTargetService(ServiceFilterType.Messenger);
-            if (msngrService != null)
+            SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>> ms =
+                GetTargetMemberships(ServiceFilterType.Messenger);
+
+            if (ms != null)
             {
-                SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(msngrService.ServiceType);
                 foreach (MemberRole role in ms.Keys)
                 {
+                    MSNLists msnlist = NSMessageHandler.ContactService.GetMSNList(role);
                     foreach (BaseMember bm in ms[role].Values)
                     {
                         long? cid = null;
@@ -98,9 +100,9 @@ namespace MSNPSharp.IO
                         {
                             string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                            contact.CID = cid;
                             contact.NSMessageHandler = NSMessageHandler;
-                            contact.Lists = GetMSNLists(account, type, contact.IsMessengerUser);
+                            contact.CID = cid;
+                            contact.Lists |= msnlist;
                         }
                     }
                 }
@@ -240,59 +242,6 @@ namespace MSNPSharp.IO
                 return MembershipList[type].Memberships;
 
             return null;
-        }
-
-
-
-        public MSNLists GetMSNLists(string account, ClientType type, bool isMessengerUser)
-        {
-            MSNLists contactlists = MSNLists.None;
-            Service targetservice = GetTargetService(ServiceFilterType.Messenger);
-
-            if (targetservice != null)
-            {
-                SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>> ms =
-                    GetTargetMemberships(targetservice.ServiceType);
-
-                string hash = Contact.MakeHash(account, type);
-
-                if (ms.ContainsKey(MemberRole.Allow) && ms[MemberRole.Allow].ContainsKey(hash))
-                {
-                    if (ms[MemberRole.Allow][hash].Deleted)
-                        contactlists ^= MSNLists.AllowedList;
-                    else
-                        contactlists |= MSNLists.AllowedList;
-                }
-
-                if (ms.ContainsKey(MemberRole.Pending) && ms[MemberRole.Pending].ContainsKey(hash))
-                {
-                    if (ms[MemberRole.Pending][hash].Deleted)
-                        contactlists ^= MSNLists.PendingList;
-                    else
-                        contactlists |= MSNLists.PendingList;
-                }
-
-                if (ms.ContainsKey(MemberRole.Block) && ms[MemberRole.Block].ContainsKey(hash))
-                {
-                    if (ms[MemberRole.Block][hash].Deleted)
-                        contactlists ^= MSNLists.BlockedList;
-                    else
-                        contactlists |= MSNLists.BlockedList;
-                }
-
-                if (ms.ContainsKey(MemberRole.Reverse) && ms[MemberRole.Reverse].ContainsKey(hash))
-                {
-                    if (ms[MemberRole.Reverse][hash].Deleted)
-                        contactlists ^= MSNLists.ReverseList;
-                    else
-                        contactlists |= MSNLists.ReverseList;
-                }
-            }
-
-            if (isMessengerUser)
-                contactlists |= MSNLists.ForwardList;
-
-            return contactlists;
         }
 
         public void AddMemberhip(ServiceFilterType servicetype, string account, ClientType type, MemberRole memberrole, BaseMember member)
@@ -445,11 +394,11 @@ namespace MSNPSharp.IO
                                                         {
                                                             Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
                                                             contact.NSMessageHandler = xmlcl.NSMessageHandler;
+                                                            contact.CID = cid;
                                                             contact.RemoveFromList(msnlist);
-                                                            contact.Lists = xmlcl.GetMSNLists(account, type, contact.IsMessengerUser);
 
                                                             // Fire ReverseRemoved
-                                                            if (memberrole == MemberRole.Reverse)
+                                                            if (msnlist == MSNLists.ReverseList)
                                                             {
                                                                 xmlcl.NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                                                             }
@@ -466,7 +415,8 @@ namespace MSNPSharp.IO
                                                         Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                                         contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                         contact.CID = cid;
-                                                        contact.Lists = xmlcl.GetMSNLists(account, type, contact.IsMessengerUser);
+                                                        contact.AddToList(msnlist);
+
                                                         // Don't fire ReverseAdded(contact.Pending) here... It fires 2 times:
                                                         // The first is OnConnect after abSynchronized
                                                         // The second is here, not anymore here :)
@@ -687,7 +637,7 @@ namespace MSNPSharp.IO
                         {
                             xmlcl.Groups[key] = groupType;
 
-                            // Add a new group									
+                            // Add a new group
                             xmlcl.NSMessageHandler.ContactGroups.AddGroup(
                                 new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, xmlcl.NSMessageHandler));
 
@@ -719,10 +669,10 @@ namespace MSNPSharp.IO
                                     contact.Guid = Guid.Empty;
                                     contact.SetIsMessengerUser(false);
 
-                                    if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(contact.Mail, contact.ClientType, contact.IsMessengerUser))
+                                    if (MSNLists.None == contact.Lists)
                                     {
-                                        //xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
-                                        //contact.NSMessageHandler = null;
+                                        xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                        contact.NSMessageHandler = null;
                                     }
                                 }
                             }
@@ -837,10 +787,10 @@ namespace MSNPSharp.IO
                                     contact.Guid = Guid.Empty;
                                     contact.SetIsMessengerUser(false);
 
-                                    if (MSNLists.None == xmlcl.NSMessageHandler.ContactService.AddressBook.GetMSNLists(contact.Mail, contact.ClientType, contact.IsMessengerUser))
+                                    if (MSNLists.None == contact.Lists)
                                     {
-                                        //xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
-                                        //contact.NSMessageHandler = null;
+                                        xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                        contact.NSMessageHandler = null;
                                     }
                                 }
                             }
