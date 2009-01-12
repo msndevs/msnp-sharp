@@ -1007,6 +1007,19 @@ namespace MSNPSharp.IO
 
         #endregion
 
+        #region Other
+        private MSNTicket ticket = MSNTicket.Empty;
+
+        /// <summary>
+        /// All the tickets for webservices.
+        /// </summary>
+        public MSNTicket Ticket
+        {
+            get { return ticket; }
+            set { ticket = value; }
+        }
+
+        #endregion
         #region Overrides
 
         /// <summary>
