@@ -431,6 +431,14 @@ namespace MSNPSharp
             }
         }
 
+        public WhatsUpService WhatsUpService
+        {
+            get
+            {
+                return nsMessageHandler.WhatsUpService;
+            }
+        }
+
         /// <summary>
         /// Contact service.
         /// </summary>

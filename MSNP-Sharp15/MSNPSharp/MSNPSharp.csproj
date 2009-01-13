@@ -162,6 +162,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
+    <Compile Include="WhatsUpService.cs" />
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
     <Compile Include="Core\YIMMessage.cs" />
