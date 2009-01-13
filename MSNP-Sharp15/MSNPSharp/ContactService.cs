@@ -461,41 +461,6 @@ using System.Web.Services.Protocols;
                     ServiceFilterType.OfficeLiveWebNotification
                 };
 
-                GetCacheKey(sharingService,"FindMembership", request);
-
-                //sharingService = CreateSharingService(partnerScenario);
-                //sharingService.Url = @"https://" + PreferredHosts[request.GetType().ToString()] + @"/abservice/SharingService.asmx";
-                sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
-
-                //if (NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] == string.Empty)
-                //{
-                //    sharingService.Url = @"https://" + RDRServiceHost.OmegaContactRDRServiceHost + @"/abservice/SharingService.asmx";
-                //    try
-                //    {
-                //        sharingService.FindMembership(request);
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        XmlDocument errdoc = new XmlDocument();
-                //        string xmlstr = ex.Message.Substring(ex.Message.IndexOf("<?xml"));
-                //        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
-                //        errdoc.LoadXml(xmlstr);
-                //        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
-                //        if (findnodelist.Count > 0)
-                //        {
-                //            PreferredHosts[typeof(FindMembershipRequestType)] = findnodelist[0].InnerText;
-                //            sharingService.Url = @"https://" + PreferredHosts[typeof(FindMembershipRequestType)] + @"/abservice/SharingService.asmx";
-                //        }
-
-                //        findnodelist = errdoc.GetElementsByTagName("CacheKey");
-                //        if (findnodelist.Count > 0)
-                //        {
-                //            NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = findnodelist[0].InnerText;
-                //            sharingService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
-                //        }
-                //    }
-                //}
-
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     sharingService = sender as SharingServiceBinding;
@@ -531,6 +496,8 @@ using System.Web.Services.Protocols;
                                     abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Mail;
                                     abAddRequest.abInfo.ownerPuid = "0";
                                     abAddRequest.abInfo.fDefault = true;
+
+                                    GetCacheKeyAndPreferredHost(abservice, "ABAdd", abAddRequest);
                                     abservice.ABAddAsync(abAddRequest, new object());
                                 }
                             }
@@ -562,7 +529,7 @@ using System.Web.Services.Protocols;
                     }
                 };
 
-                
+                GetCacheKeyAndPreferredHost(sharingService, "FindMembership", request);
                 sharingService.FindMembershipAsync(request, partnerScenario);
 
             }
@@ -602,39 +569,6 @@ using System.Web.Services.Protocols;
                 request.filterOptions.DeltasOnly = deltasOnly;
                 request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
 
-                GetCacheKey(abService,"ABFindContactsPaged", request);
-
-                //if (NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] == String.Empty)
-                //{
-                //    abService.Url = @"https://" + RDRServiceHost.OmegaContactRDRServiceHost + @"/abservice/abservice.asmx";
-                //    try
-                //    {
-                //        abService.ABFindContactsPaged(request);
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        XmlDocument errdoc = new XmlDocument();
-                //        string xmlstr = ex.Message.Substring(ex.Message.IndexOf("<?xml"));
-                //        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
-                //        errdoc.LoadXml(xmlstr);
-                //        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
-                //        if (findnodelist.Count > 0)
-                //        {
-                //            PreferredHosts[typeof(ABFindContactsPagedRequestType)] = findnodelist[0].InnerText;
-                //            abService.Url = @"https://" + PreferredHosts[typeof(ABFindContactsPagedRequestType)] + @"/abservice/abservice.asmx";
-                //        }
-
-                //        findnodelist = errdoc.GetElementsByTagName("CacheKey");
-
-                //        //If there's no cachekey node, abservice and sharingservice use the same cachekey.
-                //        if (findnodelist.Count > 0)
-                //        {
-                //            NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = findnodelist[0].InnerText;
-                //            abService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
-                //        }
-                //    }
-                //}
-
                 abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
                 {
                     abService = sender as ABServiceBinding;
@@ -673,6 +607,7 @@ using System.Web.Services.Protocols;
                     }
                 };
 
+                GetCacheKeyAndPreferredHost(abService, "ABFindContactsPaged", request);
                 abService.ABFindContactsPagedAsync(request, partnerScenario);
             }
         }
@@ -702,35 +637,6 @@ using System.Web.Services.Protocols;
                 request.lastChange = lastChange;
                 request.dynamicItemLastChange = dynamicItemLastChange;
                 request.dynamicItemView = "Gleam";
-
-                if (NSMessageHandler.MSNTicket.ABServiceCacheKey == String.Empty)
-                {
-                    abService.Url = RDRServiceUrl.ABServiceUrl;
-                    try
-                    {
-                        abService.ABFindAll(request);
-                    }
-                    catch (Exception ex)
-                    {
-                        XmlDocument errdoc = new XmlDocument();
-                        string xmlstr = ex.Message.Substring(ex.Message.IndexOf("<?xml"));
-                        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
-                        errdoc.LoadXml(xmlstr);
-                        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
-                        if (findnodelist.Count > 0)
-                        {
-                            PreferredHost = findnodelist[0].InnerText;
-                            abService.Url = @"https://" + PreferredHost + @"/abservice/abservice.asmx"; ;
-                        }
-
-                        findnodelist = errdoc.GetElementsByTagName("CacheKey");
-                        if (findnodelist.Count > 0)
-                        {
-                            NSMessageHandler.MSNTicket.ABServiceCacheKey = findnodelist[0].InnerText;
-                            abService.ABApplicationHeaderValue.CacheKey = findnodelist[0].InnerText;
-                        }
-                    }
-                }
 
                 abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
                 {
@@ -770,6 +676,7 @@ using System.Web.Services.Protocols;
                     }
                 };
 
+                GetCacheKeyAndPreferredHost(abService, "ABFindAll", request);
                 abService.ABFindAllAsync(request, partnerScenario);
             }
         }
@@ -1140,6 +1047,7 @@ using System.Web.Services.Protocols;
                     break;
             }
 
+            GetCacheKeyAndPreferredHost(abService, "ABContactAdd", request);
             abService.ABContactAddAsync(request, new object());
         }
 
@@ -1249,6 +1157,7 @@ using System.Web.Services.Protocols;
             request.contacts = new ContactIdType[] { new ContactIdType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
+            GetCacheKeyAndPreferredHost(abService, "ABContactDelete", request);
             abService.ABContactDeleteAsync(request, new object());
         }
 
@@ -1401,6 +1310,8 @@ using System.Web.Services.Protocols;
                     }
                 };
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+
+                GetCacheKeyAndPreferredHost(abService, ".ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1459,6 +1370,8 @@ using System.Web.Services.Protocols;
                 request.contacts[0].contactInfo.contactTypeSpecified = true;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = "Annotation";
+
+                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1541,6 +1454,8 @@ using System.Web.Services.Protocols;
                 //request.contacts[0].contactInfo.displayName = owner.Name;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+
+                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1594,6 +1509,7 @@ using System.Web.Services.Protocols;
             request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupAdd", request);
             abService.ABGroupAddAsync(request, new object());
         }
 
@@ -1641,6 +1557,7 @@ using System.Web.Services.Protocols;
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { contactGroup.Guid };
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupDelete", request);
             abService.ABGroupDeleteAsync(request, new object());
         }
 
@@ -1683,6 +1600,7 @@ using System.Web.Services.Protocols;
             request.groups[0].groupInfo = new groupInfoType();
             request.groups[0].groupInfo.name = newGroupName;
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupUpdate", request);
             abService.ABGroupUpdateAsync(request, new object());
         }
 
@@ -1725,6 +1643,7 @@ using System.Web.Services.Protocols;
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupContactAdd", request);
             abService.ABGroupContactAddAsync(request, new object());
         }
 
@@ -1763,6 +1682,7 @@ using System.Web.Services.Protocols;
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupContactDelete", request);
             abService.ABGroupContactDeleteAsync(request, new object());
         }
         #endregion
@@ -1878,7 +1798,7 @@ using System.Web.Services.Protocols;
                 }
             };
 
-            GetCacheKey(sharingService, "AddMember", addMemberRequest);
+            GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
             sharingService.AddMemberAsync(addMemberRequest, new object());
 
         }
@@ -1996,7 +1916,7 @@ using System.Web.Services.Protocols;
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
 
-            GetCacheKey(sharingService, "DeleteMember", deleteMemberRequest);
+            GetCacheKeyAndPreferredHost(sharingService, "DeleteMember", deleteMemberRequest);
 
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
         }
@@ -2096,51 +2016,97 @@ using System.Web.Services.Protocols;
             }
         }
 
-        internal void GetCacheKey(SoapHttpClientProtocol webservice, string methodName, object param)
+        internal void GetCacheKeyAndPreferredHost(SharingServiceBinding sharingService, string methodName, object param)
+        {
+            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
+            sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+        }
+
+
+        internal void GetCacheKeyAndPreferredHost(ABServiceBinding abService, string methodName, object param)
+        {
+            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, abService, methodName, param);
+            abService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+        }
+
+        internal void GetCacheKeyAndPreferredHost(CacheKeyType keyType, SoapHttpClientProtocol webservice, string methodName, object param)
         {
             if (Deltas == null)
             {
                 throw new MSNPSharpException("Deltas is null.");
             }
 
-            string[] urls = webservice.Url.Split(@"/".ToCharArray());
-            if (Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] == string.Empty ||
-                (Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] != string.Empty &&
+            string originalUrl = webservice.Url;
+            string originalHost = webservice.Url.Substring(webservice.Url.IndexOf(@"://") + 3 /* @"://".Length */);
+            originalHost = originalHost.Substring(0, originalHost.IndexOf(@"/"));
+
+            if (Deltas.CacheKeys[keyType] == string.Empty ||
+                (Deltas.CacheKeys[keyType] != string.Empty &&
                 (Deltas.PreferredHosts.ContainsKey(param.GetType().ToString()) == false ||
                 Deltas.PreferredHosts[param.GetType().ToString()] == "")))
             {
                 
                 try
                 {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, webservice.GetType().ToString() + "is requesting a cachekey and preferred host for calling " + methodName);
 
-                    webservice.Url = urls[0] + @"//" + RDRServiceHost.OmegaContactRDRServiceHost + @"/" + urls[3] + @"/" + urls[4];
+                    switch (keyType)
+                    {
+                        case CacheKeyType.OmegaContactServiceCacheKey:                    
+                            webservice.Url = webservice.Url.Replace(originalHost, RDRServiceHost.OmegaContactRDRServiceHost);
+                            break;
+                        case CacheKeyType.StorageServiceCacheKey:
+                            webservice.Url = webservice.Url.Replace(originalHost, RDRServiceHost.StorageRDRServiceHost);
+                            break;
+                    }
+
                     webservice.GetType().InvokeMember(methodName, System.Reflection.BindingFlags.InvokeMethod,
                         null, webservice,
                         new object[] { param });
                 }
                 catch (Exception ex)
                 {
-                    XmlDocument errdoc = new XmlDocument();
-                    string errorMessage = ex.InnerException.Message;
-                    string xmlstr = errorMessage.Substring(errorMessage.IndexOf("<?xml"));
-                    xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
-                    errdoc.LoadXml(xmlstr);
-                    XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
-                    if (findnodelist.Count > 0)
+                    try
                     {
-                        PreferredHosts[param.GetType().ToString()] = findnodelist[0].InnerText;
-                    }
+                        XmlDocument errdoc = new XmlDocument();
+                        string errorMessage = ex.InnerException.Message;
+                        string xmlstr = errorMessage.Substring(errorMessage.IndexOf("<?xml"));
+                        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+                        
+                        //I think the xml parser microsoft used internally is just a super parser, it can ignore everything.
+                        xmlstr = xmlstr.Replace("&amp;", "&");
+                        xmlstr = xmlstr.Replace("&", "&amp;");
 
-                    findnodelist = errdoc.GetElementsByTagName("CacheKey");
-                    if (findnodelist.Count > 0)
+
+                        errdoc.LoadXml(xmlstr);
+                        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
+                        if (findnodelist.Count > 0)
+                        {
+                            PreferredHosts[param.GetType().ToString()] = findnodelist[0].InnerText;
+                        }
+                        else
+                        {
+                            PreferredHosts[param.GetType().ToString()] = originalHost;  //If nothing (Storage), just use the old host.
+                        }
+
+                        findnodelist = errdoc.GetElementsByTagName("CacheKey");
+                        if (findnodelist.Count > 0)
+                        {
+                            Deltas.CacheKeys[keyType] = findnodelist[0].InnerText;
+                        }
+                    }
+                    catch (Exception exc)
                     {
-                        Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = findnodelist[0].InnerText;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occurs while getting CacheKey and Preferred host :\r\n" +
+                            "Service:    " + webservice.GetType().ToString() + "\r\n" +
+                            "MethodName: " + methodName + "\r\n" +
+                            "Message:    " + exc.Message);
                     }
                 }            
                 Deltas.Save();
             }
 
-            webservice.Url = urls[0] + @"//" + PreferredHosts[param.GetType().ToString()] + @"/" + urls[3] + @"/" + urls[4];
+            webservice.Url = originalUrl.Replace(originalHost, PreferredHosts[param.GetType().ToString()]);
 
         }
 
