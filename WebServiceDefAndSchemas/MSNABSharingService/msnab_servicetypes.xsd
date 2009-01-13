@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
+<!-- edited with XMLSpy v2008 rel. 2 (http://www.altova.com) by ee (darksiderg) -->
 <xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.msn.com/webservices/AddressBook" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
     <xsd:include schemaLocation="msnab_datatypes.xsd"/>
     <xsd:element name="ABApplicationHeader">
@@ -452,4 +452,56 @@
             </xsd:sequence>
         </xsd:complexType>
     </xsd:element>
+    <xsd:element name="WNApplicationHeader">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ApplicationId" type="msnab:Guid"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="WNAuthHeader">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="TicketToken" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="WNServiceHeader">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="Version" type="xsd:token"/>
+                <xsd:element name="CacheKey" type="xsd:token" minOccurs="0"/>
+                <xsd:element name="CacheKeyChanged" type="xsd:boolean" minOccurs="0"/>
+                <xsd:element name="PreferredHostName" type="xsd:string" minOccurs="0"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="GetContactsRecentActivity" type="msnab:GetContactsRecentActivityRequestType"/>
+    <xsd:complexType name="GetContactsRecentActivityRequestType">
+        <xsd:sequence>
+            <xsd:element name="entityHandle" type="msnab:entityHandle"/>
+            <xsd:element name="locales">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="string" type="xsd:string" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="count" type="xsd:int"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:element name="GetContactsRecentActivityResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="GetContactsRecentActivityResult" type="msnab:GetContactsRecentActivityResultType"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:complexType name="GetContactsRecentActivityResultType">
+        <xsd:sequence>
+            <xsd:element name="Activities" type="xsd:anyType" maxOccurs="unbounded"/>
+            <xsd:element name="Templates" type="xsd:anyType" maxOccurs="unbounded"/>
+            <xsd:element name="FeedUrl" type="xsd:anyURI"/>
+        </xsd:sequence>
+    </xsd:complexType>
 </xsd:schema>
