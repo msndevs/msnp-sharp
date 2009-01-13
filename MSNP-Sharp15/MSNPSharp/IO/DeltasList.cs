@@ -48,6 +48,8 @@ namespace MSNPSharp.IO
 
         private List<FindMembershipResultType> membershipDeltas = new List<FindMembershipResultType>(0);
         private SerializableDictionary<string, BaseDynamicItemType> dynamicItems = new SerializableDictionary<string, BaseDynamicItemType>(0);
+        private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
+        private SerializableDictionary<string, string> preferredHosts = new SerializableDictionary<string, string>(0);
 
         /// <summary>
         /// The users that have changed their spaces or profiles.
@@ -104,6 +106,36 @@ namespace MSNPSharp.IO
             set
             {
                 membershipDeltas = value;
+            }
+        }
+
+        /// <summary>
+        /// CacheKeys for webservices.
+        /// </summary>
+        public SerializableDictionary<CacheKeyType, string> CacheKeys
+        {
+            get
+            {
+                return cacheKeys;
+            }
+            set
+            {
+                cacheKeys = value;
+            }
+        }
+
+        /// <summary>
+        /// Preferred hosts for different methods.
+        /// </summary>
+        public SerializableDictionary<string, string> PreferredHosts
+        {
+            get
+            {
+                return preferredHosts;
+            }
+            set
+            {
+                preferredHosts = value;
             }
         }
 
