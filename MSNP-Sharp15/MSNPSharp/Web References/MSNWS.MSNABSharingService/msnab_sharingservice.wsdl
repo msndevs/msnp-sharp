@@ -105,6 +105,17 @@
   <message name="ABFindContactsPagedResponseMessage">
     <part name="ABFindContactsPagedResponse" element="msnab:ABFindContactsPagedResponse" />
   </message>
+  <message name="GetContactsRecentActivityMessage">
+    <part name="GetContactsRecentActivityRequest" element="msnab:GetContactsRecentActivity" />
+  </message>
+  <message name="GetContactsRecentActivityResponseMessage">
+    <part name="GetContactsRecentActivityResponse" element="msnab:GetContactsRecentActivityResponse" />
+  </message>
+  <message name="WNHeader">
+    <part name="WNApplicationHeader" element="msnab:WNApplicationHeader" />
+    <part name="WNAuthHeader" element="msnab:WNAuthHeader" />
+    <part name="WNServiceHeader" element="msnab:WNServiceHeader" />
+  </message>
   <portType name="SharingServicePortType">
     <operation name="FindMembership">
       <input message="msnab:FindMembershipMessage" />
@@ -170,6 +181,12 @@
     <operation name="ABFindContactsPaged">
       <input message="msnab:ABFindContactsPagedMessage" />
       <output message="msnab:ABFindContactsPagedResponseMessage" />
+    </operation>
+  </portType>
+  <portType name="WhatsUpServicePortType">
+    <operation name="GetContactsRecentActivity">
+      <input message="msnab:GetContactsRecentActivityMessage" />
+      <output message="msnab:GetContactsRecentActivityResponseMessage" />
     </operation>
   </portType>
   <binding name="SharingServiceBinding" type="msnab:SharingServicePortType">
@@ -367,6 +384,21 @@
       </output>
     </operation>
   </binding>
+  <binding name="WhatsUpServiceBinding" type="msnab:WhatsUpServicePortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <operation name="GetContactsRecentActivity">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/GetContactsRecentActivity" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnab:WNHeader" part="WNApplicationHeader" use="literal" />
+        <soap:header message="msnab:WNHeader" part="WNAuthHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnab:WNHeader" part="WNServiceHeader" use="literal" />
+      </output>
+    </operation>
+  </binding>
   <service name="SharingService">
     <port name="FindMembershipPort" binding="msnab:SharingServiceBinding">
       <soap:address location="https://contacts.msn.com/abservice/SharingService.asmx" />
@@ -414,6 +446,11 @@
     </port>
     <port name="ABFindContactsPagedPort" binding="msnab:ABServiceBinding">
       <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
+    </port>
+  </service>
+  <service name="WhatsUpService">
+    <port name="GetContactsRecentActivityPort" binding="msnab:WhatsUpServiceBinding">
+      <soap:address location="http://sup.live.com/whatsnew/whatsnewservice.asmx" />
     </port>
   </service>
 </definitions>

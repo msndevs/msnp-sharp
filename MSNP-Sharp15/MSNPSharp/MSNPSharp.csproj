@@ -392,6 +392,9 @@
     <None Include="Web References\MSNWS.MSNABSharingService\FindMembershipResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\GetContactsRecentActivityResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\soap-env.xsd">
       <SubType>Designer</SubType>
     </None>

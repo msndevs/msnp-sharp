@@ -603,4 +603,9 @@
       <xsd:element name="ContactFilter" type="msnab:ContactFilterType" />
     </xsd:sequence>
   </xsd:complexType>
+  <xsd:complexType name="entityHandle">
+    <xsd:sequence>
+      <xsd:element name="Cid" type="xsd:long" />
+    </xsd:sequence>
+  </xsd:complexType>
 </xsd:schema>

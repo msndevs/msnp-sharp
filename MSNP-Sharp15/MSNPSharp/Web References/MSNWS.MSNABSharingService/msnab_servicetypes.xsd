@@ -451,4 +451,56 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="WNApplicationHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="ApplicationId" type="msnab:Guid" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="WNAuthHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="TicketToken" type="xsd:string" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="WNServiceHeader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="Version" type="xsd:token" />
+        <xsd:element minOccurs="0" name="CacheKey" type="xsd:token" />
+        <xsd:element minOccurs="0" name="CacheKeyChanged" type="xsd:boolean" />
+        <xsd:element minOccurs="0" name="PreferredHostName" type="xsd:string" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="GetContactsRecentActivity" type="msnab:GetContactsRecentActivityRequestType" />
+  <xsd:complexType name="GetContactsRecentActivityRequestType">
+    <xsd:sequence>
+      <xsd:element name="entityHandle" type="msnab:entityHandle" />
+      <xsd:element name="locales">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="string" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="count" type="xsd:int" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="GetContactsRecentActivityResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="GetContactsRecentActivityResult" type="msnab:GetContactsRecentActivityResultType" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="GetContactsRecentActivityResultType">
+    <xsd:sequence>
+      <xsd:element maxOccurs="unbounded" name="Activities" type="xsd:anyType" />
+      <xsd:element maxOccurs="unbounded" name="Templates" type="xsd:anyType" />
+      <xsd:element name="FeedUrl" type="xsd:anyURI" />
+    </xsd:sequence>
+  </xsd:complexType>
 </xsd:schema>
