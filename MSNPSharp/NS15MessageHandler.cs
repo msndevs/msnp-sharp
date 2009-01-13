@@ -75,6 +75,7 @@ namespace MSNPSharp
         private OIMService oimService;
         private ContactSpaceService spaceService;
         private MSNStorageService storageService;
+        private WhatsUpService whatsUpService;
 
         private List<Regex> censorWords = new List<Regex>(0);
         private Messenger messenger = null;
@@ -95,6 +96,7 @@ namespace MSNPSharp
             oimService = new OIMService(this);
             spaceService = new ContactSpaceService(this);
             storageService = new MSNStorageService(this);
+            whatsUpService = new WhatsUpService(this);
         }
 
         #endregion
@@ -250,6 +252,14 @@ namespace MSNPSharp
             get
             {
                 return storageService;
+            }
+        }
+
+        public WhatsUpService WhatsUpService
+        {
+            get
+            {
+                return whatsUpService;
             }
         }
 

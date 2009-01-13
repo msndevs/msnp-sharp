@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Xml;
 
 namespace MSNPSharpClient
 {
@@ -87,6 +88,13 @@ namespace MSNPSharpClient
         private ToolTip toolTipChangePhoto;
         private ComboBox comboPlaces;
         private Label lblStatus;
+        private Panel WhatsUpPanel;
+        private Label lblWhatsup;
+        private Button cmdNext;
+        private Button cmdPrev;
+        private PictureBox pbNewsPicture;
+        private Label lblNews;
+        private LinkLabel lblNewsLink;
         private IContainer components;
         #endregion
 
@@ -100,13 +108,13 @@ namespace MSNPSharpClient
         {
             this.components = new System.ComponentModel.Container();
             this.ListPanel = new System.Windows.Forms.Panel();
-            this.treeViewPanel = new System.Windows.Forms.Panel();
-            this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
-            this.treeViewFilterList = new System.Windows.Forms.TreeView();
             this.SortPanel = new System.Windows.Forms.Panel();
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnAddNew = new System.Windows.Forms.Button();
             this.btnSortBy = new System.Windows.Forms.Button();
+            this.treeViewPanel = new System.Windows.Forms.Panel();
+            this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
+            this.treeViewFilterList = new System.Windows.Forms.TreeView();
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sendIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sendOIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -146,9 +154,16 @@ namespace MSNPSharpClient
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.toolTipChangePhoto = new System.Windows.Forms.ToolTip(this.components);
+            this.pbNewsPicture = new System.Windows.Forms.PictureBox();
+            this.WhatsUpPanel = new System.Windows.Forms.Panel();
+            this.lblNewsLink = new System.Windows.Forms.LinkLabel();
+            this.lblNews = new System.Windows.Forms.Label();
+            this.cmdNext = new System.Windows.Forms.Button();
+            this.cmdPrev = new System.Windows.Forms.Button();
+            this.lblWhatsup = new System.Windows.Forms.Label();
             this.ListPanel.SuspendLayout();
-            this.treeViewPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
+            this.treeViewPanel.SuspendLayout();
             this.userMenuStrip.SuspendLayout();
             this.ContactPanel.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -158,73 +173,20 @@ namespace MSNPSharpClient
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbNewsPicture)).BeginInit();
+            this.WhatsUpPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // ListPanel
             // 
             this.ListPanel.BackColor = System.Drawing.SystemColors.Window;
-            this.ListPanel.Controls.Add(this.treeViewPanel);
             this.ListPanel.Controls.Add(this.SortPanel);
+            this.ListPanel.Controls.Add(this.treeViewPanel);
             this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ListPanel.Location = new System.Drawing.Point(239, 88);
             this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(300, 473);
+            this.ListPanel.Size = new System.Drawing.Size(300, 393);
             this.ListPanel.TabIndex = 0;
-            // 
-            // treeViewPanel
-            // 
-            this.treeViewPanel.Controls.Add(this.treeViewFavoriteList);
-            this.treeViewPanel.Controls.Add(this.treeViewFilterList);
-            this.treeViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
-            this.treeViewPanel.Name = "treeViewPanel";
-            this.treeViewPanel.Size = new System.Drawing.Size(300, 446);
-            this.treeViewPanel.TabIndex = 2;
-            // 
-            // treeViewFavoriteList
-            // 
-            this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
-            this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewFavoriteList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.treeViewFavoriteList.FullRowSelect = true;
-            this.treeViewFavoriteList.HideSelection = false;
-            this.treeViewFavoriteList.Indent = 20;
-            this.treeViewFavoriteList.ItemHeight = 20;
-            this.treeViewFavoriteList.Location = new System.Drawing.Point(0, 0);
-            this.treeViewFavoriteList.Name = "treeViewFavoriteList";
-            this.treeViewFavoriteList.ShowLines = false;
-            this.treeViewFavoriteList.ShowPlusMinus = false;
-            this.treeViewFavoriteList.ShowRootLines = false;
-            this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 446);
-            this.treeViewFavoriteList.TabIndex = 0;
-            this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
-            this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
-            this.treeViewFavoriteList.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragEnter);
-            this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
-            this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
-            this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
-            // 
-            // treeViewFilterList
-            // 
-            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
-            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.treeViewFilterList.FullRowSelect = true;
-            this.treeViewFilterList.HideSelection = false;
-            this.treeViewFilterList.Indent = 20;
-            this.treeViewFilterList.ItemHeight = 20;
-            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
-            this.treeViewFilterList.Name = "treeViewFilterList";
-            this.treeViewFilterList.ShowLines = false;
-            this.treeViewFilterList.ShowPlusMinus = false;
-            this.treeViewFilterList.ShowRootLines = false;
-            this.treeViewFilterList.Size = new System.Drawing.Size(300, 446);
-            this.treeViewFilterList.TabIndex = 0;
-            this.treeViewFilterList.Visible = false;
-            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
-            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
             // 
             // SortPanel
             // 
@@ -276,6 +238,63 @@ namespace MSNPSharpClient
             this.btnSortBy.Text = "sort";
             this.btnSortBy.UseVisualStyleBackColor = true;
             this.btnSortBy.Click += new System.EventHandler(this.btnSortBy_Click);
+            // 
+            // treeViewPanel
+            // 
+            this.treeViewPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.treeViewPanel.Controls.Add(this.treeViewFavoriteList);
+            this.treeViewPanel.Controls.Add(this.treeViewFilterList);
+            this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
+            this.treeViewPanel.Name = "treeViewPanel";
+            this.treeViewPanel.Size = new System.Drawing.Size(300, 366);
+            this.treeViewPanel.TabIndex = 2;
+            // 
+            // treeViewFavoriteList
+            // 
+            this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
+            this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFavoriteList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.treeViewFavoriteList.FullRowSelect = true;
+            this.treeViewFavoriteList.HideSelection = false;
+            this.treeViewFavoriteList.Indent = 20;
+            this.treeViewFavoriteList.ItemHeight = 20;
+            this.treeViewFavoriteList.Location = new System.Drawing.Point(0, 0);
+            this.treeViewFavoriteList.Name = "treeViewFavoriteList";
+            this.treeViewFavoriteList.ShowLines = false;
+            this.treeViewFavoriteList.ShowPlusMinus = false;
+            this.treeViewFavoriteList.ShowRootLines = false;
+            this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 366);
+            this.treeViewFavoriteList.TabIndex = 0;
+            this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
+            this.treeViewFavoriteList.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragEnter);
+            this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
+            this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
+            // 
+            // treeViewFilterList
+            // 
+            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
+            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.treeViewFilterList.FullRowSelect = true;
+            this.treeViewFilterList.HideSelection = false;
+            this.treeViewFilterList.Indent = 20;
+            this.treeViewFilterList.ItemHeight = 20;
+            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
+            this.treeViewFilterList.Name = "treeViewFilterList";
+            this.treeViewFilterList.ShowLines = false;
+            this.treeViewFilterList.ShowPlusMinus = false;
+            this.treeViewFilterList.ShowRootLines = false;
+            this.treeViewFilterList.Size = new System.Drawing.Size(300, 366);
+            this.treeViewFilterList.TabIndex = 0;
+            this.treeViewFilterList.Visible = false;
+            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
             // 
             // userMenuStrip
             // 
@@ -375,7 +394,7 @@ namespace MSNPSharpClient
             this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Left;
             this.ContactPanel.Location = new System.Drawing.Point(0, 88);
             this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(239, 473);
+            this.ContactPanel.Size = new System.Drawing.Size(239, 393);
             this.ContactPanel.TabIndex = 2;
             // 
             // propertyGrid
@@ -386,7 +405,7 @@ namespace MSNPSharpClient
             this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
             this.propertyGrid.Location = new System.Drawing.Point(0, 0);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(239, 473);
+            this.propertyGrid.Size = new System.Drawing.Size(239, 393);
             this.propertyGrid.TabIndex = 4;
             // 
             // panel1
@@ -611,6 +630,88 @@ namespace MSNPSharpClient
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
             // 
+            // pbNewsPicture
+            // 
+            this.pbNewsPicture.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pbNewsPicture.BackColor = System.Drawing.SystemColors.Highlight;
+            this.pbNewsPicture.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pbNewsPicture.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.pbNewsPicture.Location = new System.Drawing.Point(459, 0);
+            this.pbNewsPicture.Name = "pbNewsPicture";
+            this.pbNewsPicture.Size = new System.Drawing.Size(80, 80);
+            this.pbNewsPicture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pbNewsPicture.TabIndex = 3;
+            this.pbNewsPicture.TabStop = false;
+            this.toolTipChangePhoto.SetToolTip(this.pbNewsPicture, "Display Picture");
+            // 
+            // WhatsUpPanel
+            // 
+            this.WhatsUpPanel.BackColor = System.Drawing.SystemColors.InactiveCaption;
+            this.WhatsUpPanel.Controls.Add(this.lblNewsLink);
+            this.WhatsUpPanel.Controls.Add(this.lblNews);
+            this.WhatsUpPanel.Controls.Add(this.pbNewsPicture);
+            this.WhatsUpPanel.Controls.Add(this.cmdNext);
+            this.WhatsUpPanel.Controls.Add(this.cmdPrev);
+            this.WhatsUpPanel.Controls.Add(this.lblWhatsup);
+            this.WhatsUpPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.WhatsUpPanel.Location = new System.Drawing.Point(0, 481);
+            this.WhatsUpPanel.Name = "WhatsUpPanel";
+            this.WhatsUpPanel.Size = new System.Drawing.Size(539, 80);
+            this.WhatsUpPanel.TabIndex = 1;
+            // 
+            // lblNewsLink
+            // 
+            this.lblNewsLink.AutoSize = true;
+            this.lblNewsLink.Location = new System.Drawing.Point(242, 54);
+            this.lblNewsLink.Name = "lblNewsLink";
+            this.lblNewsLink.Size = new System.Drawing.Size(28, 13);
+            this.lblNewsLink.TabIndex = 5;
+            this.lblNewsLink.TabStop = true;
+            this.lblNewsLink.Text = "LNK";
+            this.lblNewsLink.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblNewsLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lblNewsLink_LinkClicked);
+            // 
+            // lblNews
+            // 
+            this.lblNews.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblNews.AutoSize = true;
+            this.lblNews.Location = new System.Drawing.Point(242, 10);
+            this.lblNews.Name = "lblNews";
+            this.lblNews.Size = new System.Drawing.Size(44, 13);
+            this.lblNews.TabIndex = 4;
+            this.lblNews.Text = "lblNews";
+            this.lblNews.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cmdNext
+            // 
+            this.cmdNext.Location = new System.Drawing.Point(204, 33);
+            this.cmdNext.Name = "cmdNext";
+            this.cmdNext.Size = new System.Drawing.Size(29, 23);
+            this.cmdNext.TabIndex = 2;
+            this.cmdNext.Text = ">";
+            this.cmdNext.UseVisualStyleBackColor = true;
+            // 
+            // cmdPrev
+            // 
+            this.cmdPrev.Location = new System.Drawing.Point(170, 33);
+            this.cmdPrev.Name = "cmdPrev";
+            this.cmdPrev.Size = new System.Drawing.Size(29, 23);
+            this.cmdPrev.TabIndex = 1;
+            this.cmdPrev.Text = "<";
+            this.cmdPrev.UseVisualStyleBackColor = true;
+            // 
+            // lblWhatsup
+            // 
+            this.lblWhatsup.AutoSize = true;
+            this.lblWhatsup.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.lblWhatsup.Location = new System.Drawing.Point(167, 10);
+            this.lblWhatsup.Name = "lblWhatsup";
+            this.lblWhatsup.Size = new System.Drawing.Size(66, 13);
+            this.lblWhatsup.TabIndex = 0;
+            this.lblWhatsup.Text = "What\'s Up";
+            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
@@ -619,13 +720,14 @@ namespace MSNPSharpClient
             this.Controls.Add(this.ListPanel);
             this.Controls.Add(this.ContactPanel);
             this.Controls.Add(this.pictureBox);
+            this.Controls.Add(this.WhatsUpPanel);
             this.Controls.Add(this.OwnerPanel);
             this.Name = "ClientForm";
             this.Text = "MSNPSharp Example Client for MSNP18 (3.0 Dev)";
             this.ListPanel.ResumeLayout(false);
-            this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
             this.SortPanel.PerformLayout();
+            this.treeViewPanel.ResumeLayout(false);
             this.userMenuStrip.ResumeLayout(false);
             this.ContactPanel.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
@@ -637,6 +739,9 @@ namespace MSNPSharpClient
             this.sortContextMenu.ResumeLayout(false);
             this.groupContextMenu.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbNewsPicture)).EndInit();
+            this.WhatsUpPanel.ResumeLayout(false);
+            this.WhatsUpPanel.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -676,6 +781,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
 
             messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
+            messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
@@ -685,6 +791,9 @@ namespace MSNPSharpClient
 
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
             messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
+            
+
+            messenger.Nameserver.WhatsUpService.GetWhatsUpCompleted += WhatsUpService_GetWhatsUpCompleted;
 
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
@@ -694,6 +803,53 @@ namespace MSNPSharpClient
                 SortByGroup();
 
             comboStatus.SelectedIndex = 0;
+        }
+
+        void ContactService_SynchronizationCompleted(object sender, EventArgs e)
+        {
+            messenger.Nameserver.WhatsUpService.GetWhatsUp(200);
+        }
+
+        void WhatsUpService_GetWhatsUpCompleted(object sender, GetWhatsUpCompletedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted), sender, e);
+                return;
+            }
+
+            if (e.Error != null)
+            {
+                MessageBox.Show(e.Error.ToString());
+            }
+            else
+            {
+                foreach (XmlNode[] activityDetails in e.Response.Activities)
+                {
+                    foreach (XmlNode xn in activityDetails)
+                    {
+                        Trace.WriteLine(xn.InnerXml);
+                    }
+                }
+                foreach (XmlNode[] templates in e.Response.Templates)
+                {
+                    foreach (XmlNode tn in templates)
+                    {
+                        Trace.WriteLine(tn.InnerXml);
+                    }
+                }
+                lblNewsLink.Text = "Get Feeds";
+                lblNewsLink.Tag = e.Response.FeedUrl;
+            }
+
+        }
+
+        private void lblNewsLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (lblNewsLink.Tag != null)
+            {
+                Process.Start(lblNewsLink.Tag.ToString());
+            }
         }
 
         void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArgs arg)
@@ -1812,5 +1968,7 @@ namespace MSNPSharpClient
                 }
             }
         }
+
+        
     }
 }

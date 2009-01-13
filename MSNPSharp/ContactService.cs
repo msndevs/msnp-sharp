@@ -38,13 +38,13 @@ using System.Text;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Web.Services.Protocols;
 
 namespace MSNPSharp
 {
     using MSNPSharp.IO;
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
-using System.Web.Services.Protocols;
 
     /// <summary>
     /// Provide webservice operations for contacts
@@ -398,24 +398,6 @@ using System.Web.Services.Protocols;
                             }
                         }
                     }
-
-                    WhatsUpServiceBinding wuService = CreateWhatsUpService(":)");
-
-                    GetContactsRecentActivityRequestType request = new GetContactsRecentActivityRequestType();
-                    request.entityHandle = new entityHandle();
-                    request.entityHandle.Cid = Convert.ToInt64(NSMessageHandler.Owner.CID);
-                    request.locales = new string[] { System.Globalization.CultureInfo.CurrentCulture.Name };
-                    request.count = 50;
-                    try
-                    {
-                        // Response is XML
-                        GetContactsRecentActivityResponse res = wuService.GetContactsRecentActivity(request);
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, res.GetContactsRecentActivityResult.FeedUrl, GetType().Name);
-                    }
-                    catch (Exception exp)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exp.ToString(), GetType().Name);
-                    }
                 }
                 return true;
             }
@@ -725,22 +707,7 @@ using System.Web.Services.Protocols;
             return abService;
         }
 
-        internal WhatsUpServiceBinding CreateWhatsUpService(string partnerScenario)
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.WhatsUp);
-
-            WhatsUpServiceBinding wuService = new WhatsUpServiceBinding();
-            wuService.Proxy = WebProxy;
-            wuService.Timeout = Int32.MaxValue;
-            wuService.UserAgent = Properties.Resources.WebServiceUserAgent;
-            wuService.Url = "http://sup.live.com/whatsnew/whatsnewservice.asmx";
-            wuService.WNApplicationHeaderValue = new WNApplicationHeader();
-            wuService.WNApplicationHeaderValue.ApplicationId = "3B119D87-1D76-4474-91AD-0D7267E86D04";
-            wuService.WNAuthHeaderValue = new WNAuthHeader();
-            wuService.WNAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WhatsUp].Ticket;
-
-            return wuService;
-        }
+        
 
 
         internal string[] ConstructLists(Dictionary<string, MSNLists> contacts, bool initial)
