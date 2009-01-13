@@ -61,7 +61,6 @@ using System.Web.Services.Protocols;
         internal int initialADLcount;
         internal XMLContactList AddressBook;
         internal DeltasList Deltas;
-        internal CacheInfo CachedInformation;
 
         #endregion
 
@@ -209,8 +208,10 @@ using System.Web.Services.Protocols;
                 //    return AddressBook.MyProperties["preferredhost"];
                 //}
                 //return "contacts.msn.com";
-                if (CachedInformation == null) return null;
-                return CachedInformation.PreferredHosts;
+                if (Deltas == null) 
+                    return null;
+
+                return Deltas.PreferredHosts;
             }
             set
             {
@@ -219,9 +220,9 @@ using System.Web.Services.Protocols;
                 //    AddressBook.MyProperties["preferredhost"] = value;
                 //}
 
-                if (CachedInformation != null)
+                if (Deltas != null)
                 {
-                    CachedInformation.PreferredHosts = value;
+                    Deltas.PreferredHosts = value;
                 }
             }
         }
@@ -276,10 +277,8 @@ using System.Web.Services.Protocols;
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, NSMessageHandler);
-                CachedInformation = CacheInfo.LoadFromFile(cacheInfoFile, nocompress);
 
-
-                NSMessageHandler.MSNTicket.CacheKeys = CachedInformation.CacheKeys;
+                NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
 
                 if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
                     || Deltas.Version != Properties.Resources.DeltasListVersion)
@@ -398,7 +397,6 @@ using System.Web.Services.Protocols;
                                 }
                             }
                         }
-                        CachedInformation.Save();
                     }
                 }
                 return true;
@@ -449,7 +447,7 @@ using System.Web.Services.Protocols;
 
                 //sharingService = CreateSharingService(partnerScenario);
                 //sharingService.Url = @"https://" + PreferredHosts[request.GetType().ToString()] + @"/abservice/SharingService.asmx";
-                sharingService.ABApplicationHeaderValue.CacheKey = CachedInformation.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+                sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
 
                 //if (NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] == string.Empty)
                 //{
@@ -2065,16 +2063,16 @@ using System.Web.Services.Protocols;
 
         internal void GetCacheKey(SoapHttpClientProtocol webservice, string methodName, object param)
         {
-            if (CachedInformation == null)
+            if (Deltas == null)
             {
-                throw new MSNPSharpException("CachedInformation is null.");
+                throw new MSNPSharpException("Deltas is null.");
             }
 
             string[] urls = webservice.Url.Split(@"/".ToCharArray());
-            if (CachedInformation.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] == string.Empty ||
-                (CachedInformation.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] != string.Empty && 
-                (CachedInformation.PreferredHosts.ContainsKey(param.GetType().ToString()) == false ||
-                CachedInformation.PreferredHosts[param.GetType().ToString()] == "")))
+            if (Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] == string.Empty ||
+                (Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] != string.Empty &&
+                (Deltas.PreferredHosts.ContainsKey(param.GetType().ToString()) == false ||
+                Deltas.PreferredHosts[param.GetType().ToString()] == "")))
             {
                 
                 try
@@ -2101,13 +2099,13 @@ using System.Web.Services.Protocols;
                     findnodelist = errdoc.GetElementsByTagName("CacheKey");
                     if (findnodelist.Count > 0)
                     {
-                        CachedInformation.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = findnodelist[0].InnerText;
+                        Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = findnodelist[0].InnerText;
                     }
                 }
             }
 
             webservice.Url = urls[0] + @"//" + PreferredHosts[param.GetType().ToString()] + @"/" + urls[3] + @"/" + urls[4];
-            CachedInformation.Save();
+            Deltas.Save();
         }
 
         internal void handleServiceHeader(ServiceHeader sh, Type requestType)
@@ -2125,7 +2123,7 @@ using System.Web.Services.Protocols;
                     PreferredHosts[requestType.ToString()] = sh.PreferredHostName;
                 }
 
-                CachedInformation.Save();
+                Deltas.Save();
             }
         }
 
