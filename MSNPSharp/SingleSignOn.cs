@@ -79,7 +79,7 @@ namespace MSNPSharp
         private string mainBrandID = "MSFT";
         private string oimLockKey = String.Empty;
 
-        [NonSerialized()]
+        [NonSerialized]
         private SerializableDictionary<SSOTicketType, SSOTicket> ssoTickets = new SerializableDictionary<SSOTicketType, SSOTicket>();
         private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
 
@@ -88,7 +88,9 @@ namespace MSNPSharp
         [NonSerialized]
         internal int DeleteTick;
 
-        public MSNTicket() { }
+        public MSNTicket()
+        {
+        }
 
         internal MSNTicket(Credentials creds)
         {
@@ -129,7 +131,7 @@ namespace MSNPSharp
             }
             set
             {
-                cacheKeys = value ;
+                cacheKeys = value;
             }
         }
 
@@ -675,6 +677,9 @@ namespace MSNPSharp
                         break;
                     case "storage.msn.com":
                         ticketype = SSOTicketType.Storage;
+                        break;
+                    case "sup.live.com":
+                        ticketype = SSOTicketType.WhatsUp;
                         break;
                 }
 
