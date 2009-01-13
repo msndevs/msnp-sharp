@@ -272,7 +272,7 @@ using System.Web.Services.Protocols;
             bool nocompress = Settings.NoCompress;
             string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl");
             string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
-            string cacheInfoFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "c" + ".mcl");
+
             try
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
@@ -2136,11 +2136,12 @@ using System.Web.Services.Protocols;
                     {
                         Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = findnodelist[0].InnerText;
                     }
-                }
+                }            
+                Deltas.Save();
             }
 
             webservice.Url = urls[0] + @"//" + PreferredHosts[param.GetType().ToString()] + @"/" + urls[3] + @"/" + urls[4];
-            Deltas.Save();
+
         }
 
         internal void handleServiceHeader(ServiceHeader sh, Type requestType)
