@@ -65,8 +65,8 @@ namespace MSNPSharp
     [Serializable()]
     public class Credentials
     {
-        private string clientID = "PROD0119GSJUC$18";
-        private string clientCode = "ILTXC!4IXB5FB*PX";
+        private string clientID = Properties.Resources.ProductID;
+        private string clientCode = Properties.Resources.ProductKey;
         private string password;
         private string account;
 
