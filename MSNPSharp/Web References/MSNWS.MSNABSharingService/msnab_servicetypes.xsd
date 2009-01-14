@@ -498,8 +498,20 @@
   </xsd:element>
   <xsd:complexType name="GetContactsRecentActivityResultType">
     <xsd:sequence>
-      <xsd:element maxOccurs="unbounded" name="Activities" type="xsd:anyType" />
-      <xsd:element maxOccurs="unbounded" name="Templates" type="xsd:anyType" />
+      <xsd:element name="Activities">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="ActivityDetails" type="msnab:ActivityDetailsType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="Templates">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="RecentActivityTemplateContainer" type="msnab:RecentActivityTemplateContainerType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
       <xsd:element name="FeedUrl" type="xsd:anyURI" />
     </xsd:sequence>
   </xsd:complexType>
