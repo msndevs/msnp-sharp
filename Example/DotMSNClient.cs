@@ -495,7 +495,7 @@ namespace MSNPSharpClient
             this.accountTextBox.Name = "accountTextBox";
             this.accountTextBox.Size = new System.Drawing.Size(198, 20);
             this.accountTextBox.TabIndex = 1;
-            this.accountTextBox.Text = "msnpsharp@msn.com";
+            this.accountTextBox.Text = "msnpsharp@live.cn";
             this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // loginButton
@@ -516,7 +516,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(121, 20);
             this.passwordTextBox.TabIndex = 2;
-            this.passwordTextBox.Text = "qwer1234";
+            this.passwordTextBox.Text = "123456";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // comboStatus
