@@ -169,11 +169,7 @@ namespace MSNPSharp
                 srvHandle.Type = ServiceFilterType.Profile;
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed");
-                    sharingService.AllowAutoRedirect = true;
-
                     AddMemberRequestType addMemberRequest = new AddMemberRequestType();
-
                     addMemberRequest.serviceHandle = srvHandle;
 
                     Membership memberShip = new Membership();
@@ -193,9 +189,11 @@ namespace MSNPSharp
                     roleMember.DefiningService = defService;
                     memberShip.Members = new RoleMember[] { roleMember };
                     addMemberRequest.memberships = new Membership[] { memberShip };
+
+                    SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed", "AddMember", addMemberRequest);
+                    sharingService.AllowAutoRedirect = true;
                     try
                     {
-                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
                         sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)

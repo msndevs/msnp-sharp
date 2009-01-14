@@ -416,7 +416,6 @@ namespace MSNPSharp
                     serviceLastChange = msLastChange;
                 }
 
-                SharingServiceBinding sharingService = CreateSharingService(partnerScenario);
                 FindMembershipRequestType request = new FindMembershipRequestType();
                 request.View = "Full";  // NO default!
                 request.deltasOnly = msdeltasOnly;
@@ -433,6 +432,7 @@ namespace MSNPSharp
                     ServiceFilterType.OfficeLiveWebNotification
                 };
 
+                SharingServiceBinding sharingService = CreateSharingService(partnerScenario, "FindMembership", request);
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     sharingService = sender as SharingServiceBinding;
@@ -501,7 +501,6 @@ namespace MSNPSharp
                     }
                 };
 
-                GetCacheKeyAndPreferredHost(sharingService, "FindMembership", request);
                 sharingService.FindMembershipAsync(request, partnerScenario);
 
             }
@@ -653,7 +652,7 @@ namespace MSNPSharp
             }
         }
 #endif
-        internal SharingServiceBinding CreateSharingService(string partnerScenario)
+        internal SharingServiceBinding CreateSharingService(string partnerScenario, string methodName, object param)
         {
             SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
@@ -671,7 +670,8 @@ namespace MSNPSharp
             sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
-
+            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
+            sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
             return sharingService;
         }
 
@@ -1682,7 +1682,6 @@ namespace MSNPSharp
                 return;
             }
 
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock");
 
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
@@ -1722,6 +1721,7 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
 
+            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock", "AddMember", addMemberRequest);
             sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
             {
                 // Cache key for Sharing service...
@@ -1753,9 +1753,7 @@ namespace MSNPSharp
                 }
             };
 
-            GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
             sharingService.AddMemberAsync(addMemberRequest, new object());
-
         }
 
         #endregion
@@ -1799,36 +1797,6 @@ namespace MSNPSharp
                 return;
             }
 
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock");
-            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
-            {
-                // Cache key for Sharing service...
-                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
-                if (!e.Cancelled)
-                {
-                    if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
-                    {
-                        // XXX But the response is OK
-                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
-                        return;
-                    }
-
-                    contact.RemoveFromList(list);
-                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
-                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
-
-                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
-                    {
-                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
-                    }
-
-                    if (onSuccess != null)
-                    {
-                        onSuccess(this, EventArgs.Empty);
-                    }
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + list, GetType().Name);
-                }
-            };
 
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
             deleteMemberRequest.serviceHandle = new HandleType();
@@ -1871,7 +1839,36 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
 
-            GetCacheKeyAndPreferredHost(sharingService, "DeleteMember", deleteMemberRequest);
+            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock", "DeleteMember", deleteMemberRequest);
+            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
+            {
+                // Cache key for Sharing service...
+                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
+                if (!e.Cancelled)
+                {
+                    if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
+                    {
+                        // XXX But the response is OK
+                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
+                        return;
+                    }
+
+                    contact.RemoveFromList(list);
+                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
+                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
+
+                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                    {
+                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
+                    }
+
+                    if (onSuccess != null)
+                    {
+                        onSuccess(this, EventArgs.Empty);
+                    }
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + list, GetType().Name);
+                }
+            };
 
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
         }
