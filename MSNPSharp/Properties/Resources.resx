@@ -129,11 +129,20 @@
   <data name="HostingApp" xml:space="preserve">
     <value>{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}</value>
   </data>
+  <data name="MessengerClientBrand" xml:space="preserve">
+    <value>msnsgs</value>
+  </data>
   <data name="MessengerClientBuildVer" xml:space="preserve">
-    <value>8.5.1302</value>
+    <value>8.5.1288.816</value>
   </data>
   <data name="MessengerClientName" xml:space="preserve">
     <value>MSNMSGR</value>
+  </data>
+  <data name="ProductID" xml:space="preserve">
+    <value>PROD0119GSJUC$18</value>
+  </data>
+  <data name="ProductKey" xml:space="preserve">
+    <value>ILTXC!4IXB5FB*PX</value>
   </data>
   <data name="WebServiceUserAgent" xml:space="preserve">
     <value>MSN Explorer/9.0 (MSN 8.0; TmstmpExt)</value>

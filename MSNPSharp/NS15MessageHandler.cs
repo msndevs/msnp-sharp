@@ -697,7 +697,7 @@ using System.Text.RegularExpressions;
                     "i386", 
                     Properties.Resources .MessengerClientName, 
                     Properties.Resources.MessengerClientBuildVer, 
-                    "msmsgs", 
+                    Properties.Resources.MessengerClientBrand, 
                     Credentials.Account }));
         }
 

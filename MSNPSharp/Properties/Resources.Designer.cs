@@ -97,7 +97,16 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 8.5.1302 的本地化字符串。
+        ///   查找类似 msnsgs 的本地化字符串。
+        /// </summary>
+        internal static string MessengerClientBrand {
+            get {
+                return ResourceManager.GetString("MessengerClientBrand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 8.5.1288.816 的本地化字符串。
         /// </summary>
         internal static string MessengerClientBuildVer {
             get {
@@ -111,6 +120,24 @@ namespace MSNPSharp.Properties {
         internal static string MessengerClientName {
             get {
                 return ResourceManager.GetString("MessengerClientName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 PROD0119GSJUC$18 的本地化字符串。
+        /// </summary>
+        internal static string ProductID {
+            get {
+                return ResourceManager.GetString("ProductID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 ILTXC!4IXB5FB*PX 的本地化字符串。
+        /// </summary>
+        internal static string ProductKey {
+            get {
+                return ResourceManager.GetString("ProductKey", resourceCulture);
             }
         }
         
