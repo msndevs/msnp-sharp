@@ -139,7 +139,7 @@ namespace MSNPSharp
                 string resId_Prof = "";
                 try
                 {
-                    GetCacheKeyAndPreferredHost(storageService, "CreateProfile", createRequest);
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "CreateProfile", createRequest);
                     CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
                     resId_Prof = createResponse.CreateProfileResult;
                     NSMessageHandler.ContactService.Deltas.Profile.ResourceID = resId_Prof;
@@ -169,7 +169,11 @@ namespace MSNPSharp
                 srvHandle.Type = ServiceFilterType.Profile;
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
+                    SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed");
+                    sharingService.AllowAutoRedirect = true;
+
                     AddMemberRequestType addMemberRequest = new AddMemberRequestType();
+
                     addMemberRequest.serviceHandle = srvHandle;
 
                     Membership memberShip = new Membership();
@@ -189,11 +193,9 @@ namespace MSNPSharp
                     roleMember.DefiningService = defService;
                     memberShip.Members = new RoleMember[] { roleMember };
                     addMemberRequest.memberships = new Membership[] { memberShip };
-
-                    SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed", "AddMember", addMemberRequest);
-                    sharingService.AllowAutoRedirect = true;
                     try
                     {
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "AddMember", addMemberRequest);
                         sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
@@ -351,7 +353,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(abService, "UpdateDynamicItem", updateDyItemRequest);
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex)
@@ -379,7 +381,7 @@ namespace MSNPSharp
                     abcontactUpdateRequest.contacts = new ContactType[] { meContact };
                     try
                     {
-                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(
                             abService, "ABContactUpdate", abcontactUpdateRequest);
                         abService.ABContactUpdate(abcontactUpdateRequest);
                     }
@@ -412,7 +414,7 @@ namespace MSNPSharp
                 request.profileAttributes = new profileAttributes();
                 request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
 
-                GetCacheKeyAndPreferredHost(storageService, "GetProfile", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "GetProfile", request);
                 GetProfileResponse response = storageService.GetProfile(request);
 
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
@@ -524,7 +526,7 @@ namespace MSNPSharp
 
                 try
                 {
-                    GetCacheKeyAndPreferredHost(storageService, "UpdateProfile", request);
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "UpdateProfile", request);
                     storageService.UpdateProfile(request);
                 }
                 catch (Exception ex)
@@ -565,7 +567,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(
                             abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
@@ -587,11 +589,11 @@ namespace MSNPSharp
 
         }
 
-        internal void GetCacheKeyAndPreferredHost(StorageService storageService, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(StorageService storageService, string methodName, object param)
         {
             if (NSMessageHandler != null && NSMessageHandler.ContactService != null)
             {
-                NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(CacheKeyType.StorageServiceCacheKey, storageService, methodName, param);
+                NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType.StorageServiceCacheKey, storageService, methodName, param);
                 storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
             }
         }
