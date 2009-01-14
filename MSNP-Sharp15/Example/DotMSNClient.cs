@@ -14,6 +14,7 @@ namespace MSNPSharpClient
     using MSNPSharp;
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -494,7 +495,7 @@ namespace MSNPSharpClient
             this.accountTextBox.Name = "accountTextBox";
             this.accountTextBox.Size = new System.Drawing.Size(198, 20);
             this.accountTextBox.TabIndex = 1;
-            this.accountTextBox.Text = "msnpsharp@live.cn";
+            this.accountTextBox.Text = "msnpsharp@msn.com";
             this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // loginButton
@@ -515,7 +516,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(121, 20);
             this.passwordTextBox.TabIndex = 2;
-            this.passwordTextBox.Text = "123456";
+            this.passwordTextBox.Text = "qwer1234";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // comboStatus
@@ -824,20 +825,21 @@ namespace MSNPSharpClient
             }
             else
             {
-                foreach (XmlNode[] activityDetails in e.Response.Activities)
-                {
-                    foreach (XmlNode xn in activityDetails)
-                    {
-                        Trace.WriteLine(xn.InnerXml);
-                    }
-                }
-                foreach (XmlNode[] templates in e.Response.Templates)
-                {
-                    foreach (XmlNode tn in templates)
-                    {
-                        Trace.WriteLine(tn.InnerXml);
-                    }
-                }
+                //foreach (XmlNode[] activityDetails in e.Response.Activities)
+                //{
+                //    foreach (XmlNode xn in activityDetails)
+                //    {
+                //        Trace.WriteLine(xn.InnerXml);
+                //    }
+                //}
+                //foreach (XmlNode[] templates in e.Response.Templates)
+                //{
+                //    foreach (XmlNode tn in templates)
+                //    {
+                //        Trace.WriteLine(tn.InnerXml);
+                //    }
+                //}
+                
                 lblNewsLink.Text = "Get Feeds";
                 lblNewsLink.Tag = e.Response.FeedUrl;
             }

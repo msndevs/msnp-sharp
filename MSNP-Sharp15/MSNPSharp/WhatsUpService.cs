@@ -48,6 +48,16 @@ namespace MSNPSharp
     public class WhatsUpService : MSNService
     {
 
+        private string feedUrl = string.Empty;
+
+        /// <summary>
+        /// RSS feed url for what's up service.
+        /// </summary>
+        public string FeedUrl
+        {
+            get { return feedUrl; }
+        }
+
         public event EventHandler<GetWhatsUpCompletedEventArgs> GetWhatsUpCompleted;
 
 
@@ -99,6 +109,7 @@ namespace MSNPSharp
 
                     if (e.Result.GetContactsRecentActivityResult != null)
                     {
+                        feedUrl = e.Result.GetContactsRecentActivityResult.FeedUrl;
                         OnGetWhatsUpCompleted(this, new GetWhatsUpCompletedEventArgs(null, e.Result.GetContactsRecentActivityResult));
                     }
                     else

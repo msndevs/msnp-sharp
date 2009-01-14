@@ -707,13 +707,8 @@ namespace MSNPSharp
                     "winnt", 
                     "5.1", 
                     "i386", 
-#if MSNP18
                     Properties.Resources .MessengerClientName, 
                     Properties.Resources.MessengerClientBuildVer, 
-#else
-                    "MSNMSGR",
-                    "8.5.1302",
-#endif
                     "msmsgs", 
                     Credentials.Account 
                 }));
