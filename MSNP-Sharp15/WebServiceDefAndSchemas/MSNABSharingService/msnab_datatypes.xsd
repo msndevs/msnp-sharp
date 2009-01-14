@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- edited with XMLSpy v2008 rel. 2 (http://www.altova.com) by ee (darksiderg) -->
+<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
 <xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" targetNamespace="http://www.msn.com/webservices/AddressBook" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
     <xsd:complexType name="abInfoType">
         <xsd:sequence>
@@ -607,6 +607,159 @@
     <xsd:complexType name="entityHandle">
         <xsd:sequence>
             <xsd:element name="Cid" type="xsd:long"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="NotationType">
+        <xsd:sequence>
+            <xsd:element name="Name" type="xsd:string"/>
+            <xsd:element name="Value" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ListTemplateVariableItemType">
+        <xsd:sequence>
+            <xsd:element name="Values">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="Value" type="msnab:SimpleTemplateVariableBaseType" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="TemplateVariableBaseType">
+        <xsd:sequence>
+            <xsd:element name="Name" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="SimpleTemplateVariableBaseType">
+        <xsd:complexContent>
+            <xsd:extension base="msnab:TemplateVariableBaseType">
+                <xsd:sequence>
+                    <xsd:element name="Value" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="PublisherIdTemplateVariable">
+        <xsd:complexContent>
+            <xsd:extension base="msnab:TemplateVariableBaseType">
+                <xsd:sequence>
+                    <xsd:element name="Id" type="xsd:string"/>
+                    <xsd:element name="NameHint" type="xsd:string" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="TargetIdTemplateVariable">
+        <xsd:complexContent>
+            <xsd:extension base="msnab:PublisherIdTemplateVariable">
+                <xsd:sequence>
+                    <xsd:element name="IdOwner" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="TextTemplateVariable">
+        <xsd:complexContent>
+            <xsd:extension base="msnab:SimpleTemplateVariableBaseType"/>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="HlinkTemplateVariable">
+        <xsd:complexContent>
+            <xsd:extension base="msnab:SimpleTemplateVariableBaseType">
+                <xsd:sequence>
+                    <xsd:element name="Text" type="xsd:string"/>
+                    <xsd:element name="Notations">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="Notation" type="msnab:NotationType" maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="ListTemplateVariable">
+        <xsd:complexContent>
+            <xsd:extension base="msnab:TemplateVariableBaseType">
+                <xsd:sequence>
+                    <xsd:element name="Items">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="ListTemplateVariableItem" type="msnab:ListTemplateVariableItemType" maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="ImageTemplateVariable">
+        <xsd:complexContent>
+            <xsd:extension base="msnab:SimpleTemplateVariableBaseType">
+                <xsd:sequence>
+                    <xsd:element name="Herf" type="xsd:string"/>
+                    <xsd:element name="Notations">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="Notation" type="msnab:NotationType" maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="ActivityDetailsType">
+        <xsd:sequence>
+            <xsd:element name="OwnerCID" type="xsd:string"/>
+            <xsd:element name="ObjectId" type="xsd:string"/>
+            <xsd:element name="ApplicationId" type="xsd:string"/>
+            <xsd:element name="ChangeType" type="xsd:string"/>
+            <xsd:element name="PublishDate" type="xsd:dateTime"/>
+            <xsd:element name="TemplateVariables">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="TemplateVariable" type="msnab:TemplateVariableBaseType" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="RecentActivityTemplateType">
+        <xsd:sequence>
+            <xsd:element name="Cardinality" type="xsd:string"/>
+            <xsd:element name="Data" type="xsd:string"/>
+            <xsd:element name="Title" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="RequestedLocalesType">
+        <xsd:sequence>
+            <xsd:element name="string" type="xsd:string" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="RecentActivityTemplateContainerType">
+        <xsd:sequence>
+            <xsd:element name="ApplicationId" type="xsd:string"/>
+            <xsd:element name="ApplicationName" type="xsd:string"/>
+            <xsd:element name="ChangeType" type="xsd:integer"/>
+            <xsd:element name="Locale" type="xsd:string"/>
+            <xsd:element name="RequestedLocales" type="msnab:RequestedLocalesType"/>
+            <xsd:element name="TemplateRevision" type="xsd:integer"/>
+            <xsd:element name="Templates">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="RecentActivityTemplate" type="msnab:RecentActivityTemplateType" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="CollapseCondition" type="msnab:CollapseConditionType" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="CollapseConditionType">
+        <xsd:sequence>
+            <xsd:element name="string" type="xsd:string" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
 </xsd:schema>
