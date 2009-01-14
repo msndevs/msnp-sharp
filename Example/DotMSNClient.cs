@@ -661,10 +661,6 @@ namespace MSNPSharpClient
             // You can set proxy settings here
             // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
 
-            // by default this example will emulate the official microsoft windows messenger client
-            messenger.Credentials.ClientID = "PROD0119GSJUC$18";
-            messenger.Credentials.ClientCode = "ILTXC!4IXB5FB*PX";
-
             // uncomment this to enable verbose output for debugging
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
 

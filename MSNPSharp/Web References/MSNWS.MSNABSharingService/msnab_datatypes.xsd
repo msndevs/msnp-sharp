@@ -4,6 +4,7 @@
     <xsd:sequence>
       <xsd:element minOccurs="0" name="name" type="xsd:string" />
       <xsd:element name="ownerPuid" type="xsd:string" />
+      <xsd:element minOccurs="0" name="OwnerCID" type="xsd:integer" />
       <xsd:element name="ownerEmail" type="xsd:string" />
       <xsd:element name="fDefault" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="joinedNamespace" type="xsd:boolean" />
@@ -13,7 +14,7 @@
       <xsd:element minOccurs="0" name="NotifyExternalPartner" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="AddressBookType" type="xsd:string" />
       <xsd:element minOccurs="0" name="MessengerApplicationServiceCreated" type="xsd:boolean" />
-      <xsd:element minOccurs="0" name="OwnerCID" type="xsd:integer" />
+      <xsd:element minOccurs="0" name="IsBetaMigrated" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="HandleType">
@@ -172,8 +173,9 @@
       <xsd:enumeration value="ProfileProfessionalContact" />
       <xsd:enumeration value="ProfileSocial" />
       <xsd:enumeration value="ProfileExpression" />
-      <xsd:enumeration value="TwoWayRelationship" />
+      <xsd:enumeration value="ProfileEducation" />
       <xsd:enumeration value="OneWayRelationship" />
+      <xsd:enumeration value="TwoWayRelationship" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="MemberType">
@@ -211,6 +213,8 @@
       </xsd:element>
       <xsd:element minOccurs="0" name="fDeleted" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="lastChange" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="CreateDate" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="LastModifiedBy" type="xsd:integer" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ContactIdType">
@@ -323,7 +327,17 @@
       </xsd:element>
       <xsd:element minOccurs="0" name="Gender" type="xsd:string" />
       <xsd:element minOccurs="0" name="TimeZone" type="xsd:string" />
+      <xsd:element minOccurs="0" name="NetworkInfoList">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="NetworkInfo" type="msnab:NetworkInfoType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="PublicDisplayName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="IsAutoUpdateDisabled" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="MessengerMemberInfo" type="msnab:MessengerMemberInfo" />
+      <xsd:element minOccurs="0" name="PropertiesChanged" type="xsd:anyType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="contactEmailType">
@@ -432,6 +446,7 @@
       <xsd:element minOccurs="0" name="name" type="xsd:string" />
       <xsd:element minOccurs="0" name="IsNotMobileVisible" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="IsPrivate" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="IsFavorite" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="fMessenger" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
@@ -456,6 +471,7 @@
       <xsd:enumeration value="Folder" />
       <xsd:enumeration value="Event" />
       <xsd:enumeration value="OfficeLiveWebNotification" />
+      <xsd:enumeration value="CommunityQuestionAnswer" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="InvalidPassportUser">
@@ -540,6 +556,210 @@
         </xsd:complexType>
       </xsd:element>
       <xsd:element minOccurs="0" name="LiveContactLastChanged" type="xsd:dateTime" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="abType">
+    <xsd:sequence>
+      <xsd:element name="abId" type="msnab:Guid" />
+      <xsd:element name="abInfo" type="msnab:abInfoType" />
+      <xsd:element name="lastChange" type="xsd:dateTime" />
+      <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime" />
+      <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime" />
+      <xsd:element name="createDate" type="xsd:dateTime" />
+      <xsd:element name="propertiesChanged" type="xsd:anyType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CircleResultType">
+    <xsd:sequence>
+      <xsd:element name="CircleTicket" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="NetworkInfoType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="DomainId" type="xsd:int" />
+      <xsd:element minOccurs="0" name="DomainTag" type="xsd:string" />
+      <xsd:element minOccurs="0" name="UserTileURL" type="xsd:string" />
+      <xsd:element minOccurs="0" name="ProfileURL" type="xsd:string" />
+      <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="RelationshipType" type="xsd:int" />
+      <xsd:element minOccurs="0" name="RelationshipState" type="xsd:int" />
+      <xsd:element minOccurs="0" name="RelationshipStateDate" type="xsd:string" />
+      <xsd:element minOccurs="0" name="RelationshipRole" type="xsd:int" />
+      <xsd:element minOccurs="0" name="NDRCount" type="xsd:int" />
+      <xsd:element minOccurs="0" name="InviterCID" type="xsd:int" />
+      <xsd:element minOccurs="0" name="CreateDate" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="LastChanged" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="PropertiesChanged" type="xsd:anyType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ContactFilterType">
+    <xsd:sequence>
+      <xsd:element name="IncludeHiddenContacts" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="filterOptionsType">
+    <xsd:sequence>
+      <xsd:element name="DeltasOnly" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="LastChanged" type="xsd:dateTime" />
+      <xsd:element name="ContactFilter" type="msnab:ContactFilterType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="entityHandle">
+    <xsd:sequence>
+      <xsd:element name="Cid" type="xsd:long" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="NotationType">
+    <xsd:sequence>
+      <xsd:element name="Name" type="xsd:string" />
+      <xsd:element name="Value" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ListTemplateVariableItemType">
+    <xsd:sequence>
+      <xsd:element name="Values">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="Value" type="msnab:SimpleTemplateVariableBaseType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="TemplateVariableBaseType">
+    <xsd:sequence>
+      <xsd:element name="Name" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="SimpleTemplateVariableBaseType">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:TemplateVariableBaseType">
+        <xsd:sequence>
+          <xsd:element name="Value" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="PublisherIdTemplateVariable">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:TemplateVariableBaseType">
+        <xsd:sequence>
+          <xsd:element name="Id" type="xsd:string" />
+          <xsd:element minOccurs="0" name="NameHint" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="TargetIdTemplateVariable">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:PublisherIdTemplateVariable">
+        <xsd:sequence>
+          <xsd:element name="IdOwner" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="TextTemplateVariable">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:SimpleTemplateVariableBaseType" />
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="HlinkTemplateVariable">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:SimpleTemplateVariableBaseType">
+        <xsd:sequence>
+          <xsd:element name="Text" type="xsd:string" />
+          <xsd:element name="Notations">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element maxOccurs="unbounded" name="Notation" type="msnab:NotationType" />
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ListTemplateVariable">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:TemplateVariableBaseType">
+        <xsd:sequence>
+          <xsd:element name="Items">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element maxOccurs="unbounded" name="ListTemplateVariableItem" type="msnab:ListTemplateVariableItemType" />
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ImageTemplateVariable">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:SimpleTemplateVariableBaseType">
+        <xsd:sequence>
+          <xsd:element name="Herf" type="xsd:string" />
+          <xsd:element name="Notations">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element maxOccurs="unbounded" name="Notation" type="msnab:NotationType" />
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ActivityDetailsType">
+    <xsd:sequence>
+      <xsd:element name="OwnerCID" type="xsd:string" />
+      <xsd:element name="ObjectId" type="xsd:string" />
+      <xsd:element name="ApplicationId" type="xsd:string" />
+      <xsd:element name="ChangeType" type="xsd:string" />
+      <xsd:element name="PublishDate" type="xsd:dateTime" />
+      <xsd:element name="TemplateVariables">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="TemplateVariable" type="msnab:TemplateVariableBaseType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="RecentActivityTemplateType">
+    <xsd:sequence>
+      <xsd:element name="Cardinality" type="xsd:string" />
+      <xsd:element name="Data" type="xsd:string" />
+      <xsd:element name="Title" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="RequestedLocalesType">
+    <xsd:sequence>
+      <xsd:element maxOccurs="unbounded" name="string" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="RecentActivityTemplateContainerType">
+    <xsd:sequence>
+      <xsd:element name="ApplicationId" type="xsd:string" />
+      <xsd:element name="ApplicationName" type="xsd:string" />
+      <xsd:element name="ChangeType" type="xsd:integer" />
+      <xsd:element name="Locale" type="xsd:string" />
+      <xsd:element name="RequestedLocales" type="msnab:RequestedLocalesType" />
+      <xsd:element name="TemplateRevision" type="xsd:integer" />
+      <xsd:element name="Templates">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="RecentActivityTemplate" type="msnab:RecentActivityTemplateType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="0" name="CollapseCondition" type="msnab:CollapseConditionType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CollapseConditionType">
+    <xsd:sequence>
+      <xsd:element maxOccurs="unbounded" name="string" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
 </xsd:schema>

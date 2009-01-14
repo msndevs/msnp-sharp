@@ -79,10 +79,6 @@ namespace MSNPSharp
             {
                 return clientID;
             }
-            set
-            {
-                clientID = value;
-            }
         }
         /// <summary>
         /// The client code used to identify the clientsoftware.
@@ -92,10 +88,6 @@ namespace MSNPSharp
             get
             {
                 return clientCode;
-            }
-            set
-            {
-                clientCode = value;
             }
         }
 

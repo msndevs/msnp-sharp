@@ -773,6 +773,8 @@ using System.Text.RegularExpressions;
 
             if (SignedIn != null)
                 SignedIn(this, e);
+
+            SendPing(); //Ping the server for the first time. Then client programmer should handle the answer.
         }
 
         /// <summary>

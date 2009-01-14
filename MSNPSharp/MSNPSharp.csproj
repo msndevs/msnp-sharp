@@ -358,6 +358,12 @@
     <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ABFindContactsPagedResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\GetContactsRecentActivityResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\addressing.xsd">
       <SubType>Designer</SubType>
     </None>
