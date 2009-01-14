@@ -1266,7 +1266,7 @@ namespace MSNPSharp
                 };
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
 
-                GetCacheKeyAndPreferredHost(abService, ".ABContactUpdate", request);
+                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
