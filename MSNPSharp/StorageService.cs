@@ -135,7 +135,7 @@ namespace MSNPSharp
                 string resId_Prof = "";
                 try
                 {
-                    GetCacheKeyAndPreferredHost(storageService, "CreateProfile", createRequest);
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "CreateProfile", createRequest);
                     CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
                     resId_Prof = createResponse.CreateProfileResult;
                     NSMessageHandler.ContactService.Deltas.Profile.ResourceID = resId_Prof;
@@ -191,7 +191,7 @@ namespace MSNPSharp
                     addMemberRequest.memberships = new Membership[] { memberShip };
                     try
                     {
-                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "AddMember", addMemberRequest);
                         sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
@@ -349,7 +349,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(abService, "UpdateDynamicItem", updateDyItemRequest);
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex)
@@ -408,7 +408,7 @@ namespace MSNPSharp
                 request.profileAttributes = new profileAttributes();
                 request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
 
-                GetCacheKeyAndPreferredHost(storageService, "GetProfile", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "GetProfile", request);
                 GetProfileResponse response = storageService.GetProfile(request);
 
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
@@ -520,7 +520,7 @@ namespace MSNPSharp
 
                 try
                 {
-                    GetCacheKeyAndPreferredHost(storageService, "UpdateProfile", request);
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "UpdateProfile", request);
                     storageService.UpdateProfile(request);
                 }
                 catch (Exception ex)
@@ -561,7 +561,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(abService, "UpdateDynamicItem", updateDyItemRequest);
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex2)
@@ -584,11 +584,11 @@ namespace MSNPSharp
 
         #endregion
 
-        internal void GetCacheKeyAndPreferredHost(StorageService storageService, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(StorageService storageService, string methodName, object param)
         {
             if (NSMessageHandler != null && NSMessageHandler.ContactService != null)
             {
-                NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(CacheKeyType.StorageServiceCacheKey, storageService, methodName, param);
+                NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType.StorageServiceCacheKey, storageService, methodName, param);
                 storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
             }
         }

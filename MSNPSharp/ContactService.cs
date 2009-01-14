@@ -448,7 +448,7 @@ namespace MSNPSharp
                                     abAddRequest.abInfo.ownerPuid = "0";
                                     abAddRequest.abInfo.fDefault = true;
 
-                                    GetCacheKeyAndPreferredHost(abservice, "ABAdd", abAddRequest);
+                                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abservice, "ABAdd", abAddRequest);
                                     abservice.ABAddAsync(abAddRequest, new object());
                                 }
                             }
@@ -495,7 +495,7 @@ namespace MSNPSharp
                      * */
                 };
 
-                GetCacheKeyAndPreferredHost(sharingService, "FindMembership", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "FindMembership", request);
                 sharingService.FindMembershipAsync(request, partnerScenario);
             }
         }
@@ -569,7 +569,7 @@ namespace MSNPSharp
                 request.dynamicItemLastChange = dynamicItemLastChange;
                 request.dynamicItemView = "Gleam";
 
-                GetCacheKeyAndPreferredHost(abService, "ABFindAll", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindAll", request);
                 abService.ABFindAllAsync(request, partnerScenario);
             }
         }
@@ -921,7 +921,7 @@ namespace MSNPSharp
                     break;
             }
 
-            GetCacheKeyAndPreferredHost(abService, "ABContactAdd", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactAdd", request);
             abService.ABContactAddAsync(request, new object());
         }
 
@@ -1031,7 +1031,7 @@ namespace MSNPSharp
             request.contacts = new ContactIdType[] { new ContactIdType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
-            GetCacheKeyAndPreferredHost(abService, "ABContactDelete", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactDelete", request);
             abService.ABContactDeleteAsync(request, new object());
         }
 
@@ -1185,7 +1185,7 @@ namespace MSNPSharp
                 };
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
 
-                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1245,7 +1245,7 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = "Annotation";
 
-                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1329,7 +1329,7 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
 
-                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1383,7 +1383,7 @@ namespace MSNPSharp
             request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupAdd", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupAdd", request);
             abService.ABGroupAddAsync(request, new object());
         }
 
@@ -1431,7 +1431,7 @@ namespace MSNPSharp
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { contactGroup.Guid };
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupDelete", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupDelete", request);
             abService.ABGroupDeleteAsync(request, new object());
         }
 
@@ -1474,7 +1474,7 @@ namespace MSNPSharp
             request.groups[0].groupInfo = new groupInfoType();
             request.groups[0].groupInfo.name = newGroupName;
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupUpdate", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupUpdate", request);
             abService.ABGroupUpdateAsync(request, new object());
         }
 
@@ -1517,7 +1517,7 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupContactAdd", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupContactAdd", request);
             abService.ABGroupContactAddAsync(request, new object());
         }
 
@@ -1556,7 +1556,7 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupContactDelete", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupContactDelete", request);
             abService.ABGroupContactDeleteAsync(request, new object());
         }
         #endregion
@@ -1671,7 +1671,7 @@ namespace MSNPSharp
                 }
             };
 
-            GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "AddMember", addMemberRequest);
             sharingService.AddMemberAsync(addMemberRequest, new object());
 
         }
@@ -1788,7 +1788,7 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
 
-            GetCacheKeyAndPreferredHost(sharingService, "DeleteMember", deleteMemberRequest);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "DeleteMember", deleteMemberRequest);
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
         }
 
@@ -1895,20 +1895,20 @@ namespace MSNPSharp
         }
 
 
-        internal void GetCacheKeyAndPreferredHost(SharingServiceBinding sharingService, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(SharingServiceBinding sharingService, string methodName, object param)
         {
-            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
             sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
         }
 
 
-        internal void GetCacheKeyAndPreferredHost(ABServiceBinding abService, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(ABServiceBinding abService, string methodName, object param)
         {
-            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, abService, methodName, param);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType.OmegaContactServiceCacheKey, abService, methodName, param);
             abService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
         }
 
-        internal void GetCacheKeyAndPreferredHost(CacheKeyType keyType, SoapHttpClientProtocol webservice, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType keyType, SoapHttpClientProtocol webservice, string methodName, object param)
         {
             if (Deltas == null)
             {
@@ -1980,6 +1980,7 @@ namespace MSNPSharp
                             "Service:    " + webservice.GetType().ToString() + "\r\n" +
                             "MethodName: " + methodName + "\r\n" +
                             "Message:    " + exc.Message);
+                        PreferredHosts[param.GetType().ToString()] = originalHost; //If there's an error, we must set the host back to its original value.
                     }
                 }
                 Deltas.Save();
