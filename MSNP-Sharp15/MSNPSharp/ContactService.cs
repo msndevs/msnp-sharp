@@ -203,11 +203,6 @@ namespace MSNPSharp
         {
             get
             {
-                //if (AddressBook != null && AddressBook.MyProperties != null && AddressBook.MyProperties.ContainsKey("preferredhost") && !String.IsNullOrEmpty(AddressBook.MyProperties["preferredhost"]))
-                //{
-                //    return AddressBook.MyProperties["preferredhost"];
-                //}
-                //return "contacts.msn.com";
                 if (Deltas == null) 
                     return null;
 
@@ -215,11 +210,6 @@ namespace MSNPSharp
             }
             set
             {
-                //if (AddressBook != null && AddressBook.MyProperties != null)
-                //{
-                //    AddressBook.MyProperties["preferredhost"] = value;
-                //}
-
                 if (Deltas != null)
                 {
                     Deltas.PreferredHosts = value;
@@ -669,7 +659,6 @@ namespace MSNPSharp
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = WebProxy;
-            //sharingService.Url = "https://" + PreferredHosts + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
             sharingService.UserAgent = Properties.Resources.WebServiceUserAgent;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -694,7 +683,6 @@ namespace MSNPSharp
             abService.Proxy = WebProxy;
             abService.Timeout = Int32.MaxValue;
             abService.UserAgent = Properties.Resources.WebServiceUserAgent;
-            //abService.Url = "https://" + PreferredHosts + "/abservice/abservice.asmx";
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = applicationId;
             abService.ABApplicationHeaderValue.IsMigration = false;

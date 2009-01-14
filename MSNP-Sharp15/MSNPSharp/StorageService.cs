@@ -68,7 +68,7 @@ namespace MSNPSharp
 #if MSNP18
             storageService.StorageApplicationHeaderValue.ApplicationID = Properties.Resources.ApplicationStrId;
 #else
-           storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.0";
+           storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
 #endif
             storageService.StorageApplicationHeaderValue.Scenario = scenario;
             storageService.StorageUserHeaderValue = new StorageUserHeader();
@@ -195,6 +195,7 @@ namespace MSNPSharp
                     addMemberRequest.memberships = new Membership[] { memberShip };
                     try
                     {
+                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
                         sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
@@ -352,6 +353,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
+                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex)
