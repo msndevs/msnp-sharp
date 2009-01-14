@@ -2063,6 +2063,7 @@ namespace MSNPSharp
                             "Service:    " + webservice.GetType().ToString() + "\r\n" +
                             "MethodName: " + methodName + "\r\n" +
                             "Message:    " + exc.Message);
+                        PreferredHosts[param.GetType().ToString()] = originalHost; //If there's an error, we must set the host back to its original value.
                     }
                 }            
                 Deltas.Save();
