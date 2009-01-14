@@ -284,6 +284,7 @@
                         <xsd:enumeration value="LivePending"/>
                         <xsd:enumeration value="LiveRejected"/>
                         <xsd:enumeration value="LiveDropped"/>
+                        <xsd:enumeration value="Circle"/>
                     </xsd:restriction>
                 </xsd:simpleType>
             </xsd:element>
@@ -587,7 +588,7 @@
             <xsd:element name="RelationshipStateDate" type="xsd:string" minOccurs="0"/>
             <xsd:element name="RelationshipRole" type="xsd:int" minOccurs="0"/>
             <xsd:element name="NDRCount" type="xsd:int" minOccurs="0"/>
-            <xsd:element name="InviterCID" type="xsd:int" minOccurs="0"/>
+            <xsd:element name="InviterCID" type="xsd:long" minOccurs="0"/>
             <xsd:element name="CreateDate" type="xsd:dateTime" minOccurs="0"/>
             <xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
             <xsd:element name="PropertiesChanged" type="xsd:anyType" minOccurs="0"/>
