@@ -51,12 +51,13 @@ namespace MSNPSharp
     /// When you want to emulate the Microsoft MSN Messenger client, you can use any of the following
     /// values:
     /// <c>
-    /// ClientID			ClientCode
+    /// ClientID			ClientCode          Client Version              Acknowledgement
     /// msmsgs@msnmsgr.com	Q1P7W2E4J9R8U3S5 
     /// PROD0038W!61ZTF9	VT6PX?UQTM4WM%YR 
     /// PROD0058#7IL2{QD	QHDCY@7R1TB6W?5B 
     /// PROD0061VRRZH@4F	JXQ6J@TUOGYV@N0M
     /// PROD0119GSJUC$18    ILTXC!4IXB5FB*PX
+    /// PROD0120PW!CCV9@    C1BX{V4W}Q3*10SM    WLM 2009 v14.0.8050.1202   http://twitter.com/mynetx
     /// </c>
     /// 
     /// Note that officially you must use an obtained license (client id and client code) from Microsoft in order to access the network legally!
@@ -79,10 +80,6 @@ namespace MSNPSharp
             {
                 return clientID;
             }
-            set
-            {
-                clientID = value;
-            }
         }
         /// <summary>
         /// The client code used to identify the clientsoftware.
@@ -92,10 +89,6 @@ namespace MSNPSharp
             get
             {
                 return clientCode;
-            }
-            set
-            {
-                clientCode = value;
             }
         }
 

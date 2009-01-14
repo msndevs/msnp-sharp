@@ -133,7 +133,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 PROD0119GSJUC$18 的本地化字符串。
+        ///   查找类似 PROD0120PW!CCV9@ 的本地化字符串。
         /// </summary>
         internal static string ProductID {
             get {
@@ -142,7 +142,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 ILTXC!4IXB5FB*PX 的本地化字符串。
+        ///   查找类似 C1BX{V4W}Q3*10SM 的本地化字符串。
         /// </summary>
         internal static string ProductKey {
             get {
