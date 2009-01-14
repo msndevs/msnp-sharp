@@ -689,7 +689,16 @@ using System.Text.RegularExpressions;
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
             // send client information back
-            MessageProcessor.SendMessage(new NSMessage("CVR", new string[] { "0x040c", "winnt", "5.1", "i386", "MSNMSGR", "8.5.1302", "msmsgs", Credentials.Account }));
+            MessageProcessor.SendMessage(new NSMessage("CVR", 
+                new string[] { 
+                    "0x" + CultureInfo.CurrentCulture.LCID.ToString("x4"), 
+                    "winnt", 
+                    "5.1", 
+                    "i386", 
+                    Properties.Resources .MessengerClientName, 
+                    Properties.Resources.MessengerClientBuildVer, 
+                    "msmsgs", 
+                    Credentials.Account }));
         }
 
         /// <summary>

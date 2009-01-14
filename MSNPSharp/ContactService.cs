@@ -44,6 +44,7 @@ namespace MSNPSharp
     using MSNPSharp.IO;
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using System.Web.Services.Protocols;
 
     /// <summary>
     /// Provide webservice operations for contacts
@@ -194,21 +195,20 @@ namespace MSNPSharp
         /// <summary>
         /// Preferred host of the contact service. The default is "contacts.msn.com".
         /// </summary>
-        private string PreferredHost
+        internal SerializableDictionary<string, string> PreferredHosts
         {
             get
             {
-                if (AddressBook != null && AddressBook.MyProperties != null && AddressBook.MyProperties.ContainsKey("preferredhost") && !String.IsNullOrEmpty(AddressBook.MyProperties["preferredhost"]))
-                {
-                    return AddressBook.MyProperties["preferredhost"];
-                }
-                return "contacts.msn.com";
+                if (Deltas == null)
+                    return null;
+
+                return Deltas.PreferredHosts;
             }
             set
             {
-                if (AddressBook != null && AddressBook.MyProperties != null)
+                if (Deltas != null)
                 {
-                    AddressBook.MyProperties["preferredhost"] = value;
+                    Deltas.PreferredHosts = value;
                 }
             }
         }
@@ -262,6 +262,9 @@ namespace MSNPSharp
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, NSMessageHandler);
+
+                NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
+
                 if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
                     || Deltas.Version != Properties.Resources.DeltasListVersion)
                     && recursiveCall == 0)
@@ -412,7 +415,7 @@ namespace MSNPSharp
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     sharingService = sender as SharingServiceBinding;
-                    handleServiceHeader(sharingService.ServiceHeaderValue, false);
+                    handleServiceHeader(sharingService.ServiceHeaderValue, typeof(FindMembershipRequestType));
 
                     if (!e.Cancelled)
                     {
@@ -444,6 +447,8 @@ namespace MSNPSharp
                                     abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Mail;
                                     abAddRequest.abInfo.ownerPuid = "0";
                                     abAddRequest.abInfo.fDefault = true;
+
+                                    GetCacheKeyAndPreferredHost(abservice, "ABAdd", abAddRequest);
                                     abservice.ABAddAsync(abAddRequest, new object());
                                 }
                             }
@@ -489,6 +494,8 @@ namespace MSNPSharp
                     ServiceFilterType.Profile
                      * */
                 };
+
+                GetCacheKeyAndPreferredHost(sharingService, "FindMembership", request);
                 sharingService.FindMembershipAsync(request, partnerScenario);
             }
         }
@@ -520,7 +527,7 @@ namespace MSNPSharp
                 abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
                 {
                     abService = sender as ABServiceBinding;
-                    handleServiceHeader(abService.ServiceHeaderValue, true);
+                    handleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindAllRequestType));
                     string abpartnerScenario = e.UserState.ToString();
 
                     if (!e.Cancelled)
@@ -562,6 +569,7 @@ namespace MSNPSharp
                 request.dynamicItemLastChange = dynamicItemLastChange;
                 request.dynamicItemView = "Gleam";
 
+                GetCacheKeyAndPreferredHost(abService, "ABFindAll", request);
                 abService.ABFindAllAsync(request, partnerScenario);
             }
         }
@@ -572,17 +580,18 @@ namespace MSNPSharp
 
             SharingServiceBinding sharingService = new SharingServiceBinding();
             sharingService.Proxy = WebProxy;
-            sharingService.Url = "https://" + PreferredHost + "/abservice/SharingService.asmx";
             sharingService.Timeout = Int32.MaxValue;
+            sharingService.UserAgent = Properties.Resources.WebServiceUserAgent;
             sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
             sharingService.ABApplicationHeaderValue.ApplicationId = applicationId;
             sharingService.ABApplicationHeaderValue.IsMigration = false;
             sharingService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
             sharingService.ABApplicationHeaderValue.BrandId = NSMessageHandler.MSNTicket.MainBrandID;
-            sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.SharingServiceCacheKey;
+            sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
             sharingService.ABAuthHeaderValue = new ABAuthHeader();
             sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
+
 
             return sharingService;
         }
@@ -594,12 +603,12 @@ namespace MSNPSharp
             ABServiceBinding abService = new ABServiceBinding();
             abService.Proxy = WebProxy;
             abService.Timeout = Int32.MaxValue;
-            abService.Url = "https://" + PreferredHost + "/abservice/abservice.asmx";
+            abService.UserAgent = Properties.Resources.WebServiceUserAgent;
             abService.ABApplicationHeaderValue = new ABApplicationHeader();
             abService.ABApplicationHeaderValue.ApplicationId = applicationId;
             abService.ABApplicationHeaderValue.IsMigration = false;
             abService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
-            abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.ABServiceCacheKey;
+            abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -855,7 +864,7 @@ namespace MSNPSharp
             ABServiceBinding abService = CreateABService(pending ? "ContactMsgrAPI" : "ContactSave");
             abService.ABContactAddCompleted += delegate(object service, ABContactAddCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactAddRequestType));
                 if (!e.Cancelled && e.Error == null)
                 {
                     if (onSuccess != null)
@@ -912,6 +921,7 @@ namespace MSNPSharp
                     break;
             }
 
+            GetCacheKeyAndPreferredHost(abService, "ABContactAdd", request);
             abService.ABContactAddAsync(request, new object());
         }
 
@@ -1002,7 +1012,7 @@ namespace MSNPSharp
             ABServiceBinding abService = CreateABService("Timer");
             abService.ABContactDeleteCompleted += delegate(object service, ABContactDeleteCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactDeleteRequestType));
                 if (!e.Cancelled && e.Error == null)
                 {
                     abRequest("ContactSave", null);
@@ -1021,6 +1031,7 @@ namespace MSNPSharp
             request.contacts = new ContactIdType[] { new ContactIdType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
+            GetCacheKeyAndPreferredHost(abService, "ABContactDelete", request);
             abService.ABContactDeleteAsync(request, new object());
         }
 
@@ -1162,7 +1173,7 @@ namespace MSNPSharp
                 ABServiceBinding abService = CreateABService(contact.IsMessengerUser ? "ContactSave" : "Timer");
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
-                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
                     if (!e.Cancelled && e.Error == null)
                     {
                         abRequest("ContactSave", null);
@@ -1173,6 +1184,8 @@ namespace MSNPSharp
                     }
                 };
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+
+                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1209,7 +1222,7 @@ namespace MSNPSharp
                 ABServiceBinding abService = CreateABService("PrivacyApply");  //In msnp17 this is "GeneralDialogApply"
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
-                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
                     if (!e.Cancelled && e.Error == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateGeneralDialogSetting completed.", GetType().Name);
@@ -1231,6 +1244,8 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo.contactTypeSpecified = true;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = "Annotation";
+
+                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1287,7 +1302,7 @@ namespace MSNPSharp
                 ABServiceBinding abService = CreateABService("PrivacyApply");
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
-                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
                     if (!e.Cancelled && e.Error == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateMe completed.", GetType().Name);
@@ -1313,6 +1328,8 @@ namespace MSNPSharp
                 //request.contacts[0].contactInfo.displayName = owner.Name;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+
+                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1336,7 +1353,7 @@ namespace MSNPSharp
             ABServiceBinding abService = CreateABService("GroupSave");
             abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupAddRequestType));
                 if (!e.Cancelled && e.Error == null)
                 {
                     NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, NSMessageHandler));
@@ -1366,6 +1383,7 @@ namespace MSNPSharp
             request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupAdd", request);
             abService.ABGroupAddAsync(request, new object());
         }
 
@@ -1392,7 +1410,7 @@ namespace MSNPSharp
             ABServiceBinding abService = CreateABService("Timer");
             abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupDeleteRequestType));
                 if (!e.Cancelled && e.Error == null)
                 {
                     NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
@@ -1413,6 +1431,7 @@ namespace MSNPSharp
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { contactGroup.Guid };
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupDelete", request);
             abService.ABGroupDeleteAsync(request, new object());
         }
 
@@ -1433,7 +1452,7 @@ namespace MSNPSharp
             ABServiceBinding abService = CreateABService("GroupSave");
             abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupUpdateRequestType));
                 if (!e.Cancelled && e.Error == null)
                 {
                     group.SetName(newGroupName);
@@ -1455,6 +1474,7 @@ namespace MSNPSharp
             request.groups[0].groupInfo = new groupInfoType();
             request.groups[0].groupInfo.name = newGroupName;
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupUpdate", request);
             abService.ABGroupUpdateAsync(request, new object());
         }
 
@@ -1476,7 +1496,7 @@ namespace MSNPSharp
             ABServiceBinding abService = CreateABService("GroupSave");
             abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupContactAddRequestType));
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.AddContactToGroup(group);
@@ -1497,6 +1517,7 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupContactAdd", request);
             abService.ABGroupContactAddAsync(request, new object());
         }
 
@@ -1514,7 +1535,7 @@ namespace MSNPSharp
             ABServiceBinding abService = CreateABService("GroupSave");
             abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, true);
+                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupContactDeleteRequestType));
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.RemoveContactFromGroup(group);
@@ -1535,6 +1556,7 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
+            GetCacheKeyAndPreferredHost(abService, "ABGroupContactDelete", request);
             abService.ABGroupContactDeleteAsync(request, new object());
         }
         #endregion
@@ -1622,7 +1644,7 @@ namespace MSNPSharp
             sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
             {
                 // Cache key for Sharing service...
-                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, false);
+                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(AddMemberRequestType));
                 if (!e.Cancelled)
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
@@ -1648,6 +1670,8 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + list, GetType().Name);
                 }
             };
+
+            GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
             sharingService.AddMemberAsync(addMemberRequest, new object());
 
         }
@@ -1697,7 +1721,7 @@ namespace MSNPSharp
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
                 // Cache key for Sharing service...
-                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, false);
+                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
                 if (!e.Cancelled)
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
@@ -1763,6 +1787,8 @@ namespace MSNPSharp
 
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
+
+            GetCacheKeyAndPreferredHost(sharingService, "DeleteMember", deleteMemberRequest);
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
         }
 
@@ -1854,33 +1880,132 @@ namespace MSNPSharp
                 string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
                 if (File.Exists(deltasResultFile))
                 {
-                    File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
-                    File.Delete(deltasResultFile);
+                    if (Deltas != null)
+                    {
+                        Deltas.Truncate();  //If we saved cachekey and preferred host in it, deltas can't be deleted.
+                    }
+                    else
+                    {
+                        File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
+                        File.Delete(deltasResultFile);
+                    }
                 }
                 abSynchronized = false;
             }
         }
 
-        internal void handleServiceHeader(ServiceHeader sh, bool isABServiceBinding)
+
+        internal void GetCacheKeyAndPreferredHost(SharingServiceBinding sharingService, string methodName, object param)
+        {
+            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
+            sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+        }
+
+
+        internal void GetCacheKeyAndPreferredHost(ABServiceBinding abService, string methodName, object param)
+        {
+            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, abService, methodName, param);
+            abService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+        }
+
+        internal void GetCacheKeyAndPreferredHost(CacheKeyType keyType, SoapHttpClientProtocol webservice, string methodName, object param)
+        {
+            if (Deltas == null)
+            {
+                throw new MSNPSharpException("Deltas is null.");
+            }
+
+            string originalUrl = webservice.Url;
+            string originalHost = webservice.Url.Substring(webservice.Url.IndexOf(@"://") + 3 /* @"://".Length */);
+            originalHost = originalHost.Substring(0, originalHost.IndexOf(@"/"));
+
+            if (Deltas.CacheKeys[keyType] == string.Empty ||
+                (Deltas.CacheKeys[keyType] != string.Empty &&
+                (Deltas.PreferredHosts.ContainsKey(param.GetType().ToString()) == false ||
+                Deltas.PreferredHosts[param.GetType().ToString()] == "")))
+            {
+
+                try
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, webservice.GetType().ToString() + "is requesting a cachekey and preferred host for calling " + methodName);
+
+                    switch (keyType)
+                    {
+                        case CacheKeyType.OmegaContactServiceCacheKey:
+                            webservice.Url = webservice.Url.Replace(originalHost, RDRServiceHost.OmegaContactRDRServiceHost);
+                            break;
+                        case CacheKeyType.StorageServiceCacheKey:
+                            webservice.Url = webservice.Url.Replace(originalHost, RDRServiceHost.StorageRDRServiceHost);
+                            break;
+                    }
+
+                    webservice.GetType().InvokeMember(methodName, System.Reflection.BindingFlags.InvokeMethod,
+                        null, webservice,
+                        new object[] { param });
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        XmlDocument errdoc = new XmlDocument();
+                        string errorMessage = ex.InnerException.Message;
+                        string xmlstr = errorMessage.Substring(errorMessage.IndexOf("<?xml"));
+                        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+
+                        //I think the xml parser microsoft used internally is just a super parser, it can ignore everything.
+                        xmlstr = xmlstr.Replace("&amp;", "&");
+                        xmlstr = xmlstr.Replace("&", "&amp;");
+
+
+                        errdoc.LoadXml(xmlstr);
+                        XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
+                        if (findnodelist.Count > 0)
+                        {
+                            PreferredHosts[param.GetType().ToString()] = findnodelist[0].InnerText;
+                        }
+                        else
+                        {
+                            PreferredHosts[param.GetType().ToString()] = originalHost;  //If nothing (Storage), just use the old host.
+                        }
+
+                        findnodelist = errdoc.GetElementsByTagName("CacheKey");
+                        if (findnodelist.Count > 0)
+                        {
+                            Deltas.CacheKeys[keyType] = findnodelist[0].InnerText;
+                        }
+                    }
+                    catch (Exception exc)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occurs while getting CacheKey and Preferred host :\r\n" +
+                            "Service:    " + webservice.GetType().ToString() + "\r\n" +
+                            "MethodName: " + methodName + "\r\n" +
+                            "Message:    " + exc.Message);
+                    }
+                }
+                Deltas.Save();
+            }
+
+            webservice.Url = originalUrl.Replace(originalHost, PreferredHosts[param.GetType().ToString()]);
+
+        }
+
+
+        internal void handleServiceHeader(ServiceHeader sh, Type requestType)
         {
             if (null != sh)
             {
                 if (sh.CacheKeyChanged)
                 {
-                    if (isABServiceBinding)
-                    {
-                        NSMessageHandler.MSNTicket.ABServiceCacheKey = sh.CacheKey;
-                    }
-                    else
-                    {
-                        NSMessageHandler.MSNTicket.SharingServiceCacheKey = sh.CacheKey;
-                    }
+                    NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
+
                 }
 
-                if (AddressBook != null && !String.IsNullOrEmpty(sh.PreferredHostName))
+                if (!String.IsNullOrEmpty(sh.PreferredHostName))
                 {
-                    AddressBook.MyProperties["preferredhost"] = sh.PreferredHostName;
+                    PreferredHosts[requestType.ToString()] = sh.PreferredHostName;
                 }
+
+                Deltas.Save();
             }
         }
 

@@ -65,11 +65,13 @@ namespace MSNPSharp
             StorageService storageService = new StorageService();
             storageService.Proxy = WebProxy;
             storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
-            storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
+            storageService.StorageApplicationHeaderValue.ApplicationID = Properties.Resources.ApplicationStrId;
             storageService.StorageApplicationHeaderValue.Scenario = scenario;
             storageService.StorageUserHeaderValue = new StorageUserHeader();
             storageService.StorageUserHeaderValue.Puid = 0;
             storageService.StorageUserHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket;
+            storageService.AffinityCacheHeaderValue = new AffinityCacheHeader();
+            storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
             return storageService;
         }
 
@@ -133,6 +135,7 @@ namespace MSNPSharp
                 string resId_Prof = "";
                 try
                 {
+                    GetCacheKeyAndPreferredHost(storageService, "CreateProfile", createRequest);
                     CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
                     resId_Prof = createResponse.CreateProfileResult;
                     NSMessageHandler.ContactService.Deltas.Profile.ResourceID = resId_Prof;
@@ -188,6 +191,7 @@ namespace MSNPSharp
                     addMemberRequest.memberships = new Membership[] { memberShip };
                     try
                     {
+                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(sharingService, "AddMember", addMemberRequest);
                         sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
@@ -345,6 +349,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
+                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex)
@@ -403,6 +408,7 @@ namespace MSNPSharp
                 request.profileAttributes = new profileAttributes();
                 request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
 
+                GetCacheKeyAndPreferredHost(storageService, "GetProfile", request);
                 GetProfileResponse response = storageService.GetProfile(request);
 
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
@@ -514,6 +520,7 @@ namespace MSNPSharp
 
                 try
                 {
+                    GetCacheKeyAndPreferredHost(storageService, "UpdateProfile", request);
                     storageService.UpdateProfile(request);
                 }
                 catch (Exception ex)
@@ -554,6 +561,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
+                        NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex2)
@@ -562,7 +570,7 @@ namespace MSNPSharp
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex2.Message, GetType().Name);
                         return;
                     }
-                    NSMessageHandler.ContactService.handleServiceHeader(abService.ServiceHeaderValue, true);
+                    NSMessageHandler.ContactService.handleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
                     NSMessageHandler.ContactService.Deltas.Save();
                 }
 
@@ -575,6 +583,15 @@ namespace MSNPSharp
         }
 
         #endregion
+
+        internal void GetCacheKeyAndPreferredHost(StorageService storageService, string methodName, object param)
+        {
+            if (NSMessageHandler != null && NSMessageHandler.ContactService != null)
+            {
+                NSMessageHandler.ContactService.GetCacheKeyAndPreferredHost(CacheKeyType.StorageServiceCacheKey, storageService, methodName, param);
+                storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
+            }
+        }
 
         /// <summary>
         /// Get my profile. Display name, personal status and display photo.

@@ -69,6 +69,32 @@ namespace MSNPSharp
     #endregion
 
     /// <summary>
+    /// Redirect service URL
+    /// </summary>
+    public static class RDRServiceHost
+    {
+        private static string omegaContactRDRServiceHost = @"byrdr.omega.contacts.msn.com";
+        private static string storageRDRServiceHost = @"tkrdr.storage.msn.com";
+
+        /// <summary>
+        /// Redirection host for service on *.omega.contacts.msn.com
+        /// </summary>
+        public static string OmegaContactRDRServiceHost
+        {
+            get { return RDRServiceHost.omegaContactRDRServiceHost; }
+        }
+
+        /// <summary>
+        /// Redirection host for service on *.storage.msn.com
+        /// </summary>
+        public static string StorageRDRServiceHost
+        {
+            get { return RDRServiceHost.storageRDRServiceHost; }
+        }
+    }
+
+
+    /// <summary>
     /// Base class of webservice-related classes
     /// </summary>
     public abstract class MSNService

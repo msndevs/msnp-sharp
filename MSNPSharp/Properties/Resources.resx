@@ -126,6 +126,18 @@
   <data name="DeltasListVersion" xml:space="preserve">
     <value>2.5.3.0</value>
   </data>
+  <data name="HostingApp" xml:space="preserve">
+    <value>{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}</value>
+  </data>
+  <data name="MessengerClientBuildVer" xml:space="preserve">
+    <value>8.5.1302</value>
+  </data>
+  <data name="MessengerClientName" xml:space="preserve">
+    <value>MSNMSGR</value>
+  </data>
+  <data name="WebServiceUserAgent" xml:space="preserve">
+    <value>MSN Explorer/9.0 (MSN 8.0; TmstmpExt)</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="WLXLarge_default" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\WLXLarge_default.gif;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

@@ -800,4 +800,21 @@ namespace MSNPSharp
         /// </summary>
         Chat = 8
     }
+
+    /// <summary>
+    /// CacheKey for webservices
+    /// </summary>
+    [Serializable()]
+    public enum CacheKeyType
+    {
+        /// <summary>
+        /// CacheKey for contact service, which url is ***.omega.contacts.msn.com
+        /// </summary>
+        OmegaContactServiceCacheKey,
+
+        /// <summary>
+        /// CacheKey for profile storage service, which url is ***.storage.msn.com
+        /// </summary>
+        StorageServiceCacheKey
+    }
 };

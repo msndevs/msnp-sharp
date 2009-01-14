@@ -46,6 +46,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.SOAP;
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
+    using MSNPSharp.IO;
 
     [Flags]
     public enum SSOTicketType
@@ -78,7 +79,9 @@ namespace MSNPSharp
         private string oimLockKey = String.Empty;
         private string abServiceCacheKey = String.Empty;
         private string sharingServiceCacheKey = String.Empty;
-        private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
+        [NonSerialized]
+        private SerializableDictionary<SSOTicketType, SSOTicket> ssoTickets = new SerializableDictionary<SSOTicketType, SSOTicket>();
+        private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
 
         [NonSerialized]
         private int hashcode;
@@ -96,7 +99,41 @@ namespace MSNPSharp
 
         #region Properties
 
-        public Dictionary<SSOTicketType, SSOTicket> SSOTickets
+        #region CacheKey
+
+
+        private void InitializeCacheKeys()
+        {
+            if (!cacheKeys.ContainsKey(CacheKeyType.OmegaContactServiceCacheKey))
+            {
+                cacheKeys.Add(CacheKeyType.OmegaContactServiceCacheKey, String.Empty);
+            }
+
+            if (!cacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey))
+            {
+                cacheKeys.Add(CacheKeyType.StorageServiceCacheKey, String.Empty);
+            }
+        }
+
+        /// <summary>
+        /// CacheKeys for webservices.
+        /// </summary>
+        public SerializableDictionary<CacheKeyType, string> CacheKeys
+        {
+            get
+            {
+                InitializeCacheKeys();
+                return cacheKeys;
+            }
+            set
+            {
+                cacheKeys = value;
+            }
+        }
+
+        #endregion
+
+        public SerializableDictionary<SSOTicketType, SSOTicket> SSOTickets
         {
             get
             {
@@ -211,6 +248,10 @@ namespace MSNPSharp
         private DateTime created = DateTime.MinValue;
         private DateTime expires = DateTime.MinValue;
         private SSOTicketType type = SSOTicketType.None;
+
+        internal SSOTicket()
+        {
+        }
 
         public SSOTicket(SSOTicketType tickettype)
         {
@@ -522,7 +563,7 @@ namespace MSNPSharp
             securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
-            securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
+            securService.AuthInfo.HostingApp = Properties.Resources.HostingApp;
             securService.AuthInfo.BinaryVersion = "4";
             securService.AuthInfo.Cookies = string.Empty;
             securService.AuthInfo.UIVersion = "1";
