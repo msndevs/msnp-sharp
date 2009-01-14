@@ -3164,6 +3164,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         LiveDropped,
+        
+        /// <remarks/>
+        Circle,
     }
     
     /// <remarks/>
@@ -3204,7 +3207,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool nDRCountFieldSpecified;
         
-        private int inviterCIDField;
+        private long inviterCIDField;
         
         private bool inviterCIDFieldSpecified;
         
@@ -3374,7 +3377,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public int InviterCID {
+        public long InviterCID {
             get {
                 return this.inviterCIDField;
             }
