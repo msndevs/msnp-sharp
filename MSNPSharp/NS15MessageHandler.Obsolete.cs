@@ -40,18 +40,6 @@ namespace MSNPSharp
 
     partial class NSMessageHandler
     {
-        [Obsolete("No more used. Using this property causes error!!!", true)]
-        public bool AutoSynchronize
-        {
-            get
-            {
-                return true;
-            }
-            set
-            {
-            }
-        }
-
         [Obsolete("No more used. Using this method causes error!!!", true)]
         public virtual void SynchronizeContactList()
         {
