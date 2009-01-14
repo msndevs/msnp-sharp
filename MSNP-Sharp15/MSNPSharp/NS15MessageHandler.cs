@@ -65,6 +65,7 @@ namespace MSNPSharp
 
         private ContactGroupList contactGroups;
         private ContactList contactList = new ContactList();
+        private bool autoSynchronize = false;
 
         private bool isSignedIn;
         private Owner owner = new Owner();
@@ -102,6 +103,18 @@ namespace MSNPSharp
         #endregion
 
         #region Properties
+
+        public bool AutoSynchronize
+        {
+            get
+            {
+                return autoSynchronize;
+            }
+            set
+            {
+                autoSynchronize = value;
+            }
+        }
 
         /// <summary>
         /// Defines whether the user is signed in the messenger network

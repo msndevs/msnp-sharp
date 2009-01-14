@@ -355,14 +355,19 @@ namespace MSNPSharp
                 NSMessageHandler.MessageProcessor.SendMessage(message);
                 initialADLs.Add(message.TransactionID);
             }
+
+            if (NSMessageHandler.AutoSynchronize)
+            {
+                ProcessADL(0);
+            }
         }
 
         internal bool ProcessADL(int transid)
         {
-            if (initialADLs.Contains(transid))
+            if (initialADLs.Contains(transid) || transid == 0)
             {
                 initialADLs.Remove(transid);
-                if (--initialADLcount <= 0)
+                if (--initialADLcount <= 0 || transid == 0)
                 {
                     initialADLcount = 0;
 
