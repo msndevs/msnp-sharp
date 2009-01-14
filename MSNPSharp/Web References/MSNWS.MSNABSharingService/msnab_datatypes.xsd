@@ -471,6 +471,7 @@
       <xsd:enumeration value="Folder" />
       <xsd:enumeration value="Event" />
       <xsd:enumeration value="OfficeLiveWebNotification" />
+      <xsd:enumeration value="CommunityQuestionAnswer" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:element name="InvalidPassportUser">
