@@ -416,6 +416,7 @@ namespace MSNPSharp
                     serviceLastChange = msLastChange;
                 }
 
+                SharingServiceBinding sharingService = CreateSharingService(partnerScenario);
                 FindMembershipRequestType request = new FindMembershipRequestType();
                 request.View = "Full";  // NO default!
                 request.deltasOnly = msdeltasOnly;
@@ -432,7 +433,6 @@ namespace MSNPSharp
                     ServiceFilterType.OfficeLiveWebNotification
                 };
 
-                SharingServiceBinding sharingService = CreateSharingService(partnerScenario, "FindMembership", request);
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     sharingService = sender as SharingServiceBinding;
@@ -469,7 +469,7 @@ namespace MSNPSharp
                                     abAddRequest.abInfo.ownerPuid = "0";
                                     abAddRequest.abInfo.fDefault = true;
 
-                                    GetCacheKeyAndPreferredHost(abservice, "ABAdd", abAddRequest);
+                                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abservice, "ABAdd", abAddRequest);
                                     abservice.ABAddAsync(abAddRequest, new object());
                                 }
                             }
@@ -501,6 +501,7 @@ namespace MSNPSharp
                     }
                 };
 
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "FindMembership", request);
                 sharingService.FindMembershipAsync(request, partnerScenario);
 
             }
@@ -578,7 +579,7 @@ namespace MSNPSharp
                     }
                 };
 
-                GetCacheKeyAndPreferredHost(abService, "ABFindContactsPaged", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindContactsPaged", request);
                 abService.ABFindContactsPagedAsync(request, partnerScenario);
             }
         }
@@ -652,7 +653,7 @@ namespace MSNPSharp
             }
         }
 #endif
-        internal SharingServiceBinding CreateSharingService(string partnerScenario, string methodName, object param)
+        internal SharingServiceBinding CreateSharingService(string partnerScenario)
         {
             SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
@@ -670,8 +671,7 @@ namespace MSNPSharp
             sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
-            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
-            sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+
             return sharingService;
         }
 
@@ -1002,7 +1002,7 @@ namespace MSNPSharp
                     break;
             }
 
-            GetCacheKeyAndPreferredHost(abService, "ABContactAdd", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactAdd", request);
             abService.ABContactAddAsync(request, new object());
         }
 
@@ -1112,7 +1112,7 @@ namespace MSNPSharp
             request.contacts = new ContactIdType[] { new ContactIdType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
-            GetCacheKeyAndPreferredHost(abService, "ABContactDelete", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactDelete", request);
             abService.ABContactDeleteAsync(request, new object());
         }
 
@@ -1266,7 +1266,7 @@ namespace MSNPSharp
                 };
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
 
-                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1326,7 +1326,7 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = "Annotation";
 
-                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1410,7 +1410,7 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
 
-                GetCacheKeyAndPreferredHost(abService, "ABContactUpdate", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
             }
         }
@@ -1464,7 +1464,7 @@ namespace MSNPSharp
             request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupAdd", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupAdd", request);
             abService.ABGroupAddAsync(request, new object());
         }
 
@@ -1512,7 +1512,7 @@ namespace MSNPSharp
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { contactGroup.Guid };
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupDelete", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupDelete", request);
             abService.ABGroupDeleteAsync(request, new object());
         }
 
@@ -1555,7 +1555,7 @@ namespace MSNPSharp
             request.groups[0].groupInfo = new groupInfoType();
             request.groups[0].groupInfo.name = newGroupName;
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupUpdate", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupUpdate", request);
             abService.ABGroupUpdateAsync(request, new object());
         }
 
@@ -1598,7 +1598,7 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupContactAdd", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupContactAdd", request);
             abService.ABGroupContactAddAsync(request, new object());
         }
 
@@ -1637,7 +1637,7 @@ namespace MSNPSharp
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
-            GetCacheKeyAndPreferredHost(abService, "ABGroupContactDelete", request);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupContactDelete", request);
             abService.ABGroupContactDeleteAsync(request, new object());
         }
         #endregion
@@ -1682,6 +1682,7 @@ namespace MSNPSharp
                 return;
             }
 
+            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock");
 
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
@@ -1721,7 +1722,6 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
 
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock", "AddMember", addMemberRequest);
             sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
             {
                 // Cache key for Sharing service...
@@ -1753,7 +1753,9 @@ namespace MSNPSharp
                 }
             };
 
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "AddMember", addMemberRequest);
             sharingService.AddMemberAsync(addMemberRequest, new object());
+
         }
 
         #endregion
@@ -1797,6 +1799,36 @@ namespace MSNPSharp
                 return;
             }
 
+            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock");
+            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
+            {
+                // Cache key for Sharing service...
+                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
+                if (!e.Cancelled)
+                {
+                    if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
+                    {
+                        // XXX But the response is OK
+                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
+                        return;
+                    }
+
+                    contact.RemoveFromList(list);
+                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
+                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
+
+                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                    {
+                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
+                    }
+
+                    if (onSuccess != null)
+                    {
+                        onSuccess(this, EventArgs.Empty);
+                    }
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + list, GetType().Name);
+                }
+            };
 
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
             deleteMemberRequest.serviceHandle = new HandleType();
@@ -1839,36 +1871,7 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { member };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
 
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock", "DeleteMember", deleteMemberRequest);
-            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
-            {
-                // Cache key for Sharing service...
-                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
-                if (!e.Cancelled)
-                {
-                    if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
-                    {
-                        // XXX But the response is OK
-                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
-                        return;
-                    }
-
-                    contact.RemoveFromList(list);
-                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
-                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
-
-                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
-                    {
-                        NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
-                    }
-
-                    if (onSuccess != null)
-                    {
-                        onSuccess(this, EventArgs.Empty);
-                    }
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + list, GetType().Name);
-                }
-            };
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "DeleteMember", deleteMemberRequest);
 
             sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
         }
@@ -1975,20 +1978,20 @@ namespace MSNPSharp
             }
         }
 
-        internal void GetCacheKeyAndPreferredHost(SharingServiceBinding sharingService, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(SharingServiceBinding sharingService, string methodName, object param)
         {
-            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType.OmegaContactServiceCacheKey, sharingService, methodName, param);
             sharingService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
         }
 
 
-        internal void GetCacheKeyAndPreferredHost(ABServiceBinding abService, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(ABServiceBinding abService, string methodName, object param)
         {
-            GetCacheKeyAndPreferredHost(CacheKeyType.OmegaContactServiceCacheKey, abService, methodName, param);
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType.OmegaContactServiceCacheKey, abService, methodName, param);
             abService.ABApplicationHeaderValue.CacheKey = Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
         }
 
-        internal void GetCacheKeyAndPreferredHost(CacheKeyType keyType, SoapHttpClientProtocol webservice, string methodName, object param)
+        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType keyType, SoapHttpClientProtocol webservice, string methodName, object param)
         {
             if (Deltas == null)
             {
