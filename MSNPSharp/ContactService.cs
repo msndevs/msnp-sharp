@@ -1976,8 +1976,15 @@ namespace MSNPSharp
                 string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
                 if (File.Exists(deltasResultFile))
                 {
-                    File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
-                    File.Delete(deltasResultFile);
+                    if (Deltas != null)
+                    {
+                        Deltas.Truncate();  //If we saved cachekey and preferred host in it, deltas can't be deleted.
+                    }
+                    else
+                    {
+                        File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
+                        File.Delete(deltasResultFile);
+                    }
                 }
                 abSynchronized = false;
             }
