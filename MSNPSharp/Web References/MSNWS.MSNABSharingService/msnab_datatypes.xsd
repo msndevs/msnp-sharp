@@ -458,16 +458,6 @@
       <xsd:element minOccurs="0" name="DisplayName" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:complexType name="PassportDynamicItem" block="">
-    <xsd:complexContent mixed="false">
-      <xsd:extension base="msnab:BaseDynamicItemType">
-        <xsd:sequence>
-          <xsd:element name="PassportName" type="xsd:string" />
-          <xsd:element minOccurs="0" name="PassportId" type="xsd:string" />
-        </xsd:sequence>
-      </xsd:extension>
-    </xsd:complexContent>
-  </xsd:complexType>
   <xsd:complexType name="InfoType">
     <xsd:sequence>
       <xsd:element name="Handle" type="msnab:HandleType" />
@@ -492,19 +482,6 @@
       <xsd:element name="Type" type="xsd:string" />
       <xsd:element minOccurs="0" name="Deleted" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="LastChanged" type="xsd:dateTime" />
-      <xsd:element minOccurs="0" name="CID" type="xsd:string" />
-      <xsd:element name="SpaceStatus" type="xsd:string" />
-      <xsd:element minOccurs="0" name="SpaceLastChanged" type="xsd:dateTime" />
-      <xsd:element minOccurs="0" name="SpaceLastViewed" type="xsd:dateTime" />
-      <xsd:element minOccurs="0" name="SpaceGleam" type="xsd:boolean" />
-      <xsd:element minOccurs="0" name="ProfileLastChanged" type="xsd:dateTime" />
-      <xsd:element minOccurs="0" name="ProfileLastView" type="xsd:dateTime" />
-      <xsd:element name="ProfileStatus" type="xsd:string" />
-      <xsd:element minOccurs="0" name="ProfileGleam" type="xsd:boolean" />
-      <xsd:element name="ContactProfileStatus" type="xsd:string" />
-      <xsd:element minOccurs="0" name="ContactProfileLastChanged" type="xsd:dateTime" />
-      <xsd:element minOccurs="0" name="ContactProfileLastViewed" type="xsd:dateTime" />
-      <xsd:element name="Changes" type="xsd:string" />
       <xsd:element minOccurs="0" name="Notifications">
         <xsd:complexType>
           <xsd:sequence>
@@ -512,8 +489,40 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element minOccurs="0" name="LiveContactLastChanged" type="xsd:dateTime" />
+      <xsd:element name="Changes" type="xsd:string" />
     </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CircleDynamicItem">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseDynamicItemType">
+        <xsd:sequence>
+          <xsd:element name="Id" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="PassportDynamicItem" block="">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseDynamicItemType">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" name="CID" type="xsd:string" />
+          <xsd:element name="PassportName" type="xsd:string" />
+          <xsd:element minOccurs="0" name="PassportId" type="xsd:string" />
+          <xsd:element name="SpaceStatus" type="xsd:string" />
+          <xsd:element minOccurs="0" name="SpaceLastChanged" type="xsd:dateTime" />
+          <xsd:element minOccurs="0" name="SpaceLastViewed" type="xsd:dateTime" />
+          <xsd:element minOccurs="0" name="SpaceGleam" type="xsd:boolean" />
+          <xsd:element minOccurs="0" name="ProfileLastChanged" type="xsd:dateTime" />
+          <xsd:element minOccurs="0" name="ProfileLastView" type="xsd:dateTime" />
+          <xsd:element name="ProfileStatus" type="xsd:string" />
+          <xsd:element minOccurs="0" name="ProfileGleam" type="xsd:boolean" />
+          <xsd:element name="ContactProfileStatus" type="xsd:string" />
+          <xsd:element minOccurs="0" name="ContactProfileLastChanged" type="xsd:dateTime" />
+          <xsd:element minOccurs="0" name="ContactProfileLastViewed" type="xsd:dateTime" />
+          <xsd:element minOccurs="0" name="LiveContactLastChanged" type="xsd:dateTime" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
   </xsd:complexType>
   <xsd:complexType name="abType">
     <xsd:sequence>

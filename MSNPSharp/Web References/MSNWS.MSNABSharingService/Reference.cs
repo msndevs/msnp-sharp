@@ -3972,6 +3972,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(PassportDynamicItem))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CircleDynamicItem))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1434")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -3989,53 +3990,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool lastChangedFieldSpecified;
         
-        private string cIDField;
-        
-        private string spaceStatusField;
-        
-        private System.DateTime spaceLastChangedField;
-        
-        private bool spaceLastChangedFieldSpecified;
-        
-        private System.DateTime spaceLastViewedField;
-        
-        private bool spaceLastViewedFieldSpecified;
-        
-        private bool spaceGleamField;
-        
-        private bool spaceGleamFieldSpecified;
-        
-        private System.DateTime profileLastChangedField;
-        
-        private bool profileLastChangedFieldSpecified;
-        
-        private System.DateTime profileLastViewField;
-        
-        private bool profileLastViewFieldSpecified;
-        
-        private string profileStatusField;
-        
-        private bool profileGleamField;
-        
-        private bool profileGleamFieldSpecified;
-        
-        private string contactProfileStatusField;
-        
-        private System.DateTime contactProfileLastChangedField;
-        
-        private bool contactProfileLastChangedFieldSpecified;
-        
-        private System.DateTime contactProfileLastViewedField;
-        
-        private bool contactProfileLastViewedFieldSpecified;
-        
-        private string changesField;
-        
         private NotificationDataType[] notificationsField;
         
-        private System.DateTime liveContactLastChangedField;
-        
-        private bool liveContactLastChangedFieldSpecified;
+        private string changesField;
         
         /// <remarks/>
         public string Type {
@@ -4090,224 +4047,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public string CID {
-            get {
-                return this.cIDField;
-            }
-            set {
-                this.cIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string SpaceStatus {
-            get {
-                return this.spaceStatusField;
-            }
-            set {
-                this.spaceStatusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime SpaceLastChanged {
-            get {
-                return this.spaceLastChangedField;
-            }
-            set {
-                this.spaceLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceLastChangedSpecified {
-            get {
-                return this.spaceLastChangedFieldSpecified;
-            }
-            set {
-                this.spaceLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime SpaceLastViewed {
-            get {
-                return this.spaceLastViewedField;
-            }
-            set {
-                this.spaceLastViewedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceLastViewedSpecified {
-            get {
-                return this.spaceLastViewedFieldSpecified;
-            }
-            set {
-                this.spaceLastViewedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool SpaceGleam {
-            get {
-                return this.spaceGleamField;
-            }
-            set {
-                this.spaceGleamField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceGleamSpecified {
-            get {
-                return this.spaceGleamFieldSpecified;
-            }
-            set {
-                this.spaceGleamFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ProfileLastChanged {
-            get {
-                return this.profileLastChangedField;
-            }
-            set {
-                this.profileLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastChangedSpecified {
-            get {
-                return this.profileLastChangedFieldSpecified;
-            }
-            set {
-                this.profileLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ProfileLastView {
-            get {
-                return this.profileLastViewField;
-            }
-            set {
-                this.profileLastViewField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastViewSpecified {
-            get {
-                return this.profileLastViewFieldSpecified;
-            }
-            set {
-                this.profileLastViewFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ProfileStatus {
-            get {
-                return this.profileStatusField;
-            }
-            set {
-                this.profileStatusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool ProfileGleam {
-            get {
-                return this.profileGleamField;
-            }
-            set {
-                this.profileGleamField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileGleamSpecified {
-            get {
-                return this.profileGleamFieldSpecified;
-            }
-            set {
-                this.profileGleamFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ContactProfileStatus {
-            get {
-                return this.contactProfileStatusField;
-            }
-            set {
-                this.contactProfileStatusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ContactProfileLastChanged {
-            get {
-                return this.contactProfileLastChangedField;
-            }
-            set {
-                this.contactProfileLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ContactProfileLastChangedSpecified {
-            get {
-                return this.contactProfileLastChangedFieldSpecified;
-            }
-            set {
-                this.contactProfileLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ContactProfileLastViewed {
-            get {
-                return this.contactProfileLastViewedField;
-            }
-            set {
-                this.contactProfileLastViewedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ContactProfileLastViewedSpecified {
-            get {
-                return this.contactProfileLastViewedFieldSpecified;
-            }
-            set {
-                this.contactProfileLastViewedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Changes {
-            get {
-                return this.changesField;
-            }
-            set {
-                this.changesField = value;
-            }
-        }
-        
-        /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("NotificationData", IsNullable=false)]
         public NotificationDataType[] Notifications {
             get {
@@ -4319,23 +4058,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LiveContactLastChanged {
+        public string Changes {
             get {
-                return this.liveContactLastChangedField;
+                return this.changesField;
             }
             set {
-                this.liveContactLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LiveContactLastChangedSpecified {
-            get {
-                return this.liveContactLastChangedFieldSpecified;
-            }
-            set {
-                this.liveContactLastChangedFieldSpecified = value;
+                this.changesField = value;
             }
         }
     }
@@ -5228,9 +4956,63 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class PassportDynamicItem : BaseDynamicItemType {
         
+        private string cIDField;
+        
         private string passportNameField;
         
         private string passportIdField;
+        
+        private string spaceStatusField;
+        
+        private System.DateTime spaceLastChangedField;
+        
+        private bool spaceLastChangedFieldSpecified;
+        
+        private System.DateTime spaceLastViewedField;
+        
+        private bool spaceLastViewedFieldSpecified;
+        
+        private bool spaceGleamField;
+        
+        private bool spaceGleamFieldSpecified;
+        
+        private System.DateTime profileLastChangedField;
+        
+        private bool profileLastChangedFieldSpecified;
+        
+        private System.DateTime profileLastViewField;
+        
+        private bool profileLastViewFieldSpecified;
+        
+        private string profileStatusField;
+        
+        private bool profileGleamField;
+        
+        private bool profileGleamFieldSpecified;
+        
+        private string contactProfileStatusField;
+        
+        private System.DateTime contactProfileLastChangedField;
+        
+        private bool contactProfileLastChangedFieldSpecified;
+        
+        private System.DateTime contactProfileLastViewedField;
+        
+        private bool contactProfileLastViewedFieldSpecified;
+        
+        private System.DateTime liveContactLastChangedField;
+        
+        private bool liveContactLastChangedFieldSpecified;
+        
+        /// <remarks/>
+        public string CID {
+            get {
+                return this.cIDField;
+            }
+            set {
+                this.cIDField = value;
+            }
+        }
         
         /// <remarks/>
         public string PassportName {
@@ -5249,6 +5031,246 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.passportIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string SpaceStatus {
+            get {
+                return this.spaceStatusField;
+            }
+            set {
+                this.spaceStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime SpaceLastChanged {
+            get {
+                return this.spaceLastChangedField;
+            }
+            set {
+                this.spaceLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool SpaceLastChangedSpecified {
+            get {
+                return this.spaceLastChangedFieldSpecified;
+            }
+            set {
+                this.spaceLastChangedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime SpaceLastViewed {
+            get {
+                return this.spaceLastViewedField;
+            }
+            set {
+                this.spaceLastViewedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool SpaceLastViewedSpecified {
+            get {
+                return this.spaceLastViewedFieldSpecified;
+            }
+            set {
+                this.spaceLastViewedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool SpaceGleam {
+            get {
+                return this.spaceGleamField;
+            }
+            set {
+                this.spaceGleamField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool SpaceGleamSpecified {
+            get {
+                return this.spaceGleamFieldSpecified;
+            }
+            set {
+                this.spaceGleamFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime ProfileLastChanged {
+            get {
+                return this.profileLastChangedField;
+            }
+            set {
+                this.profileLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ProfileLastChangedSpecified {
+            get {
+                return this.profileLastChangedFieldSpecified;
+            }
+            set {
+                this.profileLastChangedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime ProfileLastView {
+            get {
+                return this.profileLastViewField;
+            }
+            set {
+                this.profileLastViewField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ProfileLastViewSpecified {
+            get {
+                return this.profileLastViewFieldSpecified;
+            }
+            set {
+                this.profileLastViewFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ProfileStatus {
+            get {
+                return this.profileStatusField;
+            }
+            set {
+                this.profileStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool ProfileGleam {
+            get {
+                return this.profileGleamField;
+            }
+            set {
+                this.profileGleamField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ProfileGleamSpecified {
+            get {
+                return this.profileGleamFieldSpecified;
+            }
+            set {
+                this.profileGleamFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ContactProfileStatus {
+            get {
+                return this.contactProfileStatusField;
+            }
+            set {
+                this.contactProfileStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime ContactProfileLastChanged {
+            get {
+                return this.contactProfileLastChangedField;
+            }
+            set {
+                this.contactProfileLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ContactProfileLastChangedSpecified {
+            get {
+                return this.contactProfileLastChangedFieldSpecified;
+            }
+            set {
+                this.contactProfileLastChangedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime ContactProfileLastViewed {
+            get {
+                return this.contactProfileLastViewedField;
+            }
+            set {
+                this.contactProfileLastViewedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ContactProfileLastViewedSpecified {
+            get {
+                return this.contactProfileLastViewedFieldSpecified;
+            }
+            set {
+                this.contactProfileLastViewedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime LiveContactLastChanged {
+            get {
+                return this.liveContactLastChangedField;
+            }
+            set {
+                this.liveContactLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool LiveContactLastChangedSpecified {
+            get {
+                return this.liveContactLastChangedFieldSpecified;
+            }
+            set {
+                this.liveContactLastChangedFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1434")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CircleDynamicItem : BaseDynamicItemType {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
             }
         }
     }
