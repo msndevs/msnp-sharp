@@ -365,8 +365,7 @@ namespace MSNPSharp
                     meContact.propertiesChanged = "Annotation";
 
                     contactInfoType meinfo = new contactInfoType();
-                    meinfo.contactTypeSpecified = true;
-                    meinfo.contactType = contactInfoTypeContactType.Me;
+                    meinfo.contactType = MessengerContactType.Me;
 
                     Annotation anno = new Annotation();
                     anno.Name = "MSN.IM.RoamLiveProperties";

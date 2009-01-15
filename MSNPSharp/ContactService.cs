@@ -485,14 +485,9 @@ namespace MSNPSharp
                 request.deltasOnly = msdeltasOnly;
                 request.lastChange = serviceLastChange;
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
-                request.serviceFilter.Types = new ServiceFilterType[]
+                request.serviceFilter.Types = new string[]
                 {
                     ServiceFilterType.Messenger
-                    /*ServiceFilterType.Invitation,
-                    ServiceFilterType.SocialNetwork,
-                    ServiceFilterType.Space,
-                    ServiceFilterType.Profile
-                     * */
                 };
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "FindMembership", request);
@@ -888,7 +883,7 @@ namespace MSNPSharp
             switch (network)
             {
                 case ClientType.PassportMember:
-                    request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.LivePending;
+                    request.contacts[0].contactInfo.contactType = MessengerContactType.LivePending;
                     request.contacts[0].contactInfo.passportName = account;
                     request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
                     request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
@@ -1121,8 +1116,7 @@ namespace MSNPSharp
                         if (abContactType.contactInfo.contactType != contact.ContactType)
                         {
                             propertiesChanged.Add("ContactType");
-                            request.contacts[0].contactInfo.contactType = (contactInfoTypeContactType)contact.ContactType;
-                            request.contacts[0].contactInfo.contactTypeSpecified = true;
+                            request.contacts[0].contactInfo.contactType = contact.ContactType;
                         }
                     }
                     break;
@@ -1240,8 +1234,7 @@ namespace MSNPSharp
                 request.abId = "00000000-0000-0000-0000-000000000000";
                 request.contacts = new ContactType[] { new ContactType() };
                 request.contacts[0].contactInfo = new contactInfoType();
-                request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.Me;
-                request.contacts[0].contactInfo.contactTypeSpecified = true;
+                request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = "Annotation";
 
@@ -1323,8 +1316,7 @@ namespace MSNPSharp
                 request.abId = "00000000-0000-0000-0000-000000000000";
                 request.contacts = new ContactType[] { new ContactType() };
                 request.contacts[0].contactInfo = new contactInfoType();
-                request.contacts[0].contactInfo.contactType = contactInfoTypeContactType.Me;
-                request.contacts[0].contactInfo.contactTypeSpecified = true;
+                request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
                 //request.contacts[0].contactInfo.displayName = owner.Name;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
                 request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
@@ -2012,7 +2004,7 @@ namespace MSNPSharp
 
         #endregion
 
-        public virtual MemberRole GetMemberRole(MSNLists list)
+        public virtual string GetMemberRole(MSNLists list)
         {
             switch (list)
             {
@@ -2032,7 +2024,7 @@ namespace MSNPSharp
         }
 
 
-        public virtual MSNLists GetMSNList(MemberRole memberRole)
+        public virtual MSNLists GetMSNList(string memberRole)
         {
             switch (memberRole)
             {

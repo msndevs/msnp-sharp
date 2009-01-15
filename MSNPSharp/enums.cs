@@ -817,4 +817,48 @@ namespace MSNPSharp
         /// </summary>
         StorageServiceCacheKey
     }
+
+    public static class MemberRole
+    {
+        public const string Allow = "Allow";
+        public const string Block = "Block";
+        public const string Reverse = "Reverse";
+        public const string Pending = "Pending";
+        public const string Admin = "Admin";
+        public const string Contributor = "Contributor";
+        public const string ProfileGeneral = "ProfileGeneral";
+        public const string ProfilePersonalContact = "ProfilePersonalContact";
+        public const string ProfileProfessionalContact = "ProfileProfessionalContact";
+        public const string ProfileSocial = "ProfileSocial";
+        public const string ProfileExpression = "ProfileExpression";
+        public const string ProfileEducation = "ProfileEducation";
+        public const string OneWayRelationship = "OneWayRelationship";
+        public const string TwoWayRelationship = "TwoWayRelationship";
+    }
+
+    public static class MessengerContactType
+    {
+        public const string Me = "Me";
+        public const string Regular = "Regular";
+        public const string Messenger = "Messenger";
+        public const string Live = "Live";
+        public const string LivePending = "LivePending";
+        public const string LiveRejected = "LiveRejected";
+        public const string LiveDropped = "LiveDropped";
+        public const string Circle = "Circle";
+    }
+
+    public static class ServiceFilterType
+    {
+        public const string Messenger = "Messenger";
+        public const string Invitation = "Invitation";
+        public const string SocialNetwork = "SocialNetwork";
+        public const string Space = "Space";
+        public const string Profile = "Profile";
+        public const string Folder = "Folder";
+        public const string Event = "Event";
+        public const string OfficeLiveWebNotification = "OfficeLiveWebNotification";
+        public const string CommunityQuestionAnswer = "CommunityQuestionAnswer";
+    }
+
 };

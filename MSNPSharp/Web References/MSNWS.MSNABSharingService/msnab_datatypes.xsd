@@ -20,7 +20,7 @@
   <xsd:complexType name="HandleType">
     <xsd:sequence>
       <xsd:element name="Id" type="xsd:integer" />
-      <xsd:element default="Messenger" name="Type" type="msnab:ServiceFilterType" />
+      <xsd:element default="Messenger" name="Type" type="xsd:string" />
       <xsd:element name="ForeignId" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
@@ -41,7 +41,7 @@
   </xsd:complexType>
   <xsd:complexType name="Membership">
     <xsd:sequence>
-      <xsd:element name="MemberRole" type="msnab:MemberRole" />
+      <xsd:element name="MemberRole" type="xsd:string" />
       <xsd:element name="Members">
         <xsd:complexType>
           <xsd:sequence>
@@ -160,24 +160,6 @@
       <xsd:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />
     </xsd:restriction>
   </xsd:simpleType>
-  <xsd:simpleType name="MemberRole">
-    <xsd:restriction base="xsd:string">
-      <xsd:enumeration value="Allow" />
-      <xsd:enumeration value="Block" />
-      <xsd:enumeration value="Reverse" />
-      <xsd:enumeration value="Pending" />
-      <xsd:enumeration value="Admin" />
-      <xsd:enumeration value="Contributor" />
-      <xsd:enumeration value="ProfileGeneral" />
-      <xsd:enumeration value="ProfilePersonalContact" />
-      <xsd:enumeration value="ProfileProfessionalContact" />
-      <xsd:enumeration value="ProfileSocial" />
-      <xsd:enumeration value="ProfileExpression" />
-      <xsd:enumeration value="ProfileEducation" />
-      <xsd:enumeration value="OneWayRelationship" />
-      <xsd:enumeration value="TwoWayRelationship" />
-    </xsd:restriction>
-  </xsd:simpleType>
   <xsd:element name="MemberType">
     <xsd:simpleType>
       <xsd:restriction base="xsd:string">
@@ -273,20 +255,7 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element minOccurs="0" name="contactType">
-        <xsd:simpleType>
-          <xsd:restriction base="xsd:string">
-            <xsd:enumeration value="Me" />
-            <xsd:enumeration value="Regular" />
-            <xsd:enumeration value="Messenger" />
-            <xsd:enumeration value="Live" />
-            <xsd:enumeration value="LivePending" />
-            <xsd:enumeration value="LiveRejected" />
-            <xsd:enumeration value="LiveDropped" />
-            <xsd:enumeration value="Circle" />
-          </xsd:restriction>
-        </xsd:simpleType>
-      </xsd:element>
+      <xsd:element minOccurs="0" name="contactType" type="xsd:string" />
       <xsd:element minOccurs="0" name="quickName" type="xsd:string" />
       <xsd:element minOccurs="0" name="firstName" type="xsd:string" />
       <xsd:element minOccurs="0" name="MiddleName" type="xsd:string" />
@@ -462,19 +431,6 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  <xsd:simpleType name="ServiceFilterType">
-    <xsd:restriction base="xsd:string">
-      <xsd:enumeration value="Messenger" />
-      <xsd:enumeration value="Invitation" />
-      <xsd:enumeration value="SocialNetwork" />
-      <xsd:enumeration value="Space" />
-      <xsd:enumeration value="Profile" />
-      <xsd:enumeration value="Folder" />
-      <xsd:enumeration value="Event" />
-      <xsd:enumeration value="OfficeLiveWebNotification" />
-      <xsd:enumeration value="CommunityQuestionAnswer" />
-    </xsd:restriction>
-  </xsd:simpleType>
   <xsd:element name="InvalidPassportUser">
     <xsd:complexType>
       <xsd:sequence>
@@ -700,7 +656,7 @@
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnab:SimpleTemplateVariableBaseType">
         <xsd:sequence>
-          <xsd:element name="Herf" type="xsd:string" />
+          <xsd:element name="Href" type="xsd:anyURI" />
           <xsd:element name="Notations">
             <xsd:complexType>
               <xsd:sequence>

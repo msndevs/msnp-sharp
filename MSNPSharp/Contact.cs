@@ -151,7 +151,7 @@ namespace MSNPSharp
         private DynamicItemState dynamicChanged = DynamicItemState.None;
         private PresenceStatus status = PresenceStatus.Offline;
         private ClientType clientType = ClientType.PassportMember;
-        private contactInfoTypeContactType? contactType;
+        private string contactType;
 
         private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
         private MSNLists lists = MSNLists.None;
@@ -364,7 +364,7 @@ namespace MSNPSharp
             }
         }
 
-        public contactInfoTypeContactType? ContactType
+        public string ContactType
         {
             get
             {
@@ -448,7 +448,7 @@ namespace MSNPSharp
         {
             get
             {
-                return (contactType == contactInfoTypeContactType.Live || contactType == contactInfoTypeContactType.LivePending);
+                return (contactType == MessengerContactType.Live || contactType == MessengerContactType.LivePending);
             }
             set
             {
@@ -458,15 +458,15 @@ namespace MSNPSharp
                     {
                         if (!AutoSubscribeToUpdates)
                         {
-                            contactType = contactInfoTypeContactType.LivePending;
+                            contactType = MessengerContactType.LivePending;
                             NSMessageHandler.ContactService.UpdateContact(this);
                         }
                     }
                     else
                     {
-                        if (contactType != contactInfoTypeContactType.Regular)
+                        if (contactType != MessengerContactType.Regular)
                         {
-                            contactType = contactInfoTypeContactType.Regular;
+                            contactType = MessengerContactType.Regular;
                             NSMessageHandler.ContactService.UpdateContact(this);
                         }
                     }

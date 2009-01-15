@@ -60,8 +60,8 @@ namespace MSNPSharp.IO
             }
         }
 
-        private ServiceFilterType serviceType;
-        public ServiceFilterType ServiceType
+        private string serviceType;
+        public string ServiceType
         {
             get
             {
@@ -198,7 +198,7 @@ namespace MSNPSharp.IO
     public class ServiceMembership
     {
         private Service service;
-        private SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>> memberships = new SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>>(0);
+        private SerializableDictionary<string, SerializableDictionary<string, BaseMember>> memberships = new SerializableDictionary<string, SerializableDictionary<string, BaseMember>>(0);
 
         public Service Service
         {
@@ -212,7 +212,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        public SerializableDictionary<MemberRole, SerializableDictionary<string, BaseMember>> Memberships
+        public SerializableDictionary<string, SerializableDictionary<string, BaseMember>> Memberships
         {
             get
             {
