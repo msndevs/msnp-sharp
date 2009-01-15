@@ -239,19 +239,24 @@ namespace MSNPSharp
                         if (NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
                         {
                             BaseDynamicItemType basedyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
-                            basedyItem.ProfileGleamSpecified = true;
-                            basedyItem.ProfileGleam = false;
-
-                            basedyItem.SpaceGleamSpecified = true;
-                            basedyItem.SpaceGleam = false;
-
-                            if (basedyItem.SpaceStatus == "Exist Access" || basedyItem.ProfileStatus == "Exist Access")
+                            if (basedyItem is PassportDynamicItem)
                             {
-                                NSMessageHandler.ContactList[account, ClientType.PassportMember].DynamicChanged = DynamicItemState.None;
-                                NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
-                            }
+                                PassportDynamicItem psDyItem = basedyItem as PassportDynamicItem;
 
-                            NSMessageHandler.ContactService.Deltas.Save();
+                                psDyItem.ProfileGleamSpecified = true;
+                                psDyItem.ProfileGleam = false;
+
+                                psDyItem.SpaceGleamSpecified = true;
+                                psDyItem.SpaceGleam = false;
+
+                                if (psDyItem.SpaceStatus == "Exist Access" || psDyItem.ProfileStatus == "Exist Access")
+                                {
+                                    NSMessageHandler.ContactList[account, ClientType.PassportMember].DynamicChanged = DynamicItemState.None;
+                                    NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
+                                }
+
+                                NSMessageHandler.ContactService.Deltas.Save();
+                            }
                         }
                     }
                 };
@@ -279,52 +284,57 @@ namespace MSNPSharp
                 {
                     BaseDynamicItemType dyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
 
-                    // Active contact
-                    request.refreshInformation.isActiveContact = true;
-                    request.refreshInformation.activeContactLastChanged = dyItem.LiveContactLastChanged;
-                    request.refreshInformation.activeContactLastChangedSpecified = true;
-
-                    // Profile
-                    if (dyItem.ProfileGleam && dyItem.ProfileStatus == "Exist Access")
+                    if (dyItem is PassportDynamicItem)
                     {
-                        if (dyItem.ProfileLastViewSpecified)
-                        {
-                            request.refreshInformation.profileLastViewed = dyItem.ProfileLastView;
-                        }
-                        else
-                        {
-                            request.refreshInformation.profileLastViewed = defaultTime;
-                        }
-                        request.refreshInformation.profileLastViewedSpecified = true;
-                    }
+                        PassportDynamicItem psDyItem = dyItem as PassportDynamicItem;
 
-                    // Space
-                    if (dyItem.SpaceGleam && dyItem.SpaceStatus == "Exist Access")
-                    {
-                        if (dyItem.SpaceLastViewedSpecified)
-                        {
-                            request.refreshInformation.spaceLastViewed = dyItem.SpaceLastViewed;
-                        }
-                        else
-                        {
-                            request.refreshInformation.spaceLastViewed = defaultTime;
-                        }
-                        request.refreshInformation.spaceLastViewedSpecified = true;
-                    }
+                        // Active contact
+                        request.refreshInformation.isActiveContact = true;
+                        request.refreshInformation.activeContactLastChanged = psDyItem.LiveContactLastChanged;
+                        request.refreshInformation.activeContactLastChangedSpecified = true;
 
-                    // ContactProfile
-                    if (dyItem.ContactProfileStatus == "Exist Access")
-                    {
-                        if (dyItem.ContactProfileLastViewedSpecified)
+                        // Profile
+                        if (psDyItem.ProfileGleam && psDyItem.ProfileStatus == "Exist Access")
                         {
-                            request.refreshInformation.contactProfileLastViewed = dyItem.ContactProfileLastViewed;
-                        }
-                        else
-                        {
-                            request.refreshInformation.contactProfileLastViewed = defaultTime;
+                            if (psDyItem.ProfileLastViewSpecified)
+                            {
+                                request.refreshInformation.profileLastViewed = psDyItem.ProfileLastView;
+                            }
+                            else
+                            {
+                                request.refreshInformation.profileLastViewed = defaultTime;
+                            }
+                            request.refreshInformation.profileLastViewedSpecified = true;
                         }
 
-                        request.refreshInformation.contactProfileLastViewedSpecified = true;
+                        // Space
+                        if (psDyItem.SpaceGleam && psDyItem.SpaceStatus == "Exist Access")
+                        {
+                            if (psDyItem.SpaceLastViewedSpecified)
+                            {
+                                request.refreshInformation.spaceLastViewed = psDyItem.SpaceLastViewed;
+                            }
+                            else
+                            {
+                                request.refreshInformation.spaceLastViewed = defaultTime;
+                            }
+                            request.refreshInformation.spaceLastViewedSpecified = true;
+                        }
+
+                        // ContactProfile
+                        if (psDyItem.ContactProfileStatus == "Exist Access")
+                        {
+                            if (psDyItem.ContactProfileLastViewedSpecified)
+                            {
+                                request.refreshInformation.contactProfileLastViewed = psDyItem.ContactProfileLastViewed;
+                            }
+                            else
+                            {
+                                request.refreshInformation.contactProfileLastViewed = defaultTime;
+                            }
+
+                            request.refreshInformation.contactProfileLastViewedSpecified = true;
+                        }
                     }
                 }
                 else
