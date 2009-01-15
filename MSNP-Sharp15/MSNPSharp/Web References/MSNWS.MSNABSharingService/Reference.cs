@@ -2080,9 +2080,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string[] groupIdsDeletedField;
         
-        private contactInfoTypeContactType contactTypeField;
-        
-        private bool contactTypeFieldSpecified;
+        private string contactTypeField;
         
         private string quickNameField;
         
@@ -2254,23 +2252,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public contactInfoTypeContactType contactType {
+        public string contactType {
             get {
                 return this.contactTypeField;
             }
             set {
                 this.contactTypeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool contactTypeSpecified {
-            get {
-                return this.contactTypeFieldSpecified;
-            }
-            set {
-                this.contactTypeFieldSpecified = value;
             }
         }
         
@@ -3136,37 +3123,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         ContactWebSiteBusiness,
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1434")]
-    [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public enum contactInfoTypeContactType {
-        
-        /// <remarks/>
-        Me,
-        
-        /// <remarks/>
-        Regular,
-        
-        /// <remarks/>
-        Messenger,
-        
-        /// <remarks/>
-        Live,
-        
-        /// <remarks/>
-        LivePending,
-        
-        /// <remarks/>
-        LiveRejected,
-        
-        /// <remarks/>
-        LiveDropped,
-        
-        /// <remarks/>
-        Circle,
     }
     
     /// <remarks/>
@@ -4540,7 +4496,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class Membership {
         
-        private MemberRole memberRoleField;
+        private string memberRoleField;
         
         private BaseMember[] membersField;
         
@@ -4549,7 +4505,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private bool membershipIsCompleteFieldSpecified;
         
         /// <remarks/>
-        public MemberRole MemberRole {
+        public string MemberRole {
             get {
                 return this.memberRoleField;
             }
@@ -4589,55 +4545,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.membershipIsCompleteFieldSpecified = value;
             }
         }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1434")]
-    [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public enum MemberRole {
-        
-        /// <remarks/>
-        Allow,
-        
-        /// <remarks/>
-        Block,
-        
-        /// <remarks/>
-        Reverse,
-        
-        /// <remarks/>
-        Pending,
-        
-        /// <remarks/>
-        Admin,
-        
-        /// <remarks/>
-        Contributor,
-        
-        /// <remarks/>
-        ProfileGeneral,
-        
-        /// <remarks/>
-        ProfilePersonalContact,
-        
-        /// <remarks/>
-        ProfileProfessionalContact,
-        
-        /// <remarks/>
-        ProfileSocial,
-        
-        /// <remarks/>
-        ProfileExpression,
-        
-        /// <remarks/>
-        ProfileEducation,
-        
-        /// <remarks/>
-        OneWayRelationship,
-        
-        /// <remarks/>
-        TwoWayRelationship,
     }
     
     /// <remarks/>
@@ -4954,12 +4861,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string idField;
         
-        private ServiceFilterType typeField;
+        private string typeField;
         
         private string foreignIdField;
         
         public HandleType() {
-            this.typeField = ServiceFilterType.Messenger;
+            this.typeField = "Messenger";
         }
         
         /// <remarks/>
@@ -4974,7 +4881,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public ServiceFilterType Type {
+        public string Type {
             get {
                 return this.typeField;
             }
@@ -4992,40 +4899,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.foreignIdField = value;
             }
         }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.1434")]
-    [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public enum ServiceFilterType {
-        
-        /// <remarks/>
-        Messenger,
-        
-        /// <remarks/>
-        Invitation,
-        
-        /// <remarks/>
-        SocialNetwork,
-        
-        /// <remarks/>
-        Space,
-        
-        /// <remarks/>
-        Profile,
-        
-        /// <remarks/>
-        Folder,
-        
-        /// <remarks/>
-        Event,
-        
-        /// <remarks/>
-        OfficeLiveWebNotification,
-        
-        /// <remarks/>
-        CommunityQuestionAnswer,
     }
     
     /// <remarks/>
@@ -6847,11 +6720,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class FindMembershipRequestTypeServiceFilter {
         
-        private ServiceFilterType[] typesField;
+        private string[] typesField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ServiceType", IsNullable=false)]
-        public ServiceFilterType[] Types {
+        public string[] Types {
             get {
                 return this.typesField;
             }
