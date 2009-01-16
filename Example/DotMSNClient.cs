@@ -692,6 +692,13 @@ namespace MSNPSharpClient
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
             messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
 
+
+            // Handle Service Operation Errors
+            messenger.ContactService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.SpaceService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
+
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             if (toolStripSortByStatus.Checked)
@@ -701,6 +708,18 @@ namespace MSNPSharpClient
 
             comboStatus.SelectedIndex = 0;
         }
+
+        void ServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Method + ": " + e.Exception.ToString(), e.GetType().Name); 
+        }
+
+  
+
+
+
+
+
 
         void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArgs arg)
         {

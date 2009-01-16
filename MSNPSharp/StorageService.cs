@@ -118,7 +118,7 @@ namespace MSNPSharp
         /// </summary>
         private void CreateProfile()
         {
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || NSMessageHandler.ContactService.Deltas == null)
                 return;
 
             try
@@ -597,6 +597,12 @@ namespace MSNPSharp
         /// </summary>
         public OwnerProfile GetProfile()
         {
+            if (NSMessageHandler.ContactService.Deltas == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("GetProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return null;
+            }
+
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty &&
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified < Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
@@ -614,6 +620,12 @@ namespace MSNPSharp
         /// <param name="personalStatus"></param>
         public void UpdateProfile(string displayName, string personalStatus)
         {
+            if (NSMessageHandler.ContactService.Deltas == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("UpdateProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&
                 (NSMessageHandler.ContactService.Deltas.Profile.DisplayName != displayName ||
                 NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage != personalStatus))
@@ -639,6 +651,12 @@ namespace MSNPSharp
         /// <param name="photoName">The resourcename</param>
         public bool UpdateProfile(Image photo, string photoName)
         {
+            if (NSMessageHandler.ContactService.Deltas == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("UpdateProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return false;
+            }
+
             // 1. Getprofile
             NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl("RoamingIdentityChanged");
 

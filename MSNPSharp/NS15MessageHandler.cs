@@ -65,7 +65,7 @@ using System.Text.RegularExpressions;
 
         private ContactGroupList contactGroups;
         private ContactList contactList = new ContactList();
-        private bool autoSynchronize = false;
+        private bool autoSynchronize = true;
 
         private bool isSignedIn;
         private Owner owner = new Owner();
@@ -540,8 +540,10 @@ using System.Text.RegularExpressions;
                 throw new MSNPSharpException("Not a valid owner");
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
-
-            StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
+            if (AutoSynchronize)
+            {
+                StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
+            }
         }
 
         /// <summary>
@@ -555,7 +557,10 @@ using System.Text.RegularExpressions;
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
 
-            StorageService.UpdateProfile(Owner.Name, pmsg.Message);
+            if (AutoSynchronize)
+            {
+                StorageService.UpdateProfile(Owner.Name, pmsg.Message);
+            }
         }
 
         #endregion
@@ -583,7 +588,10 @@ using System.Text.RegularExpressions;
         public virtual void SetNotifyPrivacyMode(NotifyPrivacy privacy)
         {
             Owner.SetNotifyPrivacy(privacy);
-            ContactService.UpdateMe();
+            if (AutoSynchronize)
+            {
+                ContactService.UpdateMe();
+            }
         }
 
         /// <summary>
@@ -1372,7 +1380,14 @@ using System.Text.RegularExpressions;
                     externalEndPoint = new IPEndPoint(ip, clientPort);
                 }
 
-                ContactService.SynchronizeContactList();
+                if (AutoSynchronize)
+                {
+                    ContactService.SynchronizeContactList();
+                }
+                else
+                {
+                    OnSignedIn(EventArgs.Empty);
+                }
             }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
             {
@@ -1579,49 +1594,52 @@ using System.Text.RegularExpressions;
                 NetworkMessage networkMessage = message as NetworkMessage;
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
-                    ContactService.msRequest(
-                        "MessengerPendingList",
-                        delegate
-                        {
-                            XmlDocument xmlDoc = new XmlDocument();
-                            xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                            XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                            string domain = String.Empty;
-                            foreach (XmlNode domainNode in domains)
+                    if (AutoSynchronize)
+                    {
+                        ContactService.msRequest(
+                            "MessengerPendingList",
+                            delegate
                             {
-                                domain = domainNode.Attributes["n"].Value;
-                                XmlNode contactNode = domainNode.FirstChild;
-                                do
+                                XmlDocument xmlDoc = new XmlDocument();
+                                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                                string domain = String.Empty;
+                                foreach (XmlNode domainNode in domains)
                                 {
-                                    string account = contactNode.Attributes["n"].Value + "@" + domain;
-                                    ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                                    MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
-                                    string displayName = account;
-                                    try
+                                    domain = domainNode.Attributes["n"].Value;
+                                    XmlNode contactNode = domainNode.FirstChild;
+                                    do
                                     {
-                                        displayName = contactNode.Attributes["f"].Value;
-                                    }
-                                    catch (Exception)
-                                    {
-                                    }
-
-                                    if (ContactList.HasContact(account, type))
-                                    {
-                                        Contact contact = ContactList.GetContact(account, type);
-
-                                        // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
-                                        if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                        string account = contactNode.Attributes["n"].Value + "@" + domain;
+                                        ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                                        MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                                        string displayName = account;
+                                        try
                                         {
-                                            ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                            displayName = contactNode.Attributes["f"].Value;
                                         }
-                                    }
+                                        catch (Exception)
+                                        {
+                                        }
 
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
+                                        if (ContactList.HasContact(account, type))
+                                        {
+                                            Contact contact = ContactList.GetContact(account, type);
 
-                                } while (contactNode.NextSibling != null);
-                            }
+                                            // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
+                                            if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                            {
+                                                ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                            }
+                                        }
 
-                        });
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
+
+                                    } while (contactNode.NextSibling != null);
+                                }
+
+                            });
+                    }
                 }
             }
         }
@@ -1637,7 +1655,10 @@ using System.Text.RegularExpressions;
             NetworkMessage networkMessage = nsMessage as NetworkMessage;
             if (networkMessage.InnerBody != null)   //Payload RML command.
             {
-                ContactService.msRequest("Initial", null);
+                if (AutoSynchronize)
+                {
+                    ContactService.msRequest("Initial", null);
+                }
 
                 if (Settings.TraceSwitch.TraceVerbose)
                 {
@@ -1675,7 +1696,10 @@ using System.Text.RegularExpressions;
         /// <param name="message"></param>
         protected virtual void OnADGReceived(NSMessage message)
         {
-            ContactService.abRequest("ContactSave", null);
+            if (AutoSynchronize)
+            {
+                ContactService.abRequest("ContactSave", null);
+            }
         }
 
         /// <summary>
@@ -1689,7 +1713,10 @@ using System.Text.RegularExpressions;
         /// <param name="message"></param>
         protected virtual void OnRMGReceived(NSMessage message)
         {
-            ContactService.abRequest("ContactSave", null);
+            if (AutoSynchronize)
+            {
+                ContactService.abRequest("ContactSave", null);
+            }
         }
 
         /// <summary>Called when a FQY command has been received.
@@ -1856,11 +1883,17 @@ using System.Text.RegularExpressions;
             {
                 case "AL":
                     Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
-                    ContactService.UpdateMe();
+                    if (AutoSynchronize)
+                    {
+                        ContactService.UpdateMe();
+                    }
                     break;
                 case "BL":
                     owner.SetPrivacy(PrivacyMode.NoneButAllowed);
-                    ContactService.UpdateMe();
+                    if (AutoSynchronize)
+                    {
+                        ContactService.UpdateMe();
+                    }
                     break;
             }
         }
