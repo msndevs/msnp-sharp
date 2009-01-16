@@ -792,6 +792,14 @@ namespace MSNPSharpClient
 
             messenger.Nameserver.WhatsUpService.GetWhatsUpCompleted += WhatsUpService_GetWhatsUpCompleted;
 
+
+            // Handle Service Operation Errors
+            messenger.ContactService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.SpaceService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed;
+
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             if (toolStripSortByStatus.Checked)
@@ -800,6 +808,11 @@ namespace MSNPSharpClient
                 SortByGroup();
 
             comboStatus.SelectedIndex = 0;
+        }
+
+        void ServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Method + ": " + e.Exception.ToString(), e.GetType().Name); 
         }
 
         void ContactService_SynchronizationCompleted(object sender, EventArgs e)
