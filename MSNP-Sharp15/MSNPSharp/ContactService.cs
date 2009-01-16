@@ -356,40 +356,46 @@ namespace MSNPSharp
                 initialADLs.Add(message.TransactionID);
             }
 
-            if (NSMessageHandler.AutoSynchronize)
-            {
-                ProcessADL(0);
-            }
+            // Set screen name
+            NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
+
+            // Save addressbook and then truncate deltas file.
+            AddressBook.Save();
+            Deltas.Truncate();
         }
 
         internal bool ProcessADL(int transid)
         {
-            if (initialADLs.Contains(transid) || transid == 0)
+            if (initialADLs.Contains(transid))
             {
                 initialADLs.Remove(transid);
-                if (--initialADLcount <= 0 || transid == 0)
+                if (--initialADLcount <= 0)
                 {
                     initialADLcount = 0;
 
-                    NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
-                    NSMessageHandler.OnSignedIn(EventArgs.Empty);
-                    NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
+                    if (NSMessageHandler.AutoSynchronize)
+                    {
+                        NSMessageHandler.OnSignedIn(EventArgs.Empty);
+                        NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
+                    }
 
                     if (!AddressBookSynchronized)
                     {
-                        // This is very important to synchronize (5 STEPS)
-                        abSynchronized = true;                          // 1: Set AddressBookSynchronized
-                        AddressBook.Save();                             // 2: The first and the last AddressBook.Save()
-                        Deltas.Truncate();                              // 3: Call this after AddressBook.Save()
-                        OnSynchronizationCompleted(EventArgs.Empty);    // 4: Fire SynchronizationCompleted
-                        lock (NSMessageHandler.ContactList.SyncRoot)    // 5: ContactList synchronization
+                        abSynchronized = true;
+                        OnSynchronizationCompleted(EventArgs.Empty);
+
+                        if (NSMessageHandler.AutoSynchronize)
                         {
-                            foreach (Contact contact in NSMessageHandler.ContactList.All)
+                            lock (NSMessageHandler.ContactList.SyncRoot)
                             {
-                                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                foreach (Contact contact in NSMessageHandler.ContactList.All)
                                 {
-                                    NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                    if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                    {
+                                        NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                    }
                                 }
+
                             }
                         }
                     }
