@@ -976,7 +976,7 @@ namespace MSNPSharp
                 switch (network)
                 {
                     case ClientType.PassportMember:
-                        request.contacts[0].contactInfo.contactType = MessengerContactType.LivePending;
+                        request.contacts[0].contactInfo.contactType = MessengerContactType.Regular;
                         request.contacts[0].contactInfo.passportName = account;
                         request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
                         request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
