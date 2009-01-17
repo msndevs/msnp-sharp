@@ -581,7 +581,7 @@ namespace MSNPSharp
             {
                 if (user.Split('@')[1].ToLower(CultureInfo.InvariantCulture) == "msn.com")
                 {
-                    securService.Url = @"https://msnia.login.live.com/RST2.srf";
+                    securService.Url = @"https://msnia.login.live.com/pp550/RST.srf";
                 }
             }
             else
