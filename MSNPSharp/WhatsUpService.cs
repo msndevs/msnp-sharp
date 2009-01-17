@@ -76,7 +76,7 @@ namespace MSNPSharp
             wuService.UserAgent = Properties.Resources.WebServiceUserAgent;
             wuService.Url = "http://sup.live.com/whatsnew/whatsnewservice.asmx";
             wuService.WNApplicationHeaderValue = new WNApplicationHeader();
-            wuService.WNApplicationHeaderValue.ApplicationId = "3B119D87-1D76-4474-91AD-0D7267E86D04";
+            wuService.WNApplicationHeaderValue.ApplicationId = Properties.Resources.WhatsupServiceAppID;
             wuService.WNAuthHeaderValue = new WNAuthHeader();
             wuService.WNAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WhatsUp].Ticket;
 
