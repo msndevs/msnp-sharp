@@ -366,7 +366,7 @@ namespace MSNPSharp
                     abcontactUpdateRequest.abId = Guid.Empty.ToString();
 
                     ContactType meContact = new ContactType();
-                    meContact.propertiesChanged = "Annotation";
+                    meContact.propertiesChanged = PropertyString.Annotation; //"Annotation";
 
                     contactInfoType meinfo = new contactInfoType();
                     meinfo.contactType = MessengerContactType.Me;

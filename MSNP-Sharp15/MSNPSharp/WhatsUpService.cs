@@ -88,8 +88,20 @@ namespace MSNPSharp
             GetWhatsUp(50);
         }
 
+        /// <summary>
+        /// Get the recent activities of your contacts.
+        /// </summary>
+        /// <param name="count">Max activity count, must be larger than zero and less than 50.</param>
         public void GetWhatsUp(int count)
         {
+            if (count > 50)
+            {
+                count = 50;
+            }else if(count < 0)
+            {
+                count = 0;
+            }
+
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 WhatsUpServiceBinding wuService = CreateWhatsUpService(":)");
