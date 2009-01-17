@@ -285,10 +285,18 @@ namespace MSNPSharp
 
             AddressBook.Synchronize(Deltas);
 
+            if (AddressBook.MembershipLastChange == DateTime.MinValue)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+            }
             msRequest(
                 "Initial",
                 delegate
                 {
+                    if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                    }
                     abRequest("Initial",
                         delegate
                         {
@@ -965,7 +973,7 @@ namespace MSNPSharp
                 switch (network)
                 {
                     case ClientType.PassportMember:
-                        request.contacts[0].contactInfo.contactType = MessengerContactType.Regular;
+                        request.contacts[0].contactInfo.contactType = MessengerContactType.LivePending;  //Pending is a must.
                         request.contacts[0].contactInfo.passportName = account;
                         request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
                         request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
@@ -986,7 +994,10 @@ namespace MSNPSharp
                         request.contacts[0].contactInfo.emails[0].email = account;
                         request.contacts[0].contactInfo.emails[0].isMessengerEnabled = true;
                         request.contacts[0].contactInfo.emails[0].Capability = "32";
-                        request.contacts[0].contactInfo.emails[0].propertiesChanged = "Email IsMessengerEnabled Capability";
+                        request.contacts[0].contactInfo.emails[0].propertiesChanged =  //"Email IsMessengerEnabled Capability";
+                            String.Join(PropertyString.propertySeparator,
+                            new string[] { PropertyString.Email, PropertyString.IsMessengerEnabled, PropertyString.Capability });
+
                         break;
 
                     case ClientType.PhoneMember:
@@ -994,7 +1005,9 @@ namespace MSNPSharp
                         request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
                         request.contacts[0].contactInfo.phones[0].number = account;
                         request.contacts[0].contactInfo.phones[0].isMessengerEnabled = true;
-                        request.contacts[0].contactInfo.phones[0].propertiesChanged = "Number IsMessengerEnabled";
+                        request.contacts[0].contactInfo.phones[0].propertiesChanged = //"Number IsMessengerEnabled";
+                            String.Join(PropertyString.propertySeparator,
+                            new string[] { PropertyString.Number, PropertyString.IsMessengerEnabled });
                         break;
                 }
 
@@ -1149,14 +1162,16 @@ namespace MSNPSharp
             // Comment
             if (abContactType.contactInfo.comment != contact.Comment)
             {
-                propertiesChanged.Add("Comment");
+                //propertiesChanged.Add("Comment");
+                propertiesChanged.Add(PropertyString.Comment);
                 request.contacts[0].contactInfo.comment = contact.Comment;
             }
 
             // DisplayName
             if (abContactType.contactInfo.displayName != contact.Name)
             {
-                propertiesChanged.Add("DisplayName");
+                //propertiesChanged.Add("DisplayName");
+                propertiesChanged.Add(PropertyString.DisplayName);
                 request.contacts[0].contactInfo.displayName = contact.Name;
             }
 
@@ -1183,7 +1198,8 @@ namespace MSNPSharp
 
             if (annotationsChanged.Count > 0)
             {
-                propertiesChanged.Add("Annotation");
+                //propertiesChanged.Add("Annotation");
+                propertiesChanged.Add(PropertyString.Annotation);
                 request.contacts[0].contactInfo.annotations = annotationsChanged.ToArray();
             }
 
@@ -1196,7 +1212,10 @@ namespace MSNPSharp
                         // IsMessengerUser
                         if (abContactType.contactInfo.isMessengerUser != contact.IsMessengerUser)
                         {
-                            propertiesChanged.Add("IsMessengerUser");
+                            //propertiesChanged.Add("IsMessengerUser");
+                            //propertiesChanged.Add("MessengerMemberInfo");  //I found WLM2009 add this.
+                            propertiesChanged.Add(PropertyString.IsMessengerUser);
+                            propertiesChanged.Add(PropertyString.MessengerMemberInfo);
                             request.contacts[0].contactInfo.isMessengerUser = contact.IsMessengerUser;
                             request.contacts[0].contactInfo.isMessengerUserSpecified = true;
                         }
@@ -1204,7 +1223,8 @@ namespace MSNPSharp
                         // ContactType
                         if (abContactType.contactInfo.contactType != contact.ContactType)
                         {
-                            propertiesChanged.Add("ContactType");
+                            //propertiesChanged.Add("ContactType");
+                            propertiesChanged.Add(PropertyString.ContactType);
                             request.contacts[0].contactInfo.contactType = contact.ContactType;
                         }
                     }
@@ -1218,11 +1238,12 @@ namespace MSNPSharp
                             {
                                 if (em.email.ToLowerInvariant() == contact.Mail.ToLowerInvariant() && em.isMessengerEnabled != contact.IsMessengerUser)
                                 {
-                                    propertiesChanged.Add("ContactEmail");
+                                    //propertiesChanged.Add("ContactEmail");
+                                    propertiesChanged.Add(PropertyString.ContactEmail);
                                     request.contacts[0].contactInfo.emails = new contactEmailType[] { new contactEmailType() };
                                     request.contacts[0].contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
                                     request.contacts[0].contactInfo.emails[0].isMessengerEnabled = contact.IsMessengerUser;
-                                    request.contacts[0].contactInfo.emails[0].propertiesChanged = "IsMessengerEnabled";
+                                    request.contacts[0].contactInfo.emails[0].propertiesChanged = PropertyString.IsMessengerEnabled; //"IsMessengerEnabled";
                                     break;
                                 }
                             }
@@ -1238,11 +1259,12 @@ namespace MSNPSharp
                             {
                                 if (ph.number == contact.Mail && ph.isMessengerEnabled != contact.IsMessengerUser)
                                 {
-                                    propertiesChanged.Add("ContactPhone");
+                                    //propertiesChanged.Add("ContactPhone");
+                                    propertiesChanged.Add(PropertyString.ContactPhone);
                                     request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
                                     request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
                                     request.contacts[0].contactInfo.phones[0].isMessengerEnabled = contact.IsMessengerUser;
-                                    request.contacts[0].contactInfo.phones[0].propertiesChanged = "IsMessengerEnabled";
+                                    request.contacts[0].contactInfo.phones[0].propertiesChanged = PropertyString.IsMessengerEnabled; //"IsMessengerEnabled";
                                     break;
                                 }
                             }
@@ -1266,7 +1288,7 @@ namespace MSNPSharp
                         OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateContact", e.Error));
                     }
                 };
-                request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+                request.contacts[0].propertiesChanged = String.Join(PropertyString.propertySeparator, propertiesChanged.ToArray());
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
@@ -1325,7 +1347,7 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo = new contactInfoType();
                 request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
-                request.contacts[0].propertiesChanged = "Annotation";
+                request.contacts[0].propertiesChanged = PropertyString.Annotation; //"Annotation";
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
@@ -1373,7 +1395,10 @@ namespace MSNPSharp
             }
 
             if (annos.Count > 0)
-                propertiesChanged.Add("Annotation");
+            {
+                //propertiesChanged.Add("Annotation");
+                propertiesChanged.Add(PropertyString.Annotation);
+            }
 
             // DisplayName
             //if (owner.Name != NSMessageHandler.ContactService.Deltas.Profile.DisplayName)
@@ -1408,7 +1433,7 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
                 //request.contacts[0].contactInfo.displayName = owner.Name;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
-                request.contacts[0].propertiesChanged = String.Join(" ", propertiesChanged.ToArray());
+                request.contacts[0].propertiesChanged = String.Join(PropertyString.propertySeparator, propertiesChanged.ToArray());
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
                 abService.ABContactUpdateAsync(request, new object());
@@ -1551,7 +1576,7 @@ namespace MSNPSharp
             request.abId = "00000000-0000-0000-0000-000000000000";
             request.groups = new GroupType[1] { new GroupType() };
             request.groups[0].groupId = group.Guid;
-            request.groups[0].propertiesChanged = "GroupName";
+            request.groups[0].propertiesChanged = PropertyString.GroupName; //"GroupName";
             request.groups[0].groupInfo = new groupInfoType();
             request.groups[0].groupInfo.name = newGroupName;
 
@@ -2008,7 +2033,7 @@ namespace MSNPSharp
 
                 try
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, webservice.GetType().ToString() + "is requesting a cachekey and preferred host for calling " + methodName);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, webservice.GetType().ToString() + " is requesting a cachekey and preferred host for calling " + methodName);
 
                     switch (keyType)
                     {
@@ -2057,10 +2082,13 @@ namespace MSNPSharp
                     }
                     catch (Exception exc)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occurs while getting CacheKey and Preferred host :\r\n" +
+                        Trace.WriteLineIf(
+                            Settings.TraceSwitch.TraceError,
+                            "An error occured while getting CacheKey and Preferred host:\r\n" +
                             "Service:    " + webservice.GetType().ToString() + "\r\n" +
                             "MethodName: " + methodName + "\r\n" +
                             "Message:    " + exc.Message);
+
                         PreferredHosts[param.GetType().ToString()] = originalHost; //If there's an error, we must set the host back to its original value.
                     }
                 }

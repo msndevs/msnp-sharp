@@ -861,4 +861,22 @@ namespace MSNPSharp
         public const string CommunityQuestionAnswer = "CommunityQuestionAnswer";
     }
 
+    public static class PropertyString
+    {
+        public const string propertySeparator = " ";
+        public const string Email = "Email";
+        public const string IsMessengerEnabled = "IsMessengerEnabled";
+        public const string Capability = "Capability";
+        public const string Number = "Number";
+        public const string Comment = "Comment";
+        public const string DisplayName = "DisplayName";
+        public const string Annotation = "Annotation";
+        public const string IsMessengerUser = "IsMessengerUser";
+        public const string MessengerMemberInfo = "MessengerMemberInfo";
+        public const string ContactType = "ContactType";
+        public const string ContactEmail = "ContactEmail";
+        public const string ContactPhone = "ContactPhone";
+        public const string GroupName = "GroupName";
+    }
+
 };
