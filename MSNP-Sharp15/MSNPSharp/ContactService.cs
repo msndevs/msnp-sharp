@@ -290,10 +290,18 @@ namespace MSNPSharp
 
             AddressBook.Synchronize(Deltas);
 
+            if (AddressBook.MembershipLastChange == DateTime.MinValue)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+            }
             msRequest(
                 "Initial",
                 delegate
                 {
+                    if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                    }
                     abRequest("Initial",
                         delegate
                         {
@@ -514,7 +522,6 @@ namespace MSNPSharp
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "FindMembership", request);
                 sharingService.FindMembershipAsync(request, partnerScenario);
-
             }
         }
 
@@ -2038,7 +2045,7 @@ namespace MSNPSharp
 
                 try
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, webservice.GetType().ToString() + "is requesting a cachekey and preferred host for calling " + methodName);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, webservice.GetType().ToString() + " is requesting a cachekey and preferred host for calling " + methodName);
 
                     switch (keyType)
                     {
@@ -2087,10 +2094,13 @@ namespace MSNPSharp
                     }
                     catch (Exception exc)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occurs while getting CacheKey and Preferred host :\r\n" +
+                        Trace.WriteLineIf(
+                            Settings.TraceSwitch.TraceError,
+                            "An error occured while getting CacheKey and Preferred host:\r\n" +
                             "Service:    " + webservice.GetType().ToString() + "\r\n" +
                             "MethodName: " + methodName + "\r\n" +
                             "Message:    " + exc.Message);
+
                         PreferredHosts[param.GetType().ToString()] = originalHost; //If there's an error, we must set the host back to its original value.
                     }
                 }
