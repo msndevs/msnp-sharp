@@ -757,8 +757,17 @@ namespace MSNPSharpClient
             // You can set proxy settings here
             // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
 
-            // uncomment this to enable verbose output for debugging
+
+            // ******* Listen traces *****
+            Trace.Listeners.Add(new ConsoleTraceListener());
+
+#if DEBUG || MSNP18
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
+#elif TRACE
+            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Info;
+#else
+            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Warning;
+#endif
 
             // set the events that we will handle
             // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
@@ -812,7 +821,7 @@ namespace MSNPSharpClient
 
         void ServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Method + ": " + e.Exception.ToString(), e.GetType().Name); 
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Method + ": " + e.Exception.ToString(), sender.GetType().Name); 
         }
 
         void ContactService_SynchronizationCompleted(object sender, EventArgs e)
