@@ -763,7 +763,15 @@ using System.Text.RegularExpressions;
                 string policy = (string)message.CommandValues[3];
                 string nonce = (string)message.CommandValues[4];
 
-                SingleSignOnManager.Authenticate(this, policy);
+                try
+                {
+                    SingleSignOnManager.Authenticate(this, policy);
+                }
+                catch (Exception exception)
+                {
+                    OnAuthenticationErrorOccurred(new ExceptionEventArgs(exception));
+                    return;
+                }
 
                 MBI mbi = new MBI();
                 string response =
