@@ -1316,7 +1316,7 @@ namespace MSNPSharpClient
 
         private void Nameserver_AuthenticationError(object sender, ExceptionEventArgs e)
         {
-            MessageBox.Show("Authentication failed, check your account or password.", "Authentication failed");
+            MessageBox.Show("Authentication failed, check your account or password.", e.Exception.InnerException.Message);
             SetStatus("Authentication failed");
         }
 
