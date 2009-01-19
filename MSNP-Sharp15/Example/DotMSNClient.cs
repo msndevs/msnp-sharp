@@ -759,7 +759,8 @@ namespace MSNPSharpClient
 
 
             // ******* Listen traces *****
-            Trace.Listeners.Add(new ConsoleTraceListener());
+            TraceForm traceform = new TraceForm();
+            traceform.Show();
 
 #if DEBUG || MSNP18
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
