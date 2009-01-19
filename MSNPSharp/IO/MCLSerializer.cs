@@ -159,16 +159,16 @@ namespace MSNPSharp.IO
 
         private void SaveToHiddenMCL(string filename)
         {
-            if (Settings.NoSave)
-                return;
-
-            XmlSerializer ser = new XmlSerializer(this.GetType());
-            MemoryStream ms = new MemoryStream();
-            ser.Serialize(ms, this);
-            MCLFile file = MCLFileManager.GetFile(filename, noCompress);
-            file.Content = ms.ToArray();
-            MCLFileManager.Save(file, true);
-            ms.Close();
+            if (!Settings.NoSave)
+            {
+                XmlSerializer ser = new XmlSerializer(this.GetType());
+                MemoryStream ms = new MemoryStream();
+                ser.Serialize(ms, this);
+                MCLFile file = MCLFileManager.GetFile(filename, noCompress);
+                file.Content = ms.ToArray();
+                file.SaveAndHide(filename);
+                ms.Close();
+            }
         }
 
         #endregion

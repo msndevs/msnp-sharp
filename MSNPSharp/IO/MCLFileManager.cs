@@ -96,14 +96,11 @@ namespace MSNPSharp.IO
     }
 
     /// <summary>
-    /// A caching file system..
+    /// A caching file system to open files.
     /// </summary>
     public static class MCLFileManager
     {
         private static Dictionary<string, MCLInfo> storage = new Dictionary<string, MCLInfo>(0);
-
-        private static bool hiddenSave;
-        private static Timer timer;
         private static object syncObject;
 
         private static object SyncObject
@@ -115,58 +112,7 @@ namespace MSNPSharp.IO
                     object newobj = new object();
                     Interlocked.CompareExchange(ref syncObject, newobj, null);
                 }
-
                 return syncObject;
-            }
-        }
-
-        public static void Save(MCLFile file, bool hiddensave)
-        {
-            hiddenSave = hiddensave;
-
-            if (timer == null)
-            {
-                lock (SyncObject)
-                {
-                    if (timer == null)
-                    {
-                        timer = new Timer(new TimerCallback(SaveImpl));
-                        timer.Change(1000, Timeout.Infinite); //Prevent user call this in a heigh frequency
-                    }
-                }
-            }
-
-            storage[file.FileName.ToLowerInvariant()] = new MCLInfo(file);
-        }
-
-        private static void SaveImpl(object state)
-        {
-            if (storage.Count != 0)
-            {
-                lock (SyncObject)
-                {
-                    try
-                    {
-                        foreach (MCLInfo mclinfo in storage.Values)
-                        {
-                            if (hiddenSave)
-                                mclinfo.File.SaveAndHide();
-                            else
-                                mclinfo.File.Save();
-                        }
-
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, storage.Count + " MCL file(s) saved.", typeof(MCLFileManager).Name);
-                    }
-                    catch (Exception exception)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, exception.Message, typeof(MCLFileManager).Name);
-                    }
-                    finally
-                    {
-                        ((Timer)state).Dispose();
-                        timer = null;
-                    }
-                }
             }
         }
 
