@@ -47,9 +47,9 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNABSharingService;
 
     /// <summary>
-    /// Provide webservice operations for contacts
+    /// Provide webservice operations for contacts. This class cannot be inherited.
     /// </summary>
-    public class ContactService : MSNService
+    public sealed class ContactService : MSNService
     {
         #region Fields
 
@@ -118,7 +118,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ReverseRemoved"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal virtual void OnReverseRemoved(ContactEventArgs e)
+        internal void OnReverseRemoved(ContactEventArgs e)
         {
             if (ReverseRemoved != null)
                 ReverseRemoved(this, e);
@@ -128,7 +128,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ReverseAdded"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal virtual void OnReverseAdded(ContactEventArgs e)
+        internal void OnReverseAdded(ContactEventArgs e)
         {
             if (ReverseAdded != null)
                 ReverseAdded(this, e);
@@ -138,7 +138,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ContactAdded"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal virtual void OnContactAdded(ListMutateEventArgs e)
+        internal void OnContactAdded(ListMutateEventArgs e)
         {
             if (ContactAdded != null)
             {
@@ -150,7 +150,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ContactRemoved"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal virtual void OnContactRemoved(ListMutateEventArgs e)
+        internal void OnContactRemoved(ListMutateEventArgs e)
         {
             if (ContactRemoved != null)
             {
@@ -162,7 +162,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ContactGroupAdded"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal virtual void OnContactGroupAdded(ContactGroupEventArgs e)
+        internal void OnContactGroupAdded(ContactGroupEventArgs e)
         {
             if (ContactGroupAdded != null)
             {
@@ -174,7 +174,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ContactGroupRemoved"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal virtual void OnContactGroupRemoved(ContactGroupEventArgs e)
+        internal void OnContactGroupRemoved(ContactGroupEventArgs e)
         {
             if (ContactGroupRemoved != null)
             {
@@ -187,7 +187,7 @@ namespace MSNPSharp
         /// Fires the <see cref="SynchronizationCompleted"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal virtual void OnSynchronizationCompleted(EventArgs e)
+        internal void OnSynchronizationCompleted(EventArgs e)
         {
             if (SynchronizationCompleted != null)
                 SynchronizationCompleted(this, e);
@@ -290,7 +290,7 @@ namespace MSNPSharp
 
             AddressBook.Synchronize(Deltas);
 
-            if (AddressBook.MembershipLastChange == DateTime.MinValue)
+            if (AddressBook.AddressbookLastChange == DateTime.MinValue)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
             }
@@ -1031,7 +1031,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="account">An account, email address or phone number, to add</param>
         /// <remarks>The phone format is +CC1234567890, CC is Country Code</remarks>
-        public virtual void AddNewContact(string account)
+        public void AddNewContact(string account)
         {
             long test;
             if (long.TryParse(account, out test) || (account.StartsWith("+") && long.TryParse(account.Substring(1), out test)))
@@ -1105,7 +1105,7 @@ namespace MSNPSharp
         /// Note that remote contacts that are allowed/blocked remain allowed/blocked.
         /// </summary>
         /// <param name="contact">Contact to remove</param>
-        public virtual void RemoveContact(Contact contact)
+        public void RemoveContact(Contact contact)
         {
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
@@ -1307,8 +1307,11 @@ namespace MSNPSharp
 
         internal void UpdateMe()
         {
-            UpdatePrivacySettings();
-            UpdateGeneralDialogSettings();
+            if (NSMessageHandler.AutoSynchronize)
+            {
+                UpdatePrivacySettings();
+                UpdateGeneralDialogSettings();
+            }
         }
 
         private void UpdateGeneralDialogSettings()
@@ -1458,7 +1461,7 @@ namespace MSNPSharp
         /// Send a request to the server to add a new contactgroup.
         /// </summary>
         /// <param name="groupName">The name of the group to add</param>
-        internal virtual void AddContactGroup(string groupName)
+        public void AddContactGroup(string groupName)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1507,7 +1510,7 @@ namespace MSNPSharp
         /// Send a request to the server to remove a contactgroup. Any contacts in the group will also be removed from the forward list.
         /// </summary>
         /// <param name="contactGroup">The group to remove</param>
-        internal virtual void RemoveContactGroup(ContactGroup contactGroup)
+        public void RemoveContactGroup(ContactGroup contactGroup)
         {
             foreach (Contact cnt in NSMessageHandler.ContactList.All)
             {
@@ -1557,7 +1560,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="group">The contactgroup which name will be set</param>
         /// <param name="newGroupName">The new name</param>
-        public virtual void RenameGroup(ContactGroup group, string newGroupName)
+        public void RenameGroup(ContactGroup group, string newGroupName)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1598,7 +1601,7 @@ namespace MSNPSharp
 
         #region AddContactToGroup & RemoveContactFromGroup
 
-        public virtual void AddContactToGroup(Contact contact, ContactGroup group)
+        public void AddContactToGroup(Contact contact, ContactGroup group)
         {
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
@@ -1637,7 +1640,7 @@ namespace MSNPSharp
             abService.ABGroupContactAddAsync(request, new object());
         }
 
-        public virtual void RemoveContactFromGroup(Contact contact, ContactGroup group)
+        public void RemoveContactFromGroup(Contact contact, ContactGroup group)
         {
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
@@ -1685,7 +1688,7 @@ namespace MSNPSharp
         /// <param name="contact">The affected contact</param>
         /// <param name="list">The list to place the contact in</param>
         /// <param name="onSuccess"></param>
-        internal virtual void AddContactToList(Contact contact, MSNLists list, EventHandler onSuccess)
+        internal void AddContactToList(Contact contact, MSNLists list, EventHandler onSuccess)
         {
             if (list == MSNLists.PendingList) //this causes disconnect 
                 return;
@@ -1803,7 +1806,7 @@ namespace MSNPSharp
         /// <param name="contact">The affected contact</param>
         /// <param name="list">The list to remove the contact from</param>
         /// <param name="onSuccess"></param>
-        internal virtual void RemoveContactFromList(Contact contact, MSNLists list, EventHandler onSuccess)
+        internal void RemoveContactFromList(Contact contact, MSNLists list, EventHandler onSuccess)
         {
             if (list == MSNLists.ReverseList) //this causes disconnect
                 return;
@@ -1920,7 +1923,7 @@ namespace MSNPSharp
         /// will be placed in your block list and removed from your allowed list.
         /// </summary>
         /// <param name="contact">Contact to block</param>
-        public virtual void BlockContact(Contact contact)
+        public void BlockContact(Contact contact)
         {
             if (contact.OnAllowedList)
             {
@@ -1951,7 +1954,7 @@ namespace MSNPSharp
         /// will be removed from your blocked list and placed in your allowed list.
         /// </summary>
         /// <param name="contact">Contact to unblock</param>
-        public virtual void UnBlockContact(Contact contact)
+        public void UnBlockContact(Contact contact)
         {
             if (contact.OnBlockedList)
             {
@@ -1985,7 +1988,7 @@ namespace MSNPSharp
         /// <summary>
         /// Delete the record file that contains the contactlist of owner.
         /// </summary>
-        public virtual void DeleteRecordFile()
+        public void DeleteRecordFile()
         {
             if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Mail != null)
             {
@@ -2132,7 +2135,7 @@ namespace MSNPSharp
 
         #endregion
 
-        public virtual string GetMemberRole(MSNLists list)
+        public string GetMemberRole(MSNLists list)
         {
             switch (list)
             {
@@ -2151,8 +2154,7 @@ namespace MSNPSharp
             return MemberRole.ProfilePersonalContact;
         }
 
-
-        public virtual MSNLists GetMSNList(string memberRole)
+        public MSNLists GetMSNList(string memberRole)
         {
             switch (memberRole)
             {
@@ -2178,5 +2180,5 @@ namespace MSNPSharp
             AddressBook = null;
             Deltas = null;
         }
-    };
+    }
 };
