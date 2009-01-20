@@ -81,6 +81,11 @@ namespace MSNPSharpClient
                         StringBuilder copybuffer = new StringBuilder(buffer.ToString());
                         richTextBox.Invoke(new WriteHandler(OutPut), new object[] { copybuffer, richTextBox });
                     }
+                    else
+                    {
+                        OutPut(buffer, richTextBox);
+                    }
+
                     buffer.Remove(0, buffer.Length);
                 }
             }
