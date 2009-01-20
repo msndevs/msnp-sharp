@@ -28,6 +28,25 @@ namespace MSNPSharpClient
         {
             Trace.Listeners.Remove(rtbTraceListener);
         }
+
+        private void tsbClear_Click(object sender, EventArgs e)
+        {
+            rtbTrace.Clear();
+        }
+
+        private void tsbStop_Click(object sender, EventArgs e)
+        {
+            rtbTraceListener.Stop();
+            tsbStart.Enabled = true;
+            tsbStop.Enabled = false;
+        }
+
+        private void tsbStart_Click(object sender, EventArgs e)
+        {
+            rtbTraceListener.Resume();
+            tsbStart.Enabled = false;
+            tsbStop.Enabled = true;
+        }
     }
     
     
@@ -78,6 +97,8 @@ namespace MSNPSharpClient
     {
         // Fields
         private TraceWriter writer = null;
+        private object syncObject = new object();
+        private bool stop = false;
 
         // Methods
         public RichTextBoxTraceListener()
@@ -105,8 +126,11 @@ namespace MSNPSharpClient
 
         private bool EnsureWriter()
         {
-            if (writer == null) return false;
-            return true;
+            lock (syncObject)
+            {
+                if (writer == null || stop == true) return false;
+                return true;
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -150,6 +174,22 @@ namespace MSNPSharpClient
             }
             this.writer.WriteLine(message);
             base.NeedIndent = true;
+        }
+
+        public void Stop()
+        {
+            lock (syncObject)
+            {
+                stop = true;
+            }
+        }
+
+        public void Resume()
+        {
+            lock (syncObject)
+            {
+                stop = false;
+            }
         }
 
         // Properties
