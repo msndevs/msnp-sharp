@@ -1872,14 +1872,7 @@ namespace MSNPSharp
             deleteMemberRequest.serviceHandle = new HandleType();
 
             Service messengerService = AddressBook.GetTargetService(ServiceFilterType.Messenger);
-            if (list == MSNLists.PendingList)
-            {
-                deleteMemberRequest.serviceHandle.Id = "0"; //Always set to 0 for Pending
-            }
-            else
-            {
-                deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();
-            }
+            deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();   //Always set to 0 ??
             deleteMemberRequest.serviceHandle.Type = messengerService.ServiceType;
 
             Membership memberShip = new Membership();
