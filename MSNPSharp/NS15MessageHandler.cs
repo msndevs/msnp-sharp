@@ -42,11 +42,11 @@ using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-using System.Text.RegularExpressions;
 
     /// <summary>
     /// Handles the protocol messages from the notification server.
@@ -539,7 +539,11 @@ using System.Text.RegularExpressions;
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+            if (owner.PassportVerified)
+            {
+                MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+            }
+
             if (AutoSynchronize)
             {
                 StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
