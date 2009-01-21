@@ -566,7 +566,10 @@ namespace MSNPSharp
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+            if (owner.PassportVerified)
+            {
+                MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+            }
 
             StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
