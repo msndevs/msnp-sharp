@@ -662,8 +662,7 @@ namespace MSNPSharp.IO
 
                                 if (contact != null)
                                 {
-                                    contact.OnForwardList = false;
-
+                                    contact.RemoveFromList(MSNLists.ForwardList);
                                     xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
 
                                     contact.Guid = Guid.Empty;
@@ -781,7 +780,6 @@ namespace MSNPSharp.IO
                                 if (contact != null)
                                 {
                                     contact.RemoveFromList(MSNLists.ForwardList);
-
                                     xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
 
                                     contact.Guid = Guid.Empty;
