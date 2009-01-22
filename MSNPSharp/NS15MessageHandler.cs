@@ -716,7 +716,7 @@ namespace MSNPSharp
             // send client information back
             MessageProcessor.SendMessage(new NSMessage("CVR",
                 new string[] { 
-                    "0x040c", /*"0x" + CultureInfo.CurrentCulture.LCID.ToString("x4"), */
+                    "0x040c", /*"0x" + CultureInfo.CurrentCulture.LCID.ToString("x4"), */  //The LCIDs in .net framework are different from Windows API.
                     "winnt", 
                     "5.1", 
                     "i386", 
