@@ -79,7 +79,7 @@ namespace MSNPSharpClient
                     if (richTextBox.InvokeRequired)
                     {
                         StringBuilder copybuffer = new StringBuilder(buffer.ToString());
-                        richTextBox.Invoke(new WriteHandler(OutPut), new object[] { copybuffer, richTextBox });
+                        richTextBox.BeginInvoke(new WriteHandler(OutPut), new object[] { copybuffer, richTextBox });
                     }
                     else
                     {
