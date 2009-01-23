@@ -496,21 +496,32 @@ namespace MSNPSharp
         /// <param name="callbackDevice"></param>
         public virtual void SendMobileMessage(Contact receiver, string text, string callbackNumber, string callbackDevice)
         {
-            if (receiver.MobileAccess == false)
-                throw new MSNPSharpException("A direct message can not be send. The specified contact has no mobile device enabled.");
+            if (receiver.MobileAccess || receiver.ClientType == ClientType.PhoneMember)
+            {
+#if MSNP18
+                string payload = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=iso-8859-1\r\nDest-Agent: mobile\r\n\r\n" + text;
+                NSPayLoadMessage nsMessage = new NSPayLoadMessage("UUM", new string[] { "tel:" + receiver.Mail, ((int)receiver.ClientType).ToString(), "1" }, payload);
+                MessageProcessor.SendMessage(nsMessage);
+#else
+                // create a body message
+                MobileMessage bodyMessage = new MobileMessage();
+                bodyMessage.CallbackDeviceName = callbackDevice;
+                bodyMessage.CallbackNumber = callbackNumber;
+                bodyMessage.Receiver = receiver.Mail;
+                bodyMessage.Text = text;
 
-            // create a body message
-            MobileMessage bodyMessage = new MobileMessage();
-            bodyMessage.CallbackDeviceName = callbackDevice;
-            bodyMessage.CallbackNumber = callbackNumber;
-            bodyMessage.Receiver = receiver.Mail;
-            bodyMessage.Text = text;
+                // create a NSPayLoadMessage to transport it
+                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { receiver.Mail, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
 
-            // create a NSPayLoadMessage to transport it
-            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { receiver.Mail, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
+                // and send it
+                MessageProcessor.SendMessage(nsMessage);
 
-            // and send it
-            MessageProcessor.SendMessage(nsMessage);
+#endif
+            }
+            else
+            {
+                throw new MSNPSharpException("The specified contact has no mobile device enabled nor phone member.");
+            }
         }
 
 
