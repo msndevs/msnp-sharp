@@ -632,6 +632,10 @@ namespace MSNPSharp
         /// </summary>
         CommandDisabled = 502,
         /// <summary>
+        /// Ups failure
+        /// </summary>
+        UpsFailure = 509,
+        /// <summary>
         /// File operation failed. 
         /// </summary>
         FileOperationFailed = 510,
