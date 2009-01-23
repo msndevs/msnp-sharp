@@ -512,7 +512,8 @@ namespace MSNPSharp
                 bodyMessage.Text = text;
 
                 // create a NSPayLoadMessage to transport it
-                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { receiver.Mail, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
+                string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
+                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { to, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
 
                 // and send it
                 MessageProcessor.SendMessage(nsMessage);
