@@ -1497,8 +1497,7 @@ namespace MSNPSharpClient
             Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
             this.propertyGrid.SelectedObject = selectedContact;
 
-            // open a dialog box to select the file
-            if (selectedContact.Online == false && selectedContact.MobileAccess == true)
+            if (selectedContact.MobileAccess || selectedContact.ClientType == ClientType.PhoneMember)
             {
                 messenger.Nameserver.SendMobileMessage(selectedContact, "MSNP mobile message");
             }
