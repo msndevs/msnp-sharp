@@ -499,8 +499,9 @@ namespace MSNPSharp
             if (receiver.MobileAccess || receiver.ClientType == ClientType.PhoneMember)
             {
 #if MSNP18
+                string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
                 string payload = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=iso-8859-1\r\nDest-Agent: mobile\r\n\r\n" + text;
-                NSPayLoadMessage nsMessage = new NSPayLoadMessage("UUM", new string[] { "tel:" + receiver.Mail, ((int)receiver.ClientType).ToString(), "1" }, payload);
+                NSPayLoadMessage nsMessage = new NSPayLoadMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" }, payload);
                 MessageProcessor.SendMessage(nsMessage);
 #else
                 // create a body message
