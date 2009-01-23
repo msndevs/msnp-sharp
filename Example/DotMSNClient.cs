@@ -419,7 +419,7 @@ namespace MSNPSharpClient
             // comboPlaces
             // 
             this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboPlaces.DropDownWidth = 155;
+            this.comboPlaces.DropDownWidth = 170;
             this.comboPlaces.FormattingEnabled = true;
             this.comboPlaces.Location = new System.Drawing.Point(134, 53);
             this.comboPlaces.Name = "comboPlaces";
@@ -1080,7 +1080,14 @@ namespace MSNPSharpClient
                 }
                 else
                 {
-                    messenger.Owner.SignoutFrom(place);
+                    foreach (KeyValuePair<Guid, string> keyvalue in messenger.Owner.Places)
+                    {
+                        if (keyvalue.Value == place)
+                        {
+                            messenger.Owner.SignoutFrom(keyvalue.Key);
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -1098,14 +1105,16 @@ namespace MSNPSharpClient
                 comboPlaces.BeginUpdate();
                 comboPlaces.Items.Clear();
                 comboPlaces.Items.Add("(" + messenger.Owner.Places.Count + ") Places");
-                comboPlaces.Items.Add("Signout from here");
-                foreach (string ep in messenger.Owner.Places.Keys)
+                comboPlaces.Items.Add("Signout from here (" + messenger.Owner.EpName + ")");
+
+                foreach (KeyValuePair<Guid, string> keyvalue in messenger.Owner.Places)
                 {
-                    if (ep != messenger.Owner.EpName)
+                    if (keyvalue.Key != NSMessageHandler.MachineGuid)
                     {
-                        comboPlaces.Items.Add("Signout from " + ep);
+                        comboPlaces.Items.Add("Signout from " + keyvalue.Value);
                     }
                 }
+
                 comboPlaces.Items.Add("Signout from everywhere");
                 comboPlaces.SelectedIndex = 0;
                 comboPlaces.Visible = true;

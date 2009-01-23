@@ -890,13 +890,13 @@ namespace MSNPSharp
 
                 if (privateendpoints.Count > 0)
                 {
-                    Dictionary<string, Guid> newPlaces = new Dictionary<string, Guid>(privateendpoints.Count);
+                    Dictionary<Guid, string> newPlaces = new Dictionary<Guid, string>(privateendpoints.Count);
                     foreach (XmlNode pepdNode in privateendpoints)
                     {
                         string id = pepdNode.Attributes["id"].Value;
                         string epname = pepdNode["EpName"].InnerText;
 
-                        newPlaces[epname] = new Guid(id);
+                        newPlaces[new Guid(id)] = epname;
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
                     }

@@ -45,7 +45,7 @@ namespace MSNPSharp
     [Serializable]
     public class Owner : Contact
     {
-        private Dictionary<string, Guid> places = new Dictionary<string, Guid>(0);
+        private Dictionary<Guid, string> places = new Dictionary<Guid, string>();
         private string epName = Environment.MachineName;
 
         private bool passportVerified;
@@ -97,12 +97,15 @@ namespace MSNPSharp
             }
             set
             {
-                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                    "<PrivateEndpointData>" +
-                    "<EpName>" + value + "</EpName>" +
-                    "<Idle>" + ((Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
-                    "<State>" + NSMessageHandler.ParseStatus(Status) + "</State>" +
-                    "</PrivateEndpointData>"));
+                if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline)
+                {
+                    NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
+                        "<PrivateEndpointData>" +
+                        "<EpName>" + value + "</EpName>" +
+                        "<Idle>" + ((Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
+                        "<State>" + NSMessageHandler.ParseStatus(Status) + "</State>" +
+                        "</PrivateEndpointData>"));
+                }
 
                 epName = value;
             }
@@ -111,7 +114,7 @@ namespace MSNPSharp
         /// <summary>
         /// The end points.
         /// </summary>
-        public Dictionary<string, Guid> Places
+        public Dictionary<Guid, string> Places
         {
             get
             {
@@ -136,19 +139,19 @@ namespace MSNPSharp
         /// <summary>
         /// Sign the owner out from the specificed place.
         /// </summary>
-        /// <param name="place">The place name to be signed out</param>
-        public void SignoutFrom(string place)
+        /// <param name="place">The place guid to be signed out</param>
+        public void SignoutFrom(Guid place)
         {
-            if (place == EpName)
-            {
-                Status = PresenceStatus.Offline;
-            }
-            else if (Places.ContainsKey(place))
+            if (Places.ContainsKey(place))
             {
                 NSMessageHandler.MessageProcessor.SendMessage(
                     new NSPayLoadMessage("UUN",
-                    new string[] { Mail + ";" + Places[place], "4" },
+                    new string[] { Mail + ";" + place, "4" },
                     "goawyplzthxbye"));
+            }
+            else
+            {
+                Status = PresenceStatus.Offline;
             }
         }
 
