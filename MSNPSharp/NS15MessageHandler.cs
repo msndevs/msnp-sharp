@@ -453,21 +453,24 @@ namespace MSNPSharp
         /// <param name="callbackDevice"></param>
         public virtual void SendMobileMessage(Contact receiver, string text, string callbackNumber, string callbackDevice)
         {
-            if (receiver.MobileAccess == false)
-                throw new MSNPSharpException("A direct message can not be send. The specified contact has no mobile device enabled.");
+            if (receiver.MobileAccess || receiver.ClientType == ClientType.PhoneMember)
+            {
+                // create a body message
+                MobileMessage bodyMessage = new MobileMessage();
+                bodyMessage.CallbackDeviceName = callbackDevice;
+                bodyMessage.CallbackNumber = callbackNumber;
+                bodyMessage.Receiver = receiver.Mail;
+                bodyMessage.Text = text;
 
-            // create a body message
-            MobileMessage bodyMessage = new MobileMessage();
-            bodyMessage.CallbackDeviceName = callbackDevice;
-            bodyMessage.CallbackNumber = callbackNumber;
-            bodyMessage.Receiver = receiver.Mail;
-            bodyMessage.Text = text;
+                // create a NSPayLoadMessage to transport it
+                string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
+                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { to, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
 
-            // create a NSPayLoadMessage to transport it
-            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { receiver.Mail, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
-
-            // and send it
-            MessageProcessor.SendMessage(nsMessage);
+                // and send it
+                MessageProcessor.SendMessage(nsMessage);
+            }
+            else
+                throw new MSNPSharpException("The specified contact has no mobile device enabled.");
         }
 
 
