@@ -1657,7 +1657,7 @@ namespace MSNPSharpClient
             this.propertyGrid.SelectedObject = selectedContact;
 
             // open a dialog box to select the file
-            if (selectedContact.Online == false && selectedContact.MobileAccess == true)
+            if (selectedContact.Online == false && (selectedContact.MobileAccess || selectedContact.ClientType == ClientType.PhoneMember))
             {
                 messenger.Nameserver.SendMobileMessage(selectedContact, "MSNP mobile message");
             }
