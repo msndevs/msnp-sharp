@@ -794,8 +794,11 @@ namespace MSNPSharp
                 string response =
                     MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
                     mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
-
+#if MSNP18
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
+#else
+                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
+#endif
             }
             else if ((string)message.CommandValues[1] == "OK")
             {

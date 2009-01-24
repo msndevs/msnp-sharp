@@ -539,7 +539,7 @@ namespace MSNPSharp.DataTransfer
             MSGMessage msgWrapper = new MSGMessage();
             msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
 #if MSNP18
-            msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
+            //msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
 #endif
             msgWrapper.MimeHeader["Content-Type"] = "application/x-msnmsgrp2p";
             msgWrapper.InnerMessage = networkMessage;
