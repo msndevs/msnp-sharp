@@ -631,7 +631,7 @@ namespace MSNPSharp
                 abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
                 {
                     abService = sender as ABServiceBinding;
-                    handleServiceHeader(abService.ServiceHeaderValue, true);
+                    handleServiceHeader(abService.ServiceHeaderValue, request.GetType());
                     string abpartnerScenario = e.UserState.ToString();
 
                     if (!e.Cancelled)
@@ -666,7 +666,7 @@ namespace MSNPSharp
                     }
                 };
 
-                GetCacheKeyAndPreferredHost(abService, "ABFindAll", request);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindAll", request);
                 abService.ABFindAllAsync(request, partnerScenario);
             }
         }

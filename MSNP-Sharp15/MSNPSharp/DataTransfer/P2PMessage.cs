@@ -95,7 +95,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Footer for a filetransfer p2pMessage.
         /// </summary>
-        FileTransFooter = 0x1
+        FileTransFooter = 0x1,
 
         /// <summary>
         /// Footer for a msn CustomEmoticon p2pMessage.
