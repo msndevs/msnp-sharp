@@ -71,7 +71,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         MSNObjectData = 0x01000020,
         
-#if MSNP18
+#if MSNC9
         /// <summary>
         /// Footer for a msn DisplayImage p2pMessage.
         /// </summary>
@@ -128,7 +128,7 @@ namespace MSNPSharp.DataTransfer
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
         
-#if MSNP18
+#if MSNC9
         /// <summary>
         /// The AppID used in invitations for DisplayImage p2p transfer.
         /// </summary>
