@@ -574,7 +574,7 @@ namespace MSNPSharp.DataTransfer
         private void Switchboard_ContactJoined(object sender, ContactEventArgs e)
         {
             SBMessageHandler handler = (SBMessageHandler)sender;
-#if MSNP18
+#if MSNC9
             if (handler.Contacts.Count > 2) //MSNP18: owner in the switchboard, so there're 2 contacts.
 #else
             if (handler.Contacts.Count > 1)
@@ -593,7 +593,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-#if MSNP18
+#if MSNC9
             if (handler.Contacts.Count == 2)  //MSNP18: owner in the switchboard, so there're 2 contacts.
 #else
             if (handler.Contacts.Count == 1)

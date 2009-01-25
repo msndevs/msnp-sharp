@@ -373,7 +373,7 @@ namespace MSNPSharp.DataTransfer
 
             // check if it is a content message
             // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
-#if MSNP18
+#if MSNC9
             if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0 &&
                ((p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.DisplayImageFooter) ||  //DisplayImage
                (p2pMessage.Flags == (uint)P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter) ||       //File
