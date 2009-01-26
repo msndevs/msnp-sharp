@@ -1310,7 +1310,9 @@ namespace MSNPSharp
             if (NSMessageHandler.AutoSynchronize)
             {
                 UpdatePrivacySettings();
+#if MSNP18
                 UpdateGeneralDialogSettings();
+#endif
             }
         }
 
