@@ -203,6 +203,7 @@ namespace MSNPSharp.Core
                            (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||     // ADL Add List command
                            (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L') ||     // RML Remove List command
                            (cmd[0] == 'F' && cmd[1] == 'Q' && cmd[2] == 'Y') ||     // FQY Forward QuerY command
+                           (cmd[0] == '2' && cmd[1] == '4' && cmd[2] == '1') ||     // 241 ADL/RML error
                            (cmd[0] == '5' && cmd[1] == '0' && cmd[2] == '9'))       // 509 Payload error
                         {
                             bufferStream.Seek(-3, SeekOrigin.End);
