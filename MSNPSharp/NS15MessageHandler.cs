@@ -687,19 +687,37 @@ namespace MSNPSharp
         /// <param name="sender"></param>
         protected virtual void OnProcessorConnectCallback(IMessageProcessor sender)
         {
-            SendInitialMessage();
-        }
+            // Check for valid credentials
+            if (Credentials == null)
+                throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
-        /// <summary>
-        /// Send the first message to the server. This is usually the VER command.
-        /// </summary>
-        protected virtual void SendInitialMessage()
-        {
+            // VER: MSN Protocol used
 #if MSNP16
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16", "MSNP15", "CVR0" }));
 #else
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
 #endif
+            // CVR: Send client information back
+            MessageProcessor.SendMessage(new NSMessage("CVR",
+                new string[] { 
+                    "0x040c", /*"0x" + CultureInfo.CurrentCulture.LCID.ToString("x4"), */  //The LCIDs in .net framework are different from Windows API.
+                    "winnt", 
+                    "5.1", 
+                    "i386", 
+                    Properties.Resources.MessengerClientName, 
+                    Properties.Resources.MessengerClientBuildVer, 
+                    Properties.Resources.MessengerClientBrand, 
+                    Credentials.Account }));
+
+            // USR: Begin login procedure
+            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
+        }
+
+        /// <summary>
+        /// Send the first message to the server.
+        /// </summary>
+        protected virtual void SendInitialMessage()
+        {
         }
 
         /// <summary>
@@ -711,22 +729,7 @@ namespace MSNPSharp
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnVERReceived(NSMessage message)
-        {
-            // check for valid credentials
-            if (Credentials == null)
-                throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
-
-            // send client information back
-            MessageProcessor.SendMessage(new NSMessage("CVR",
-                new string[] { 
-                    "0x040c", /*"0x" + CultureInfo.CurrentCulture.LCID.ToString("x4"), */  //The LCIDs in .net framework are different from Windows API.
-                    "winnt", 
-                    "5.1", 
-                    "i386", 
-                    Properties.Resources.MessengerClientName, 
-                    Properties.Resources.MessengerClientBuildVer, 
-                    Properties.Resources.MessengerClientBrand, 
-                    Credentials.Account }));
+        {            
         }
 
         /// <summary>
@@ -739,7 +742,6 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnCVRReceived(NSMessage message)
         {
-            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
         internal MSNTicket MSNTicket
@@ -784,12 +786,11 @@ namespace MSNPSharp
                 string response =
                     MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
                     mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
-
-                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response
 #if MSNP16
-         , MachineGuid.ToString("B")
-#endif  
-                }));
+                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
+#else
+                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
+#endif
             }
             else if ((string)message.CommandValues[1] == "OK")
             {

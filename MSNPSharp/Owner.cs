@@ -203,7 +203,7 @@ namespace MSNPSharp
             }
         }
 
-        public void BroadcastDisplayImage()
+        internal void BroadcastDisplayImage()
         {
             if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
