@@ -1170,11 +1170,11 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="transferProperties"></param>
         /// <returns></returns>
-        protected virtual MSNSLPMessage CreateInernalErrorMessage(MSNSLPTransferProperties transferProperties)
+        protected virtual MSNSLPMessage CreateInternalErrorMessage(MSNSLPTransferProperties transferProperties)
         {
             MSNSLPMessage slpMessage = new MSNSLPMessage();
 
-            slpMessage.StartLine = "MSNSLP/1.0 500 Inernal Error";
+            slpMessage.StartLine = "MSNSLP/1.0 500 Internal Error";
             slpMessage.To = "<msnmsgr:" + transferProperties.RemoteContact + ">";
             slpMessage.From = "<msnmsgr:" + transferProperties.LocalContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + transferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
@@ -1584,7 +1584,7 @@ namespace MSNPSharp.DataTransfer
 #if MSNC9
                     replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
 #endif
-                    replyMessage.InnerMessage = CreateInernalErrorMessage(properties);
+                    replyMessage.InnerMessage = CreateInternalErrorMessage(properties);
                     MessageProcessor.SendMessage(replyMessage);
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
                         properties.DataTypeGuid + ". 500 INTERNAL ERROR send.", GetType().ToString());
