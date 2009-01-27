@@ -124,7 +124,7 @@
     <value>Messenger Client 8.5</value>
   </data>
   <data name="DeltasListVersion" xml:space="preserve">
-    <value>2.5.3.0</value>
+    <value>2.5.4.0</value>
   </data>
   <data name="HostingApp" xml:space="preserve">
     <value>{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}</value>
@@ -152,6 +152,6 @@
     <value>..\Resources\WLXLarge_default.gif;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="XMLContactListVersion" xml:space="preserve">
-    <value>2.5.3.0</value>
+    <value>2.5.4.0</value>
   </data>
 </root>

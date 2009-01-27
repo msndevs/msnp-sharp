@@ -291,15 +291,46 @@ namespace MSNPSharp
         CanSIP = 0x100000,
         CanShareFolders = 0x400000,
 
-        CanHandleMSNC1 = 0x10000000, //MSN 6.0
-        CanHandleMSNC2 = 0x20000000, //MSN 6.1
-        CanHandleMSNC3 = 0x30000000, //MSN 6.2
-        CanHandleMSNC4 = 0x40000000, //MSN 7.0
-        CanHandleMSNC5 = 0x50000000, //MSN 7.5
-        CanHandleMSNC6 = 0x60000000, //MSN 8.0
-        CanHandleMSNC7 = 0x70000000, //MSN 8.1
-        CanHandleMSNC8 = 0x80000000, //MSN 8.5
-        CanHandleMSNC9 = 0x90000000, //MSN 9.0
+        HasOneCare = 0x1000000,
+        SupportP2PTURN = 0x2000000,
+        SupportP2PUUNBootstrap = 0x4000000,
+
+        /// <summary>
+        /// MSN 6.0
+        /// </summary>
+        CanHandleMSNC1 = 0x10000000,
+        /// <summary>
+        /// MSN 6.1
+        /// </summary>
+        CanHandleMSNC2 = 0x20000000,
+        /// <summary>
+        /// MSN 6.2
+        /// </summary>
+        CanHandleMSNC3 = 0x30000000,
+        /// <summary>
+        /// MSN 7.0
+        /// </summary>
+        CanHandleMSNC4 = 0x40000000,
+        /// <summary>
+        /// MSN 7.5
+        /// </summary>
+        CanHandleMSNC5 = 0x50000000,
+        /// <summary>
+        /// MSN 8.0
+        /// </summary>
+        CanHandleMSNC6 = 0x60000000,
+        /// <summary>
+        /// MSN 8.1
+        /// </summary>
+        CanHandleMSNC7 = 0x70000000,
+        /// <summary>
+        /// MSN 8.5
+        /// </summary>
+        CanHandleMSNC8 = 0x80000000,
+        /// <summary>
+        /// MSN 9.0
+        /// </summary>
+        CanHandleMSNC9 = 0x90000000
     }
 
     /// <summary>
