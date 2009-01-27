@@ -987,7 +987,6 @@ namespace MSNPSharp
             {
                 // notify the client of this exception
                 OnExceptionOccurred(e);
-                throw e;
             }
         }
 
