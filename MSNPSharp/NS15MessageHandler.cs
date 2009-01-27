@@ -969,7 +969,17 @@ namespace MSNPSharp
         protected virtual void OnNLNReceived(NSMessage message)
         {
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), (string)message.CommandValues[2]);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[1], type);
+            Contact contact = null;
+
+            if ((string)message.CommandValues[1] == Owner.Mail && type == ClientType.PassportMember)
+            {
+                contact = Owner;
+            }
+            else
+            {
+                contact = ContactList.GetContact((string)message.CommandValues[1], type);
+            }
+
             contact.SetName((string)message.CommandValues[3]);
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(ParseStatus((string)message.CommandValues[0]));

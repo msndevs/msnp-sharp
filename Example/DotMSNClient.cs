@@ -1145,6 +1145,8 @@ namespace MSNPSharpClient
 
             messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
+            propertyGrid.SelectedObject = messenger.Owner;
+
             Invoke(new EventHandler<EventArgs>(UpdateContactlist), sender, e);
         }
 
