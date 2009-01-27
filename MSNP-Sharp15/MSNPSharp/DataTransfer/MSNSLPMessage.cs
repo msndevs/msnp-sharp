@@ -337,7 +337,7 @@ namespace MSNPSharp.DataTransfer
             builder.Append(Body);
             foreach (string key in MessageValues.Keys)
             {
-                builder.Append(key).Append(": ").Append(MessageValues[key]);
+                builder.Append(key).Append(": ").Append(MessageValues[key]).Append("\r\n");
             }
 
             // get the bytes			

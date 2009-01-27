@@ -211,25 +211,23 @@ namespace MSNPSharp
         /// If the specified account has multi-clienttype, the contact with type
         /// <see cref="ClientType.PassportMember"/> will be returned first.
         /// If there's no PassportMember with the specified account, the contact with type 
-        /// <see cref="ClientType.EmailMember"/> will be returned.Then the next is <see cref="ClientType.PhoneMember"/>
+        /// <see cref="ClientType.EmailMember"/> will be returned. Then the next is <see cref="ClientType.PhoneMember"/>
         /// ,<see cref="ClientType.LCS"/> and so on...
         /// </returns>
         public Contact GetContact(string account)
         {
-            if (HasContact(account))
-            {
-                if (HasContact(account, ClientType.PassportMember))
-                    return GetContact(account, ClientType.PassportMember);
+            if (HasContact(account, ClientType.PassportMember))
+                return GetContact(account, ClientType.PassportMember);
 
-                if (HasContact(account, ClientType.EmailMember))
-                    return GetContact(account, ClientType.EmailMember);
+            if (HasContact(account, ClientType.EmailMember))
+                return GetContact(account, ClientType.EmailMember);
 
-                if (HasContact(account, ClientType.PhoneMember))
-                    return GetContact(account, ClientType.PhoneMember);
+            if (HasContact(account, ClientType.PhoneMember))
+                return GetContact(account, ClientType.PhoneMember);
 
-                if (HasContact(account, ClientType.LCS))
-                    return GetContact(account, ClientType.LCS);
-            }
+            if (HasContact(account, ClientType.LCS))
+                return GetContact(account, ClientType.LCS);
+
             return null;
         }
 
@@ -267,7 +265,7 @@ namespace MSNPSharp
         /// <param name="type"></param>
         /// <returns>
         /// A <see cref="Contact"/> object.
-        /// If the contact does not exist, return null.
+        /// If the contact does not exist, create it.
         /// </returns>
         internal Contact GetContact(string account, string name, ClientType type)
         {
