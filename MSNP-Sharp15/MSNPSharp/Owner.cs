@@ -149,7 +149,8 @@ namespace MSNPSharp
             }
             else if (Places.ContainsKey(place))
             {
-                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye"));
+                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
+                    new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
             }
             else
             {

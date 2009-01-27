@@ -956,7 +956,19 @@ namespace MSNPSharp
                         newPlaces[new Guid(id)] = epname;
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
-                    }
+                   }
+
+                   if (newPlaces.Count > 1 && Owner.MPOPMode == MPOP.AutoLogoff)
+                   {
+                       foreach (KeyValuePair<Guid, string> keyvalue in newPlaces)
+                       {
+                           if (keyvalue.Key != NSMessageHandler.MachineGuid)
+                           {
+                               owner.SignoutFrom(keyvalue.Key);
+                           }
+                       }
+                   }
+
                     Owner.Places.Clear();
                     Owner.Places = newPlaces;
                 }
@@ -1165,7 +1177,7 @@ message.CommandValues[0].ToString().Split(':')[1]
                     case "8":
                         {
                             string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
-                            if (logoutMsg == "goawyplzthxbye" || logoutMsg == "gtfo")
+                            if (logoutMsg.StartsWith("goawyplzthxbye") || logoutMsg == "gtfo")
                             {
                                 // Logout here...
                                 OnSignedOff(new SignedOffEventArgs(SignedOffReason.OtherClient));

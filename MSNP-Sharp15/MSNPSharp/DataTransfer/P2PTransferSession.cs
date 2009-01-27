@@ -345,7 +345,7 @@ namespace MSNPSharp.DataTransfer
         {
             P2PMessage p2pMessage = message as P2PMessage;
 
-            System.Diagnostics.Debug.Assert(message != null, "Incoming message is not a P2PMessage", "");
+            System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
             // close connection flag
             //if(p2pMessage.Flags == 0x40)
