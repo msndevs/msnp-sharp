@@ -1177,7 +1177,7 @@ namespace MSNPSharp
 
             if (contact == null)  //anonymous request
             {
-                contact = NSMessageHandler.ContactList.GetContact(account, ClientType.LCS);
+                contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
                 contact.NSMessageHandler = NSMessageHandler;
                 if (message.CommandValues.Count >= 5)
                 {
