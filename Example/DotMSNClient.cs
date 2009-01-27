@@ -96,7 +96,6 @@ namespace MSNPSharpClient
         private PictureBox pbNewsPicture;
         private Label lblNews;
         private LinkLabel lblNewsLink;
-        private Button button1;
         private IContainer components;
         #endregion
 
@@ -163,7 +162,6 @@ namespace MSNPSharpClient
             this.cmdNext = new System.Windows.Forms.Button();
             this.cmdPrev = new System.Windows.Forms.Button();
             this.lblWhatsup = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
             this.ListPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
@@ -715,25 +713,10 @@ namespace MSNPSharpClient
             this.lblWhatsup.TabIndex = 0;
             this.lblWhatsup.Text = "What\'s Up";
             // 
-            // button1
-            // 
-            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.BackColor = System.Drawing.SystemColors.Control;
-            this.button1.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.button1.Location = new System.Drawing.Point(161, 33);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(38, 21);
-            this.button1.TabIndex = 6;
-            this.button1.Text = "sort";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(539, 587);
-            this.Controls.Add(this.button1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.ListPanel);
             this.Controls.Add(this.ContactPanel);
@@ -2016,22 +1999,6 @@ namespace MSNPSharpClient
                 }
             }
         }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            lock (messenger.ContactList.SyncRoot)
-            {
-                foreach (Contact c in messenger.ContactList.Allowed)
-                {
-                    c.OnAllowedList = false;
-                    //messenger.ContactService.RemoveContact(c);
-                   // messenger.ContactService.RemoveContactFromList(c, MSNLists.ReverseList, null);
-                }
-            }
-            
-
-        }
-
         
     }
 }
