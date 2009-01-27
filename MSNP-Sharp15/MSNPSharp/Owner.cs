@@ -34,6 +34,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Collections;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace MSNPSharp
@@ -142,19 +143,23 @@ namespace MSNPSharp
         /// <param name="place">The place guid to be signed out</param>
         public void SignoutFrom(Guid place)
         {
-            if (Places.ContainsKey(place))
-            {
-                NSMessageHandler.MessageProcessor.SendMessage(
-                    new NSPayLoadMessage("UUN",
-                    new string[] { Mail + ";" + place, "4" },
-                    "goawyplzthxbye"));
-            }
-            else
+            if (place == NSMessageHandler.MachineGuid)
             {
                 Status = PresenceStatus.Offline;
             }
+            else if (Places.ContainsKey(place))
+            {
+                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye"));
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place: " + place.ToString(), GetType().Name);
+            }
         }
 
+        /// <summary>
+        /// Owner display image. The image is broadcasted automatically.
+        /// </summary>
         public new DisplayImage DisplayImage
         {
             get
@@ -185,6 +190,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Personel message
+        /// </summary>
         public new PersonalMessage PersonalMessage
         {
             get
