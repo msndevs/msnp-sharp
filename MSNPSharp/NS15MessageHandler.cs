@@ -1030,20 +1030,24 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnNLNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType),
 #if MSNP18
- message.CommandValues[1].ToString().Split(':')[0]
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
+            string account = message.CommandValues[1].ToString().Split(':')[1];
 #else
-                message.CommandValues[2].ToString()
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[2].ToString());
+            string account = message.CommandValues[0].ToString();
 #endif
-);
-            Contact contact = ContactList.GetContact(
-#if MSNP18
-message.CommandValues[1].ToString().Split(':')[1]
-#else
-                message.CommandValues[0].ToString()
-#endif
-, type);
+
+            Contact contact = null;
+
+            if (account == Owner.Mail && type == ClientType.PassportMember)
+            {
+                contact = Owner;
+            }
+            else
+            {
+                contact = ContactList.GetContact(account, type);
+            }
 
             contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
             PresenceStatus oldStatus = contact.Status;
