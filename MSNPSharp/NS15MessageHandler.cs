@@ -1316,7 +1316,8 @@ namespace MSNPSharp
 
                 YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
                 switchboard.NSMessageHandler = this;
-                switchboard.Contacts.Add(sender, ContactList[sender, ClientType.EmailMember]);
+                switchboard.Contacts[sender] = ContactConversationState.Invited;
+
                 switchboard.MessageProcessor = MessageProcessor;
                 lock (SwitchBoards)
                     SwitchBoards.Add(switchboard);

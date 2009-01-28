@@ -59,7 +59,11 @@ namespace MSNPSharp
         /// <param name="contact"></param>
         public override void Invite(string contact)
         {
-            Contacts.Add(contact, NSMessageHandler.ContactList[contact, ClientType.EmailMember]);
+            if (!Contacts.ContainsKey(contact))
+            {
+                Contacts.Add(contact, ContactConversationState.Invited);
+            }
+
             OnContactJoined(NSMessageHandler.ContactList[contact, ClientType.EmailMember]);
         }
 

@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Web;
 using System.Text;
 using System.Diagnostics;
 using System.Collections;
@@ -80,9 +81,11 @@ namespace MSNPSharp
     /// </summary>
     public class SBCreatedEventArgs : EventArgs
     {
-        /// <summary>
-        /// </summary>
+        private object initiator;
         private SBMessageHandler switchboard;
+        private string account = string.Empty;
+        private string name = string.Empty;
+        private bool anonymous;
 
         /// <summary>
         /// The affected switchboard
@@ -100,10 +103,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// </summary>
-        private object initiator;
-
-        /// <summary>
         /// The object that requested the switchboard. Null if the switchboard session was initiated by a remote client.
         /// </summary>
         public object Initiator
@@ -112,9 +111,38 @@ namespace MSNPSharp
             {
                 return initiator;
             }
-            set
+        }
+
+        /// <summary>
+        /// The account of user that requested the switchboard.
+        /// </summary>
+        public string Account
+        {
+            get
             {
-                initiator = value;
+                return account;
+            }
+        }
+
+        /// <summary>
+        ///  The nick name of user that requested the switchboard.
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                return name;
+            }
+        }
+
+        /// <summary>
+        /// Anonymous request, usually from webchat users.
+        /// </summary>
+        public bool Anonymous
+        {
+            get
+            {
+                return anonymous;
             }
         }
 
@@ -125,6 +153,18 @@ namespace MSNPSharp
         {
             this.switchboard = switchboard;
             this.initiator = initiator;
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        public SBCreatedEventArgs(SBMessageHandler switchboard, object initiator, string account, string name, bool anonymous)
+        {
+            this.switchboard = switchboard;
+            this.initiator = initiator;
+            this.account = account;
+            this.name = name;
+            this.anonymous = anonymous;
         }
     }
     #endregion
@@ -145,8 +185,6 @@ namespace MSNPSharp
         private EventHandler<EventArgs> processorConnectedHandler;
         private EventHandler<EventArgs> processorDisconnectedHandler;
 
-        /// <summary>
-        /// </summary>
         protected int SessionId
         {
             get
@@ -159,8 +197,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// </summary>
         private string sessionHash = String.Empty;
         /// <summary>
         /// The hash identifier used to define this switchboard session.
@@ -179,7 +215,8 @@ namespace MSNPSharp
 
 
         protected bool sessionEstablished;
-        private Hashtable contacts = new Hashtable();
+        private Dictionary<string, ContactConversationState> contacts
+            = new Dictionary<string, ContactConversationState>(0);
 
         /// <summary>
         /// Holds track of the invitations we have yet to issue
@@ -258,6 +295,7 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnSessionClosed()
         {
+            ClearAll();  //Session closed, force all contact left this conversation.
             if (SessionClosed != null)
                 SessionClosed(this, new EventArgs());
         }
@@ -330,6 +368,19 @@ namespace MSNPSharp
             {
                 AllContactsLeft(this, new EventArgs());
             }
+
+            if (contacts.Count == 1)  //MSNP18: owner in the switch
+            {
+                Left();
+                lock (contacts)
+                    contacts.Clear();
+            }
+            else
+            {
+                Close();
+            }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ToString() + " all contacts left, disconnect automately.", GetType().ToString());
         }
 
         /// <summary>
@@ -475,7 +526,7 @@ namespace MSNPSharp
         /// <summary>
         /// A collection of all <i>remote</i> contacts present in this session
         /// </summary>
-        public Hashtable Contacts
+        public Dictionary<string, ContactConversationState> Contacts
         {
             get
             {
@@ -535,7 +586,31 @@ namespace MSNPSharp
         public virtual void Close()
         {
             if (MessageProcessor != null)
+            {
                 ((SocketMessageProcessor)MessageProcessor).Disconnect();
+            }
+        }
+
+        /// <summary>
+        /// Left the conversation then closes the switchboard session by disconnecting from the server. 
+        /// </summary>
+        public virtual void Left()
+        {
+            if (MessageProcessor != null)
+            {
+                SocketMessageProcessor processor = messageProcessor as SocketMessageProcessor;
+                try
+                {
+                    processor.SendMessage(new SBMessage("OUT", new string[] { }));
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().ToString());
+                }
+
+                System.Threading.Thread.CurrentThread.Join(100);
+                Close();
+            }
         }
 
         /// <summary>
@@ -544,14 +619,14 @@ namespace MSNPSharp
         /// <returns></returns>
         public override string ToString()
         {
-            return SessionHash;
+            return GetType().ToString() + " SessionHash: " + SessionHash;
         }
 
         #endregion
 
         /// <summary>
         /// Called when the message processor has established a connection. This function will 
-        /// begin the login procedure by sending the VER command.
+        /// begin the login procedure by sending the USR or ANS command.
         /// </summary>
         protected virtual void OnProcessorConnectCallback(IMessageProcessor processor)
         {
@@ -568,6 +643,7 @@ namespace MSNPSharp
             {
                 if (sessionEstablished)
                     OnSessionClosed();
+
                 sessionEstablished = false;
             }
         }
@@ -592,6 +668,15 @@ namespace MSNPSharp
         private void SB11MessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
         {
             OnProcessorDisconnectCallback((IMessageProcessor)sender);
+        }
+
+        private void ClearAll()
+        {
+            Dictionary<string, ContactConversationState> cp = new Dictionary<string, ContactConversationState>(contacts);
+            foreach (string account in cp.Keys)
+            {
+                SetContactState(account, ContactConversationState.Left);
+            }
         }
 
         private void SetContactState(string account, ContactConversationState state)
@@ -646,8 +731,14 @@ namespace MSNPSharp
         {
             if (Contacts.ContainsKey(contact))
             {
-                return;
+                //If already invited or joined, do nothing.
+                if (Contacts[contact] == ContactConversationState.Joined ||
+                    Contacts[contact] == ContactConversationState.Invited)
+                {
+                    return;
+                }
             }
+
             SetContactState(contact, ContactConversationState.Invited);
             invitationQueue.Enqueue(contact);
             ProcessInvitations();
@@ -758,7 +849,7 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
             msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-#if MSNP16
+#if MSNP16 || MSNP18
             msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail + "\r\n";
 #else
             msgMessage.MimeHeader["TypingUser"] += NSMessageHandler.Owner.Mail;
@@ -778,7 +869,7 @@ namespace MSNPSharp
             SBMessage sbMessage = new SBMessage();
 
             MSGMessage msgMessage = new MSGMessage();
-#if MSNP16
+#if MSNP16 || MSNP18
             msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
 #else
             msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
@@ -804,6 +895,7 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(sbMessage);
         }
 
+
         /// <summary>
         /// Send the first message to the server.
         /// </summary>
@@ -813,8 +905,8 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             string auth = NSMessageHandler.Owner.Mail;
-#if MSNP16
-            auth  += ";" + NSMessageHandler.MachineGuid.ToString("B");
+#if MSNP16 || MSNP18
+            auth += ";" + NSMessageHandler.MachineGuid.ToString("B");
 #endif
             if (Invited)
                 MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { auth, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
@@ -909,7 +1001,6 @@ namespace MSNPSharp
             {
                 // notify the client of this exception
                 OnExceptionOccurred(e);
-                throw e;
             }
         }
 
@@ -966,25 +1057,32 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that the server has replied to our identification USR command.
-        /// <code>USR [Transaction] ['OK'] [account] [name]</code>
+        /// <code>USR [Transaction] ['OK'] [account[;GUID]] [name]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnUSRReceived(SBMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK"
-#if MSNP16
- && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant().Split(';')[0]
-
-#else
-              && NSMessageHandler.Owner.Mail.ToLowerInvariant() == message.CommandValues[2].ToString().ToLowerInvariant()  
-#endif
-)
+            if (message.CommandValues[1].ToString() == "OK")
             {
-                // update the owner's name. Just to be sure.
-                //NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
+                string account = message.CommandValues[2].ToString().ToLowerInvariant();
+                if (account.Contains(";"))
+                {
+                    account = account.Split(';')[0];
+                }
 
-                // we are now ready to invite other contacts. Notify the client of this.
-                OnSessionEstablished();
+                if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
+                {
+                    // update the owner's name. Just to be sure.
+                    // NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
+#if MSNP18
+                    if (NSMessageHandler != null)
+                    {
+                        Invite(NSMessageHandler.Owner.Mail);
+                    }
+#endif
+                    // we are now ready to invite other contacts. Notify the client of this.
+                    OnSessionEstablished();
+                }
             }
         }
 
@@ -1008,21 +1106,32 @@ namespace MSNPSharp
         /// <remarks>
         /// Indicates that a remote contact has joined the session.
         /// This will fire the <see cref="ContactJoined"/> event.
-        /// <code>JOI [account] [name]</code>
+        /// <code>JOI [account[;GUID]] [name]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnJOIReceived(SBMessage message)
         {
-            if (NSMessageHandler.Owner.Mail == message.CommandValues[0].ToString())
-                return;
+            string account = message.CommandValues[0].ToString().ToLowerInvariant();
+            if (account.Contains(";"))
+            {
+                account = account.Split(';')[0];
+            }
 
-            // get the contact and update it's name
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
-            //contact.SetName(message.CommandValues[1].ToString());
+            if (NSMessageHandler.Owner.Mail.ToLowerInvariant() != account)
+            {
+                Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
+                if (contact.NSMessageHandler == null)
+                {
+                    contact.NSMessageHandler = NSMessageHandler;
+                }
 
-            // notify the client programmer
-            OnContactJoined(contact);
-
+                // get the contact and update it's name
+                // contact.SetName(message.CommandValues[1].ToString());
+                if (!Contacts.ContainsKey(contact.Mail) || Contacts[contact.Mail] != ContactConversationState.Joined)
+                {
+                    OnContactJoined(contact); // notify the client programmer
+                }
+            }
         }
 
         /// <summary>
@@ -1031,43 +1140,46 @@ namespace MSNPSharp
         /// <remarks>
         /// Indicates that a remote contact has leaved the session.
         /// This will fire the <see cref="ContactLeft"/> event. Or, if all contacts have left, the <see cref="AllContactsLeft"/> event.
-        /// <code>BYE [account];[Machine GUID] [Client Type]</code>
+        /// <code>BYE [account[;GUID]] [Client Type]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnBYEReceived(SBMessage message)
         {
-            string account = string.Empty;
-#if MSNP16
-            account = message.CommandValues[0].ToString().Split(';')[0];
-#else
-            account = message.CommandValues[0].ToString();
-#endif
+            string account = message.CommandValues[0].ToString().ToLowerInvariant();
+            if (account.Contains(";"))
+            {
+                account = account.Split(';')[0];
+            }
+
             if (Contacts.ContainsKey(account))
             {
-                // get the contact and update it's name
-#if MSNP16
-                Contact contact = null;
-                if (message.CommandValues.Count >= 2)
-                {
-                    contact = NSMessageHandler.ContactList.GetContact(account, (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString()));
-                }
-                else
-                {
-                    contact = NSMessageHandler.ContactList.GetContact(account);
-                }
-                if (contact == null)
+                Contact contact = (message.CommandValues.Count >= 2) ?
+                    NSMessageHandler.ContactList.GetContact(account, (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString()))
+                    :
+                    NSMessageHandler.ContactList.GetContact(account);
+
+                if (contact == null || Contacts[contact.Mail] == ContactConversationState.Left)
                     return;
-#else
-                Contact contact = NSMessageHandler.ContactList.GetContact(account);
-#endif
 
-                // notify the client programmer
-                OnContactLeft(contact);
+                OnContactLeft(contact); // notify the client programmer
 
-                if (Contacts.Count == 0)
+                foreach (string acc in Contacts.Keys)
                 {
-                    OnAllContactsLeft();
+                    if (contacts[acc] != ContactConversationState.Left)
+                    {
+                        if (NSMessageHandler != null)
+                        {
+                            if (acc != NSMessageHandler.Owner.Mail)
+                                return;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
                 }
+
+                OnAllContactsLeft();  //Indicates whe should end the conversation and disconnect.
             }
         }
 
@@ -1076,20 +1188,39 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a remote contact was already present in the session that was joined.
-        /// <code>IRO [Transaction] [Current] [Total] [Account] [Name]</code>
+        /// <code>IRO [Transaction] [Current] [Total] [account[;GUID]] [Name]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnIROReceived(SBMessage message)
         {
-            if (NSMessageHandler.Owner.Mail == message.CommandValues[3].ToString())
+            string account = message.CommandValues[3].ToString().ToLowerInvariant();
+            if (account.Contains(";"))
+            {
+                account = account.Split(';')[0];
+            }
+
+            if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
                 return;
 
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[3].ToString());
             // update the name to make sure we have it up-to-date
-            //contact.SetName(message.CommandValues[4].ToString());
+            // contact.SetName(message.CommandValues[4].ToString());
+            Contact contact = NSMessageHandler.ContactList.GetContact(account);
 
-            // notify the client programmer
-            OnContactJoined(contact);
+            if (contact == null)  //anonymous request
+            {
+                contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
+                contact.NSMessageHandler = NSMessageHandler;
+                if (message.CommandValues.Count >= 5)
+                {
+                    contact.SetName(System.Web.HttpUtility.UrlDecode(message.CommandValues[4].ToString()));
+                }
+                contact.Lists = MSNLists.None;
+            }
+
+            if (!Contacts.ContainsKey(contact.Mail) || Contacts[contact.Mail] != ContactConversationState.Joined)
+            {
+                OnContactJoined(contact); // notify the client programmer
+            }
         }
 
         /// <summary>
@@ -1104,8 +1235,8 @@ namespace MSNPSharp
         {
             // the MSG command is the most versatile one. These are all the messages
             // between clients. Like normal messages, file transfer invitations, P2P messages, etc.
-
             Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
+
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[1].ToString());
 
