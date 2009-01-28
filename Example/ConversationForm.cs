@@ -31,9 +31,11 @@ namespace MSNPSharpClient
         private PictureBox displayOwner;
         private PictureBox displayUser;
 
-        private Conversation _conversation = null;
-        private ClientForm _clientform = null;
         private ToolStripDropDown emotionDropDown = new ToolStripDropDown();
+        private ToolStripDropDown onlineUsersDropDown = new ToolStripDropDown();
+
+        private Conversation _conversation = null;
+        private ClientForm _clientform = null;        
         private List<string> _contacts = new List<string>(0);
         private Contact _firstInvitedContact;
         private OpenFileDialog openFileDialog;
@@ -49,8 +51,9 @@ namespace MSNPSharpClient
         private ToolStripButton bMessageSend;
         private ToolStripButton bMessageInsertEmoticon;
         private ToolStripButton bMessageSendNudge;
-        private ToolStripButton bMessageSendCustomEmoticon;
-        private ToolStripButton bMessageSendFiles;
+        private Button btnSendFiles;
+        private Button btnInviteUsers;
+        private Button btnCustomEmoticon;
         private ColorDialog dlgColor;
         
 
@@ -213,26 +216,27 @@ namespace MSNPSharpClient
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConversationForm));
             this.panel1 = new System.Windows.Forms.Panel();
             this.tsMessage = new System.Windows.Forms.ToolStrip();
-            this.cbMessageFontName = new System.Windows.Forms.ToolStripComboBox();
-            this.cbMessageFontSize = new System.Windows.Forms.ToolStripComboBox();
-            this.bMessageFontColor = new System.Windows.Forms.ToolStripButton();
+            this.bMessageInsertEmoticon = new System.Windows.Forms.ToolStripButton();
+            this.bMessageSendNudge = new System.Windows.Forms.ToolStripButton();
             this.tssMessageSeperator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.bMessageFontColor = new System.Windows.Forms.ToolStripButton();
             this.bMessageBold = new System.Windows.Forms.ToolStripButton();
             this.bMessageItalic = new System.Windows.Forms.ToolStripButton();
             this.bMessageUnderline = new System.Windows.Forms.ToolStripButton();
+            this.cbMessageFontName = new System.Windows.Forms.ToolStripComboBox();
+            this.cbMessageFontSize = new System.Windows.Forms.ToolStripComboBox();
             this.tssMessageSeperator2 = new System.Windows.Forms.ToolStripSeparator();
             this.bMessageSend = new System.Windows.Forms.ToolStripButton();
-            this.bMessageInsertEmoticon = new System.Windows.Forms.ToolStripButton();
-            this.bMessageSendNudge = new System.Windows.Forms.ToolStripButton();
-            this.bMessageSendCustomEmoticon = new System.Windows.Forms.ToolStripButton();
-            this.bMessageSendFiles = new System.Windows.Forms.ToolStripButton();
             this.displayOwner = new System.Windows.Forms.PictureBox();
             this.inputTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.btnCustomEmoticon = new System.Windows.Forms.Button();
+            this.btnInviteUsers = new System.Windows.Forms.Button();
+            this.btnSendFiles = new System.Windows.Forms.Button();
             this.displayUser = new System.Windows.Forms.PictureBox();
+            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.dlgColor = new System.Windows.Forms.ColorDialog();
-            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
             this.panel1.SuspendLayout();
             this.tsMessage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
@@ -260,25 +264,99 @@ namespace MSNPSharpClient
             this.tsMessage.Dock = System.Windows.Forms.DockStyle.None;
             this.tsMessage.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.tsMessage.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.cbMessageFontName,
-            this.cbMessageFontSize,
-            this.bMessageFontColor,
+            this.bMessageInsertEmoticon,
+            this.bMessageSendNudge,
             this.tssMessageSeperator1,
+            this.bMessageFontColor,
             this.bMessageBold,
             this.bMessageItalic,
             this.bMessageUnderline,
+            this.cbMessageFontName,
+            this.cbMessageFontSize,
             this.tssMessageSeperator2,
-            this.bMessageSend,
-            this.bMessageInsertEmoticon,
-            this.bMessageSendNudge,
-            this.bMessageSendCustomEmoticon,
-            this.bMessageSendFiles});
+            this.bMessageSend});
             this.tsMessage.Location = new System.Drawing.Point(109, 3);
             this.tsMessage.Name = "tsMessage";
             this.tsMessage.Padding = new System.Windows.Forms.Padding(3, 0, 1, 0);
             this.tsMessage.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
             this.tsMessage.Size = new System.Drawing.Size(537, 25);
             this.tsMessage.TabIndex = 8;
+            // 
+            // bMessageInsertEmoticon
+            // 
+            this.bMessageInsertEmoticon.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.bMessageInsertEmoticon.Image = global::MSNPSharpClient.Properties.Resources.smiley;
+            this.bMessageInsertEmoticon.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.bMessageInsertEmoticon.ImageTransparentColor = System.Drawing.Color.White;
+            this.bMessageInsertEmoticon.Name = "bMessageInsertEmoticon";
+            this.bMessageInsertEmoticon.Size = new System.Drawing.Size(23, 22);
+            this.bMessageInsertEmoticon.Text = "Insert an &emoticon";
+            this.bMessageInsertEmoticon.Click += new System.EventHandler(this.bMessageInsertEmoticon_Click);
+            // 
+            // bMessageSendNudge
+            // 
+            this.bMessageSendNudge.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.bMessageSendNudge.Image = global::MSNPSharpClient.Properties.Resources.nudge;
+            this.bMessageSendNudge.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.bMessageSendNudge.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bMessageSendNudge.Name = "bMessageSendNudge";
+            this.bMessageSendNudge.Size = new System.Drawing.Size(28, 22);
+            this.bMessageSendNudge.Text = "Send a &nudge";
+            this.bMessageSendNudge.Click += new System.EventHandler(this.bMessageSendNudge_Click);
+            // 
+            // tssMessageSeperator1
+            // 
+            this.tssMessageSeperator1.Name = "tssMessageSeperator1";
+            this.tssMessageSeperator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // bMessageFontColor
+            // 
+            this.bMessageFontColor.Image = ((System.Drawing.Image)(resources.GetObject("bMessageFontColor.Image")));
+            this.bMessageFontColor.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bMessageFontColor.Name = "bMessageFontColor";
+            this.bMessageFontColor.Size = new System.Drawing.Size(56, 22);
+            this.bMessageFontColor.Text = "Color";
+            this.bMessageFontColor.ToolTipText = "Font Color";
+            this.bMessageFontColor.Click += new System.EventHandler(this.bMessageFontColor_Click);
+            // 
+            // bMessageBold
+            // 
+            this.bMessageBold.CheckOnClick = true;
+            this.bMessageBold.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.bMessageBold.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bMessageBold.Image = ((System.Drawing.Image)(resources.GetObject("bMessageBold.Image")));
+            this.bMessageBold.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bMessageBold.Name = "bMessageBold";
+            this.bMessageBold.Size = new System.Drawing.Size(23, 22);
+            this.bMessageBold.Text = "B";
+            this.bMessageBold.ToolTipText = "Bold";
+            this.bMessageBold.CheckedChanged += new System.EventHandler(this.bMessageBoldItalicUnderline_CheckedChanged);
+            // 
+            // bMessageItalic
+            // 
+            this.bMessageItalic.CheckOnClick = true;
+            this.bMessageItalic.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.bMessageItalic.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bMessageItalic.Image = ((System.Drawing.Image)(resources.GetObject("bMessageItalic.Image")));
+            this.bMessageItalic.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bMessageItalic.Name = "bMessageItalic";
+            this.bMessageItalic.Size = new System.Drawing.Size(23, 22);
+            this.bMessageItalic.Text = "I";
+            this.bMessageItalic.ToolTipText = "Italic";
+            this.bMessageItalic.CheckedChanged += new System.EventHandler(this.bMessageBoldItalicUnderline_CheckedChanged);
+            // 
+            // bMessageUnderline
+            // 
+            this.bMessageUnderline.CheckOnClick = true;
+            this.bMessageUnderline.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.bMessageUnderline.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bMessageUnderline.Image = ((System.Drawing.Image)(resources.GetObject("bMessageUnderline.Image")));
+            this.bMessageUnderline.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bMessageUnderline.Name = "bMessageUnderline";
+            this.bMessageUnderline.Size = new System.Drawing.Size(23, 22);
+            this.bMessageUnderline.Text = "U";
+            this.bMessageUnderline.ToolTipText = "Underline";
+            this.bMessageUnderline.CheckedChanged += new System.EventHandler(this.bMessageBoldItalicUnderline_CheckedChanged);
             // 
             // cbMessageFontName
             // 
@@ -320,60 +398,6 @@ namespace MSNPSharpClient
             this.cbMessageFontSize.Validating += new System.ComponentModel.CancelEventHandler(this.cbMessageFontSize_Validating);
             this.cbMessageFontSize.Validated += new System.EventHandler(this.cbMessageFontSize_Validated);
             // 
-            // bMessageFontColor
-            // 
-            this.bMessageFontColor.Image = ((System.Drawing.Image)(resources.GetObject("bMessageFontColor.Image")));
-            this.bMessageFontColor.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageFontColor.Name = "bMessageFontColor";
-            this.bMessageFontColor.Size = new System.Drawing.Size(56, 22);
-            this.bMessageFontColor.Text = "Color";
-            this.bMessageFontColor.ToolTipText = "Font Color";
-            this.bMessageFontColor.Click += new System.EventHandler(this.bMessageFontColor_Click);
-            // 
-            // tssMessageSeperator1
-            // 
-            this.tssMessageSeperator1.Name = "tssMessageSeperator1";
-            this.tssMessageSeperator1.Size = new System.Drawing.Size(6, 25);
-            // 
-            // bMessageBold
-            // 
-            this.bMessageBold.CheckOnClick = true;
-            this.bMessageBold.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.bMessageBold.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bMessageBold.Image = ((System.Drawing.Image)(resources.GetObject("bMessageBold.Image")));
-            this.bMessageBold.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageBold.Name = "bMessageBold";
-            this.bMessageBold.Size = new System.Drawing.Size(23, 22);
-            this.bMessageBold.Text = "B";
-            this.bMessageBold.ToolTipText = "Bold";
-            this.bMessageBold.CheckedChanged += new System.EventHandler(this.bMessageBoldItalicUnderline_CheckedChanged);
-            // 
-            // bMessageItalic
-            // 
-            this.bMessageItalic.CheckOnClick = true;
-            this.bMessageItalic.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.bMessageItalic.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bMessageItalic.Image = ((System.Drawing.Image)(resources.GetObject("bMessageItalic.Image")));
-            this.bMessageItalic.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageItalic.Name = "bMessageItalic";
-            this.bMessageItalic.Size = new System.Drawing.Size(23, 22);
-            this.bMessageItalic.Text = "I";
-            this.bMessageItalic.ToolTipText = "Italic";
-            this.bMessageItalic.CheckedChanged += new System.EventHandler(this.bMessageBoldItalicUnderline_CheckedChanged);
-            // 
-            // bMessageUnderline
-            // 
-            this.bMessageUnderline.CheckOnClick = true;
-            this.bMessageUnderline.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.bMessageUnderline.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bMessageUnderline.Image = ((System.Drawing.Image)(resources.GetObject("bMessageUnderline.Image")));
-            this.bMessageUnderline.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageUnderline.Name = "bMessageUnderline";
-            this.bMessageUnderline.Size = new System.Drawing.Size(23, 22);
-            this.bMessageUnderline.Text = "U";
-            this.bMessageUnderline.ToolTipText = "Underline";
-            this.bMessageUnderline.CheckedChanged += new System.EventHandler(this.bMessageBoldItalicUnderline_CheckedChanged);
-            // 
             // tssMessageSeperator2
             // 
             this.tssMessageSeperator2.Name = "tssMessageSeperator2";
@@ -391,50 +415,6 @@ namespace MSNPSharpClient
             this.bMessageSend.Size = new System.Drawing.Size(57, 22);
             this.bMessageSend.Text = "   &Send   ";
             this.bMessageSend.Click += new System.EventHandler(this.bMessageSend_Click);
-            // 
-            // bMessageInsertEmoticon
-            // 
-            this.bMessageInsertEmoticon.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.bMessageInsertEmoticon.Image = global::MSNPSharpClient.Properties.Resources.smiley;
-            this.bMessageInsertEmoticon.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.bMessageInsertEmoticon.ImageTransparentColor = System.Drawing.Color.White;
-            this.bMessageInsertEmoticon.Name = "bMessageInsertEmoticon";
-            this.bMessageInsertEmoticon.Size = new System.Drawing.Size(23, 22);
-            this.bMessageInsertEmoticon.Text = "Insert an &emoticon";
-            this.bMessageInsertEmoticon.Click += new System.EventHandler(this.bMessageInsertEmoticon_Click);
-            // 
-            // bMessageSendNudge
-            // 
-            this.bMessageSendNudge.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.bMessageSendNudge.Image = global::MSNPSharpClient.Properties.Resources.nudge;
-            this.bMessageSendNudge.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.bMessageSendNudge.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageSendNudge.Name = "bMessageSendNudge";
-            this.bMessageSendNudge.Size = new System.Drawing.Size(28, 22);
-            this.bMessageSendNudge.Text = "Send a &nudge";
-            this.bMessageSendNudge.Click += new System.EventHandler(this.bMessageSendNudge_Click);
-            // 
-            // bMessageSendCustomEmoticon
-            // 
-            this.bMessageSendCustomEmoticon.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.bMessageSendCustomEmoticon.Image = ((System.Drawing.Image)(resources.GetObject("bMessageSendCustomEmoticon.Image")));
-            this.bMessageSendCustomEmoticon.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageSendCustomEmoticon.Name = "bMessageSendCustomEmoticon";
-            this.bMessageSendCustomEmoticon.Size = new System.Drawing.Size(23, 22);
-            this.bMessageSendCustomEmoticon.Text = "toolStripButton1";
-            this.bMessageSendCustomEmoticon.ToolTipText = "Custom Emoticon";
-            this.bMessageSendCustomEmoticon.Click += new System.EventHandler(this.bMessageSendCustomEmoticon_Click);
-            // 
-            // bMessageSendFiles
-            // 
-            this.bMessageSendFiles.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.bMessageSendFiles.Image = global::MSNPSharpClient.Properties.Resources.file;
-            this.bMessageSendFiles.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageSendFiles.Name = "bMessageSendFiles";
-            this.bMessageSendFiles.Size = new System.Drawing.Size(23, 22);
-            this.bMessageSendFiles.Text = "toolStripButton2";
-            this.bMessageSendFiles.ToolTipText = "Send Files";
-            this.bMessageSendFiles.Click += new System.EventHandler(this.bMessageSendFiles_Click);
             // 
             // displayOwner
             // 
@@ -465,6 +445,9 @@ namespace MSNPSharpClient
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.btnCustomEmoticon);
+            this.panel2.Controls.Add(this.btnInviteUsers);
+            this.panel2.Controls.Add(this.btnSendFiles);
             this.panel2.Controls.Add(this.displayUser);
             this.panel2.Controls.Add(this.richTextHistory);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -472,6 +455,36 @@ namespace MSNPSharpClient
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(649, 238);
             this.panel2.TabIndex = 0;
+            // 
+            // btnCustomEmoticon
+            // 
+            this.btnCustomEmoticon.Location = new System.Drawing.Point(3, 41);
+            this.btnCustomEmoticon.Name = "btnCustomEmoticon";
+            this.btnCustomEmoticon.Size = new System.Drawing.Size(100, 23);
+            this.btnCustomEmoticon.TabIndex = 3;
+            this.btnCustomEmoticon.Text = "Custom Emoticon";
+            this.btnCustomEmoticon.UseVisualStyleBackColor = true;
+            this.btnCustomEmoticon.Click += new System.EventHandler(this.bMessageSendCustomEmoticon_Click);
+            // 
+            // btnInviteUsers
+            // 
+            this.btnInviteUsers.Location = new System.Drawing.Point(3, 70);
+            this.btnInviteUsers.Name = "btnInviteUsers";
+            this.btnInviteUsers.Size = new System.Drawing.Size(100, 23);
+            this.btnInviteUsers.TabIndex = 2;
+            this.btnInviteUsers.Text = "Invite Users";
+            this.btnInviteUsers.UseVisualStyleBackColor = true;
+            this.btnInviteUsers.Click += new System.EventHandler(this.btnInviteUsers_Click);
+            // 
+            // btnSendFiles
+            // 
+            this.btnSendFiles.Location = new System.Drawing.Point(3, 12);
+            this.btnSendFiles.Name = "btnSendFiles";
+            this.btnSendFiles.Size = new System.Drawing.Size(100, 23);
+            this.btnSendFiles.TabIndex = 1;
+            this.btnSendFiles.Text = "Send Files";
+            this.btnSendFiles.UseVisualStyleBackColor = true;
+            this.btnSendFiles.Click += new System.EventHandler(this.bMessageSendFiles_Click);
             // 
             // displayUser
             // 
@@ -484,10 +497,6 @@ namespace MSNPSharpClient
             this.displayUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.displayUser.TabIndex = 0;
             this.displayUser.TabStop = false;
-            // 
-            // openFileDialog
-            // 
-            this.openFileDialog.Multiselect = true;
             // 
             // richTextHistory
             // 
@@ -506,6 +515,10 @@ namespace MSNPSharpClient
             this.richTextHistory.TabStop = false;
             this.richTextHistory.Text = "";
             this.richTextHistory.TextColor = MSNPSharpClient.RtfRichTextBox.RtfColor.Black;
+            // 
+            // openFileDialog
+            // 
+            this.openFileDialog.Multiselect = true;
             // 
             // ConversationForm
             // 
@@ -800,6 +813,7 @@ namespace MSNPSharpClient
             }
             ((TableLayoutSettings)emotionDropDown.LayoutSettings).ColumnCount = 3;
 
+            onlineUsersDropDown.LayoutStyle = ToolStripLayoutStyle.VerticalStackWithOverflow;
 
             foreach (FontFamily ff in FontFamily.Families)
             {
@@ -878,6 +892,30 @@ namespace MSNPSharpClient
             int y = Location.Y + richTextHistory.Height + emotionDropDown.Height + 20;
             emotionDropDown.Show(x, y);
             emotionDropDown.Focus();
+        }
+
+        private void btnInviteUsers_Click(object sender, EventArgs e)
+        {
+            int x = Location.X + 10 + btnInviteUsers.Width;
+            int y = Location.Y + 10 + btnInviteUsers.Height + 20;
+
+            onlineUsersDropDown.Items.Clear();
+            foreach (Contact c in Conversation.Messenger.ContactList.Forward)
+            {
+                if (c.Online && c.ClientType == ClientType.PassportMember)
+                {
+                    onlineUsersDropDown.Items.Add(c.Mail, null, onlineUsersDropDown_Click).ToolTipText = c.Mail;
+                }
+            }
+
+            onlineUsersDropDown.Show(x, y);
+            onlineUsersDropDown.Focus();
+        }
+
+        private void onlineUsersDropDown_Click(object sender, EventArgs args)
+        {
+            ToolStripItem item = (ToolStripItem)sender;
+            Conversation.Invite(item.ToolTipText, ClientType.PassportMember);
         }
 
         private void bMessageSendNudge_Click(object sender, EventArgs e)
