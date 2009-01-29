@@ -82,7 +82,7 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-#if MSNP16
+#if MSNC9
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC9
 #else
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
@@ -292,6 +292,18 @@ namespace MSNPSharp
 
                 // and make sure we respond on closing
                 ((SocketMessageProcessor)messageProcessor).ConnectionClosed += processorDisconnectedHandler;
+            }
+        }
+
+        internal MSNTicket MSNTicket
+        {
+            get
+            {
+                return msnticket;
+            }
+            set
+            {
+                msnticket = value;
             }
         }
 
@@ -744,17 +756,6 @@ namespace MSNPSharp
         {
         }
 
-        internal MSNTicket MSNTicket
-        {
-            get
-            {
-                return msnticket;
-            }
-            set
-            {
-                msnticket = value;
-            }
-        }
 
         /// <summary>
         /// Called when a USR command has been received. 
@@ -786,7 +787,8 @@ namespace MSNPSharp
                 string response =
                     MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
                     mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
-#if MSNP16
+
+#if MSNP16 || MSNP18
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
 #else
                 MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));

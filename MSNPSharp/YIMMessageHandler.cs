@@ -176,8 +176,8 @@ namespace MSNPSharp
                 switch (sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "text/x-msmsgscontrol":
-                        // make sure we don't parse the rest of the message in the next loop											
-                        OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"]));
+                        // make sure we don't parse the rest of the message in the next loop
+                        OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"], ClientType.EmailMember));
                         break;
 
                     /*case "text/x-msmsgsinvite":

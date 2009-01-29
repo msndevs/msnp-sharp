@@ -59,29 +59,102 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         MSNObject = 0x20,
         /// <summary>
+        /// Messages for info data, such as INVITE, 200 OK, 500 INTERNAL ERROR
+        /// </summary>
+        MSNSLPInfo = 0x01000000,
+        /// <summary>
         /// Messages defines data for a filetransfer.
         /// </summary>
         FileData = 0x01000030,
         /// <summary>
-        /// 
+        /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        Activity = 0x01000000,
+        MSNObjectData = 0x01000020,
+        
+#if MSNC9
         /// <summary>
-        /// Footer for a msn object p2pMessage.
+        /// Footer for a msn DisplayImage p2pMessage.
         /// </summary>
-#if MSNP16
-        MSNObjectFooter = 0xc,
-#else
-        MSNObjectFooter = 0x1,
-#endif
+        DisplayImageFooter = 0xc,
+
         /// <summary>
         /// Footer for a filetransfer p2pMessage.
         /// </summary>
-#if MSNP16
-        FileTransFooter = 0x2
+        FileTransFooter = 0x2,
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        CustomEmoticonFooter = 0x0b
 #else
-        FileTransFooter = 0x1
+        /// <summary>
+        /// Footer for a msn object p2pMessage.
+        /// </summary>
+        DisplayImageFooter = 0x1,
+
+        /// <summary>
+        /// Footer for a filetransfer p2pMessage.
+        /// </summary>
+        FileTransFooter = 0x1,
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        CustomEmoticonFooter = 0x1
 #endif
+
+    }
+
+    internal static class P2PConst
+    {
+        /// <summary>
+        /// The guid used in invitations for a filetransfer.
+        /// </summary>
+        public const string FileTransferGuid = "{5D3E02AB-6190-11D3-BBBB-00C04F795683}";
+
+        /// <summary>
+        /// The guid used in invitations for a user display transfer.
+        /// </summary>
+        public const string UserDisplayGuid = "{A4268EEC-FEC5-49E5-95C3-F126696BDBF6}";
+
+        /// <summary>
+        /// The guid used in invitations for a share photo.
+        /// </summary>
+        public const string SharePhotoGuid = "{41D3E74E-04A2-4B37-96F8-08ACDB610874}";
+
+        /// <summary>
+        /// The guid used in invitations for an activity.
+        /// </summary>
+        public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
+
+        
+#if MSNC9
+        /// <summary>
+        /// The AppID used in invitations for DisplayImage p2p transfer.
+        /// </summary>
+        public const uint DisplayImageAppID = 12;
+
+        /// <summary>
+        /// The AppID used in invitations for CustomEmoticon p2p transfer.
+        /// </summary>
+        public const uint CustomEmoticonAppID = 11;
+#else
+
+        /// <summary>
+        /// The AppID used in invitations for DisplayImage p2p transfer.
+        /// </summary>
+        public const uint DisplayImageAppID = 1;
+
+        /// <summary>
+        /// The AppID used in invitations for CustomEmoticon p2p transfer.
+        /// </summary>
+        public const uint CustomEmoticonAppID = 1;
+#endif
+
+        /// <summary>
+        /// The AppID(footer) used in invitations for a filetransfer.
+        /// </summary>
+        public const uint FileTransAppID = 2;
     }
 
     /// <summary>
@@ -307,7 +380,7 @@ namespace MSNPSharp.DataTransfer
             P2PMessage ack = new P2PMessage();
 
             ack.TotalSize = TotalSize;
-            ack.Flags = 0x2;//P2PFlag.Acknowledgement;			
+            ack.Flags = (uint)P2PFlag.Acknowledgement;			
             ack.AckSessionId = Identifier;
             ack.AckIdentifier = AckSessionId;
             ack.AckTotalSize = TotalSize;

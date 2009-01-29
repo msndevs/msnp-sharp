@@ -325,7 +325,42 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return socket != null && socket.Connected;
+                if (socket != null)
+                {
+                    lock (socket)
+                    {
+                        // Socket.Connected doesn't tell us if the socket is actually connected...
+                        // http://msdn2.microsoft.com/en-us/library/system.net.sockets.socket.connected.aspx
+
+                        bool disposed = false;
+                        bool blocking = socket.Blocking;
+                        try
+                        {
+                            socket.Blocking = false;
+                            socket.Send(new byte[0], 0, 0);
+                            return true;
+                        }
+                        catch (SocketException ex)
+                        {
+                            // 10035 == WSAEWOULDBLOCK
+                            if (ex.NativeErrorCode.Equals(10035))
+                                return true;
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            disposed = true;
+                            return false;
+                        }
+                        finally
+                        {
+                            if (!disposed)
+                            {
+                                socket.Blocking = blocking;
+                            }
+                        }
+                    }
+                }
+                return false;
             }
         }
 

@@ -1001,6 +1001,7 @@ namespace MSNPSharp
             {
                 // notify the client of this exception
                 OnExceptionOccurred(e);
+                throw e;
             }
         }
 
@@ -1232,10 +1233,11 @@ namespace MSNPSharp
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnMSGReceived(MSNMessage message)
+        
         {
             // the MSG command is the most versatile one. These are all the messages
             // between clients. Like normal messages, file transfer invitations, P2P messages, etc.
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString());
+            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString(), ClientType.PassportMember);
 
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[1].ToString());
@@ -1294,7 +1296,7 @@ namespace MSNPSharp
                 {
                     case "text/x-msmsgscontrol":
                         // make sure we don't parse the rest of the message in the next loop											
-                        OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"]));
+                        OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"], ClientType.PassportMember));
                         break;
 
                     /*case "text/x-msmsgsinvite":
