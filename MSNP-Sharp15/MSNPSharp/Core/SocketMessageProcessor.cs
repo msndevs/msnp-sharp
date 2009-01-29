@@ -332,6 +332,7 @@ namespace MSNPSharp.Core
                         // Socket.Connected doesn't tell us if the socket is actually connected...
                         // http://msdn2.microsoft.com/en-us/library/system.net.sockets.socket.connected.aspx
 
+                        bool disposed = false;
                         bool blocking = socket.Blocking;
                         try
                         {
@@ -345,9 +346,17 @@ namespace MSNPSharp.Core
                             if (ex.NativeErrorCode.Equals(10035))
                                 return true;
                         }
+                        catch (ObjectDisposedException)
+                        {
+                            disposed = true;
+                            return false;
+                        }
                         finally
                         {
-                            socket.Blocking = blocking;
+                            if (!disposed)
+                            {
+                                socket.Blocking = blocking;
+                            }
                         }
                     }
                 }
