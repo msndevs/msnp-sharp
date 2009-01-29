@@ -56,6 +56,7 @@ namespace MSNPSharpClient
         private delegate void WriteHandler(StringBuilder buffe, RichTextBox rtb);
         private int MaxBufferLen = 1024;
         private StringBuilder buffer = new StringBuilder();
+        private DateTime lastInputTime = DateTime.Now;
 
         protected virtual void OutPut(StringBuilder buffer, RichTextBox rtb)
         {
@@ -74,7 +75,9 @@ namespace MSNPSharpClient
             if (richTextBox != null && buffer != null)
             {
                 buffer.Append(value);
-                if (value == '\n' || buffer.Length == MaxBufferLen)
+                if ((value == '\n' && buffer.Length >= MaxBufferLen) ||
+                    buffer.Length == MaxBufferLen ||
+                    (value == '\n' && (DateTime.Now - lastInputTime).Milliseconds >= 100))
                 {
                     if (richTextBox.InvokeRequired)
                     {
@@ -87,6 +90,7 @@ namespace MSNPSharpClient
                     }
 
                     buffer.Remove(0, buffer.Length);
+                    lastInputTime = DateTime.Now;
                 }
             }
         }
