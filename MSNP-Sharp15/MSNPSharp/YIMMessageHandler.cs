@@ -181,7 +181,7 @@ namespace MSNPSharp
                 {
                     case "text/x-msmsgscontrol":
                         // make sure we don't parse the rest of the message in the next loop											
-                        OnUserTyping(NSMessageHandler.ContactList.GetContact(yimMessage.InnerMessage.MimeHeader["TypingUser"]));
+                        OnUserTyping(NSMessageHandler.ContactList.GetContact(yimMessage.InnerMessage.MimeHeader["TypingUser"], ClientType.EmailMember));
                         break;
 
                     case "text/x-msnmsgr-datacast":

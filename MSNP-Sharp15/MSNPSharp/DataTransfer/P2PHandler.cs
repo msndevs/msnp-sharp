@@ -401,8 +401,9 @@ namespace MSNPSharp.DataTransfer
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
             }
 
-            // check if it's a valid p2p message
-            if (msgMessage.MimeHeader["Content-Type"].ToString() != "application/x-msnmsgrp2p")
+            // check if it's a valid p2p message (chunk messages has no content type)
+            if (!msgMessage.MimeHeader.ContainsKey("Content-Type") ||
+                msgMessage.MimeHeader["Content-Type"].ToString() != "application/x-msnmsgrp2p")
             {
                 return;
             }
