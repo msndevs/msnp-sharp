@@ -327,7 +327,7 @@ namespace MSNPSharp
             {
                 if (messenger == null)
                 {
-                    throw new NullReferenceException();
+                    throw new ArgumentNullException("messenger");
                 }
 
                 return messenger;
