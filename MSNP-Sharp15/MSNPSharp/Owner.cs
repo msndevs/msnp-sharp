@@ -218,7 +218,11 @@ namespace MSNPSharp
             {
                 // resend the user status so other client can see the new msn object
 #if MSNP18
+#if MSNC9
                 string capacities = ((long)ClientCapacities).ToString() + ":48";
+#else
+                string capacities = ((long)ClientCapacities).ToString() + ":0";
+#endif
 #else
                 string capacities = ((long)ClientCapacities).ToString();
 #endif

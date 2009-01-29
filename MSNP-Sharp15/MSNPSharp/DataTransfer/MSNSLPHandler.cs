@@ -719,6 +719,8 @@ namespace MSNPSharp.DataTransfer
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
             slpMessage.Body = "EUF-GUID: " + P2PConst.UserDisplayGuid + "\r\n" +
                 "SessionID: " + properties.SessionId + "\r\n" +
+                "SChannelState: 0\r\n" +
+                "Capabilities-Flags: 1\r\n" +
                 AppID +"\r\n" +
                 "Context: " + base64Context + "\r\n\r\n";
 
