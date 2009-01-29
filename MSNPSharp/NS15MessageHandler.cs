@@ -84,7 +84,7 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-#if MSNP18
+#if MSNC9
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC9
 #else
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
@@ -676,7 +676,11 @@ namespace MSNPSharp
             else if (status != owner.Status)
             {
 #if MSNP18
+#if MSNC9
                 string capacities = ((long)owner.ClientCapacities).ToString() + ":48";
+#else
+                string capacities = ((long)owner.ClientCapacities).ToString() + ":0";
+#endif
 #else
                 string capacities = ((long)owner.ClientCapacities).ToString();
 #endif
