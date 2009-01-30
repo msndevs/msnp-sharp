@@ -49,8 +49,8 @@ namespace MSNPSharp
     using MSNPSharp.Core;
 
     /// <summary>
-    /// Handles the protocol messages from the notification server.
-    /// NSMessageHandler implements protocol version MSNP15.
+    /// Handles the protocol messages from the notification server
+    /// and implements protocol version between MSNP15 and MSNP18.
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
@@ -990,48 +990,49 @@ namespace MSNPSharp
         /// Called when a ILN command has been received.
         /// </summary>
         /// <remarks>
-        /// ILN indicates the initial status of a contact.
+        /// ILN indicates the initial status of a contact. Used for MSNP15 and MSNP16, not MSNP18.
         /// It is send after initial log on or after adding/removing contact from the contactlist.
         /// Fires the <see cref="ContactOnline"/> and/or the <see cref="ContactStatusChanged"/> events.
+        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities:0] [displayimage] (MSNP16)</code>
+        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities] [displayimage] (MSNP15)</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnILNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType),
-#if MSNP18
- message.CommandValues[1].ToString().Split(':')[0]
-#else
-                message.CommandValues[3].ToString()
-#endif
-);
-            Contact contact = ContactList.GetContact((string)message.CommandValues[2], type);
-            contact.SetName((string)message.CommandValues[4]);
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(ParseStatus((string)message.CommandValues[1]));
+            PresenceStatus newstatus = ParseStatus(message.CommandValues[1].ToString());
+            string account = message.CommandValues[2].ToString().ToLowerInvariant();
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[3].ToString());
+            string newname = (message.CommandValues.Count >= 5) ? message.CommandValues[4].ToString() : String.Empty;
+            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 6) ? (message.CommandValues[5].ToString().Contains(":") ? message.CommandValues[5].ToString().Split(':')[0] : message.CommandValues[5].ToString()) : "0"));
+            string newdp = message.CommandValues.Count >= 7 ? message.CommandValues[6].ToString() : String.Empty;
 
-            // set the client capabilities, if available
-            if (message.CommandValues.Count >= 5)
+
+            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+                ? Owner : ContactList.GetContact(account, type);
+
+            contact.SetName(HttpUtility.UrlDecode(newname));
+
+            if (newcaps != ClientCapacities.None)
             {
-#if MSNP18
-                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString().Split(':')[0]);
-#else
-                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[5].ToString());
-#endif
+                contact.ClientCapacities = (ClientCapacities)newcaps;
             }
 
-            // check whether there is a msn object available
-            if (message.CommandValues.Count >= 6)
+            if (contact != Owner && !String.IsNullOrEmpty(newdp))
             {
                 DisplayImage userDisplay = new DisplayImage();
-                userDisplay.Context = message.CommandValues[6].ToString();
+                userDisplay.Context = newdp;
                 contact.DisplayImage = userDisplay;
             }
+
+            PresenceStatus oldStatus = contact.Status;
+            contact.SetStatus(newstatus);
 
             if (oldStatus == PresenceStatus.Unknown || oldStatus == PresenceStatus.Offline)
             {
                 if (ContactOnline != null)
                     ContactOnline(this, new ContactEventArgs(contact));
             }
+
             if (ContactStatusChanged != null)
                 ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
         }
@@ -1041,59 +1042,50 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a contact on the forward list went online.
-        /// <code>NLN [status] [account] [clienttype] [name] [clientcapacities] [displayimage]</code>
+        /// <code>NLN [status] [clienttype:account] [name] [clientcapacities:48] [displayimage] (MSNP18)</code>
+        /// <code>NLN [status] [account] [clienttype] [name] [clientcapacities:0] [displayimage] (MSNP16)</code>
+        /// <code>NLN [status] [account] [clienttype] [name] [clientcapacities] [displayimage] (MSNP15)</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnNLNReceived(NSMessage message)
         {
+            PresenceStatus newstatus = ParseStatus(message.CommandValues[0].ToString());
 #if MSNP18
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
-            string account = message.CommandValues[1].ToString().Split(':')[1];
+            string account = message.CommandValues[1].ToString().Split(':')[1].ToLowerInvariant();
+            string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 4) ? (message.CommandValues[3].ToString().Contains(":") ? message.CommandValues[3].ToString().Split(':')[0] : message.CommandValues[3].ToString()) : "0"));
+            string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
 #else
             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[2].ToString());
-            string account = message.CommandValues[0].ToString();
+            string account = message.CommandValues[1].ToString().ToLowerInvariant();
+            string newname = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
+            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 5) ? (message.CommandValues[4].ToString().Contains(":") ? message.CommandValues[4].ToString().Split(':')[0] : message.CommandValues[4].ToString()) : "0"));
+            string newdp = message.CommandValues.Count >= 6 ? message.CommandValues[5].ToString() : String.Empty;
 #endif
 
-            Contact contact = null;
-
-            if (account == Owner.Mail && type == ClientType.PassportMember)
+            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember) ? Owner : ContactList.GetContact(account, type);
+            contact.SetName(HttpUtility.UrlDecode(newname));
+            if (newcaps != ClientCapacities.None)
             {
-                contact = Owner;
-            }
-            else
-            {
-                contact = ContactList.GetContact(account, type);
+                contact.ClientCapacities = (ClientCapacities)newcaps;
             }
 
-            contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(ParseStatus(message.CommandValues[0].ToString()));
-            if (message.CommandValues.Count >= 5)
+            if (contact != Owner && !String.IsNullOrEmpty(newdp))
             {
                 DisplayImage userDisplay = new DisplayImage();
-#if MSNP18
-                userDisplay.Context = message.CommandValues[4].ToString();
-#else
-                userDisplay.Context = message.CommandValues[5].ToString();
-#endif
+                userDisplay.Context = newdp;
                 contact.DisplayImage = userDisplay;
             }
 
-            // set the client capabilities, if available
-            if (message.CommandValues.Count > 4)
-            {
-#if MSNP18
-                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[3].ToString().Split(':')[0]);
-#else
-                contact.ClientCapacities = (ClientCapacities)long.Parse(message.CommandValues[4].ToString());
-#endif
-            }
+            PresenceStatus oldStatus = contact.Status;
+            contact.SetStatus(newstatus);
 
-            // the contact changed status, fire event
+            // The contact changed status
             if (ContactStatusChanged != null)
                 ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
 
-            // the contact goes online, fire event
+            // The contact goes online
             if (ContactOnline != null)
                 ContactOnline(this, new ContactEventArgs(contact));
         }
@@ -1103,33 +1095,36 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a user went offline.
-        /// <code>FLN [account] [clienttype]</code>
+        /// <code>FLN [clienttype:account] [caps:0] [networkpng] (MSNP18)</code>
+        /// <code>FLN [account] [clienttype] [caps:0] [networkpng] (MSNP16)</code>
+        /// <code>FLN [account] [clienttype] [caps] [networkpng] (MSNP15)</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType),
 #if MSNP18
- message.CommandValues[0].ToString().Split(':')[0]
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
+            string account = message.CommandValues[0].ToString().Split(':')[1].ToLowerInvariant();
+            ClientCapacities oldcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 2) ? (message.CommandValues[1].ToString().Contains(":") ? message.CommandValues[1].ToString().Split(':')[0] : message.CommandValues[1].ToString()) : "0"));
+            string networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
 #else
-                message.CommandValues[1].ToString()
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
+            string account = message.CommandValues[0].ToString().ToLowerInvariant();
+            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 3) ? (message.CommandValues[2].ToString().Contains(":") ? message.CommandValues[2].ToString().Split(':')[0] : message.CommandValues[2].ToString()) : "0"));
+            string networkpng = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
 #endif
-);
-            Contact contact = ContactList.GetContact(
-#if MSNP18
-message.CommandValues[0].ToString().Split(':')[1]
-#else
-                message.CommandValues[0].ToString()
-#endif
-, type);
+
+            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+                ? Owner : ContactList.GetContact(account, type);
+
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
 
-            // the contact changed status, fire event
+            // the contact changed status
             if (ContactStatusChanged != null)
                 ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
 
-            // the contact goes offline, fire event
+            // the contact goes offline
             if (ContactOffline != null)
                 ContactOffline(this, new ContactEventArgs(contact));
         }
