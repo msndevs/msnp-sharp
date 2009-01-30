@@ -115,7 +115,7 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler;
 
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
-        private Credentials credentials = new Credentials();
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
 
         #endregion

@@ -68,7 +68,7 @@ namespace MSNPSharp
             : base(nsHandler)
         {
 #if MSNP18
-            applicationId = Properties.Resources.ApplicationId;
+            applicationId = nsHandler.Credentials.ClientInfo.ApplicationId;
 #else
             applicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";  //This must be strictly matched now.
 #endif

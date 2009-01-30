@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ApplicationId" xml:space="preserve">
-    <value>AAD9B99B-58E6-4F23-B975-D9EC1F9EC24A</value>
-  </data>
   <data name="ApplicationStrId" xml:space="preserve">
     <value>Messenger Client 9.0</value>
   </data>
@@ -128,24 +125,6 @@
   </data>
   <data name="DeltasListVersion" xml:space="preserve">
     <value>3.0.0.0</value>
-  </data>
-  <data name="HostingApp" xml:space="preserve">
-    <value>{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}</value>
-  </data>
-  <data name="MessengerClientBrand" xml:space="preserve">
-    <value>msmsgs</value>
-  </data>
-  <data name="MessengerClientBuildVer" xml:space="preserve">
-    <value>14.0.8050.1202</value>
-  </data>
-  <data name="MessengerClientName" xml:space="preserve">
-    <value>MSNMSGR</value>
-  </data>
-  <data name="ProductID" xml:space="preserve">
-    <value>PROD0120PW!CCV9@</value>
-  </data>
-  <data name="ProductKey" xml:space="preserve">
-    <value>C1BX{V4W}Q3*10SM</value>
   </data>
   <data name="WebServiceUserAgent" xml:space="preserve">
     <value>MSN Explorer/9.0 (MSN 8.0; TmstmpExt)</value>
