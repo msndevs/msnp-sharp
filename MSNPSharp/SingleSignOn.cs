@@ -548,7 +548,7 @@ namespace MSNPSharp
             securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
-            securService.AuthInfo.HostingApp = Properties.Resources.HostingApp;
+            securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
             securService.AuthInfo.BinaryVersion = "5";
             securService.AuthInfo.Cookies = string.Empty;
             securService.AuthInfo.UIVersion = "1";

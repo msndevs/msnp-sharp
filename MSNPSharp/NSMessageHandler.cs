@@ -58,10 +58,10 @@ namespace MSNPSharp
 
         #region Members
 
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private SocketMessageProcessor messageProcessor;
         private ConnectivitySettings connectivitySettings;
         private IPEndPoint externalEndPoint;
-        private Credentials credentials;
 
         private ContactGroupList contactGroups;
         private ContactList contactList = new ContactList();
@@ -690,7 +690,7 @@ namespace MSNPSharp
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
         }
-    
+
 
         #endregion
 
@@ -720,6 +720,14 @@ namespace MSNPSharp
             if (Credentials == null)
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
+            SendInitialMessage();
+        }
+
+        /// <summary>
+        /// Send the first message to the server.
+        /// </summary>
+        protected virtual void SendInitialMessage()
+        {
             // VER: MSN Protocol used
             if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
             {
@@ -733,29 +741,6 @@ namespace MSNPSharp
             {
                 MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
             }
-
-            // CVR: Send client information back
-            MessageProcessor.SendMessage(new NSMessage("CVR",
-                new string[] { 
-                    "0x040c", /*"0x" + CultureInfo.CurrentCulture.LCID.ToString("x4"), */  //The LCIDs in .net framework are different from Windows API.
-                    "winnt", 
-                    "5.1", 
-                    "i386", 
-                    Properties.Resources.MessengerClientName, 
-                    Properties.Resources.MessengerClientBuildVer, 
-                    Properties.Resources.MessengerClientBrand, 
-                    Credentials.Account 
-                }));
-
-            // USR: Begin login procedure
-            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
-        }
-
-        /// <summary>
-        /// Send the first message to the server.
-        /// </summary>
-        protected virtual void SendInitialMessage()
-        {
         }
 
         /// <summary>
@@ -770,7 +755,21 @@ namespace MSNPSharp
         {
             MsnProtocol msnProtocol = (MsnProtocol)Convert.ToInt32(message.CommandValues[1].ToString().Substring("MSNP".Length, 2));
             Credentials oldcred = Credentials;
-            Credentials = new Credentials(oldcred.Account, oldcred.Password, oldcred.ClientID, oldcred.ClientCode, msnProtocol);
+            Credentials = new Credentials(oldcred.Account, oldcred.Password, msnProtocol);
+
+            // CVR: Send client information back
+            MessageProcessor.SendMessage(new NSMessage("CVR",
+                new string[] { 
+                    "0x040c", //The LCIDs in .net framework are different from Windows API: "0x" + CultureInfo.CurrentCulture.LCID.ToString("x4")
+                    "winnt",
+                    "5.1",
+                    "i386",
+                    Credentials.ClientInfo.MessengerClientName, 
+                    Credentials.ClientInfo.MessengerClientBuildVer,
+                    Credentials.ClientInfo.MessengerClientBrand,
+                    Credentials.Account
+                })
+           );
         }
 
         /// <summary>
@@ -783,6 +782,8 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnCVRReceived(NSMessage message)
         {
+            // USR: Begin login procedure
+            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
         /// <summary>
