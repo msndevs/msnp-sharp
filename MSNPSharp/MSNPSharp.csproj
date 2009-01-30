@@ -80,9 +80,9 @@
     <Compile Include="DataTransfer\MSNSLPMessage.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />
-    <Compile Include="NS15MessageHandler.cs" />
-    <Compile Include="NS15MessageHandler.Obsolete.cs">
-      <DependentUpon>NS15MessageHandler.cs</DependentUpon>
+    <Compile Include="NSMessageHandler.cs" />
+    <Compile Include="NSMessageHandler.Obsolete.cs">
+      <DependentUpon>NSMessageHandler.cs</DependentUpon>
     </Compile>
     <Compile Include="Core\NSMessage.cs" />
     <Compile Include="Core\NSMessagePool.cs" />
@@ -119,7 +119,7 @@
     <Compile Include="ProxySocket\Socks5Handler.cs" />
     <Compile Include="ProxySocket\SocksHandler.cs" />
     <Compile Include="QRYFactory.cs" />
-    <Compile Include="SB11MessageHandler.cs" />
+    <Compile Include="SBMessageHandler.cs" />
     <Compile Include="Core\SBMessage.cs" />
     <Compile Include="Core\SBMessagePool.cs" />
     <Compile Include="SBMessageProcessor.cs" />

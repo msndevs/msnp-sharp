@@ -209,42 +209,42 @@
   <Class Name="MSNPSharp.ListReceivedEventArgs" Collapsed="true">
     <Position X="26.75" Y="2.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.SignedOffEventArgs" Collapsed="true">
     <Position X="33.75" Y="5.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.PingAnswerEventArgs" Collapsed="true">
     <Position X="33.75" Y="4.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.ListMutateEventArgs" Collapsed="true">
     <Position X="25" Y="2.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAACQAAAAkAAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.MSNErrorEventArgs" Collapsed="true">
     <Position X="33.75" Y="2.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.NSMessageHandler" Collapsed="true" BaseTypeListCollapsed="true">
     <Position X="32" Y="3.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>Hh7nBUbCG0AprQGggWBgoSgmEGBEXfQClALxZsJ/nPU=</HashCode>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
@@ -280,21 +280,21 @@
   <Class Name="MSNPSharp.SBEventArgs" Collapsed="true">
     <Position X="28.5" Y="5.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>AAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.SBCreatedEventArgs" Collapsed="true">
     <Position X="26.75" Y="5.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>AAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAACAAAAAgAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="MSNPSharp.SBMessageHandler" Collapsed="true" BaseTypeListCollapsed="true">
     <Position X="1.5" Y="14.75" Width="2" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>FGABzAZCGIBACAAosUggIDGbFgAAeBSQlAAAIBGEYBA=</HashCode>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
@@ -724,7 +724,7 @@
   <Enum Name="MSNPSharp.SignedOffReason" Collapsed="true">
     <Position X="23.25" Y="10.25" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAABA=</HashCode>
     </TypeIdentifier>
   </Enum>
@@ -759,112 +759,112 @@
   <Delegate Name="MSNPSharp.ContactChangedEventHandler" Collapsed="true">
     <Position X="23.25" Y="11.25" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>EAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.ContactGroupChangedEventHandler" Collapsed="true">
     <Position X="25" Y="11.25" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAgAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.ContactStatusChangedEventHandler" Collapsed="true">
     <Position X="26.75" Y="11.25" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>ABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.ListReceivedEventHandler" Collapsed="true">
     <Position X="26.75" Y="12" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQ=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.SignedOffEventHandler" Collapsed="true">
     <Position X="33.75" Y="12.75" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAgAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.PingAnswerEventHandler" Collapsed="true">
     <Position X="25" Y="12.75" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAACAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.ListMutatedAddedEventHandler" Collapsed="true">
     <Position X="25" Y="12" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAIA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.SBCreatedEventHandler" Collapsed="true">
     <Position X="30.25" Y="12.75" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAACAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.MailboxStatusEventHandler" Collapsed="true">
     <Position X="28.5" Y="12" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAEAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.NewMailEventHandler" Collapsed="true">
     <Position X="33.75" Y="12" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAgAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.MailChangedEventHandler" Collapsed="true">
     <Position X="30.25" Y="12" Width="1.5" />
     <TypeIdentifier>
-      <FileName>NS15MessageHandler.cs</FileName>
+      <FileName>NSMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAgAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.SBChangedEventHandler" Collapsed="true">
     <Position X="28.5" Y="12.75" Width="1.5" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAACAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.TextMessageReceivedEventHandler" Collapsed="true">
     <Position X="23.25" Y="13.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAQAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.EmoticonDefinitionReceivedEventHandler" Collapsed="true">
     <Position X="30.25" Y="11.25" Width="1.5" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>AAAAAACAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.WinkReceivedEventHandler" Collapsed="true">
     <Position X="26.75" Y="13.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAEAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
   <Delegate Name="MSNPSharp.UserTypingEventHandler" Collapsed="true">
     <Position X="25" Y="13.5" Width="1.5" />
     <TypeIdentifier>
-      <FileName>SB11MessageHandler.cs</FileName>
+      <FileName>SBMessageHandler.cs</FileName>
       <HashCode>EAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Delegate>
