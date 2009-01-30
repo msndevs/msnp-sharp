@@ -268,11 +268,14 @@ namespace MSNPSharp
                 GetXmlFeedRequestType request = new GetXmlFeedRequestType();
                 request.refreshInformation = new refreshInformationType();
                 request.refreshInformation.cid = Convert.ToString(contact.CID);
-#if MSNP18
-                request.refreshInformation.applicationId = Properties.Resources.ApplicationStrId;
-#else
-                request.refreshInformation.applicationId = "Messenger Client 8.0";
-#endif
+                if (NSMessageHandler.Credentials.MsnProtocol == MsnProtocol.MSNP18)
+                {
+                    request.refreshInformation.applicationId = Properties.Resources.ApplicationStrId;
+                }
+                else
+                {
+                    request.refreshInformation.applicationId = "Messenger Client 8.0";
+                }
                 request.refreshInformation.market = CultureInfo.CurrentCulture.Name;
                 request.refreshInformation.updateAccessedTime = true;
                 request.refreshInformation.brand = String.Empty;

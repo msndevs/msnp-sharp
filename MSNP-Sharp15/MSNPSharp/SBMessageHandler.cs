@@ -549,11 +549,10 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
             msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-#if MSNP16 || MSNP18
-            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail + "\r\n";
-#else
-            msgMessage.MimeHeader["TypingUser"] += NSMessageHandler.Owner.Mail;
-#endif
+            if (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail + "\r\n";
+            else
+                msgMessage.MimeHeader["TypingUser"] += NSMessageHandler.Owner.Mail;
 
             sbMessage.InnerMessage = msgMessage;
 
@@ -584,11 +583,11 @@ namespace MSNPSharp
             SBMessage sbMessage = new SBMessage();
 
             MSGMessage msgMessage = new MSGMessage();
-#if MSNP16 || MSNP18
-            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
-#else
-            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
-#endif
+            if (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
+            else
+                msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
+
             sbMessage.InnerMessage = msgMessage;
 
             // send it over the network
@@ -773,9 +772,9 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             string auth = NSMessageHandler.Owner.Mail;
-#if MSNP16 || MSNP18
-            auth += ";" + NSMessageHandler.MachineGuid.ToString("B");
-#endif
+            if (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                auth += ";" + NSMessageHandler.MachineGuid.ToString("B");
+
             if (Invited)
                 MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { auth, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
             else
@@ -961,12 +960,13 @@ namespace MSNPSharp
                 {
                     // update the owner's name. Just to be sure.
                     // NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
-#if MSNP18
-                    if (NSMessageHandler != null)
+                    if (NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
                     {
-                        Invite(NSMessageHandler.Owner.Mail);
+                        if (NSMessageHandler != null)
+                        {
+                            Invite(NSMessageHandler.Owner.Mail);
+                        }
                     }
-#endif
                     // we are now ready to invite other contacts. Notify the client of this.
                     OnSessionEstablished();
                 }

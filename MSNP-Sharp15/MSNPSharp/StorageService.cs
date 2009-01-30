@@ -65,11 +65,14 @@ namespace MSNPSharp
             StorageService storageService = new StorageService();
             storageService.Proxy = WebProxy;
             storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
-#if MSNP18
-            storageService.StorageApplicationHeaderValue.ApplicationID = Properties.Resources.ApplicationStrId;
-#else
-           storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
-#endif
+            if (NSMessageHandler.Credentials.MsnProtocol == MsnProtocol.MSNP18)
+            {
+                storageService.StorageApplicationHeaderValue.ApplicationID = Properties.Resources.ApplicationStrId;
+            }
+            else
+            {
+                storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
+            }
             storageService.StorageApplicationHeaderValue.Scenario = scenario;
             storageService.StorageUserHeaderValue = new StorageUserHeader();
             storageService.StorageUserHeaderValue.Puid = 0;
