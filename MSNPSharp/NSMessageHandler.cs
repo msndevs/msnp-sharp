@@ -2020,120 +2020,119 @@ namespace MSNPSharp
         {
             try
             {
-                // we expect at least a NSMessage object
+                // We expect at least a NSMessage object
                 NSMessage nsMessage = (NSMessage)message;
-
                 switch (nsMessage.Command)
                 {
                     case "ADG":
                         OnADGReceived(nsMessage);
-                        break;
+                        return;
                     case "ADL":
                         OnADLReceived(nsMessage);
-                        break;
+                        return;
                     case "BLP":
                         OnBLPReceived(nsMessage);
-                        break;
+                        return;
                     case "BPR":
                         OnBPRReceived(nsMessage);
-                        break;
+                        return;
                     case "CHG":
                         OnCHGReceived(nsMessage);
-                        break;
+                        return;
                     case "CHL":
                         OnCHLReceived(nsMessage);
-                        break;
+                        return;
                     case "CVR":
                         OnCVRReceived(nsMessage);
-                        break;
+                        return;
                     case "FLN":
                         OnFLNReceived(nsMessage);
-                        break;
+                        return;
                     case "FQY":
                         OnFQYReceived(nsMessage);
-                        break;
+                        return;
                     case "GCF":
                         OnGCFReceived(nsMessage);
-                        break;
+                        return;
                     case "ILN":
                         OnILNReceived(nsMessage);
-                        break;
+                        return;
                     case "MSG":
                         OnMSGReceived(nsMessage);
-                        break;
+                        return;
                     case "NLN":
                         OnNLNReceived(nsMessage);
-                        break;
+                        return;
                     case "NOT":
                         OnNOTReceived(nsMessage);
-                        break;
+                        return;
                     case "OUT":
                         OnOUTReceived(nsMessage);
-                        break;
+                        return;
                     case "PRP":
                         OnPRPReceived(nsMessage);
-                        break;
+                        return;
                     case "QNG":
                         OnQNGReceived(nsMessage);
-                        break;
+                        return;
                     case "QRY":
                         OnQRYReceived(nsMessage);
-                        break;
+                        return;
                     case "RMG":
                         OnRMGReceived(nsMessage);
-                        break;
+                        return;
                     case "RML":
                         OnRMLReceived(nsMessage);
-                        break;
+                        return;
                     case "RNG":
                         OnRNGReceived(nsMessage);
-                        break;
+                        return;
                     case "UBM":
                         OnUBMReceived(nsMessage);
-                        break;
+                        return;
                     case "UBN":
                         OnUBNReceived(nsMessage);
-                        break;
+                        return;
                     case "UUN":
                         OnUUNReceived(nsMessage);
-                        break;
+                        return;
                     case "UBX":
                         OnUBXReceived(nsMessage);
-                        break;
+                        return;
                     case "USR":
                         OnUSRReceived(nsMessage);
-                        break;
+                        return;
                     case "VER":
                         OnVERReceived(nsMessage);
-                        break;
+                        return;
                     case "XFR":
                         OnXFRReceived(nsMessage);
-                        break;
-                    default:
-                        // first check whether it is a numeric error command
-                        if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
-                        {
-                            MSNError msnError = 0;
-                            try
-                            {
-                                int errorCode = int.Parse(nsMessage.Command, System.Globalization.CultureInfo.InvariantCulture);
-                                msnError = (MSNError)errorCode;
-                            }
-                            catch (Exception e)
-                            {
-                                throw new MSNPSharpException("Exception Occurred when parsing an error code received from the server", e);
-                            }
-                            OnServerErrorReceived(new MSNErrorEventArgs(msnError));
-                        }
+                        return;
+                }
 
-                        // if not then it is a unknown command:
-                        // do nothing.
-                        break;
+                // Check whether it is a numeric error command
+                if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
+                {
+                    MSNError msnError = 0;
+                    try
+                    {
+                        int errorCode = int.Parse(nsMessage.Command, System.Globalization.CultureInfo.InvariantCulture);
+                        msnError = (MSNError)errorCode;
+                    }
+                    catch (Exception fe)
+                    {
+                        throw new MSNPSharpException("Exception Occurred when parsing an error code received from the server", fe);
+                    }
+                    OnServerErrorReceived(new MSNErrorEventArgs(msnError));
+                }
+                else
+                {
+                    // It is a unknown command
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "UNKNOWN COMMAND: " + nsMessage.Command + "\r\n" + nsMessage.ToDebugString(), GetType().ToString());
                 }
             }
             catch (Exception e)
             {
-                // notify the client of this exception
                 OnExceptionOccurred(new ExceptionEventArgs(e));
                 throw e;
             }
