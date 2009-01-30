@@ -81,8 +81,7 @@ namespace MSNPSharp
     /// </summary>
     public class SBCreatedEventArgs : EventArgs
     {
-        /// <summary>
-        /// </summary>
+        private object initiator;
         private SBMessageHandler switchboard;
         private string account = string.Empty;
         private string name = string.Empty;
@@ -103,9 +102,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// </summary>
-        private object initiator;
 
         /// <summary>
         /// The object that requested the switchboard. Null if the switchboard session was initiated by a remote client.
@@ -154,6 +150,15 @@ namespace MSNPSharp
         /// <summary>
         /// Constructor.
         /// </summary>
+        public SBCreatedEventArgs(SBMessageHandler switchboard, object initiator)
+        {
+            this.switchboard = switchboard;
+            this.initiator = initiator;
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         public SBCreatedEventArgs(SBMessageHandler switchboard, object initiator, string account, string name, bool anonymous)
         {
             this.switchboard = switchboard;
@@ -170,57 +175,12 @@ namespace MSNPSharp
     /// </summary>
     public class SBMessageHandler : IMessageHandler
     {
-        #region Private
-
-        private SocketMessageProcessor messageProcessor;
-        private NSMessageHandler nsMessageHandler;
-        protected bool invited;
-        private int sessionId;
-        private object syncObject = new object();
-
-        private EventHandler<EventArgs> processorConnectedHandler;
-        private EventHandler<EventArgs> processorDisconnectedHandler;
-
-        protected int SessionId
-        {
-            get
-            {
-                return sessionId;
-            }
-            set
-            {
-                sessionId = value;
-            }
-        }
-
-        private string sessionHash = String.Empty;
         /// <summary>
-        /// The hash identifier used to define this switchboard session.
+        /// Constructor
         /// </summary>
-        internal string SessionHash
+        protected SBMessageHandler()
         {
-            get
-            {
-                return sessionHash;
-            }
-            set
-            {
-                sessionHash = value;
-            }
         }
-
-
-        protected bool sessionEstablished;
-        private Dictionary<string, ContactConversationState> contacts
-            = new Dictionary<string, ContactConversationState>(0);
-
-        /// <summary>
-        /// Holds track of the invitations we have yet to issue
-        /// </summary>
-        private Queue invitationQueue = new Queue();
-
-        private Hashtable multiPacketMessages = new Hashtable();
-        #endregion
 
         #region Public Events
 
@@ -235,7 +195,7 @@ namespace MSNPSharp
         public event EventHandler<EventArgs> SessionClosed;
 
         /// <summary>
-        /// Occurs when a switchboard connection has been made and the initial handshaking commands are send. This indicates that the session is ready to invite or accept other contacts.
+        /// Fired when a switchboard connection has been made and the initial handshaking commands are send. This indicates that the session is ready to invite or accept other contacts.
         /// </summary>
         public event EventHandler<EventArgs> SessionEstablished;
 
@@ -243,6 +203,7 @@ namespace MSNPSharp
         /// Fired when a contact joins. In case of a conversation with two people in it this event is called with the remote contact specified in the event argument.
         /// </summary>
         public event EventHandler<ContactEventArgs> ContactJoined;
+
         /// <summary>
         /// Fired when a contact leaves the conversation.
         /// </summary>
@@ -258,10 +219,13 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<EmoticonDefinitionEventArgs> EmoticonDefinitionReceived;
 
+        /// <summary>
+        /// Fired when a contact sends a wink.
+        /// </summary>
         public event EventHandler<WinkEventArgs> WinkReceived;
 
         /// <summary>
-        /// Fired when a contact sends a nudge
+        /// Fired when a contact sends a nudge.
         /// </summary>
         public event EventHandler<ContactEventArgs> NudgeReceived;
 
@@ -271,185 +235,155 @@ namespace MSNPSharp
         public event EventHandler<ContactEventArgs> UserTyping;
 
         /// <summary>
-        /// Occurs when an exception is thrown while handling the incoming or outgoing messages.
+        /// Fired when an exception is thrown while handling the incoming or outgoing messages.
         /// </summary>
         public event EventHandler<ExceptionEventArgs> ExceptionOccurred;
 
         /// <summary>
-        /// Occurs when the MSN Switchboard Server sends us an error.
+        /// Fired when the MSN Switchboard Server sends us an error.
         /// </summary>
         public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
 
+        #endregion
+
+        #region Members
+
+        private Dictionary<string, ContactConversationState> contacts = new Dictionary<string, ContactConversationState>(0);
+        private Dictionary<string, MSGMessage> multiPacketMessages = new Dictionary<string, MSGMessage>();
+        private object syncObject = new object();
+        private Queue invitationQueue = new Queue();
+        private string sessionHash = String.Empty;
+        private SocketMessageProcessor messageProcessor;
+        private NSMessageHandler nsMessageHandler;
+        private int sessionId;
+
+        protected bool sessionEstablished;
+        protected bool invited;
+
+        #endregion
+
+        #region Properties
 
         /// <summary>
-        /// Fires the SessionClosed event.
+        /// A collection of all <i>remote</i> contacts present in this session
         /// </summary>
-        protected virtual void OnSessionClosed()
+        public Dictionary<string, ContactConversationState> Contacts
         {
-            ClearAll();  //Session closed, force all contact left this conversation.
-            if (SessionClosed != null)
-                SessionClosed(this, new EventArgs());
-        }
-
-        /// <summary>
-        /// Fires the ServerErrorReceived event.
-        /// </summary>
-        protected virtual void OnServerErrorReceived(MSNError serverError)
-        {
-            if (ServerErrorReceived != null)
-                ServerErrorReceived(this, new MSNErrorEventArgs(serverError));
-        }
-
-        /// <summary>
-        /// Fires the SessionEstablished event and processes invitations in the queue.
-        /// </summary>
-        protected virtual void OnSessionEstablished()
-        {
-            sessionEstablished = true;
-            if (SessionEstablished != null)
-                SessionEstablished(this, new EventArgs());
-
-            // process ant remaining invitations
-            ProcessInvitations();
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ExceptionOccurred"/> event.
-        /// </summary>
-        /// <param name="e">The exception which was thrown</param>
-        protected virtual void OnExceptionOccurred(Exception e)
-        {
-            if (ExceptionOccurred != null)
-                ExceptionOccurred(this, new ExceptionEventArgs(e));
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactJoined"/> event.
-        /// </summary>
-        /// <param name="contact">The contact who joined the session.</param>
-        protected virtual void OnContactJoined(Contact contact)
-        {
-            SetContactState(contact.Mail, ContactConversationState.Joined);
-            if (ContactJoined != null)
+            get
             {
-                ContactJoined(this, new ContactEventArgs(contact));
+                return contacts;
             }
         }
 
         /// <summary>
-        /// Fires the <see cref="ContactLeft"/> event.
+        /// The nameserver that received the request for the switchboard session
         /// </summary>
-        /// <param name="contact">The contact who left the session.</param>
-        protected virtual void OnContactLeft(Contact contact)
+        public NSMessageHandler NSMessageHandler
         {
-            SetContactState(contact.Mail, ContactConversationState.Left);
-            if (ContactLeft != null)
+            get
             {
-                ContactLeft(this, new ContactEventArgs(contact));
+                return nsMessageHandler;
+            }
+            set
+            {
+                nsMessageHandler = value;
+            }
+        }
+
+        /// <summary>
+        /// Indicates if the local client was invited to the session
+        /// </summary>
+        public bool Invited
+        {
+            get
+            {
+                return invited;
+            }
+        }
+
+        /// <summary>
+        /// Indicates if the session is ready to send/accept commands. E.g. the initial handshaking and identification has been completed.
+        /// </summary>
+        public bool IsSessionEstablished
+        {
+            get
+            {
+                return sessionEstablished;
+            }
+        }
+
+        protected int SessionId
+        {
+            get
+            {
+                return sessionId;
+            }
+            set
+            {
+                sessionId = value;
             }
         }
 
 
         /// <summary>
-        /// Fires the <see cref="AllContactsLeft"/> event.
-        /// </summary>		
-        protected virtual void OnAllContactsLeft()
-        {
-            if (AllContactsLeft != null)
-            {
-                AllContactsLeft(this, new EventArgs());
-            }
-
-            if (contacts.Count == 1)  //MSNP18: owner in the switch
-            {
-                Left();
-                lock (contacts)
-                    contacts.Clear();
-            }
-            else
-            {
-                Close();
-            }
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ToString() + " all contacts left, disconnect automately.", GetType().ToString());
-        }
-
-        /// <summary>
-        /// Fires the <see cref="UserTyping"/> event.
+        /// The hash identifier used to define this switchboard session.
         /// </summary>
-        /// <param name="contact">The contact who is typing.</param>
-        protected virtual void OnUserTyping(Contact contact)
+        internal string SessionHash
         {
-            // make sure we don't parse the rest of the message in the next loop											
-            if (UserTyping != null)
+            get
             {
-                // raise the event
-                UserTyping(this, new ContactEventArgs(contact));
+                return sessionHash;
+            }
+            set
+            {
+                sessionHash = value;
             }
         }
 
         /// <summary>
-        /// Fires the <see cref="UserTyping"/> event.
+        /// Implements the P2P framework. This object is automatically created when a succesfull connection was made to the switchboard.
         /// </summary>
-        /// <param name="message">The emoticon message.</param>
-        /// <param name="contact">The contact who is sending the definition.</param>
-        protected virtual void OnEmoticonDefinition(MSGMessage message, Contact contact)
+        [Obsolete("Please use Messenger.P2PHandler.", true)]
+        public P2PHandler P2PHandler
         {
-            EmoticonMessage emoticonMessage = new EmoticonMessage();
-            emoticonMessage.CreateFromMessage(message);
-
-            if (EmoticonDefinitionReceived != null)
+            get
             {
-                foreach (Emoticon emoticon in emoticonMessage.Emoticons)
-                {
-                    EmoticonDefinitionReceived(this, new EmoticonDefinitionEventArgs(contact, emoticon));
-                }
+                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
             }
-        }
-
-        protected virtual void OnWinkReceived(MSGMessage message, Contact contact)
-        {
-            string body = System.Text.Encoding.UTF8.GetString(message.InnerBody);
-
-            Wink obj = new Wink();
-            obj.ParseContext(body, false);
-
-            if (WinkReceived != null)
-                WinkReceived(this, new WinkEventArgs(contact, obj));
-        }
-
-        /// <summary>
-        /// Fires the <see cref="NudgeReceived"/> event.
-        /// </summary>
-        /// <param name="contact">The contact who is sending the nudge.</param>
-        protected virtual void OnNudgeReceived(Contact contact)
-        {
-            if (NudgeReceived != null)
+            set
             {
-                NudgeReceived(this, new ContactEventArgs(contact));
+                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
             }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="TextMessageReceived"/> event.
-        /// </summary>
-        /// <param name="message">The message send.</param>
-        /// <param name="contact">The contact who sended the message.</param>
-        protected virtual void OnTextMessageReceived(TextMessage message, Contact contact)
-        {
-            if (TextMessageReceived != null)
-                TextMessageReceived(this, new TextMessageEventArgs(message, contact));
         }
 
         #endregion
 
-        #region Public
+        #region Invitation
 
         /// <summary>
+        /// Invites the specified contact to the switchboard.
         /// </summary>
-        protected SBMessageHandler()
+        /// <remarks>
+        /// If there is not yet a connection established the invitation will be stored in a queue and processed as soon as a connection is established.
+        /// </remarks>
+        /// <param name="contact">The contact's account to invite.</param>
+        public virtual void Invite(string contact)
         {
+            if (Contacts.ContainsKey(contact))
+            {
+                //If already invited or joined, do nothing.
+                if (Contacts[contact] == ContactConversationState.Joined ||
+                    Contacts[contact] == ContactConversationState.Invited)
+                {
+                    return;
+                }
+            }
+
+            SetContactState(contact, ContactConversationState.Invited);
+            invitationQueue.Enqueue(contact);
+            ProcessInvitations();
         }
+
 
         /// <summary>
         /// Called when a switchboard session is created on request of a remote client.
@@ -471,116 +405,6 @@ namespace MSNPSharp
         {
             this.sessionHash = sessionHash;
             this.invited = false;
-        }
-
-        /// <summary>
-        /// The nameserver that received the request for the switchboard session
-        /// </summary>
-        public NSMessageHandler NSMessageHandler
-        {
-            get
-            {
-                return nsMessageHandler;
-            }
-            set
-            {
-                nsMessageHandler = value;
-            }
-        }
-
-        /// <summary>
-        /// Implements the P2P framework. This object is automatically created when a succesfull connection was made to the switchboard.
-        /// </summary>
-        [Obsolete("Please use Messenger.P2PHandler.", true)]
-        public P2PHandler P2PHandler
-        {
-            get
-            {
-                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
-            }
-            set
-            {
-                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
-            }
-        }
-
-        /// <summary>
-        /// Indicates if the local client was invited to the session
-        /// </summary>
-        public bool Invited
-        {
-            get
-            {
-                return invited;
-            }
-        }
-
-        /// <summary>
-        /// A collection of all <i>remote</i> contacts present in this session
-        /// </summary>
-        public Dictionary<string, ContactConversationState> Contacts
-        {
-            get
-            {
-                return contacts;
-            }
-        }
-
-        /// <summary>
-        /// Indicates if the session is ready to send/accept commands. E.g. the initial handshaking and identification has been completed.
-        /// </summary>
-        public bool IsSessionEstablished
-        {
-            get
-            {
-                return sessionEstablished;
-            }
-        }
-
-        /// <summary>
-        /// The processor to handle the messages
-        /// </summary>
-        public IMessageProcessor MessageProcessor
-        {
-            get
-            {
-                return messageProcessor;
-            }
-            set
-            {
-                if (processorConnectedHandler == null)
-                {
-                    // store the new eventhandlers in order to remove them in the future
-                    processorConnectedHandler = new EventHandler<EventArgs>(SB11MessageHandler_ProcessorConnectCallback);
-                    processorDisconnectedHandler = new EventHandler<EventArgs>(SB11MessageHandler_ProcessorDisconnectCallback);
-                }
-
-                // catch the connect event so we can start sending the USR command upon initiating
-                SocketMessageProcessor smp = value as SocketMessageProcessor;
-                smp.ConnectionEstablished += processorConnectedHandler;
-                smp.ConnectionClosed += processorDisconnectedHandler;
-
-                if (messageProcessor != null)
-                {
-                    // de-register from the previous message processor					
-                    ((SocketMessageProcessor)messageProcessor).ConnectionEstablished -= processorConnectedHandler;
-                    ((SocketMessageProcessor)messageProcessor).ConnectionClosed -= processorDisconnectedHandler;
-                }
-
-                messageProcessor = smp;
-
-            }
-        }
-
-        /// <summary>
-        /// Closes the switchboard session by disconnecting from the server. 
-        /// </summary>
-        public virtual void Close()
-        {
-            if (MessageProcessor != null)
-            {
-                ((SocketMessageProcessor)MessageProcessor).Disconnect();
-            }
         }
 
         /// <summary>
@@ -606,135 +430,19 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Debug string
+        /// Closes the switchboard session by disconnecting from the server. 
         /// </summary>
-        /// <returns></returns>
-        public override string ToString()
+        public virtual void Close()
         {
-            return GetType().ToString() + " SessionHash: " + SessionHash;
+            if (MessageProcessor != null)
+            {
+                ((SocketMessageProcessor)MessageProcessor).Disconnect();
+            }
         }
 
         #endregion
 
-        /// <summary>
-        /// Called when the message processor has established a connection. This function will 
-        /// begin the login procedure by sending the USR or ANS command.
-        /// </summary>
-        protected virtual void OnProcessorConnectCallback(IMessageProcessor processor)
-        {
-            SendInitialMessage();
-        }
-
-        /// <summary>
-        /// Called when the message processor has disconnected. This function will 
-        /// set the IsSessionEstablished to false.
-        /// </summary>
-        protected virtual void OnProcessorDisconnectCallback(IMessageProcessor processor)
-        {
-            lock (syncObject)
-            {
-                if (sessionEstablished)
-                    OnSessionClosed();
-
-                sessionEstablished = false;
-            }
-        }
-
-        /// <summary>
-        /// Calls OnProcessorConnectCallback.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void SB11MessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Switchboard processor connected.", GetType().Name);
-
-            OnProcessorConnectCallback((IMessageProcessor)sender);
-        }
-
-        /// <summary>
-        /// Calls OnProcessorDisconnectCallback.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void SB11MessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
-        {
-            OnProcessorDisconnectCallback((IMessageProcessor)sender);
-        }
-
-        private void ClearAll()
-        {
-            Dictionary<string, ContactConversationState> cp = new Dictionary<string, ContactConversationState>(contacts);
-            foreach (string account in cp.Keys)
-            {
-                SetContactState(account, ContactConversationState.Left);
-            }
-        }
-
-        private void SetContactState(string account, ContactConversationState state)
-        {
-            lock (contacts)
-            {
-                contacts[account] = state;
-            }
-        }
-
-        #region Protected helper methods
-
-        /// <summary>
-        /// Handles all remaining invitations. If no connection is yet established it will do nothing.
-        /// </summary>
-        protected virtual void ProcessInvitations()
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Processing invitations for switchboard...", GetType().Name);
-
-            if (IsSessionEstablished)
-            {
-                while (invitationQueue.Count > 0)
-                    SendInvitationCommand((string)invitationQueue.Dequeue());
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Invitation send", GetType().Name);
-            }
-        }
-
-        /// <summary>
-        /// Sends the invitation command to the switchboard server.
-        /// </summary>
-        /// <param name="contact"></param>
-        protected virtual void SendInvitationCommand(string contact)
-        {
-            MessageProcessor.SendMessage(new SBMessage("CAL", new string[] { contact }));
-        }
-
-        #endregion
-
-
-
-        #region Message sending methods
-
-        /// <summary>
-        /// Invites the specified contact to the switchboard.
-        /// </summary>
-        /// <remarks>
-        /// If there is not yet a connection established the invitation will be stored in a queue and processed as soon as a connection is established.
-        /// </remarks>
-        /// <param name="contact">The contact's account to invite.</param>
-        public virtual void Invite(string contact)
-        {
-            if (Contacts.ContainsKey(contact))
-            {
-                //If already invited or joined, do nothing.
-                if (Contacts[contact] == ContactConversationState.Joined ||
-                    Contacts[contact] == ContactConversationState.Invited)
-                {
-                    return;
-                }
-            }
-
-            SetContactState(contact, ContactConversationState.Invited);
-            invitationQueue.Enqueue(contact);
-            ProcessInvitations();
-        }
+        #region Messaging
 
         /// <summary>
         /// Sends a plain text message to all other contacts in the conversation.
@@ -841,31 +549,12 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
             msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-#if MSNP18
+#if MSNP16 || MSNP18
             msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail + "\r\n";
 #else
             msgMessage.MimeHeader["TypingUser"] += NSMessageHandler.Owner.Mail;
 #endif
 
-            sbMessage.InnerMessage = msgMessage;
-
-            // send it over the network
-            MessageProcessor.SendMessage(sbMessage);
-        }
-
-        /// <summary>
-        /// Send a keep-alive message to avoid the switchboard closing. This is useful for bots.
-        /// </summary>
-        public virtual void SendKeepAliveMessage()
-        {
-            SBMessage sbMessage = new SBMessage();
-
-            MSGMessage msgMessage = new MSGMessage();
-#if MSNP18
-            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
-#else
-            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
-#endif
             sbMessage.InnerMessage = msgMessage;
 
             // send it over the network
@@ -887,6 +576,193 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(sbMessage);
         }
 
+        /// <summary>
+        /// Send a keep-alive message to avoid the switchboard closing. This is useful for bots.
+        /// </summary>
+        public virtual void SendKeepAliveMessage()
+        {
+            SBMessage sbMessage = new SBMessage();
+
+            MSGMessage msgMessage = new MSGMessage();
+#if MSNP16 || MSNP18
+            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
+#else
+            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive";
+#endif
+            sbMessage.InnerMessage = msgMessage;
+
+            // send it over the network
+            MessageProcessor.SendMessage(sbMessage);
+        }
+
+        #endregion
+
+        #region Protected User Methods
+
+        /// <summary>
+        /// Fires the <see cref="AllContactsLeft"/> event.
+        /// </summary>		
+        protected virtual void OnAllContactsLeft()
+        {
+            if (AllContactsLeft != null)
+            {
+                AllContactsLeft(this, new EventArgs());
+            }
+
+            if (contacts.Count == 1)  //MSNP18: owner in the switch
+            {
+                Left();
+                lock (contacts)
+                    contacts.Clear();
+            }
+            else
+            {
+                Close();
+            }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ToString() + " all contacts left, disconnect automately.", GetType().ToString());
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactJoined"/> event.
+        /// </summary>
+        /// <param name="contact">The contact who joined the session.</param>
+        protected virtual void OnContactJoined(Contact contact)
+        {
+            SetContactState(contact.Mail, ContactConversationState.Joined);
+            if (ContactJoined != null)
+            {
+                ContactJoined(this, new ContactEventArgs(contact));
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactLeft"/> event.
+        /// </summary>
+        /// <param name="contact">The contact who left the session.</param>
+        protected virtual void OnContactLeft(Contact contact)
+        {
+            SetContactState(contact.Mail, ContactConversationState.Left);
+            if (ContactLeft != null)
+            {
+                ContactLeft(this, new ContactEventArgs(contact));
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="UserTyping"/> event.
+        /// </summary>
+        /// <param name="message">The emoticon message.</param>
+        /// <param name="contact">The contact who is sending the definition.</param>
+        protected virtual void OnEmoticonDefinition(MSGMessage message, Contact contact)
+        {
+            EmoticonMessage emoticonMessage = new EmoticonMessage();
+            emoticonMessage.CreateFromMessage(message);
+
+            if (EmoticonDefinitionReceived != null)
+            {
+                foreach (Emoticon emoticon in emoticonMessage.Emoticons)
+                {
+                    EmoticonDefinitionReceived(this, new EmoticonDefinitionEventArgs(contact, emoticon));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="NudgeReceived"/> event.
+        /// </summary>
+        /// <param name="contact">The contact who is sending the nudge.</param>
+        protected virtual void OnNudgeReceived(Contact contact)
+        {
+            if (NudgeReceived != null)
+            {
+                NudgeReceived(this, new ContactEventArgs(contact));
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="UserTyping"/> event.
+        /// </summary>
+        /// <param name="contact">The contact who is typing.</param>
+        protected virtual void OnUserTyping(Contact contact)
+        {
+            // make sure we don't parse the rest of the message in the next loop											
+            if (UserTyping != null)
+            {
+                // raise the event
+                UserTyping(this, new ContactEventArgs(contact));
+            }
+        }
+
+        protected virtual void OnWinkReceived(MSGMessage message, Contact contact)
+        {
+            string body = System.Text.Encoding.UTF8.GetString(message.InnerBody);
+
+            Wink obj = new Wink();
+            obj.ParseContext(body, false);
+
+            if (WinkReceived != null)
+                WinkReceived(this, new WinkEventArgs(contact, obj));
+        }
+
+        /// <summary>
+        /// Fires the <see cref="TextMessageReceived"/> event.
+        /// </summary>
+        /// <param name="message">The message send.</param>
+        /// <param name="contact">The contact who sended the message.</param>
+        protected virtual void OnTextMessageReceived(TextMessage message, Contact contact)
+        {
+            if (TextMessageReceived != null)
+                TextMessageReceived(this, new TextMessageEventArgs(message, contact));
+        }
+
+        /// <summary>
+        /// Fires the SessionClosed event.
+        /// </summary>
+        protected virtual void OnSessionClosed()
+        {
+            ClearAll();  //Session closed, force all contact left this conversation.
+            if (SessionClosed != null)
+                SessionClosed(this, new EventArgs());
+        }
+
+        /// <summary>
+        /// Fires the SessionEstablished event and processes invitations in the queue.
+        /// </summary>
+        protected virtual void OnSessionEstablished()
+        {
+            sessionEstablished = true;
+            if (SessionEstablished != null)
+                SessionEstablished(this, new EventArgs());
+
+            // process ant remaining invitations
+            ProcessInvitations();
+        }
+
+        /// <summary>
+        /// Handles all remaining invitations. If no connection is yet established it will do nothing.
+        /// </summary>
+        protected virtual void ProcessInvitations()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Processing invitations for switchboard...", GetType().Name);
+
+            if (IsSessionEstablished)
+            {
+                while (invitationQueue.Count > 0)
+                    SendInvitationCommand((string)invitationQueue.Dequeue());
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Invitation send", GetType().Name);
+            }
+        }
+
+        /// <summary>
+        /// Sends the invitation command to the switchboard server.
+        /// </summary>
+        /// <param name="contact"></param>
+        protected virtual void SendInvitationCommand(string contact)
+        {
+            MessageProcessor.SendMessage(new SBMessage("CAL", new string[] { contact }));
+        }
 
         /// <summary>
         /// Send the first message to the server.
@@ -897,7 +773,7 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             string auth = NSMessageHandler.Owner.Mail;
-#if MSNP18
+#if MSNP16 || MSNP18
             auth += ";" + NSMessageHandler.MachineGuid.ToString("B");
 #endif
             if (Invited)
@@ -908,96 +784,7 @@ namespace MSNPSharp
 
         #endregion
 
-
-
-        /// <summary>
-        /// Handles message from the processor.
-        /// </summary>
-        /// <remarks>
-        /// This is one of the most important functions of the class.
-        /// It handles incoming messages and performs actions based on the commands in the messages.
-        /// Many commands will affect the data objects in MSNPSharp, like <see cref="Contact"/> and <see cref="ContactGroup"/>.
-        /// For example contacts are renamed, contactgroups are added and status is set.
-        /// Exceptions which occur in this method are redirected via the <see cref="ExceptionOccurred"/> event.
-        /// </remarks>
-        /// <param name="sender"></param>
-        /// <param name="message">The network message received from the notification server</param>
-        public virtual void HandleMessage(IMessageProcessor sender, NetworkMessage message)
-        {
-            try
-            {
-                // we expect at least a SBMessage object
-                SBMessage sbMessage = (SBMessage)message;
-
-                switch (sbMessage.Command)
-                {
-                    case "ANS":
-                        {
-                            OnANSReceived(sbMessage);
-                            break;
-                        }
-                    case "BYE":
-                        {
-                            OnBYEReceived(sbMessage);
-                            break;
-                        }
-                    case "CAL":
-                        {
-                            OnCALReceived(sbMessage);
-                            break;
-                        }
-                    case "IRO":
-                        {
-                            OnIROReceived(sbMessage);
-                            break;
-                        }
-                    case "JOI":
-                        {
-                            OnJOIReceived(sbMessage);
-                            break;
-                        }
-                    case "MSG":
-                        {
-                            OnMSGReceived(sbMessage);
-                            break;
-                        }
-                    case "USR":
-                        {
-                            OnUSRReceived(sbMessage);
-                            break;
-                        }
-
-                    default:
-                        {
-                            // first check whether it is a numeric error command
-                            if (sbMessage.Command[0] >= '0' && sbMessage.Command[0] <= '9')
-                            {
-                                try
-                                {
-                                    int errorCode = int.Parse(sbMessage.Command, System.Globalization.CultureInfo.InvariantCulture);
-                                    OnServerErrorReceived((MSNError)errorCode);
-                                }
-                                catch (FormatException e)
-                                {
-                                    throw new MSNPSharpException("Exception occurred while parsing an error code received from the switchboard server", e);
-                                }
-                            }
-
-                            // if not then it is a unknown command:
-                            // do nothing.
-                            break;
-                        }
-                }
-            }
-            catch (Exception e)
-            {
-                // notify the client of this exception
-                OnExceptionOccurred(e);
-                throw e;
-            }
-        }
-
-        #region Message handlers
+        #region Protected CMDs
 
         /// <summary>
         /// Called when a ANS command has been received.
@@ -1013,88 +800,6 @@ namespace MSNPSharp
             {
                 // we are now ready to invite other contacts. Notify the client of this.
                 OnSessionEstablished();
-            }
-        }
-
-        /// <summary>
-        /// Called when a USR command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has replied to our identification USR command.
-        /// <code>USR [Transaction] ['OK'] [account[;GUID]] [name]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnUSRReceived(SBMessage message)
-        {
-            if (message.CommandValues[1].ToString() == "OK")
-            {
-                string account = message.CommandValues[2].ToString().ToLowerInvariant();
-                if (account.Contains(";"))
-                {
-                    account = account.Split(';')[0];
-                }
-
-                if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
-                {
-                    // update the owner's name. Just to be sure.
-                    // NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
-#if MSNP18
-                    if (NSMessageHandler != null)
-                    {
-                        Invite(NSMessageHandler.Owner.Mail);
-                    }
-#endif
-                    // we are now ready to invite other contacts. Notify the client of this.
-                    OnSessionEstablished();
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// Called when a CAL command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has replied to our request to invite a contact.
-        /// <code>CAL [Transaction] ['RINGING'] [sessionId]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnCALReceived(SBMessage message)
-        {
-            // this is not very interesting so do nothing at the moment
-        }
-
-        /// <summary>
-        /// Called when a JOI command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a remote contact has joined the session.
-        /// This will fire the <see cref="ContactJoined"/> event.
-        /// <code>JOI [account[;GUID]] [name]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnJOIReceived(SBMessage message)
-        {
-            string account = message.CommandValues[0].ToString().ToLowerInvariant();
-            if (account.Contains(";"))
-            {
-                account = account.Split(';')[0];
-            }
-
-            if (NSMessageHandler.Owner.Mail.ToLowerInvariant() != account)
-            {
-                Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
-                if (contact.NSMessageHandler == null)
-                {
-                    contact.NSMessageHandler = NSMessageHandler;
-                }
-
-                // get the contact and update it's name
-                // contact.SetName(message.CommandValues[1].ToString());
-                if (!Contacts.ContainsKey(contact.Mail) || Contacts[contact.Mail] != ContactConversationState.Joined)
-                {
-                    OnContactJoined(contact); // notify the client programmer
-                }
             }
         }
 
@@ -1148,6 +853,19 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Called when a CAL command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the server has replied to our request to invite a contact.
+        /// <code>CAL [Transaction] ['RINGING'] [sessionId]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnCALReceived(SBMessage message)
+        {
+            // this is not very interesting so do nothing at the moment
+        }
+
+        /// <summary>
         /// Called when a IRO command has been received.
         /// </summary>
         /// <remarks>
@@ -1188,15 +906,83 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Called when a JOI command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that a remote contact has joined the session.
+        /// This will fire the <see cref="ContactJoined"/> event.
+        /// <code>JOI [account[;GUID]] [name]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnJOIReceived(SBMessage message)
+        {
+            string account = message.CommandValues[0].ToString().ToLowerInvariant();
+            if (account.Contains(";"))
+            {
+                account = account.Split(';')[0];
+            }
+
+            if (NSMessageHandler.Owner.Mail.ToLowerInvariant() != account)
+            {
+                Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
+                if (contact.NSMessageHandler == null)
+                {
+                    contact.NSMessageHandler = NSMessageHandler;
+                }
+
+                // get the contact and update it's name
+                // contact.SetName(message.CommandValues[1].ToString());
+                if (!Contacts.ContainsKey(contact.Mail) || Contacts[contact.Mail] != ContactConversationState.Joined)
+                {
+                    OnContactJoined(contact); // notify the client programmer
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called when a USR command has been received.
+        /// </summary>
+        /// <remarks>
+        /// Indicates that the server has replied to our identification USR command.
+        /// <code>USR [Transaction] ['OK'] [account[;GUID]] [name]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnUSRReceived(SBMessage message)
+        {
+            if (message.CommandValues[1].ToString() == "OK")
+            {
+                string account = message.CommandValues[2].ToString().ToLowerInvariant();
+                if (account.Contains(";"))
+                {
+                    account = account.Split(';')[0];
+                }
+
+                if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
+                {
+                    // update the owner's name. Just to be sure.
+                    // NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
+#if MSNP18
+                    if (NSMessageHandler != null)
+                    {
+                        Invite(NSMessageHandler.Owner.Mail);
+                    }
+#endif
+                    // we are now ready to invite other contacts. Notify the client of this.
+                    OnSessionEstablished();
+                }
+            }
+        }
+
+        /// <summary>
         /// Called when a MSG command has been received.
         /// </summary>
         /// <remarks>
-        /// Indicates that a remote contact has send us a message. This can be a plain text message, an invitation, or an application specific message.
+        /// Indicates that a remote contact has send us a message. This can be a plain text message,
+        /// an invitation, or an application specific message.
         /// <code>MSG [Account] [Name] [Bodysize]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnMSGReceived(MSNMessage message)
-        
         {
             // the MSG command is the most versatile one. These are all the messages
             // between clients. Like normal messages, file transfer invitations, P2P messages, etc.
@@ -1221,17 +1007,17 @@ namespace MSNPSharp
                 else if (sbMSGMessage.MimeHeader.ContainsKey("Chunk"))
                 {
                     //Is this the last message?
-                    if (Convert.ToInt32(sbMSGMessage.MimeHeader["Chunk"]) + 1 == Convert.ToInt32(((MSGMessage)multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"]).MimeHeader["Chunks"]))
+                    if (Convert.ToInt32(sbMSGMessage.MimeHeader["Chunk"]) + 1 == Convert.ToInt32(multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"].MimeHeader["Chunks"]))
                     {
                         //Paste all the pieces together
-                        MSGMessage completeMessage = (MSGMessage)multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"];
+                        MSGMessage completeMessage = multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"];
                         multiPacketMessages.Remove(sbMSGMessage.MimeHeader["Message-ID"] + "/0");
 
                         int chunksToProcess = Convert.ToInt32(completeMessage.MimeHeader["Chunks"]) - 2;
                         List<byte> completeText = new List<byte>(completeMessage.InnerBody);
                         for (int i = 0; i < chunksToProcess; i++)
                         {
-                            MSGMessage part = (MSGMessage)multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/" + Convert.ToString(i + 1)];
+                            MSGMessage part = multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/" + Convert.ToString(i + 1)];
                             completeText.AddRange(part.InnerBody);
 
                             //Remove the part from the buffer
@@ -1291,6 +1077,198 @@ namespace MSNPSharp
                         break;
                 }
         }
+
         #endregion
+
+        #region Switchboard Handling
+
+        private EventHandler<EventArgs> processorConnectedHandler;
+        private EventHandler<EventArgs> processorDisconnectedHandler;
+
+        private void SBMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Switchboard processor connected.", GetType().Name);
+            OnProcessorConnectCallback((IMessageProcessor)sender);
+        }
+
+        private void SBMessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
+        {
+            OnProcessorDisconnectCallback((IMessageProcessor)sender);
+        }
+
+        private void ClearAll()
+        {
+            Dictionary<string, ContactConversationState> cp = new Dictionary<string, ContactConversationState>(contacts);
+            foreach (string account in cp.Keys)
+            {
+                SetContactState(account, ContactConversationState.Left);
+            }
+        }
+
+        private void SetContactState(string account, ContactConversationState state)
+        {
+            lock (contacts)
+            {
+                contacts[account] = state;
+            }
+        }
+
+        /// <summary>
+        /// Called when the message processor has established a connection. This function will 
+        /// begin the login procedure by sending the USR or ANS command.
+        /// </summary>
+        protected virtual void OnProcessorConnectCallback(IMessageProcessor processor)
+        {
+            SendInitialMessage();
+        }
+
+        /// <summary>
+        /// Called when the message processor has disconnected. This function will 
+        /// set the IsSessionEstablished to false.
+        /// </summary>
+        protected virtual void OnProcessorDisconnectCallback(IMessageProcessor processor)
+        {
+            lock (syncObject)
+            {
+                if (sessionEstablished)
+                    OnSessionClosed();
+
+                sessionEstablished = false;
+            }
+        }
+
+        /// <summary>
+        /// The processor to handle the messages
+        /// </summary>
+        public IMessageProcessor MessageProcessor
+        {
+            get
+            {
+                return messageProcessor;
+            }
+            set
+            {
+                if (processorConnectedHandler == null)
+                {
+                    // store the new eventhandlers in order to remove them in the future
+                    processorConnectedHandler = new EventHandler<EventArgs>(SBMessageHandler_ProcessorConnectCallback);
+                    processorDisconnectedHandler = new EventHandler<EventArgs>(SBMessageHandler_ProcessorDisconnectCallback);
+                }
+
+                // catch the connect event so we can start sending the USR command upon initiating
+                SocketMessageProcessor smp = value as SocketMessageProcessor;
+                smp.ConnectionEstablished += processorConnectedHandler;
+                smp.ConnectionClosed += processorDisconnectedHandler;
+
+                if (messageProcessor != null)
+                {
+                    // de-register from the previous message processor					
+                    ((SocketMessageProcessor)messageProcessor).ConnectionEstablished -= processorConnectedHandler;
+                    ((SocketMessageProcessor)messageProcessor).ConnectionClosed -= processorDisconnectedHandler;
+                }
+
+                messageProcessor = smp;
+
+            }
+        }
+
+
+        /// <summary>
+        /// Handles message from the processor.
+        /// </summary>
+        /// <remarks>
+        /// This is one of the most important functions of the class.
+        /// It handles incoming messages and performs actions based on the commands in the messages.
+        /// Exceptions which occur in this method are redirected via the <see cref="ExceptionOccurred"/> event.
+        /// </remarks>
+        /// <param name="sender"></param>
+        /// <param name="message">The network message received from the notification server</param>
+        public virtual void HandleMessage(IMessageProcessor sender, NetworkMessage message)
+        {
+            try
+            {
+                // We expect at least a SBMessage object
+                SBMessage sbMessage = (SBMessage)message;
+                switch (sbMessage.Command)
+                {
+                    case "USR":
+                        OnUSRReceived(sbMessage);
+                        return;
+                    case "MSG":
+                        OnMSGReceived(sbMessage);
+                        return;
+                    case "JOI":
+                        OnJOIReceived(sbMessage);
+                        return;
+                    case "IRO":
+                        OnIROReceived(sbMessage);
+                        return;
+                    case "CAL":
+                        OnCALReceived(sbMessage);
+                        return;
+                    case "BYE":
+                        OnBYEReceived(sbMessage);
+                        return;
+                    case "ANS":
+                        OnANSReceived(sbMessage);
+                        return;
+                }
+
+                // Check whether it is a numeric error command
+                if (sbMessage.Command[0] >= '0' && sbMessage.Command[0] <= '9')
+                {
+                    try
+                    {
+                        int errorCode = int.Parse(sbMessage.Command, System.Globalization.CultureInfo.InvariantCulture);
+                        OnServerErrorReceived((MSNError)errorCode);
+                    }
+                    catch (FormatException fe)
+                    {
+                        throw new MSNPSharpException("Exception occurred while parsing an error code received from the switchboard server", fe);
+                    }
+                }
+                else
+                {
+                    // It is a unknown command
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "UNKNOWN COMMAND: " + sbMessage.Command + "\r\n" + sbMessage.ToDebugString(), GetType().ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                OnExceptionOccurred(e);
+                throw e;
+            }
+        }
+
+        /// <summary>
+        /// Fires the ServerErrorReceived event.
+        /// </summary>
+        protected virtual void OnServerErrorReceived(MSNError serverError)
+        {
+            if (ServerErrorReceived != null)
+                ServerErrorReceived(this, new MSNErrorEventArgs(serverError));
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ExceptionOccurred"/> event.
+        /// </summary>
+        /// <param name="e">The exception which was thrown</param>
+        protected virtual void OnExceptionOccurred(Exception e)
+        {
+            if (ExceptionOccurred != null)
+                ExceptionOccurred(this, new ExceptionEventArgs(e));
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Debug string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return GetType().ToString() + " SessionHash: " + SessionHash;
+        }
+
     }
 };
