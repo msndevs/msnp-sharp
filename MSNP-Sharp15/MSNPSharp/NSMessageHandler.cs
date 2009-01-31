@@ -84,7 +84,7 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-#if MSNC9
+#if MSNC9_DEFINE_ME_LATER_WHEN_COMPLETED
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC9
 #else
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
