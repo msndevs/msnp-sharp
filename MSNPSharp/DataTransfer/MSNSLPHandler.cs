@@ -682,7 +682,7 @@ namespace MSNPSharp.DataTransfer
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
             {
                 properties.DataType = DataTransferType.Emoticon;
-                AppID = "AppID: " + P2PConst.CustomEmoticonAppID.ToString();
+                AppID = P2PConst.CustomEmoticonAppID.ToString();
 #if MSNC9
                 session.MessageFooter = (uint)P2PFlag.CustomEmoticonFooter;
 #endif
@@ -690,7 +690,7 @@ namespace MSNPSharp.DataTransfer
             else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
             {
                 properties.DataType = DataTransferType.DisplayImage;
-                AppID = "AppID: " + P2PConst.DisplayImageAppID.ToString();
+                AppID = P2PConst.DisplayImageAppID.ToString();
 #if MSNC9
                 session.MessageFooter = (uint)P2PFlag.DisplayImageFooter;
 #endif
@@ -714,15 +714,16 @@ namespace MSNPSharp.DataTransfer
             slpMessage.From = "<msnmsgr:" + localContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
-            slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CallId = properties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.Body = "EUF-GUID: " + P2PConst.UserDisplayGuid + "\r\n" +
-                "SessionID: " + properties.SessionId + "\r\n" +
-                "SChannelState: 0\r\n" +
-                "Capabilities-Flags: 1\r\n" +
-                AppID +"\r\n" +
-                "Context: " + base64Context + "\r\n\r\n";
+
+            slpMessage.BodyValues["EUF-GUID"] = P2PConst.UserDisplayGuid;
+            slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
+            slpMessage.BodyValues["SChannelState"] = "0";
+            slpMessage.BodyValues["Capabilities-Flags"] = "1";
+            slpMessage.BodyValues["AppID"] = AppID;
+            slpMessage.BodyValues["Context"] = base64Context;
 
             p2pMessage.InnerMessage = slpMessage;
 
@@ -808,16 +809,15 @@ namespace MSNPSharp.DataTransfer
             slpMessage.From = "<msnmsgr:" + localContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
-            slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CallId = properties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-
-            slpMessage.Body = "EUF-GUID: " + P2PConst.ActivityGuid + "\r\n" +
-                          "SessionID: " + properties.SessionId + "\r\n" +
-                          "SChannelState: 0\r\n" +
-                          "Capabilities-Flags: 1\r\n" +
-                          "AppID: " + activityID.ToString() + "\r\n" +
-                          "Context: " + base64Context + "\r\n\r\n";
+            slpMessage.BodyValues["EUF-GUID"] = P2PConst.ActivityGuid;
+            slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
+            slpMessage.BodyValues["SChannelState"] = "0";
+            slpMessage.BodyValues["Capabilities-Flags"] = "1";
+            slpMessage.BodyValues["AppID"] = activityID.ToString();
+            slpMessage.BodyValues["Context"] = base64Context;
             //slpMessage.Body = "EUF-GUID: {6A13AF9C-5308-4F35-923A-67E8DDA40C2F}\r\nSessionID: " + properties.SessionId + "\r\nAppID: 1\r\n" + "Context: " + base64Context + "\r\n\r\n" + "\r\nRobot-Command: auto-accept#" + localContact + "#\r\n";
 
 
@@ -915,13 +915,13 @@ namespace MSNPSharp.DataTransfer
             slpMessage.From = "<msnmsgr:" + localContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
-            slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CallId = properties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.Body = "EUF-GUID: " + P2PConst.FileTransferGuid + "\r\n" + 
-                "SessionID: " + properties.SessionId + "\r\n" + 
-                "AppID: " + P2PConst.FileTransAppID.ToString() + "\r\n" +
-                "Context: " + base64Context + "\r\n\r\n";
+            slpMessage.BodyValues["EUF-GUID"] = P2PConst.FileTransferGuid;
+            slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
+            slpMessage.BodyValues["AppID"] = P2PConst.FileTransAppID.ToString();
+            slpMessage.BodyValues["Context"] = base64Context;
 
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
@@ -1004,7 +1004,7 @@ namespace MSNPSharp.DataTransfer
 
 
             // check for a msn object request
-            if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
+            if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
             {
                 // for some kind of weird behavior, our local identifier must now subtract 4 ?
                 ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
@@ -1020,7 +1020,7 @@ namespace MSNPSharp.DataTransfer
             }
             p2pTransfer.DataStream = objectToSend.OpenStream();*/
 
-            if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
+            if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
             {
                 p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
                 p2pTransfer.MessageFooter = (uint)P2PFlag.FileTransFooter;
@@ -1159,11 +1159,9 @@ namespace MSNPSharp.DataTransfer
             slpMessage.From = "<msnmsgr:" + transferProperties.LocalContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + transferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
-            slpMessage.CallId = transferProperties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CallId = transferProperties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
-            slpMessage.Body = "\r\n\r\n";
-
             return slpMessage;
         }
 
@@ -1175,18 +1173,16 @@ namespace MSNPSharp.DataTransfer
         protected virtual MSNSLPMessage CreateInternalErrorMessage(MSNSLPTransferProperties transferProperties)
         {
             MSNSLPMessage slpMessage = new MSNSLPMessage();
-
             slpMessage.StartLine = "MSNSLP/1.0 500 Internal Error";
             slpMessage.To = "<msnmsgr:" + transferProperties.RemoteContact + ">";
             slpMessage.From = "<msnmsgr:" + transferProperties.LocalContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + transferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = transferProperties.LastCSeq;
-            slpMessage.CallId = transferProperties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CallId = transferProperties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.Body = "SessionID: " + transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n" +
-                              "SChannelState: 0\r\n\r\n";
-
+            slpMessage.BodyValues["SessionID"] = transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["SChannelState"] = "0";
             return slpMessage;
         }
 
@@ -1200,16 +1196,16 @@ namespace MSNPSharp.DataTransfer
 
             properties.RemoteInvited = true;
 
-            if (message.MessageValues.ContainsKey("EUF-GUID"))
+            if (message.BodyValues.Contains("EUF-GUID"))
             {
-                properties.DataTypeGuid = message.MessageValues["EUF-GUID"].ToString();
-                if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
+                properties.DataTypeGuid = message.BodyValues["EUF-GUID"].ToString();
+                if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
                 {
                     // create a temporary msn object to extract the data type
-                    if (message.MessageValues.ContainsKey("Context"))
+                    if (message.BodyValues.Contains("Context"))
                     {
                         MSNObject msnObject = new MSNObject();
-                        msnObject.ParseContext(message.MessageValues["Context"].ToString(), true);
+                        msnObject.ParseContext(message.BodyValues["Context"].ToString(), true);
 
                         if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                             properties.DataType = DataTransferType.DisplayImage;
@@ -1218,7 +1214,7 @@ namespace MSNPSharp.DataTransfer
                         else
                             properties.DataType = DataTransferType.Unknown;
 
-                        properties.Context = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(message.MessageValues["Context"].ToString()));
+                        properties.Context = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(message.BodyValues["Context"].ToString()));
                         properties.Checksum = ExtractChecksum(properties.Context);
                     }
                     else
@@ -1226,11 +1222,11 @@ namespace MSNPSharp.DataTransfer
                         properties.DataType = DataTransferType.Unknown;
                     }
                 }
-                else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
+                else if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
                 {
                     properties.DataType = DataTransferType.File;
                 }
-                else if (message.MessageValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.ActivityGuid)
+                else if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.ActivityGuid)
                 {
                     properties.DataType = DataTransferType.Activity;
                 }
@@ -1242,8 +1238,8 @@ namespace MSNPSharp.DataTransfer
                 // store the branch for use in the OK Message
                 properties.LastBranch = new Guid(message.Branch);
                 properties.LastCSeq = message.CSeq;
-                properties.CallId = new Guid(message.CallId);
-                properties.SessionId = (uint)(uint.Parse(message.MessageValues["SessionID"].ToString(), System.Globalization.CultureInfo.InvariantCulture));
+                properties.CallId = message.CallId;
+                properties.SessionId = (uint)(uint.Parse(message.BodyValues["SessionID"].ToString(), System.Globalization.CultureInfo.InvariantCulture));
 
                 // set the contacts who send and receive it				
                 properties.LocalContact = ExtractNameFromTag(message.To);
@@ -1301,15 +1297,14 @@ namespace MSNPSharp.DataTransfer
             slpMessage.From = "<msnmsgr:" + transferProperties.LocalContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + transferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
-            slpMessage.CallId = transferProperties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CallId = transferProperties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
-            slpMessage.Body =
-                "Bridges: TRUDPV1 TCPv1\r\n" +
-                "NetID: 2042264281\r\n" +	// unknown variable
-                "Conn-Type: " + connectionType + "\r\n" +
-                "UPnPNat: false\r\n" +		// UPNP Enabled
-                "ICF: false\r\n\r\n";		// Firewall enabled
+            slpMessage.BodyValues["Bridges"] = "TRUDPV1 TCPv1";
+            slpMessage.BodyValues["NetID"] = "2042264281"; // unknown variable
+            slpMessage.BodyValues["Conn-Type"] = connectionType;
+            slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
+            slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled		
 
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
@@ -1331,10 +1326,9 @@ namespace MSNPSharp.DataTransfer
             newMessage.From = "<msnmsgr:" + properties.LocalContact + ">";
             newMessage.Via = "MSNSLP/1.0/TLP ;branch=" + properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             newMessage.CSeq = 1;
-            newMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            newMessage.CallId = properties.CallId;
             newMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            newMessage.Body = "SessionID: " + properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n\r\n";
-
+            newMessage.BodyValues["SessionID"] = properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
             return newMessage;
         }
 
@@ -1352,9 +1346,9 @@ namespace MSNPSharp.DataTransfer
             newMessage.From = "<msnmsgr:" + properties.LocalContact + ">";
             newMessage.Via = "MSNSLP/1.0/TLP ;branch=" + properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             newMessage.CSeq = 1;
-            newMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            newMessage.CallId = properties.CallId;
             newMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            newMessage.Body = "SessionID: " + properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n\r\n";
+            newMessage.BodyValues["SessionID"] = properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
             return newMessage;
         }
 
@@ -1524,7 +1518,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void OnSessionCloseRequest(MSNSLPMessage message)
         {
-            Guid callGuid = new Guid(message.CallId);
+            Guid callGuid = message.CallId;
             MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);
             P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
 
@@ -1553,7 +1547,7 @@ namespace MSNPSharp.DataTransfer
             }
             else if (message.CSeq == 1 && message.StartLine.IndexOf("200 OK") >= 0)
             {
-                Guid callGuid = new Guid(message.CallId);
+                Guid callGuid = message.CallId;
                 MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);
                 P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
                 if (properties.DataType == DataTransferType.File)
@@ -1597,7 +1591,7 @@ namespace MSNPSharp.DataTransfer
                 {
                     // set the filetransfer values in the EventArgs object.
                     // see the SendInvitation(..) method for more info about the layout of the context string		
-                    MemoryStream memStream = new MemoryStream(Convert.FromBase64String(message.MessageValues["Context"].ToString()));
+                    MemoryStream memStream = new MemoryStream(Convert.FromBase64String(message.BodyValues["Context"].ToString()));
                     BinaryReader reader = new BinaryReader(memStream);
                     reader.ReadInt32();	// previewDataLength, 4
                     reader.ReadInt32(); // first flag, 4
@@ -1705,7 +1699,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            MSNSLPTransferProperties properties = GetTransferProperties(new Guid(message.CallId));
+            MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
 
 
             properties.Nonce = Guid.NewGuid();
@@ -1720,26 +1714,23 @@ namespace MSNPSharp.DataTransfer
             slpMessage.From = "<msnmsgr:" + properties.LocalContact + ">";
             slpMessage.Via = "MSNSLP/1.0/TLP ;branch=" + properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture).ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 1;
-            slpMessage.CallId = properties.CallId.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture).ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CallId = properties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
-            slpMessage.Body =
-                "Bridge: TCPv1\r\n" +
-                "Listening: true\r\n" +
-                "Nonce: " + properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "\r\n" +
-                "IPv4Internal-Addrs: " + iphostentry.AddressList[0].ToString() + "\r\n" +
-                "IPv4Internal-Port: " + port.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n";
-
+            slpMessage.BodyValues["Bridge"] = "TCPv1";
+            slpMessage.BodyValues["Listening"] = "true";
+            slpMessage.BodyValues["Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.AddressList[0].ToString();
+            slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            
             // check if client is behind firewall (NAT-ted)
             // if so, send the public ip also the client, so it can try to connect to that ip
             if (ExternalEndPoint != null && ExternalEndPoint.Address != iphostentry.AddressList[0])
             {
-                slpMessage.Body += "IPv4External-Addrs: " + ExternalEndPoint.Address.ToString() + "\r\n" +
-                "IPv4External-Port: " + port.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n";
+                slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
+                slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
 
-            // close the message body
-            slpMessage.Body += "\r\n";
 
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
@@ -1764,13 +1755,13 @@ namespace MSNPSharp.DataTransfer
         protected virtual void OnDCResponse(MSNSLPMessage message)
         {
             // read the values			
-            Hashtable bodyValues = message.MessageValues;
+            MimeDictionary bodyValues = message.BodyValues;
 
             // check the protocol
-            if (bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
+            if (bodyValues.Contains("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
             {
-                if (bodyValues.ContainsKey("IPv4Internal-Addrs") &&
-                    bodyValues.ContainsKey("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
+                if (bodyValues.Contains("IPv4Internal-Addrs") &&
+                    bodyValues.Contains("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
                 {
                     // we must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
@@ -1778,7 +1769,7 @@ namespace MSNPSharp.DataTransfer
                     settings.Port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
 
                     // let the message session connect
-                    MSNSLPTransferProperties properties = GetTransferProperties(new Guid(message.CallId));
+                    MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
 
                     P2PTransferSession transferSession = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
 

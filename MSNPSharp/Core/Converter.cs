@@ -266,5 +266,35 @@ namespace MSNPSharp.Core
             return num1;
         }
 
+
+        public static int IndexOf(byte[] input, byte[] pattern)
+        {
+            if (pattern.Length > input.Length)
+                return -1;
+
+            for (int i = 0; i <= input.Length - pattern.Length; i++)
+            {
+                bool found = true;
+
+                for (int j = 0; j < pattern.Length; j++)
+                {
+                    if (input[i + j] != pattern[j])
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        public static int IndexOf(byte[] input, string pattern)
+        {
+            return IndexOf(input, Encoding.UTF8.GetBytes(pattern));
+        }
     }
 };
