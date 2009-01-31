@@ -1586,7 +1586,9 @@ namespace MSNPSharp.DataTransfer
                 if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
                 {
                     P2PMessage replyMessage = new P2PMessage();
+#if MSNC9
                     replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+#endif
                     replyMessage.InnerMessage = CreateInternalErrorMessage(properties);
                     MessageProcessor.SendMessage(replyMessage);
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
