@@ -1520,14 +1520,20 @@ namespace MSNPSharp.DataTransfer
         {
             Guid callGuid = message.CallId;
             MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);
-            P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+            if (properties != null) // Closed before or never accepted?
+            {
+                P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
 
-            // remove the resources
-            RemoveTransferSession(session);
-            // and close the connection
-            if (session.MessageSession.DirectConnected)
-                session.MessageSession.CloseDirectConnection();
-
+                // remove the resources
+                RemoveTransferSession(session);
+                // and close the connection
+                if (session.MessageSession.DirectConnected)
+                    session.MessageSession.CloseDirectConnection();
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Warning: a session with the call-id " + callGuid + " not exists.", GetType().Name);
+            }
         }
 
         /// <summary>
