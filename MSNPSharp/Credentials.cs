@@ -62,13 +62,26 @@ namespace MSNPSharp
     /// Note that officially you must use an obtained license (client id and client code) from Microsoft in order to access the network legally!
     /// After you have received your own license you can set the client id and client code in this class.
     /// </remarks>
-    [Serializable()]
+    [Serializable]
     public class Credentials
     {
-        private string clientID = Properties.Resources.ProductID;
-        private string clientCode = Properties.Resources.ProductKey;
+        private readonly MsnProtocol msnProtocol = MsnProtocol.MSNP16;
+        private readonly string clientID = Properties.Resources.ProductID;
+        private readonly string clientCode = Properties.Resources.ProductKey;
+
         private string password;
         private string account;
+
+        /// <summary>
+        /// Msn protocol
+        /// </summary>
+        public MsnProtocol MsnProtocol
+        {
+            get
+            {
+                return msnProtocol;
+            }
+        }
 
         /// <summary>
         /// The client identifier used to identify the clientsoftware.
@@ -80,6 +93,7 @@ namespace MSNPSharp
                 return clientID;
             }
         }
+
         /// <summary>
         /// The client code used to identify the clientsoftware.
         /// </summary>
@@ -132,11 +146,31 @@ namespace MSNPSharp
         /// Constructor to instantiate a Credentials object with the specified values.
         /// </summary>
         public Credentials(string account, string password, string clientID, string clientCode)
+            : this(account, password, clientID, clientCode, MsnProtocol.MSNP16)
+        {
+        }
+
+        /// <summary>
+        /// Constructor to instantiate a Credentials object with the specified values and msn protocol speaking.
+        /// </summary>
+        public Credentials(string account, string password, string clientID, string clientCode, MsnProtocol msnp)
         {
             this.account = account;
             this.password = password;
             this.clientCode = clientCode;
             this.clientID = clientID;
+            this.msnProtocol = msnp;
+        }
+
+        public static Credentials Create(string account, string password, MsnProtocol msnp)
+        {
+            Credentials cred = new Credentials();
+
+            return cred;
+        }
+
+        static Credentials()
+        {
         }
     }
 };

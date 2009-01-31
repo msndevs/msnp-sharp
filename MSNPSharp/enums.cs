@@ -38,6 +38,17 @@ namespace MSNPSharp
     using MSNPSharp.DataTransfer;
 
     /// <summary>
+    /// Msn protocol speaking
+    /// </summary>
+    public enum MsnProtocol
+    {
+        MSNP16 = 16,
+        MSNP15 = 15
+    }
+
+
+
+    /// <summary>
     /// Specifies the type of proxy servers that can be used
     /// </summary>
     public enum ProxyType

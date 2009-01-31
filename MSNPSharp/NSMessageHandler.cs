@@ -470,27 +470,31 @@ namespace MSNPSharp
         {
             if (receiver.MobileAccess || receiver.ClientType == ClientType.PhoneMember)
             {
-#if MSNP18
-                string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
-                string payload = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=iso-8859-1\r\nDest-Agent: mobile\r\n\r\n" + text;
-                NSPayLoadMessage nsMessage = new NSPayLoadMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" }, payload);
-                MessageProcessor.SendMessage(nsMessage);
-#else
-                // create a body message
-                MobileMessage bodyMessage = new MobileMessage();
-                bodyMessage.CallbackDeviceName = callbackDevice;
-                bodyMessage.CallbackNumber = callbackNumber;
-                bodyMessage.Receiver = receiver.Mail;
-                bodyMessage.Text = text;
+                /*
+                if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+                {
+                    string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
+                    string payload = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=iso-8859-1\r\nDest-Agent: mobile\r\n\r\n" + text;
+                    NSPayLoadMessage nsMessage = new NSPayLoadMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" }, payload);
+                    MessageProcessor.SendMessage(nsMessage);
+                }
+                else
+                    */
+                {
+                    // create a body message
+                    MobileMessage bodyMessage = new MobileMessage();
+                    bodyMessage.CallbackDeviceName = callbackDevice;
+                    bodyMessage.CallbackNumber = callbackNumber;
+                    bodyMessage.Receiver = receiver.Mail;
+                    bodyMessage.Text = text;
 
-                // create a NSPayLoadMessage to transport it
-                string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
-                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { to, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
+                    // create a NSPayLoadMessage to transport it
+                    string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
+                    NSPayLoadMessage nsMessage = new NSPayLoadMessage("PGD", new string[] { to, "1" }, Encoding.UTF8.GetString(bodyMessage.GetBytes()));
 
-                // and send it
-                MessageProcessor.SendMessage(nsMessage);
-
-#endif
+                    // and send it
+                    MessageProcessor.SendMessage(nsMessage);
+                }
             }
             else
             {
@@ -642,23 +646,25 @@ namespace MSNPSharp
                 context = owner.DisplayImage.Context;
 
             if (status == PresenceStatus.Offline)
+            {
                 messageProcessor.Disconnect();
-
-            //don't set the same status or it will result in disconnection
+            }
             else if (status != owner.Status)
             {
-#if MSNP18
-#if MSNC9
-                string capacities = ((long)owner.ClientCapacities).ToString() + ":48";
-#else
-                string capacities = ((long)owner.ClientCapacities).ToString() + ":0";
-#endif
-#else
+                //don't set the same status or it will result in disconnection
                 string capacities = ((long)owner.ClientCapacities).ToString();
+                if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                {
+#if MSNC9
+                    capacities += ":48";
+#else
+                    capacities += ":0";
 #endif
+                }
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
         }
+    
 
         #endregion
 
@@ -689,11 +695,21 @@ namespace MSNPSharp
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
             // VER: MSN Protocol used
-#if MSNP16
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16", "MSNP15", "CVR0" }));
-#else
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
-#endif
+            /*if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            {
+                MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18 MSNP16 MSNP15", "CVR0" }));
+            }
+            else 
+            */
+            if (Credentials.MsnProtocol == MsnProtocol.MSNP16)
+            {
+                MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16 MSNP15", "CVR0" }));
+            }
+            else
+            {
+                MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
+            }
+
             // CVR: Send client information back
             MessageProcessor.SendMessage(new NSMessage("CVR",
                 new string[] { 
@@ -727,7 +743,10 @@ namespace MSNPSharp
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnVERReceived(NSMessage message)
-        {            
+        {
+            MsnProtocol msnProtocol = (MsnProtocol)Convert.ToInt32(message.CommandValues[1].ToString().Substring("MSNP".Length, 2));
+            Credentials oldcred = Credentials;
+            Credentials = new Credentials(oldcred.Account, oldcred.Password, oldcred.ClientID, oldcred.ClientCode, msnProtocol);
         }
 
         /// <summary>
@@ -772,11 +791,16 @@ namespace MSNPSharp
                 string response =
                     MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
                     mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
-#if MSNP16 || MSNP18
-                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
-#else
-                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
-#endif
+
+                if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                {
+                    MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
+                }
+                else
+                {
+                    MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
+                }
+
             }
             else if ((string)message.CommandValues[1] == "OK")
             {
@@ -907,13 +931,19 @@ namespace MSNPSharp
             if (message.CommandValues[1].ToString() == "0")
                 return;
 
-#if MSNP18
-            string account = message.CommandValues[0].ToString().Split(':')[1];
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
-#else
-            string account = message.CommandValues[0].ToString();
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
-#endif
+            string account;
+            ClientType type;
+
+            /*if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            {
+                account = message.CommandValues[0].ToString().Split(':')[1];
+                type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
+            }
+            else*/
+            {
+                account = message.CommandValues[0].ToString();
+                type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
+            }
 
             if (message.InnerBody != null && account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
             {
@@ -932,18 +962,18 @@ namespace MSNPSharp
                         newPlaces[new Guid(id)] = epname;
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
-                   }
+                    }
 
-                   if (newPlaces.Count > 1 && Owner.MPOPMode == MPOP.AutoLogoff)
-                   {
-                       foreach (KeyValuePair<Guid, string> keyvalue in newPlaces)
-                       {
-                           if (keyvalue.Key != NSMessageHandler.MachineGuid)
-                           {
-                               owner.SignoutFrom(keyvalue.Key);
-                           }
-                       }
-                   }
+                    if (newPlaces.Count > 1 && Owner.MPOPMode == MPOP.AutoLogoff)
+                    {
+                        foreach (KeyValuePair<Guid, string> keyvalue in newPlaces)
+                        {
+                            if (keyvalue.Key != NSMessageHandler.MachineGuid)
+                            {
+                                owner.SignoutFrom(keyvalue.Key);
+                            }
+                        }
+                    }
 
                     Owner.Places.Clear();
                     Owner.Places = newPlaces;
@@ -971,42 +1001,45 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnILNReceived(NSMessage message)
         {
-            PresenceStatus newstatus = ParseStatus(message.CommandValues[1].ToString());
-            string account = message.CommandValues[2].ToString().ToLowerInvariant();
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[3].ToString());
-            string newname = (message.CommandValues.Count >= 5) ? message.CommandValues[4].ToString() : String.Empty;
-            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 6) ? (message.CommandValues[5].ToString().Contains(":") ? message.CommandValues[5].ToString().Split(':')[0] : message.CommandValues[5].ToString()) : "0"));
-            string newdp = message.CommandValues.Count >= 7 ? message.CommandValues[6].ToString() : String.Empty;
-
-
-            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
-                ? Owner : ContactList.GetContact(account, type);
-
-            contact.SetName(HttpUtility.UrlDecode(newname));
-
-            if (newcaps != ClientCapacities.None)
+            if (Credentials.MsnProtocol <= MsnProtocol.MSNP16)
             {
-                contact.ClientCapacities = (ClientCapacities)newcaps;
+                PresenceStatus newstatus = ParseStatus(message.CommandValues[1].ToString());
+                string account = message.CommandValues[2].ToString().ToLowerInvariant();
+                ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[3].ToString());
+                string newname = (message.CommandValues.Count >= 5) ? message.CommandValues[4].ToString() : String.Empty;
+                ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 6) ? (message.CommandValues[5].ToString().Contains(":") ? message.CommandValues[5].ToString().Split(':')[0] : message.CommandValues[5].ToString()) : "0"));
+                string newdp = message.CommandValues.Count >= 7 ? message.CommandValues[6].ToString() : String.Empty;
+
+
+                Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+                    ? Owner : ContactList.GetContact(account, type);
+
+                contact.SetName(HttpUtility.UrlDecode(newname));
+
+                if (newcaps != ClientCapacities.None)
+                {
+                    contact.ClientCapacities = (ClientCapacities)newcaps;
+                }
+
+                if (contact != Owner && !String.IsNullOrEmpty(newdp))
+                {
+                    DisplayImage userDisplay = new DisplayImage();
+                    userDisplay.Context = newdp;
+                    contact.DisplayImage = userDisplay;
+                }
+
+                PresenceStatus oldStatus = contact.Status;
+                contact.SetStatus(newstatus);
+
+                if (oldStatus == PresenceStatus.Unknown || oldStatus == PresenceStatus.Offline)
+                {
+                    if (ContactOnline != null)
+                        ContactOnline(this, new ContactEventArgs(contact));
+                }
+
+                if (ContactStatusChanged != null)
+                    ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
             }
-
-            if (contact != Owner && !String.IsNullOrEmpty(newdp))
-            {
-                DisplayImage userDisplay = new DisplayImage();
-                userDisplay.Context = newdp;
-                contact.DisplayImage = userDisplay;
-            }
-
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(newstatus);
-
-            if (oldStatus == PresenceStatus.Unknown || oldStatus == PresenceStatus.Offline)
-            {
-                if (ContactOnline != null)
-                    ContactOnline(this, new ContactEventArgs(contact));
-            }
-
-            if (ContactStatusChanged != null)
-                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
         }
 
         /// <summary>
@@ -1022,19 +1055,28 @@ namespace MSNPSharp
         protected virtual void OnNLNReceived(NSMessage message)
         {
             PresenceStatus newstatus = ParseStatus(message.CommandValues[0].ToString());
-#if MSNP18
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
-            string account = message.CommandValues[1].ToString().Split(':')[1].ToLowerInvariant();
-            string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 4) ? (message.CommandValues[3].ToString().Contains(":") ? message.CommandValues[3].ToString().Split(':')[0] : message.CommandValues[3].ToString()) : "0"));
-            string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
-#else
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[2].ToString());
-            string account = message.CommandValues[1].ToString().ToLowerInvariant();
-            string newname = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
-            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 5) ? (message.CommandValues[4].ToString().Contains(":") ? message.CommandValues[4].ToString().Split(':')[0] : message.CommandValues[4].ToString()) : "0"));
-            string newdp = message.CommandValues.Count >= 6 ? message.CommandValues[5].ToString() : String.Empty;
-#endif
+            ClientType type;
+            string account;
+            string newname;
+            ClientCapacities newcaps;
+            string newdp;
+
+            /*if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            {
+                type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
+                account = message.CommandValues[1].ToString().Split(':')[1].ToLowerInvariant();
+                newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+                newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 4) ? (message.CommandValues[3].ToString().Contains(":") ? message.CommandValues[3].ToString().Split(':')[0] : message.CommandValues[3].ToString()) : "0"));
+                newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
+            }
+            else*/
+            {
+                type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[2].ToString());
+                account = message.CommandValues[1].ToString().ToLowerInvariant();
+                newname = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
+                newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 5) ? (message.CommandValues[4].ToString().Contains(":") ? message.CommandValues[4].ToString().Split(':')[0] : message.CommandValues[4].ToString()) : "0"));
+                newdp = message.CommandValues.Count >= 6 ? message.CommandValues[5].ToString() : String.Empty;
+            }
 
             Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember) ? Owner : ContactList.GetContact(account, type);
             contact.SetName(HttpUtility.UrlDecode(newname));
@@ -1074,17 +1116,25 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-#if MSNP18
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
-            string account = message.CommandValues[0].ToString().Split(':')[1].ToLowerInvariant();
-            ClientCapacities oldcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 2) ? (message.CommandValues[1].ToString().Contains(":") ? message.CommandValues[1].ToString().Split(':')[0] : message.CommandValues[1].ToString()) : "0"));
-            string networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-#else
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
-            string account = message.CommandValues[0].ToString().ToLowerInvariant();
-            ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 3) ? (message.CommandValues[2].ToString().Contains(":") ? message.CommandValues[2].ToString().Split(':')[0] : message.CommandValues[2].ToString()) : "0"));
-            string networkpng = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
-#endif
+            ClientType type;
+            string account;
+            ClientCapacities oldcaps;
+            string networkpng;
+
+            /*if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            {
+                type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
+                account = message.CommandValues[0].ToString().Split(':')[1].ToLowerInvariant();
+                oldcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 2) ? (message.CommandValues[1].ToString().Contains(":") ? message.CommandValues[1].ToString().Split(':')[0] : message.CommandValues[1].ToString()) : "0"));
+                networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+            }
+            else*/
+            {
+                type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
+                account = message.CommandValues[0].ToString().ToLowerInvariant();
+                oldcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 3) ? (message.CommandValues[2].ToString().Contains(":") ? message.CommandValues[2].ToString().Split(':')[0] : message.CommandValues[2].ToString()) : "0"));
+                networkpng = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
+            }
 
             Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
                 ? Owner : ContactList.GetContact(account, type);
@@ -1176,9 +1226,10 @@ namespace MSNPSharp
         protected virtual void OnCHGReceived(NSMessage message)
         {
             Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
-#if MSNP16 || MSNP18
-            Owner.EpName = Owner.EpName;
-#endif
+            if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+            {
+                Owner.EpName = Owner.EpName;
+            }
         }
 
         #endregion
