@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
@@ -51,12 +52,13 @@ namespace MSNPSharp
     /// When you want to emulate the Microsoft MSN Messenger client, you can use any of the following
     /// values:
     /// <c>
-    /// ClientID			ClientCode
+    /// ClientID			ClientCode          Client Version              Acknowledgement
     /// msmsgs@msnmsgr.com	Q1P7W2E4J9R8U3S5 
     /// PROD0038W!61ZTF9	VT6PX?UQTM4WM%YR 
     /// PROD0058#7IL2{QD	QHDCY@7R1TB6W?5B 
     /// PROD0061VRRZH@4F	JXQ6J@TUOGYV@N0M
     /// PROD0119GSJUC$18    ILTXC!4IXB5FB*PX
+    /// PROD0120PW!CCV9@    C1BX{V4W}Q3*10SM    WLM 2009 v14.0.8050.1202   http://twitter.com/mynetx
     /// </c>
     /// 
     /// Note that officially you must use an obtained license (client id and client code) from Microsoft in order to access the network legally!
@@ -65,12 +67,17 @@ namespace MSNPSharp
     [Serializable]
     public class Credentials
     {
-        private readonly MsnProtocol msnProtocol = MsnProtocol.MSNP16;
-        private readonly string clientID = Properties.Resources.ProductID;
-        private readonly string clientCode = Properties.Resources.ProductKey;
-
+        private ClientInfo clientInfo = new ClientInfo();
         private string password;
         private string account;
+
+        public ClientInfo ClientInfo
+        {
+            get
+            {
+                return clientInfo;
+            }
+        }
 
         /// <summary>
         /// Msn protocol
@@ -79,7 +86,7 @@ namespace MSNPSharp
         {
             get
             {
-                return msnProtocol;
+                return clientInfo.MsnProtocol;
             }
         }
 
@@ -90,7 +97,7 @@ namespace MSNPSharp
         {
             get
             {
-                return clientID;
+                return clientInfo.ProductID;
             }
         }
 
@@ -101,7 +108,7 @@ namespace MSNPSharp
         {
             get
             {
-                return clientCode;
+                return clientInfo.ProductKey;
             }
         }
 
@@ -138,8 +145,25 @@ namespace MSNPSharp
         /// <summary>
         /// Constructor to instantiate a Credentials object.
         /// </summary>
-        public Credentials()
+        protected Credentials()
         {
+        }
+
+        public Credentials(MsnProtocol msnp)
+            : this(string.Empty, string.Empty)
+        {
+        }
+
+        public Credentials(string account, string password)
+            : this(account, password, MsnProtocol.MSNP16)
+        {
+        }
+
+        public Credentials(string account, string password, MsnProtocol msnp)
+        {
+            this.account = account;
+            this.password = password;
+            this.clientInfo = (ClientInfo)DefaultCredentials[msnp].Clone();
         }
 
         /// <summary>
@@ -154,23 +178,69 @@ namespace MSNPSharp
         /// Constructor to instantiate a Credentials object with the specified values and msn protocol speaking.
         /// </summary>
         public Credentials(string account, string password, string clientID, string clientCode, MsnProtocol msnp)
+            : this(account, password, msnp)
         {
-            this.account = account;
-            this.password = password;
-            this.clientCode = clientCode;
-            this.clientID = clientID;
-            this.msnProtocol = msnp;
+            clientInfo.ProductID = clientID;
+            clientInfo.ProductKey = clientCode;
         }
 
-        public static Credentials Create(string account, string password, MsnProtocol msnp)
-        {
-            Credentials cred = new Credentials();
-
-            return cred;
-        }
-
+        static readonly Dictionary<MsnProtocol, ClientInfo> DefaultCredentials = new Dictionary<MsnProtocol, ClientInfo>();
         static Credentials()
         {
+            /*
+            // MSNP18
+            ClientInfo msnp18 = new ClientInfo();
+            msnp18.MsnProtocol = MsnProtocol.MSNP16;
+            msnp18.ProductID = "PROD0120PW!CCV9@";
+            msnp18.ProductKey = "C1BX{V4W}Q3*10SM";
+            msnp18.MessengerClientName = "MSNMSGR";
+            msnp18.MessengerClientBuildVer = "14.0.8050.1202";
+            msnp18.ApplicationId = "AAD9B99B-58E6-4F23-B975-D9EC1F9EC24A";
+            msnp18.MessengerClientBrand = "msmsgs";
+            DefaultCredentials[msnp18.MsnProtocol] = msnp18;
+            */
+            // MSNP15
+            ClientInfo msnp15 = new ClientInfo();
+            msnp15.MsnProtocol = MsnProtocol.MSNP15;
+            msnp15.ProductID = "PROD0119GSJUC$18";
+            msnp15.ProductKey = "ILTXC!4IXB5FB*PX";
+            msnp15.MessengerClientName = "MSNMSGR";
+            msnp15.MessengerClientBuildVer = "8.5.1302";
+            msnp15.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
+            msnp15.MessengerClientBrand = "msmsgs";
+            DefaultCredentials[msnp15.MsnProtocol] = msnp15;
+
+            // We haven't msnp16 client information so clone MSNP15
+            ClientInfo msnp16 = (ClientInfo)msnp15.Clone();
+            msnp16.MsnProtocol = MsnProtocol.MSNP16;
+            DefaultCredentials[msnp16.MsnProtocol] = msnp16;
         }
+    }
+
+    [Serializable]
+    public struct ClientInfo : ICloneable
+    {
+        public MsnProtocol MsnProtocol;
+        public string ApplicationId;
+        public string MessengerClientBuildVer;
+        public string MessengerClientName;
+        public string ProductID;
+        public string ProductKey;
+        public string MessengerClientBrand;
+
+        public object Clone()
+        {
+            ClientInfo ci = new ClientInfo();
+            ci.MsnProtocol = MsnProtocol;
+            ci.ApplicationId = String.Copy(ApplicationId);
+            ci.MessengerClientBuildVer = String.Copy(MessengerClientBuildVer);
+            ci.MessengerClientName = String.Copy(MessengerClientName);
+            ci.ProductID = String.Copy(ProductID);
+            ci.ProductKey = String.Copy(ProductKey);
+            ci.MessengerClientBrand = MessengerClientBrand;
+
+            return ci;
+        }
+
     }
 };

@@ -87,7 +87,7 @@ namespace MSNPSharpClient
         private ToolStripMenuItem viewContactCardMenuItem;
         private ToolTip toolTipChangePhoto;
         private ComboBox comboPlaces;
-        private Label lblStatus;
+        private ComboBox comboProtocol;
         private IContainer components;
         #endregion
 
@@ -125,7 +125,6 @@ namespace MSNPSharpClient
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
             this.comboPlaces = new System.Windows.Forms.ComboBox();
-            this.lblStatus = new System.Windows.Forms.Label();
             this.pnlNameAndPM = new System.Windows.Forms.Panel();
             this.lblPM = new System.Windows.Forms.TextBox();
             this.lblName = new System.Windows.Forms.TextBox();
@@ -148,6 +147,7 @@ namespace MSNPSharpClient
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.toolTipChangePhoto = new System.Windows.Forms.ToolTip(this.components);
+            this.comboProtocol = new System.Windows.Forms.ComboBox();
             this.ListPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
@@ -295,7 +295,7 @@ namespace MSNPSharpClient
             this.toolStripMenuItem4,
             this.viewContactCardMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 198);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 220);
             // 
             // sendIMMenuItem
             // 
@@ -404,8 +404,8 @@ namespace MSNPSharpClient
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.panel1.Controls.Add(this.comboPlaces);
-            this.panel1.Controls.Add(this.lblStatus);
             this.panel1.Controls.Add(this.pnlNameAndPM);
+            this.panel1.Controls.Add(this.comboProtocol);
             this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.accountTextBox);
             this.panel1.Controls.Add(this.loginButton);
@@ -421,21 +421,12 @@ namespace MSNPSharpClient
             this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboPlaces.DropDownWidth = 170;
             this.comboPlaces.FormattingEnabled = true;
-            this.comboPlaces.Location = new System.Drawing.Point(134, 53);
+            this.comboPlaces.Location = new System.Drawing.Point(134, 54);
             this.comboPlaces.Name = "comboPlaces";
             this.comboPlaces.Size = new System.Drawing.Size(70, 21);
             this.comboPlaces.TabIndex = 5;
             this.comboPlaces.Visible = false;
             this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
-            // 
-            // lblStatus
-            // 
-            this.lblStatus.AutoSize = true;
-            this.lblStatus.Location = new System.Drawing.Point(144, 57);
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(37, 13);
-            this.lblStatus.TabIndex = 5;
-            this.lblStatus.Text = "Status";
             // 
             // pnlNameAndPM
             // 
@@ -523,6 +514,7 @@ namespace MSNPSharpClient
             this.comboStatus.Name = "comboStatus";
             this.comboStatus.Size = new System.Drawing.Size(121, 21);
             this.comboStatus.TabIndex = 3;
+            this.toolTipChangePhoto.SetToolTip(this.comboStatus, "Your status");
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
             // 
@@ -621,6 +613,20 @@ namespace MSNPSharpClient
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
             // 
+            // comboProtocol
+            // 
+            this.comboProtocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboProtocol.DropDownWidth = 75;
+            this.comboProtocol.FormattingEnabled = true;
+            this.comboProtocol.Items.AddRange(new object[] {
+            "MSNP16",
+            "MSNP15"});
+            this.comboProtocol.Location = new System.Drawing.Point(134, 54);
+            this.comboProtocol.Name = "comboProtocol";
+            this.comboProtocol.Size = new System.Drawing.Size(70, 21);
+            this.comboProtocol.TabIndex = 6;
+            this.toolTipChangePhoto.SetToolTip(this.comboProtocol, "Msn protocol used");
+            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
@@ -717,6 +723,7 @@ namespace MSNPSharpClient
                 SortByGroup();
 
             comboStatus.SelectedIndex = 0;
+            comboProtocol.SelectedIndex = 0;
         }
 
         void ServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
@@ -948,10 +955,9 @@ namespace MSNPSharpClient
                             messenger.Disconnect();
                         }
 
-                        // set the credentials, this is ofcourse something every MSNPSharp program will need to
-                        // implement.
-                        messenger.Credentials.Account = accountTextBox.Text;
-                        messenger.Credentials.Password = passwordTextBox.Text;
+                        // set the credentials, this is ofcourse something every MSNPSharp program will need to implement.
+                        messenger.Credentials = new Credentials(accountTextBox.Text, passwordTextBox.Text, (MsnProtocol)Enum.Parse(typeof(MsnProtocol), comboProtocol.Text));
+
 
                         // inform the user what is happening and try to connecto to the messenger network.			
                         SetStatus("Connecting to server");

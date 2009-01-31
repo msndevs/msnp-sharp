@@ -61,15 +61,6 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CFE80F9D-180F-4399-82AB-413F33A1FA11.
-        /// </summary>
-        internal static string ApplicationId {
-            get {
-                return ResourceManager.GetString("ApplicationId", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Messenger Client 8.5.
         /// </summary>
         internal static string ApplicationStrId {
@@ -84,60 +75,6 @@ namespace MSNPSharp.Properties {
         internal static string DeltasListVersion {
             get {
                 return ResourceManager.GetString("DeltasListVersion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {7108E71A-9926-4FCB-BCC9-9A9D3F32E423}.
-        /// </summary>
-        internal static string HostingApp {
-            get {
-                return ResourceManager.GetString("HostingApp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to msmsgs.
-        /// </summary>
-        internal static string MessengerClientBrand {
-            get {
-                return ResourceManager.GetString("MessengerClientBrand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 8.5.1302.
-        /// </summary>
-        internal static string MessengerClientBuildVer {
-            get {
-                return ResourceManager.GetString("MessengerClientBuildVer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to MSNMSGR.
-        /// </summary>
-        internal static string MessengerClientName {
-            get {
-                return ResourceManager.GetString("MessengerClientName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to PROD0119GSJUC$18.
-        /// </summary>
-        internal static string ProductID {
-            get {
-                return ResourceManager.GetString("ProductID", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to ILTXC!4IXB5FB*PX.
-        /// </summary>
-        internal static string ProductKey {
-            get {
-                return ResourceManager.GetString("ProductKey", resourceCulture);
             }
         }
         

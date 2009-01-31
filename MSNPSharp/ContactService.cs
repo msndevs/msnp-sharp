@@ -67,7 +67,7 @@ namespace MSNPSharp
         public ContactService(NSMessageHandler nsHandler)
             : base(nsHandler)
         {
-            applicationId = Properties.Resources.ApplicationId;
+            applicationId = nsHandler.Credentials.ClientInfo.ApplicationId;
         }
 
         #region Events
