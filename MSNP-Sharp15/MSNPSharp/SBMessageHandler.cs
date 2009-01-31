@@ -1078,6 +1078,17 @@ namespace MSNPSharp
                 }
         }
 
+        /// <summary>
+        /// Called when a ACK command has been received.
+        /// </summary>
+        /// <remarks>
+        /// <code>ACK [MSGTransid]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnACKReceived(SBMessage message)
+        {
+        }
+
         #endregion
 
         #region Switchboard Handling
@@ -1191,26 +1202,30 @@ namespace MSNPSharp
                 SBMessage sbMessage = (SBMessage)message;
                 switch (sbMessage.Command)
                 {
-                    case "USR":
-                        OnUSRReceived(sbMessage);
-                        return;
                     case "MSG":
                         OnMSGReceived(sbMessage);
                         return;
-                    case "JOI":
-                        OnJOIReceived(sbMessage);
+                    case "ACK":
+                        OnACKReceived(sbMessage);
                         return;
-                    case "IRO":
-                        OnIROReceived(sbMessage);
-                        return;
-                    case "CAL":
-                        OnCALReceived(sbMessage);
+
+                    case "ANS":
+                        OnANSReceived(sbMessage);
                         return;
                     case "BYE":
                         OnBYEReceived(sbMessage);
                         return;
-                    case "ANS":
-                        OnANSReceived(sbMessage);
+                    case "CAL":
+                        OnCALReceived(sbMessage);
+                        return;
+                    case "IRO":
+                        OnIROReceived(sbMessage);
+                        return;
+                    case "JOI":
+                        OnJOIReceived(sbMessage);
+                        return;
+                    case "USR":
+                        OnUSRReceived(sbMessage);
                         return;
                 }
 
