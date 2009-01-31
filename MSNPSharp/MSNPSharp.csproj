@@ -53,6 +53,7 @@
     <Compile Include="Core\Converter.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />
     <Compile Include="Credentials.cs" />
+    <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />

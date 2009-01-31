@@ -31,19 +31,187 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Web;
 using System.Text;
 
 namespace MSNPSharp.Core
 {
-    public static class Converter
+    /// <summary>
+    /// Provides methods for encoding and decoding URLs when processing Web requests. This class cannot be inherited. 
+    /// </summary>
+    public sealed class MSNHttpUtility
     {
+        private enum UnSafe
+        {
+            /// <summary>
+            /// For url encode
+            /// </summary>
+            UrlEscape = 0x1,
+            /// <summary>
+            /// For XML encode
+            /// </summary>
+            XMLEscape = 0x2,
+            /// <summary>
+            /// For HTML encode
+            /// </summary>
+            HTMLEscape = 0x4
+        }
+
+        private static uint[] ASCII_CLASS;
+        private static string strUrlUnsafe = " \"#%&+,/:;<=>?@[\\]^`{|}";
+        private static string strXmlUnsafe = "&:;<=>?[]\\^{|}";
+        private static string strHtmlUnsafe = "&'<> ;\"";
+
+        static MSNHttpUtility()
+        {
+            ASCII_CLASS = new uint[256];
+            int c = 0;
+            for (c = 0; c < ASCII_CLASS.Length; c++)
+            {
+                if ((c >= 0 && c <= 32) || c >= 126)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.UrlEscape;
+                }
+
+                if (c >= 0 && c <= 32)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.XMLEscape;
+                }
+
+                if (strUrlUnsafe.IndexOf((char)c) != -1)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.UrlEscape;
+                }
+                if (strXmlUnsafe.IndexOf((char)c) != -1)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.XMLEscape;
+                }
+                if (strHtmlUnsafe.IndexOf((char)c) != -1)
+                {
+                    ASCII_CLASS[c] |= (uint)UnSafe.HTMLEscape;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Encodes a URL string using UTF-8 encoding by default.
+        /// </summary>
+        /// <param name="str">The text to encode.</param>
+        /// <returns>An encoded string.</returns>
+        public static string UrlEncode(string str)
+        {
+            return UrlEncode(str, Encoding.UTF8);
+        }
+
+        /// <summary>
+        /// Encodes a URL string using the specified encoding object.
+        /// </summary>
+        /// <param name="str">The text to encode.</param>
+        /// <param name="e">The <see cref="Encoding"/> object that specifies the encoding scheme. </param>
+        /// <returns>An encoded string.</returns>
+        public static string UrlEncode(string str, Encoding e)
+        {
+            if (str == null)
+                return string.Empty;
+            byte[] byt = e.GetBytes(str);
+            StringBuilder result = new StringBuilder(256);
+            for (int c = 0; c < byt.Length; c++)
+            {
+                byte chr = byt[c];
+                if ((ASCII_CLASS[chr] & (uint)UnSafe.UrlEscape) != 0)
+                {
+                    switch (chr)
+                    {
+                        case (byte)'+':
+                            result.Append("%20");
+                            break;
+                        default:
+                            result.Append("%" + ((int)chr).ToString("X2"));
+                            break;
+
+                    }
+                }
+                else
+                {
+                    result.Append((char)chr);
+                }
+            }
+
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Converts a string that has been encoded for transmission in a URL into a decoded string using UTF-8 encoding by default.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <returns>A decoded string.</returns>
+        public static string UrlDecode(string str)
+        {
+            return UrlDecode(str, Encoding.UTF8);
+        }
+
+        /// <summary>
+        /// Converts a URL-encoded string into a decoded string, using the specified encoding object.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <param name="e">The <see cref="Encoding"/> that specifies the decoding scheme.</param>
+        /// <returns>A decoded string.</returns>
+        public static string UrlDecode(string str, Encoding e)
+        {
+            return HttpUtility.UrlDecode(str.Replace("%20", "+"), e);
+        }
+
+        /// <summary>
+        /// Encodes a Xml string.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <returns>A decoded string.</returns>
+        public static string XmlEncode(string str)
+        {
+            if (str == null)
+                return string.Empty;
+
+            char[] chrArr = str.ToCharArray();
+            char chr;
+            StringBuilder result = new StringBuilder(256);
+            for (int c = 0; c < chrArr.Length; c++)
+            {
+                chr = chrArr[c];
+
+                if (chr < 128)
+                {
+                    if ((ASCII_CLASS[chr] & (uint)UnSafe.XMLEscape) != 0)
+                    {
+                        result.Append("&#x" + ((int)chr).ToString("X2") + ";");
+                        continue;
+                    }
+                }
+
+                result.Append(chr);
+            }
+
+            return result.ToString();
+        }
+
+
+        /// <summary>
+        /// Decode the QP encoded string.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <returns>A decoded string.</returns>
+        public static string QPDecode(string str)
+        {
+            return QPDecode(str, Encoding.Default);
+        }
+
         /// <summary>
         /// Decode the QP encoded string using an encoding
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="encode"></param>
-        /// <returns></returns>
-        public static string ConvertFromQPString(string value, Encoding encode)
+        /// <param name="value">The string to decode.</param>
+        /// <param name="encode">The <see cref="Encoding"/> that specifies the decoding scheme.</param>
+        /// <returns>A decoded string.</returns>
+        public static string QPDecode(string value, Encoding encode)
         {
             string inputString = value;
             StringBuilder builder1 = new StringBuilder();
@@ -97,5 +265,36 @@ namespace MSNPSharp.Core
             }
             return num1;
         }
+
+
+        public static int IndexOf(byte[] input, byte[] pattern)
+        {
+            if (pattern.Length > input.Length)
+                return -1;
+
+            for (int i = 0; i <= input.Length - pattern.Length; i++)
+            {
+                bool found = true;
+
+                for (int j = 0; j < pattern.Length; j++)
+                {
+                    if (input[i + j] != pattern[j])
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        public static int IndexOf(byte[] input, string pattern)
+        {
+            return IndexOf(input, Encoding.UTF8.GetBytes(pattern));
+        }
     }
-}
+};

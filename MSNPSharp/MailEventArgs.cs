@@ -285,7 +285,7 @@ namespace MSNPSharp
                         if (strdecode.ToLowerInvariant() == "q")
                         {
                             //I GUSS this can work.
-                            from = Converter.ConvertFromQPString(encodedfrom, encode);
+                            from = MSNHttpUtility.QPDecode(encodedfrom, encode);
                             return;
                         }
                     }

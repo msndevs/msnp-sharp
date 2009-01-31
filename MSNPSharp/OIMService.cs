@@ -399,7 +399,7 @@ namespace MSNPSharp
 
                             if (strdecode.ToLowerInvariant() == "q")
                             {
-                                nick = Converter.ConvertFromQPString(strencodenick, encode);
+                                nick = MSNHttpUtility.QPDecode(strencodenick, encode);
                             }
 
                             if (regmsg.Match(e.Result.GetMessageResult).Success)
@@ -530,7 +530,7 @@ namespace MSNPSharp
                 oimService.FromValue = new From();
                 oimService.FromValue.memberName = NSMessageHandler.Owner.Mail;
                 oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
-                oimService.FromValue.buildVer = Properties.Resources.MessengerClientBuildVer;
+                oimService.FromValue.buildVer = "8.5.1302";
                 oimService.FromValue.msnpVer = "MSNP15";
                 oimService.FromValue.lang = System.Globalization.CultureInfo.CurrentCulture.Name;
                 oimService.FromValue.proxy = "MSNMSGR";
