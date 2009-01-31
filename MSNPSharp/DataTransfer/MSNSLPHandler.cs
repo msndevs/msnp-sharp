@@ -998,41 +998,37 @@ namespace MSNPSharp.DataTransfer
             p2pTransfer.RegisterHandler(this);
 
             p2pTransfer.DataStream = invitationArgs.TransferSession.DataStream;
-
             replyMessage.InnerMessage = CreateAcceptanceMessage(properties);
 #if MSNC9
             replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
 #endif
 
-
-            // check for a msn object request
-            if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
+            switch (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
             {
-                // for some kind of weird behavior, our local identifier must now subtract 4 ?
-                ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
-                p2pTransfer.IsSender = true;
-                p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
+                case P2PConst.UserDisplayGuid:
+                    {
+                        // for some kind of weird behavior, our local identifier must now subtract 4 ?
+                        ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
+                        p2pTransfer.IsSender = true;
+                        p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
 #if MSNC9
                 p2pTransfer.MessageFooter = (uint)P2PFlag.DisplayImageFooter;
 #endif
-            }
 
-            /*MSNObject objectToSend = MSNObjectCollection.Get(properties.Checksum);
-            if(objectToSend == null )
-            {
-                throw new MSNPSharpException("MSNSLPHandler: could not find MSNObject associated with the asked context");
-            }
-            p2pTransfer.DataStream = objectToSend.OpenStream();*/
+                        break;
+                    }
 
-            // Double check?????? BodyValues["EUF-GUID"], Look above.
-            /*
-            if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
-            {
-                p2pTransfer.MessageFlag = (uint)P2PFlag.FileData; // Now this is changed, it was (uint)P2PFlag.MSNObjectData;
+                case P2PConst.FileTransferGuid:
+                    {
+                        p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
+#if MSNC9
                 p2pTransfer.MessageFooter = (uint)P2PFlag.FileTransFooter;
-                p2pTransfer.IsSender = false;
+#endif
+                        p2pTransfer.IsSender = false;
+                        break;
+                    }
             }
-            */
+
 
             p2pTransfer.CallId = properties.CallId;
 
