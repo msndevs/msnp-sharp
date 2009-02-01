@@ -478,7 +478,8 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void RemoveTransferSession(P2PTransferSession session)
         {
-            transferSessions.Remove(session.SessionId);
+            if (session != null)
+                transferSessions.Remove(session.SessionId);
         }
 
         /// <summary>
@@ -713,14 +714,14 @@ namespace MSNPSharp.DataTransfer
             System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
             // check whether it is an acknowledgement to data preparation message
-            if (p2pMessage.Flags == 0x100 && DCHandshakeAck != 0)
+            if (p2pMessage.Flags == P2PFlag.DirectHandshake && DCHandshakeAck != 0)
             {
                 OnHandshakeCompleted((P2PDirectProcessor)sender);
                 return;
             }
 
             // check if it's a direct connection handshake
-            if (p2pMessage.Flags == 0x100 && AutoHandshake == true)
+            if (p2pMessage.Flags == P2PFlag.DirectHandshake && AutoHandshake == true)
             {
                 // create a handshake message based on the incoming p2p message and send it				
                 P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage);
@@ -729,9 +730,8 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            if (p2pMessage.Flags == 0x08)
+            if (p2pMessage.Flags == P2PFlag.Error)
             {
-
                 P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
                 if (session != null)
                 {
