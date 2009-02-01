@@ -696,7 +696,7 @@ namespace MSNPSharp.DataTransfer
 #endif
             }
 #if MSNC9
-            p2pMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            p2pMessage.Flags = P2PFlag.MSNSLPInfo;
             session.MessageFlag = (uint)P2PFlag.MSNObjectData;
 #endif
             MSNSLPMessage slpMessage = new MSNSLPMessage();
@@ -720,8 +720,10 @@ namespace MSNPSharp.DataTransfer
 
             slpMessage.BodyValues["EUF-GUID"] = P2PConst.UserDisplayGuid;
             slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
+#if MSNC9
             slpMessage.BodyValues["SChannelState"] = "0";
             slpMessage.BodyValues["Capabilities-Flags"] = "1";
+#endif
             slpMessage.BodyValues["AppID"] = AppID;
             slpMessage.BodyValues["Context"] = base64Context;
 
@@ -818,8 +820,6 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["Capabilities-Flags"] = "1";
             slpMessage.BodyValues["AppID"] = activityID.ToString();
             slpMessage.BodyValues["Context"] = base64Context;
-            //slpMessage.Body = "EUF-GUID: {6A13AF9C-5308-4F35-923A-67E8DDA40C2F}\r\nSessionID: " + properties.SessionId + "\r\nAppID: 1\r\n" + "Context: " + base64Context + "\r\n\r\n" + "\r\nRobot-Command: auto-accept#" + localContact + "#\r\n";
-
 
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
@@ -936,7 +936,9 @@ namespace MSNPSharp.DataTransfer
 
             MessageSession.AddTransferSession(session);
             session.MessageFlag = (uint)P2PFlag.FileData;
+#if MSNC9
             session.MessageFooter = (uint)P2PFlag.FileTransFooter;
+#endif
 
             // set the data stream to read from
             session.DataStream = file;
@@ -960,14 +962,14 @@ namespace MSNPSharp.DataTransfer
             P2PMessage replyMessage = new P2PMessage();
             replyMessage.InnerMessage = CreateDeclineMessage(properties);
 #if MSNC9
-            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
 
             MessageProcessor.SendMessage(replyMessage);
 
             replyMessage.InnerMessage = CreateClosingMessage(properties);
 #if MSNC9
-            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
             MessageProcessor.SendMessage(replyMessage);
         }
@@ -996,36 +998,37 @@ namespace MSNPSharp.DataTransfer
             p2pTransfer.RegisterHandler(this);
 
             p2pTransfer.DataStream = invitationArgs.TransferSession.DataStream;
-
             replyMessage.InnerMessage = CreateAcceptanceMessage(properties);
 #if MSNC9
-            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
 
-
-            // check for a msn object request
-            if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
+            switch (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
             {
-                // for some kind of weird behavior, our local identifier must now subtract 4 ?
-                ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
-                p2pTransfer.IsSender = true;
-                p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
+                case P2PConst.UserDisplayGuid:
+                    {
+                        // for some kind of weird behavior, our local identifier must now subtract 4 ?
+                        ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
+                        p2pTransfer.IsSender = true;
+                        p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
+#if MSNC9
                 p2pTransfer.MessageFooter = (uint)P2PFlag.DisplayImageFooter;
-            }
+#endif
 
-            /*MSNObject objectToSend = MSNObjectCollection.Get(properties.Checksum);
-            if(objectToSend == null )
-            {
-                throw new MSNPSharpException("MSNSLPHandler: could not find MSNObject associated with the asked context");
-            }
-            p2pTransfer.DataStream = objectToSend.OpenStream();*/
+                        break;
+                    }
 
-            if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.FileTransferGuid)
-            {
-                p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
+                case P2PConst.FileTransferGuid:
+                    {
+                        p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
+#if MSNC9
                 p2pTransfer.MessageFooter = (uint)P2PFlag.FileTransFooter;
-                p2pTransfer.IsSender = false;
+#endif
+                        p2pTransfer.IsSender = false;
+                        break;
+                    }
             }
+
 
             p2pTransfer.CallId = properties.CallId;
 
@@ -1050,7 +1053,7 @@ namespace MSNPSharp.DataTransfer
                 P2PTransferSession transferSession = session.GetTransferSession(properties.SessionId);
                 P2PMessage closeMessage = new P2PMessage();
 #if MSNC9
-                closeMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+                closeMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
                 closeMessage.InnerMessage = CreateClosingMessage(properties);
                 MessageProcessor.SendMessage(closeMessage);
@@ -1071,7 +1074,7 @@ namespace MSNPSharp.DataTransfer
             P2PMessage closeMessage = new P2PMessage();
             closeMessage.InnerMessage = CreateClosingMessage(property);
 #if MSNC9
-            closeMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            closeMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
             MessageProcessor.SendMessage(closeMessage);
             if (session != null)
@@ -1196,13 +1199,13 @@ namespace MSNPSharp.DataTransfer
 
             properties.RemoteInvited = true;
 
-            if (message.BodyValues.Contains("EUF-GUID"))
+            if (message.BodyValues.ContainsKey("EUF-GUID"))
             {
                 properties.DataTypeGuid = message.BodyValues["EUF-GUID"].ToString();
                 if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
                 {
                     // create a temporary msn object to extract the data type
-                    if (message.BodyValues.Contains("Context"))
+                    if (message.BodyValues.ContainsKey("Context"))
                     {
                         MSNObject msnObject = new MSNObject();
                         msnObject.ParseContext(message.BodyValues["Context"].ToString(), true);
@@ -1436,7 +1439,7 @@ namespace MSNPSharp.DataTransfer
                 P2PMessage p2pMessage = new P2PMessage();
                 p2pMessage.InnerMessage = CreateClosingMessage(GetTransferProperties(session.CallId));
 #if MSNC9
-                p2pMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
                 session.SendMessage(p2pMessage);
 
@@ -1582,9 +1585,9 @@ namespace MSNPSharp.DataTransfer
 
                 if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
                 {
-                    P2PMessage replyMessage = new P2PMessage ();
+                    P2PMessage replyMessage = new P2PMessage();
 #if MSNC9
-                    replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+                    replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
                     replyMessage.InnerMessage = CreateInternalErrorMessage(properties);
                     MessageProcessor.SendMessage(replyMessage);
@@ -1764,10 +1767,10 @@ namespace MSNPSharp.DataTransfer
             MimeDictionary bodyValues = message.BodyValues;
 
             // check the protocol
-            if (bodyValues.Contains("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
+            if (bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
             {
-                if (bodyValues.Contains("IPv4Internal-Addrs") &&
-                    bodyValues.Contains("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
+                if (bodyValues.ContainsKey("IPv4Internal-Addrs") &&
+                    bodyValues.ContainsKey("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
                 {
                     // we must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
