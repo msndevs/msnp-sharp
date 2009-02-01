@@ -47,9 +47,10 @@ namespace MSNPSharp
         private string personalMessage;
         private Guid machineGuid;
 
-#if MSNP16
+#if MSNP18
         private string signatureSound;
-#endif        
+#endif
+
         private string appName;
         private string format;
         private MediaType mediaType;
@@ -98,22 +99,21 @@ namespace MSNPSharp
                 string currentmedia = String.Empty;
 
                 if (mediaType != MediaType.None)
-                    currentmedia = System.Web.HttpUtility.HtmlEncode(String.Join(@"\0", content));
+                    currentmedia = MSNHttpUtility.XmlEncode(String.Join(@"\0", content));
 
                 string pload = String.Format(
                     "<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia>" +
                     "<MachineGuid>{2}</MachineGuid>" +
 
-#if MSNP16
+#if MSNP18
  "<SignatureSound>{3}</SignatureSound>" +
 #endif
  "</Data>",
-
-                    System.Web.HttpUtility.HtmlEncode(personalMessage),
-                    currentmedia,
-                    machineGuid.ToString("B")
-#if MSNP16
- ,signatureSound
+                    MSNHttpUtility.XmlEncode(personalMessage),
+                    MSNHttpUtility.XmlEncode(currentmedia),
+                    MSNHttpUtility.XmlEncode(machineGuid.ToString("B"))
+#if MSNP18
+ ,MSNHttpUtility.XmlEncode(signatureSound)
 #endif
 );
 
@@ -141,7 +141,7 @@ namespace MSNPSharp
             }
         }
 
-#if MSNP16
+#if MSNP18
         public string SignatureSound
         {
             get
@@ -271,7 +271,7 @@ namespace MSNPSharp
             if (node != null && node.InnerText != String.Empty)
                 machineGuid = new Guid(node.InnerText);
 
-#if MSNP16
+#if MSNP18
             node = xmlDoc.SelectSingleNode("//Data/SignatureSound");
             if (node != null)
                 signatureSound = node.InnerText;

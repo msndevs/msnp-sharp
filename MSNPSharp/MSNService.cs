@@ -93,7 +93,6 @@ namespace MSNPSharp
         }
     }
 
-
     /// <summary>
     /// Base class of webservice-related classes
     /// </summary>

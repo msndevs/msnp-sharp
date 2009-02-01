@@ -102,7 +102,7 @@ namespace MSNPSharp
                 {
                     NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
                         "<PrivateEndpointData>" +
-                        "<EpName>" + value + "</EpName>" +
+                        "<EpName>" + MSNHttpUtility.XmlEncode(value) + "</EpName>" +
                         "<Idle>" + ((Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
                         "<State>" + NSMessageHandler.ParseStatus(Status) + "</State>" +
                         "</PrivateEndpointData>"));
@@ -149,7 +149,8 @@ namespace MSNPSharp
             }
             else if (Places.ContainsKey(place))
             {
-                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye"));
+                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
+                    new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
             }
             else
             {
@@ -216,7 +217,15 @@ namespace MSNPSharp
             if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
                 // resend the user status so other client can see the new msn object
+#if MSNP18
+#if MSNC9
+                string capacities = ((long)ClientCapacities).ToString() + ":48";
+#else
+                string capacities = ((long)ClientCapacities).ToString() + ":0";
+#endif
+#else
                 string capacities = ((long)ClientCapacities).ToString();
+#endif
                 string context = String.Empty;
 
                 if (DisplayImage != null)

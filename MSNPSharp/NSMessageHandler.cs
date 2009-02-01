@@ -82,7 +82,7 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-#if MSNC9_DEFINE_ME_LATER_WHEN_COMPLETED
+#if MSNC9
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC9
 #else
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
@@ -559,7 +559,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", HttpUtility.UrlEncode(contact.Name).Replace("+", "%20") }));
+            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", MSNHttpUtility.UrlEncode(contact.Name) }));
         }
 
         /// <summary>
@@ -573,7 +573,7 @@ namespace MSNPSharp
 
             if (owner.PassportVerified)
             {
-                MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", HttpUtility.UrlEncode(newName).Replace("+", "%20") }));
+                MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.UrlEncode(newName) }));
             }
             if (AutoSynchronize)
             {
@@ -801,7 +801,6 @@ namespace MSNPSharp
                 {
                     MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response }));
                 }
-
             }
             else if ((string)message.CommandValues[1] == "OK")
             {
@@ -1409,7 +1408,7 @@ namespace MSNPSharp
                     processor.RegisterHandler(queueItem.SwitchboardHandler);
 
                     // notify the client
-                    OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator, string.Empty, string.Empty, true);
+                    OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator, string.Empty, string.Empty, false);
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB created event handler called", GetType().Name);
 

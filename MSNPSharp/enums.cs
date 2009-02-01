@@ -291,8 +291,13 @@ namespace MSNPSharp
         CanMultiPacketMSG = 0x20,
         IsMobileDevice = 0x40,
         IsDirectDevice = 0x80,
+        IsWebClient = 0x200,
+        IsTGWClient = 0x800,
         HasMSNSpaces = 0x1000, // 0x001000
         UsingXPMediaCenter = 0x2000,
+        /// <summary>
+        /// Activity support.
+        /// </summary>
         CanDirectIM = 0x4000,
         CanReceiveWinks = 0x8000,
         CanMSNSearch = 0x10000,
@@ -669,6 +674,10 @@ namespace MSNPSharp
         /// </summary>
         CommandDisabled = 502,
         /// <summary>
+        /// Ups failure
+        /// </summary>
+        UpsFailure = 509,
+        /// <summary>
         /// File operation failed. 
         /// </summary>
         FileOperationFailed = 510,
@@ -782,6 +791,9 @@ namespace MSNPSharp
         AccountNotOnThisServer = 931
     }
 
+    /// <summary>
+    /// Custom emoticon type.
+    /// </summary>
     public enum EmoticonType
     {
         /// <summary>

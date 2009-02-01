@@ -383,6 +383,8 @@ namespace MSNPSharp
                     abcontactUpdateRequest.contacts = new ContactType[] { meContact };
                     try
                     {
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(
+                            abService, "ABContactUpdate", abcontactUpdateRequest);
                         abService.ABContactUpdate(abcontactUpdateRequest);
                     }
                     catch (Exception ex)
@@ -567,7 +569,8 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(
+                            abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex2)
@@ -588,8 +591,6 @@ namespace MSNPSharp
 
         }
 
-        #endregion
-
         internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(StorageService storageService, string methodName, object param)
         {
             if (NSMessageHandler != null && NSMessageHandler.ContactService != null)
@@ -598,6 +599,8 @@ namespace MSNPSharp
                 storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
             }
         }
+
+        #endregion
 
         /// <summary>
         /// Get my profile. Display name, personal status and display photo.
