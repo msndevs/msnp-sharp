@@ -696,7 +696,7 @@ namespace MSNPSharp.DataTransfer
 #endif
             }
 #if MSNC9
-            p2pMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            p2pMessage.Flags = P2PFlag.MSNSLPInfo;
             session.MessageFlag = (uint)P2PFlag.MSNObjectData;
 #endif
             MSNSLPMessage slpMessage = new MSNSLPMessage();
@@ -962,14 +962,14 @@ namespace MSNPSharp.DataTransfer
             P2PMessage replyMessage = new P2PMessage();
             replyMessage.InnerMessage = CreateDeclineMessage(properties);
 #if MSNC9
-            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
 
             MessageProcessor.SendMessage(replyMessage);
 
             replyMessage.InnerMessage = CreateClosingMessage(properties);
 #if MSNC9
-            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
             MessageProcessor.SendMessage(replyMessage);
         }
@@ -1000,7 +1000,7 @@ namespace MSNPSharp.DataTransfer
             p2pTransfer.DataStream = invitationArgs.TransferSession.DataStream;
             replyMessage.InnerMessage = CreateAcceptanceMessage(properties);
 #if MSNC9
-            replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
 
             switch (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
@@ -1053,7 +1053,7 @@ namespace MSNPSharp.DataTransfer
                 P2PTransferSession transferSession = session.GetTransferSession(properties.SessionId);
                 P2PMessage closeMessage = new P2PMessage();
 #if MSNC9
-                closeMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+                closeMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
                 closeMessage.InnerMessage = CreateClosingMessage(properties);
                 MessageProcessor.SendMessage(closeMessage);
@@ -1074,7 +1074,7 @@ namespace MSNPSharp.DataTransfer
             P2PMessage closeMessage = new P2PMessage();
             closeMessage.InnerMessage = CreateClosingMessage(property);
 #if MSNC9
-            closeMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+            closeMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
             MessageProcessor.SendMessage(closeMessage);
             if (session != null)
@@ -1439,7 +1439,7 @@ namespace MSNPSharp.DataTransfer
                 P2PMessage p2pMessage = new P2PMessage();
                 p2pMessage.InnerMessage = CreateClosingMessage(GetTransferProperties(session.CallId));
 #if MSNC9
-                p2pMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
                 session.SendMessage(p2pMessage);
 
@@ -1587,7 +1587,7 @@ namespace MSNPSharp.DataTransfer
                 {
                     P2PMessage replyMessage = new P2PMessage();
 #if MSNC9
-                    replyMessage.Flags = (uint)P2PFlag.MSNSLPInfo;
+                    replyMessage.Flags = P2PFlag.MSNSLPInfo;
 #endif
                     replyMessage.InnerMessage = CreateInternalErrorMessage(properties);
                     MessageProcessor.SendMessage(replyMessage);

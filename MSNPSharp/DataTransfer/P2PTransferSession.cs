@@ -375,9 +375,9 @@ namespace MSNPSharp.DataTransfer
             // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
 #if MSNC9
             if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0 &&
-               ((p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.DisplayImageFooter) ||  //DisplayImage
-               (p2pMessage.Flags == (uint)P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter) ||       //File
-               (p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.CustomEmoticonFooter)))  //CustomEmoticon
+               ((p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)P2PFlag.DisplayImageFooter) ||  //DisplayImage
+               (p2pMessage.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter) ||       //File
+               (p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)P2PFlag.CustomEmoticonFooter)))  //CustomEmoticon
 #else
             if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
             && (p2pMessage.Flags == P2PFlag.FileData || p2pMessage.Footer == 1))
