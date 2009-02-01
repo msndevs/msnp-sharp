@@ -379,8 +379,8 @@ namespace MSNPSharp.DataTransfer
                (p2pMessage.Flags == (uint)P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter) ||       //File
                (p2pMessage.Flags == (uint)P2PFlag.MSNObject && p2pMessage.Footer == (uint)P2PFlag.CustomEmoticonFooter)))  //CustomEmoticon
 #else
-                if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
-                && (p2pMessage.Flags == (uint)P2PFlag.FileData || p2pMessage.Footer == 1))
+            if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
+            && (p2pMessage.Flags == (uint)P2PFlag.FileData || p2pMessage.Footer == 1))
 #endif
             {
                 // indicates whether we must stream this message
@@ -388,7 +388,7 @@ namespace MSNPSharp.DataTransfer
 
                 // check if it is a data preparation message send via the SB
                 if (p2pMessage.TotalSize == 4 && p2pMessage.MessageSize == 4
-                    && p2pMessage.InnerBody[0] == 0 && p2pMessage.InnerBody[1] == 0)
+                    && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
                 {
                     writeToStream = false;
                 }
@@ -428,10 +428,10 @@ namespace MSNPSharp.DataTransfer
                         // notify the remote client we close the direct connection
                         SendDisconnectMessage();
                     }
-
-                    // finished handling this message
-                    return;
                 }
+                // finished handling this message
+                return;
+                
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2P Info message received", GetType().Name);

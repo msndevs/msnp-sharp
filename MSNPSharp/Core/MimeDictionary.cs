@@ -33,18 +33,17 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Text;
 
 namespace MSNPSharp.Core
 {
-    public class MimeDictionary : OrderedDictionary
+    public class MimeDictionary : SortedList<string, MimeValue>
     {
-        public MimeValue this[string name]
+        public new MimeValue this[string name]
         {
             get
             {
-                if (!Contains(name))
+                if (!ContainsKey(name))
                     return new MimeValue();
 
                 return (MimeValue)base[name];
@@ -106,12 +105,9 @@ namespace MSNPSharp.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            foreach (DictionaryEntry pair in this)
+            foreach (KeyValuePair<string, MimeValue> pair in this)
             {
-                sb.Append(pair.Key);
-                sb.Append(": ");
-                sb.Append(pair.Value.ToString());
-                sb.Append("\r\n");
+                sb.Append(pair.Key).Append(": ").Append(pair.Value.ToString()).Append("\r\n");
             }
 
             return sb.ToString();
@@ -121,7 +117,7 @@ namespace MSNPSharp.Core
     public class MimeValue
     {
         string _val;
-        OrderedDictionary _attributes = new OrderedDictionary();
+        SortedList<object, string> _attributes = new SortedList<object, string>();
 
         public string Value
         {
@@ -131,7 +127,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        MimeValue(string main, OrderedDictionary attributes)
+        MimeValue(string main, SortedList<object, string> attributes)
         {
             if (attributes == null)
                 throw new ArgumentNullException("attributes");
@@ -154,7 +150,7 @@ namespace MSNPSharp.Core
         {
             get
             {
-                if (!_attributes.Contains(attKey))
+                if (!_attributes.ContainsKey(attKey))
                     return string.Empty;
 
                 return _attributes[attKey].ToString();
@@ -178,7 +174,7 @@ namespace MSNPSharp.Core
             str = str.Trim();
 
             string main = str;
-            OrderedDictionary attributes = new OrderedDictionary();
+            SortedList<object, string> attributes = new SortedList<object, string>();
 
             if (main.Contains(";"))
             {
@@ -215,22 +211,19 @@ namespace MSNPSharp.Core
 
         public bool HasAttribute(string name)
         {
-            return _attributes.Contains(name);
+            return _attributes.ContainsKey(name);
         }
 
         public override string ToString()
         {
             string str = _val;
 
-            foreach (DictionaryEntry att in _attributes)
+            foreach (KeyValuePair<object, string> att in _attributes)
             {
                 if (!string.IsNullOrEmpty(str))
                     str += ";";
 
-                if (att.Key is int)
-                    str += att.Value;
-                else
-                    str += String.Format("{0}={1}", att.Key, att.Value);
+                str += (att.Key is int) ? att.Value : String.Format("{0}={1}", att.Key, att.Value);
             }
 
             return str.Trim();

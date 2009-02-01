@@ -1199,13 +1199,13 @@ namespace MSNPSharp.DataTransfer
 
             properties.RemoteInvited = true;
 
-            if (message.BodyValues.Contains("EUF-GUID"))
+            if (message.BodyValues.ContainsKey("EUF-GUID"))
             {
                 properties.DataTypeGuid = message.BodyValues["EUF-GUID"].ToString();
                 if (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) == P2PConst.UserDisplayGuid)
                 {
                     // create a temporary msn object to extract the data type
-                    if (message.BodyValues.Contains("Context"))
+                    if (message.BodyValues.ContainsKey("Context"))
                     {
                         MSNObject msnObject = new MSNObject();
                         msnObject.ParseContext(message.BodyValues["Context"].ToString(), true);
@@ -1767,10 +1767,10 @@ namespace MSNPSharp.DataTransfer
             MimeDictionary bodyValues = message.BodyValues;
 
             // check the protocol
-            if (bodyValues.Contains("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
+            if (bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
             {
-                if (bodyValues.Contains("IPv4Internal-Addrs") &&
-                    bodyValues.Contains("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
+                if (bodyValues.ContainsKey("IPv4Internal-Addrs") &&
+                    bodyValues.ContainsKey("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
                 {
                     // we must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
