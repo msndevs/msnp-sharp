@@ -182,10 +182,17 @@ namespace MSNPSharp.IO
 
             if (deltas.AddressBookDeltas.Count > 0)
             {
+#if MSNP18
+                foreach (ABFindContactsPagedResultType abfindallResult in deltas.AddressBookDeltas)
+                {
+                    ops += abfindallResult;
+                }
+#else
                 foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
                 {
                     ops += abfindallResult;
                 }
+#endif
             }
 
         }
@@ -714,6 +721,93 @@ namespace MSNPSharp.IO
             }
 
 
+            return xmlcl;
+        }
+
+        /// <summary>
+        /// Merge changes to addressbook and add address book contacts
+        /// </summary>
+        /// <param name="xmlcl">Addressbook</param>
+        /// <param name="forwardList"></param>
+        /// <returns></returns>
+        public static XMLContactList operator +(XMLContactList xmlcl, ABFindContactsPagedResultType forwardList)
+        {
+            if (forwardList.Ab != null && xmlcl.AddressbookLastChange < forwardList.Ab.lastChange)
+            {
+                if (null != forwardList.Groups)
+                {
+                    foreach (GroupType groupType in forwardList.Groups)
+                    {
+                        Guid key = new Guid(groupType.groupId);
+                        if (groupType.fDeleted)
+                        {
+                            xmlcl.Groups.Remove(key);
+
+                            ContactGroup contactGroup = (ContactGroup)xmlcl.NSMessageHandler.ContactGroups[groupType.groupId];
+                            if (contactGroup != null)
+                            {
+                                xmlcl.NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
+                                xmlcl.NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
+                            }
+                        }
+                        else
+                        {
+                            xmlcl.Groups[key] = groupType;
+
+                            // Add a new group									
+                            xmlcl.NSMessageHandler.ContactGroups.AddGroup(
+                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, xmlcl.NSMessageHandler));
+
+                            // Fire the event
+                            xmlcl.NSMessageHandler.ContactService.OnContactGroupAdded(
+                                new ContactGroupEventArgs(xmlcl.NSMessageHandler.ContactGroups[groupType.groupId]));
+                        }
+                    }
+                }
+
+                if (null != forwardList.Contacts)
+                {
+                    foreach (ContactType contactType in forwardList.Contacts)
+                    {
+                        if (null != contactType.contactInfo)
+                        {
+                            Contact contact = xmlcl.NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
+
+                            if (contactType.fDeleted)
+                            {
+                                xmlcl.AddressbookContacts.Remove(new Guid(contactType.contactId));
+
+                                if (contact != null)
+                                {
+                                    contact.RemoveFromList(MSNLists.ForwardList);
+                                    xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+
+                                    contact.Guid = Guid.Empty;
+                                    contact.SetIsMessengerUser(false);
+
+                                    if (MSNLists.None == contact.Lists)
+                                    {
+                                        xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                        contact.NSMessageHandler = null;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                xmlcl.AddressbookContacts[new Guid(contactType.contactId)] = contactType;
+                                xmlcl.UpdateContact(contactType);
+                                xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                            }
+                        }
+                    }
+                }
+
+                // Update lastchange
+                xmlcl.AddressbookLastChange = forwardList.Ab.lastChange;
+                xmlcl.DynamicItemLastChange = forwardList.Ab.DynamicItemLastChanged;
+            }
+
+            //NO DynamicItems any more
             return xmlcl;
         }
 

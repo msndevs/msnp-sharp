@@ -45,12 +45,11 @@ namespace MSNPSharp.IO
     [Serializable]
     public class DeltasList : MCLSerializer
     {
-        private List<ABFindAllResultType> addressBookDeltas = new List<ABFindAllResultType>(0);
+
         private List<FindMembershipResultType> membershipDeltas = new List<FindMembershipResultType>(0);
         private SerializableDictionary<string, BaseDynamicItemType> dynamicItems = new SerializableDictionary<string, BaseDynamicItemType>(0);
         private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
         private SerializableDictionary<string, string> preferredHosts = new SerializableDictionary<string, string>(0);
-
 
         /// <summary>
         /// The users that have changed their spaces or profiles.
@@ -67,7 +66,22 @@ namespace MSNPSharp.IO
             }
         }
 
-
+#if MSNP18
+        private List<ABFindContactsPagedResultType> addressBookDeltas = new List<ABFindContactsPagedResultType>(0);
+        public List<ABFindContactsPagedResultType> AddressBookDeltas
+        {
+            get
+            {
+                addressBookDeltas.Sort(CompareAddressBookDeltas);
+                return addressBookDeltas;
+            }
+            set
+            {
+                addressBookDeltas = value;
+            }
+        }
+#else
+        private List<ABFindAllResultType> addressBookDeltas = new List<ABFindAllResultType>(0);
         public List<ABFindAllResultType> AddressBookDeltas
         {
             get
@@ -80,6 +94,7 @@ namespace MSNPSharp.IO
                 addressBookDeltas = value;
             }
         }
+#endif
 
         public List<FindMembershipResultType> MembershipDeltas
         {
@@ -123,7 +138,6 @@ namespace MSNPSharp.IO
                 preferredHosts = value;
             }
         }
-
 
         #region Profile
         private OwnerProfile profile = new OwnerProfile();
@@ -179,6 +193,11 @@ namespace MSNPSharp.IO
         public static int CompareAddressBookDeltas(ABFindAllResultType x, ABFindAllResultType y)
         {
             return x.ab.lastChange.CompareTo(y.ab.lastChange);
+        }
+
+        public static int CompareAddressBookDeltas(ABFindContactsPagedResultType x, ABFindContactsPagedResultType y)
+        {
+            return x.Ab.lastChange.CompareTo(y.Ab.lastChange);
         }
 
         public static int CompareMembershipDeltas(FindMembershipResultType x, FindMembershipResultType y)
