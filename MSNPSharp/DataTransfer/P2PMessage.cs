@@ -489,8 +489,9 @@ namespace MSNPSharp.DataTransfer
             InnerBody = new byte[MessageSize];
             memStream.Read(InnerBody, 0, (int)MessageSize);
 
-            // this is in big-endian
-            Footer = ToBigEndian(reader.ReadUInt32());
+            // this is big-endian
+            if (data.Length > 48 + MessageSize)
+                Footer = ToBigEndian(reader.ReadUInt32());
 
             // clean up
             reader.Close();

@@ -66,6 +66,17 @@ namespace MSNPSharp.Core
             Dispose(false);
         }
 
+        /// <summary>
+        /// Is true when there are message available to retrieve.
+        /// </summary>
+        public override bool MessageAvailable
+        {
+            get
+            {
+                return messageQueue.Count > 0;
+            }
+        }
+
         protected Queue<MemoryStream> MessageQueue
         {
             get
@@ -122,24 +133,12 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
-        /// Is true when there are message available to retrieve.
-        /// </summary>
-        public override bool MessageAvailable
-        {
-            get
-            {
-                return messageQueue.Count > 0;
-            }
-        }
-
-        /// <summary>
         /// Get the next message as a byte array. The returned data includes all newlines which seperate the commands ("\r\n")
         /// </summary>
         /// <returns></returns>
         public override byte[] GetNextMessageData()
         {
-            MemoryStream memStream = messageQueue.Dequeue();
-            return memStream.ToArray();
+            return messageQueue.Dequeue().ToArray();
         }
 
         /// <summary>
@@ -187,10 +186,11 @@ namespace MSNPSharp.Core
 
                         // check if it's a payload command
                         bufferStream.Position = 0;
-                        byte[] cmd = new byte[3];
-                        cmd[0] = (byte)bufferStream.ReadByte();
-                        cmd[1] = (byte)bufferStream.ReadByte();
-                        cmd[2] = (byte)bufferStream.ReadByte();
+                        byte[] cmd = new byte[3] { 
+                            (byte)bufferStream.ReadByte(),
+                            (byte)bufferStream.ReadByte(),
+                            (byte)bufferStream.ReadByte() 
+                        };
 
                         if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||    // MSG payload command
                            (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||     // IPG pager command
@@ -198,26 +198,25 @@ namespace MSNPSharp.Core
                            (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||     // UBX personal message
                            (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||     // GCF privacy settings
                            (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||     // UBM Yahoo messenger message
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'N') ||     // UBN SIP request
-                           (cmd[0] == 'U' && cmd[1] == 'U' && cmd[2] == 'N') ||     // UUN ?
+                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'N') ||     // UBN Unified Budy Notification (for SIP requests)
+                           (cmd[0] == 'U' && cmd[1] == 'U' && cmd[2] == 'N') ||     // UUN Unified User Notification
                            (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||     // ADL Add List command
                            (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L') ||     // RML Remove List command
                            (cmd[0] == 'F' && cmd[1] == 'Q' && cmd[2] == 'Y') ||     // FQY Forward QuerY command
-                           (cmd[0] == '2' && cmd[1] == '4' && cmd[2] == '1') ||     // 241 ADL/RML error
-                           (cmd[0] == '5' && cmd[1] == '0' && cmd[2] == '9'))       // 509 Payload error
+                           (cmd[0] == '2' && cmd[1] == '0' && cmd[2] == '4') ||     // 204 Invalid contact network in ADL/RML (payload)
+                           (cmd[0] == '2' && cmd[1] == '4' && cmd[2] == '1') ||     // 241 Invalid membership for ADL/RML (payload)
+                           (cmd[0] == '5' && cmd[1] == '0' && cmd[2] == '9'))       // 509 UpsFailure, when sending mobile message (payload)
                         {
                             bufferStream.Seek(-3, SeekOrigin.End);
 
                             // calculate the length by reading backwards from the end
                             remainingBuffer = 0;
                             int size = 0;
-                            int iter = 0;
 
-                            while ((size = bufferStream.ReadByte()) > 0 && size >= '0' && size <= '9')
+                            for (int i = 0; ((size = bufferStream.ReadByte()) > 0) && size >= '0' && size <= '9'; i++)
                             {
-                                remainingBuffer += (int)((size - '0') * Math.Pow(10, iter));
+                                remainingBuffer += (int)((size - '0') * Math.Pow(10, i));
                                 bufferStream.Seek(-2, SeekOrigin.Current);
-                                iter++;
                             }
 
                             // move to the end of the stream before we are going to write
@@ -266,7 +265,6 @@ namespace MSNPSharp.Core
 
             // Free native resources
         }
-
 
 
         #endregion
