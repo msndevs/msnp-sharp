@@ -546,6 +546,10 @@ namespace MSNPSharp
         /// </summary>
         InvalidParameter = 201,
         /// <summary>
+        /// Invalid contact network
+        /// </summary>
+        InvalidContactNetwork = 204,
+        /// <summary>
         /// Invalid user.
         /// </summary>
         InvalidUser = 205,

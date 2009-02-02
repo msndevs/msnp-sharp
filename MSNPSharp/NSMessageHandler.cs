@@ -1209,10 +1209,21 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Called when a UUN command has been received.
+        /// </summary>
+        /// <param name="message"></param>
         protected virtual void OnUUNReceived(NSMessage message)
         {
         }
 
+        /// <summary>
+        /// Called when a UUX command has been received.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnUUXReceived(NSMessage message)
+        {
+        }
 
         /// <summary>
         /// Called when a CHG command has been received.
@@ -2159,6 +2170,24 @@ namespace MSNPSharp
                 NSMessage nsMessage = (NSMessage)message;
                 switch (nsMessage.Command)
                 {
+                    // Most used CMDs
+                    case "MSG":
+                        OnMSGReceived(nsMessage);
+                        return;
+                    case "FLN":
+                        OnFLNReceived(nsMessage);
+                        return;
+                    case "NLN":
+                        OnNLNReceived(nsMessage);
+                        return;
+                    case "QNG":
+                        OnQNGReceived(nsMessage);
+                        return;
+                    case "UBX":
+                        OnUBXReceived(nsMessage);
+                        return;
+
+                    // Other CMDs
                     case "ADG":
                         OnADGReceived(nsMessage);
                         return;
@@ -2167,9 +2196,6 @@ namespace MSNPSharp
                         return;
                     case "BLP":
                         OnBLPReceived(nsMessage);
-                        return;
-                    case "BPR":
-                        OnBPRReceived(nsMessage);
                         return;
                     case "CHG":
                         OnCHGReceived(nsMessage);
@@ -2180,9 +2206,6 @@ namespace MSNPSharp
                     case "CVR":
                         OnCVRReceived(nsMessage);
                         return;
-                    case "FLN":
-                        OnFLNReceived(nsMessage);
-                        return;
                     case "FQY":
                         OnFQYReceived(nsMessage);
                         return;
@@ -2192,12 +2215,6 @@ namespace MSNPSharp
                     case "ILN":
                         OnILNReceived(nsMessage);
                         return;
-                    case "MSG":
-                        OnMSGReceived(nsMessage);
-                        return;
-                    case "NLN":
-                        OnNLNReceived(nsMessage);
-                        return;
                     case "NOT":
                         OnNOTReceived(nsMessage);
                         return;
@@ -2206,9 +2223,6 @@ namespace MSNPSharp
                         return;
                     case "PRP":
                         OnPRPReceived(nsMessage);
-                        return;
-                    case "QNG":
-                        OnQNGReceived(nsMessage);
                         return;
                     case "QRY":
                         OnQRYReceived(nsMessage);
@@ -2228,20 +2242,25 @@ namespace MSNPSharp
                     case "UBN":
                         OnUBNReceived(nsMessage);
                         return;
+                    case "USR":
+                        OnUSRReceived(nsMessage);
+                        return;
                     case "UUN":
                         OnUUNReceived(nsMessage);
                         return;
-                    case "UBX":
-                        OnUBXReceived(nsMessage);
-                        return;
-                    case "USR":
-                        OnUSRReceived(nsMessage);
+                    case "UUX":
+                        OnUUXReceived(nsMessage);
                         return;
                     case "VER":
                         OnVERReceived(nsMessage);
                         return;
                     case "XFR":
                         OnXFRReceived(nsMessage);
+                        return;
+
+                    // Outdated
+                    case "BPR":
+                        OnBPRReceived(nsMessage);
                         return;
                 }
 
