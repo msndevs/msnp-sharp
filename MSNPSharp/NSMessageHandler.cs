@@ -287,25 +287,22 @@ namespace MSNPSharp
             }
             set
             {
-                if (processorConnectedHandler != null && messageProcessor != null)
+                // de-register from the previous message processor
+                if (messageProcessor != null)
                 {
-                    // de-register from the previous message processor					
-                    ((SocketMessageProcessor)messageProcessor).ConnectionEstablished -= processorConnectedHandler;
+                    messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
+                    messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
                 }
 
-                if (processorConnectedHandler == null)
+                messageProcessor = value as SocketMessageProcessor;
+
+                if (messageProcessor != null)
                 {
-                    processorConnectedHandler = new EventHandler<EventArgs>(NSMessageHandler_ProcessorConnectCallback);
-                    processorDisconnectedHandler = new EventHandler<EventArgs>(NSMessageHandler_ProcessorDisconnectCallback);
+                    // catch the connect event so we can start sending the USR command upon initiating
+                    messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
+                    // and make sure we respond on closing
+                    messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
                 }
-
-                messageProcessor = (SocketMessageProcessor)value;
-
-                // catch the connect event so we can start sending the USR command upon initiating
-                ((SocketMessageProcessor)messageProcessor).ConnectionEstablished += processorConnectedHandler;
-
-                // and make sure we respond on closing
-                ((SocketMessageProcessor)messageProcessor).ConnectionClosed += processorDisconnectedHandler;
             }
         }
 
@@ -704,9 +701,13 @@ namespace MSNPSharp
         /// Called when the message processor has disconnected.
         /// </summary>
         /// <param name="sender"></param>
-        protected virtual void OnProcessorDisconnectCallback(IMessageProcessor sender)
+        /// <param name="e"></param>
+        protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            // do nothing
+            if (IsSignedIn)
+                OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
+
+            Clear();
         }
 
         /// <summary>
@@ -714,12 +715,14 @@ namespace MSNPSharp
         /// begin the login procedure by sending the VER command.
         /// </summary>
         /// <param name="sender"></param>
-        protected virtual void OnProcessorConnectCallback(IMessageProcessor sender)
+        /// <param name="e"></param>
+        protected virtual void OnProcessorConnectCallback(object sender, EventArgs e)
         {
             // Check for valid credentials
             if (Credentials == null)
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
+            Clear();
             SendInitialMessage();
         }
 
@@ -2134,35 +2137,6 @@ namespace MSNPSharp
         #endregion
 
         #region Command handler
-
-        private EventHandler<EventArgs> processorConnectedHandler;
-        private EventHandler<EventArgs> processorDisconnectedHandler;
-
-        /// <summary>
-        /// Event handler.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void NSMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
-        {
-            Clear();
-            OnProcessorConnectCallback((IMessageProcessor)sender);
-        }
-
-        /// <summary>
-        /// Event handler.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void NSMessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
-        {
-            if (IsSignedIn)
-                OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
-
-            OnProcessorDisconnectCallback((IMessageProcessor)sender);
-
-            Clear();
-        }
 
         /// <summary>
         /// Clears all resources associated with a nameserver session.
