@@ -1093,20 +1093,6 @@ namespace MSNPSharp
 
         #region Switchboard Handling
 
-        private EventHandler<EventArgs> processorConnectedHandler;
-        private EventHandler<EventArgs> processorDisconnectedHandler;
-
-        private void SBMessageHandler_ProcessorConnectCallback(object sender, EventArgs e)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Switchboard processor connected.", GetType().Name);
-            OnProcessorConnectCallback((IMessageProcessor)sender);
-        }
-
-        private void SBMessageHandler_ProcessorDisconnectCallback(object sender, EventArgs e)
-        {
-            OnProcessorDisconnectCallback((IMessageProcessor)sender);
-        }
-
         private void ClearAll()
         {
             Dictionary<string, ContactConversationState> cp = new Dictionary<string, ContactConversationState>(contacts);
@@ -1128,8 +1114,9 @@ namespace MSNPSharp
         /// Called when the message processor has established a connection. This function will 
         /// begin the login procedure by sending the USR or ANS command.
         /// </summary>
-        protected virtual void OnProcessorConnectCallback(IMessageProcessor processor)
+        protected virtual void OnProcessorConnectCallback(object sender, EventArgs e)
         {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB processor connected.", GetType().Name);
             SendInitialMessage();
         }
 
@@ -1137,8 +1124,9 @@ namespace MSNPSharp
         /// Called when the message processor has disconnected. This function will 
         /// set the IsSessionEstablished to false.
         /// </summary>
-        protected virtual void OnProcessorDisconnectCallback(IMessageProcessor processor)
+        protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB processor disconnected.", GetType().Name);
             lock (syncObject)
             {
                 if (sessionEstablished)
@@ -1159,27 +1147,20 @@ namespace MSNPSharp
             }
             set
             {
-                if (processorConnectedHandler == null)
+                if (messageProcessor != null)
                 {
-                    // store the new eventhandlers in order to remove them in the future
-                    processorConnectedHandler = new EventHandler<EventArgs>(SBMessageHandler_ProcessorConnectCallback);
-                    processorDisconnectedHandler = new EventHandler<EventArgs>(SBMessageHandler_ProcessorDisconnectCallback);
+                    messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
+                    messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
                 }
 
-                // catch the connect event so we can start sending the USR command upon initiating
-                SocketMessageProcessor smp = value as SocketMessageProcessor;
-                smp.ConnectionEstablished += processorConnectedHandler;
-                smp.ConnectionClosed += processorDisconnectedHandler;
+                messageProcessor = value as SocketMessageProcessor;
 
                 if (messageProcessor != null)
                 {
-                    // de-register from the previous message processor					
-                    ((SocketMessageProcessor)messageProcessor).ConnectionEstablished -= processorConnectedHandler;
-                    ((SocketMessageProcessor)messageProcessor).ConnectionClosed -= processorDisconnectedHandler;
+                    // catch the connect event to start sending the USR command upon initiating
+                    messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
+                    messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
                 }
-
-                messageProcessor = smp;
-
             }
         }
 
