@@ -836,11 +836,11 @@ namespace MSNPSharp
         private void AddNonPendingContact(string account, ClientType ct, string invitation)
         {
             // Query other networks and add as new contact if available
-            if (ct == ClientType.PassportMember && account.Contains("@"))
+            if (account.Contains("@") && ct == ClientType.PassportMember)
             {
                 string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
-                fqypayload = fqypayload.Replace("{d}", account.Split(("@").ToCharArray())[1]);
-                fqypayload = fqypayload.Replace("{n}", account.Split(("@").ToCharArray())[0]);
+                fqypayload = fqypayload.Replace("{d}", account.Split('@')[1]);
+                fqypayload = fqypayload.Replace("{n}", account.Split('@')[0]);
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
             }
 
@@ -1017,34 +1017,40 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
+        /// Creates a new contact on your address book and adds to allowed list if not blocked before.
         /// </summary>
-        /// <param name="account">An account, email address or phone number, to add</param>
-        /// <remarks>The phone format is +CC1234567890, CC is Country Code</remarks>
+        /// <param name="account">An email address or phone number to add. The email address can be yahoo account.</param>
+        /// <remarks>The phone format is +CC1234567890 for phone contact, CC is Country Code</remarks>
         public void AddNewContact(string account)
         {
+            AddNewContact(account, String.Empty);
+        }
+
+        /// <summary>
+        /// Creates a new contact on your address book and adds to allowed list if not blocked before.
+        /// </summary>
+        /// <param name="account">An email address or phone number to add. The email address can be yahoo account.</param>
+        /// <param name="invitation">The reason of the adding contact</param>
+        /// <remarks>The phone format is +CC1234567890, CC is Country Code</remarks>
+        public void AddNewContact(string account, string invitation)
+        {
             long test;
-            if (long.TryParse(account, out test) || (account.StartsWith("+") && long.TryParse(account.Substring(1), out test)))
+            if (long.TryParse(account, out test) ||
+                (account.StartsWith("+") && long.TryParse(account.Substring(1), out test)))
             {
                 if (account.StartsWith("00"))
                 {
                     account = "+" + account.Substring(2);
                 }
-                AddNewContact(account, ClientType.PhoneMember, String.Empty);
+                AddNewContact(account, ClientType.PhoneMember, invitation);
             }
             else
             {
-                AddNewContact(account, ClientType.PassportMember, String.Empty);
+                AddNewContact(account, ClientType.PassportMember, invitation);
             }
         }
 
-        /// <summary>
-        /// Creates a new contact and sends a request to the server to add this contact to the forward and allowed list.
-        /// </summary>
-        /// <param name="account">An account, email address or phone number, to add</param>
-        /// <param name="network">The service type of target contact</param>
-        /// <param name="invitation">The reason of the adding contact</param>
-        public void AddNewContact(string account, ClientType network, string invitation)
+        internal void AddNewContact(string account, ClientType network, string invitation)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
