@@ -1038,7 +1038,7 @@ namespace MSNPSharpClient
             }
 
             Contact contact = e.Contact;
-            if (contact.NSMessageHandler.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
+            if (messenger.Nameserver.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
             {
                 if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList && !contact.OnPendingList))
                 {
@@ -1050,7 +1050,7 @@ namespace MSNPSharpClient
                         {
                             if (form.AddToContactList)
                             {
-                                contact.NSMessageHandler.ContactService.AddNewContact(contact.Mail);
+                                messenger.Nameserver.ContactService.AddNewContact(contact.Mail);
                                 System.Threading.Thread.Sleep(200);
 
                                 if (form.Blocked)
@@ -1883,11 +1883,11 @@ namespace MSNPSharpClient
                     {
                         if (newgroupNode.Tag is ContactGroup)
                         {
-                            contact.NSMessageHandler.ContactService.AddContactToGroup(contact, (ContactGroup)newgroupNode.Tag);
+                            messenger.Nameserver.ContactService.AddContactToGroup(contact, (ContactGroup)newgroupNode.Tag);
                         }
                         if (oldgroupNode.Tag is ContactGroup)
                         {
-                            contact.NSMessageHandler.ContactService.RemoveContactFromGroup(contact, (ContactGroup)oldgroupNode.Tag);
+                            messenger.Nameserver.ContactService.RemoveContactFromGroup(contact, (ContactGroup)oldgroupNode.Tag);
                         }
                     }
                     catch (Exception)

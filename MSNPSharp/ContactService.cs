@@ -864,7 +864,6 @@ namespace MSNPSharp
                 {
                     Contact contact = NSMessageHandler.ContactList.GetContact(account, ct);
                     contact.Guid = new Guid(e.Result.ABContactAddResult.guid);
-                    contact.NSMessageHandler = NSMessageHandler;
 
                     if (!contact.OnBlockedList)
                     {
@@ -910,7 +909,6 @@ namespace MSNPSharp
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     contact.Guid = new Guid(e.Result.ABContactAddResult.guid);
-                    contact.NSMessageHandler = NSMessageHandler;
 
                     // FL
                     contact.OnForwardList = true;
