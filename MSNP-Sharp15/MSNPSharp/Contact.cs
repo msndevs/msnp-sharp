@@ -196,7 +196,7 @@ namespace MSNPSharp
             {
                 return nsMessageHandler;
             }
-            set
+            internal protected set
             {
                 nsMessageHandler = value;
             }

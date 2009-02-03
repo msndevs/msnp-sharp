@@ -289,9 +289,9 @@ namespace MSNPSharp
             // it seems the server does not like it when we want to set mobile device ourselves!
             /*set 
             {
-                if(NSMessageHandler != null)
+                if(nsMessageHandler != null)
                 {
-                    NSMessageHandler.SetMobileDevice(value);
+                    nsMessageHandler.SetMobileDevice(value);
                 }
             }*/
         }
