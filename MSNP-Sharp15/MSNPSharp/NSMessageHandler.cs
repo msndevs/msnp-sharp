@@ -1955,11 +1955,7 @@ namespace MSNPSharp
                             ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
                             string account = contactNode.Attributes["n"].Value + "@" + domain;
                             account = account.ToLower(CultureInfo.InvariantCulture);
-
-                            if (!ContactList.HasContact(account, type))
-                            {
-                                ContactService.AddNewContact(account, type, String.Empty);
-                            }
+                            ContactService.AddNewContact(account, type, String.Empty);
                         }
 
                     } while (contactNode.NextSibling != null);
