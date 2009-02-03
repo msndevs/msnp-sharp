@@ -1564,6 +1564,7 @@ namespace MSNPSharp
                 }
                 else
                 {
+                    Owner.CreateDefaultDisplayImage(null);
                     OnSignedIn(EventArgs.Empty);
                 }
             }
