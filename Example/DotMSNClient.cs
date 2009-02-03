@@ -96,6 +96,7 @@ namespace MSNPSharpClient
         private Label lblNews;
         private LinkLabel lblNewsLink;
         private ComboBox comboProtocol;
+        private CheckBox cbRobotMode;
         private IContainer components;
         #endregion
 
@@ -114,9 +115,9 @@ namespace MSNPSharpClient
             this.btnAddNew = new System.Windows.Forms.Button();
             this.btnSortBy = new System.Windows.Forms.Button();
             this.treeViewPanel = new System.Windows.Forms.Panel();
-            this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
             this.treeViewFilterList = new System.Windows.Forms.TreeView();
+            this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sendIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sendOIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -162,6 +163,7 @@ namespace MSNPSharpClient
             this.cmdNext = new System.Windows.Forms.Button();
             this.cmdPrev = new System.Windows.Forms.Button();
             this.lblWhatsup = new System.Windows.Forms.Label();
+            this.cbRobotMode = new System.Windows.Forms.CheckBox();
             this.ListPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
@@ -253,19 +255,6 @@ namespace MSNPSharpClient
             this.treeViewPanel.Size = new System.Drawing.Size(300, 366);
             this.treeViewPanel.TabIndex = 2;
             // 
-            // comboPlaces
-            // 
-            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboPlaces.DropDownWidth = 170;
-            this.comboPlaces.FormattingEnabled = true;
-            this.comboPlaces.Location = new System.Drawing.Point(134, 53);
-            this.comboPlaces.Name = "comboPlaces";
-            this.comboPlaces.Size = new System.Drawing.Size(70, 21);
-            this.comboPlaces.TabIndex = 5;
-            this.toolTipChangePhoto.SetToolTip(this.comboPlaces, "Places you signed on");
-            this.comboPlaces.Visible = false;
-            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
-            // 
             // treeViewFavoriteList
             // 
             this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
@@ -310,6 +299,19 @@ namespace MSNPSharpClient
             this.treeViewFilterList.Visible = false;
             this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            // 
+            // comboPlaces
+            // 
+            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboPlaces.DropDownWidth = 170;
+            this.comboPlaces.FormattingEnabled = true;
+            this.comboPlaces.Location = new System.Drawing.Point(134, 53);
+            this.comboPlaces.Name = "comboPlaces";
+            this.comboPlaces.Size = new System.Drawing.Size(70, 21);
+            this.comboPlaces.TabIndex = 5;
+            this.toolTipChangePhoto.SetToolTip(this.comboPlaces, "Places you signed on");
+            this.comboPlaces.Visible = false;
+            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
             // 
             // userMenuStrip
             // 
@@ -427,9 +429,9 @@ namespace MSNPSharpClient
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.panel1.Controls.Add(this.cbRobotMode);
             this.panel1.Controls.Add(this.comboPlaces);
             this.panel1.Controls.Add(this.comboProtocol);
-            this.panel1.Controls.Add(this.pnlNameAndPM);
             this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.accountTextBox);
             this.panel1.Controls.Add(this.loginButton);
@@ -460,7 +462,7 @@ namespace MSNPSharpClient
             this.pnlNameAndPM.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.pnlNameAndPM.Controls.Add(this.lblPM);
             this.pnlNameAndPM.Controls.Add(this.lblName);
-            this.pnlNameAndPM.Location = new System.Drawing.Point(3, 3);
+            this.pnlNameAndPM.Location = new System.Drawing.Point(29, 6);
             this.pnlNameAndPM.Name = "pnlNameAndPM";
             this.pnlNameAndPM.Size = new System.Drawing.Size(204, 49);
             this.pnlNameAndPM.TabIndex = 1;
@@ -501,7 +503,7 @@ namespace MSNPSharpClient
             // 
             this.accountTextBox.Location = new System.Drawing.Point(6, 6);
             this.accountTextBox.Name = "accountTextBox";
-            this.accountTextBox.Size = new System.Drawing.Size(198, 20);
+            this.accountTextBox.Size = new System.Drawing.Size(121, 20);
             this.accountTextBox.TabIndex = 1;
             this.accountTextBox.Text = "msnpsharp@live.cn";
             this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
@@ -519,7 +521,7 @@ namespace MSNPSharpClient
             // 
             // passwordTextBox
             // 
-            this.passwordTextBox.Location = new System.Drawing.Point(7, 28);
+            this.passwordTextBox.Location = new System.Drawing.Point(6, 28);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(121, 20);
@@ -537,7 +539,7 @@ namespace MSNPSharpClient
             "Away",
             "Hidden",
             "Offline"});
-            this.comboStatus.Location = new System.Drawing.Point(7, 54);
+            this.comboStatus.Location = new System.Drawing.Point(6, 54);
             this.comboStatus.Name = "comboStatus";
             this.comboStatus.Size = new System.Drawing.Size(121, 21);
             this.comboStatus.TabIndex = 3;
@@ -722,16 +724,30 @@ namespace MSNPSharpClient
             this.lblWhatsup.TabIndex = 0;
             this.lblWhatsup.Text = "What\'s Up";
             // 
+            // cbRobotMode
+            // 
+            this.cbRobotMode.AutoSize = true;
+            this.cbRobotMode.Location = new System.Drawing.Point(134, 9);
+            this.cbRobotMode.Name = "cbRobotMode";
+            this.cbRobotMode.Size = new System.Drawing.Size(71, 17);
+            this.cbRobotMode.TabIndex = 7;
+            this.cbRobotMode.Text = "Bot mode";
+            this.toolTipChangePhoto.SetToolTip(this.cbRobotMode, "If your account is provisioned, check this. This sets AutoSynchronize property to" +
+                    " false when connected; that will make MSNPSharp don\'t use Address Book anymore, " +
+                    "so your contact list isn\'t loaded.");
+            this.cbRobotMode.UseVisualStyleBackColor = true;
+            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(539, 587);
+            this.Controls.Add(this.pnlNameAndPM);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.ListPanel);
             this.Controls.Add(this.ContactPanel);
-            this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.WhatsUpPanel);
             this.Controls.Add(this.OwnerPanel);
+            this.Controls.Add(this.pictureBox);
             this.Name = "ClientForm";
             this.Text = "MSNPSharp Example Client for MSNP18 (3.0 Dev)";
             this.ListPanel.ResumeLayout(false);
@@ -763,6 +779,10 @@ namespace MSNPSharpClient
             // Required for Windows Form Designer support
             //
             InitializeComponent();
+            // Move PM panel to SignIn window...
+            pnlNameAndPM.Location = panel1.Location;
+
+
             // You can set proxy settings here
             // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
 
@@ -1275,6 +1295,14 @@ namespace MSNPSharpClient
 
         private void NameserverProcessor_ConnectionEstablished(object sender, EventArgs e)
         {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler(NameserverProcessor_ConnectionEstablished), sender, e);
+                return;
+            }
+
+            messenger.Nameserver.AutoSynchronize = !cbRobotMode.Checked;
+
             SetStatus("Connected to server");
         }
 
