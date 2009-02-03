@@ -1918,7 +1918,7 @@ namespace MSNPSharpClient
                 string invitation = ic.InvitationMessage;
                 foreach (String account in ic.Contacts)
                 {
-                    messenger.Nameserver.ContactService.AddNewContact(account, ClientType.PassportMember, invitation);
+                    messenger.Nameserver.ContactService.AddNewContact(account, invitation);
                 }
             }
         }
