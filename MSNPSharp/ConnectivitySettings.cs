@@ -64,16 +64,19 @@ namespace MSNPSharp
 
         static ConnectivitySettings()
         {
-            if (null == Type.GetType("Mono.RunTime"))
+            try
             {
-                ServicePointManager.ServerCertificateValidationCallback = delegate
-                {
-                    return true;
-                };
+                ServicePointManager.ServerCertificateValidationCallback += delegate(object sender, X509Certificate certificate,
+                    X509Chain chain, SslPolicyErrors sslPolicyErrors)
+                    {
+                        return true;
+                    };
             }
-            else
+            catch (NotImplementedException)
             {
+#pragma warning disable 0618
                 ServicePointManager.CertificatePolicy = new MSNServiceCertificatePolicy();
+#pragma warning restore 0618
             }
         }
 
