@@ -808,9 +808,9 @@ namespace MSNPSharp
                 Contact contact = (message.CommandValues.Count >= 2) ?
                     NSMessageHandler.ContactList.GetContact(account, (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString()))
                     :
-                    NSMessageHandler.ContactList.GetContact(account);
+                    NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
-                if (contact == null || Contacts[contact.Mail] == ContactConversationState.Left)
+                if (Contacts[contact.Mail] == ContactConversationState.Left)
                     return;
 
                 OnContactLeft(contact); // notify the client programmer
@@ -867,19 +867,14 @@ namespace MSNPSharp
             if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
                 return;
 
-            // update the name to make sure we have it up-to-date
-            // contact.SetName(message.CommandValues[4].ToString());
-            Contact contact = NSMessageHandler.ContactList.GetContact(account);
+            Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
-            if (contact == null)  //anonymous request
+            if (contact.Lists == MSNLists.None) // Anonymous request
             {
-                contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
-                contact.NSMessageHandler = NSMessageHandler;
                 if (message.CommandValues.Count >= 5)
                 {
                     contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
                 }
-                contact.Lists = MSNLists.None;
             }
 
             if (!Contacts.ContainsKey(contact.Mail) || Contacts[contact.Mail] != ContactConversationState.Joined)
@@ -908,10 +903,6 @@ namespace MSNPSharp
             if (NSMessageHandler.Owner.Mail.ToLowerInvariant() != account)
             {
                 Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
-                if (contact.NSMessageHandler == null)
-                {
-                    contact.NSMessageHandler = NSMessageHandler;
-                }
 
                 // get the contact and update it's name
                 // contact.SetName(message.CommandValues[1].ToString());

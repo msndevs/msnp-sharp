@@ -100,7 +100,6 @@ namespace MSNPSharp.IO
                         {
                             string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                            contact.NSMessageHandler = NSMessageHandler;
                             contact.CID = cid;
                             contact.Lists |= msnlist;
                         }
@@ -393,7 +392,6 @@ namespace MSNPSharp.IO
                                                         if (xmlcl.NSMessageHandler.ContactList.HasContact(account, type))
                                                         {
                                                             Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
-                                                            contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                             contact.CID = cid;
                                                             contact.RemoveFromList(msnlist);
 
@@ -413,7 +411,6 @@ namespace MSNPSharp.IO
 
                                                         string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                                                         Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                                                        contact.NSMessageHandler = xmlcl.NSMessageHandler;
                                                         contact.CID = cid;
                                                         contact.AddToList(msnlist);
 
@@ -840,7 +837,6 @@ namespace MSNPSharp.IO
                 if (cit.contactType != MessengerContactType.Me)
                 {
                     Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
-                    contact.NSMessageHandler = NSMessageHandler;
                     contact.Guid = new Guid(contactType.contactId);
                     contact.CID = Convert.ToInt64(cit.CID);
                     contact.ContactType = cit.contactType;

@@ -64,7 +64,7 @@ namespace MSNPSharp
         private IPEndPoint externalEndPoint;
 
         private ContactGroupList contactGroups;
-        private ContactList contactList = new ContactList();
+        private ContactList contactList;
         private bool autoSynchronize = true;
 
         private bool isSignedIn;
@@ -91,6 +91,7 @@ namespace MSNPSharp
  | ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
 
             contactGroups = new ContactGroupList(this);
+            contactList = new ContactList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
             spaceService = new ContactSpaceService(this);
@@ -1351,7 +1352,7 @@ namespace MSNPSharp
                 name = message.CommandValues[5].ToString();
             }
 
-            if (ContactList.GetContact(account) == null)
+            if (ContactList.GetContact(account, ClientType.PassportMember).Lists == MSNLists.None)
             {
                 anonymous = true;
             }

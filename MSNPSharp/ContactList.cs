@@ -46,9 +46,18 @@ namespace MSNPSharp
     {
         private static ClientType[] clientTypes = (ClientType[])Enum.GetValues(typeof(ClientType));
 
-        public ContactList()
-            : base()
+        [NonSerialized]
+        private NSMessageHandler nsMessageHandler;
+        [NonSerialized]
+        private object syncRoot;
+
+        private ContactList()
         {
+        }
+
+        public ContactList(NSMessageHandler handler)
+        {
+            nsMessageHandler = handler;
         }
 
         #region ListEnumerators
@@ -132,6 +141,8 @@ namespace MSNPSharp
 
         #endregion
 
+        #region Lists
+
         public ContactList.ListEnumerator Forward
         {
             get
@@ -188,15 +199,17 @@ namespace MSNPSharp
             }
         }
 
-        [NonSerialized]
-        private object syncRoot;
+        #endregion
+
         public object SyncRoot
         {
             get
             {
                 if (syncRoot == null)
-                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
-
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncRoot, newobj, null);
+                }
                 return syncRoot;
             }
         }
@@ -295,7 +308,7 @@ namespace MSNPSharp
             }
 
             Contact tmpContact = Factory.CreateContact();
-
+            tmpContact.NSMessageHandler = nsMessageHandler;
             tmpContact.Mail = account;
             tmpContact.ClientType = type;
             tmpContact.SetName(account);

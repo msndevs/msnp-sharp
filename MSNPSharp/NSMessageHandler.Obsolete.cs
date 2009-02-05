@@ -131,18 +131,13 @@ namespace MSNPSharp
 
             if (commandone.IndexOf('@') != -1)
             {
-                contact = ContactList.GetContact(commandone);
+                contact = ContactList.GetContact(commandone, ClientType.PassportMember);
                 index = 2;
             }
-            //else
-            //{
-            //    contact = lastContactSynced;
-            //    index = 1;
-            //}
 
             string number = HttpUtility.UrlDecode((string)message.CommandValues[index]);
 
-            if (contact != null)
+            if (contact.Lists != MSNLists.None)
             {
                 switch ((string)message.CommandValues[index - 1])
                 {
