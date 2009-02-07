@@ -58,6 +58,9 @@
     <Compile Include="DataTransfer\P2PApplications.cs" />
     <Compile Include="DataTransfer\P2PFileTransferApplication.cs" />
     <Compile Include="DataTransfer\P2PSession.cs" />
+    <Compile Include="DataTransfer\P2PSession.DC.cs">
+      <DependentUpon>P2PSession.cs</DependentUpon>
+    </Compile>
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
@@ -100,6 +103,9 @@
     <Compile Include="DataTransfer\P2PMessage.cs" />
     <Compile Include="DataTransfer\P2PMessagePool.cs" />
     <Compile Include="DataTransfer\P2PMessageSession.cs" />
+    <Compile Include="DataTransfer\P2PMessageSession.DC.cs">
+      <DependentUpon>P2PMessageSession.cs</DependentUpon>
+    </Compile>
     <Compile Include="DataTransfer\P2PTransferSession.cs" />
     <Compile Include="DataTransfer\PersistentStream.cs" />
     <Compile Include="PersonalMessage.cs" />

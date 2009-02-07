@@ -52,6 +52,20 @@ namespace MSNPSharp.DataTransfer
         private Encoding encoding = Encoding.UTF8;
         private MimeDictionary mimeHeaders = new MimeDictionary();
         private MimeDictionary mimeBodies = new MimeDictionary();
+        [NonSerialized]
+        private NSMessageHandler nsMessageHandler;
+
+        public NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return nsMessageHandler;
+            }
+            set
+            {
+                nsMessageHandler = value;
+            }
+        }
 
         public MSNSLPMessage()
         {

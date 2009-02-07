@@ -175,13 +175,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="invitation"></param>
         /// <returns></returns>
-        public virtual bool ValidateInvitation(MSNSLPInvitationEventArgs invitation)
+        public virtual bool ValidateInvitation(MSNSLPMessage invitation)
         {
-            return (invitation.InvitationMessage.ToMail == Local.Mail
-                && invitation.InvitationMessage.BodyValues.ContainsKey("EUF-GUID")
-                && new Guid(invitation.InvitationMessage.BodyValues["EUF-GUID"].Value) == ApplicationEufGuid
-                && invitation.InvitationMessage.BodyValues.ContainsKey("AppID")
-                && Convert.ToUInt32(invitation.InvitationMessage.BodyValues["AppID"].Value) == ApplicationId);
+            return (invitation.ToMail == Local.Mail);
         }
 
         public virtual void Start()

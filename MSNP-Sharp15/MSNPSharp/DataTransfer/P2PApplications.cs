@@ -50,10 +50,12 @@ namespace MSNPSharp.DataTransfer
 
     
 
-    public static class P2PManager
+    public static class P2PTransfers
     {
         private static List<P2PSession> sessions = new List<P2PSession>();
         private static List<P2PBridge> bridges = new List<P2PBridge>();
+        private static Dictionary<uint, KeyValuePair<P2PMessage, P2PAckHandler>> ackHandlers = new Dictionary<uint, KeyValuePair<P2PMessage, P2PAckHandler>>();
+
 
 
         public static IEnumerable<P2PSession> Sessions
@@ -62,6 +64,11 @@ namespace MSNPSharp.DataTransfer
             {
                 return sessions;
             }
+        }
+
+        public static void RegisterP2PAckHandler(P2PMessage msg, P2PAckHandler handler)
+        {
+            ackHandlers[msg.AckIdentifier] = new KeyValuePair<P2PMessage, P2PAckHandler>(msg, handler);
         }
     }
 
@@ -113,13 +120,20 @@ namespace MSNPSharp.DataTransfer
 
         internal static Type GetApplication(Guid eufGuid, uint appId)
         {
+            if (appId != 0 && eufGuid != Guid.Empty)
+            {
+                foreach (P2PApp app in p2pApps)
+                {
+                    if (app.EufGuid == eufGuid && app.AppId == appId)
+                        return app.AppType;
+                }
+            }
+
             foreach (P2PApp app in p2pApps)
             {
-                if (app.EufGuid == eufGuid && app.AppId == appId)
+                if (app.EufGuid == eufGuid)
                     return app.AppType;
                 else if (app.AppId == appId)
-                    return app.AppType;
-                else if (app.EufGuid == eufGuid)
                     return app.AppType;
             }
 
