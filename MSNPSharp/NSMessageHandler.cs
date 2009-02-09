@@ -1082,7 +1082,10 @@ namespace MSNPSharp
                 newdp = message.CommandValues.Count >= 6 ? message.CommandValues[5].ToString() : String.Empty;
             }
 
-            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember) ? Owner : ContactList.GetContact(account, type);
+            if (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+                return;
+
+            Contact contact = ContactList.GetContact(account, type);
             contact.SetName(HttpUtility.UrlDecode(newname));
             if (newcaps != ClientCapacities.None)
             {
