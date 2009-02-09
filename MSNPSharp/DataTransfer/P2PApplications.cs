@@ -78,6 +78,61 @@ namespace MSNPSharp.DataTransfer
             return session;
         }
 
+        public static P2PSession FindSession(P2PMessage msg)
+        {
+            uint sessionID = msg.SessionId;
+
+            if (sessionID == 0)
+            {
+                SLPMessage slp = msg.InnerMessage as SLPMessage;
+                if (slp.BodyValues.ContainsKey("SessionID"))
+                {
+                    if (!uint.TryParse(slp.BodyValues["SessionID"].Value, out sessionID))
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Unable to parse SLP message SessionID", "P2PTransfers");
+                        sessionID = 0;
+                    }
+                }
+
+                if (sessionID == 0)
+                {
+                    // We don't get a session ID in BYE requests
+                    // so we need to find the session by its call ID
+                    foreach (P2PSession session in sessions)
+                    {
+                        if (session.Invite.CallId == slp.CallId)
+                            return session;
+                    }
+                }
+            }
+
+            // Sometimes we only have a message ID to find the session with...
+            // e.g. the waiting (flag 4) messages wlm sends sometimes
+            if ((sessionID == 0) && (msg.Identifier != 0))
+            {
+                foreach (P2PSession session in sessions)
+                {
+                    uint expected = session.RemoteIdentifier + 1;
+                    if (expected == session.RemoteBaseIdentifier)
+                        expected++;
+
+                    if (msg.Identifier == expected)
+                        return session;
+                }
+            }
+
+            if (sessionID == 0)
+                return null;
+
+            foreach (P2PSession session in sessions)
+            {
+                if (session.SessionId == sessionID)
+                    return session;
+            }
+
+            return null;
+        }
+
         private static void SessionClosed(object sender, EventArgs args)
         {
             P2PSession session = sender as P2PSession;
