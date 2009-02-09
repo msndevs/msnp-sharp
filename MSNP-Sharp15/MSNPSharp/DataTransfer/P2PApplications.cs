@@ -67,6 +67,33 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        public static P2PSession AddTransfer(P2PApplication app)
+        {
+            P2PSession session = new P2PSession(app);
+            session.Closed += SessionClosed;
+
+            lock (sessions)
+                sessions.Add(session);
+
+            return session;
+        }
+
+        private static void SessionClosed(object sender, EventArgs args)
+        {
+            P2PSession session = sender as P2PSession;
+            session.Closed -= SessionClosed;
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} closed, removing", session.SessionId), "P2PTransfers");
+
+            lock (sessions)
+                sessions.Remove(session);
+
+            session.Dispose();
+        }
+
+
+
+
         public static void RegisterP2PAckHandler(P2PMessage msg, P2PAckHandler handler)
         {
             ackHandlers[msg.AckIdentifier] = new KeyValuePair<P2PMessage, P2PAckHandler>(msg, handler);
@@ -162,6 +189,14 @@ namespace MSNPSharp.DataTransfer
 
             return Guid.Empty;
         }
+
+
+
+
+
+
+
+       
 
 
 
