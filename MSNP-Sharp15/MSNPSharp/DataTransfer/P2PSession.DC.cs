@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Collections;
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Globalization;
 using System.Collections.Generic;
 
@@ -168,29 +169,8 @@ namespace MSNPSharp.DataTransfer
                 DirectConnectionEstablished(this, new EventArgs());
         }
 
-        /// <summary>
-        /// Creates a direct connection with the remote client.
-        /// </summary>
-        /// <param name="host"></param>
-        /// <param name="port"></param>
-        /// <returns></returns>
-        public IMessageProcessor CreateDirectConnection(string host, int port)
-        {
-            // create the P2P Direct processor to handle the file data
-            P2PDirectProcessor processor = new P2PDirectProcessor();
-            processor.ConnectivitySettings = new ConnectivitySettings();
-            processor.ConnectivitySettings.Host = host;
-            processor.ConnectivitySettings.Port = port;
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
 
-            AddPendingProcessor(processor);
-
-            // try to connect
-            processor.Connect();
-
-            return processor;
-        }
 
         /// <summary>
         /// Setups a P2PDirectProcessor to listen for incoming connections.
@@ -257,6 +237,134 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
 
             smp.SendMessage(HandshakeMessage);
+        }
+
+        protected virtual void OnDCResponse(SLPMessage message)
+        {
+            MimeDictionary bodyValues = message.BodyValues;
+
+            if (bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
+            {
+                if (bodyValues.ContainsKey("IPv4Internal-Addrs") &&
+                    bodyValues.ContainsKey("Listening") && bodyValues["Listening"].ToString().ToLowerInvariant().Contains("true"))
+                {
+                    // we must connect to the remote client
+                    ConnectivitySettings settings = new ConnectivitySettings();
+                    settings.Host = bodyValues["IPv4Internal-Addrs"].ToString();
+                    settings.Port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+
+                    // create the handshake message to send upon connection                    
+                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
+                    hsMessage.Guid = new Guid(bodyValues["Nonce"].Value);
+                    HandshakeMessage = hsMessage;
+
+                    P2PDirectProcessor processor = new P2PDirectProcessor();
+                    processor.ConnectivitySettings = settings;
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + settings.Host + ":" + settings.Port, GetType().Name);
+
+                    AddPendingProcessor(processor);
+
+                    // try to connect
+                    processor.Connect();
+                }
+            }
+        }
+
+        protected virtual void OnDCRequest(SLPMessage slp)
+        {
+            // Find host by name
+            IPHostEntry iphostentry = new IPHostEntry();
+            iphostentry.AddressList = new IPAddress[1];
+            int IPC = 0;
+            for (IPC = 0; IPC < Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.Length; IPC++)
+            {
+                if (Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC].AddressFamily == AddressFamily.InterNetwork)
+                {
+                    iphostentry.AddressList[0] = Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC];
+
+                    break;
+                }
+            }
+
+            int port = GetNextDirectConnectionPort();
+            ListenForDirectConnection(iphostentry.AddressList[0], port);
+
+            // create the message
+            SLPStatusMessage slpMessage = new SLPStatusMessage(Remote.Mail, 200, "OK");
+            slpMessage.ToMail = Remote.Mail;
+            slpMessage.FromMail = Local.Mail;
+            slpMessage.Branch = slp.Branch;
+            slpMessage.CSeq = slp.CSeq + 1;
+            slpMessage.CallId = slp.CallId;
+            slpMessage.MaxForwards = 0;
+            slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
+            slpMessage.BodyValues["Bridge"] = "TCPv1";
+            slpMessage.BodyValues["Listening"] = "true";
+            slpMessage.BodyValues["Nonce"] = new Guid().ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.AddressList[0].ToString();
+            slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            // check if client is behind firewall (NAT-ted)
+            // if so, send the public ip also the client, so it can try to connect to that ip
+            if (NSMessageHandler.ExternalEndPoint != null && NSMessageHandler.ExternalEndPoint.Address != iphostentry.AddressList[0])
+            {
+                slpMessage.BodyValues["IPv4External-Addrs"] = NSMessageHandler.ExternalEndPoint.Address.ToString();
+                slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            P2PMessage p2pMessage = new P2PMessage();
+            p2pMessage.InnerMessage = slpMessage;
+
+            P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
+            hsMessage.Guid = new Guid(slpMessage.BodyValues["Nonce"].Value);
+            HandshakeMessage = hsMessage;
+
+            // and notify the remote client that he can connect
+            MessageProcessor.SendMessage(p2pMessage);
+        }
+
+        /// <summary>
+        /// Returns a port number which can be used to listen for a new direct connection.
+        /// </summary>
+        /// <remarks>Throws an SocketException when no ports can be found.</remarks>
+        /// <returns></returns>
+        protected virtual int GetNextDirectConnectionPort()
+        {
+            // Find host by name
+            IPHostEntry iphostentry = new IPHostEntry();
+            iphostentry.AddressList = new IPAddress[1];
+            int IPC = 0;
+            for (IPC = 0; IPC < Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.Length; IPC++)
+            {
+                if (Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC].AddressFamily == AddressFamily.InterNetwork)
+                {
+                    iphostentry.AddressList[0] = Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC];
+
+                    break;
+                }
+            }
+
+            for (int p = 1119; p <= IPEndPoint.MaxPort; p++)
+            {
+                Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                try
+                {
+                    s.Bind(new IPEndPoint(iphostentry.AddressList[0], p));
+                    //s.Bind(new IPEndPoint(IPAddress.Any, p));
+                    s.Close();
+                    return p;
+                }
+                catch (SocketException ex)
+                {
+                    // EADDRINUSE?
+                    if (ex.ErrorCode == 10048)
+                        continue;
+                    else
+                        throw;
+                }
+            }
+            throw new SocketException(10048);
         }
 
 

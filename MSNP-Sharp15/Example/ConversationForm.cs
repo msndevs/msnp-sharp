@@ -110,7 +110,7 @@ namespace MSNPSharpClient
                             if (contact.ClientType == ClientType.PassportMember)
                             {
                                 // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
-                                // The MSNSLPHandler makes use of the underlying P2P framework.					
+                                // The MSNSLPHandler makes use of the underlying P2P framework.
                                 MSNSLPHandler msnslpHandler = conversation.Messenger.GetMSNSLPHandler(contact.Mail);
 
                                 // by sending an invitation a P2PTransferSession is automatically created.

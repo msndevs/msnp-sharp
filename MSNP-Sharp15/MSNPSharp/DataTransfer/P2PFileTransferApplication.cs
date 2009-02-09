@@ -9,7 +9,7 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp;
     using MSNPSharp.Core;
 
-    [P2PApplication(2, "{5D3E02AB-6190-11D3-BBBB-00C04F795683}")]
+    [P2PApplication(2, "5D3E02AB-6190-11D3-BBBB-00C04F795683")]
     public class P2PFileTransferApplication : P2PApplication
     {
         bool sending;

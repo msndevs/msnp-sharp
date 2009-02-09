@@ -340,10 +340,5 @@ namespace MSNPSharp.DataTransfer
         }
 
 
-
-
-        
-
-
     }
 };

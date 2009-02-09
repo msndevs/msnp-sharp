@@ -26,19 +26,31 @@ namespace MSNPSharp.DataTransfer
     {
         static Random random = new Random();
 
+        #region Events
+
+        public event EventHandler<EventArgs> Error;
+        public event EventHandler<EventArgs> Activated;
+        public event EventHandler<ContactEventArgs> Closing;
+        public event EventHandler<ContactEventArgs> Closed;
+        public event EventHandler<ContactEventArgs> Waiting;
+
+        #endregion
+
+        #region Members
+
         private uint localBaseIdentifier;
         private uint localIdentifier;
         private uint remoteBaseIdentifier;
         private uint remoteIdentifier;
-
+        private uint sessionId;
         private Contact local;
         private Contact remote;
-        private uint sessionId;
-        private Timer timeoutTimer;
+        private SLPMessage invite;
         private P2PApplication app;
-        private MSNSLPMessage invite;
         private NSMessageHandler nsMessageHandler;
         private P2PSessionStatus status = P2PSessionStatus.Closed;
+
+        #endregion
 
         /// <summary>
         /// This is the processor used before a direct connection. Usually a SB processor.
@@ -50,60 +62,8 @@ namespace MSNPSharp.DataTransfer
         /// A collection of all transfersessions
         /// </summary>
         private Hashtable transferSessions = new Hashtable();
-        
-        public event EventHandler<EventArgs> Error;
-        public event EventHandler<EventArgs> Activated;
-        public event EventHandler<ContactEventArgs> Closing;
-        public event EventHandler<ContactEventArgs> Closed;        
-        public event EventHandler<ContactEventArgs> Waiting;
 
-        public P2PApplication Application
-        {
-            get
-            {
-                return app;
-            }
-        }
-
-        public P2PSessionStatus Status
-        {
-            get
-            {
-                return status;
-            }
-        }
-
-        public MSNSLPMessage Invite
-        {
-            get
-            {
-                return invite;
-            }
-        }
-
-        public uint SessionId
-        {
-            get
-            {
-                return sessionId;
-            }
-        }        
-
-        public Contact Local
-        {
-            get
-            {
-                return local;
-            }
-        }
-        
-        public Contact Remote
-        {
-            get
-            {
-                return remote;
-            }
-        }
+        #region Properties
 
         /// <summary>
         /// The base identifier of the local client
@@ -113,10 +73,6 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 return localBaseIdentifier;
-            }
-            set
-            {
-                localBaseIdentifier = value;
             }
         }
 
@@ -144,10 +100,6 @@ namespace MSNPSharp.DataTransfer
             {
                 return remoteBaseIdentifier;
             }
-            set
-            {
-                remoteBaseIdentifier = value;
-            }
         }
         /// <summary>
         /// The expected identifier of the remote client for the next message.
@@ -158,13 +110,319 @@ namespace MSNPSharp.DataTransfer
             {
                 return remoteIdentifier;
             }
-            set
+        }
+
+        /// <summary>
+        /// Session ID
+        /// </summary>
+        public uint SessionId
+        {
+            get
             {
-                remoteIdentifier = value;
+                return sessionId;
             }
         }
 
- 
+        /// <summary>
+        /// Local contact
+        /// </summary>
+        public Contact Local
+        {
+            get
+            {
+                return local;
+            }
+        }
+
+        /// <summary>
+        /// Remote contact
+        /// </summary>
+        public Contact Remote
+        {
+            get
+            {
+                return remote;
+            }
+        }
+
+        /// <summary>
+        /// SLP invitation
+        /// </summary>
+        public SLPMessage Invite
+        {
+            get
+            {
+                return invite;
+            }
+        }
+
+        /// <summary>
+        /// P2P Application handling incoming data messages
+        /// </summary>
+        public P2PApplication Application
+        {
+            get
+            {
+                return app;
+            }
+        }
+
+        /// <summary>
+        /// Session state
+        /// </summary>
+        public P2PSessionStatus Status
+        {
+            get
+            {
+                return status;
+            }
+        }
+
+        public NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return nsMessageHandler;
+            }
+        }
+
+        #endregion
+
+        #region Constructors and Destructors
+
+        /// <summary>
+        /// We are sender. Sends invitation message automatically and sets remote identifiers after ack received.
+        /// </summary>
+        /// <param name="app"></param>
+        public P2PSession(P2PApplication app)
+        {
+            this.app = app;
+            local = app.Local;
+            remote = app.Remote;
+            nsMessageHandler = app.Local.NSMessageHandler;
+
+            sessionId = (uint)random.Next(50000, int.MaxValue);
+            localBaseIdentifier = (uint)random.Next(50000, int.MaxValue);
+            localIdentifier = localBaseIdentifier;
+
+            app.Session = this;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} created (locally)", SessionId), GetType().Name);
+
+            SLPRequestMessage slpMessage = new SLPRequestMessage(remote.Mail, "INVITE");
+            slpMessage.ToMail = remote.Mail;
+            slpMessage.FromMail = local.Mail;
+            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+            slpMessage.BodyValues["EUF-GUID"] = app.ApplicationEufGuid.ToString("B").ToUpperInvariant();
+            slpMessage.BodyValues["AppID"] = app.ApplicationId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["Context"] = app.InvitationContext;
+            slpMessage.BodyValues["SChannelState"] = "0";
+            slpMessage.BodyValues["Capabilities-Flags"] = "1";
+
+            P2PMessage p2pMessage = new P2PMessage();
+            p2pMessage.Flags = P2PFlag.MSNSLPInfo;
+            p2pMessage.InnerMessage = slpMessage;
+            p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
+
+            OnWaiting(new ContactEventArgs(Remote));
+
+            SendMessage(p2pMessage, delegate(P2PMessage ack)
+            {
+                remoteBaseIdentifier = ack.Identifier;
+                remoteIdentifier = RemoteBaseIdentifier;
+            });
+        }
+
+        /// <summary>
+        /// We are receiver.
+        /// </summary>
+        /// <param name="invite"></param>
+        /// <param name="msg"></param>
+        /// <param name="nsMessageHandler"></param>
+        public P2PSession(SLPMessage invite, P2PMessage msg, NSMessageHandler nsMessageHandler)
+        {
+            this.invite = invite;
+            this.nsMessageHandler = nsMessageHandler;
+            local = (invite.ToMail == nsMessageHandler.Owner.Mail) ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContact(invite.ToMail, ClientType.PassportMember);
+            remote = nsMessageHandler.ContactList.GetContact(invite.FromMail, ClientType.PassportMember);
+
+            localBaseIdentifier = (uint)random.Next(50000, int.MaxValue);
+            localIdentifier = localBaseIdentifier;
+            remoteBaseIdentifier = (msg == null) ? 0 : msg.Identifier;
+            remoteIdentifier = remoteBaseIdentifier;
+
+            uint.TryParse(invite.BodyValues["SessionID"].Value, out sessionId);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} created (remotely)", SessionId), GetType().Name);
+
+            // Send Base ID
+            if (msg != null)
+            {
+                SendMessage(msg.CreateAcknowledgement(), delegate(P2PMessage ack)
+                {
+                    Debug.Assert(ack.Flags == P2PFlag.Acknowledgement, "not ACK");
+                });
+            }
+
+            // Create application based on invitation
+            uint appId = uint.Parse(invite.BodyValues["AppID"].Value);
+            Guid eufGuid = new Guid(invite.BodyValues["EUF-GUID"].Value);
+            Type appType = P2PApplications.GetApplication(eufGuid, appId);
+            if (appType == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Unknown app for EUF-GUID: {0}, AppID: {1}", eufGuid, appId), GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("[SLPMessage]\r\n{1}", invite.ToString()), GetType().Name);
+            }
+            else
+            {
+                app = Activator.CreateInstance(appType, this) as P2PApplication;
+
+                if (app.ValidateInvitation(invite))
+                {
+                    status = P2PSessionStatus.WaitingForLocal;
+
+                    if (app.AutoAccept)
+                        Accept();
+                    else
+                        OnWaiting(new ContactEventArgs(local));
+                }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} app rejects invite\r\n{1}", SessionId, Invite), GetType().Name);
+
+                    OnError(EventArgs.Empty);
+
+                    SLPStatusMessage slpMessage = new SLPStatusMessage(remote.Mail, 500, "Internal Error");
+                    slpMessage.ToMail = remote.Mail;
+                    slpMessage.FromMail = local.Mail;
+                    slpMessage.Branch = invite.Branch;
+                    slpMessage.CallId = invite.CallId;
+
+                    slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+                    slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    slpMessage.BodyValues["SChannelState"] = "0";
+
+                    P2PMessage p2pMessage = new P2PMessage();
+                    p2pMessage.Flags = P2PFlag.MSNSLPInfo;
+                    p2pMessage.InnerMessage = slpMessage;
+                    p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
+
+                    SendMessage(p2pMessage, delegate
+                    {
+                        Close();
+                    });
+                }
+            }
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        public void Accept()
+        {
+            if (status != P2PSessionStatus.WaitingForLocal)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Accept called, but we're not waiting for the local client (State {0})", status), GetType().Name);
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} accepted", SessionId), GetType().Name);
+
+                SLPStatusMessage slpMessage = new SLPStatusMessage(remote.Mail, 200, "OK");
+                slpMessage.ToMail = remote.Mail;
+                slpMessage.FromMail = local.Mail;
+                slpMessage.Branch = invite.Branch;
+                slpMessage.CSeq = 1;
+                slpMessage.CallId = invite.CallId;
+                slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+                slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                P2PMessage p2pMessage = new P2PMessage();
+                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
+                p2pMessage.InnerMessage = slpMessage;
+                p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
+
+                SendMessage(p2pMessage, delegate
+                {
+                    OnActive(EventArgs.Empty);
+
+                    if (app != null)
+                    {
+                        app.Start();
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Unable to start p2p application (null)", GetType().Name);
+                    }
+                });
+            }
+        }
+
+        public void Decline()
+        {
+            if (status != P2PSessionStatus.WaitingForLocal)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Declined called, but we're not waiting for the local client (State {0})", status), GetType().Name);
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} declined", SessionId), GetType().Name);
+
+                SLPStatusMessage slpMessage = new SLPStatusMessage(remote.Mail, 603, "Decline");
+                slpMessage.ToMail = remote.Mail;
+                slpMessage.FromMail = local.Mail;
+                slpMessage.Branch = invite.Branch;
+                slpMessage.CSeq = 1;
+                slpMessage.CallId = invite.CallId;
+                slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+                slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                P2PMessage p2pMessage = new P2PMessage();
+                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
+                p2pMessage.InnerMessage = slpMessage;
+                p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
+
+                SendMessage(p2pMessage, delegate
+                {
+                    Close();
+                });
+            }
+        }
+
+        public void Close()
+        {
+            if (status == P2PSessionStatus.Closing)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("P2PSession {0} was already closing, forcing unclean closure", SessionId), GetType().Name);
+                OnClosed(new ContactEventArgs(Local));
+            }
+            else
+            {
+                OnClosing(new ContactEventArgs(Local));
+
+                SLPRequestMessage slpMessage = new SLPRequestMessage(remote.Mail, "BYE");
+                slpMessage.ToMail = remote.Mail;
+                slpMessage.FromMail = local.Mail;
+                slpMessage.Branch = invite.Branch;
+                slpMessage.CallId = invite.CallId;
+                slpMessage.MaxForwards = 0;
+                slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
+
+                P2PMessage p2pMessage = new P2PMessage();
+                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
+                p2pMessage.InnerMessage = slpMessage;
+                p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
+
+                SendMessage(p2pMessage, delegate
+                {
+                    OnClosed(new ContactEventArgs(Local));
+                });
+            }
+        }
+
+        #endregion
+
+
 
 
         #region IMessageHandler Members
@@ -197,9 +455,11 @@ namespace MSNPSharp.DataTransfer
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
             P2PMessage p2pMessage = message as P2PMessage;
+            Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage");
 
-            System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
             ResetTimeoutTimer();
+
+            remoteIdentifier = p2pMessage.Identifier;
 
             // check whether it is an acknowledgement to data preparation message
             if (p2pMessage.Flags == P2PFlag.DirectHandshake && DCHandshakeAck != 0)
@@ -218,41 +478,78 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            if (p2pMessage.Flags == P2PFlag.Error)
-            {
-                P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
-                if (session != null)
-                {
-                    session.AbortTransfer();
-                }
-
-                return;
-            }
-
-
-
+            // Waiting for what?
             if ((p2pMessage.Flags & P2PFlag.Waiting) == P2PFlag.Waiting)
             {
                 return;
             }
 
-            remoteIdentifier = p2pMessage.Identifier;
-
-            if (p2pMessage.InnerMessage != null)
+            if (p2pMessage.Flags == P2PFlag.Error)
             {
-                MSNSLPMessage slp = p2pMessage.InnerMessage as MSNSLPMessage;
-                bool isStatusMessage = slp.StartLine.StartsWith("MSNSLP/1.0");
+                return;
+            }
 
-                if (!isStatusMessage)
+            if (status == P2PSessionStatus.Closed || status == P2PSessionStatus.Error)
+            {
+                return;
+            }
+
+            // Check if it is a content message
+            if (p2pMessage.SessionId > 0)
+            {
+                if (app == null)
                 {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("P2PSession {0}: Received message for P2P app, but it's either been disposed or not created", SessionId), GetType().Name);
+                }
+                else
+                {
+                    app.HandleMessage(this, p2pMessage);
+                }
+                return;
+            }
+
+            // Check slp
+            SLPMessage slp = SLPMessage.Parse(p2pMessage.InnerBody);
+            if (slp != null)
+            {
+                if (slp is SLPRequestMessage)
+                {
+                    SLPRequestMessage req = slp as SLPRequestMessage;
+
+                    if ((req.ContentType == "application/x-msnmsgr-sessionclosebody") && (req.Method == "BYE"))
+                    {
+                        P2PMessage byeAck = p2pMessage.CreateAcknowledgement();
+                        byeAck.Flags = P2PFlag.CloseSession;
+                        SendMessage(byeAck);
+
+                        OnClosed(new ContactEventArgs(Remote));
+                        return;
+                    }
+                    else
+                    {
+                        SendMessage(p2pMessage.CreateAcknowledgement());
+
+                        if ((req.ContentType == "application/x-msnmsgr-transreqbody")
+                            || (req.ContentType == "application/x-msnmsgr-transrespbody"))
+                        {
+                            // Direct connection invite
+                            OnDCRequest(slp);
+                            return;
+                        }
+                        else if (req.Method == "ACK")
+                            return;
+                    }
+                }
+                else if (slp is SLPStatusMessage)
+                {
+                    SLPStatusMessage sta = slp as SLPStatusMessage;
+
                     SendMessage(p2pMessage.CreateAcknowledgement());
 
-                    if (slp.StartLine.Contains("200"))
+                    if (sta.Code == 200) // OK
                     {
-                        if (slp.ContentType == "application/x-msnmsgr-transrespbody")
-                        {
-                            //XXX TODO ProcessDirectInvite(msg);
-                        }
+                        if (sta.ContentType == "application/x-msnmsgr-transrespbody")
+                            OnDCResponse(sta);
                         else
                         {
                             OnActive(EventArgs.Empty);
@@ -260,54 +557,15 @@ namespace MSNPSharp.DataTransfer
                         }
                         return;
                     }
-                    else if (slp.StartLine.Contains("603")) // Decline
+                    else if (sta.Code == 603) // Decline
                     {
                         OnClosed(new ContactEventArgs(Remote));
                         return;
                     }
                 }
-                else if (isStatusMessage)
-                {
-                    if ((slp.ContentType == "application/x-msnmsgr-sessionclosebody") && (slp.StartLine.Contains("BYE")))
-                    {
-                        P2PMessage byeAck = p2pMessage.CreateAcknowledgement();
-                        byeAck.Flags = P2PFlag.CloseSession;
-                        SendMessage(byeAck);
 
-                        OnClosed(new ContactEventArgs(Remote));
-
-                        return;
-                    }
-                    else
-                    {
-                        SendMessage(p2pMessage.CreateAcknowledgement());
-
-                        if ((slp.ContentType == "application/x-msnmsgr-transreqbody") || (slp.ContentType == "application/x-msnmsgr-transrespbody"))
-                        {
-                            // Direct connection invite XXX TODO
-                            // ProcessDirectInvite(msg);
-                            return;
-                        }
-                        else if (slp.StartLine.Contains("ACK"))
-                            return;
-                    }
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Unhandled SLP Message:\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
-                    OnError(EventArgs.Empty);
-                }
-                return;
-            }
-            
-
-            // check if it is a content message
-            if (p2pMessage.SessionId > 0)
-            {
-                // get the session to handle this message				
-                P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
-                if (session != null)
-                    session.HandleMessage(this, p2pMessage);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Unhandled SLP Message:\r\n{0}", p2pMessage.ToString()), GetType().Name);
+                OnError(EventArgs.Empty);
                 return;
             }
 
@@ -366,7 +624,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-       
+
 
         /// <summary>
         /// Sends incoming p2p messages to the remote contact.		
@@ -401,7 +659,7 @@ namespace MSNPSharp.DataTransfer
             {
                 p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
             }
-            
+
             ResetTimeoutTimer();
             P2PTransfers.RegisterP2PAckHandler(p2pMessage, ackHandler);
 
@@ -766,235 +1024,14 @@ namespace MSNPSharp.DataTransfer
             return sbMessageWrapper;
         }
 
-        
-        /// <summary>
-        /// We are sender
-        /// </summary>
-        /// <param name="app"></param>
-        public P2PSession(P2PApplication app)
-        {
-            this.app = app;
-            local = app.Local;
-            remote = app.Remote;
-            nsMessageHandler = app.Local.NSMessageHandler;
-
-            sessionId = (uint)random.Next(50000, int.MaxValue);
-            localBaseIdentifier = (uint)random.Next(50000, int.MaxValue);
-            localIdentifier = localBaseIdentifier;
-
-            app.Session = this;
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} created (locally)", SessionId), GetType().Name);
-
-            MSNSLPMessage slpMessage = new MSNSLPMessage();
-            slpMessage.StartLine = "INVITE MSNMSGR:" + remote.Mail + " MSNSLP/1.0";
-            slpMessage.To = "<msnmsgr:" + remote.Mail + ">";
-            slpMessage.From = "<msnmsgr:" + local.Mail + ">";
-            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-
-            slpMessage.BodyValues["EUF-GUID"] = app.ApplicationEufGuid.ToString("B").ToUpperInvariant();
-            slpMessage.BodyValues["SessionID"] = SessionId.ToString();
-            slpMessage.BodyValues["SChannelState"] = "0";
-            slpMessage.BodyValues["Capabilities-Flags"] = "1";
-            slpMessage.BodyValues["AppID"] = app.ApplicationId.ToString();
-            slpMessage.BodyValues["Context"] = app.InvitationContext;
-
-            P2PMessage p2pMessage = new P2PMessage();
-            p2pMessage.Flags = P2PFlag.MSNSLPInfo;
-            p2pMessage.InnerMessage = slpMessage;
-            p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-
-            OnWaiting(new ContactEventArgs(remote));
-
-            SendMessage(p2pMessage, delegate(P2PMessage ack)
-            {
-                RemoteBaseIdentifier = ack.Identifier;
-                RemoteIdentifier = RemoteBaseIdentifier;
-            });
-        }
-
-        /// <summary>
-        /// We are receiver
-        /// </summary>
-        /// <param name="invite"></param>
-        /// <param name="msg"></param>
-        public P2PSession(MSNSLPMessage invite, P2PMessage msg)
-        {
-            this.invite = invite;
-            nsMessageHandler = invite.NSMessageHandler;
-            local = (invite.ToMail == nsMessageHandler.Owner.Mail) ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContact(invite.ToMail, ClientType.PassportMember);
-            remote = nsMessageHandler.ContactList.GetContact(invite.FromMail, ClientType.PassportMember);
-
-            localBaseIdentifier = (uint)random.Next(50000, int.MaxValue);
-            localIdentifier = localBaseIdentifier;
-            remoteBaseIdentifier = (msg == null) ? 0 : msg.Identifier;
-            remoteIdentifier = remoteBaseIdentifier;
-
-            uint.TryParse(invite.BodyValues["SessionID"].Value, out sessionId);
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} created (remotely)", SessionId), GetType().Name);
-
-            // Send Base ID
-            if (msg != null)
-            {
-                SendMessage(msg.CreateAcknowledgement(), delegate(P2PMessage ack)
-                {
-                    Debug.Assert(ack.Flags == P2PFlag.Acknowledgement, "not ACK");
-                });
-            }
-
-
-            Type appType = P2PApplications.GetApplication(new Guid(invite.BodyValues["EUF-GUID"].Value), uint.Parse(invite.BodyValues["AppID"].Value));
-
-            if (appType == null)
-            {
-
-                return;
-            }
-
-            app = Activator.CreateInstance(appType, this) as P2PApplication;
-
-            if (app.ValidateInvitation(invite))
-            {
-                status = P2PSessionStatus.WaitingForLocal;
-
-                if (app.AutoAccept)
-                    Accept();
-                else
-                    OnWaiting(new ContactEventArgs(local));
-            }
-            else
-            {
-                OnError(EventArgs.Empty);
-
-                MSNSLPMessage slpMessage = new MSNSLPMessage();
-                slpMessage.StartLine = "MSNSLP/1.0 500 Internal Error";
-                slpMessage.To = "<msnmsgr:" + remote.Mail + ">";
-                slpMessage.From = "<msnmsgr:" + local.Mail + ">";
-                slpMessage.Branch = invite.Branch;
-                slpMessage.CallId = invite.CallId;
-
-                slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-                slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                slpMessage.BodyValues["SChannelState"] = "0";
-
-                P2PMessage p2pMessage = new P2PMessage();
-                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
-                p2pMessage.InnerMessage = slpMessage;
-                p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-
-                SendMessage(p2pMessage, delegate
-                {
-                    Close();
-                });
-            }
-        }
 
 
 
 
 
 
-        public void Accept()
-        {
-            if (status != P2PSessionStatus.WaitingForLocal)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Accept called, but we're not waiting for the local client (State {0})", status), GetType().Name);
-                return;
-            }
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} accepted", SessionId), GetType().Name);
 
-            MSNSLPMessage slpMessage = new MSNSLPMessage();
-            slpMessage.StartLine = "MSNSLP/1.0 200 OK";
-            slpMessage.To = "<msnmsgr:" + remote.Mail + ">";
-            slpMessage.From = "<msnmsgr:" + local.Mail + ">";
-            slpMessage.Branch = invite.Branch;
-            slpMessage.CSeq = 1;
-            slpMessage.CallId = invite.CallId;
-            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-            P2PMessage p2pMessage = new P2PMessage();
-            p2pMessage.Flags = P2PFlag.MSNSLPInfo;
-            p2pMessage.InnerMessage = slpMessage;
-            p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-
-            SendMessage(p2pMessage, delegate
-            {
-                OnActive(EventArgs.Empty);
-
-                if (app != null)
-                {
-                    app.Start();
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Unable to start p2p application (null)", GetType().Name);
-                }
-            });
-        }
-
-        public void Decline()
-        {
-            if (status != P2PSessionStatus.WaitingForLocal)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Declined called, but we're not waiting for the local client (State {0})", status), GetType().Name);
-                return;
-            }
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} declined", SessionId), GetType().Name);
-
-            MSNSLPMessage slpMessage = new MSNSLPMessage();
-            slpMessage.StartLine = "MSNSLP/1.0 603 Decline";
-            slpMessage.To = "<msnmsgr:" + remote.Mail + ">";
-            slpMessage.From = "<msnmsgr:" + local.Mail + ">";
-            slpMessage.Branch = invite.Branch;
-            slpMessage.CSeq = 1;
-            slpMessage.CallId = invite.CallId;
-            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-            P2PMessage p2pMessage = new P2PMessage();
-            p2pMessage.Flags = P2PFlag.MSNSLPInfo;
-            p2pMessage.InnerMessage = slpMessage;
-            p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-
-            SendMessage(p2pMessage, delegate
-            {
-                Close();
-            });
-        }
-
-        public void Close()
-        {
-            if (status == P2PSessionStatus.Closing)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("P2PSession {0} was already closing, forcing unclean closure", SessionId), GetType().Name);
-                OnClosed(new ContactEventArgs(Local));
-            }
-            else
-            {
-                OnClosing(new ContactEventArgs(Local));
-
-                MSNSLPMessage slpMessage = new MSNSLPMessage();
-                slpMessage.StartLine = "BYE MSNMSGR:" + remote.Mail + " MSNSLP/1.0";
-                slpMessage.To = "<msnmsgr:" + remote.Mail + ">";
-                slpMessage.From = "<msnmsgr:" + local.Mail + ">";
-                slpMessage.Branch = invite.Branch;
-                slpMessage.CallId = invite.CallId;
-                slpMessage.MaxForwards = 0;
-                slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
-
-                P2PMessage p2pMessage = new P2PMessage();
-                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
-                p2pMessage.InnerMessage = slpMessage;
-                p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-
-                SendMessage(p2pMessage, delegate
-                {
-                    OnClosed(new ContactEventArgs(Local));
-                });
-            }
-        }
 
 
         public void Dispose()
@@ -1051,7 +1088,6 @@ namespace MSNPSharp.DataTransfer
 
         protected virtual void OnActive(EventArgs e)
         {
-
             status = P2PSessionStatus.Active;
 
             if (Activated != null)
@@ -1067,8 +1103,9 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        
+
         const int timeout = 120000;
+        private Timer timeoutTimer;
         private void ResetTimeoutTimer()
         {
             if (timeoutTimer != null)
@@ -1085,7 +1122,5 @@ namespace MSNPSharp.DataTransfer
             Close();
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("P2PSession {0} timed out through inactivity", SessionId), GetType().Name);
         }
-
-
     }
 };

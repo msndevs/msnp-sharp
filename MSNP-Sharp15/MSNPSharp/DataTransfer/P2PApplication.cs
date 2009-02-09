@@ -175,7 +175,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="invitation"></param>
         /// <returns></returns>
-        public virtual bool ValidateInvitation(MSNSLPMessage invitation)
+        public virtual bool ValidateInvitation(SLPMessage invitation)
         {
             return (invitation.ToMail == Local.Mail);
         }
