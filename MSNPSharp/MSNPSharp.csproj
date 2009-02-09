@@ -57,6 +57,7 @@
     <Compile Include="DataTransfer\P2PApplication.cs" />
     <Compile Include="DataTransfer\P2PApplications.cs" />
     <Compile Include="DataTransfer\P2PFileTransferApplication.cs" />
+    <Compile Include="DataTransfer\P2PObjectTransferApplication.cs" />
     <Compile Include="DataTransfer\P2PSession.cs" />
     <Compile Include="DataTransfer\P2PSession.DC.cs">
       <DependentUpon>P2PSession.cs</DependentUpon>

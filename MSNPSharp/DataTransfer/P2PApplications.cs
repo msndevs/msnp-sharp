@@ -13,6 +13,7 @@ namespace MSNPSharp.DataTransfer
 
     #region P2PApplicationAttribute
 
+    [AttributeUsage(AttributeTargets.Class)]
     public class P2PApplicationAttribute : Attribute
     {
         uint appId;
@@ -46,9 +47,9 @@ namespace MSNPSharp.DataTransfer
     {
     }
 
-   
 
-    
+
+
 
     public static class P2PTransfers
     {
@@ -165,9 +166,6 @@ namespace MSNPSharp.DataTransfer
 
 
         #endregion
-
-
-
 
     }
 };

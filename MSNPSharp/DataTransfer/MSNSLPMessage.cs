@@ -42,32 +42,17 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp.Core;
 
     /// <summary>
-    /// Represents a single MSNSLPMessage.
+    /// Base SLP message for SLPStatusMessage and SLPRequestMessage.
     /// Usually this message is contained in a P2P Message.
     /// </summary>
-    [Serializable()]
-    public class MSNSLPMessage : NetworkMessage
+    [Serializable]
+    public abstract class SLPMessage : NetworkMessage
     {
-        private string startLine;
         private Encoding encoding = Encoding.UTF8;
         private MimeDictionary mimeHeaders = new MimeDictionary();
         private MimeDictionary mimeBodies = new MimeDictionary();
-        [NonSerialized]
-        private NSMessageHandler nsMessageHandler;
 
-        public NSMessageHandler NSMessageHandler
-        {
-            get
-            {
-                return nsMessageHandler;
-            }
-            set
-            {
-                nsMessageHandler = value;
-            }
-        }
-
-        public MSNSLPMessage()
+        protected SLPMessage()
         {
             Via = "MSNSLP/1.0/TLP";
             Branch = Guid.NewGuid().ToString("B").ToUpperInvariant();
@@ -78,20 +63,16 @@ namespace MSNPSharp.DataTransfer
             mimeHeaders["Content-Length"] = "0";
         }
 
-
-        public string StartLine
+        protected SLPMessage(byte[] data)
         {
-            get
-            {
-                return startLine;
-            }
-            set
-            {
-                startLine = value;
-            }
+            ParseBytes(data);
         }
 
-
+        protected abstract string StartLine
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Defaults to UTF8
@@ -126,10 +107,6 @@ namespace MSNPSharp.DataTransfer
             {
                 return mimeHeaders["To"];
             }
-            set
-            {
-                mimeHeaders["To"] = value;
-            }
         }
 
         public string From
@@ -137,10 +114,6 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 return mimeHeaders["From"];
-            }
-            set
-            {
-                mimeHeaders["From"] = value;
             }
         }
 
@@ -153,6 +126,10 @@ namespace MSNPSharp.DataTransfer
             {
                 return From.Replace("<msnmsgr:", String.Empty).Replace(">", String.Empty);
             }
+            internal set
+            {
+                mimeHeaders["From"] = String.Format("<msnmsgr:{0}>", value);
+            }
         }
 
         /// <summary>
@@ -163,6 +140,10 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 return To.Replace("<msnmsgr:", String.Empty).Replace(">", String.Empty);
+            }
+            internal set
+            {
+                mimeHeaders["To"] = String.Format("<msnmsgr:{0}>", value);
             }
         }
 
@@ -257,7 +238,7 @@ namespace MSNPSharp.DataTransfer
             mimeHeaders["Content-Length"] = (body.Length + 3).ToString();
 
             StringBuilder builder = new StringBuilder(512);
-            builder.Append(StartLine);
+            builder.Append(StartLine.Trim());
             builder.Append("\r\n");
             builder.Append(mimeHeaders.ToString());
             builder.Append("\r\n");
@@ -284,7 +265,7 @@ namespace MSNPSharp.DataTransfer
             int lineLen = MSNHttpUtility.IndexOf(data, "\r\n");
             byte[] lineData = new byte[lineLen];
             Array.Copy(data, lineData, lineLen);
-            StartLine = Encoding.GetString(lineData);
+            StartLine = Encoding.GetString(lineData).Trim();
 
             byte[] header = new byte[data.Length - lineLen - 2];
             Array.Copy(data, lineLen + 2, header, 0, header.Length);
@@ -306,6 +287,167 @@ namespace MSNPSharp.DataTransfer
         public override string ToString()
         {
             return Encoding.GetString(GetBytes());
+        }
+
+        public static SLPMessage Parse(byte[] data)
+        {
+            int lineLen = MSNHttpUtility.IndexOf(data, "\r\n");
+
+            if (lineLen < 0)
+                return null;
+
+            try
+            {
+                byte[] lineData = new byte[lineLen];
+                Array.Copy(data, lineData, lineLen);
+                string line = Encoding.UTF8.GetString(lineData);
+
+                if (!line.Contains("MSNSLP"))
+                    return null;
+
+                if (line.StartsWith("MSNSLP/1.0"))
+                    return new SLPStatusMessage(data);
+                else
+                    return new SLPRequestMessage(data);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
+    public class SLPRequestMessage : SLPMessage
+    {
+        string method = "UNKNOWN";
+        string version = "MSNSLP/1.0";
+
+        public string Method
+        {
+            get
+            {
+                return method;
+            }
+            set
+            {
+                method = value;
+            }
+        }
+
+        public string Version
+        {
+            get
+            {
+                return version;
+            }
+            set
+            {
+                version = value;
+            }
+        }
+
+        protected override string StartLine
+        {
+            get
+            {
+                return String.Format("{0} {1}:{2} {3}", method, "MSNMSGR", ToMail, version);
+            }
+            set
+            {
+                string[] chunks = value.Split(new string[] { " ", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                method = chunks[0];
+                version = chunks[2];
+            }
+        }
+
+        public SLPRequestMessage(string to, string method)
+            : base()
+        {
+            this.ToMail = to;
+            this.method = method;
+        }
+
+        public SLPRequestMessage(byte[] data)
+            : base(data)
+        {
+        }
+    }
+
+    public class SLPStatusMessage : SLPMessage
+    {
+        string version = "MSNSLP/1.0";
+        int code = 0;
+        string phrase = "Unknown";
+
+        public int Code
+        {
+            get
+            {
+                return code;
+            }
+            set
+            {
+                code = value;
+            }
+        }
+
+        public string Phrase
+        {
+            get
+            {
+                return phrase;
+            }
+            set
+            {
+                phrase = value;
+            }
+        }
+
+        public string Version
+        {
+            get
+            {
+                return version;
+            }
+            set
+            {
+                version = value;
+            }
+        }
+
+        protected override string StartLine
+        {
+            get
+            {
+                return string.Format("{0} {1} {2}", version, code, phrase);
+            }
+            set
+            {
+                string[] chunks = value.Split(new string[] { " ", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                version = chunks[0];
+                int.TryParse(chunks[1], out code);
+                phrase = string.Empty;
+
+                for (int i = 2; i < chunks.Length; i++)
+                    phrase += chunks[i] + " ";
+
+                phrase = phrase.Trim();
+            }
+        }
+
+        public SLPStatusMessage(string to, int code, string phrase)
+            : base()
+        {
+            this.ToMail = to;
+            this.code = code;
+            this.phrase = phrase;
+        }
+
+        public SLPStatusMessage(byte[] data)
+            : base(data)
+        {
         }
     }
 };
