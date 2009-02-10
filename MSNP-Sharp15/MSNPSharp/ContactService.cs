@@ -254,7 +254,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (recursiveCall != 0)
+            if (recursiveCall != 0 || NSMessageHandler.AutoSynchronize == false)
             {
                 DeleteRecordFile();
             }
@@ -270,9 +270,9 @@ namespace MSNPSharp
 
                 NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
 
-                if ((AddressBook.Version != Properties.Resources.XMLContactListVersion
-                    || Deltas.Version != Properties.Resources.DeltasListVersion)
-                    && recursiveCall == 0)
+                if (NSMessageHandler.AutoSynchronize &&
+                    recursiveCall == 0 &&
+                    (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
                 {
                     recursiveCall++;
                     SynchronizeContactList();
@@ -288,28 +288,38 @@ namespace MSNPSharp
                 return;
             }
 
-            AddressBook.Synchronize(Deltas);
-
-            if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+            if (NSMessageHandler.AutoSynchronize)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-            }
-            msRequest(
-                "Initial",
-                delegate
+                AddressBook.Synchronize(Deltas);
+                if (AddressBook.AddressbookLastChange == DateTime.MinValue)
                 {
-                    if (AddressBook.AddressbookLastChange == DateTime.MinValue)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                    }
-                    abRequest("Initial",
-                        delegate
-                        {
-                            SetDefaults();
-                        }
-                    );
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                 }
-            );
+                msRequest(
+                    "Initial",
+                    delegate
+                    {
+                        if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                        }
+                        abRequest("Initial",
+                            delegate
+                            {
+                                SetDefaults();
+                            }
+                        );
+                    }
+                );
+            }
+            else
+            {
+                // Set lastchanged and roaming profile last change to get display picture and personal message
+                NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                NSMessageHandler.Owner.SetRoamLiveProperty(RoamLiveProperty.Enabled);
+                SetDefaults();
+                NSMessageHandler.OnSignedIn(EventArgs.Empty);
+            }
         }
 
         private void SetDefaults()
@@ -317,11 +327,14 @@ namespace MSNPSharp
             // Reset
             recursiveCall = 0;
 
-            // Set privacy settings and roam property
-            NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-            NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
-            NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
-            NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
+            if (NSMessageHandler.AutoSynchronize)
+            {
+                // Set privacy settings and roam property
+                NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+                NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
+                NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+                NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
+            }
 
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
 
@@ -333,35 +346,38 @@ namespace MSNPSharp
             NSMessageHandler.Owner.SetPersonalMessage(pm);
             NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
 
-            // Send BLP
-            NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
-
-            // Send Initial ADL
-            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
-            lock (NSMessageHandler.ContactList.SyncRoot)
+            if (NSMessageHandler.AutoSynchronize)
             {
-                foreach (Contact contact in NSMessageHandler.ContactList.All)
+                // Send BLP
+                NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
+
+                // Send Initial ADL
+                Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
+                lock (NSMessageHandler.ContactList.SyncRoot)
                 {
-                    string ch = contact.Hash;
-                    MSNLists l = MSNLists.None;
-                    if (contact.IsMessengerUser)
-                        l |= MSNLists.ForwardList;
-                    if (contact.OnAllowedList)
-                        l |= MSNLists.AllowedList;
-                    else if (contact.OnBlockedList)
-                        l |= MSNLists.BlockedList;
+                    foreach (Contact contact in NSMessageHandler.ContactList.All)
+                    {
+                        string ch = contact.Hash;
+                        MSNLists l = MSNLists.None;
+                        if (contact.IsMessengerUser)
+                            l |= MSNLists.ForwardList;
+                        if (contact.OnAllowedList)
+                            l |= MSNLists.AllowedList;
+                        else if (contact.OnBlockedList)
+                            l |= MSNLists.BlockedList;
 
-                    if (l != MSNLists.None && !hashlist.ContainsKey(ch))
-                        hashlist.Add(ch, l);
+                        if (l != MSNLists.None && !hashlist.ContainsKey(ch))
+                            hashlist.Add(ch, l);
+                    }
                 }
-            }
-            string[] adls = ConstructLists(hashlist, true);
-            initialADLcount = adls.Length;
-            foreach (string payload in adls)
-            {
-                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                NSMessageHandler.MessageProcessor.SendMessage(message);
-                initialADLs.Add(message.TransactionID);
+                string[] adls = ConstructLists(hashlist, true);
+                initialADLcount = adls.Length;
+                foreach (string payload in adls)
+                {
+                    NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                    NSMessageHandler.MessageProcessor.SendMessage(message);
+                    initialADLs.Add(message.TransactionID);
+                }
             }
 
             // Set screen name
@@ -2047,10 +2063,11 @@ namespace MSNPSharp
             string originalHost = webservice.Url.Substring(webservice.Url.IndexOf(@"://") + 3 /* @"://".Length */);
             originalHost = originalHost.Substring(0, originalHost.IndexOf(@"/"));
 
-            if (Deltas.CacheKeys[keyType] == string.Empty ||
+            if (Deltas.CacheKeys.ContainsKey(keyType) == false ||
+                Deltas.CacheKeys[keyType] == string.Empty ||
                 (Deltas.CacheKeys[keyType] != string.Empty &&
                 (Deltas.PreferredHosts.ContainsKey(param.GetType().ToString()) == false ||
-                Deltas.PreferredHosts[param.GetType().ToString()] == "")))
+                Deltas.PreferredHosts[param.GetType().ToString()] == String.Empty)))
             {
 
                 try
