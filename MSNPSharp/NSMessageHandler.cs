@@ -90,7 +90,7 @@ namespace MSNPSharp
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
 #endif
 
- | ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+ | ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanVideoConference;
 
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);

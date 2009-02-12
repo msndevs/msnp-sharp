@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
@@ -59,7 +60,7 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes(MsnObject.Context));
+                return Convert.ToBase64String(Encoding.UTF8.GetBytes(MSNObject.GetDecodeString(msnObject.OriginalContext)));
             }
         }
 
@@ -100,10 +101,25 @@ namespace MSNPSharp.DataTransfer
                 p2pDataMessage.Identifier = Session.LocalIdentifier;
                 p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
 
+                p2pDataMessage.Flags = P2PFlag.Data;
                 // store the ack identifier so we can accept the acknowledge later on
                 dataPreparationAck = p2pDataMessage.AckSessionId;
 
-                MessageProcessor.SendMessage(p2pDataMessage);
+                SendMessage(p2pDataMessage, delegate
+                {
+                    P2PMessage p2pMessage = new P2PMessage();
+                    p2pMessage.Flags = P2PFlag.Data;
+                    byte[] data = new byte[msnObject.Size];
+                    using (Stream s = NSMessageHandler.Owner.DisplayImage.OpenStream())
+                    {
+                        s.Write(data, 0, data.Length);
+                    }
+                    p2pMessage.InnerBody = data;
+                    SendMessage(p2pMessage, delegate
+                    {
+                        OnTransferFinished(EventArgs.Empty);
+                    });
+                });
             }
             else
             {
@@ -114,7 +130,6 @@ namespace MSNPSharp.DataTransfer
 
         public override void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            P2PBridge bridge = sender as P2PBridge;
             P2PMessage p2pMessage = message as P2PMessage;
 
             if ((objStream.Length == 0) && (p2pMessage.InnerBody.Length == 4) && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
@@ -132,25 +147,19 @@ namespace MSNPSharp.DataTransfer
 
                 if (objStream.Length == msnObject.Size)
                 {
-                    byte[] data = new byte[msnObject.Size];
-
                     objStream.Seek(0, SeekOrigin.Begin);
-                    objStream.Read(data, 0, data.Length);
 
-                    string dataSha = Convert.ToBase64String(new SHA1Managed().ComputeHash(data));
+                    if (msnObject.ObjectType == MSNObjectType.UserDisplay)
+                    {
+                        ((DisplayImage)msnObject).Image = Image.FromStream(objStream);
+                    }
 
-                    if (dataSha == msnObject.Sha)
-                    {
-                        msnObject = new MSNObject(Session.Remote.Mail, objStream, MSNObjectType.Unknown, "");
-                        OnTransferFinished(EventArgs.Empty);
-                        Session.Close();
-                    }
-                    else
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "MsnObject hash doesn't match data hash, data invalid!", GetType().Name);
-                    }
+                    objStream.Close();
+                    OnTransferFinished(EventArgs.Empty);
+                    Session.Close();
                 }
-            }
+
+            }            
         }
     }
 };
