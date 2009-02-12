@@ -70,6 +70,9 @@ namespace MSNPSharp.DataTransfer
             msnObject = new MSNObject();
             msnObject.ParseContext(session.Invite.BodyValues["Context"].Value, true);
 
+            if (msnObject.Size == 0)
+                msnObject = NSMessageHandler.Owner.DisplayImage;
+
             sending = true;
             Session.LocalIdentifier -= 4;
         }
@@ -115,6 +118,7 @@ namespace MSNPSharp.DataTransfer
                         s.Write(data, 0, data.Length);
                     }
                     p2pMessage.InnerBody = data;
+                    p2pMessage.MessageSize = (uint)p2pMessage.InnerBody.Length;
                     SendMessage(p2pMessage, delegate
                     {
                         OnTransferFinished(EventArgs.Empty);
@@ -132,7 +136,7 @@ namespace MSNPSharp.DataTransfer
         {
             P2PMessage p2pMessage = message as P2PMessage;
 
-            if ((objStream.Length == 0) && (p2pMessage.InnerBody.Length == 4) && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
+            if ((p2pMessage.InnerBody.Length == 4) && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
             {
                 // Data prep
                 if (Sending)
