@@ -55,7 +55,6 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DataTransfer\P2PApplication.cs" />
-    <Compile Include="DataTransfer\P2PApplications.cs" />
     <Compile Include="DataTransfer\P2PFileTransferApplication.cs" />
     <Compile Include="DataTransfer\P2PObjectTransferApplication.cs" />
     <Compile Include="DataTransfer\P2PSession.cs" />
@@ -101,6 +100,9 @@
     <Compile Include="DataTransfer\P2PDCPool.cs" />
     <Compile Include="DataTransfer\P2PDirectProcessor.cs" />
     <Compile Include="DataTransfer\P2PHandler.cs" />
+    <Compile Include="DataTransfer\P2PHandler.New.cs">
+      <DependentUpon>P2PHandler.cs</DependentUpon>
+    </Compile>
     <Compile Include="DataTransfer\P2PMessage.cs" />
     <Compile Include="DataTransfer\P2PMessagePool.cs" />
     <Compile Include="DataTransfer\P2PMessageSession.cs" />

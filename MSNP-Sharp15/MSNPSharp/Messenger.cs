@@ -32,12 +32,12 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections;
+using System.Diagnostics;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
-    using System.Diagnostics;
+    using MSNPSharp.DataTransfer;    
 
     #region ConversationCreatedEvent
 
@@ -113,10 +113,8 @@ namespace MSNPSharp
         private P2PHandler p2pHandler;
         private NSMessageProcessor nsMessageProcessor;
         private NSMessageHandler nsMessageHandler;
-
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
-        private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
 
         #endregion
 
@@ -136,7 +134,10 @@ namespace MSNPSharp
             #region private events
             nsMessageProcessor.ConnectionClosed += delegate
             {
-                CleanUp();
+                if (null != P2PHandler)
+                {
+                    P2PHandler.ClearMessageSessions();
+                }
             };
 
             nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
@@ -167,28 +168,22 @@ namespace MSNPSharp
 
             p2pHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
             {
-                MSNSLPHandler msnslpHandler = CreateMSNSLPHandler();
-                msnslpHandler.MessageProcessor = see.Session;
-                see.Session.RegisterHandler(msnslpHandler);
-
-                tsMsnslpHandlers.Add(msnslpHandler);
-
                 // set the correct switchboard to send messages to
                 lock (p2pHandler.SwitchboardSessions)
                 {
                     foreach (SBMessageHandler sb in p2pHandler.SwitchboardSessions)
                     {
-                        if (sb.GetType() == typeof(SBMessageHandler))
+                        if (sb.GetType() == typeof(SBMessageHandler) &&
+                            sb.Contacts.ContainsKey(see.Session.RemoteContact))
                         {
-                            if (sb.Contacts.ContainsKey(see.Session.RemoteContact))
-                            {
-                                see.Session.MessageProcessor = sb.MessageProcessor;
-                                break;
-                            }
+                            see.Session.MessageProcessor = sb.MessageProcessor;
+                            break;
                         }
                     }
                 }
+                
                 // Accepts by default owner display images and contact emoticons.
+                /*
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
                 {
                     if (ie.TransferProperties.DataType == DataTransferType.DisplayImage)
@@ -224,17 +219,20 @@ namespace MSNPSharp
                     }
                     return;
                 };
-                return;
+
+                */
             };
 
             p2pHandler.SessionClosed += delegate(object sender, P2PSessionAffectedEventArgs e)
             {
+                /*
                 MSNSLPHandler handler = GetMSNSLPHandler(e.Session);
                 if (handler != null)
                 {
                     tsMsnslpHandlers.Remove(handler);
                 }
                 return;
+                 * */
             };
 
             #endregion
@@ -580,8 +578,6 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void CleanUp()
         {
-            tsMsnslpHandlers.Clear();
-
             if (null != p2pHandler)
             {
                 p2pHandler.ClearMessageSessions();
@@ -603,18 +599,17 @@ namespace MSNPSharp
             return msnslpHandler;
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="session"></param>
-        /// <returns></returns>
-        private MSNSLPHandler GetMSNSLPHandler(P2PMessageSession session)
+        public SBMessageProcessor GetSBProcessor(string remote)
         {
-            lock (tsMsnslpHandlers.SyncRoot)
+            lock (p2pHandler.SwitchboardSessions)
             {
-                foreach (MSNSLPHandler handler in tsMsnslpHandlers)
+                foreach (SBMessageHandler sb in p2pHandler.SwitchboardSessions)
                 {
-                    if (handler.MessageSession == session)
-                        return handler;
+                    if (sb.GetType() == typeof(SBMessageHandler) &&
+                        sb.Contacts.ContainsKey(remote))
+                    {
+                        return sb.MessageProcessor as SBMessageProcessor;
+                    }
                 }
             }
             return null;

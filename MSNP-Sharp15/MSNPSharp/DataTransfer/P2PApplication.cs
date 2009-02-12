@@ -1,12 +1,79 @@
+#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+/*
+Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
+#endregion
+
 using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Reflection;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
+
+    #region P2PApplicationAttribute
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public class P2PApplicationAttribute : Attribute
+    {
+        private uint appId;
+        private string eufGuid;
+
+        public uint AppId
+        {
+            get
+            {
+                return appId;
+            }
+        }
+
+        public string EufGuid
+        {
+            get
+            {
+                return eufGuid;
+            }
+        }
+
+        public P2PApplicationAttribute(uint appID, string eufGuid)
+        {
+            this.appId = appID;
+            this.eufGuid = eufGuid;
+        }
+    }
+    #endregion
+
+    #region P2PApplicationStatus
 
     public enum P2PApplicationStatus
     {
@@ -17,7 +84,9 @@ namespace MSNPSharp.DataTransfer
         Error
     }
 
-    public abstract class P2PApplication : IDisposable, IMessageHandler
+    #endregion
+
+    public abstract class P2PApplication : IDisposable
     {
         #region Events
 
@@ -29,16 +98,17 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region Members
-
-        private P2PApplicationStatus status = P2PApplicationStatus.Waiting;
-        private IMessageProcessor iProcessor;
+        
+        private uint applicationId = 0;
+        private Guid applicationEufGuid = Guid.Empty;
+        private P2PApplicationStatus status = P2PApplicationStatus.Waiting;        
         private NSMessageHandler nsMessageHandler;
         private P2PSession p2pSession;
         private Contact remote;
 
         #endregion
 
-        #region .ctor
+        #region Ctor
 
         protected P2PApplication(Contact remote)
         {
@@ -60,25 +130,47 @@ namespace MSNPSharp.DataTransfer
 
         #region Properties
 
-        #region IMessageHandler Members
-
-        public IMessageProcessor MessageProcessor
-        {
-            get
-            {
-                return iProcessor;
-            }
-            set
-            {
-                iProcessor = value;
-            }
-        }
-
-        #endregion
-
         public abstract string InvitationContext
         {
             get;
+        }
+
+        public virtual bool AutoAccept
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public virtual uint ApplicationId
+        {
+            get
+            {
+                if (applicationId == 0)
+                    applicationId = FindApplicationId(this);
+
+                return applicationId;
+            }
+        }
+
+        public virtual Guid ApplicationEufGuid
+        {
+            get
+            {
+                if (applicationEufGuid == Guid.Empty)
+                    applicationEufGuid = FindApplicationEufGuid(this);
+
+                return applicationEufGuid;
+            }
+        }
+
+        public P2PApplicationStatus ApplicationStatus
+        {
+            get
+            {
+                return status;
+            }
         }
 
         public Owner Local
@@ -102,38 +194,6 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 return nsMessageHandler;
-            }
-        }
-
-        public P2PApplicationStatus ApplicationStatus
-        {
-            get
-            {
-                return status;
-            }
-        }
-
-        public virtual bool AutoAccept
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public virtual uint ApplicationId
-        {
-            get
-            {
-                return P2PApplications.FindApplicationId(this);
-            }
-        }
-
-        public virtual Guid ApplicationEufGuid
-        {
-            get
-            {
-                return P2PApplications.FindApplicationEufGuid(this);
             }
         }
 
@@ -163,12 +223,25 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-
         #endregion
 
+        #region Methods
 
-        public abstract void HandleMessage(IMessageProcessor bridge, NetworkMessage message);
+        public abstract void HandleMessage(IMessageProcessor bridge, NetworkMessage p2pMessage);
 
+        public void SendMessage(P2PMessage p2pMessage)
+        {
+            SendMessage(p2pMessage, null);
+        }
+
+        public virtual void SendMessage(P2PMessage p2pMessage, P2PAckHandler ackHandler)
+        {
+            // If not an ack, set the footer
+            if ((p2pMessage.Flags & P2PFlag.Acknowledgement) != P2PFlag.Acknowledgement)
+                p2pMessage.Footer = ApplicationId;
+
+            p2pSession.SendMessage(p2pMessage, ackHandler);
+        }
 
         /// <summary>
         /// Validate invitation for this application.
@@ -197,7 +270,7 @@ namespace MSNPSharp.DataTransfer
 
         public virtual void Abort()
         {
-            OnTransferAborted(new ContactEventArgs(nsMessageHandler.Owner));
+            OnTransferAborted(new ContactEventArgs(Local));
             p2pSession.Close();
         }
 
@@ -214,6 +287,8 @@ namespace MSNPSharp.DataTransfer
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Application disposed", GetType().Name);
         }
+
+        #endregion
 
         #region Protected
 
@@ -239,7 +314,7 @@ namespace MSNPSharp.DataTransfer
 
         protected virtual void OnTransferAborted(ContactEventArgs e)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Transfer aborted ({0})", e.Contact == nsMessageHandler.Owner ? "locally" : "remotely"), GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Transfer aborted ({0})", e.Contact == Local ? "locally" : "remotely"), GetType().Name);
 
             status = P2PApplicationStatus.Aborted;
 
@@ -263,10 +338,12 @@ namespace MSNPSharp.DataTransfer
 
         private void P2PSessionClosing(object sender, ContactEventArgs e)
         {
-            if (e.Contact != nsMessageHandler.Owner)
+            if (e.Contact != Local)
             {
                 if (status == P2PApplicationStatus.Waiting || status == P2PApplicationStatus.Active)
+                {
                     OnTransferAborted(e);
+                }
             }
         }
 
@@ -281,8 +358,105 @@ namespace MSNPSharp.DataTransfer
         private void P2PSessionError(object sender, EventArgs e)
         {
             if (status != P2PApplicationStatus.Error)
+            {
                 OnTransferError(e);
+            }
         }
+
+        #endregion
+
+        #region Static
+
+        private static List<P2PApp> p2pApps = new List<P2PApp>(4);
+        private struct P2PApp
+        {
+            public UInt32 AppId;
+            public Type AppType;
+            public Guid EufGuid;
+        }
+
+        static P2PApplication()
+        {
+            try
+            {
+                AddApplication(Assembly.GetExecutingAssembly());
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error loading built-in p2p applications: " + e.Message, "P2PApplication");
+            }
+        }
+
+        #region Add/Find Application
+
+        public static void AddApplication(Assembly assembly)
+        {
+            foreach (Type type in assembly.GetTypes())
+            {
+                if (type.GetCustomAttributes(typeof(P2PApplicationAttribute), false).Length > 0)
+                    AddApplication(type);
+            }
+        }
+
+        public static void AddApplication(Type type)
+        {
+            foreach (P2PApplicationAttribute att in type.GetCustomAttributes(typeof(P2PApplicationAttribute), false))
+            {
+                P2PApp app = new P2PApp();
+                app.AppType = type;
+                app.AppId = att.AppId;
+                app.EufGuid = new Guid(att.EufGuid);
+
+                lock (p2pApps)
+                    p2pApps.Add(app);
+            }
+        }
+
+        internal static Type GetApplication(Guid eufGuid, uint appId)
+        {
+            if (appId != 0 && eufGuid != Guid.Empty)
+            {
+                foreach (P2PApp app in p2pApps)
+                {
+                    if (app.EufGuid == eufGuid && app.AppId == appId)
+                        return app.AppType;
+                }
+            }
+
+            foreach (P2PApp app in p2pApps)
+            {
+                if (app.EufGuid == eufGuid)
+                    return app.AppType;
+                else if (app.AppId == appId)
+                    return app.AppType;
+            }
+
+            return null;
+        }
+
+        private static uint FindApplicationId(P2PApplication p2pApp)
+        {
+            foreach (P2PApp app in p2pApps)
+            {
+                if (app.AppType == p2pApp.GetType())
+                    return app.AppId;
+            }
+
+            return 0;
+        }
+
+        private static Guid FindApplicationEufGuid(P2PApplication p2pApp)
+        {
+            foreach (P2PApp app in p2pApps)
+            {
+                if (app.AppType == p2pApp.GetType())
+                    return app.EufGuid;
+            }
+
+            return Guid.Empty;
+        }
+        #endregion
+
 
         #endregion
     }

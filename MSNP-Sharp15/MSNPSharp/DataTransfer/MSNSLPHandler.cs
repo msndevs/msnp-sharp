@@ -690,7 +690,7 @@ namespace MSNPSharp.DataTransfer
                 properties.DataType = DataTransferType.Emoticon;
                 AppID = P2PConst.CustomEmoticonAppID.ToString();
 #if MSNC12
-                session.MessageFooter = (uint)P2PFlag.CustomEmoticonFooter;
+                session.MessageFooter = (uint)AppFlags.CustomEmoticonFooter;
 #endif
             }
             else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
@@ -698,7 +698,7 @@ namespace MSNPSharp.DataTransfer
                 properties.DataType = DataTransferType.DisplayImage;
                 AppID = P2PConst.DisplayImageAppID.ToString();
 #if MSNC12
-                session.MessageFooter = (uint)P2PFlag.DisplayImageFooter;
+                session.MessageFooter = (uint)AppFlags.DisplayImageFooter;
 #endif
             }
 #if MSNC12
@@ -943,7 +943,7 @@ namespace MSNPSharp.DataTransfer
             MessageSession.AddTransferSession(session);
             session.MessageFlag = (uint)P2PFlag.FileData;
 #if MSNC12
-            session.MessageFooter = (uint)P2PFlag.FileTransFooter;
+            session.MessageFooter = (uint)AppFlags.FileTransFooter;
 #endif
 
             // set the data stream to read from
@@ -1018,7 +1018,7 @@ namespace MSNPSharp.DataTransfer
                         p2pTransfer.IsSender = true;
                         p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
 #if MSNC12
-                        p2pTransfer.MessageFooter = (uint)P2PFlag.DisplayImageFooter;
+                        p2pTransfer.MessageFooter = (uint)AppFlags.DisplayImageFooter;
 #endif
 
                         break;
@@ -1028,7 +1028,7 @@ namespace MSNPSharp.DataTransfer
                     {
                         p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
 #if MSNC12
-                        p2pTransfer.MessageFooter = (uint)P2PFlag.FileTransFooter;
+                        p2pTransfer.MessageFooter = (uint)AppFlags.FileTransFooter;
 #endif
                         p2pTransfer.IsSender = false;
                         break;

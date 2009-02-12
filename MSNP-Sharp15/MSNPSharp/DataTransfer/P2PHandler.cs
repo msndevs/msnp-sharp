@@ -77,7 +77,7 @@ namespace MSNPSharp.DataTransfer
     /// <summary>
     /// Handles incoming P2P messages from the switchboardserver.
     /// </summary>
-    public class P2PHandler : IMessageHandler
+    public partial class P2PHandler : IMessageHandler
     {
         /// <summary>
         /// </summary>
@@ -349,119 +349,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// Handles incoming sb messages. Other messages are ignored.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="message"></param>
-        public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
-        {
-            SBMessage sbMessage = message as SBMessage;
-
-            if (sbMessage == null)
-                return;            
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message " + NSMessageHandler.Owner.Mail, GetType().Name);
-            
-            //Clean the MessageSessions, or it will lead to memory leak.
-            if (sbMessage.Command == "BYE")
-            {
-                string account = sbMessage.CommandValues[0].ToString();
-                lock (messageSessions)
-                {
-                    ArrayList list = new ArrayList(messageSessions);
-                    foreach (P2PMessageSession p2psession in list)
-                    {
-                        if (p2psession.RemoteContact == account)
-                        {
-                            messageSessions.Remove(p2psession);
-                            p2psession.CleanUp();
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed : " + p2psession.RemoteContact + ", remain session count: " + messageSessions.Count.ToString());
-                        }
-                    }
-                }
-                return;
-            }
-
-
-            if (sbMessage.Command != "MSG")
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "No MSG : " + sbMessage.Command + " instead " + NSMessageHandler.Owner.Mail, GetType().Name);
-                return;
-            }
-
-            // create a MSGMessage from the sb message
-            MSGMessage msgMessage = new MSGMessage();
-            try
-            {
-                msgMessage.CreateFromMessage(sbMessage);
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
-            }
-
-            // check if it's a valid p2p message (chunk messages has no content type)
-            if (!msgMessage.MimeHeader.ContainsKey("Content-Type") ||
-                msgMessage.MimeHeader["Content-Type"].ToString() != "application/x-msnmsgrp2p")
-            {
-                return;
-            }
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming p2p message " + NSMessageHandler.Owner.Mail, GetType().Name);
-
-            // create a P2P Message from the msg message
-            P2PMessage p2pMessage = new P2PMessage();
-            p2pMessage.CreateFromMessage(msgMessage);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Incoming p2p message " + NSMessageHandler.Owner.Mail + "\r\n" + ((P2PMessage)p2pMessage).ToDebugString(), GetType().Name);
-
-            // get the associated message session
-            P2PMessageSession session = GetSessionFromRemote((string)sbMessage.CommandValues[0]);// p2pMessage.Identifier);			
-
-            // check for validity
-            if (session == null)
-            {
-                if (p2pMessage.IsAcknowledgement)
-                {
-                    // if it is an acknowledgement then the local client initiated the session.
-                    // this means the session alread exists, but the remote identifier are not yet set.
-                    session = SetSessionIdentifiersAfterAck(p2pMessage);
-                }
-                else
-                {
-                    // there is no session available at all. the remote client sends the first message
-                    // in the session. So create a new session to handle following messages.
-                    session = CreateSessionFromRemote(p2pMessage);
-                    session.RemoteContact = sbMessage.CommandValues[0].ToString();
-                    session.LocalContact = msgMessage.MimeHeader["P2P-Dest"].ToString();
-
-                    // add the session to the session list
-                    messageSessions.Add(session);
-
-                    // set the default message processor
-                    session.MessageProcessor = sender;
-
-                    // notify the client programmer
-                    OnSessionCreated(session);
-                }
-            }
-
-            // diagnostic check
-            System.Diagnostics.Debug.Assert(session != null, "Session is null", "P2P Message session");
-
-            // send an acknowledgement after the last message
-            if (p2pMessage.IsAcknowledgement == false && p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
-            {
-                P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                session.SendMessage(ack);
-            }
-
-            // now handle the message
-            session.HandleMessage(sender, p2pMessage);
-
-            return;
-        }
+        
 
         #endregion
 
@@ -704,5 +592,7 @@ namespace MSNPSharp.DataTransfer
         {
             RemoveSwitchboardSession((SBMessageHandler)sender);
         }
+
+
     }
 };

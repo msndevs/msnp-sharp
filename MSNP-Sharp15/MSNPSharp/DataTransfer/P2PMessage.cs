@@ -94,7 +94,11 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        MSNObjectData = MSNSLPInfo | P2PFlag.Data,
+        MSNObjectData = MSNSLPInfo | P2PFlag.Data
+    }
+
+    public enum AppFlags
+    {
 
 #if MSNC12
         /// <summary>
