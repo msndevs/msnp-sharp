@@ -21,7 +21,7 @@ namespace MSNPSharp.DataTransfer
 
         private uint dataPreparationAck;
         private MSNObject msnObject;
-        private MemoryStream objStream;
+        private Stream objStream;
         private bool sending;
 
         public MSNObject MsnObject
@@ -32,7 +32,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        public MemoryStream ObjectStream
+        public Stream ObjectStream
         {
             get
             {
@@ -64,19 +64,38 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        /// <summary>
+        /// We are sender
+        /// </summary>
+        /// <param name="session"></param>
         public P2PObjectTransferApplication(P2PSession session)
             : base(session)
         {
             msnObject = new MSNObject();
             msnObject.ParseContext(session.Invite.BodyValues["Context"].Value, true);
 
-            if (msnObject.Size == 0)
+            if (msnObject.ObjectType == MSNObjectType.UserDisplay ||
+                msnObject.ObjectType == MSNObjectType.Unknown)
+            {
                 msnObject = NSMessageHandler.Owner.DisplayImage;
+                objStream = NSMessageHandler.Owner.DisplayImage.OpenStream();
+                Session.LocalIdentifier -= 4;
+            }
+            else if (msnObject.ObjectType == MSNObjectType.Emoticon &&
+                Local.Emoticons.ContainsKey(msnObject.Sha))
+            {
+                msnObject = Local.Emoticons[msnObject.Sha];
+                objStream = ((Emoticon)msnObject).OpenStream();
+            }
 
             sending = true;
-            Session.LocalIdentifier -= 4;
         }
 
+        /// <summary>
+        /// We are receiver
+        /// </summary>
+        /// <param name="msnObj">Msn object requested</param>
+        /// <param name="contact">Remote contact</param>
         public P2PObjectTransferApplication(MSNObject msnObj, Contact contact)
             : base(contact)
         {
@@ -108,17 +127,20 @@ namespace MSNPSharp.DataTransfer
                 // store the ack identifier so we can accept the acknowledge later on
                 dataPreparationAck = p2pDataMessage.AckSessionId;
 
-                SendMessage(p2pDataMessage, delegate
+                SendMessage(p2pDataMessage, delegate(P2PMessage ack)
                 {
                     P2PMessage p2pMessage = new P2PMessage();
                     p2pMessage.Flags = P2PFlag.Data;
                     byte[] data = new byte[msnObject.Size];
                     using (Stream s = NSMessageHandler.Owner.DisplayImage.OpenStream())
                     {
-                        s.Write(data, 0, data.Length);
+                        s.Position = 0;
+                        s.Read(data, 0, data.Length);
                     }
                     p2pMessage.InnerBody = data;
                     p2pMessage.MessageSize = (uint)p2pMessage.InnerBody.Length;
+                    p2pMessage.TotalSize = p2pMessage.MessageSize;
+
                     SendMessage(p2pMessage, delegate
                     {
                         OnTransferFinished(EventArgs.Empty);
@@ -157,13 +179,17 @@ namespace MSNPSharp.DataTransfer
                     {
                         ((DisplayImage)msnObject).Image = Image.FromStream(objStream);
                     }
+                    else if (msnObject.ObjectType == MSNObjectType.Emoticon)
+                    {
+                        ((Emoticon)msnObject).Image = Image.FromStream(objStream);
+                    }
 
                     objStream.Close();
                     OnTransferFinished(EventArgs.Empty);
                     Session.Close();
                 }
 
-            }            
+            }
         }
     }
 };
