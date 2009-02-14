@@ -232,9 +232,9 @@ namespace MSNPSharp.DataTransfer
 
             Debug.Assert(sbMessage != null, "Incoming message is not a SBMessage");
 
-            string source = sbMessage.CommandValues[0].ToString();
-            if (sbMessage.Command == "BYESSS")
+            if (sbMessage.Command == "BYE")
             {
+                string source = sbMessage.CommandValues[0].ToString();
                 // Clean the MessageSessions, or it will lead to memory leak.
                 lock (messageSessions)
                 {
@@ -269,6 +269,13 @@ namespace MSNPSharp.DataTransfer
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
             }
 
+            // check if it's a valid p2p message
+            if (!msgMessage.MimeHeader.ContainsKey("Content-Type") ||
+                msgMessage.MimeHeader["Content-Type"].ToString() != "application/x-msnmsgrp2p")
+            {
+                return;
+            }
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming p2p message " + NSMessageHandler.Owner.Mail, GetType().Name);
 
             // create a P2P Message from the msg message
@@ -278,14 +285,14 @@ namespace MSNPSharp.DataTransfer
             if (HandleSplitMessage(ref p2pMessage))
                 return;
 
-            if (ShouldAck(p2pMessage))
+            if (p2pMessage.ShouldAck)
                 sender.SendMessage(p2pMessage.CreateAcknowledgement());
 
             SLPMessage slp = null;
-            if (p2pMessage.InnerBody != null && p2pMessage.InnerBody.Length > 0)
+            if (p2pMessage.InnerBody != null && p2pMessage.InnerBody.Length != 0)
             {
                 slp = SLPMessage.Parse(p2pMessage.InnerBody);
-                if (slp != null && !CheckSLPMessage(sender, source, p2pMessage, slp))
+                if (slp != null && !CheckSLPMessage(sender, slp.FromMail, p2pMessage, slp))
                     return;
             }
 
@@ -310,6 +317,7 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
+            
             P2PSession session = FindSession(p2pMessage);
 
             if (session != null)
@@ -320,9 +328,10 @@ namespace MSNPSharp.DataTransfer
 
             if (slp != null)
             {
-                if (ProcessSLPMessage(sender, source, p2pMessage, slp))
+                if (ProcessSLPMessage(sender, slp.FromMail, p2pMessage, slp))
                     return;
             }
+
 
             if ((p2pMessage.Flags & P2PFlag.Waiting) == P2PFlag.Waiting)
             {
@@ -389,24 +398,6 @@ namespace MSNPSharp.DataTransfer
 
             return true;
         }
-
-        bool ShouldAck(P2PMessage msg)
-        {
-            if ((msg.Offset + msg.MessageSize) != msg.TotalSize)
-                return false;
-            if (msg.AckIdentifier != 0)
-                return false;
-            if (msg.InnerBody != null)
-                return false;
-            if ((msg.Flags & P2PFlag.Waiting) == P2PFlag.Waiting)
-                return false;
-            if ((msg.Flags & P2PFlag.CloseSession) == P2PFlag.CloseSession)
-                return false;
-
-            return true;
-        }
-
-       
 
     }
 };
