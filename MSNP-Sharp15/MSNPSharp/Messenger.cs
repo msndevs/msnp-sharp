@@ -37,7 +37,7 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;    
+    using MSNPSharp.DataTransfer;
 
     #region ConversationCreatedEvent
 
@@ -181,7 +181,7 @@ namespace MSNPSharp
                         }
                     }
                 }
-                
+
                 // Accepts by default owner display images and contact emoticons.
                 /*
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
@@ -524,35 +524,9 @@ namespace MSNPSharp
         /// <returns></returns>
         public Conversation CreateConversation()
         {
-
             Conversation conversation = new Conversation(this);
-            
             OnConversationCreated(conversation, this);
-
             return conversation;
-        }
-
-
-        /// <summary>
-        /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send or receive invitations from the remote contact.
-        /// </summary>
-        /// <param name="remoteAccount"></param>
-        /// <returns></returns>
-        public MSNSLPHandler GetMSNSLPHandler(string remoteAccount)
-        {
-            if (!Nameserver.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
-                throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
-
-            P2PMessageSession p2pSession = p2pHandler.GetSession(Owner.Mail, remoteAccount);
-            MSNSLPHandler msnslpHandler = (MSNSLPHandler)p2pSession.GetHandler(typeof(MSNSLPHandler));
-            if (msnslpHandler == null)
-            {
-                // create a msn slp handler
-                msnslpHandler = CreateMSNSLPHandler();
-                p2pSession.RegisterHandler(msnslpHandler);
-                msnslpHandler.MessageProcessor = p2pSession;
-            }
-            return msnslpHandler;
         }
 
         #endregion
@@ -570,49 +544,6 @@ namespace MSNPSharp
         {
             if (ConversationCreated != null)
                 ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
-        }
-
-
-        /// <summary>
-        /// Cleans up resources.
-        /// </summary>
-        protected virtual void CleanUp()
-        {
-            if (null != p2pHandler)
-            {
-                p2pHandler.ClearMessageSessions();
-            }
-        }
-
-        #endregion
-
-        #region Private
-
-        /// <summary>
-        /// Creates the object and sets the external end point.
-        /// </summary>
-        /// <returns></returns>
-        private MSNSLPHandler CreateMSNSLPHandler()
-        {
-            MSNSLPHandler msnslpHandler = Factory.CreateMSNSLPHandler();
-            msnslpHandler.ExternalEndPoint = Nameserver.ExternalEndPoint;
-            return msnslpHandler;
-        }
-
-        public SBMessageProcessor GetSBProcessor(string remote)
-        {
-            lock (p2pHandler.SwitchboardSessions)
-            {
-                foreach (SBMessageHandler sb in p2pHandler.SwitchboardSessions)
-                {
-                    if (sb.GetType() == typeof(SBMessageHandler) &&
-                        sb.Contacts.ContainsKey(remote))
-                    {
-                        return sb.MessageProcessor as SBMessageProcessor;
-                    }
-                }
-            }
-            return null;
         }
 
         #endregion

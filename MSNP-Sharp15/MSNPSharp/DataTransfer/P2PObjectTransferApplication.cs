@@ -11,7 +11,7 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp;
     using MSNPSharp.Core;
 
-    [P2PApplication(1, "A4268EEC-FEC5-49E5-95C3-F126696BDBF6")]
+    [P2PApplication(12, "A4268EEC-FEC5-49E5-95C3-F126696BDBF6")]
     public class P2PObjectTransferApplication : P2PApplication
     {
         static P2PObjectTransferApplication()
@@ -88,6 +88,9 @@ namespace MSNPSharp.DataTransfer
                 objStream = ((Emoticon)msnObject).OpenStream();
             }
 
+            if (session.Invite.BodyValues.ContainsKey("AppID"))
+                applicationId = uint.Parse(session.Invite.BodyValues["AppID"]);
+
             sending = true;
         }
 
@@ -116,14 +119,13 @@ namespace MSNPSharp.DataTransfer
             {
                 P2PDataMessage p2pDataMessage = new P2PDataMessage();
                 p2pDataMessage.WritePreparationBytes();
-
                 p2pDataMessage.SessionId = Session.SessionId;
                 Session.IncreaseLocalIdentifier();
-
                 p2pDataMessage.Identifier = Session.LocalIdentifier;
                 p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
 
                 p2pDataMessage.Flags = P2PFlag.Data;
+                p2pDataMessage.Footer = 1;
                 // store the ack identifier so we can accept the acknowledge later on
                 dataPreparationAck = p2pDataMessage.AckSessionId;
 
@@ -132,7 +134,7 @@ namespace MSNPSharp.DataTransfer
                     P2PMessage p2pMessage = new P2PMessage();
                     p2pMessage.Flags = P2PFlag.Data;
                     byte[] data = new byte[msnObject.Size];
-                    using (Stream s = NSMessageHandler.Owner.DisplayImage.OpenStream())
+                    using (Stream s = objStream)
                     {
                         s.Position = 0;
                         s.Read(data, 0, data.Length);
@@ -166,7 +168,7 @@ namespace MSNPSharp.DataTransfer
                     Debug.Assert(p2pMessage.AckIdentifier == dataPreparationAck, "not data prep?");
                 }
             }
-            else if ((p2pMessage.Flags & P2PFlag.Data) == P2PFlag.Data || p2pMessage.Flags == P2PFlag.Normal)
+            else if ((p2pMessage.Flags & P2PFlag.Data) == P2PFlag.Data)
             {
                 objStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("Received {0} / {1}", objStream.Length, msnObject.Size), GetType().Name);

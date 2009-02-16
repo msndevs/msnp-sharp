@@ -98,10 +98,12 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region Members
-        
-        private uint applicationId = 0;
-        private Guid applicationEufGuid = Guid.Empty;
-        private P2PApplicationStatus status = P2PApplicationStatus.Waiting;        
+
+        protected uint applicationId = uint.MinValue;
+        protected Guid applicationEufGuid = Guid.Empty;
+        protected P2PFlag dataFlags = P2PFlag.Normal;
+
+        private P2PApplicationStatus status = P2PApplicationStatus.Waiting;
         private NSMessageHandler nsMessageHandler;
         private P2PSession p2pSession;
         private Contact remote;
@@ -237,7 +239,8 @@ namespace MSNPSharp.DataTransfer
         public virtual void SendMessage(P2PMessage p2pMessage, P2PAckHandler ackHandler)
         {
             // If not an ack, set the footer
-            if ((p2pMessage.Flags & P2PFlag.Acknowledgement) != P2PFlag.Acknowledgement)
+            if ((p2pMessage.Flags & P2PFlag.Acknowledgement) != P2PFlag.Acknowledgement &&
+                p2pMessage.Footer == 0)
                 p2pMessage.Footer = ApplicationId;
 
             p2pSession.SendMessage(p2pMessage, ackHandler);

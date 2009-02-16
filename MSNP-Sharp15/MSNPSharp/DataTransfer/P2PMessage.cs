@@ -30,10 +30,12 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.IO;
+using System.Collections.Generic;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.IO;
     using MSNPSharp.Core;
     using MSNPSharp;
 
@@ -44,7 +46,7 @@ namespace MSNPSharp.DataTransfer
     public enum P2PFlag : uint
     {
         /// <summary>
-        /// Normal (protocl) message.
+        /// Normal (protocol) message.
         /// </summary>
         Normal = 0,
         /// <summary>
@@ -403,6 +405,38 @@ namespace MSNPSharp.DataTransfer
             ack.AckIdentifier = AckSessionId;
             ack.AckTotalSize = TotalSize;
             return ack;
+        }
+
+        public P2PMessage[] SplitMessage(int maxSize)
+        {
+            if (MessageSize <= maxSize)
+                return new P2PMessage[] { this };
+
+            uint offset = 0;
+            Random rand = new Random();
+            int cnt = ((int)(MessageSize / maxSize)) + 1;
+            List<P2PMessage> chunks = new List<P2PMessage>(cnt);
+            byte[] totalMessage = (InnerBody != null) ? InnerBody : InnerMessage.GetBytes();
+            for (int i = 0; i < cnt; i++)
+            {
+                P2PMessage chunkMessage = new P2PMessage();
+                chunkMessage.AckIdentifier = AckIdentifier;
+                chunkMessage.AckTotalSize = AckTotalSize;
+                chunkMessage.Flags = Flags;
+                chunkMessage.Footer = Footer;
+                chunkMessage.Identifier = Identifier;
+                chunkMessage.MessageSize = (uint)Math.Min((uint)maxSize, (uint)(MessageSize - offset));
+                chunkMessage.Offset = offset;
+                chunkMessage.SessionId = SessionId;
+                chunkMessage.TotalSize = MessageSize;
+                chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
+                Array.Copy(totalMessage, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
+                chunkMessage.AckSessionId = (uint)rand.Next(50000, int.MaxValue);
+                chunkMessage.PrepareMessage();
+                chunks.Add(chunkMessage);
+                offset += chunkMessage.MessageSize;
+            }
+            return chunks.ToArray();
         }
 
         /// <summary>
