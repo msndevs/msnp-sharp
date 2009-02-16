@@ -11,5 +11,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyrightAttribute("Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.")]
 [assembly: AssemblyProductAttribute("MSNPSharp")]
 [assembly: AssemblyDelaySignAttribute(false)]
-[assembly: AssemblyFileVersionAttribute("2.5.5.*")]
+[assembly: AssemblyFileVersionAttribute("2.5.5.0")]
 [assembly: GuidAttribute("FAE04EC0-301F-11D3-BF4B-00C04F79EFBC")]
