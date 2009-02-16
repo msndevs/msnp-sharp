@@ -57,6 +57,7 @@ namespace MSNPSharp
         private string applicationId = String.Empty;
         private List<int> initialADLs = new List<int>();
         private bool abSynchronized;
+        private Dictionary<SoapHttpClientProtocol, object> asyncStates = new Dictionary<SoapHttpClientProtocol, object>();
 
         internal int initialADLcount;
         internal XMLContactList AddressBook;
@@ -451,7 +452,8 @@ namespace MSNPSharp
                     serviceLastChange = msLastChange;
                 }
 
-                SharingServiceBinding sharingService = CreateSharingService(partnerScenario);
+                object FindMembershipObject = partnerScenario;
+                SharingServiceBinding sharingService = CreateSharingService(partnerScenario, FindMembershipObject);
                 FindMembershipRequestType request = new FindMembershipRequestType();
                 request.View = "Full";  // NO default!
                 request.deltasOnly = msdeltasOnly;
@@ -470,8 +472,7 @@ namespace MSNPSharp
 
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
-                    sharingService = sender as SharingServiceBinding;
-                    handleServiceHeader(sharingService.ServiceHeaderValue, typeof(FindMembershipRequestType));
+                    DeleteCompletedObject(sharingService);
 
                     if (!e.Cancelled)
                     {
@@ -485,9 +486,11 @@ namespace MSNPSharp
                                 }
                                 else
                                 {
-                                    ABServiceBinding abservice = CreateABService(partnerScenario);
+                                    object ABAddObject = new object();
+                                    ABServiceBinding abservice = CreateABService(partnerScenario, ABAddObject);
                                     abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
                                     {
+                                        DeleteCompletedObject(abservice);
                                         if (abadd_e.Error == null)
                                         {
                                             recursiveCall++;
@@ -505,7 +508,7 @@ namespace MSNPSharp
                                     abAddRequest.abInfo.fDefault = true;
 
                                     ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abservice, "ABAdd", abAddRequest);
-                                    abservice.ABAddAsync(abAddRequest, new object());
+                                    abservice.ABAddAsync(abAddRequest, ABAddObject);
                                 }
                             }
                             else if ((recursiveCall == 0 && partnerScenario == "Initial")
@@ -522,6 +525,7 @@ namespace MSNPSharp
                         }
                         else
                         {
+                            HandleServiceHeader(sharingService.ServiceHeaderValue, typeof(FindMembershipRequestType));
                             if (null != e.Result.FindMembershipResult)
                             {
                                 AddressBook += e.Result.FindMembershipResult;
@@ -537,7 +541,7 @@ namespace MSNPSharp
                 };
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "FindMembership", request);
-                sharingService.FindMembershipAsync(request, partnerScenario);
+                sharingService.FindMembershipAsync(request, FindMembershipObject);
             }
         }
 
@@ -557,7 +561,8 @@ namespace MSNPSharp
             {
                 bool deltasOnly = false;
 
-                ABServiceBinding abService = CreateABService(partnerScenario);
+                object ABFindContactsPagedObject = partnerScenario;
+                ABServiceBinding abService = CreateABService(partnerScenario, ABFindContactsPagedObject);
                 ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
                 request.abView = "MessengerClient8";  //NO default!
                 request.extendedContent = "AB AllGroups CircleResult";
@@ -577,8 +582,7 @@ namespace MSNPSharp
 
                 abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
                 {
-                    abService = sender as ABServiceBinding;
-                    handleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindContactsPagedRequestType));
+                    DeleteCompletedObject(abService);
                     string abpartnerScenario = e.UserState.ToString();
 
                     if (!e.Cancelled)
@@ -599,6 +603,7 @@ namespace MSNPSharp
                         }
                         else
                         {
+                            HandleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindContactsPagedRequestType));
                             if (null != e.Result.ABFindContactsPagedResult)
                             {
                                 AddressBook += e.Result.ABFindContactsPagedResult;
@@ -614,7 +619,7 @@ namespace MSNPSharp
                 };
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindContactsPaged", request);
-                abService.ABFindContactsPagedAsync(request, partnerScenario);
+                abService.ABFindContactsPagedAsync(request, ABFindContactsPagedObject);
             }
         }
 #else
@@ -636,7 +641,8 @@ namespace MSNPSharp
                     deltasOnly = true;
                 }
 
-                ABServiceBinding abService = CreateABService(partnerScenario);
+                object ABFindAllObject = partnerScenario;
+                ABServiceBinding abService = CreateABService(partnerScenario, ABFindAllObject);
                 ABFindAllRequestType request = new ABFindAllRequestType();
                 request.abView = "Full";  //NO default!
                 request.deltasOnly = deltasOnly;
@@ -646,8 +652,7 @@ namespace MSNPSharp
 
                 abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
                 {
-                    abService = sender as ABServiceBinding;
-                    handleServiceHeader(abService.ServiceHeaderValue, request.GetType());
+                    DeleteCompletedObject(abService);
                     string abpartnerScenario = e.UserState.ToString();
 
                     if (!e.Cancelled)
@@ -668,6 +673,8 @@ namespace MSNPSharp
                         }
                         else
                         {
+                            HandleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindAllRequestType));
+
                             if (null != e.Result.ABFindAllResult)
                             {
                                 AddressBook += e.Result.ABFindAllResult;
@@ -683,11 +690,11 @@ namespace MSNPSharp
                 };
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindAll", request);
-                abService.ABFindAllAsync(request, partnerScenario);
+                abService.ABFindAllAsync(request, ABFindAllObject);
             }
         }
 #endif
-        internal SharingServiceBinding CreateSharingService(string partnerScenario)
+        internal SharingServiceBinding CreateSharingService(string partnerScenario, object asyncObject)
         {
             SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
@@ -705,11 +712,16 @@ namespace MSNPSharp
             sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
 
+            if (asyncObject != null)
+            {
+                lock (asyncStates)
+                    asyncStates[sharingService] = asyncObject;
+            }
 
             return sharingService;
         }
 
-        internal ABServiceBinding CreateABService(string partnerScenario)
+        internal ABServiceBinding CreateABService(string partnerScenario, object asyncObject)
         {
             SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
 
@@ -725,6 +737,12 @@ namespace MSNPSharp
             abService.ABAuthHeaderValue = new ABAuthHeader();
             abService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
             abService.ABAuthHeaderValue.ManagedGroupRequest = false;
+
+            if (asyncObject != null)
+            {
+                lock (asyncStates)
+                    asyncStates[abService] = asyncObject;
+            }
 
             return abService;
         }
@@ -971,12 +989,15 @@ namespace MSNPSharp
             }
             else
             {
-                ABServiceBinding abService = CreateABService(pending ? "ContactMsgrAPI" : "ContactSave");
+                object ABContactAddObject = new object();
+                ABServiceBinding abService = CreateABService(pending ? "ContactMsgrAPI" : "ContactSave", ABContactAddObject);
                 abService.ABContactAddCompleted += delegate(object service, ABContactAddCompletedEventArgs e)
                 {
-                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactAddRequestType));
+                    DeleteCompletedObject(abService);
+
                     if (!e.Cancelled && e.Error == null)
                     {
+                        HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactAddRequestType));
                         if (onSuccess != null)
                         {
                             onSuccess(service, e);
@@ -986,7 +1007,6 @@ namespace MSNPSharp
                     {
                         OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("AddContact", e.Error));
                     }
-                    ((IDisposable)service).Dispose();
                 };
 
                 ABContactAddRequestType request = new ABContactAddRequestType();
@@ -1036,7 +1056,7 @@ namespace MSNPSharp
                 }
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactAdd", request);
-                abService.ABContactAddAsync(request, new object());
+                abService.ABContactAddAsync(request, ABContactAddObject);
             }
         }
 
@@ -1136,21 +1156,20 @@ namespace MSNPSharp
                 return;
             }
 
-            ABServiceBinding abService = CreateABService("Timer");
+            object ABContactDeleteObject = new object();
+            ABServiceBinding abService = CreateABService("Timer", ABContactDeleteObject);
             abService.ABContactDeleteCompleted += delegate(object service, ABContactDeleteCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactDeleteRequestType));
+                DeleteCompletedObject(abService);
                 if (!e.Cancelled && e.Error == null)
                 {
+                    HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactDeleteRequestType));
                     abRequest("ContactSave", null);
                 }
                 else if (e.Error != null)
                 {
-                    OnServiceOperationFailed(abService,
-                        new ServiceOperationFailedEventArgs("RemoveContact", e.Error));
+                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("RemoveContact", e.Error));
                 }
-                ((IDisposable)service).Dispose();
-                return;
             };
 
             ABContactDeleteRequestType request = new ABContactDeleteRequestType();
@@ -1159,7 +1178,7 @@ namespace MSNPSharp
             request.contacts[0].contactId = contact.Guid.ToString();
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactDelete", request);
-            abService.ABContactDeleteAsync(request, new object());
+            abService.ABContactDeleteAsync(request, ABContactDeleteObject);
         }
 
         #endregion
@@ -1299,12 +1318,14 @@ namespace MSNPSharp
 
             if (propertiesChanged.Count > 0)
             {
-                ABServiceBinding abService = CreateABService(contact.IsMessengerUser ? "ContactSave" : "Timer");
+                object ABContactUpdateObject = new object();
+                ABServiceBinding abService = CreateABService(contact.IsMessengerUser ? "ContactSave" : "Timer", ABContactUpdateObject);
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
-                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
+                    DeleteCompletedObject(abService);
                     if (!e.Cancelled && e.Error == null)
                     {
+                        HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
                         abRequest("ContactSave", null);
                     }
                     else if (e.Error != null)
@@ -1315,7 +1336,7 @@ namespace MSNPSharp
                 request.contacts[0].propertiesChanged = String.Join(PropertyString.propertySeparator, propertiesChanged.ToArray());
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
-                abService.ABContactUpdateAsync(request, new object());
+                abService.ABContactUpdateAsync(request, ABContactUpdateObject);
             }
         }
 
@@ -1354,12 +1375,14 @@ namespace MSNPSharp
 
             if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                ABServiceBinding abService = CreateABService("PrivacyApply");  //In msnp17 this is "GeneralDialogApply"
+                object ABContactUpdateObject = new object();
+                ABServiceBinding abService = CreateABService("PrivacyApply", ABContactUpdateObject);  //In msnp17 this is "GeneralDialogApply"
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
-                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
+                    DeleteCompletedObject(abService);
                     if (!e.Cancelled && e.Error == null)
                     {
+                        HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateGeneralDialogSetting completed.", GetType().Name);
                         AddressBook.MyProperties["mpop"] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
                     }
@@ -1367,8 +1390,6 @@ namespace MSNPSharp
                     {
                         OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateGeneralDialogSetting", e.Error));
                     }
-                    ((IDisposable)service).Dispose();
-                    return;
                 };
 
                 ABContactUpdateRequestType request = new ABContactUpdateRequestType();
@@ -1377,10 +1398,10 @@ namespace MSNPSharp
                 request.contacts[0].contactInfo = new contactInfoType();
                 request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
                 request.contacts[0].contactInfo.annotations = annos.ToArray();
-                request.contacts[0].propertiesChanged = PropertyString.Annotation; //"Annotation";
+                request.contacts[0].propertiesChanged = PropertyString.Annotation;
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
-                abService.ABContactUpdateAsync(request, new object());
+                abService.ABContactUpdateAsync(request, ABContactUpdateObject);
             }
         }
 
@@ -1435,12 +1456,14 @@ namespace MSNPSharp
 
             if (propertiesChanged.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                ABServiceBinding abService = CreateABService("PrivacyApply");
+                object ABContactUpdateObject = new object();
+                ABServiceBinding abService = CreateABService("PrivacyApply", ABContactUpdateObject);
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
-                    handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
+                    DeleteCompletedObject(abService);
                     if (!e.Cancelled && e.Error == null)
                     {
+                        HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateMe completed.", GetType().Name);
 
                         AddressBook.MyProperties["blp"] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
@@ -1451,8 +1474,6 @@ namespace MSNPSharp
                     {
                         OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateMe", e.Error));
                     }
-                    ((IDisposable)service).Dispose();
-                    return;
                 };
 
                 ABContactUpdateRequestType request = new ABContactUpdateRequestType();
@@ -1465,7 +1486,7 @@ namespace MSNPSharp
                 request.contacts[0].propertiesChanged = String.Join(PropertyString.propertySeparator, propertiesChanged.ToArray());
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
-                abService.ABContactUpdateAsync(request, new object());
+                abService.ABContactUpdateAsync(request, ABContactUpdateObject);
             }
         }
 
@@ -1485,12 +1506,14 @@ namespace MSNPSharp
                 return;
             }
 
-            ABServiceBinding abService = CreateABService("GroupSave");
+            object ABGroupAddObject = new object();
+            ABServiceBinding abService = CreateABService("GroupSave", ABGroupAddObject);
             abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupAddRequestType));
+                DeleteCompletedObject(abService);
                 if (!e.Cancelled && e.Error == null)
                 {
+                    HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupAddRequestType));
                     NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, NSMessageHandler));
                     NSMessageHandler.ContactService.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)NSMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
                 }
@@ -1499,8 +1522,6 @@ namespace MSNPSharp
                     OnServiceOperationFailed(abService,
                         new ServiceOperationFailedEventArgs("AddContactGroup", e.Error));
                 }
-                ((IDisposable)service).Dispose();
-                return;
             };
 
             ABGroupAddRequestType request = new ABGroupAddRequestType();
@@ -1519,7 +1540,7 @@ namespace MSNPSharp
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupAdd", request);
-            abService.ABGroupAddAsync(request, new object());
+            abService.ABGroupAddAsync(request, ABGroupAddObject);
         }
 
         /// <summary>
@@ -1542,23 +1563,22 @@ namespace MSNPSharp
                 return;
             }
 
-            ABServiceBinding abService = CreateABService("Timer");
+            object ABGroupDeleteObject = new object();
+            ABServiceBinding abService = CreateABService("Timer", ABGroupDeleteObject);
             abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupDeleteRequestType));
+                DeleteCompletedObject(abService);
                 if (!e.Cancelled && e.Error == null)
                 {
+                    HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupDeleteRequestType));
                     NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
                     AddressBook.Groups.Remove(new Guid(contactGroup.Guid));
                     NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
                 }
                 else if (e.Error != null)
                 {
-                    OnServiceOperationFailed(abService,
-                        new ServiceOperationFailedEventArgs("ContactGroupList.Remove", e.Error));
+                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("ContactGroupList.Remove", e.Error));
                 }
-                ((IDisposable)service).Dispose();
-                return;
             };
 
             ABGroupDeleteRequestType request = new ABGroupDeleteRequestType();
@@ -1567,7 +1587,7 @@ namespace MSNPSharp
             request.groupFilter.groupIds = new string[] { contactGroup.Guid };
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupDelete", request);
-            abService.ABGroupDeleteAsync(request, new object());
+            abService.ABGroupDeleteAsync(request, ABGroupDeleteObject);
         }
 
 
@@ -1584,12 +1604,14 @@ namespace MSNPSharp
                 return;
             }
 
-            ABServiceBinding abService = CreateABService("GroupSave");
+            object ABGroupUpdateObject = new object();
+            ABServiceBinding abService = CreateABService("GroupSave", ABGroupUpdateObject);
             abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupUpdateRequestType));
+                DeleteCompletedObject(abService);
                 if (!e.Cancelled && e.Error == null)
                 {
+                    HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupUpdateRequestType));
                     group.SetName(newGroupName);
                 }
                 else if (e.Error != null)
@@ -1597,8 +1619,6 @@ namespace MSNPSharp
                     OnServiceOperationFailed(abService,
                         new ServiceOperationFailedEventArgs("RenameGroup", e.Error));
                 }
-                ((IDisposable)service).Dispose();
-                return;
             };
 
             ABGroupUpdateRequestType request = new ABGroupUpdateRequestType();
@@ -1610,7 +1630,7 @@ namespace MSNPSharp
             request.groups[0].groupInfo.name = newGroupName;
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupUpdate", request);
-            abService.ABGroupUpdateAsync(request, new object());
+            abService.ABGroupUpdateAsync(request, ABGroupUpdateObject);
         }
 
         #endregion
@@ -1628,21 +1648,20 @@ namespace MSNPSharp
                 return;
             }
 
-            ABServiceBinding abService = CreateABService("GroupSave");
+            object ABGroupContactAddObject = new object();
+            ABServiceBinding abService = CreateABService("GroupSave", ABGroupContactAddObject);
             abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupContactAddRequestType));
+                DeleteCompletedObject(abService);
                 if (!e.Cancelled && e.Error == null)
                 {
+                    HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupContactAddRequestType));
                     contact.AddContactToGroup(group);
                 }
                 else if (e.Error != null)
                 {
-                    OnServiceOperationFailed(abService,
-                        new ServiceOperationFailedEventArgs("AddContactToGroup", e.Error));
+                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("AddContactToGroup", e.Error));
                 }
-                ((IDisposable)service).Dispose();
-                return;
             };
 
             ABGroupContactAddRequestType request = new ABGroupContactAddRequestType();
@@ -1653,7 +1672,7 @@ namespace MSNPSharp
             request.contacts[0].contactId = contact.Guid.ToString();
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupContactAdd", request);
-            abService.ABGroupContactAddAsync(request, new object());
+            abService.ABGroupContactAddAsync(request, ABGroupContactAddObject);
         }
 
         public void RemoveContactFromGroup(Contact contact, ContactGroup group)
@@ -1667,21 +1686,20 @@ namespace MSNPSharp
                 return;
             }
 
-            ABServiceBinding abService = CreateABService("GroupSave");
+            object ABGroupContactDelete = new object();
+            ABServiceBinding abService = CreateABService("GroupSave", ABGroupContactDelete);
             abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
             {
-                handleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupContactDeleteRequestType));
+                DeleteCompletedObject(abService);
                 if (!e.Cancelled && e.Error == null)
                 {
+                    HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABGroupContactDeleteRequestType));
                     contact.RemoveContactFromGroup(group);
                 }
                 else if (e.Error != null)
                 {
-                    OnServiceOperationFailed(abService,
-                        new ServiceOperationFailedEventArgs("RemoveContactFromGroup", e.Error));
+                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("RemoveContactFromGroup", e.Error));
                 }
-                ((IDisposable)service).Dispose();
-                return;
             };
 
             ABGroupContactDeleteRequestType request = new ABGroupContactDeleteRequestType();
@@ -1692,7 +1710,7 @@ namespace MSNPSharp
             request.contacts[0].contactId = contact.Guid.ToString();
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABGroupContactDelete", request);
-            abService.ABGroupContactDeleteAsync(request, new object());
+            abService.ABGroupContactDeleteAsync(request, ABGroupContactDelete);
         }
         #endregion
 
@@ -1736,7 +1754,8 @@ namespace MSNPSharp
                 return;
             }
 
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock");
+            object AddMemberObject = new object();
+            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock", AddMemberObject);
 
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
@@ -1778,13 +1797,13 @@ namespace MSNPSharp
 
             sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
             {
-                // Cache key for Sharing service...
-                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(AddMemberRequestType));
+                DeleteCompletedObject(sharingService);
+
                 if (!e.Cancelled)
                 {
+                    HandleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(AddMemberRequestType));
                     if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
                     {
-                        // XXX But the response is OK
                         OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
                         return;
                     }
@@ -1808,8 +1827,7 @@ namespace MSNPSharp
             };
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "AddMember", addMemberRequest);
-            sharingService.AddMemberAsync(addMemberRequest, new object());
-
+            sharingService.AddMemberAsync(addMemberRequest, AddMemberObject);
         }
 
         #endregion
@@ -1853,20 +1871,21 @@ namespace MSNPSharp
                 return;
             }
 
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock");
+            object DeleteMemberObject = new object();
+            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock", DeleteMemberObject);
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
-                // Cache key for Sharing service...
-                handleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
+                DeleteCompletedObject(sharingService);
+
                 if (!e.Cancelled)
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
                     {
-                        // XXX But the response is OK
                         OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("RemoveContactFromList", e.Error));
                         return;
                     }
 
+                    HandleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
                     contact.RemoveFromList(list);
                     AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
@@ -1926,8 +1945,7 @@ namespace MSNPSharp
             deleteMemberRequest.memberships = new Membership[] { memberShip };
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "DeleteMember", deleteMemberRequest);
-
-            sharingService.DeleteMemberAsync(deleteMemberRequest, new object());
+            sharingService.DeleteMemberAsync(deleteMemberRequest, DeleteMemberObject);
         }
 
         #endregion
@@ -2131,14 +2149,13 @@ namespace MSNPSharp
 
         }
 
-        internal void handleServiceHeader(ServiceHeader sh, Type requestType)
+        internal void HandleServiceHeader(ServiceHeader sh, Type requestType)
         {
-            if (null != sh && NSMessageHandler.IsSignedIn)
+            if (null != sh && Deltas != null)
             {
                 if (sh.CacheKeyChanged)
                 {
                     NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
-
                 }
 
                 if (!String.IsNullOrEmpty(sh.PreferredHostName))
@@ -2193,9 +2210,44 @@ namespace MSNPSharp
             initialADLs.Clear();
             initialADLcount = 0;
 
+            Dictionary<SoapHttpClientProtocol, object> copyStates = new Dictionary<SoapHttpClientProtocol, object>();
+            lock (asyncStates)
+            {
+                copyStates = new Dictionary<SoapHttpClientProtocol, object>(asyncStates);
+                asyncStates = new Dictionary<SoapHttpClientProtocol, object>();
+            }
+            if (copyStates.Count > 0)
+            {
+                foreach (KeyValuePair<SoapHttpClientProtocol, object> state in copyStates)
+                {
+                    try
+                    {
+                        state.Key.GetType().InvokeMember("CancelAsync",
+                            System.Reflection.BindingFlags.InvokeMethod,
+                            null, state.Key,
+                            new object[] { state.Value });
+                    }
+                    catch (Exception error)
+                    {
+                        Trace.WriteLineIf(
+                                Settings.TraceSwitch.TraceError,
+                                "An error occured while canceling :\r\n" +
+                                "Service:    " + state.Key.ToString() + "\r\n" +
+                                "State: " + state.Value.ToString() + "\r\n" +
+                                "Message:    " + error.Message);
+                    }
+                }
+            }
+
             abSynchronized = false;
             AddressBook = null;
             Deltas = null;
+        }
+
+        private void DeleteCompletedObject(SoapHttpClientProtocol key)
+        {
+            lock (asyncStates)
+                asyncStates.Remove(key);
         }
     }
 };
