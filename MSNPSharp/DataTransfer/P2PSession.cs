@@ -34,6 +34,12 @@ namespace MSNPSharp.DataTransfer
         public event EventHandler<ContactEventArgs> Closed;
         public event EventHandler<ContactEventArgs> Waiting;
 
+        /// <summary>
+        /// Occurs when the processor has been marked as invalid.
+        /// Due to connection error, or message processor being null.
+        /// </summary>
+        public event EventHandler<EventArgs> ProcessorInvalid;
+
         #endregion
 
         #region Members
@@ -52,7 +58,7 @@ namespace MSNPSharp.DataTransfer
         private IMessageProcessor preDCProcessor; // Processor used before a DC. Usually a SB processor. It is a fallback variables in case a direct connection fails.
         private P2PSessionStatus status = P2PSessionStatus.Closed;
 
-        #endregion        
+        #endregion
 
         #region Properties
 
@@ -205,10 +211,10 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// We are sender. Sends invitation message automatically and sets remote identifiers after ack received.
         /// </summary>
-        public P2PSession(P2PApplication app, IMessageProcessor sbMessageProcessor)
+        public P2PSession(P2PApplication app)
         {
             this.p2pApplication = app;
-            this.MessageProcessor = sbMessageProcessor;
+            this.ProcessorInvalid += P2PSession_ProcessorInvalid;
 
             local = app.Local;
             remote = app.Remote;
@@ -219,6 +225,7 @@ namespace MSNPSharp.DataTransfer
             localIdentifier = localBaseIdentifier;
 
             app.Session = this;
+
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("{0} created (Initiated locally)", SessionId), GetType().Name);
 
@@ -250,11 +257,11 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// We are receiver.
         /// </summary>
-        public P2PSession(SLPMessage invite, P2PMessage msg, NSMessageHandler nsMessageHandler, IMessageProcessor sbMessageProcessor)
+        public P2PSession(SLPMessage invite, P2PMessage msg, NSMessageHandler nsMessageHandler)
         {
             this.invite = invite;
             this.nsMessageHandler = nsMessageHandler;
-            this.MessageProcessor = sbMessageProcessor;
+            this.ProcessorInvalid += P2PSession_ProcessorInvalid;
 
             local = (invite.ToMail == nsMessageHandler.Owner.Mail) ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContact(invite.ToMail, ClientType.PassportMember);
             remote = nsMessageHandler.ContactList.GetContact(invite.FromMail, ClientType.PassportMember);
@@ -621,101 +628,36 @@ namespace MSNPSharp.DataTransfer
 
             NSMessageHandler.Messenger.P2PHandler.RegisterP2PAckHandler(p2pMessage, ackHandler);
 
-            // Maximum length
             int maxSize = DirectConnected ? 1352 : 1202;
+            P2PMessage[] chunks = p2pMessage.SplitMessage(maxSize);
 
-            // split up large messages which go to the SB
-            if (p2pMessage.MessageSize > maxSize)
+            foreach (P2PMessage chunk in chunks)
             {
-                byte[] totalMessage = null;
-                if (p2pMessage.InnerBody != null)
-                    totalMessage = p2pMessage.InnerBody;
-                else if (p2pMessage.InnerMessage != null)
-                    totalMessage = p2pMessage.InnerMessage.GetBytes();
-                else
-                    throw new MSNPSharpException("An error occured while splitting a large p2p message into smaller messages: Both the InnerBody and InnerMessage are null.");
-
-                uint bytesSend = 0;
-                int cnt = ((int)(p2pMessage.MessageSize / maxSize)) + 1;
-                for (int i = 0; i < cnt; i++)
-                {
-                    P2PMessage chunkMessage = new P2PMessage();
-
-                    // copy the values from the original message
-                    chunkMessage.AckIdentifier = p2pMessage.AckIdentifier;
-                    chunkMessage.AckTotalSize = p2pMessage.AckTotalSize;
-                    chunkMessage.Flags = p2pMessage.Flags;
-                    chunkMessage.Footer = p2pMessage.Footer;
-                    chunkMessage.Identifier = p2pMessage.Identifier;
-                    chunkMessage.MessageSize = (uint)Math.Min((uint)maxSize, (uint)(p2pMessage.MessageSize - bytesSend));
-                    chunkMessage.Offset = bytesSend;
-                    chunkMessage.SessionId = p2pMessage.SessionId;
-                    chunkMessage.TotalSize = p2pMessage.MessageSize;
-
-                    chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
-                    Array.Copy(totalMessage, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
-
-                    chunkMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-
-                    chunkMessage.PrepareMessage();
-
-                    // now send it to propbably a SB processor
-                    try
-                    {
-                        if (MessageProcessor != null && ((SocketMessageProcessor)MessageProcessor).Connected == true)
-                        {
-                            if (DirectConnected == true)
-                            {
-                                MessageProcessor.SendMessage(new P2PDCMessage(chunkMessage));
-                            }
-                            else
-                            {
-                                // wrap the message before sending it to the (probably) SB processor
-                                MessageProcessor.SendMessage(WrapMessage(chunkMessage));
-                            }
-                        }
-
-                        else
-                        {
-                            InvalidateProcessor();
-                            BufferMessage(chunkMessage);
-                        }
-                    }
-                    catch (System.Net.Sockets.SocketException)
-                    {
-                        InvalidateProcessor();
-                        BufferMessage(chunkMessage);
-                    }
-
-                    bytesSend += chunkMessage.MessageSize;
-                }
-            }
-            else
-            {
+                // now send it to propbably a SB processor
                 try
                 {
-                    if (MessageProcessor != null)
+                    if (MessageProcessor != null && ((SocketMessageProcessor)MessageProcessor).Connected)
                     {
-                        if (DirectConnected == true)
+                        if (DirectConnected)
                         {
-                            MessageProcessor.SendMessage(new P2PDCMessage(p2pMessage));
+                            MessageProcessor.SendMessage(new P2PDCMessage(chunk));
                         }
                         else
                         {
                             // wrap the message before sending it to the (probably) SB processor
-                            MessageProcessor.SendMessage(WrapMessage(p2pMessage));
+                            MessageProcessor.SendMessage(WrapMessage(chunk));
                         }
                     }
                     else
                     {
                         InvalidateProcessor();
-                        BufferMessage(p2pMessage);
+                        BufferMessage(chunk);
                     }
                 }
                 catch (System.Net.Sockets.SocketException)
                 {
                     InvalidateProcessor();
-                    BufferMessage(p2pMessage);
+                    BufferMessage(chunk);
                 }
             }
         }
@@ -811,6 +753,32 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("Remain ackhandler count: {0}", NSMessageHandler.Messenger.P2PHandler.ackHandlers.Count), GetType().Name);
         }
 
+        private void P2PSession_ProcessorInvalid(object sender, EventArgs e)
+        {
+            P2PSession session = (P2PSession)sender;
+            SBMessageHandler sbHandler = session.NSMessageHandler.Messenger.P2PHandler.GetSwitchboardSession(session.Remote.Mail);
+
+            // if the contact is offline, there is no need to request a new switchboard. close the session.
+            if (PresenceStatus.Offline == NSMessageHandler.ContactList[session.Remote.Mail, ClientType.PassportMember].Status)
+            {
+                session.Close();
+                return;
+            }
+
+            // check whether the switchboard handler is valid and has a valid processor.
+            // if that is the case, use that processor. Otherwise request a new session.
+            if (sbHandler == null || sbHandler.MessageProcessor == null ||
+                ((SocketMessageProcessor)sbHandler.MessageProcessor).Connected == false ||
+                (sbHandler.Contacts.ContainsKey(session.Remote.Mail) == false))
+            {
+                session.NSMessageHandler.Messenger.P2PHandler.RequestSwitchboard(session.Remote.Mail);
+            }
+            else
+            {
+                session.MessageProcessor = sbHandler.MessageProcessor;
+            }
+        }
+
         #endregion
 
 
@@ -858,10 +826,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// Occurs when the processor has been marked as invalid. Due to connection error, or message processor being null.
-        /// </summary>
-        public event EventHandler<EventArgs> ProcessorInvalid;
+
 
         /// <summary>
         /// Keeps track of unsend messages
@@ -889,12 +854,11 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void InvalidateProcessor()
         {
-            if (processorValid == false)
-                return;
-
-            processorValid = false;
-            OnProcessorInvalid();
-
+            if (processorValid)
+            {
+                processorValid = false;
+                OnProcessorInvalid();
+            }
         }
 
         /// <summary>
@@ -1088,7 +1052,7 @@ namespace MSNPSharp.DataTransfer
         /// Wraps a P2PMessage in a MSGMessage and SBMessage.
         /// </summary>
         /// <returns></returns>
-        protected SBMessage WrapMessage(NetworkMessage networkMessage)
+        public SBMessage WrapMessage(NetworkMessage networkMessage)
         {
             // create wrapper messages
             MSGMessage msgWrapper = new MSGMessage();
@@ -1115,6 +1079,6 @@ namespace MSNPSharp.DataTransfer
 
 
 
-       
+
     }
 };
