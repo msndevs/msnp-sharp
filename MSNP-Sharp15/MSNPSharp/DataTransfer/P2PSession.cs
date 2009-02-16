@@ -771,7 +771,7 @@ namespace MSNPSharp.DataTransfer
                 ((SocketMessageProcessor)sbHandler.MessageProcessor).Connected == false ||
                 (sbHandler.Contacts.ContainsKey(session.Remote.Mail) == false))
             {
-                session.NSMessageHandler.Messenger.P2PHandler.RequestSwitchboard(session.Remote.Mail);
+                sbHandler = session.NSMessageHandler.Messenger.P2PHandler.RequestSwitchboard(session.Remote.Mail);
             }
             else
             {

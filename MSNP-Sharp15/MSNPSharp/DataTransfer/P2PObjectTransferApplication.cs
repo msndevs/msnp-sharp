@@ -119,27 +119,22 @@ namespace MSNPSharp.DataTransfer
             {
                 P2PDataMessage p2pDataMessage = new P2PDataMessage();
                 p2pDataMessage.WritePreparationBytes();
-                p2pDataMessage.SessionId = Session.SessionId;
-                Session.IncreaseLocalIdentifier();
-                p2pDataMessage.Identifier = Session.LocalIdentifier;
-                p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-
                 p2pDataMessage.Flags = P2PFlag.Data;
-                p2pDataMessage.Footer = 1;
-                // store the ack identifier so we can accept the acknowledge later on
-                dataPreparationAck = p2pDataMessage.AckSessionId;
 
                 SendMessage(p2pDataMessage, delegate(P2PMessage ack)
                 {
-                    P2PMessage p2pMessage = new P2PMessage();
-                    p2pMessage.Flags = P2PFlag.Data;
+                    
+                    
                     byte[] data = new byte[msnObject.Size];
                     using (Stream s = objStream)
                     {
                         s.Position = 0;
                         s.Read(data, 0, data.Length);
                     }
+                    P2PDataMessage p2pMessage = new P2PDataMessage();
+                    p2pMessage.Flags = P2PFlag.MSNObjectData;
                     p2pMessage.InnerBody = data;
+
                     p2pMessage.MessageSize = (uint)p2pMessage.InnerBody.Length;
                     p2pMessage.TotalSize = p2pMessage.MessageSize;
 
