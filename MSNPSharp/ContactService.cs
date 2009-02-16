@@ -2122,12 +2122,11 @@ namespace MSNPSharp
 
         internal void handleServiceHeader(ServiceHeader sh, Type requestType)
         {
-            if (null != sh)
+            if (null != sh && Deltas != null)
             {
                 if (sh.CacheKeyChanged)
                 {
                     NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
-
                 }
 
                 if (!String.IsNullOrEmpty(sh.PreferredHostName))
