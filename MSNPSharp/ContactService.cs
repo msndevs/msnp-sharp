@@ -2133,7 +2133,7 @@ namespace MSNPSharp
 
         internal void handleServiceHeader(ServiceHeader sh, Type requestType)
         {
-            if (null != sh)
+            if (null != sh && NSMessageHandler.IsSignedIn)
             {
                 if (sh.CacheKeyChanged)
                 {
