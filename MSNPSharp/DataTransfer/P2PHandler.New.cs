@@ -143,8 +143,9 @@ namespace MSNPSharp.DataTransfer
             SBMessageHandler handler = (SBMessageHandler)sender;
 
             // MSNP18: Owner in the switchboard, so there're 2 contacts.
-            bool canremove = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
-                ? (handler.Contacts.Count > 2) : (handler.Contacts.Count > 1);
+            bool canremove = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18 && handler.Contacts.ContainsKey(handler.NSMessageHandler.Owner.Mail))
+                ? (handler.Contacts.Count > 2)
+                : (handler.Contacts.Count > 1);
 
             if (canremove)
             {
@@ -153,7 +154,8 @@ namespace MSNPSharp.DataTransfer
                     // In a conversation with multiple contacts we don't want to send p2p messages.
                     foreach (P2PSession session in sessions)
                     {
-                        if (session.MessageProcessor == handler.MessageProcessor)
+                        if (session.MessageProcessor == handler.MessageProcessor &&
+                            handler.Contacts.ContainsKey(handler.NSMessageHandler.Owner.Mail))
                         {
                             // set this to null to prevent sending messages to this processor.
                             // it will invalidate the processor when trying to send messages and thus
@@ -165,8 +167,9 @@ namespace MSNPSharp.DataTransfer
             }
 
             // MSNP18: owner in the switchboard, so there're 2 contacts.
-            bool canadd = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
-                ? (handler.Contacts.Count == 2) : (handler.Contacts.Count == 1);
+            bool canadd = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18 && handler.Contacts.ContainsKey(handler.NSMessageHandler.Owner.Mail))
+                ? (handler.Contacts.Count == 2)
+                : (handler.Contacts.Count == 1);
 
             if (canadd)
             {
