@@ -301,7 +301,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
             slpMessage.BodyValues["Bridge"] = "TCPv1";
             slpMessage.BodyValues["Listening"] = "true";
-            slpMessage.BodyValues["Nonce"] = new Guid().ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["Nonce"] = Guid.NewGuid().ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.AddressList[0].ToString();
             slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 

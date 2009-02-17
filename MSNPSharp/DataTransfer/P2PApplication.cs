@@ -238,9 +238,16 @@ namespace MSNPSharp.DataTransfer
 
         public virtual void SendMessage(P2PMessage p2pMessage, P2PAckHandler ackHandler)
         {
+            p2pMessage.SessionId = p2pSession.SessionId;
+
+            if (p2pMessage.Identifier == 0)
+            {
+                p2pSession.IncreaseLocalIdentifier();
+                p2pMessage.Identifier = p2pSession.LocalIdentifier;
+            }
+
             // If not an ack, set the footer
-            if ((p2pMessage.Flags & P2PFlag.Acknowledgement) != P2PFlag.Acknowledgement &&
-                p2pMessage.Footer == 0)
+            if ((p2pMessage.Flags & P2PFlag.Acknowledgement) != P2PFlag.Acknowledgement)
                 p2pMessage.Footer = ApplicationId;
 
             p2pSession.SendMessage(p2pMessage, ackHandler);

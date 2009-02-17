@@ -278,12 +278,7 @@ namespace MSNPSharp.DataTransfer
 
             // Send Base ID
             if (msg != null)
-            {
-                SendMessage(msg.CreateAcknowledgement(), delegate
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("BaseID {0} sent for session", SessionId), GetType().Name);
-                });
-            }
+                SendMessage(msg.CreateAcknowledgement(), null);
 
             // Create application based on invitation
             uint appId = uint.Parse(invite.BodyValues["AppID"].Value);
@@ -487,21 +482,6 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            // Check if it is a content message
-            if (p2pMessage.SessionId > 0)
-            {
-                if (p2pApplication == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("P2PSession {0}: Received message for P2P app, but it's either been disposed or not created", SessionId), GetType().Name);
-                }
-                else
-                {
-                    p2pApplication.HandleMessage(this, p2pMessage);
-                }
-                return;
-            }
-
-
             // Check slp
             SLPMessage slp = SLPMessage.Parse(p2pMessage.InnerBody);
             if (slp != null)
@@ -563,8 +543,20 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-
-
+            // Check if it is a content message
+            // if (p2pMessage.SessionId > 0)
+            {
+                if (p2pApplication == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("P2PSession {0}: Received message for P2P app, but it's either been disposed or not created", SessionId), GetType().Name);
+                }
+                else
+                {
+                    p2pApplication.HandleMessage(this, p2pMessage);
+                }
+                return;
+            }
+            
 
             // it is not a datamessage.
             // fill up the buffer with this message and extract the messages one-by-one and dispatch
@@ -613,8 +605,6 @@ namespace MSNPSharp.DataTransfer
         {
             ResetTimeoutTimer();
 
-            p2pMessage.SessionId = SessionId;
-
             if (p2pMessage.Identifier == 0)
             {
                 IncreaseLocalIdentifier();
@@ -627,6 +617,7 @@ namespace MSNPSharp.DataTransfer
             }
 
             NSMessageHandler.Messenger.P2PHandler.RegisterP2PAckHandler(p2pMessage, ackHandler);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[P2PMessage]\r\n" + p2pMessage.ToDebugString(), GetType().Name);
 
             int maxSize = DirectConnected ? 1352 : 1202;
             P2PMessage[] chunks = p2pMessage.SplitMessage(maxSize);
