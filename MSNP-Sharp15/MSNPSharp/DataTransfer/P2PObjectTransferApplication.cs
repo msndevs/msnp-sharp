@@ -11,7 +11,7 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp;
     using MSNPSharp.Core;
 
-    [P2PApplication(12, "A4268EEC-FEC5-49E5-95C3-F126696BDBF6")]
+    [P2PApplication(1, "A4268EEC-FEC5-49E5-95C3-F126696BDBF6")]
     public class P2PObjectTransferApplication : P2PApplication
     {
         static P2PObjectTransferApplication()
@@ -19,7 +19,6 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Loaded", "P2PObjectTransferApplication");
         }
 
-        private uint dataPreparationAck;
         private MSNObject msnObject;
         private Stream objStream;
         private bool sending;
@@ -117,14 +116,14 @@ namespace MSNPSharp.DataTransfer
 
             if (Sending)
             {
-                P2PDataMessage p2pDataMessage = new P2PDataMessage();
-                p2pDataMessage.WritePreparationBytes();
-                p2pDataMessage.Flags = P2PFlag.Data;
+                P2PDataMessage p2pData = new P2PDataMessage();
+                p2pData.WritePreparationBytes();
+                p2pData.Flags = P2PFlag.Data;
+                p2pData.MessageSize = (uint)p2pData.InnerBody.Length;
+                p2pData.TotalSize = p2pData.MessageSize;
 
-                SendMessage(p2pDataMessage, delegate(P2PMessage ack)
+                SendMessage(p2pData, delegate(P2PMessage ack)
                 {
-                    
-                    
                     byte[] data = new byte[msnObject.Size];
                     using (Stream s = objStream)
                     {
@@ -157,11 +156,8 @@ namespace MSNPSharp.DataTransfer
 
             if ((p2pMessage.InnerBody.Length == 4) && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
             {
-                // Data prep
-                if (Sending)
-                {
-                    Debug.Assert(p2pMessage.AckIdentifier == dataPreparationAck, "not data prep?");
-                }
+                
+
             }
             else if ((p2pMessage.Flags & P2PFlag.Data) == P2PFlag.Data)
             {
