@@ -361,7 +361,7 @@ namespace MSNPSharpClient
         /// </returns>
         private int ReInvite()
         {
-            if (_conversation == null || !Conversation.Switchboard.IsSessionEstablished)
+            if (_conversation == null)
             {
                 RemoveEvent();
                 _conversation = _clientform.Messenger.CreateConversation();
@@ -483,6 +483,7 @@ namespace MSNPSharpClient
             if (!richTextHistory.InvokeRequired)
             {
                 DisplaySystemMessage("* Session was closed");
+                _conversation = null;
             }
             else
             {
