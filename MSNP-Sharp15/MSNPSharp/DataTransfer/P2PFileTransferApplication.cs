@@ -69,9 +69,8 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        public override void HandleMessage(IMessageProcessor sender, NetworkMessage message)
+        public override void HandleMessage(IMessageProcessor sender, P2PMessage p2pMessage)
         {
-            P2PMessage p2pMessage = message as P2PMessage;
 
 
             

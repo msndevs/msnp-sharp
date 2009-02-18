@@ -229,7 +229,7 @@ namespace MSNPSharp.DataTransfer
 
         #region Methods
 
-        public abstract void HandleMessage(IMessageProcessor bridge, NetworkMessage p2pMessage);
+        public abstract void HandleMessage(IMessageProcessor bridge, P2PMessage p2pMessage);
 
         public void SendMessage(P2PMessage p2pMessage)
         {

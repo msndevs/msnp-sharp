@@ -280,7 +280,7 @@ namespace MSNPSharp
     /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
-    [FlagsAttribute]
+    [Flags]
     public enum ClientCapacities : long
     {
         None = 0x00,
@@ -345,13 +345,34 @@ namespace MSNPSharp
         /// </summary>
         CanHandleMSNC7 = 0x70000000,
         /// <summary>
-        /// MSN 8.5
+        /// MSN 8.5 (MSNP15)
         /// </summary>
         CanHandleMSNC8 = 0x80000000,
         /// <summary>
-        /// MSN 12.0
+        /// MSN 9.0 (MSNP16)
         /// </summary>
-        CanHandleMSNC12 = 0xA0000000
+        CanHandleMSNC9 = 0x90000000,
+        /// <summary>
+        /// MSN 12.0 (MSNP18)
+        /// </summary>
+        CanHandleMSNC10 = 0xA0000000,
+        /// <summary>
+        /// Mask for MSNC
+        /// </summary>
+        CanHandleMSNCMask = 0xF0000000
+    }
+
+    [Flags]
+    public enum ClientCapacitiesEx : long
+    {
+        None = 0x00,
+        Can01 = 0x01,
+        Can02 = 0x02,
+        Can04 = 0x04,
+        Can08 = 0x08,
+        Can16 = 0x10,
+        Can32 = 0x20,
+        Can64 = 0x40
     }
 
     /// <summary>
