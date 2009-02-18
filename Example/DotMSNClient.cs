@@ -810,7 +810,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
             messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
-            messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
+            //messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
             messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
 
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
@@ -1458,8 +1458,9 @@ namespace MSNPSharpClient
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void messenger_TransferInvitationReceived(object sender, MSNSLPInvitationEventArgs e)
+        private void messenger_TransferInvitationReceived(object sender, EventArgs e)
         {
+            /*
             if (MessageBox.Show(
                 e.TransferProperties.RemoteContact +
                 " wants to send you a file.\r\nFilename: " +
@@ -1477,6 +1478,7 @@ namespace MSNPSharpClient
                     e.TransferSession.AutoCloseStream = true;
                 }
             }
+             * */
         }
 
         private int nextPing = 50;

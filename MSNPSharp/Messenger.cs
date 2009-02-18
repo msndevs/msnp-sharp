@@ -256,7 +256,7 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when a remote client has send an invitation for a filetransfer session.
         /// </summary>
-        public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
+        public event EventHandler<EventArgs> TransferInvitationReceived;
 
         #endregion
 

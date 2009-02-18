@@ -148,6 +148,7 @@ namespace MSNPSharp
         private bool isMessengerUser;
 
         private ClientCapacities clientCapacities = ClientCapacities.None;
+        private ClientCapacitiesEx clientCapacitiesEx = ClientCapacitiesEx.None;
         private DynamicItemState dynamicChanged = DynamicItemState.None;
         private PresenceStatus status = PresenceStatus.Offline;
         private ClientType clientType = ClientType.PassportMember;
@@ -318,6 +319,18 @@ namespace MSNPSharp
                 {
                     HasBlog = true;
                 }
+            }
+        }
+
+        public ClientCapacitiesEx ClientCapacitiesEx
+        {
+            get
+            {
+                return clientCapacitiesEx;
+            }
+            set
+            {
+                clientCapacitiesEx = value;
             }
         }
 

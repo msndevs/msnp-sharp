@@ -84,7 +84,6 @@
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
     <Compile Include="MSNService.cs" />
-    <Compile Include="DataTransfer\MSNSLPHandler.cs" />
     <Compile Include="DataTransfer\MSNSLPMessage.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />

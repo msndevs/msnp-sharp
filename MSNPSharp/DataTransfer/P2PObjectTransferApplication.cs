@@ -103,6 +103,17 @@ namespace MSNPSharp.DataTransfer
         {
             msnObject = msnObj;
             sending = false;
+
+            switch (msnObject.ObjectType)
+            {
+                case MSNObjectType.UserDisplay:
+                    applicationId = 12;
+                    break;
+
+                case MSNObjectType.Emoticon:
+                    applicationId = 11;
+                    break;
+            }
         }
 
         public override bool ValidateInvitation(SLPMessage invitation)
@@ -118,7 +129,7 @@ namespace MSNPSharp.DataTransfer
             {
                 P2PDataMessage p2pData = new P2PDataMessage();
                 p2pData.WritePreparationBytes();
-                p2pData.Flags = P2PFlag.Data;
+                p2pData.Flags = P2PFlag.Normal;
                 p2pData.MessageSize = (uint)p2pData.InnerBody.Length;
                 p2pData.TotalSize = p2pData.MessageSize;
 
@@ -131,7 +142,7 @@ namespace MSNPSharp.DataTransfer
                         s.Read(data, 0, data.Length);
                     }
                     P2PDataMessage p2pMessage = new P2PDataMessage();
-                    p2pMessage.Flags = P2PFlag.MSNObjectData;
+                    p2pMessage.Flags = P2PFlag.Data;
                     p2pMessage.InnerBody = data;
 
                     p2pMessage.MessageSize = (uint)p2pMessage.InnerBody.Length;
@@ -149,19 +160,17 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-
-        public override void HandleMessage(IMessageProcessor sender, NetworkMessage message)
+        public override void HandleMessage(IMessageProcessor sender, P2PMessage p2pMessage)
         {
-            P2PMessage p2pMessage = message as P2PMessage;
-
             if ((p2pMessage.InnerBody.Length == 4) && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
             {
-                
+
 
             }
             else if ((p2pMessage.Flags & P2PFlag.Data) == P2PFlag.Data)
             {
                 objStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("Received {0} / {1}", objStream.Length, msnObject.Size), GetType().Name);
 
                 if (objStream.Length == msnObject.Size)
@@ -181,7 +190,6 @@ namespace MSNPSharp.DataTransfer
                     OnTransferFinished(EventArgs.Empty);
                     Session.Close();
                 }
-
             }
         }
     }

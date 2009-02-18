@@ -241,7 +241,7 @@ namespace MSNPSharp.DataTransfer
             //invite.BodyValues["Capabilities-Flags"] = "1";
 
             P2PMessage p2pMessage = new P2PMessage();
-            p2pMessage.Flags = (remote.ClientCapacities > ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
+            p2pMessage.Flags = (remote.ClientCapacities >= ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
             p2pMessage.InnerMessage = invite;
             p2pMessage.MessageSize = (uint)invite.GetBytes().Length;
 
@@ -318,7 +318,7 @@ namespace MSNPSharp.DataTransfer
                     slpMessage.BodyValues["SChannelState"] = "0";
 
                     P2PMessage p2pMessage = new P2PMessage();
-                    p2pMessage.Flags = (remote.ClientCapacities > ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
+                    p2pMessage.Flags = (remote.ClientCapacities >= ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
                     p2pMessage.InnerMessage = slpMessage;
                     p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
 
@@ -354,7 +354,7 @@ namespace MSNPSharp.DataTransfer
                 slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
                 P2PMessage p2pMessage = new P2PMessage();
-                p2pMessage.Flags = (remote.ClientCapacities > ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
+                p2pMessage.Flags = (remote.ClientCapacities >= ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
                 p2pMessage.InnerMessage = slpMessage;
                 p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
 
@@ -394,7 +394,7 @@ namespace MSNPSharp.DataTransfer
                 slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
                 P2PMessage p2pMessage = new P2PMessage();
-                p2pMessage.Flags = (remote.ClientCapacities > ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
+                p2pMessage.Flags = (remote.ClientCapacities >= ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
                 p2pMessage.InnerMessage = slpMessage;
                 p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
 
@@ -425,7 +425,7 @@ namespace MSNPSharp.DataTransfer
                 slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
 
                 P2PMessage p2pMessage = new P2PMessage();
-                p2pMessage.Flags = (remote.ClientCapacities > ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
+                p2pMessage.Flags = (remote.ClientCapacities >= ClientCapacities.CanHandleMSNC8) ? P2PFlag.MSNSLPInfo : P2PFlag.Normal;
                 p2pMessage.InnerMessage = slpMessage;
                 p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
 
