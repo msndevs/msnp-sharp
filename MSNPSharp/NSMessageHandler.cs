@@ -47,6 +47,7 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Handles the protocol messages from the notification server
@@ -671,7 +672,7 @@ namespace MSNPSharp
             {
                 //don't set the same status or it will result in disconnection
                 owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+                owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanSIP | ClientCapacities.SupportP2PUUNBootstrap;
                 string capacities = String.Empty;
 
                 if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
@@ -1299,6 +1300,16 @@ namespace MSNPSharp
                             {
                                 // Logout here...
                                 OnSignedOff(new SignedOffEventArgs(SignedOffReason.OtherClient));
+                            }
+                            return;
+                        }
+
+                    case "3":
+                        {
+                            SLPMessage slp = SLPMessage.Parse(message.InnerBody);
+                            if (slp != null && Messenger.P2PHandler.ProcessSLPMessage(this.MessageProcessor, slp.FromMail, null, slp) == false)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Unable to process SLP message: " + slp.ToDebugString(), GetType().Name);
                             }
                             return;
                         }
