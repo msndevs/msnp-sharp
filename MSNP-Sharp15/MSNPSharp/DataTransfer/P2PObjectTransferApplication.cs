@@ -104,15 +104,18 @@ namespace MSNPSharp.DataTransfer
             msnObject = msnObj;
             sending = false;
 
-            switch (msnObject.ObjectType)
+            if (Remote.ClientCapacities >= ClientCapacities.CanHandleMSNC8)
             {
-                case MSNObjectType.UserDisplay:
-                    applicationId = 12;
-                    break;
+                switch (msnObject.ObjectType)
+                {
+                    case MSNObjectType.UserDisplay:
+                        applicationId = 12;
+                        break;
 
-                case MSNObjectType.Emoticon:
-                    applicationId = 11;
-                    break;
+                    case MSNObjectType.Emoticon:
+                        applicationId = 11;
+                        break;
+                }
             }
         }
 
