@@ -810,7 +810,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
             messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
-            //messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
+            messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
             messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
 
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
@@ -1124,7 +1124,7 @@ namespace MSNPSharpClient
                         // set the credentials, this is ofcourse something every MSNPSharp program will need to implement.
                         messenger.Credentials = new Credentials(accountTextBox.Text, passwordTextBox.Text, (MsnProtocol)Enum.Parse(typeof(MsnProtocol), comboProtocol.Text));
                        
-                        // inform the user what is happening and try to connecto to the messenger network.
+                        // inform the user what is happening and try to connecto to the messenger network.			
                         SetStatus("Connecting to server");
                         messenger.Connect();
 
@@ -1458,17 +1458,16 @@ namespace MSNPSharpClient
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void messenger_TransferInvitationReceived(object sender, EventArgs e)
+        private void messenger_TransferInvitationReceived(object sender, MSNSLPInvitationEventArgs e)
         {
-            /*
             if (MessageBox.Show(
-                e.TransferProperties.RemoteContact +
+                messenger.ContactList[e.TransferProperties.RemoteContact].Name +
                 " wants to send you a file.\r\nFilename: " +
                 e.Filename + "\r\nLength (bytes): " + e.FileSize,
                 "Filetransfer invitation",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                // by setting the Accept property in the EventArgs to true we give the transfer a green light
+                // by setting the Accept property in the EventArgs to true we give the transfer a green light				
                 saveFileDialog.FileName = e.Filename;
                 if ((DialogResult)Invoke(new ShowFileDialogDelegate(ShowFileDialog), new object[] { saveFileDialog }) == DialogResult.OK)
                 {
@@ -1478,7 +1477,6 @@ namespace MSNPSharpClient
                     e.TransferSession.AutoCloseStream = true;
                 }
             }
-             * */
         }
 
         private int nextPing = 50;

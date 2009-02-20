@@ -54,28 +54,106 @@ namespace MSNPSharp.DataTransfer
     /// data messages to the correct <see cref="P2PTransferSession"/> objects. Usually this class is a handler of a switchboard processor.
     /// A common handler for this class is <see cref="MSNSLPHandler"/>.
     /// </remarks>
-    public partial class P2PMessageSession : IMessageHandler, IMessageProcessor
+    public class P2PMessageSession : IMessageHandler, IMessageProcessor
     {
         #region Properties
-
+        /// <summary>
+        /// </summary>
         private uint localBaseIdentifier;
+        /// <summary>
+        /// </summary>
         private uint localIdentifier;
+        /// <summary>
+        /// </summary>
         private uint remoteBaseIdentifier;
+        /// <summary>
+        /// </summary>
         private uint remoteIdentifier;
-        private string remoteContact;
-        private string localContact;
 
         /// <summary>
-        /// This is the processor used before a direct connection. Usually a SB processor.
-        /// It is a fallback variables in case a direct connection fails.
         /// </summary>
-        private IMessageProcessor preDCProcessor;
+        private P2PDCHandshakeMessage handshakeMessage;
 
         /// <summary>
-        /// A collection of all transfersessions
+        /// The handshake message to send to the receiving client when a direct connection has been established
         /// </summary>
-        private Hashtable transferSessions = new Hashtable();
-        
+        /// <remarks>
+        /// If this property is set to null no handshake message is sent.
+        /// </remarks>
+        public P2PDCHandshakeMessage HandshakeMessage
+        {
+            get
+            {
+                return handshakeMessage;
+            }
+            set
+            {
+                handshakeMessage = value;
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        private bool autoAcknowledgeHandshake = true;
+
+        /// <summary>
+        /// Defines whether a direct connection handshake is automatically send to the remote client, or replied with an acknowledgement.
+        /// Setting this to true means the remote client will start the transfer immediately.
+        /// Setting this to false means the client programmer must send a handhsake message and an acknowledgement message after which the transfer will begin.
+        /// </summary>
+        public bool AutoHandshake
+        {
+            get
+            {
+                return autoAcknowledgeHandshake;
+            }
+            set
+            {
+                autoAcknowledgeHandshake = value;
+            }
+        }
+
+        /// <summary>
+        /// </summary>		
+        private bool directConnected;
+
+        /// <summary>
+        /// Defines whether the message session runs over a direct session or is routed via the messaging server
+        /// </summary>
+        public bool DirectConnected
+        {
+            get
+            {
+                return directConnected;
+            }
+        }
+
+        /// <summary>
+        /// </summary>		
+        private bool directConnectionAttempt;
+
+        /// <summary>
+        /// Defines whether an attempt has been made to create a direct connection
+        /// </summary>
+        public bool DirectConnectionAttempt
+        {
+            get
+            {
+                return directConnectionAttempt;
+            }
+        }
+
+        /// <summary>
+        /// Occurs when a direct connection is succesfully established.
+        /// </summary>
+        public event EventHandler<EventArgs> DirectConnectionEstablished;
+
+        /// <summary>
+        /// Occurs when a direct connection attempt has failed.
+        /// </summary>
+        public event EventHandler<EventArgs> DirectConnectionFailed;
+
+
         /// <summary>
         /// The base identifier of the local client
         /// </summary>
@@ -136,6 +214,13 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// </summary>
+        private string remoteContact;
+        /// <summary>
+        /// </summary>
+        private string localContact;
+
+        /// <summary>
         /// The account of the local contact.
         /// </summary>
         public string LocalContact
@@ -189,6 +274,139 @@ namespace MSNPSharp.DataTransfer
             MessageProcessor = null;
 
             transferSessions.Clear();
+        }
+
+        /// <summary>
+        /// A list of all direct processors trying to establish a connection.
+        /// </summary>
+        private ArrayList pendingProcessors = new ArrayList();
+
+        /// <summary>
+        /// Disconnect all processors that are trying to establish a connection.
+        /// </summary>
+        protected void StopAllPendingProcessors()
+        {
+            lock (pendingProcessors)
+            {
+                foreach (P2PDirectProcessor processor in pendingProcessors)
+                {
+                    processor.Disconnect();
+                    processor.UnregisterHandler(this);
+                }
+                pendingProcessors.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Add the processor to the pending list.
+        /// </summary>
+        /// <param name="processor"></param>
+        protected void AddPendingProcessor(P2PDirectProcessor processor)
+        {
+            // we want to handle message from this processor			
+            processor.RegisterHandler(this);
+
+            // inform the session of connected/disconnected events
+            processor.ConnectionEstablished += new EventHandler<EventArgs>(OnDirectProcessorConnected);
+            processor.ConnectionClosed += new EventHandler<EventArgs>(OnDirectProcessorDisconnected);
+            processor.ConnectingException += new EventHandler<ExceptionEventArgs>(OnDirectProcessorException);
+
+            lock (pendingProcessors)
+            {
+                pendingProcessors.Add(processor);
+            }
+        }
+
+        /// <summary>
+        /// Use the given processor as the direct connection processor. And disconnect all other pending processors.
+        /// </summary>
+        /// <param name="processor"></param>
+        protected void UsePendingProcessor(P2PDirectProcessor processor)
+        {
+            lock (pendingProcessors)
+            {
+                if (pendingProcessors.Contains(processor))
+                {
+                    pendingProcessors.Remove(processor);
+                }
+            }
+
+            // stop all remaining attempts
+            StopAllPendingProcessors();
+
+            // set the direct processor as the main processor
+            lock (this)
+            {
+                directConnected = true;
+                directConnectionAttempt = true;
+                preDCProcessor = MessageProcessor;
+                MessageProcessor = processor;
+            }
+
+            if (DirectConnectionEstablished != null)
+                DirectConnectionEstablished(this, new EventArgs());
+        }
+
+        /// <summary>
+        /// Creates a direct connection with the remote client.
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="port"></param>
+        /// <returns></returns>
+        public IMessageProcessor CreateDirectConnection(string host, int port)
+        {
+            // create the P2P Direct processor to handle the file data
+            P2PDirectProcessor processor = new P2PDirectProcessor();
+            processor.ConnectivitySettings = new ConnectivitySettings();
+            processor.ConnectivitySettings.Host = host;
+            processor.ConnectivitySettings.Port = port;
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
+
+            AddPendingProcessor(processor);
+
+            // try to connect
+            processor.Connect();
+
+            return processor;
+        }
+
+
+        /// <summary>
+        /// Setups a P2PDirectProcessor to listen for incoming connections.
+        /// After a connection has been established the P2PDirectProcessor will become the main MessageProcessor to send messages.
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="port"></param>
+        /// <returns></returns>
+        public IMessageProcessor ListenForDirectConnection(IPAddress host, int port)
+        {
+            P2PDirectProcessor processor = new P2PDirectProcessor();
+
+            // we want this session to listen to incoming messages
+            processor.RegisterHandler(this);
+
+            // add to the list of processors trying to establish a connection
+            AddPendingProcessor(processor);
+
+            // start to listen
+            processor.Listen(host, port);
+
+            return processor;
+        }
+
+        /// <summary>
+        /// Closes the direct connection with the remote client, if available. A closing p2p message will be send first.
+        /// The session will fallback to the previous (SB) message processor.
+        /// </summary>
+        public void CloseDirectConnection()
+        {
+            if (DirectConnected == false)
+                return;
+            else
+            {
+                CleanUpDirectConnection();
+            }
         }
 
         /// <summary>
@@ -308,6 +526,8 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        /// <summary>
+        /// </summary>
         private P2PMessagePool p2pMessagePool = new P2PMessagePool();
 
         /// <summary>
@@ -319,7 +539,7 @@ namespace MSNPSharp.DataTransfer
             // create wrapper messages
             MSGMessage msgWrapper = new MSGMessage();
             msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
-#if MSNC12
+#if MSNC9
             //msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
 #endif
             msgWrapper.MimeHeader["Content-Type"] = "application/x-msnmsgrp2p";
@@ -331,12 +551,133 @@ namespace MSNPSharp.DataTransfer
             return sbMessageWrapper;
         }
 
+        /// <summary>
+        /// Sends the handshake message in a direct connection.
+        /// </summary>
+        protected virtual void SendHandshakeMessage(IMessageProcessor processor)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Preparing to send handshake message", GetType().Name);
+
+            SocketMessageProcessor smp = (SocketMessageProcessor)processor;
+
+            if (HandshakeMessage == null)
+            {
+                // don't throw an exception because the file transfer can continue over the switchboard
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Handshake could not be send because none is specified.", GetType().Name);
+
+                // but close the direct connection
+                smp.Disconnect();
+                return;
+            }
+
+            IncreaseLocalIdentifier();
+            HandshakeMessage.Identifier = LocalIdentifier;
+
+            HandshakeMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+            DCHandshakeAck = HandshakeMessage.AckSessionId;
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
+
+            smp.SendMessage(HandshakeMessage);
+        }
+
         #endregion
 
         #region Private
-        
+        /// <summary>
+        /// A collection of all transfersessions
+        /// </summary>
+        private Hashtable transferSessions = new Hashtable();
 
-        
+        /// <summary>
+        /// This is the processor used before a direct connection. Usually a SB processor.
+        /// It is a fallback variables in case a direct connection fails.
+        /// </summary>
+        private IMessageProcessor preDCProcessor;
+
+        /// <summary>
+        /// Tracked to know when an acknowledgement for the handshake is received.
+        /// </summary>
+        private uint DCHandshakeAck;
+
+        /// <summary>
+        /// Sets the message processor back to the switchboard message processor.
+        /// </summary>
+        private void CleanUpDirectConnection()
+        {
+            lock (this)
+            {
+                if (DirectConnected == false)
+                    return;
+
+                SocketMessageProcessor directProcessor = (SocketMessageProcessor)MessageProcessor;
+
+                directConnected = false;
+                directConnectionAttempt = false;
+                MessageProcessor = preDCProcessor;
+
+                directProcessor.Disconnect();
+            }
+        }
+
+
+
+        /// <summary>
+        /// Sets the current message processor to the processor which has just connected succesfully.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnDirectProcessorConnected(object sender, EventArgs e)
+        {
+            //DCHandshakeProcessor = (IMessageProcessor)sender;
+            P2PDirectProcessor p2pdp = (P2PDirectProcessor)sender;
+
+            if (p2pdp.IsListener == false)
+            {
+                if (AutoHandshake == true && HandshakeMessage != null)
+                {
+                    SendHandshakeMessage(p2pdp);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Cleans up the direct connection.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnDirectProcessorDisconnected(object sender, EventArgs e)
+        {
+            CleanUpDirectConnection();
+        }
+
+        /// <summary>
+        /// Called when the direct processor could not connect. It will start the data transfer over the switchboard session.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnDirectProcessorException(object sender, ExceptionEventArgs e)
+        {
+            lock (this)
+            {
+                CleanUpDirectConnection();
+                directConnectionAttempt = true;
+            }
+
+            if (DirectConnectionFailed != null)
+                DirectConnectionFailed(this, new EventArgs());
+        }
+
+        /// <summary>
+        /// Occurs when an acknowledgement to a send handshake has been received, or a handshake is received.
+        /// This will start the data transfer, provided the local client is the sender.
+        /// </summary>
+        protected virtual void OnHandshakeCompleted(P2PDirectProcessor processor)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Handshake accepted", GetType().Name);
+
+            UsePendingProcessor(processor);
+        }
         #endregion
 
         #region IMessageHandler Members
@@ -434,36 +775,6 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region IMessageProcessor Members
-
-        private ArrayList handlers = new ArrayList();
-
-        /// <summary>
-        /// Registers a message handler. After registering the handler will receive incoming messages.
-        /// </summary>
-        /// <param name="handler"></param>
-        public void RegisterHandler(IMessageHandler handler)
-        {
-            lock (handlers)
-            {
-                if (handlers.Contains(handler) == true)
-                    return;
-                handlers.Add(handler);
-            }
-        }
-
-        /// <summary>
-        /// Unregisters a message handler. After registering the handler will no longer receive incoming messages.
-        /// </summary>
-        /// <param name="handler"></param>
-        public void UnregisterHandler(IMessageHandler handler)
-        {
-            lock (handlers)
-            {
-                handlers.Remove(handler);
-            }
-        }
-
-
         /// <summary>
         /// Sends incoming p2p messages to the remote contact.		
         /// </summary>
@@ -692,7 +1003,33 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        
+        private ArrayList handlers = new ArrayList();
+
+        /// <summary>
+        /// Registers a message handler. After registering the handler will receive incoming messages.
+        /// </summary>
+        /// <param name="handler"></param>
+        public void RegisterHandler(IMessageHandler handler)
+        {
+            lock (handlers)
+            {
+                if (handlers.Contains(handler) == true)
+                    return;
+                handlers.Add(handler);
+            }
+        }
+
+        /// <summary>
+        /// Unregisters a message handler. After registering the handler will no longer receive incoming messages.
+        /// </summary>
+        /// <param name="handler"></param>
+        public void UnregisterHandler(IMessageHandler handler)
+        {
+            lock (handlers)
+            {
+                handlers.Remove(handler);
+            }
+        }
 
         #endregion
     }

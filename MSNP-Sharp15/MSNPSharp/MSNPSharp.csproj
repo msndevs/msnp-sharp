@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;MSNP18;MSNC12</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;MSNP18;MSNC9</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\MSNPSharp.XML</DocumentationFile>
@@ -54,13 +54,6 @@
     <Compile Include="Core\NSPayLoadMessage.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
-    <Compile Include="DataTransfer\P2PApplication.cs" />
-    <Compile Include="DataTransfer\P2PFileTransferApplication.cs" />
-    <Compile Include="DataTransfer\P2PObjectTransferApplication.cs" />
-    <Compile Include="DataTransfer\P2PSession.cs" />
-    <Compile Include="DataTransfer\P2PSession.DC.cs">
-      <DependentUpon>P2PSession.cs</DependentUpon>
-    </Compile>
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
@@ -84,6 +77,7 @@
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
     <Compile Include="MSNService.cs" />
+    <Compile Include="DataTransfer\MSNSLPHandler.cs" />
     <Compile Include="DataTransfer\MSNSLPMessage.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />
@@ -99,15 +93,9 @@
     <Compile Include="DataTransfer\P2PDCPool.cs" />
     <Compile Include="DataTransfer\P2PDirectProcessor.cs" />
     <Compile Include="DataTransfer\P2PHandler.cs" />
-    <Compile Include="DataTransfer\P2PHandler.New.cs">
-      <DependentUpon>P2PHandler.cs</DependentUpon>
-    </Compile>
     <Compile Include="DataTransfer\P2PMessage.cs" />
     <Compile Include="DataTransfer\P2PMessagePool.cs" />
     <Compile Include="DataTransfer\P2PMessageSession.cs" />
-    <Compile Include="DataTransfer\P2PMessageSession.DC.cs">
-      <DependentUpon>P2PMessageSession.cs</DependentUpon>
-    </Compile>
     <Compile Include="DataTransfer\P2PTransferSession.cs" />
     <Compile Include="DataTransfer\PersistentStream.cs" />
     <Compile Include="PersonalMessage.cs" />

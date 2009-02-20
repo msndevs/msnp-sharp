@@ -177,15 +177,16 @@ namespace MSNPSharp
         private void transferSession_TransferAborted(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
-            OnMSNObjectDataTransferCompleted(sender as P2PObjectTransferApplication,
-                new MSNObjectDataTransferCompletedEventArgs((sender as P2PObjectTransferApplication).MsnObject, true));
+            OnMSNObjectDataTransferCompleted(sender,
+                new MSNObjectDataTransferCompletedEventArgs((sender as P2PTransferSession).ClientData as MSNObject, true));
         }
 
         private void transferSession_TransferFinished(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
-            OnMSNObjectDataTransferCompleted(sender as P2PObjectTransferApplication,
-                new MSNObjectDataTransferCompletedEventArgs((sender as P2PObjectTransferApplication).MsnObject, false));
+            OnMSNObjectDataTransferCompleted(sender,
+                new MSNObjectDataTransferCompletedEventArgs((sender as P2PTransferSession).ClientData as MSNObject, false));
+
         }
 
         private void AddContact(Contact contact)
@@ -427,16 +428,22 @@ namespace MSNPSharp
             MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
             if (existing == null)
             {
-                e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
+                e.Sender.Emoticons[e.Emoticon.Shortcut] = e.Emoticon;
 
                 // create a session and send the invitation
+                P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.Nameserver.Owner.Mail, e.Sender.Mail);
 
-                P2PSession session = Messenger.P2PHandler.RequestMSNObject(e.Sender, e.Emoticon);
-                object handlerObject = session.GetHandler(typeof(P2PHandler));
+                object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
                 if (handlerObject != null)
-                {                   
-                    session.Application.TransferAborted += new EventHandler<ContactEventArgs>(transferSession_TransferAborted);
-                    session.Application.TransferFinished += new EventHandler<EventArgs>(transferSession_TransferFinished);
+                {
+                    MSNSLPHandler msnslpHandler = (MSNSLPHandler)handlerObject;
+
+                    P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalContact, session.RemoteContact, e.Emoticon);
+                    transferSession.DataStream = e.Emoticon.OpenStream();
+                    transferSession.ClientData = e.Emoticon;
+
+                    transferSession.TransferAborted += new EventHandler<EventArgs>(transferSession_TransferAborted);
+                    transferSession.TransferFinished += new EventHandler<EventArgs>(transferSession_TransferFinished);
 
                     MSNObjectCatalog.GetInstance().Add(e.Emoticon);
                 }

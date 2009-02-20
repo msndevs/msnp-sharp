@@ -280,7 +280,7 @@ namespace MSNPSharp
     /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
-    [Flags]
+    [FlagsAttribute]
     public enum ClientCapacities : long
     {
         None = 0x00,
@@ -292,11 +292,9 @@ namespace MSNPSharp
         CanMultiPacketMSG = 0x20,
         IsMobileDevice = 0x40,
         IsDirectDevice = 0x80,
-        UNKNOWN100 = 0x100,
         IsWebClient = 0x200,
-        UNKNOWN400 = 0x400,
         IsTGWClient = 0x800,
-        HasMSNSpaces = 0x1000,
+        HasMSNSpaces = 0x1000, // 0x001000
         UsingXPMediaCenter = 0x2000,
         /// <summary>
         /// Activity support.
@@ -308,13 +306,11 @@ namespace MSNPSharp
         CanReceiveVoiceClips = 0x40000,
         CanSecureChannel = 0x80000,
         CanSIP = 0x100000,
-        UNKNOWN200000 = 0x200000,
         CanShareFolders = 0x400000,
-        UNKNOWN800000 = 0x800000,
+
         HasOneCare = 0x1000000,
         SupportP2PTURN = 0x2000000,
         SupportP2PUUNBootstrap = 0x4000000,
-        UNKNOWN8000000 = 0x8000000,
 
         /// <summary>
         /// MSN 6.0
@@ -345,34 +341,13 @@ namespace MSNPSharp
         /// </summary>
         CanHandleMSNC7 = 0x70000000,
         /// <summary>
-        /// MSN 8.5 (MSNP15)
+        /// MSN 8.5
         /// </summary>
         CanHandleMSNC8 = 0x80000000,
         /// <summary>
-        /// MSN 9.0 (MSNP16)
+        /// MSN 9.0
         /// </summary>
-        CanHandleMSNC9 = 0x90000000,
-        /// <summary>
-        /// MSN 12.0 (MSNP18)
-        /// </summary>
-        CanHandleMSNC10 = 0xA0000000,
-        /// <summary>
-        /// Mask for MSNC
-        /// </summary>
-        CanHandleMSNCMask = 0xF0000000
-    }
-
-    [Flags]
-    public enum ClientCapacitiesEx : long
-    {
-        None = 0x00,
-        Can01 = 0x01,
-        Can02 = 0x02,
-        Can04 = 0x04,
-        Can08 = 0x08,
-        Can16 = 0x10,
-        Can32 = 0x20,
-        Can64 = 0x40
+        CanHandleMSNC9 = 0x90000000
     }
 
     /// <summary>
