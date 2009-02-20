@@ -78,7 +78,9 @@ namespace MSNPSharp
             storageService.StorageUserHeaderValue.Puid = 0;
             storageService.StorageUserHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket;
             storageService.AffinityCacheHeaderValue = new AffinityCacheHeader();
-            storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
+            storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey)
+                ? NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey] : String.Empty;
+
             return storageService;
         }
 
@@ -172,7 +174,8 @@ namespace MSNPSharp
                 srvHandle.Type = ServiceFilterType.Profile;
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed");
+                    object nullObject = null;
+                    SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed", nullObject);
                     sharingService.AllowAutoRedirect = true;
 
                     AddMemberRequestType addMemberRequest = new AddMemberRequestType();
@@ -323,7 +326,8 @@ namespace MSNPSharp
                 //8. UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingSeed");
+                    object abServiceObject = null;
+                    ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingSeed", abServiceObject);
                     abService.AllowAutoRedirect = true;
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
@@ -544,7 +548,8 @@ namespace MSNPSharp
                 // UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged");
+                    object abServiceObject = null;
+                    ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged", abServiceObject);
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
                     updateDyItemRequest.abId = Guid.Empty.ToString();
@@ -579,7 +584,7 @@ namespace MSNPSharp
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex2.Message, GetType().Name);
                         return;
                     }
-                    NSMessageHandler.ContactService.handleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
+                    NSMessageHandler.ContactService.HandleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
                     NSMessageHandler.ContactService.Deltas.Save();
                 }
 
