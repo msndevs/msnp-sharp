@@ -292,9 +292,11 @@ namespace MSNPSharp
         CanMultiPacketMSG = 0x20,
         IsMobileDevice = 0x40,
         IsDirectDevice = 0x80,
+        UNKNOWN100 = 0x100,
         IsWebClient = 0x200,
+        UNKNOWN400 = 0x400,
         IsTGWClient = 0x800,
-        HasMSNSpaces = 0x1000, // 0x001000
+        HasMSNSpaces = 0x1000,
         UsingXPMediaCenter = 0x2000,
         /// <summary>
         /// Activity support.
@@ -306,11 +308,13 @@ namespace MSNPSharp
         CanReceiveVoiceClips = 0x40000,
         CanSecureChannel = 0x80000,
         CanSIP = 0x100000,
+        UNKNOWN200000 = 0x200000,
         CanShareFolders = 0x400000,
-
+        UNKNOWN800000 = 0x800000,
         HasOneCare = 0x1000000,
         SupportP2PTURN = 0x2000000,
         SupportP2PUUNBootstrap = 0x4000000,
+        UNKNOWN8000000 = 0x8000000,
 
         /// <summary>
         /// MSN 6.0
@@ -345,9 +349,9 @@ namespace MSNPSharp
         /// </summary>
         CanHandleMSNC8 = 0x80000000,
         /// <summary>
-        /// MSN 9.0
+        /// MSN 12.0
         /// </summary>
-        CanHandleMSNC9 = 0x90000000
+        CanHandleMSNC12 = 0xA0000000
     }
 
     /// <summary>

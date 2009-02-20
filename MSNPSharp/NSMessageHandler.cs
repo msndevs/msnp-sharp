@@ -84,8 +84,8 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-#if MSNC9
-            owner.ClientCapacities = ClientCapacities.CanHandleMSNC9
+#if MSNC12
+            owner.ClientCapacities = ClientCapacities.CanHandleMSNC12
 #else
             owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
 #endif
@@ -679,7 +679,7 @@ namespace MSNPSharp
                 string capacities = ((long)owner.ClientCapacities).ToString();
                 if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
                 {
-#if MSNC9
+#if MSNC12
                     capacities += ":48";
 #else
                     capacities += ":0";
@@ -1106,7 +1106,10 @@ namespace MSNPSharp
                 newdp = message.CommandValues.Count >= 6 ? message.CommandValues[5].ToString() : String.Empty;
             }
 
-            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember) ? Owner : ContactList.GetContact(account, type);
+            if (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+                return;
+
+            Contact contact = ContactList.GetContact(account, type);
             contact.SetName(HttpUtility.UrlDecode(newname));
             if (newcaps != ClientCapacities.None)
             {

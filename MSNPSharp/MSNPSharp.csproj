@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;MSNP18;MSNC9</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;MSNP18;MSNC12</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\MSNPSharp.XML</DocumentationFile>
@@ -96,6 +96,9 @@
     <Compile Include="DataTransfer\P2PMessage.cs" />
     <Compile Include="DataTransfer\P2PMessagePool.cs" />
     <Compile Include="DataTransfer\P2PMessageSession.cs" />
+    <Compile Include="DataTransfer\P2PMessageSession.DC.cs">
+      <DependentUpon>P2PMessageSession.cs</DependentUpon>
+    </Compile>
     <Compile Include="DataTransfer\P2PTransferSession.cs" />
     <Compile Include="DataTransfer\PersistentStream.cs" />
     <Compile Include="PersonalMessage.cs" />
