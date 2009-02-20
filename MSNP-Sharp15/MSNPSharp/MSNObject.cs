@@ -107,9 +107,9 @@ namespace MSNPSharp
         /// </summary>
         RoamingObject = 13,
         /// <summary>
-        /// Information about your locations (City, Country, etc).
+        /// Signature sound
         /// </summary>
-        Location = 14
+        SignatureSound = 14
     }
 
     /// <summary>
