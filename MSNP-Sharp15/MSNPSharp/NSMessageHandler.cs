@@ -1595,15 +1595,7 @@ namespace MSNPSharp
                     externalEndPoint = new IPEndPoint(ip, clientPort);
                 }
 
-                if (AutoSynchronize)
-                {
-                    ContactService.SynchronizeContactList();
-                }
-                else
-                {
-                    Owner.CreateDefaultDisplayImage(null);
-                    OnSignedIn(EventArgs.Empty);
-                }
+                ContactService.SynchronizeContactList();
             }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
             {

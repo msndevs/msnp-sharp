@@ -226,7 +226,7 @@ namespace MSNPSharp
             {
                 return cid;
             }
-            internal set
+            set
             {
                 cid = value;
             }
