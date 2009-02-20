@@ -84,13 +84,7 @@ namespace MSNPSharp
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-#if MSNC12
-            owner.ClientCapacities = ClientCapacities.CanHandleMSNC12
-#else
-            owner.ClientCapacities = ClientCapacities.CanHandleMSNC8
-#endif
-
- | ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+            owner.ClientCapacities = ClientCapacities.None;
 
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
@@ -676,15 +670,32 @@ namespace MSNPSharp
             else if (status != owner.Status)
             {
                 //don't set the same status or it will result in disconnection
-                string capacities = ((long)owner.ClientCapacities).ToString();
+                owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
+                owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+                string capacities = String.Empty;
+
                 if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
                 {
-#if MSNC12
-                    capacities += ":48";
-#else
-                    capacities += ":0";
-#endif
+                    ClientCapacitiesEx capsext = ClientCapacitiesEx.None;
+                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+                    {
+                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC10;
+                        capsext |= ClientCapacitiesEx.Can16 | ClientCapacitiesEx.Can32;
+                    }
+                    else if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+                    {
+                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
+                        capsext |= ClientCapacitiesEx.Can16;
+                    }
+
+                    capacities = ((long)owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
                 }
+                else
+                {
+                    owner.ClientCapacities |= ClientCapacities.CanHandleMSNC8;
+                    capacities = ((long)owner.ClientCapacities).ToString();
+                }
+
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
         }
@@ -1035,7 +1046,20 @@ namespace MSNPSharp
                 string account = message.CommandValues[2].ToString().ToLowerInvariant();
                 ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[3].ToString());
                 string newname = (message.CommandValues.Count >= 5) ? message.CommandValues[4].ToString() : String.Empty;
-                ClientCapacities newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 6) ? (message.CommandValues[5].ToString().Contains(":") ? message.CommandValues[5].ToString().Split(':')[0] : message.CommandValues[5].ToString()) : "0"));
+                ClientCapacities newcaps = ClientCapacities.None;
+                ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
+                if (message.CommandValues.Count >= 6)
+                {
+                    if (message.CommandValues[5].ToString().Contains(":"))
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[5].ToString().Split(':')[0]);
+                        newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[5].ToString().Split(':')[1]);
+                    }
+                    else
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[5].ToString());
+                    }
+                }
                 string newdp = message.CommandValues.Count >= 7 ? message.CommandValues[6].ToString() : String.Empty;
 
 
@@ -1043,11 +1067,8 @@ namespace MSNPSharp
                     ? Owner : ContactList.GetContact(account, type);
 
                 contact.SetName(HttpUtility.UrlDecode(newname));
-
-                if (newcaps != ClientCapacities.None)
-                {
-                    contact.ClientCapacities = (ClientCapacities)newcaps;
-                }
+                contact.ClientCapacities = newcaps;
+                contact.ClientCapacitiesEx = newcapsex;
 
                 if (contact != Owner && !String.IsNullOrEmpty(newdp))
                 {
@@ -1086,7 +1107,8 @@ namespace MSNPSharp
             ClientType type;
             string account;
             string newname;
-            ClientCapacities newcaps;
+            ClientCapacities newcaps = ClientCapacities.None;
+            ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
             string newdp;
 
             if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
@@ -1094,7 +1116,19 @@ namespace MSNPSharp
                 type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
                 account = message.CommandValues[1].ToString().Split(':')[1].ToLowerInvariant();
                 newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-                newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 4) ? (message.CommandValues[3].ToString().Contains(":") ? message.CommandValues[3].ToString().Split(':')[0] : message.CommandValues[3].ToString()) : "0"));
+                if (message.CommandValues.Count >= 4)
+                {
+                    if (message.CommandValues[3].ToString().Contains(":"))
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
+                        newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
+                    }
+                    else
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString());
+                    }
+
+                }
                 newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
             }
             else
@@ -1102,7 +1136,18 @@ namespace MSNPSharp
                 type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[2].ToString());
                 account = message.CommandValues[1].ToString().ToLowerInvariant();
                 newname = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
-                newcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 5) ? (message.CommandValues[4].ToString().Contains(":") ? message.CommandValues[4].ToString().Split(':')[0] : message.CommandValues[4].ToString()) : "0"));
+                if (message.CommandValues.Count >= 5)
+                {
+                    if (message.CommandValues[4].ToString().Contains(":"))
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[4].ToString().Split(':')[0]);
+                        newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[4].ToString().Split(':')[1]);
+                    }
+                    else
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[4].ToString());
+                    }
+                }
                 newdp = message.CommandValues.Count >= 6 ? message.CommandValues[5].ToString() : String.Empty;
             }
 
@@ -1111,10 +1156,8 @@ namespace MSNPSharp
 
             Contact contact = ContactList.GetContact(account, type);
             contact.SetName(HttpUtility.UrlDecode(newname));
-            if (newcaps != ClientCapacities.None)
-            {
-                contact.ClientCapacities = (ClientCapacities)newcaps;
-            }
+            contact.ClientCapacities = newcaps;
+            contact.ClientCapacitiesEx = newcapsex;
 
             if (contact != Owner && !String.IsNullOrEmpty(newdp))
             {
@@ -1149,21 +1192,44 @@ namespace MSNPSharp
         {
             ClientType type;
             string account;
-            ClientCapacities oldcaps;
+            ClientCapacities oldcaps = ClientCapacities.None;
+            ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
             string networkpng;
 
             if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
             {
                 type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
                 account = message.CommandValues[0].ToString().Split(':')[1].ToLowerInvariant();
-                oldcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 2) ? (message.CommandValues[1].ToString().Contains(":") ? message.CommandValues[1].ToString().Split(':')[0] : message.CommandValues[1].ToString()) : "0"));
+                if (message.CommandValues.Count >= 2)
+                {
+                    if (message.CommandValues[1].ToString().Contains(":"))
+                    {
+                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
+                        oldcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
+                    }
+                    else
+                    {
+                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
+                    }
+                }
                 networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
             }
             else
             {
                 type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString());
                 account = message.CommandValues[0].ToString().ToLowerInvariant();
-                oldcaps = (ClientCapacities)Convert.ToInt64(((message.CommandValues.Count >= 3) ? (message.CommandValues[2].ToString().Contains(":") ? message.CommandValues[2].ToString().Split(':')[0] : message.CommandValues[2].ToString()) : "0"));
+                if (message.CommandValues.Count >= 3)
+                {
+                    if (message.CommandValues[2].ToString().Contains(":"))
+                    {
+                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[2].ToString().Split(':')[0]);
+                        oldcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[2].ToString().Split(':')[1]);
+                    }
+                    else
+                    {
+                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[2].ToString());
+                    }
+                }
                 networkpng = (message.CommandValues.Count >= 4) ? message.CommandValues[3].ToString() : String.Empty;
             }
 

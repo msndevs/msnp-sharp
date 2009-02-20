@@ -1,6 +1,6 @@
-#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
 (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
@@ -216,16 +216,12 @@ namespace MSNPSharp
         {
             if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
-                // resend the user status so other client can see the new msn object
-#if MSNP18
-#if MSNC12
-                string capacities = ((long)ClientCapacities).ToString() + ":48";
-#else
-                string capacities = ((long)ClientCapacities).ToString() + ":0";
-#endif
-#else
-                string capacities = ((long)ClientCapacities).ToString();
-#endif
+                // Resend the user status so other client can see the new msn object
+
+                string capacities = (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                    ? ((long)ClientCapacities).ToString() + ":" + ((long)ClientCapacitiesEx).ToString()
+                    : ((long)ClientCapacities).ToString();
+
                 string context = String.Empty;
 
                 if (DisplayImage != null)

@@ -350,7 +350,7 @@ namespace MSNPSharp
             int oimdeletecount = xnodlst.Count;
 
             Regex regmsg = new Regex("\n\n(?<encodedmsg>[^\n]+)");
-            Regex regsenderdata = new Regex("From:[ ]*=\\u003F(?<encode>.+)\\u003F(?<decoder>.)\\u003F(?<encodenick>.+)\\u003F=[ ]*<(?<mail>.+)>[\r]*\n");
+            Regex regsenderdata = new Regex("From:[ ]*=\\u003F(?<encode>.+)\\u003F(?<decoder>.)\\u003F(?<encodenick>.+)\\u003F=[ ]*<(?<mail>.+)>[\r]*\n|From:[ ]*<(?<mail>.+)>[\r]*\n");
 
             foreach (XmlNode m in xnodlst)
             {
@@ -389,23 +389,26 @@ namespace MSNPSharp
                             string strencoding = mch.Groups["encode"].Value;
                             string strdecode = mch.Groups["decoder"].Value;
                             string strencodenick = mch.Groups["encodenick"].Value;
-                            string nick = "";
-                            Encoding encode = Encoding.GetEncoding(strencoding);
-                            if (strdecode.ToLowerInvariant() == "b")
+                            string nick = String.Empty;
+                            if (strencoding != String.Empty)
                             {
-                                byte[] bytnick = Convert.FromBase64String(strencodenick);
-                                nick = encode.GetString(bytnick);
-                            }
+                                Encoding encode = Encoding.GetEncoding(strencoding);
+                                if (strdecode.ToLowerInvariant() == "b")
+                                {
+                                    byte[] bytnick = Convert.FromBase64String(strencodenick);
+                                    nick = encode.GetString(bytnick);
+                                }
 
-                            if (strdecode.ToLowerInvariant() == "q")
-                            {
-                                nick = MSNHttpUtility.QPDecode(strencodenick, encode);
+                                if (strdecode.ToLowerInvariant() == "q")
+                                {
+                                    nick = MSNHttpUtility.QPDecode(strencodenick, encode);
+                                }
                             }
 
                             if (regmsg.Match(e.Result.GetMessageResult).Success)
                             {
                                 string msgstr = regmsg.Match(e.Result.GetMessageResult).Groups["encodedmsg"].Value.Trim();
-                                message = encode.GetString(Convert.FromBase64String(msgstr));  //Maybe always use utf-8 ?
+                                message = Encoding.UTF8.GetString(Convert.FromBase64String(msgstr));  //Maybe always use utf-8 ?
 
                                 OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, guid, email, nick, message);
 
