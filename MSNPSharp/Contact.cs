@@ -148,7 +148,6 @@ namespace MSNPSharp
         private bool isMessengerUser;
 
         private ClientCapacities clientCapacities = ClientCapacities.None;
-        private ClientCapacitiesEx clientCapacitiesEx = ClientCapacitiesEx.None;
         private DynamicItemState dynamicChanged = DynamicItemState.None;
         private PresenceStatus status = PresenceStatus.Offline;
         private ClientType clientType = ClientType.PassportMember;
@@ -227,7 +226,7 @@ namespace MSNPSharp
             {
                 return cid;
             }
-            set
+            internal set
             {
                 cid = value;
             }
@@ -322,18 +321,6 @@ namespace MSNPSharp
             }
         }
 
-        public ClientCapacitiesEx ClientCapacitiesEx
-        {
-            get
-            {
-                return clientCapacitiesEx;
-            }
-            set
-            {
-                clientCapacitiesEx = value;
-            }
-        }
-
         /// <summary>
         /// When DynamicChanged = HasNew, the official client will show a gleam before the contact.
         /// </summary>
@@ -425,9 +412,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Emoticons[sha]
-        /// </summary>
         public Dictionary<string, Emoticon> Emoticons
         {
             get

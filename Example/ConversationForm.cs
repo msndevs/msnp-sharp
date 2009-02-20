@@ -98,59 +98,50 @@ namespace MSNPSharpClient
 
             if (contact != null)
             {
-                _conversation.ContactJoined += delegate(object sender, ContactEventArgs e)
+                _conversation.Invite(contact);
+
+                // request the image, if not already available
+                if (contact.Status != PresenceStatus.Offline && contact.DisplayImage != null)
                 {
-                    // request the image, if not already available
-                    if (e.Contact.Status != PresenceStatus.Offline && e.Contact.DisplayImage != null)
+                    if (contact.DisplayImage.Image == null)
                     {
-                        if (e.Contact.DisplayImage.Image == null)
+                        try
                         {
-                            try
+                            if (contact.ClientType == ClientType.PassportMember)
                             {
-                                if (e.Contact.ClientType == ClientType.PassportMember)
+                                // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
+                                // The MSNSLPHandler makes use of the underlying P2P framework.					
+                                MSNSLPHandler msnslpHandler = conversation.Messenger.GetMSNSLPHandler(contact.Mail);
+
+                                // by sending an invitation a P2PTransferSession is automatically created.
+                                // the session object takes care of the actual data transfer to the remote client,
+                                // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
+                                P2PTransferSession session = msnslpHandler.SendInvitation(conversation.Messenger.Owner.Mail, contact.Mail, contact.DisplayImage);
+
+                                // as usual, via events we want to be notified when a transfer is finished.
+                                // ofcourse, optionally, you can also catch abort and error events.
+                                session.TransferFinished += delegate(object s, EventArgs ea)
                                 {
-                                    P2PSession p2psess = conversation.Messenger.P2PHandler.RequestMSNObject(e.Contact, e.Contact.DisplayImage);
-                                    p2psess.Closed += delegate
-                                    {
-                                        displayUser.Image = e.Contact.DisplayImage.Image;
-                                    };
+                                    P2PTransferSession sess = (P2PTransferSession)s;
+                                    DisplayImage image = (DisplayImage)sess.ClientData;
+                                    image.RetrieveImage();
 
+                                    if (image.Image != null)
+                                        displayUser.Image = image.Image;
+                                };
 
-                                    // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
-                                    // The MSNSLPHandler makes use of the underlying P2P framework.
-                                    //MSNSLPHandler msnslpHandler = conversation.Messenger.GetMSNSLPHandler(contact.Mail);
-
-                                    // by sending an invitation a P2PTransferSession is automatically created.
-                                    // the session object takes care of the actual data transfer to the remote client,
-                                    // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                                    //P2PTransferSession session = msnslpHandler.SendInvitation(conversation.Messenger.Owner.Mail, contact.Mail, contact.DisplayImage);
-
-                                    // as usual, via events we want to be notified when a transfer is finished.
-                                    // ofcourse, optionally, you can also catch abort and error events.
-                                    //session.TransferFinished += delegate(object s, EventArgs ea)
-                                    //{
-                                    //    P2PTransferSession sess = (P2PTransferSession)s;
-                                    //    DisplayImage image = (DisplayImage)sess.ClientData;
-                                    //    image.RetrieveImage();
-
-                                    //    if (image.Image != null)
-                                    //        displayUser.Image = image.Image;
-                                    //};
-
-                                    //session.ClientData = contact.DisplayImage;
-                                }
-                            }
-                            catch (Exception)
-                            {
-
+                                session.ClientData = contact.DisplayImage;
                             }
                         }
-                        else
-                            displayUser.Image = contact.DisplayImage.Image;
+                        catch (Exception)
+                        {
+
+                        }
                     }
-                };
-                _conversation.Invite(contact);
-            }
+                    else
+                        displayUser.Image = contact.DisplayImage.Image;
+                }
+            }            
         }
 
         /// <summary>
@@ -963,34 +954,9 @@ namespace MSNPSharpClient
                     {
                         foreach (string filename in openFileDialog.FileNames)
                         {
-                            // No detail
-                            // Conversation.Messenger.P2PHandler.SendFile(contact, filename);
-
-                            // Detailed
-                            FileStream stream = File.OpenRead(filename);
-
-                            P2PFileTransferApplication filetrans =
-                                new P2PFileTransferApplication(
-                                contact,
-                                stream,
-                                Path.GetFileName(filename)
-                            );
-                            filetrans.Progressed += delegate
-                            {
-                                Trace.WriteLine(filetrans.Transferred);
-                            };
-                            filetrans.TransferFinished += delegate
-                            {
-                                stream.Close();
-                                MessageBox.Show("File sent successfuly");
-                            };
-
-                            
-
-                            // Start file transfer
-                            Conversation.Messenger.P2PHandler.AddTransfer(filetrans);
-
-
+                            MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact.Mail);
+                            FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, contact.Mail, Path.GetFileName(filename), fileStream);
                         }
                     }
                 }

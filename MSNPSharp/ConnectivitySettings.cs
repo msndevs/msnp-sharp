@@ -32,14 +32,14 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Web;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using System.Net.Security;
 
     public class MSNServiceCertificatePolicy : ICertificatePolicy
     {
@@ -79,6 +79,8 @@ namespace MSNPSharp
                 ServicePointManager.CertificatePolicy = new MSNServiceCertificatePolicy();
 #pragma warning restore 0618
             }
+
+
         }
 
         /// <summary>

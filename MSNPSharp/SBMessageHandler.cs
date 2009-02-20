@@ -523,10 +523,10 @@ namespace MSNPSharp
 
             foreach (Emoticon emoticon in emoticons)
             {
-                if (!NSMessageHandler.Owner.Emoticons.ContainsKey(emoticon.Sha))
+                if (!NSMessageHandler.Owner.Emoticons.ContainsKey(emoticon.Shortcut))
                 {
                     // Add the emotions to owner's emoticon collection.
-                    NSMessageHandler.Owner.Emoticons.Add(emoticon.Sha, emoticon);
+                    NSMessageHandler.Owner.Emoticons.Add(emoticon.Shortcut, emoticon);
                 }
             }
 

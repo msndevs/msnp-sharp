@@ -50,7 +50,9 @@ namespace MSNPSharp.Core
         private static Type switchboardProcessor = typeof(SBMessageProcessor);
         private static Type contact = typeof(Contact);
         private static Type p2pHandler = typeof(P2PHandler);
+        private static Type p2pTransferSession = typeof(P2PTransferSession);
         private static Type p2pMessageSession = typeof(P2PMessageSession);
+        private static Type msnslpHandler = typeof(MSNSLPHandler);
 
         /// <summary>
         /// The type used to create nameserver handler objects.
@@ -158,6 +160,21 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
+        /// The type used to create P2P transfer session objects.
+        /// </summary>
+        public static Type P2PTransferSession
+        {
+            get
+            {
+                return p2pTransferSession;
+            }
+            set
+            {
+                p2pTransferSession = value;
+            }
+        }
+
+        /// <summary>
         /// The type used to create P2P message session objects.
         /// </summary>
         public static Type P2PMessageSession
@@ -173,12 +190,47 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
+        /// The type used to create MSNSLP Handler objects.
+        /// </summary>
+        public static Type MSNSLPHandler
+        {
+            get
+            {
+                return msnslpHandler;
+            }
+            set
+            {
+                msnslpHandler = value;
+            }
+        }
+
+
+
+        /// <summary>
+        /// Creates a default msnslpHandler.
+        /// </summary>
+        /// <returns></returns>
+        public static MSNSLPHandler CreateMSNSLPHandler()
+        {
+            return (MSNSLPHandler)Activator.CreateInstance(msnslpHandler, true);
+        }
+
+        /// <summary>
         /// Creates a default p2p handler.
         /// </summary>
         /// <returns></returns>
         public static P2PHandler CreateP2PHandler()
         {
             return (P2PHandler)Activator.CreateInstance(p2pHandler, true);
+        }
+
+        /// <summary>
+        /// Creates a default p2p transfer session handler.
+        /// </summary>
+        /// <returns></returns>
+        public static P2PTransferSession CreateP2PTransferSession()
+        {
+            return (P2PTransferSession)Activator.CreateInstance(p2pTransferSession, true);
         }
 
         /// <summary>

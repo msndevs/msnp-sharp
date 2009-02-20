@@ -30,12 +30,10 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-
 namespace MSNPSharp.DataTransfer
 {
+    using System;
+    using System.IO;
     using MSNPSharp.Core;
     using MSNPSharp;
 
@@ -46,7 +44,7 @@ namespace MSNPSharp.DataTransfer
     public enum P2PFlag : uint
     {
         /// <summary>
-        /// Normal (protocol) message.
+        /// Normal (protocl) message.
         /// </summary>
         Normal = 0,
         /// <summary>
@@ -96,13 +94,9 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        MSNObjectData = MSNSLPInfo | P2PFlag.Data
-    }
+        MSNObjectData = MSNSLPInfo | P2PFlag.Data,
 
-    public enum AppFlags
-    {
-
-#if MSNC12
+#if MSNC9
         /// <summary>
         /// Footer for a msn DisplayImage p2pMessage.
         /// </summary>
@@ -158,8 +152,8 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
-
-#if MSNC12
+        
+#if MSNC9
         /// <summary>
         /// The AppID used in invitations for DisplayImage p2p transfer.
         /// </summary>
@@ -204,10 +198,6 @@ namespace MSNPSharp.DataTransfer
         private uint ackIdentifier;
         private ulong ackTotalSize;
         private uint footer;
-
-        public P2PMessage()
-        {
-        }
 
         /// <summary>
         /// The session identifier field. Bytes 0-3 in the binary header.
@@ -370,26 +360,8 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// Indicates whether the message will be acked. If so, send a message returned from CreateAcknowledgement(). 
-        /// </summary>
-        public bool ShouldAck
+        public P2PMessage()
         {
-            get
-            {
-                if ((Offset + MessageSize) != TotalSize)
-                    return false;
-                if (AckIdentifier > 0)
-                    return false;
-                if (InnerBody != null)
-                    return false;
-                if ((Flags & P2PFlag.Waiting) == P2PFlag.Waiting)
-                    return false;
-                if ((Flags & P2PFlag.CloseSession) == P2PFlag.CloseSession)
-                    return false;
-
-                return true;
-            }
         }
 
         /// <summary>
@@ -405,38 +377,6 @@ namespace MSNPSharp.DataTransfer
             ack.AckIdentifier = AckSessionId;
             ack.AckTotalSize = TotalSize;
             return ack;
-        }
-
-        public P2PMessage[] SplitMessage(int maxSize)
-        {
-            if (MessageSize <= maxSize)
-                return new P2PMessage[] { this };
-
-            uint offset = 0;
-            Random rand = new Random();
-            int cnt = ((int)(MessageSize / maxSize)) + 1;
-            List<P2PMessage> chunks = new List<P2PMessage>(cnt);
-            byte[] totalMessage = (InnerBody != null) ? InnerBody : InnerMessage.GetBytes();
-            for (int i = 0; i < cnt; i++)
-            {
-                P2PMessage chunkMessage = new P2PMessage();
-                chunkMessage.AckIdentifier = AckIdentifier;
-                chunkMessage.AckTotalSize = AckTotalSize;
-                chunkMessage.Flags = Flags;
-                chunkMessage.Footer = Footer;
-                chunkMessage.Identifier = Identifier;
-                chunkMessage.MessageSize = (uint)Math.Min((uint)maxSize, (uint)(MessageSize - offset));
-                chunkMessage.Offset = offset;
-                chunkMessage.SessionId = SessionId;
-                chunkMessage.TotalSize = MessageSize;
-                chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
-                Array.Copy(totalMessage, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
-                chunkMessage.AckSessionId = (uint)rand.Next(50000, int.MaxValue);
-                chunkMessage.PrepareMessage();
-                chunks.Add(chunkMessage);
-                offset += chunkMessage.MessageSize;
-            }
-            return chunks.ToArray();
         }
 
         /// <summary>
