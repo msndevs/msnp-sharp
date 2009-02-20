@@ -428,7 +428,7 @@ namespace MSNPSharp
             MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
             if (existing == null)
             {
-                e.Sender.Emoticons[e.Emoticon.Shortcut] = e.Emoticon;
+                e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
 
                 // create a session and send the invitation
                 P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.Nameserver.Owner.Mail, e.Sender.Mail);

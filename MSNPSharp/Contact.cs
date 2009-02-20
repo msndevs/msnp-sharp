@@ -425,6 +425,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Emoticons[sha]
+        /// </summary>
         public Dictionary<string, Emoticon> Emoticons
         {
             get

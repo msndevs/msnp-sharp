@@ -94,7 +94,11 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        MSNObjectData = MSNSLPInfo | P2PFlag.Data,
+        MSNObjectData = MSNSLPInfo | P2PFlag.Data
+    }
+
+    public enum AppFlags
+    {
 
 #if MSNC12
         /// <summary>
@@ -198,6 +202,10 @@ namespace MSNPSharp.DataTransfer
         private uint ackIdentifier;
         private ulong ackTotalSize;
         private uint footer;
+
+        public P2PMessage()
+        {
+        }
 
         /// <summary>
         /// The session identifier field. Bytes 0-3 in the binary header.
@@ -360,8 +368,26 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        public P2PMessage()
+        /// <summary>
+        /// Indicates whether the message will be acked. If so, send a message returned from CreateAcknowledgement(). 
+        /// </summary>
+        public bool ShouldAck
         {
+            get
+            {
+                if ((Offset + MessageSize) != TotalSize)
+                    return false;
+                if (AckIdentifier > 0)
+                    return false;
+                if (InnerBody != null)
+                    return false;
+                if ((Flags & P2PFlag.Waiting) == P2PFlag.Waiting)
+                    return false;
+                if ((Flags & P2PFlag.CloseSession) == P2PFlag.CloseSession)
+                    return false;
+
+                return true;
+            }
         }
 
         /// <summary>
