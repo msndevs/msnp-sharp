@@ -1576,7 +1576,7 @@ namespace MSNPSharp
                     (string)msgMessage.MimeHeader["Subject"],
                     (string)msgMessage.MimeHeader["Dest-Folder"],
                     (string)msgMessage.MimeHeader["From-Addr"],
-                    int.Parse((string)msgMessage.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture)
+                    msgMessage.MimeHeader.ContainsKey("id") ? int.Parse((string)msgMessage.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture) : 0
                 ));
             }
             else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
@@ -1588,14 +1588,14 @@ namespace MSNPSharp
                 OnMailChanged(new MailChangedEventArgs(
                     (string)msgMessage.MimeHeader["Src-Folder"],
                     (string)msgMessage.MimeHeader["Dest-Folder"],
-                    int.Parse((string)msgMessage.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture)
+                    msgMessage.MimeHeader.ContainsKey("Message-Delta") ? int.Parse((string)msgMessage.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture) : 0
                 ));
             }
             else if (mime.IndexOf("x-msmsgsinitialemailnotification") >= 0)
             {
                 OnMailboxStatusReceived(new MailboxStatusEventArgs(
-                    int.Parse((string)msgMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture),
-                    int.Parse((string)msgMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture),
+                    msgMessage.MimeHeader.ContainsKey("Inbox-Unread") ? int.Parse((string)msgMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture) : 0,
+                    msgMessage.MimeHeader.ContainsKey("Folders-Unread") ? int.Parse((string)msgMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture) : 0,
                     (string)msgMessage.MimeHeader["Inbox-URL"],
                     (string)msgMessage.MimeHeader["Folders-URL"],
                     (string)msgMessage.MimeHeader["Post-URL"]
