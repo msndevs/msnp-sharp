@@ -349,15 +349,12 @@ namespace MSNPSharp
             List<OIMReceivedEventArgs> initialOIMS = new List<OIMReceivedEventArgs>();
             int oimdeletecount = xnodlst.Count;
 
-            Regex regmsg = new Regex("\n\n(?<encodedmsg>[^\n]+)");
-            Regex regsenderdata = new Regex("From:[ ]*=\\u003F(?<encode>.+)\\u003F(?<decoder>.)\\u003F(?<encodenick>.+)\\u003F=[ ]*<(?<mail>.+)>[\r]*\n|From:[ ]*<(?<mail>.+)>[\r]*\n");
-
             foreach (XmlNode m in xnodlst)
             {
                 DateTime rt = DateTime.Now;
                 Guid guid = Guid.Empty;
                 String email = String.Empty;
-
+                String friendlyName = String.Empty;
                 String message = String.Empty;
 
                 foreach (XmlNode a in m)
@@ -372,6 +369,10 @@ namespace MSNPSharp
                             email = a.InnerText;
                             break;
 
+                        case "N":
+                            friendlyName = a.InnerText;
+                            break;
+
                         case "I":
                             guid = new Guid(a.InnerText);
                             break;
@@ -383,68 +384,88 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled && e.Error == null)
                     {
-                        if (regsenderdata.Match(e.Result.GetMessageResult).Success)
+                        if (friendlyName != String.Empty && friendlyName.Contains("?"))
                         {
-                            Match mch = regsenderdata.Match(e.Result.GetMessageResult);
-                            string strencoding = mch.Groups["encode"].Value;
-                            string strdecode = mch.Groups["decoder"].Value;
-                            string strencodenick = mch.Groups["encodenick"].Value;
-                            string nick = String.Empty;
-                            if (strencoding != String.Empty)
+                            string[] fn = friendlyName.Split('?');
+                            Encoding encode = Encoding.UTF8;
+                            try
                             {
-                                Encoding encode = Encoding.GetEncoding(strencoding);
-                                if (strdecode.ToLowerInvariant() == "b")
-                                {
-                                    byte[] bytnick = Convert.FromBase64String(strencodenick);
-                                    nick = encode.GetString(bytnick);
-                                }
-
-                                if (strdecode.ToLowerInvariant() == "q")
-                                {
-                                    nick = MSNHttpUtility.QPDecode(strencodenick, encode);
-                                }
+                                encode = Encoding.GetEncoding(fn[1]);
+                            }
+                            catch (Exception)
+                            {
+                                encode = Encoding.UTF8;
                             }
 
-                            if (regmsg.Match(e.Result.GetMessageResult).Success)
+                            if (fn[2].ToLowerInvariant() == "b")
                             {
-                                string msgstr = regmsg.Match(e.Result.GetMessageResult).Groups["encodedmsg"].Value.Trim();
-                                message = Encoding.UTF8.GetString(Convert.FromBase64String(msgstr));  //Maybe always use utf-8 ?
+                                friendlyName = encode.GetString(Convert.FromBase64String(fn[3]));
+                            }
+                            else if (fn[2].ToLowerInvariant() == "q")
+                            {
+                                friendlyName = MSNHttpUtility.QPDecode(fn[3], encode);
+                            }
+                        }
 
-                                OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, guid, email, nick, message);
+                        MimeDictionary headers = new MimeDictionary(Encoding.UTF8.GetBytes(e.Result.GetMessageResult));
+                        int msgindex = e.Result.GetMessageResult.IndexOf("\n\n");
+                        if (msgindex != -1)
+                        {
+                            string msgstr = e.Result.GetMessageResult.Substring(msgindex);
 
-                                if (initial)
+                            Encoding encoding = Encoding.UTF8;
+                            try
+                            {
+                                encoding = headers["Content-Type"].HasAttribute("charset") ? Encoding.GetEncoding(headers["Content-Type"]["charset"]) : Encoding.UTF8;
+                            }
+                            catch (Exception)
+                            {
+                                encoding = Encoding.UTF8;
+                            }
+
+                            if (headers["Content-Transfer-Encoding"].Value.ToLowerInvariant().StartsWith("q"))
+                            {
+                                message = MSNHttpUtility.QPDecode(msgstr, encoding);
+                            }
+                            else if (headers["Content-Transfer-Encoding"].Value.ToLowerInvariant().StartsWith("b"))
+                            {
+                                message = encoding.GetString(Convert.FromBase64String(msgstr));
+                            }
+
+                            OIMReceivedEventArgs orea = new OIMReceivedEventArgs(rt, guid, email, friendlyName, message);
+
+                            if (initial)
+                            {
+                                initialOIMS.Add(orea);
+
+                                // Is this the last OIM?
+                                if (initialOIMS.Count == oimdeletecount)
                                 {
-                                    initialOIMS.Add(orea);
-
-                                    // Is this the last OIM?
-                                    if (initialOIMS.Count == oimdeletecount)
+                                    initialOIMS.Sort(CompareDates);
+                                    foreach (OIMReceivedEventArgs ea in initialOIMS)
                                     {
-                                        initialOIMS.Sort(CompareDates);
-                                        foreach (OIMReceivedEventArgs ea in initialOIMS)
+                                        OnOIMReceived(this, ea);
+                                        if (ea.IsRead)
                                         {
-                                            OnOIMReceived(this, ea);
-                                            if (ea.IsRead)
-                                            {
-                                                guidstodelete.Add(ea.Guid.ToString());
-                                            }
-                                            if (0 == --oimdeletecount && guidstodelete.Count > 0)
-                                            {
-                                                DeleteOIMMessages(guidstodelete.ToArray());
-                                            }
+                                            guidstodelete.Add(ea.Guid.ToString());
+                                        }
+                                        if (0 == --oimdeletecount && guidstodelete.Count > 0)
+                                        {
+                                            DeleteOIMMessages(guidstodelete.ToArray());
                                         }
                                     }
                                 }
-                                else
+                            }
+                            else
+                            {
+                                OnOIMReceived(this, orea);
+                                if (orea.IsRead)
                                 {
-                                    OnOIMReceived(this, orea);
-                                    if (orea.IsRead)
-                                    {
-                                        guidstodelete.Add(guid.ToString());
-                                    }
-                                    if (0 == --oimdeletecount && guidstodelete.Count > 0)
-                                    {
-                                        DeleteOIMMessages(guidstodelete.ToArray());
-                                    }
+                                    guidstodelete.Add(guid.ToString());
+                                }
+                                if (0 == --oimdeletecount && guidstodelete.Count > 0)
+                                {
+                                    DeleteOIMMessages(guidstodelete.ToArray());
                                 }
                             }
                         }
