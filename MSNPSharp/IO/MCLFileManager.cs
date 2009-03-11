@@ -103,7 +103,7 @@ namespace MSNPSharp.IO
         private static Dictionary<string, MCLInfo> storage = new Dictionary<string, MCLInfo>(0);
         private static object syncObject;
 
-        private static object SyncObject
+        internal static object SyncObject
         {
             get
             {

@@ -160,11 +160,13 @@ namespace MSNPSharp.IO
                 byte[] byt = new byte[content.Length + MclBytes.Length];
                 Array.Copy(MclBytes, byt, MclBytes.Length);
                 Array.Copy(content, 0, byt, MclBytes.Length, content.Length);
-                File.WriteAllBytes(filename, byt);
+                lock (MCLFileManager.SyncObject)
+                    File.WriteAllBytes(filename, byt);
             }
             else
             {
-                File.WriteAllBytes(filename, content);
+                lock (MCLFileManager.SyncObject)
+                    File.WriteAllBytes(filename, content);
             }
         }
 
