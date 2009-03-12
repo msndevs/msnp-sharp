@@ -1,6 +1,6 @@
-﻿#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+﻿#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
 (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
@@ -86,7 +86,10 @@ namespace MSNPSharp.IO
         public void SaveAndHide(string filename)
         {
             SaveImpl(filename, FillFileStruct(uncompressData));
-            File.SetAttributes(filename, FileAttributes.Hidden);
+            lock (MCLFileManager.SyncObject)
+            {
+                File.SetAttributes(filename, FileAttributes.Hidden);
+            }
         }
 
         /// <summary>
@@ -153,7 +156,12 @@ namespace MSNPSharp.IO
                 return;
 
             if (File.Exists(filename))
-                File.SetAttributes(filename, FileAttributes.Normal);
+            {
+                lock (MCLFileManager.SyncObject)
+                {
+                    File.SetAttributes(filename, FileAttributes.Normal);
+                }
+            }
 
             if (!noCompression)
             {
