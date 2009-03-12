@@ -37,6 +37,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 
 namespace MSNPSharp.IO
 {
@@ -169,12 +170,20 @@ namespace MSNPSharp.IO
                 Array.Copy(MclBytes, byt, MclBytes.Length);
                 Array.Copy(content, 0, byt, MclBytes.Length, content.Length);
                 lock (MCLFileManager.SyncObject)
+                {
+                    FileIOPermission permission = new FileIOPermission(FileIOPermissionAccess.Write, FileName);
+                    permission.AddPathList(FileIOPermissionAccess.Write, FileName);
                     File.WriteAllBytes(filename, byt);
+                }
             }
             else
             {
                 lock (MCLFileManager.SyncObject)
+                {
+                    FileIOPermission permission = new FileIOPermission(FileIOPermissionAccess.Write, FileName);
+                    permission.AddPathList(FileIOPermissionAccess.Write, FileName);
                     File.WriteAllBytes(filename, content);
+                }
             }
         }
 
