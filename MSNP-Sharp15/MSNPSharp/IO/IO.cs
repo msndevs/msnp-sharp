@@ -1,6 +1,6 @@
-﻿#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+﻿#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
 (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
@@ -37,6 +37,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 
 namespace MSNPSharp.IO
 {
@@ -86,7 +87,10 @@ namespace MSNPSharp.IO
         public void SaveAndHide(string filename)
         {
             SaveImpl(filename, FillFileStruct(uncompressData));
-            File.SetAttributes(filename, FileAttributes.Hidden);
+            lock (MCLFileManager.SyncObject)
+            {
+                File.SetAttributes(filename, FileAttributes.Hidden);
+            }
         }
 
         /// <summary>
@@ -153,18 +157,33 @@ namespace MSNPSharp.IO
                 return;
 
             if (File.Exists(filename))
-                File.SetAttributes(filename, FileAttributes.Normal);
+            {
+                lock (MCLFileManager.SyncObject)
+                {
+                    File.SetAttributes(filename, FileAttributes.Normal);
+                }
+            }
 
             if (!noCompression)
             {
                 byte[] byt = new byte[content.Length + MclBytes.Length];
                 Array.Copy(MclBytes, byt, MclBytes.Length);
                 Array.Copy(content, 0, byt, MclBytes.Length, content.Length);
-                File.WriteAllBytes(filename, byt);
+                lock (MCLFileManager.SyncObject)
+                {
+                    FileIOPermission permission = new FileIOPermission(FileIOPermissionAccess.Write, FileName);
+                    permission.AddPathList(FileIOPermissionAccess.Write, FileName);
+                    File.WriteAllBytes(filename, byt);
+                }
             }
             else
             {
-                File.WriteAllBytes(filename, content);
+                lock (MCLFileManager.SyncObject)
+                {
+                    FileIOPermission permission = new FileIOPermission(FileIOPermissionAccess.Write, FileName);
+                    permission.AddPathList(FileIOPermissionAccess.Write, FileName);
+                    File.WriteAllBytes(filename, content);
+                }
             }
         }
 
