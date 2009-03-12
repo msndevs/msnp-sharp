@@ -1,6 +1,6 @@
-#region Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2008, Bas Geertsema, Xih Solutions
+Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
 (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
@@ -103,7 +103,7 @@ namespace MSNPSharp.IO
         private static Dictionary<string, MCLInfo> storage = new Dictionary<string, MCLInfo>(0);
         private static object syncObject;
 
-        private static object SyncObject
+        internal static object SyncObject
         {
             get
             {
