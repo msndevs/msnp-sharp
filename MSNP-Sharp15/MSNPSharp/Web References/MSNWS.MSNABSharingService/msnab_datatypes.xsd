@@ -81,6 +81,15 @@
       <xsd:element minOccurs="0" name="Changes" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
+  <xsd:complexType name="CircleMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="CircleId" type="msnab:Guid" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
   <xsd:complexType name="PassportMember">
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnab:BaseMember">
