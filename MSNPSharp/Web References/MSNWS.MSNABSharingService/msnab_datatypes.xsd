@@ -665,7 +665,7 @@
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnab:SimpleTemplateVariableBaseType">
         <xsd:sequence>
-          <xsd:element name="Herf" type="xsd:string" />
+          <xsd:element name="Href" type="xsd:anyURI" />
           <xsd:element name="Notations">
             <xsd:complexType>
               <xsd:sequence>
