@@ -4284,6 +4284,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(PhoneMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(EmailMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(PassportMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CircleMember))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -4857,6 +4858,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.passportChangesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CircleMember : BaseMember {
+        
+        private string circleIdField;
+        
+        /// <remarks/>
+        public string CircleId {
+            get {
+                return this.circleIdField;
+            }
+            set {
+                this.circleIdField = value;
             }
         }
     }
