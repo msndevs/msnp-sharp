@@ -27,6 +27,7 @@
         <xsd:element minOccurs="0" name="CacheKey" type="xsd:token" />
         <xsd:element minOccurs="0" name="CacheKeyChanged" type="xsd:boolean" />
         <xsd:element minOccurs="0" name="PreferredHostName" type="xsd:string" />
+        <xsd:element minOccurs="0" name="SessionId" type="msnab:Guid" />
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
