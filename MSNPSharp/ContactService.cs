@@ -528,7 +528,7 @@ namespace MSNPSharp
                             HandleServiceHeader(sharingService.ServiceHeaderValue, typeof(FindMembershipRequestType));
                             if (null != e.Result.FindMembershipResult)
                             {
-                                AddressBook += e.Result.FindMembershipResult;
+                                AddressBook.Merge(e.Result.FindMembershipResult);
                                 Deltas.MembershipDeltas.Add(e.Result.FindMembershipResult);
                                 Deltas.Save();
                             }
@@ -606,7 +606,7 @@ namespace MSNPSharp
                             HandleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindContactsPagedRequestType));
                             if (null != e.Result.ABFindContactsPagedResult)
                             {
-                                AddressBook += e.Result.ABFindContactsPagedResult;
+                                AddressBook.Merge(e.Result.ABFindContactsPagedResult);
                                 Deltas.AddressBookDeltas.Add(e.Result.ABFindContactsPagedResult);
                                 Deltas.Save();
                             }
@@ -677,7 +677,7 @@ namespace MSNPSharp
 
                             if (null != e.Result.ABFindAllResult)
                             {
-                                AddressBook += e.Result.ABFindAllResult;
+                                AddressBook.Merge(e.Result.ABFindAllResult);
                                 Deltas.AddressBookDeltas.Add(e.Result.ABFindAllResult);
                                 Deltas.Save();
                             }

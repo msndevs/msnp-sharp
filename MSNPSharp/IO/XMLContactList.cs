@@ -170,26 +170,25 @@ namespace MSNPSharp.IO
 
 
             // Merge deltas
-            XMLContactList ops = this;
             if (deltas.MembershipDeltas.Count > 0)
             {
                 foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
                 {
-                    ops += membershipResult;
+                    Merge(membershipResult);
                 }
             }
 
             if (deltas.AddressBookDeltas.Count > 0)
             {
 #if MSNP18
-                foreach (ABFindContactsPagedResultType abfindallResult in deltas.AddressBookDeltas)
+                foreach (ABFindContactsPagedResultType findcontactspagedResult in deltas.AddressBookDeltas)
                 {
-                    ops += abfindallResult;
+                    Merge(findcontactspagedResult);
                 }
 #else
                 foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
                 {
-                    ops += abfindallResult;
+                    Merge(abfindallResult);
                 }
 #endif
             }
@@ -245,24 +244,21 @@ namespace MSNPSharp.IO
 
         public void AddMemberhip(string servicetype, string account, ClientType type, string memberrole, BaseMember member)
         {
-            Service svc = GetTargetService(servicetype);
-            if (svc != null)
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
+            if (ms != null)
             {
-                SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(svc.ServiceType);
-                string hash = Contact.MakeHash(account, type);
                 if (!ms.ContainsKey(memberrole))
                     ms.Add(memberrole, new SerializableDictionary<string, BaseMember>(0));
 
-                ms[memberrole][hash] = member;
+                ms[memberrole][Contact.MakeHash(account, type)] = member;
             }
         }
 
         public void RemoveMemberhip(string servicetype, string account, ClientType type, string memberrole)
         {
-            Service svc = GetTargetService(servicetype);
-            if (svc != null)
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
+            if (ms != null)
             {
-                SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(svc.ServiceType);
                 string hash = Contact.MakeHash(account, type);
                 if (ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
                 {
@@ -273,16 +269,8 @@ namespace MSNPSharp.IO
 
         public bool HasMemberhip(string servicetype, string account, ClientType type, string memberrole)
         {
-            bool ret = false;
-            Service svc = GetTargetService(servicetype);
-
-            if (svc != null)
-            {
-                SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(svc.ServiceType);
-                ret = ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
-            }
-
-            return ret;
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
+            return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
         }
 
         public virtual void Add(
@@ -320,28 +308,22 @@ namespace MSNPSharp.IO
 
         }
 
-        /// <summary>
-        /// Merge changes into membership list and add membership contacts
-        /// </summary>
-        /// <param name="xmlcl"></param>
-        /// <param name="findMembership"></param>
-        /// <returns></returns>
-        public static XMLContactList operator +(XMLContactList xmlcl, FindMembershipResultType findMembership)
+        public XMLContactList Merge(FindMembershipResultType findMembership)
         {
             // Process new FindMemberships (deltas)
             if (null != findMembership && null != findMembership.Services)
             {
                 foreach (ServiceType serviceType in findMembership.Services)
                 {
-                    Service oldService = xmlcl.GetTargetService(serviceType.Info.Handle.Type);
+                    Service oldService = GetTargetService(serviceType.Info.Handle.Type);
 
                     if (oldService == null || oldService.LastChange < serviceType.LastChange)
                     {
                         if (serviceType.Deleted)
                         {
-                            if (xmlcl.MembershipList.ContainsKey(serviceType.Info.Handle.Type))
+                            if (MembershipList.ContainsKey(serviceType.Info.Handle.Type))
                             {
-                                xmlcl.MembershipList.Remove(serviceType.Info.Handle.Type);
+                                MembershipList.Remove(serviceType.Info.Handle.Type);
                             }
                         }
                         else
@@ -354,7 +336,7 @@ namespace MSNPSharp.IO
 
                             if (oldService == null)
                             {
-                                xmlcl.MembershipList.Add(updatedService.ServiceType, new ServiceMembership(updatedService));
+                                MembershipList.Add(updatedService.ServiceType, new ServiceMembership(updatedService));
                             }
 
                             if (null != serviceType.Memberships)
@@ -400,19 +382,19 @@ namespace MSNPSharp.IO
                                                 if (account != null && type != ClientType.None)
                                                 {
                                                     account = account.ToLowerInvariant();
-                                                    MSNLists msnlist = xmlcl.NSMessageHandler.ContactService.GetMSNList(memberrole);
+                                                    MSNLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
 
                                                     if (bm.Deleted)
                                                     {
-                                                        if (xmlcl.HasMemberhip(updatedService.ServiceType, account, type, memberrole) &&
-                                                            xmlcl.MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged < bm.LastChanged)
+                                                        if (HasMemberhip(updatedService.ServiceType, account, type, memberrole) &&
+                                                            MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged < bm.LastChanged)
                                                         {
-                                                            xmlcl.RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
+                                                            RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
                                                         }
 
-                                                        if (xmlcl.NSMessageHandler.ContactList.HasContact(account, type))
+                                                        if (NSMessageHandler.ContactList.HasContact(account, type))
                                                         {
-                                                            Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, type);
+                                                            Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
                                                             contact.CID = cid;
                                                             if (contact.HasLists(msnlist))
                                                             {
@@ -421,25 +403,25 @@ namespace MSNPSharp.IO
                                                                 // Fire ReverseRemoved
                                                                 if (msnlist == MSNLists.ReverseList)
                                                                 {
-                                                                    xmlcl.NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
+                                                                    NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                                                                 }
 
                                                                 // Send a list remove event
-                                                                xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
+                                                                NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
                                                             }
                                                         }
                                                     }
                                                     else
                                                     {
-                                                        if (false == xmlcl.MembershipList[updatedService.ServiceType].Memberships.ContainsKey(memberrole) ||
-                                                            /*new*/ false == xmlcl.MembershipList[updatedService.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type)) ||
-                                                            /*probably membershipid=0*/ bm.LastChanged > xmlcl.MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
+                                                        if (false == MembershipList[updatedService.ServiceType].Memberships.ContainsKey(memberrole) ||
+                                                            /*new*/ false == MembershipList[updatedService.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type)) ||
+                                                            /*probably membershipid=0*/ bm.LastChanged > MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
                                                         {
-                                                            xmlcl.AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
+                                                            AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
                                                         }
 
                                                         string displayname = bm.DisplayName == null ? account : bm.DisplayName;
-                                                        Contact contact = xmlcl.NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                                                        Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                                         contact.CID = cid;
 
                                                         if (!contact.HasLists(msnlist))
@@ -452,7 +434,7 @@ namespace MSNPSharp.IO
                                                             // The correct place is in OnADLReceived.
 
                                                             // Send a list add event
-                                                            xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
+                                                            NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
                                                         }
                                                     }
                                                 }
@@ -513,11 +495,11 @@ namespace MSNPSharp.IO
                                                 {
                                                     if (bm.Deleted)
                                                     {
-                                                        xmlcl.RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
+                                                        RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
                                                     }
                                                     else
                                                     {
-                                                        xmlcl.AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
+                                                        AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
                                                     }
                                                 }
                                             }
@@ -528,12 +510,23 @@ namespace MSNPSharp.IO
                             }
 
                             // Update service.LastChange
-                            xmlcl.MembershipList[updatedService.ServiceType].Service = updatedService;
+                            MembershipList[updatedService.ServiceType].Service = updatedService;
                         }
                     }
                 }
             }
-            return xmlcl;
+            return this;
+        }
+
+        /// <summary>
+        /// Merge changes into membership list and add membership contacts
+        /// </summary>
+        /// <param name="xmlcl"></param>
+        /// <param name="findMembership"></param>
+        /// <returns></returns>
+        public static XMLContactList operator +(XMLContactList xmlcl, FindMembershipResultType findMembership)
+        {
+            return xmlcl.Merge(findMembership);
         }
 
         private static int CompareBaseMembers(BaseMember x, BaseMember y)
@@ -644,15 +637,9 @@ namespace MSNPSharp.IO
             }
         }
 
-        /// <summary>
-        /// Merge changes to addressbook and add address book contacts
-        /// </summary>
-        /// <param name="xmlcl">Addressbook</param>
-        /// <param name="forwardList"></param>
-        /// <returns></returns>
-        public static XMLContactList operator +(XMLContactList xmlcl, ABFindAllResultType forwardList)
+        public XMLContactList Merge(ABFindAllResultType forwardList)
         {
-            if (forwardList.ab != null && xmlcl.AddressbookLastChange < forwardList.ab.lastChange)
+            if (forwardList.ab != null && AddressbookLastChange < forwardList.ab.lastChange)
             {
                 if (null != forwardList.groups)
                 {
@@ -661,26 +648,26 @@ namespace MSNPSharp.IO
                         Guid key = new Guid(groupType.groupId);
                         if (groupType.fDeleted)
                         {
-                            xmlcl.Groups.Remove(key);
+                            Groups.Remove(key);
 
-                            ContactGroup contactGroup = (ContactGroup)xmlcl.NSMessageHandler.ContactGroups[groupType.groupId];
+                            ContactGroup contactGroup = NSMessageHandler.ContactGroups[groupType.groupId];
                             if (contactGroup != null)
                             {
-                                xmlcl.NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
-                                xmlcl.NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
+                                NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
+                                NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
                             }
                         }
                         else
                         {
-                            xmlcl.Groups[key] = groupType;
+                            Groups[key] = groupType;
 
                             // Add a new group
-                            xmlcl.NSMessageHandler.ContactGroups.AddGroup(
-                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, xmlcl.NSMessageHandler));
+                            NSMessageHandler.ContactGroups.AddGroup(
+                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, NSMessageHandler));
 
                             // Fire the event
-                            xmlcl.NSMessageHandler.ContactService.OnContactGroupAdded(
-                                new ContactGroupEventArgs(xmlcl.NSMessageHandler.ContactGroups[groupType.groupId]));
+                            NSMessageHandler.ContactService.OnContactGroupAdded(
+                                new ContactGroupEventArgs(NSMessageHandler.ContactGroups[groupType.groupId]));
                         }
                     }
                 }
@@ -691,40 +678,40 @@ namespace MSNPSharp.IO
                     {
                         if (null != contactType.contactInfo)
                         {
-                            Contact contact = xmlcl.NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
+                            Contact contact = NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
 
                             if (contactType.fDeleted)
                             {
-                                xmlcl.AddressbookContacts.Remove(new Guid(contactType.contactId));
+                                AddressbookContacts.Remove(new Guid(contactType.contactId));
 
                                 if (contact != null)
                                 {
                                     contact.RemoveFromList(MSNLists.ForwardList);
-                                    xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
 
                                     contact.Guid = Guid.Empty;
                                     contact.SetIsMessengerUser(false);
 
                                     if (MSNLists.None == contact.Lists)
                                     {
-                                        xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
                                         contact.NSMessageHandler = null;
                                     }
                                 }
                             }
                             else
                             {
-                                xmlcl.AddressbookContacts[new Guid(contactType.contactId)] = contactType;
-                                xmlcl.UpdateContact(contactType);
-                                xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                                AddressbookContacts[new Guid(contactType.contactId)] = contactType;
+                                UpdateContact(contactType);
+                                NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
                             }
                         }
                     }
                 }
 
                 // Update lastchange
-                xmlcl.AddressbookLastChange = forwardList.ab.lastChange;
-                xmlcl.DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
+                AddressbookLastChange = forwardList.ab.lastChange;
+                DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
             }
 
             // Update dynamic items
@@ -737,17 +724,17 @@ namespace MSNPSharp.IO
                     {
                         if (pdi.SpaceGleam || pdi.ProfileGleam)
                         {
-                            xmlcl.NSMessageHandler.ContactService.Deltas.DynamicItems[pdi.PassportName] = dyItem;
+                            NSMessageHandler.ContactService.Deltas.DynamicItems[pdi.PassportName] = dyItem;
                         }
-                        else if (pdi.PassportName == xmlcl.NSMessageHandler.Owner.Mail && pdi.Notifications != null)
+                        else if (pdi.PassportName == NSMessageHandler.Owner.Mail && pdi.Notifications != null)
                         {
                             foreach (NotificationDataType notifydata in dyItem.Notifications)
                             {
                                 if (notifydata.StoreService.Info.Handle.Type == ServiceFilterType.Profile)
                                 {
-                                    if (xmlcl.NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
+                                    if (NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
                                     {
-                                        xmlcl.NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] =
+                                        NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] =
                                             XmlConvert.ToString(notifydata.LastChanged, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
                                     }
                                 }
@@ -757,19 +744,12 @@ namespace MSNPSharp.IO
                 }
             }
 
-
-            return xmlcl;
+            return this;
         }
 
-        /// <summary>
-        /// Merge changes to addressbook and add address book contacts
-        /// </summary>
-        /// <param name="xmlcl">Addressbook</param>
-        /// <param name="forwardList"></param>
-        /// <returns></returns>
-        public static XMLContactList operator +(XMLContactList xmlcl, ABFindContactsPagedResultType forwardList)
+        public XMLContactList Merge(ABFindContactsPagedResultType forwardList)
         {
-            if (forwardList.Ab != null && xmlcl.AddressbookLastChange < forwardList.Ab.lastChange)
+            if (forwardList.Ab != null && AddressbookLastChange < forwardList.Ab.lastChange)
             {
                 if (null != forwardList.Groups)
                 {
@@ -778,26 +758,26 @@ namespace MSNPSharp.IO
                         Guid key = new Guid(groupType.groupId);
                         if (groupType.fDeleted)
                         {
-                            xmlcl.Groups.Remove(key);
+                            Groups.Remove(key);
 
-                            ContactGroup contactGroup = (ContactGroup)xmlcl.NSMessageHandler.ContactGroups[groupType.groupId];
+                            ContactGroup contactGroup = NSMessageHandler.ContactGroups[groupType.groupId];
                             if (contactGroup != null)
                             {
-                                xmlcl.NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
-                                xmlcl.NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
+                                NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
+                                NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
                             }
                         }
                         else
                         {
-                            xmlcl.Groups[key] = groupType;
+                            Groups[key] = groupType;
 
                             // Add a new group									
-                            xmlcl.NSMessageHandler.ContactGroups.AddGroup(
-                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, xmlcl.NSMessageHandler));
+                            NSMessageHandler.ContactGroups.AddGroup(
+                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, NSMessageHandler));
 
                             // Fire the event
-                            xmlcl.NSMessageHandler.ContactService.OnContactGroupAdded(
-                                new ContactGroupEventArgs(xmlcl.NSMessageHandler.ContactGroups[groupType.groupId]));
+                            NSMessageHandler.ContactService.OnContactGroupAdded(
+                                new ContactGroupEventArgs(NSMessageHandler.ContactGroups[groupType.groupId]));
                         }
                     }
                 }
@@ -808,44 +788,66 @@ namespace MSNPSharp.IO
                     {
                         if (null != contactType.contactInfo)
                         {
-                            Contact contact = xmlcl.NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
+                            Contact contact = NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
 
                             if (contactType.fDeleted)
                             {
-                                xmlcl.AddressbookContacts.Remove(new Guid(contactType.contactId));
+                                AddressbookContacts.Remove(new Guid(contactType.contactId));
 
                                 if (contact != null)
                                 {
                                     contact.RemoveFromList(MSNLists.ForwardList);
-                                    xmlcl.NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
 
                                     contact.Guid = Guid.Empty;
                                     contact.SetIsMessengerUser(false);
 
                                     if (MSNLists.None == contact.Lists)
                                     {
-                                        xmlcl.NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
                                         contact.NSMessageHandler = null;
                                     }
                                 }
                             }
                             else
                             {
-                                xmlcl.AddressbookContacts[new Guid(contactType.contactId)] = contactType;
-                                xmlcl.UpdateContact(contactType);
-                                xmlcl.NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                                AddressbookContacts[new Guid(contactType.contactId)] = contactType;
+                                UpdateContact(contactType);
+                                NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
                             }
                         }
                     }
                 }
 
                 // Update lastchange
-                xmlcl.AddressbookLastChange = forwardList.Ab.lastChange;
-                xmlcl.DynamicItemLastChange = forwardList.Ab.DynamicItemLastChanged;
+                AddressbookLastChange = forwardList.Ab.lastChange;
+                DynamicItemLastChange = forwardList.Ab.DynamicItemLastChanged;
             }
 
             //NO DynamicItems any more
-            return xmlcl;
+            return this;
+        }
+
+        /// <summary>
+        /// Merge changes to addressbook and add address book contacts
+        /// </summary>
+        /// <param name="xmlcl">Addressbook</param>
+        /// <param name="forwardList"></param>
+        /// <returns></returns>
+        public static XMLContactList operator +(XMLContactList xmlcl, ABFindAllResultType forwardList)
+        {
+            return xmlcl.Merge(forwardList);
+        }
+
+        /// <summary>
+        /// Merge changes to addressbook and add address book contacts
+        /// </summary>
+        /// <param name="xmlcl">Addressbook</param>
+        /// <param name="forwardList"></param>
+        /// <returns></returns>
+        public static XMLContactList operator +(XMLContactList xmlcl, ABFindContactsPagedResultType forwardList)
+        {
+            return xmlcl.Merge(forwardList);
         }
 
         private void UpdateContact(ContactType contactType)
