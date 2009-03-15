@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.IO;
 using System.Text;
 using System.Xml.Serialization;
 using System.Collections.Generic;
@@ -229,8 +230,20 @@ namespace MSNPSharp.IO
         public override void Save(string filename)
         {
             Version = Properties.Resources.DeltasListVersion;
+
+            if (File.Exists(filename) && File.GetLastWriteTime(filename) > DateTime.Now.AddSeconds(-10))
+            {
+                return;
+            }
+
             base.Save(filename);
         }
+
+        public override void Save()
+        {
+            Save(FileName);
+        }
+
         #endregion
     }
 };
