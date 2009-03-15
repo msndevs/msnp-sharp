@@ -46,6 +46,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private System.Threading.SendOrPostCallback DeleteMemberOperationCompleted;
         
+        private System.Threading.SendOrPostCallback CreateCircleOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -119,6 +121,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         public event DeleteMemberCompletedEventHandler DeleteMemberCompleted;
+        
+        /// <remarks/>
+        public event CreateCircleCompletedEventHandler CreateCircleCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
@@ -220,6 +225,39 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/CreateCircle", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("CreateCircleResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public CreateCircleResponse CreateCircle([System.Xml.Serialization.XmlElementAttribute("CreateCircle", Namespace="http://www.msn.com/webservices/AddressBook")] CreateCircleRequestType CreateCircle1) {
+            object[] results = this.Invoke("CreateCircle", new object[] {
+                        CreateCircle1});
+            return ((CreateCircleResponse)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CreateCircleAsync(CreateCircleRequestType CreateCircle1) {
+            this.CreateCircleAsync(CreateCircle1, null);
+        }
+        
+        /// <remarks/>
+        public void CreateCircleAsync(CreateCircleRequestType CreateCircle1, object userState) {
+            if ((this.CreateCircleOperationCompleted == null)) {
+                this.CreateCircleOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCreateCircleOperationCompleted);
+            }
+            this.InvokeAsync("CreateCircle", new object[] {
+                        CreateCircle1}, this.CreateCircleOperationCompleted, userState);
+        }
+        
+        private void OnCreateCircleOperationCompleted(object arg) {
+            if ((this.CreateCircleCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CreateCircleCompleted(this, new CreateCircleCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -279,6 +317,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private System.Threading.SendOrPostCallback UpdateDynamicItemOperationCompleted;
         
         private System.Threading.SendOrPostCallback ABFindContactsPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CreateContactOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback ManageWLConnectionOperationCompleted;
         
         private bool useDefaultCredentialsSetExplicitly;
         
@@ -380,6 +422,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         public event ABFindContactsPagedCompletedEventHandler ABFindContactsPagedCompleted;
+        
+        /// <remarks/>
+        public event CreateContactCompletedEventHandler CreateContactCompleted;
+        
+        /// <remarks/>
+        public event ManageWLConnectionCompletedEventHandler ManageWLConnectionCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
@@ -778,6 +826,72 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/CreateContact", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("CreateContactResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public CreateContactResponse CreateContact([System.Xml.Serialization.XmlElementAttribute("CreateContact", Namespace="http://www.msn.com/webservices/AddressBook")] CreateContactType CreateContact1) {
+            object[] results = this.Invoke("CreateContact", new object[] {
+                        CreateContact1});
+            return ((CreateContactResponse)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CreateContactAsync(CreateContactType CreateContact1) {
+            this.CreateContactAsync(CreateContact1, null);
+        }
+        
+        /// <remarks/>
+        public void CreateContactAsync(CreateContactType CreateContact1, object userState) {
+            if ((this.CreateContactOperationCompleted == null)) {
+                this.CreateContactOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCreateContactOperationCompleted);
+            }
+            this.InvokeAsync("CreateContact", new object[] {
+                        CreateContact1}, this.CreateContactOperationCompleted, userState);
+        }
+        
+        private void OnCreateContactOperationCompleted(object arg) {
+            if ((this.CreateContactCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CreateContactCompleted(this, new CreateContactCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/ManageWLConnection", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("ManageWLConnectionResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public ManageWLConnectionResponse ManageWLConnection([System.Xml.Serialization.XmlElementAttribute("ManageWLConnection", Namespace="http://www.msn.com/webservices/AddressBook")] ManageWLConnectionRequestType ManageWLConnection1) {
+            object[] results = this.Invoke("ManageWLConnection", new object[] {
+                        ManageWLConnection1});
+            return ((ManageWLConnectionResponse)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void ManageWLConnectionAsync(ManageWLConnectionRequestType ManageWLConnection1) {
+            this.ManageWLConnectionAsync(ManageWLConnection1, null);
+        }
+        
+        /// <remarks/>
+        public void ManageWLConnectionAsync(ManageWLConnectionRequestType ManageWLConnection1, object userState) {
+            if ((this.ManageWLConnectionOperationCompleted == null)) {
+                this.ManageWLConnectionOperationCompleted = new System.Threading.SendOrPostCallback(this.OnManageWLConnectionOperationCompleted);
+            }
+            this.InvokeAsync("ManageWLConnection", new object[] {
+                        ManageWLConnection1}, this.ManageWLConnectionOperationCompleted, userState);
+        }
+        
+        private void OnManageWLConnectionOperationCompleted(object arg) {
+            if ((this.ManageWLConnectionCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.ManageWLConnectionCompleted(this, new ManageWLConnectionCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -970,6 +1084,256 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.ticketTokenField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateCircleResponseType {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateContactType {
+        
+        private abHandleType abHandleField;
+        
+        private contactHandleType contactHandleField;
+        
+        /// <remarks/>
+        public abHandleType abHandle {
+            get {
+                return this.abHandleField;
+            }
+            set {
+                this.abHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public contactHandleType contactHandle {
+            get {
+                return this.contactHandleField;
+            }
+            set {
+                this.contactHandleField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class abHandleType {
+        
+        private string aBIdField;
+        
+        private long puidField;
+        
+        private long cidField;
+        
+        /// <remarks/>
+        public string ABId {
+            get {
+                return this.aBIdField;
+            }
+            set {
+                this.aBIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long Puid {
+            get {
+                return this.puidField;
+            }
+            set {
+                this.puidField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long Cid {
+            get {
+                return this.cidField;
+            }
+            set {
+                this.cidField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class contactHandleType {
+        
+        private string emailField;
+        
+        private long puidField;
+        
+        private long cidField;
+        
+        private string circleIdField;
+        
+        /// <remarks/>
+        public string Email {
+            get {
+                return this.emailField;
+            }
+            set {
+                this.emailField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long Puid {
+            get {
+                return this.puidField;
+            }
+            set {
+                this.puidField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long Cid {
+            get {
+                return this.cidField;
+            }
+            set {
+                this.cidField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CircleId {
+            get {
+                return this.circleIdField;
+            }
+            set {
+                this.circleIdField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ManageWLConnectionRequestType {
+        
+        private abHandleType abHandleField;
+        
+        private string contactIdField;
+        
+        private bool connectionField;
+        
+        private bool presenceField;
+        
+        private string actionField;
+        
+        private int relationshipTypeField;
+        
+        private int relationshipRoleField;
+        
+        /// <remarks/>
+        public abHandleType abHandle {
+            get {
+                return this.abHandleField;
+            }
+            set {
+                this.abHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string contactId {
+            get {
+                return this.contactIdField;
+            }
+            set {
+                this.contactIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool connection {
+            get {
+                return this.connectionField;
+            }
+            set {
+                this.connectionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool presence {
+            get {
+                return this.presenceField;
+            }
+            set {
+                this.presenceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string action {
+            get {
+                return this.actionField;
+            }
+            set {
+                this.actionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int relationshipType {
+            get {
+                return this.relationshipTypeField;
+            }
+            set {
+                this.relationshipTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int relationshipRole {
+            get {
+                return this.relationshipRoleField;
+            }
+            set {
+                this.relationshipRoleField = value;
             }
         }
     }
@@ -1954,6 +2318,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string lastModifiedByField;
         
+        private string createdByField;
+        
         /// <remarks/>
         public string contactId {
             get {
@@ -2057,6 +2423,17 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.lastModifiedByField = value;
             }
         }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string CreatedBy {
+            get {
+                return this.createdByField;
+            }
+            set {
+                this.createdByField = value;
+            }
+        }
     }
     
     /// <remarks/>
@@ -2103,9 +2480,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string displayNameField;
         
-        private string puidField;
+        private long puidField;
         
-        private string cIDField;
+        private bool puidFieldSpecified;
+        
+        private long cIDField;
+        
+        private bool cIDFieldSpecified;
         
         private object brandIdListField;
         
@@ -2364,8 +2745,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string puid {
+        public long puid {
             get {
                 return this.puidField;
             }
@@ -2375,13 +2755,34 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CID {
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool puidSpecified {
+            get {
+                return this.puidFieldSpecified;
+            }
+            set {
+                this.puidFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long CID {
             get {
                 return this.cIDField;
             }
             set {
                 this.cIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool CIDSpecified {
+            get {
+                return this.cIDFieldSpecified;
+            }
+            set {
+                this.cIDFieldSpecified = value;
             }
         }
         
@@ -5948,120 +6349,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class CircleResultType {
-        
-        private string circleTicketField;
-        
-        /// <remarks/>
-        public string CircleTicket {
-            get {
-                return this.circleTicketField;
-            }
-            set {
-                this.circleTicketField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class abType {
-        
-        private string abIdField;
-        
-        private abInfoType abInfoField;
-        
-        private System.DateTime lastChangeField;
-        
-        private System.DateTime dynamicItemLastChangedField;
-        
-        private System.DateTime recentActivityItemLastChangedField;
-        
-        private System.DateTime createDateField;
-        
-        private object propertiesChangedField;
-        
-        /// <remarks/>
-        public string abId {
-            get {
-                return this.abIdField;
-            }
-            set {
-                this.abIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public abInfoType abInfo {
-            get {
-                return this.abInfoField;
-            }
-            set {
-                this.abInfoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime lastChange {
-            get {
-                return this.lastChangeField;
-            }
-            set {
-                this.lastChangeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime DynamicItemLastChanged {
-            get {
-                return this.dynamicItemLastChangedField;
-            }
-            set {
-                this.dynamicItemLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime RecentActivityItemLastChanged {
-            get {
-                return this.recentActivityItemLastChangedField;
-            }
-            set {
-                this.recentActivityItemLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime createDate {
-            get {
-                return this.createDateField;
-            }
-            set {
-                this.createDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public object propertiesChanged {
-            get {
-                return this.propertiesChangedField;
-            }
-            set {
-                this.propertiesChangedField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class ABFindAllResultType {
         
         private GroupType[] groupsField;
@@ -6340,11 +6627,612 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class callerInfoType {
+        
+        private string publicDisplayNameField;
+        
+        /// <remarks/>
+        public string PublicDisplayName {
+            get {
+                return this.publicDisplayNameField;
+            }
+            set {
+                this.publicDisplayNameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CirclePersonalMembershipType {
+        
+        private string roleField;
+        
+        private string stateField;
+        
+        /// <remarks/>
+        public string Role {
+            get {
+                return this.roleField;
+            }
+            set {
+                this.roleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string State {
+            get {
+                return this.stateField;
+            }
+            set {
+                this.stateField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class MembershipInfoType {
+        
+        private CirclePersonalMembershipType circlePersonalMembershipField;
+        
+        /// <remarks/>
+        public CirclePersonalMembershipType CirclePersonalMembership {
+            get {
+                return this.circlePersonalMembershipField;
+            }
+            set {
+                this.circlePersonalMembershipField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class PersonalInfoType {
+        
+        private MembershipInfoType membershipInfoField;
+        
+        private string nameField;
+        
+        private bool isNotMobileVisibleField;
+        
+        private bool isFavoriteField;
+        
+        private bool isFamilyField;
+        
+        private object changesField;
+        
+        /// <remarks/>
+        public MembershipInfoType MembershipInfo {
+            get {
+                return this.membershipInfoField;
+            }
+            set {
+                this.membershipInfoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsNotMobileVisible {
+            get {
+                return this.isNotMobileVisibleField;
+            }
+            set {
+                this.isNotMobileVisibleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsFavorite {
+            get {
+                return this.isFavoriteField;
+            }
+            set {
+                this.isFavoriteField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsFamily {
+            get {
+                return this.isFamilyField;
+            }
+            set {
+                this.isFamilyField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ContentType {
+        
+        private ContentHandleType handleField;
+        
+        private ContentInfoType infoField;
+        
+        /// <remarks/>
+        public ContentHandleType Handle {
+            get {
+                return this.handleField;
+            }
+            set {
+                this.handleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ContentInfoType Info {
+            get {
+                return this.infoField;
+            }
+            set {
+                this.infoField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ContentHandleType {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ContentInfoType {
+        
+        private string domainField;
+        
+        private string hostedDomainField;
+        
+        private string typeField;
+        
+        private string membershipAccessField;
+        
+        private bool isPresenceEnabledField;
+        
+        private string requestMembershipOptionField;
+        
+        private string displayNameField;
+        
+        private System.DateTime profileLastUpdatedField;
+        
+        private bool profileLastUpdatedFieldSpecified;
+        
+        private object changesField;
+        
+        private System.DateTime createDateField;
+        
+        private bool createDateFieldSpecified;
+        
+        private System.DateTime lastChangedField;
+        
+        private bool lastChangedFieldSpecified;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string Domain {
+            get {
+                return this.domainField;
+            }
+            set {
+                this.domainField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string HostedDomain {
+            get {
+                return this.hostedDomainField;
+            }
+            set {
+                this.hostedDomainField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string Type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string MembershipAccess {
+            get {
+                return this.membershipAccessField;
+            }
+            set {
+                this.membershipAccessField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsPresenceEnabled {
+            get {
+                return this.isPresenceEnabledField;
+            }
+            set {
+                this.isPresenceEnabledField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string RequestMembershipOption {
+            get {
+                return this.requestMembershipOptionField;
+            }
+            set {
+                this.requestMembershipOptionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime ProfileLastUpdated {
+            get {
+                return this.profileLastUpdatedField;
+            }
+            set {
+                this.profileLastUpdatedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ProfileLastUpdatedSpecified {
+            get {
+                return this.profileLastUpdatedFieldSpecified;
+            }
+            set {
+                this.profileLastUpdatedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime CreateDate {
+            get {
+                return this.createDateField;
+            }
+            set {
+                this.createDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool CreateDateSpecified {
+            get {
+                return this.createDateFieldSpecified;
+            }
+            set {
+                this.createDateFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime LastChanged {
+            get {
+                return this.lastChangedField;
+            }
+            set {
+                this.lastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool LastChangedSpecified {
+            get {
+                return this.lastChangedFieldSpecified;
+            }
+            set {
+                this.lastChangedFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CircleInverseInfoType {
+        
+        private ContentType contentField;
+        
+        private PersonalInfoType personalInfoField;
+        
+        private bool deletedField;
+        
+        /// <remarks/>
+        public ContentType Content {
+            get {
+                return this.contentField;
+            }
+            set {
+                this.contentField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public PersonalInfoType PersonalInfo {
+            get {
+                return this.personalInfoField;
+            }
+            set {
+                this.personalInfoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool Deleted {
+            get {
+                return this.deletedField;
+            }
+            set {
+                this.deletedField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CircleResultType {
+        
+        private CircleInverseInfoType[] circlesField;
+        
+        private string circleTicketField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("CircleInverseInfo", IsNullable=false)]
+        public CircleInverseInfoType[] Circles {
+            get {
+                return this.circlesField;
+            }
+            set {
+                this.circlesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CircleTicket {
+            get {
+                return this.circleTicketField;
+            }
+            set {
+                this.circleTicketField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class abType {
+        
+        private string abIdField;
+        
+        private abInfoType abInfoField;
+        
+        private System.DateTime lastChangeField;
+        
+        private System.DateTime dynamicItemLastChangedField;
+        
+        private System.DateTime recentActivityItemLastChangedField;
+        
+        private System.DateTime createDateField;
+        
+        private object propertiesChangedField;
+        
+        /// <remarks/>
+        public string abId {
+            get {
+                return this.abIdField;
+            }
+            set {
+                this.abIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public abInfoType abInfo {
+            get {
+                return this.abInfoField;
+            }
+            set {
+                this.abInfoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime lastChange {
+            get {
+                return this.lastChangeField;
+            }
+            set {
+                this.lastChangeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime DynamicItemLastChanged {
+            get {
+                return this.dynamicItemLastChangedField;
+            }
+            set {
+                this.dynamicItemLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime RecentActivityItemLastChanged {
+            get {
+                return this.recentActivityItemLastChangedField;
+            }
+            set {
+                this.recentActivityItemLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime createDate {
+            get {
+                return this.createDateField;
+            }
+            set {
+                this.createDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object propertiesChanged {
+            get {
+                return this.propertiesChangedField;
+            }
+            set {
+                this.propertiesChangedField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateCircleRequestType {
+        
+        private ContentInfoType propertiesField;
+        
+        private callerInfoType callerInfoField;
+        
+        /// <remarks/>
+        public ContentInfoType properties {
+            get {
+                return this.propertiesField;
+            }
+            set {
+                this.propertiesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public callerInfoType callerInfo {
+            get {
+                return this.callerInfoField;
+            }
+            set {
+                this.callerInfoField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class DeleteMemberRequestType {
         
         private HandleType serviceHandleField;
         
         private Membership[] membershipsField;
+        
+        private ContentHandleType nsHandleField;
         
         /// <remarks/>
         public HandleType serviceHandle {
@@ -6364,6 +7252,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.membershipsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ContentHandleType nsHandle {
+            get {
+                return this.nsHandleField;
+            }
+            set {
+                this.nsHandleField = value;
             }
         }
     }
@@ -7103,6 +8001,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateCircleResponse {
+        
+        private CreateCircleResponseType createCircleResultField;
+        
+        /// <remarks/>
+        public CreateCircleResponseType CreateCircleResult {
+            get {
+                return this.createCircleResultField;
+            }
+            set {
+                this.createCircleResultField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class ABFindAllResponse {
         
         private ABFindAllResultType aBFindAllResultField;
@@ -7244,6 +8163,48 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateContactResponse {
+        
+        private ContactType createContactResultField;
+        
+        /// <remarks/>
+        public ContactType CreateContactResult {
+            get {
+                return this.createContactResultField;
+            }
+            set {
+                this.createContactResultField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ManageWLConnectionResponse {
+        
+        private ContactType manageWLConnectionResultField;
+        
+        /// <remarks/>
+        public ContactType ManageWLConnectionResult {
+            get {
+                return this.manageWLConnectionResultField;
+            }
+            set {
+                this.manageWLConnectionResultField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class GetContactsRecentActivityResponse {
         
         private GetContactsRecentActivityResultType getContactsRecentActivityResultField;
@@ -7333,6 +8294,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((DeleteMemberResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    public delegate void CreateCircleCompletedEventHandler(object sender, CreateCircleCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CreateCircleCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CreateCircleCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public CreateCircleResponse Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((CreateCircleResponse)(this.results[0]));
             }
         }
     }
@@ -7645,6 +8632,58 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((ABFindContactsPagedResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    public delegate void CreateContactCompletedEventHandler(object sender, CreateContactCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CreateContactCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CreateContactCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public CreateContactResponse Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((CreateContactResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    public delegate void ManageWLConnectionCompletedEventHandler(object sender, ManageWLConnectionCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class ManageWLConnectionCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal ManageWLConnectionCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public ManageWLConnectionResponse Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((ManageWLConnectionResponse)(this.results[0]));
             }
         }
     }
