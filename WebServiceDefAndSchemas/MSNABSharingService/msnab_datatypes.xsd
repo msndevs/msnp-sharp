@@ -207,6 +207,7 @@
             <xsd:element name="lastChange" type="xsd:dateTime" minOccurs="0"/>
             <xsd:element name="CreateDate" type="xsd:dateTime" minOccurs="0"/>
             <xsd:element name="LastModifiedBy" type="xsd:integer" minOccurs="0"/>
+            <xsd:element name="CreatedBy" type="xsd:integer" minOccurs="0"/>
         </xsd:sequence>
     </xsd:complexType>
     <xsd:complexType name="ContactIdType">
@@ -275,8 +276,8 @@
             <xsd:element name="passportName" type="xsd:string" minOccurs="0"/>
             <xsd:element name="IsPassportNameHidden" type="xsd:boolean" minOccurs="0"/>
             <xsd:element name="displayName" type="xsd:string" minOccurs="0"/>
-            <xsd:element name="puid" type="xsd:integer" minOccurs="0"/>
-            <xsd:element name="CID" type="xsd:integer" minOccurs="0"/>
+            <xsd:element name="puid" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="CID" type="xsd:long" minOccurs="0"/>
             <xsd:element name="BrandIdList" type="xsd:anyType" minOccurs="0"/>
             <xsd:element name="comment" type="xsd:string" minOccurs="0"/>
             <xsd:element name="IsNotMobileVisible" type="xsd:boolean" minOccurs="0"/>
@@ -547,6 +548,13 @@
     </xsd:complexType>
     <xsd:complexType name="CircleResultType">
         <xsd:sequence>
+            <xsd:element name="Circles" minOccurs="0">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="CircleInverseInfo" type="msnab:CircleInverseInfoType" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
             <xsd:element name="CircleTicket" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
@@ -736,6 +744,80 @@
     <xsd:complexType name="CollapseConditionType">
         <xsd:sequence>
             <xsd:element name="string" type="xsd:string" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="CirclePersonalMembershipType">
+        <xsd:sequence>
+            <xsd:element name="Role" type="xsd:string"/>
+            <xsd:element name="State" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="abHandleType">
+        <xsd:sequence>
+            <xsd:element name="ABId" type="xsd:string"/>
+            <xsd:element name="Puid" type="xsd:long"/>
+            <xsd:element name="Cid" type="xsd:long"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="contactHandleType">
+        <xsd:sequence>
+            <xsd:element name="Email" type="xsd:string"/>
+            <xsd:element name="Puid" type="xsd:long"/>
+            <xsd:element name="Cid" type="xsd:long"/>
+            <xsd:element name="CircleId" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="MembershipInfoType">
+        <xsd:sequence>
+            <xsd:element name="CirclePersonalMembership" type="msnab:CirclePersonalMembershipType"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="PersonalInfoType">
+        <xsd:sequence>
+            <xsd:element name="MembershipInfo" type="msnab:MembershipInfoType"/>
+            <xsd:element name="Name" type="xsd:string"/>
+            <xsd:element name="IsNotMobileVisible" type="xsd:boolean"/>
+            <xsd:element name="IsFavorite" type="xsd:boolean"/>
+            <xsd:element name="IsFamily" type="xsd:boolean"/>
+            <xsd:element name="Changes" type="xsd:anyType"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ContentInfoType">
+        <xsd:sequence>
+            <xsd:element name="Domain" type="xsd:integer"/>
+            <xsd:element name="HostedDomain" type="xsd:string"/>
+            <xsd:element name="Type" type="xsd:integer"/>
+            <xsd:element name="MembershipAccess" type="xsd:integer"/>
+            <xsd:element name="IsPresenceEnabled" type="xsd:boolean"/>
+            <xsd:element name="RequestMembershipOption" type="xsd:integer"/>
+            <xsd:element name="DisplayName" type="xsd:string"/>
+            <xsd:element name="ProfileLastUpdated" type="xsd:dateTime" minOccurs="0"/>
+            <xsd:element name="Changes" type="xsd:anyType" minOccurs="0"/>
+            <xsd:element name="CreateDate" type="xsd:dateTime" minOccurs="0"/>
+            <xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ContentHandleType">
+        <xsd:sequence>
+            <xsd:element name="Id" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ContentType">
+        <xsd:sequence>
+            <xsd:element name="Handle" type="msnab:ContentHandleType"/>
+            <xsd:element name="Info" type="msnab:ContentInfoType"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="CircleInverseInfoType">
+        <xsd:sequence>
+            <xsd:element name="Content" type="msnab:ContentType"/>
+            <xsd:element name="PersonalInfo" type="msnab:PersonalInfoType"/>
+            <xsd:element name="Deleted" type="xsd:boolean"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="callerInfoType">
+        <xsd:sequence>
+            <xsd:element name="PublicDisplayName" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
 </xsd:schema>
