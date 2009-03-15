@@ -46,6 +46,7 @@ namespace MSNPSharp.Core
     {
         string _user = "";
         string _msgtype = "1";
+        string _clienttype = "32";
 
         public YIMMessage(NSMessage message)
             : base("UBM", (ArrayList)message.CommandValues.Clone())
@@ -69,6 +70,7 @@ namespace MSNPSharp.Core
             : base(command, new ArrayList(commandValues))
         {
             _user = commandValues[0];
+            _clienttype = commandValues[1];
             _msgtype = commandValues[2];
         }
 
@@ -76,6 +78,7 @@ namespace MSNPSharp.Core
             : base(command, commandValues)
         {
             _user = commandValues[0].ToString();
+            _clienttype = commandValues[1].ToString();
             _msgtype = commandValues[2].ToString();
         }
 
@@ -95,7 +98,7 @@ namespace MSNPSharp.Core
                         CommandValues.Add(TransactionID.ToString());
 
                     CommandValues.Add(_user);
-                    CommandValues.Add("32");
+                    CommandValues.Add(_clienttype);
                     CommandValues.Add(_msgtype);
                     CommandValues.Add(contents.Length.ToString(CultureInfo.InvariantCulture));
                 }
