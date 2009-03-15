@@ -165,6 +165,15 @@
             <xsd:extension base="msnab:BaseMember"/>
         </xsd:complexContent>
     </xsd:complexType>
+    <xsd:complexType name="GroupMember" mixed="false">
+        <xsd:complexContent mixed="false">
+            <xsd:extension base="msnab:BaseMember">
+                <xsd:sequence>
+                    <xsd:element name="Id" type="msnab:Guid"/>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
     <xsd:simpleType name="Guid">
         <xsd:restriction base="xsd:string">
             <xsd:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"/>
