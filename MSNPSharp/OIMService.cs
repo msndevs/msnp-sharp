@@ -624,6 +624,52 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Send an offline message to a contact(only for MSNP18).
+        /// </summary>
+        /// <param name="receiver">Target user</param>
+        /// <param name="msg"><see cref="TextMessage"/> to send</param>
+        public void SendOIMMessage(Contact receiver, TextMessage msg)
+        {
+            if (NSMessageHandler.Messenger.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            {
+                Exception err = null;
+                try
+                {
+                    TextMessage txtmsgClone = msg.Clone() as TextMessage;
+                    MSGMessage msgMessage = new MSGMessage();
+                    msgMessage.InnerMessage = txtmsgClone;
+                    msgMessage.MimeHeader["Dest-Agent"] = "client";
+
+                    YIMMessage nsMessage = new YIMMessage("UUM",
+                        new string[] { receiver.Mail, 
+                        ((int)receiver.ClientType).ToString(), 
+                        "1" });
+                    nsMessage.InnerMessage = msgMessage;
+
+                    NSMessageHandler.MessageProcessor.SendMessage(nsMessage);
+                }
+                catch (Exception exp)
+                {
+                    err = exp;
+                }
+                
+                OnOIMSendCompleted(this,
+                                new OIMSendCompletedEventArgs(
+                                NSMessageHandler.Owner.Mail,
+                                receiver.Mail,
+                                0,
+                                msg.Text,
+                                err));
+
+            }
+            else
+            {
+                //Older version
+                SendOIMMessage(receiver.Mail, msg.Text);
+            }
+        }
+
         protected virtual void OnOIMReceived(object sender, OIMReceivedEventArgs e)
         {
             if (OIMReceived != null)

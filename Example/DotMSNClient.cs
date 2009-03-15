@@ -1696,7 +1696,14 @@ namespace MSNPSharpClient
             Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
             this.propertyGrid.SelectedObject = selectedContact;
 
-            messenger.Nameserver.OIMService.SendOIMMessage(selectedContact.Mail, "MSNP message");
+            if (messenger.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            {
+                messenger.Nameserver.OIMService.SendOIMMessage(selectedContact, new TextMessage("MSNP offline message"));
+            }
+            else
+            {
+                messenger.Nameserver.OIMService.SendOIMMessage(selectedContact.Mail, "MSNP offline message");
+            }
         }
 
         private void sendMIMMenuItem_Click(object sender, EventArgs e)

@@ -260,7 +260,14 @@ namespace MSNPSharp
                     {
                         if (msgobj is TextMessageObject && _switchboard.NSMessageHandler != null)
                         {
-                            _switchboard.NSMessageHandler.OIMService.SendOIMMessage(contact.Mail, ((msgobj.InnerObject) as TextMessage).Text);
+                            if (_switchboard.NSMessageHandler.Messenger.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+                            {
+                                _switchboard.NSMessageHandler.OIMService.SendOIMMessage(contact, msgobj.InnerObject as TextMessage);
+                            }
+                            else
+                            {
+                                _switchboard.NSMessageHandler.OIMService.SendOIMMessage(contact.Mail, ((msgobj.InnerObject) as TextMessage).Text);
+                            }
                         }
                     }
                 }
