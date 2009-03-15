@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- edited with XMLSpy v2008 rel. 2 (http://www.altova.com) by ee (darksiderg) -->
+<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
 <definitions xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns="http://www.w3.org/2001/XMLSchema" xmlns:ns1="http://schemas.xmlsoap.org/soap/encoding/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://www.msn.com/webservices/AddressBook">
     <types>
         <ns:schema xmlns="http://www.w3.org/2001/XMLSchema">
@@ -117,6 +117,24 @@
         <part name="WNAuthHeader" element="msnab:WNAuthHeader"/>
         <part name="WNServiceHeader" element="msnab:WNServiceHeader"/>
     </message>
+    <message name="CreateCircleMessage">
+        <part name="CreateCircleRequest" element="msnab:CreateCircle"/>
+    </message>
+    <message name="CreateCircleResponseMessage">
+        <part name="CreateCircleResponse" element="msnab:CreateCircleResponse"/>
+    </message>
+    <message name="CreateContactMessage">
+        <part name="CreateContactRequest" element="msnab:CreateContact"/>
+    </message>
+    <message name="CreateContactResponseMessage">
+        <part name="CreateContactResponse" element="msnab:CreateContactResponse"/>
+    </message>
+    <message name="ManageWLConnectionMessage">
+        <part name="ManageWLConnection" element="msnab:ManageWLConnection"/>
+    </message>
+    <message name="ManageWLConnectionResponseMessage">
+        <part name="ManageWLConnectionResponse" element="msnab:ManageWLConnectionResponse"/>
+    </message>
     <portType name="SharingServicePortType">
         <operation name="FindMembership">
             <input message="msnab:FindMembershipMessage"/>
@@ -129,6 +147,10 @@
         <operation name="DeleteMember">
             <input message="msnab:DeleteMemberMessage"/>
             <output message="msnab:DeleteMemberResponseMessage"/>
+        </operation>
+        <operation name="CreateCircle">
+            <input message="msnab:CreateCircleMessage"/>
+            <output message="msnab:CreateCircleResponseMessage"/>
         </operation>
     </portType>
     <portType name="ABServicePortType">
@@ -183,6 +205,14 @@
             <input message="msnab:ABFindContactsPagedMessage"/>
             <output message="msnab:ABFindContactsPagedResponseMessage"/>
         </operation>
+        <operation name="CreateContact">
+            <input message="msnab:CreateContactMessage"/>
+            <output message="msnab:CreateContactResponseMessage"/>
+        </operation>
+        <operation name="ManageWLConnection">
+            <input message="msnab:ManageWLConnectionMessage"/>
+            <output message="msnab:ManageWLConnectionResponseMessage"/>
+        </operation>
     </portType>
     <portType name="WhatsUpServicePortType">
         <operation name="GetContactsRecentActivity">
@@ -226,6 +256,18 @@
             <output>
                 <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
                 <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CreateCircle">
+            <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/CreateCircle"/>
+            <input>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal"/>
+                <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
             </output>
         </operation>
     </binding>
@@ -384,6 +426,30 @@
                 <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
             </output>
         </operation>
+        <operation name="CreateContact">
+            <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/CreateContact"/>
+            <input>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal"/>
+                <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
+            </output>
+        </operation>
+        <operation name="ManageWLConnection">
+            <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ManageWLConnection"/>
+            <input>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal"/>
+                <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+                <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
+            </output>
+        </operation>
     </binding>
     <binding name="WhatsUpServiceBinding" type="msnab:WhatsUpServicePortType">
         <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -408,6 +474,9 @@
             <soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
         </port>
         <port name="DeleteMemberPort" binding="msnab:SharingServiceBinding">
+            <soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
+        </port>
+        <port name="CreateCirclePort" binding="msnab:SharingServiceBinding">
             <soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
         </port>
     </service>
@@ -446,6 +515,12 @@
             <soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
         </port>
         <port name="ABFindContactsPagedPort" binding="msnab:ABServiceBinding">
+            <soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
+        </port>
+        <port name="CreateContactPort" binding="msnab:ABServiceBinding">
+            <soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
+        </port>
+        <port name="ManageWLConnectionPort" binding="msnab:ABServiceBinding">
             <soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
         </port>
     </service>
