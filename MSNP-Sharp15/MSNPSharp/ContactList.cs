@@ -241,6 +241,9 @@ namespace MSNPSharp
             if (HasContact(account, ClientType.LCS))
                 return GetContact(account, ClientType.LCS);
 
+            if (HasContact(account, ClientType.CircleMember))
+                return GetContact(account, ClientType.CircleMember);
+
             return null;
         }
 

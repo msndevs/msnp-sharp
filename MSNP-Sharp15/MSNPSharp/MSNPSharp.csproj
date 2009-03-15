@@ -394,10 +394,19 @@
     <None Include="Web References\MSNWS.MSNABSharingService\ABFindContactsPagedResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\CreateCircleResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\CreateContactResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNABSharingService\FindMembershipResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\GetContactsRecentActivityResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\ManageWLConnectionResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\soap-env.xsd">

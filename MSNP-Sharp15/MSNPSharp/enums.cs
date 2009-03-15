@@ -499,6 +499,7 @@ namespace MSNPSharp
 
     /// <summary>
     /// Client Type
+    /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string account)"/> method.</remarks>
     /// </summary>
     public enum ClientType
     {
@@ -521,6 +522,11 @@ namespace MSNPSharp
         /// Phone member
         /// </summary>
         PhoneMember = 4,
+
+        /// <summary>
+        /// MSN group
+        /// </summary>
+        CircleMember = 9,
 
         /// <summary>
         /// Email member, currently Yahoo!
