@@ -275,8 +275,8 @@
             <xsd:element name="passportName" type="xsd:string" minOccurs="0"/>
             <xsd:element name="IsPassportNameHidden" type="xsd:boolean" minOccurs="0"/>
             <xsd:element name="displayName" type="xsd:string" minOccurs="0"/>
-            <xsd:element name="puid" type="xsd:integer" minOccurs="0"/>
-            <xsd:element name="CID" type="xsd:integer" minOccurs="0"/>
+            <xsd:element name="puid" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="CID" type="xsd:long" minOccurs="0"/>
             <xsd:element name="BrandIdList" type="xsd:anyType" minOccurs="0"/>
             <xsd:element name="comment" type="xsd:string" minOccurs="0"/>
             <xsd:element name="IsNotMobileVisible" type="xsd:boolean" minOccurs="0"/>
