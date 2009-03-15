@@ -77,18 +77,27 @@ namespace MSNPSharp.IO
             }
         }
 
-        public static explicit operator Image(SerializableMemoryStream ms)
+        public Image ToImage()
         {
-            return Image.FromStream(ms);
+            return Image.FromStream(this);
         }
 
-        public static explicit operator SerializableMemoryStream(Image image)
+        public static SerializableMemoryStream FromImage(Image image)
         {
             SerializableMemoryStream ret = new SerializableMemoryStream();
             image.Save(ret, System.Drawing.Imaging.ImageFormat.Png);
             return ret;
         }
 
+        public static explicit operator Image(SerializableMemoryStream ms)
+        {
+            return ms.ToImage();
+        }
+
+        public static explicit operator SerializableMemoryStream(Image image)
+        {
+            return SerializableMemoryStream.FromImage(image);
+        }
         #endregion
     }
 };
