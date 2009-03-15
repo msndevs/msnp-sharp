@@ -2103,9 +2103,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string displayNameField;
         
-        private string puidField;
+        private long puidField;
         
-        private string cIDField;
+        private bool puidFieldSpecified;
+        
+        private long cIDField;
+        
+        private bool cIDFieldSpecified;
         
         private object brandIdListField;
         
@@ -2364,8 +2368,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string puid {
+        public long puid {
             get {
                 return this.puidField;
             }
@@ -2375,13 +2378,34 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CID {
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool puidSpecified {
+            get {
+                return this.puidFieldSpecified;
+            }
+            set {
+                this.puidFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long CID {
             get {
                 return this.cIDField;
             }
             set {
                 this.cIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool CIDSpecified {
+            get {
+                return this.cIDFieldSpecified;
+            }
+            set {
+                this.cIDFieldSpecified = value;
             }
         }
         
