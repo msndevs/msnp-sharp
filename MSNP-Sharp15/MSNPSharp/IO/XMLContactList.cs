@@ -95,6 +95,11 @@ namespace MSNPSharp.IO
                             type = ClientType.PhoneMember;
                             account = ((PhoneMember)bm).PhoneNumber;
                         }
+                        else if (bm is CircleMember)
+                        {
+                            type = ClientType.CircleMember;
+                            account = ((CircleMember)bm).CircleId;
+                        }
 
                         if (account != null && type != ClientType.None)
                         {
@@ -378,6 +383,11 @@ namespace MSNPSharp.IO
                                                     type = ClientType.PhoneMember;
                                                     account = ((PhoneMember)bm).PhoneNumber;
                                                 }
+                                                else if (bm is CircleMember)
+                                                {
+                                                    type = ClientType.CircleMember;
+                                                    account = ((CircleMember)bm).CircleId;
+                                                }
 
                                                 if (account != null && type != ClientType.None)
                                                 {
@@ -488,6 +498,11 @@ namespace MSNPSharp.IO
 
                                                     case "Domain":
                                                         account = ((DomainMember)bm).DomainName;
+                                                        break;
+
+                                                    case "Circle":
+                                                        type = ClientType.CircleMember;
+                                                        account = ((CircleMember)bm).CircleId;
                                                         break;
                                                 }
 

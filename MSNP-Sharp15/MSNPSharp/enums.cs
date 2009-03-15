@@ -499,7 +499,7 @@ namespace MSNPSharp
 
     /// <summary>
     /// Client Type
-    /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string account)"/> method.</remarks>
+    /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string)"/> method.</remarks>
     /// </summary>
     public enum ClientType
     {
