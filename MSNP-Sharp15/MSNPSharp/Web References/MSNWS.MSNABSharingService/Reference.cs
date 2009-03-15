@@ -4678,6 +4678,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     }
     
     /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(GroupMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(EveryoneMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(DomainMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(ServiceMember))]
@@ -4929,6 +4930,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         Pending,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class GroupMember : BaseMember {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
     }
     
     /// <remarks/>
