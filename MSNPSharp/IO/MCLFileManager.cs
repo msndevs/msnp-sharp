@@ -59,14 +59,11 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         public bool Refresh()
         {
-            if (file != null)
+            if (file != null && IOFile.Exists(file.FileName))
             {
-                if (IOFile.Exists(file.FileName))
-                {
-                    bool changed = !(lastChange.CompareTo(IOFile.GetLastWriteTime(file.FileName)) == 0);
-                    lastChange = IOFile.GetLastWriteTime(file.FileName);
-                    return changed;
-                }
+                bool changed = lastChange.CompareTo(IOFile.GetLastWriteTime(file.FileName)) != 0;
+                lastChange = IOFile.GetLastWriteTime(file.FileName);
+                return changed;
             }
 
             return false;
@@ -103,7 +100,7 @@ namespace MSNPSharp.IO
         private static Dictionary<string, MCLInfo> storage = new Dictionary<string, MCLInfo>(0);
         private static object syncObject;
 
-        internal static object SyncObject
+        private static object SyncObject
         {
             get
             {
@@ -125,20 +122,31 @@ namespace MSNPSharp.IO
         public static MCLFile GetFile(string filePath, bool noCompress)
         {
             filePath = filePath.ToLowerInvariant();
-            lock (SyncObject)
+
+            if (!storage.ContainsKey(filePath))
             {
-                if (!storage.ContainsKey(filePath))
+                lock (SyncObject)
                 {
-                    storage[filePath] = new MCLInfo(new MCLFile(filePath, noCompress));
-                }
-                else
-                {
-                    if (storage[filePath].Refresh())
+                    if (!storage.ContainsKey(filePath))
                     {
                         storage[filePath] = new MCLInfo(new MCLFile(filePath, noCompress));
                     }
                 }
             }
+            else
+            {
+                if (storage[filePath].Refresh())
+                {
+                    lock (SyncObject)
+                    {
+                        if (storage[filePath].Refresh())
+                        {
+                            storage[filePath] = new MCLInfo(new MCLFile(filePath, noCompress));
+                        }
+                    }
+                }
+            }
+
             return storage[filePath].File;
         }
     }
