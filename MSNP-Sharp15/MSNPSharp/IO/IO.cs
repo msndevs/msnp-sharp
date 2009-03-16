@@ -37,7 +37,6 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
 
 namespace MSNPSharp.IO
 {
@@ -87,7 +86,7 @@ namespace MSNPSharp.IO
         public void SaveAndHide(string filename)
         {
             SaveImpl(filename, FillFileStruct(uncompressData));
-            lock (MCLFileManager.SyncObject)
+            lock (this)
             {
                 File.SetAttributes(filename, FileAttributes.Hidden);
             }
@@ -158,7 +157,7 @@ namespace MSNPSharp.IO
 
             if (File.Exists(filename))
             {
-                lock (MCLFileManager.SyncObject)
+                lock (this)
                 {
                     File.SetAttributes(filename, FileAttributes.Normal);
                 }
@@ -169,19 +168,15 @@ namespace MSNPSharp.IO
                 byte[] byt = new byte[content.Length + MclBytes.Length];
                 Array.Copy(MclBytes, byt, MclBytes.Length);
                 Array.Copy(content, 0, byt, MclBytes.Length, content.Length);
-                lock (MCLFileManager.SyncObject)
+                lock (this)
                 {
-                    FileIOPermission permission = new FileIOPermission(FileIOPermissionAccess.Write, FileName);
-                    permission.AddPathList(FileIOPermissionAccess.Write, FileName);
                     File.WriteAllBytes(filename, byt);
                 }
             }
             else
             {
-                lock (MCLFileManager.SyncObject)
+                lock (this)
                 {
-                    FileIOPermission permission = new FileIOPermission(FileIOPermissionAccess.Write, FileName);
-                    permission.AddPathList(FileIOPermissionAccess.Write, FileName);
                     File.WriteAllBytes(filename, content);
                 }
             }
