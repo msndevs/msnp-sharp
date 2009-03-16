@@ -231,7 +231,7 @@ namespace MSNPSharp.IO
         {
             Version = Properties.Resources.DeltasListVersion;
 
-            if (File.Exists(filename) && File.GetLastWriteTime(filename) > DateTime.Now.AddSeconds(-10))
+            if (File.Exists(filename) && File.GetLastWriteTime(filename) > DateTime.Now.AddSeconds(-5))
             {
                 return;
             }
