@@ -2210,38 +2210,56 @@ namespace MSNPSharp
             initialADLs.Clear();
             initialADLcount = 0;
 
-            Dictionary<SoapHttpClientProtocol, object> copyStates = new Dictionary<SoapHttpClientProtocol, object>();
-            lock (asyncStates)
+            Dictionary<SoapHttpClientProtocol, object> copyStates;
+            lock (this)
             {
+                // Copy async states to cancel
                 copyStates = new Dictionary<SoapHttpClientProtocol, object>(asyncStates);
                 asyncStates = new Dictionary<SoapHttpClientProtocol, object>();
-            }
-            if (copyStates.Count > 0)
-            {
-                foreach (KeyValuePair<SoapHttpClientProtocol, object> state in copyStates)
+
+                if (copyStates.Count > 0)
                 {
+                    foreach (KeyValuePair<SoapHttpClientProtocol, object> state in copyStates)
+                    {
+                        try
+                        {
+                            state.Key.GetType().InvokeMember("CancelAsync",
+                                System.Reflection.BindingFlags.InvokeMethod,
+                                null, state.Key,
+                                new object[] { state.Value });
+                        }
+                        catch (Exception error)
+                        {
+                            Trace.WriteLineIf(
+                                    Settings.TraceSwitch.TraceError,
+                                    "An error occured while canceling :\r\n" +
+                                    "Service: " + state.Key.ToString() + "\r\n" +
+                                    "State:   " + state.Value.ToString() + "\r\n" +
+                                    "Message: " + error.Message);
+                        }
+                    }
+                }
+
+                // Last save for contact list files
+                if (NSMessageHandler.IsSignedIn && AddressBook != null && Deltas != null)
+                {
+                    AddressBook.Merge(Deltas);
+
                     try
                     {
-                        state.Key.GetType().InvokeMember("CancelAsync",
-                            System.Reflection.BindingFlags.InvokeMethod,
-                            null, state.Key,
-                            new object[] { state.Value });
+                        AddressBook.Save();
+                        Deltas.Truncate();
                     }
                     catch (Exception error)
                     {
-                        Trace.WriteLineIf(
-                                Settings.TraceSwitch.TraceError,
-                                "An error occured while canceling :\r\n" +
-                                "Service:    " + state.Key.ToString() + "\r\n" +
-                                "State: " + state.Value.ToString() + "\r\n" +
-                                "Message:    " + error.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, error.Message, GetType().Name);
                     }
                 }
-            }
 
-            abSynchronized = false;
-            AddressBook = null;
-            Deltas = null;
+                AddressBook = null;
+                Deltas = null;
+                abSynchronized = false;
+            }
         }
 
         private void DeleteCompletedObject(SoapHttpClientProtocol key)

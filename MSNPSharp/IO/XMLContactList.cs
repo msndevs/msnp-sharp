@@ -173,31 +173,7 @@ namespace MSNPSharp.IO
                 }
             }
 
-
-            // Merge deltas
-            if (deltas.MembershipDeltas.Count > 0)
-            {
-                foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
-                {
-                    Merge(membershipResult);
-                }
-            }
-
-            if (deltas.AddressBookDeltas.Count > 0)
-            {
-#if MSNP18
-                foreach (ABFindContactsPagedResultType findcontactspagedResult in deltas.AddressBookDeltas)
-                {
-                    Merge(findcontactspagedResult);
-                }
-#else
-                foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
-                {
-                    Merge(abfindallResult);
-                }
-#endif
-            }
-
+            Merge(deltas);
         }
 
         #region New MembershipList
@@ -310,7 +286,34 @@ namespace MSNPSharp.IO
                     }
                 }
             }
+        }
 
+        public XMLContactList Merge(DeltasList deltas)
+        {
+            if (deltas.MembershipDeltas.Count > 0)
+            {
+                foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
+                {
+                    Merge(membershipResult);
+                }
+            }
+
+            if (deltas.AddressBookDeltas.Count > 0)
+            {
+#if MSNP18
+                foreach (ABFindContactsPagedResultType findcontactspagedResult in deltas.AddressBookDeltas)
+                {
+                    Merge(findcontactspagedResult);
+                }
+#else
+                foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
+                {
+                    Merge(abfindallResult);
+                }
+#endif
+            }
+
+            return this;
         }
 
         public XMLContactList Merge(FindMembershipResultType findMembership)
