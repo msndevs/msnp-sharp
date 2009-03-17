@@ -33,6 +33,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Collections.Generic;
@@ -40,32 +41,97 @@ using System.Runtime.InteropServices;
 
 namespace MSNPSharp.IO
 {
+    #region MclFileStruct
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MCLFileStruct
+    internal struct MclFileStruct
     {
         public byte[] content;
     }
 
+    #endregion
+
+    #region MclInfo
+
+    internal class MclInfo
+    {
+        private MclFile file;
+        private DateTime lastChange;
+
+        public MclInfo(MclFile pfile)
+        {
+            file = pfile;
+            if (System.IO.File.Exists(file.FileName))
+            {
+                lastChange = System.IO.File.GetLastWriteTime(file.FileName);
+            }
+        }
+
+        /// <summary>
+        /// Get whether the file was changed and refresh the <see cref="LastChange"/> property.
+        /// </summary>
+        /// <returns></returns>
+        public bool Refresh()
+        {
+            if (file != null && System.IO.File.Exists(file.FileName))
+            {
+                bool changed = lastChange.CompareTo(System.IO.File.GetLastWriteTime(file.FileName)) != 0;
+                lastChange = System.IO.File.GetLastWriteTime(file.FileName);
+                return changed;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Inner file
+        /// </summary>
+        public MclFile File
+        {
+            get
+            {
+                return file;
+            }
+        }
+
+        /// <summary>
+        /// Last written date
+        /// </summary>
+        public DateTime LastChange
+        {
+            get
+            {
+                return lastChange;
+            }
+        }
+    }
+
+    #endregion
+
+    #region MclFile
+
     /// <summary>
     /// File class used to save userdata.
     /// </summary>
-    public sealed class MCLFile
+    public sealed class MclFile
     {
         public static readonly byte[] MclBytes = new byte[] { (byte)'m', (byte)'c', (byte)'l' };
+
         private string fileName = String.Empty;
         private bool noCompression = false;
         private byte[] uncompressData;
 
         /// <summary>
-        /// Opens filename and fills the <see cref="Content"/> with uncompressed data.
+        /// Opens filename and fills the <see cref="Content"/> with uncompressed data if file is opened for reading.
         /// </summary>
         /// <param name="filename">Name of file</param>
         /// <param name="nocompress">Use of compression when SAVING file.</param>
-        public MCLFile(string filename, bool nocompress)
+        /// <param name="access">The <see cref="Content"/> is filled if the file is opened for reading</param>
+        public MclFile(string filename, bool nocompress, FileAccess access)
         {
             fileName = filename;
             noCompression = nocompress;
-            uncompressData = GetStruct().content;
+            if ((access & FileAccess.Read) == FileAccess.Read)
+                uncompressData = GetStruct().content;
         }
 
         #region Public method
@@ -221,7 +287,7 @@ namespace MSNPSharp.IO
             if (noCompression)
                 return content;
 
-            MCLFileStruct mclstruct;
+            MclFileStruct mclstruct;
             mclstruct.content = (content != null) ? Compress(content) : null;
 
             return mclstruct.content;
@@ -231,9 +297,9 @@ namespace MSNPSharp.IO
         /// Decompress the file and fill the MCLFileStruct struct
         /// </summary>
         /// <returns></returns>
-        private MCLFileStruct GetStruct()
+        private MclFileStruct GetStruct()
         {
-            MCLFileStruct mclfile = new MCLFileStruct();
+            MclFileStruct mclfile = new MclFileStruct();
             if (File.Exists(fileName))
             {
                 FileStream fs = File.Open(fileName, FileMode.Open, FileAccess.Read);
@@ -274,7 +340,7 @@ namespace MSNPSharp.IO
                 catch (Exception exception)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exception.Message, GetType().Name);
-                    return new MCLFileStruct();
+                    return new MclFileStruct();
                 }
                 finally
                 {
@@ -289,5 +355,66 @@ namespace MSNPSharp.IO
             return Encoding.UTF8.GetString(Content);
         }
         #endregion
+
+        #region Open
+
+        static Dictionary<string, MclInfo> storage = new Dictionary<string, MclInfo>(0);
+        static object syncObject;
+        static object SyncObject
+        {
+            get
+            {
+                if (syncObject == null)
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncObject, newobj, null);
+                }
+                return syncObject;
+            }
+        }
+
+        /// <summary>
+        /// Get the file from disk or from the storage cache.
+        /// </summary>
+        /// <param name="filePath">Full file path</param>
+        /// <param name="access">If the file is opened for reading, file content is loaded</param>
+        /// <param name="noCompress">Use file compression or not for SAVING</param>
+        /// <returns>Msnpsharp contact list file</returns>
+        /// <remarks>This method is thread safe</remarks>
+        public static MclFile Open(string filePath, FileAccess access, bool noCompress)
+        {
+            filePath = filePath.ToLowerInvariant();
+
+            if (!storage.ContainsKey(filePath))
+            {
+                lock (SyncObject)
+                {
+                    if (!storage.ContainsKey(filePath))
+                    {
+                        storage[filePath] = new MclInfo(new MclFile(filePath, noCompress, access));
+                    }
+                }
+            }
+            else
+            {
+                if (storage[filePath].Refresh())
+                {
+                    lock (SyncObject)
+                    {
+                        if (storage[filePath].Refresh())
+                        {
+                            storage[filePath] = new MclInfo(new MclFile(filePath, noCompress, access));
+                        }
+                    }
+                }
+            }
+
+            return storage[filePath].File;
+        }
+
+
+        #endregion
     }
+
+    #endregion
 };

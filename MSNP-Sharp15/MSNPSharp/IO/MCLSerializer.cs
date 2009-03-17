@@ -120,7 +120,7 @@ namespace MSNPSharp.IO
             object rtnobj = Activator.CreateInstance(targettype);
             if (Settings.NoSave == false && File.Exists(filename))
             {
-                MCLFile file = MCLFileManager.GetFile(filename, nocompress);
+                MclFile file = MclFile.Open(filename, FileAccess.Read, nocompress);
                 if (file.Content != null)
                 {
                     MemoryStream mem = new MemoryStream(file.Content);
@@ -164,7 +164,7 @@ namespace MSNPSharp.IO
                 XmlSerializer ser = new XmlSerializer(this.GetType());
                 MemoryStream ms = new MemoryStream();
                 ser.Serialize(ms, this);
-                MCLFile file = MCLFileManager.GetFile(filename, noCompress);
+                MclFile file = MclFile.Open(filename, FileAccess.Write, noCompress);
                 file.Content = ms.ToArray();
                 file.SaveAndHide(filename);
                 ms.Close();

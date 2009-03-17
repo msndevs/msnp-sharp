@@ -68,7 +68,6 @@
     <Compile Include="IO\SerializableDictionary.cs" />
     <Compile Include="IO\SerializableMemoryStream.cs" />
     <Compile Include="MailEventArgs.cs" />
-    <Compile Include="IO\MCLFileManager.cs" />
     <Compile Include="Core\MessagePool.cs" />
     <Compile Include="Core\MessageProcessor.cs" />
     <Compile Include="Messenger.cs" />
