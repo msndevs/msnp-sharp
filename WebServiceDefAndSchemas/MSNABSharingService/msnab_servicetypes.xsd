@@ -425,13 +425,7 @@
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:element>
-            <xsd:element name="CircleResult">
-                <xsd:complexType>
-                    <xsd:sequence>
-                        <xsd:element name="CircleTicket" type="xsd:string"/>
-                    </xsd:sequence>
-                </xsd:complexType>
-            </xsd:element>
+            <xsd:element name="CircleResult" type="msnab:CircleResultType"/>
             <xsd:element name="Ab">
                 <xsd:complexType>
                     <xsd:sequence>
