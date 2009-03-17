@@ -62,7 +62,7 @@
                     <xsd:sequence>
                         <xsd:element name="Id" type="msnab:Guid"/>
                         <xsd:element name="IsPassportNameHidden" type="xsd:boolean"/>
-                        <xsd:element name="CID" type="xsd:integer"/>
+                        <xsd:element name="CID" type="xsd:long"/>
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:element>
@@ -97,8 +97,8 @@
                 <xsd:sequence>
                     <xsd:element name="PassportName" type="xsd:string"/>
                     <xsd:element name="IsPassportNameHidden" type="xsd:boolean" minOccurs="0"/>
-                    <xsd:element name="PassportId" type="xsd:integer" minOccurs="0"/>
-                    <xsd:element name="CID" type="xsd:integer" minOccurs="0"/>
+                    <xsd:element name="PassportId" type="xsd:int" minOccurs="0"/>
+                    <xsd:element name="CID" type="xsd:long" minOccurs="0"/>
                     <xsd:element name="PassportChanges" type="xsd:string" minOccurs="0"/>
                 </xsd:sequence>
             </xsd:extension>
@@ -793,12 +793,12 @@
     </xsd:complexType>
     <xsd:complexType name="ContentInfoType">
         <xsd:sequence>
-            <xsd:element name="Domain" type="xsd:integer"/>
+            <xsd:element name="Domain" type="xsd:int"/>
             <xsd:element name="HostedDomain" type="xsd:string"/>
-            <xsd:element name="Type" type="xsd:integer"/>
-            <xsd:element name="MembershipAccess" type="xsd:integer"/>
+            <xsd:element name="Type" type="xsd:int"/>
+            <xsd:element name="MembershipAccess" type="xsd:int"/>
             <xsd:element name="IsPresenceEnabled" type="xsd:boolean"/>
-            <xsd:element name="RequestMembershipOption" type="xsd:integer"/>
+            <xsd:element name="RequestMembershipOption" type="xsd:int"/>
             <xsd:element name="DisplayName" type="xsd:string"/>
             <xsd:element name="ProfileLastUpdated" type="xsd:dateTime" minOccurs="0"/>
             <xsd:element name="Changes" type="xsd:anyType" minOccurs="0"/>
