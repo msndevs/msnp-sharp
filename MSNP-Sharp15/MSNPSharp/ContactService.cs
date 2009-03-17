@@ -407,6 +407,7 @@ namespace MSNPSharp
 
                 #region Circle ADL
 
+                //We must send a USR SHA A command first, or we will get a 933 error.
                 ////if (NSMessageHandler.CircleList.Count > 0)
                 ////{
                 ////    hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
@@ -2108,11 +2109,12 @@ namespace MSNPSharp
                         return;
                     }
 
-                    //addressBookId = e.Result.CreateCircleResult.Id;
-                    //abCircleRequest(addressBookId);
                     abRequest("JoinedCircleDuringPush",
                         delegate
                         {
+                            //We need USR SHA A again
+                            NSMessageHandler.SendCreateCircleADL(new Guid(e.Result.CreateCircleResult.Id), "live.com");
+
                             msRequest("ABChangeNotifyAlert",
                                 delegate
                                 {
