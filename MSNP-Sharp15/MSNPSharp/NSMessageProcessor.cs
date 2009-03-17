@@ -98,6 +98,20 @@ namespace MSNPSharp
             SendSocketData(message.GetBytes());
         }
 
+        public virtual void SendMessage(NetworkMessage message, int transactionID)
+        {
+            MSNMessage NSMessage = null;
+
+            NSMessage = (MSNMessage)message;
+            NSMessage.TransactionID = transactionID;
+            message.PrepareMessage();
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString(), GetType().Name);
+
+            // convert to bytes and send it over the socket
+            SendSocketData(message.GetBytes());
+        }
+
         public override void Disconnect()
         {
             SendMessage(new NSMessage("OUT", new string[] { }));

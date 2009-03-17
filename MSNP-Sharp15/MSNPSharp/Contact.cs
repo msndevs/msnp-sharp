@@ -436,7 +436,7 @@ namespace MSNPSharp
             }
         }
 
-        public string Hash
+        public virtual string Hash
         {
             get
             {

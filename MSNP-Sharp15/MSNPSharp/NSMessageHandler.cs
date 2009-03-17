@@ -63,6 +63,7 @@ namespace MSNPSharp
         private ConnectivitySettings connectivitySettings;
         private IPEndPoint externalEndPoint;
 
+        private CircleList circleList;
         private ContactGroupList contactGroups;
         private ContactList contactList;
         private bool autoSynchronize = true;
@@ -86,6 +87,7 @@ namespace MSNPSharp
             owner.NSMessageHandler = this;
             owner.ClientCapacities = ClientCapacities.None;
 
+            circleList = new CircleList(this);
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
             contactService = new ContactService(this);
@@ -178,13 +180,24 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// A collection of all contactgroups which are defined by the user who logged into the messenger network.\
+        /// A collection of all contactgroups which are defined by the user who logged into the messenger network.
         /// </summary>
         public ContactGroupList ContactGroups
         {
             get
             {
                 return contactGroups;
+            }
+        }
+
+        /// <summary>
+        /// A collection of all circle which are defined by the user who logged into the messenger network.
+        /// </summary>
+        public CircleList CircleList
+        {
+            get
+            {
+                return circleList;
             }
         }
 
@@ -700,6 +713,37 @@ namespace MSNPSharp
             }
         }
 
+
+        #endregion
+
+        #region Circle
+
+        internal int SendCircleNotifyADL(Guid circleId, string hostDomain)
+        {
+            string payload = "<ml l=\"1\"><d n=\""
+            + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
+            ((int)(MSNLists.AllowedList | MSNLists.ForwardList)).ToString() + "\" t=\"" +
+            ((int)ClientType.CircleMember).ToString() + "\"/></d></ml>";
+
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("ADL", payload);
+            MessageProcessor.SendMessage(nsMessage);
+            return nsMessage.TransactionID;
+        }
+
+        internal int SendCreateCircleADL(Guid circleId, string hostDomain)
+        {
+            int transID = SendCircleNotifyADL(circleId, hostDomain);
+
+            string payload = "<ml><d n=\""
+            + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
+            ((int)(MSNLists.ReverseList)).ToString() + "\" t=\"" +
+            ((int)ClientType.CircleMember).ToString() + "\" f=\"" +
+            circleId.ToString("D") + "@" + hostDomain + "\" /></d></ml>";
+
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("ADL", payload);
+            (MessageProcessor as NSMessageProcessor).SendMessage(nsMessage, 0);
+            return transID;
+        }
 
         #endregion
 
@@ -1532,6 +1576,10 @@ namespace MSNPSharp
             }
         }
 
+        protected virtual void OnSBSReceived(NSMessage message)
+        {
+        }
+
         /// <summary>
         /// Called when a UBM command has been received, this message was sent by a Yahoo Messenger client.
         /// </summary>
@@ -2323,7 +2371,9 @@ namespace MSNPSharp
                     case "XFR":
                         OnXFRReceived(nsMessage);
                         return;
-
+                    case "SBS":
+                        OnSBSReceived(nsMessage);
+                        return;
                     // Outdated
                     case "BPR":
                         OnBPRReceived(nsMessage);
