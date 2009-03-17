@@ -368,5 +368,36 @@ namespace MSNPSharp.IO
 
 
     }
+
+    [Serializable()]
+    public class CircleInfo
+    {
+        private ContactType circleMember = null;
+        private CircleInverseInfoType circleResultInfo = null;
+
+        public CircleInverseInfoType CircleResultInfo
+        {
+            get { return circleResultInfo; }
+            set { circleResultInfo = value; }
+        }
+
+
+        public ContactType CircleMember
+        {
+            get { return circleMember; }
+            set { circleMember = value; }
+        }
+
+        public CircleInfo()
+        {
+        }
+
+
+        public CircleInfo(ContactType contact, CircleInverseInfoType circle)
+        {
+            CircleMember = contact;
+            CircleResultInfo = circle;
+        }
+    }
     #endregion
 };

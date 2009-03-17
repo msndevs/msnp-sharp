@@ -55,6 +55,7 @@ namespace MSNPSharp
 
         private int recursiveCall;
         private string applicationId = String.Empty;
+        private object initialADLsSyncRoot = new object();
         private List<int> initialADLs = new List<int>();
         private bool abSynchronized;
         private Dictionary<SoapHttpClientProtocol, object> asyncStates = new Dictionary<SoapHttpClientProtocol, object>();
@@ -105,6 +106,11 @@ namespace MSNPSharp
         /// Occurs when a contactgroup is removed
         /// </summary>
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
+
+        /// <summary>
+        /// Occurs when a new <see cref="Circle"/> is created
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CircleAdded;
 
         /// <summary>
         /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
@@ -183,6 +189,18 @@ namespace MSNPSharp
             }
         }
 
+
+        /// <summary>
+        /// Fires the <see cref="CircleAdded"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal void OnCircleAdded(CircleEventArgs e)
+        {
+            if (CircleAdded != null)
+            {
+                CircleAdded(this, e);
+            }
+        }
 
         /// <summary>
         /// Fires the <see cref="SynchronizationCompleted"/> event.
@@ -352,6 +370,8 @@ namespace MSNPSharp
                 // Send BLP
                 NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
 
+                #region Contacts ADL
+
                 // Send Initial ADL
                 Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
                 lock (NSMessageHandler.ContactList.SyncRoot)
@@ -377,8 +397,43 @@ namespace MSNPSharp
                 {
                     NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                     NSMessageHandler.MessageProcessor.SendMessage(message);
-                    initialADLs.Add(message.TransactionID);
-                }
+                    lock (initialADLsSyncRoot)
+                    {
+                        initialADLs.Add(message.TransactionID);
+                    }
+                } 
+
+                #endregion
+
+                #region Circle ADL
+
+                ////if (NSMessageHandler.CircleList.Count > 0)
+                ////{
+                ////    hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
+                ////    lock (NSMessageHandler.CircleList.SyncRoot)
+                ////    {
+                ////        foreach (Circle circle in NSMessageHandler.CircleList)
+                ////        {
+                ////            string ch = circle.Hash;
+                ////            MSNLists l = circle.Lists;
+                ////            hashlist.Add(ch, l);
+                ////        }
+                ////    }
+                ////    string[] circleadls = ConstructLists(hashlist, true);
+                ////    initialADLcount += circleadls.Length;  //Thread safe??
+                ////    foreach (string payload in circleadls)
+                ////    {
+                ////        NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                ////        NSMessageHandler.MessageProcessor.SendMessage(message);
+
+                ////        lock (initialADLsSyncRoot)
+                ////        {
+                ////            initialADLs.Add(message.TransactionID);
+                ////        }
+                ////    }
+                ////}
+
+                #endregion
             }
 
             // Set screen name
@@ -393,7 +448,11 @@ namespace MSNPSharp
         {
             if (initialADLs.Contains(transid))
             {
-                initialADLs.Remove(transid);
+                lock (initialADLsSyncRoot)
+                {
+                    initialADLs.Remove(transid);
+                }
+
                 if (--initialADLcount <= 0)
                 {
                     initialADLcount = 0;
@@ -2015,6 +2074,163 @@ namespace MSNPSharp
 
         #endregion
 
+        #region Create Circle
+
+        internal void CreateCircle(string circleName)
+        {
+            object createCircleObject = new object();
+            string addressBookId = string.Empty;
+
+            SharingServiceBinding sharingService = CreateSharingService("CircleSave", createCircleObject);
+            CreateCircleRequestType request = new CreateCircleRequestType();
+            request.callerInfo = new callerInfoType();
+            request.callerInfo.PublicDisplayName = NSMessageHandler.Owner.Mail;
+
+            //This is M$ style, you will never guess out the meaning of these numbers.
+            ContentInfoType properties = new ContentInfoType();
+            properties.Domain = 1;
+            properties.HostedDomain = "live.com";
+            properties.Type = 2;
+            properties.MembershipAccess = 0;
+            properties.IsPresenceEnabled = true;
+            properties.RequestMembershipOption = 2;
+            properties.DisplayName = circleName;
+
+            request.properties = properties;
+            sharingService.CreateCircleCompleted += delegate(object sender, CreateCircleCompletedEventArgs e)
+            {
+                DeleteCompletedObject(sharingService);
+                if (!e.Cancelled)
+                {
+                    if (e.Error != null)
+                    {
+                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("CreateCircle", e.Error));
+                        return;
+                    }
+
+                    //addressBookId = e.Result.CreateCircleResult.Id;
+                    //abCircleRequest(addressBookId);
+                    abRequest("JoinedCircleDuringPush",
+                        delegate
+                        {
+                            msRequest("ABChangeNotifyAlert",
+                                delegate
+                                {
+                                    msRequest("ABChangeNotifyAlert",
+                                        delegate
+                                        {
+                                            abRequest("ABChangeNotifyAlert", null);
+                                        }
+                                        );
+                                }
+                                );
+                        }
+                    );
+                }
+            };
+
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService,"CreateCircle",request);
+            sharingService.CreateCircleAsync(request, createCircleObject);
+
+        }
+
+        internal void abCircleRequest(string abId)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", new MSNPSharpException("You don't have access right on this action anymore.")));
+            }
+            else
+            {
+                bool deltasOnly = true;
+
+                object ABFindContactsPagedObject = new object();
+                ABServiceBinding abService = CreateABService("JoinedCircleDuringPush", ABFindContactsPagedObject);
+                ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
+                request.abView = "MessengerClient8";  //NO default!
+                request.extendedContent = "AB AllGroups CircleResult";
+
+                request.filterOptions = new filterOptionsType();
+                request.filterOptions.ContactFilter = new ContactFilterType();
+
+                request.filterOptions.LastChanged = AddressBook.AddressbookLastChange;
+                request.filterOptions.LastChangedSpecified = true;
+
+                request.filterOptions.DeltasOnly = deltasOnly;
+                request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+
+                abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
+                {
+                    DeleteCompletedObject(abService);
+                    string abpartnerScenario = e.UserState.ToString();
+
+                    if (!e.Cancelled)
+                    {
+                        if (e.Error != null)
+                        {
+
+                            OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ABFindContactsPaged", e.Error));
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
+                        }
+                        else
+                        {
+                            HandleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindContactsPagedRequestType));
+                            if (null != e.Result.ABFindContactsPagedResult)
+                            {
+                                string adlPayLoad = string.Empty;
+                                string domain = string.Empty;
+
+                                if (e.Result.ABFindContactsPagedResult.CircleResult.Circles != null)
+                                {
+                                    if (e.Result.ABFindContactsPagedResult.CircleResult.Circles.Length > 0)
+                                    {
+                                        domain = e.Result.ABFindContactsPagedResult.CircleResult.Circles[0].Content.Info.HostedDomain;
+                                    }
+                                }
+
+                                foreach (ContactType contact in e.Result.ABFindContactsPagedResult.Contacts)
+                                {
+                                    if (contact.contactInfo != null)
+                                    {
+                                        if (contact.contactInfo.contactType == MessengerContactType.Circle 
+                                            && contact.fDeletedSpecified 
+                                            && contact.fDeleted == false)
+                                        {
+                                            Circle circle = Factory.CreateCircle();
+                                            circle.AddressBookId = new Guid(abId);
+                                            circle.CreatorEmail = NSMessageHandler.Owner.Mail;
+                                            circle.CID = contact.contactInfo.CID;
+                                            circle.Guid = new Guid(contact.contactId);
+                                            circle.SetName(contact.contactInfo.displayName);
+                                            circle.NickName = circle.Name;
+
+                                            NSMessageHandler.CircleList.AddCircle(circle);
+
+                                            if (domain != string.Empty)
+                                            {
+                                                //TODO: combine ADL payload here.
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (adlPayLoad != string.Empty && domain != string.Empty)
+                                {
+                                    //TODO: send ADL here.
+
+                                    //The official client call abRequest and msRequest two times to refresh the contactlist here, but we needn't.
+                                }
+                            }
+                        }
+                    }
+                };
+
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindContactsPaged", request);
+                abService.ABFindContactsPagedAsync(request, ABFindContactsPagedObject);
+            }
+        }
+        #endregion
+
         #endregion
 
         #region DeleteRecordFile & handleServiceHeader
@@ -2207,7 +2423,10 @@ namespace MSNPSharp
         internal void Clear()
         {
             recursiveCall = 0;
-            initialADLs.Clear();
+            lock (initialADLsSyncRoot)
+            {
+                initialADLs.Clear();
+            }
             initialADLcount = 0;
 
             Dictionary<SoapHttpClientProtocol, object> copyStates;

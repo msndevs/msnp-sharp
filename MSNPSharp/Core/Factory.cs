@@ -49,6 +49,7 @@ namespace MSNPSharp.Core
         private static Type yimmessageHandler = typeof(YIMMessageHandler);
         private static Type switchboardProcessor = typeof(SBMessageProcessor);
         private static Type contact = typeof(Contact);
+        private static Type circle = typeof(Circle);
         private static Type p2pHandler = typeof(P2PHandler);
         private static Type p2pTransferSession = typeof(P2PTransferSession);
         private static Type p2pMessageSession = typeof(P2PMessageSession);
@@ -142,6 +143,15 @@ namespace MSNPSharp.Core
             {
                 contact = value;
             }
+        }
+
+        /// <summary>
+        /// The type used to create circle objects.
+        /// </summary>
+        public static Type Circle
+        {
+            get { return circle; }
+            set { circle = value; }
         }
 
         /// <summary>
@@ -249,6 +259,15 @@ namespace MSNPSharp.Core
         public static Contact CreateContact()
         {
             return (Contact)Activator.CreateInstance(contact, true);
+        }
+
+        /// <summary>
+        /// Creates a default circle.
+        /// </summary>
+        /// <returns></returns>
+        public static Circle CreateCircle()
+        {
+            return (Circle)Activator.CreateInstance(circle, true);
         }
 
         /// <summary>

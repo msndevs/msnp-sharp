@@ -41,6 +41,7 @@ using System.Collections.Generic;
 namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// ContactList file maintainer
@@ -95,11 +96,6 @@ namespace MSNPSharp.IO
                             type = ClientType.PhoneMember;
                             account = ((PhoneMember)bm).PhoneNumber;
                         }
-                        else if (bm is CircleMember)
-                        {
-                            type = ClientType.CircleMember;
-                            account = ((CircleMember)bm).CircleId;
-                        }
 
                         if (account != null && type != ClientType.None)
                         {
@@ -116,6 +112,12 @@ namespace MSNPSharp.IO
             foreach (GroupType group in Groups.Values)
             {
                 NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, NSMessageHandler));
+            }
+
+            //Create Circles.
+            foreach (CircleInfo circle in CircleResults.Values)
+            {
+                NSMessageHandler.CircleList.AddCircle(CombineCircle(circle.CircleMember, circle.CircleResultInfo));
             }
 
             // Create the Forward List and Email Contacts
@@ -386,11 +388,11 @@ namespace MSNPSharp.IO
                                                     type = ClientType.PhoneMember;
                                                     account = ((PhoneMember)bm).PhoneNumber;
                                                 }
-                                                else if (bm is CircleMember)
-                                                {
-                                                    type = ClientType.CircleMember;
-                                                    account = ((CircleMember)bm).CircleId;
-                                                }
+                                                //else if (bm is CircleMember)
+                                                //{
+                                                //    type = ClientType.CircleMember;
+                                                //    account = ((CircleMember)bm).CircleId;
+                                                //}
 
                                                 if (account != null && type != ClientType.None)
                                                 {
@@ -503,10 +505,10 @@ namespace MSNPSharp.IO
                                                         account = ((DomainMember)bm).DomainName;
                                                         break;
 
-                                                    case "Circle":
-                                                        type = ClientType.CircleMember;
-                                                        account = ((CircleMember)bm).CircleId;
-                                                        break;
+                                                    //case "Circle":
+                                                    //    type = ClientType.CircleMember;
+                                                    //    account = ((CircleMember)bm).CircleId;
+                                                    //    break;
                                                 }
 
                                                 if (account != null)
@@ -562,6 +564,13 @@ namespace MSNPSharp.IO
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
         SerializableDictionary<Guid, ContactType> abcontacts = new SerializableDictionary<Guid, ContactType>(0);
+        SerializableDictionary<Guid, CircleInfo> circleResults = new SerializableDictionary<Guid, CircleInfo>(0);
+
+        public SerializableDictionary<Guid, CircleInfo> CircleResults
+        {
+            get { return circleResults; }
+            set { circleResults = value; }
+        }
 
         [XmlElement("AddressbookLastChange")]
         public DateTime AddressbookLastChange
@@ -806,6 +815,43 @@ namespace MSNPSharp.IO
                     {
                         if (null != contactType.contactInfo)
                         {
+                            if (contactType.contactInfo.contactType == MessengerContactType.Circle)
+                            {
+                                //Circle is a contact
+                                if (null == forwardList.CircleResult.Circles)
+                                    continue;
+
+                                foreach (CircleInverseInfoType circleinfo in forwardList.CircleResult.Circles)
+                                {
+                                    if (contactType.contactInfo.displayName == circleinfo.Content.Info.DisplayName)
+                                    {
+                                        Guid circleId = new Guid(circleinfo.Content.Handle.Id);
+                                        if (circleinfo.Deleted)
+                                        {
+                                            CircleResults.Remove(circleId);
+                                        }
+                                        else
+                                        {
+                                            bool newadded = true;
+                                            if (CircleResults.ContainsKey(circleId))
+                                            {
+                                                newadded = false;
+                                            }
+
+                                            CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
+                                            if (newadded)
+                                            {
+                                                Circle newcircle = CombineCircle(contactType, circleinfo);
+
+                                                NSMessageHandler.CircleList.AddCircle(newcircle);
+                                                NSMessageHandler.ContactService.OnCircleAdded(new CircleEventArgs(newcircle));
+                                            }
+                                        }
+                                    }
+                                }
+                                continue;
+                            }
+
                             Contact contact = NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
 
                             if (contactType.fDeleted)
@@ -867,6 +913,23 @@ namespace MSNPSharp.IO
         {
             return xmlcl.Merge(forwardList);
         }
+
+        private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
+        {
+            Circle circle = new Circle(
+                new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.DisplayName, NSMessageHandler);
+            circle.Lists = MSNLists.AllowedList | MSNLists.ForwardList;
+            circle.Guid = new Guid(contact.contactId);
+            circle.HostDomain = circleinfo.Content.Info.HostedDomain;
+
+            if (contact.contactInfo != null)
+            {
+
+                circle.CID = contact.contactInfo.CID;
+            }
+            return circle;
+        }
+
 
         private void UpdateContact(ContactType contactType)
         {
