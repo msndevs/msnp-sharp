@@ -98,23 +98,6 @@ namespace MSNPSharp
         {
         }
 
-        internal WhatsUpServiceBinding CreateWhatsUpService(string partnerScenario)
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.WhatsUp);
-
-            WhatsUpServiceBinding wuService = new WhatsUpServiceBinding();
-            wuService.Proxy = WebProxy;
-            wuService.Timeout = Int32.MaxValue;
-            wuService.UserAgent = Properties.Resources.WebServiceUserAgent;
-            wuService.Url = "http://sup.live.com/whatsnew/whatsnewservice.asmx";
-            wuService.WNApplicationHeaderValue = new WNApplicationHeader();
-            wuService.WNApplicationHeaderValue.ApplicationId = Properties.Resources.WhatsupServiceAppID;
-            wuService.WNAuthHeaderValue = new WNAuthHeader();
-            wuService.WNAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WhatsUp].Ticket;
-
-            return wuService;
-        }
-
         public void GetWhatsUp()
         {
             GetWhatsUp(50);
@@ -123,22 +106,26 @@ namespace MSNPSharp
         /// <summary>
         /// Get the recent activities of your contacts.
         /// </summary>
-        /// <param name="count">Max activity count, must be larger than zero and less than 50.</param>
+        /// <param name="count">Max activity count, must be larger than zero and less than 200.</param>
         public void GetWhatsUp(int count)
         {
-            if (count > 50)
+            if (count > 200)
+            {
+                count = 200;
+            }
+            else if (count < 0)
             {
                 count = 50;
-            }else if(count < 0)
-            {
-                count = 0;
             }
 
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                WhatsUpServiceBinding wuService = CreateWhatsUpService(":)");
+                MsnServiceObject getContactsRecentActivityObject = new MsnServiceObject(PartnerScenario.None, "GetContactsRecentActivity");
+                WhatsUpServiceBinding wuService = (WhatsUpServiceBinding)CreateService(MsnServiceType.WhatsUp, getContactsRecentActivityObject);
                 wuService.GetContactsRecentActivityCompleted += delegate(object sender, GetContactsRecentActivityCompletedEventArgs e)
                 {
+                    DeleteCompletedObject(wuService);
+
                     if (e.Cancelled)
                         return;
 
@@ -162,16 +149,13 @@ namespace MSNPSharp
                     }
                 };
 
-                if (count > 200)
-                    count = 200;
-
                 GetContactsRecentActivityRequestType request = new GetContactsRecentActivityRequestType();
                 request.entityHandle = new entityHandle();
                 request.entityHandle.Cid = Convert.ToInt64(NSMessageHandler.Owner.CID);
                 request.locales = new string[] { System.Globalization.CultureInfo.CurrentCulture.Name };
                 request.count = count;
 
-                wuService.GetContactsRecentActivityAsync(request, new object());
+                wuService.GetContactsRecentActivityAsync(request, getContactsRecentActivityObject);
             }
         }
 
@@ -181,6 +165,11 @@ namespace MSNPSharp
             {
                 GetWhatsUpCompleted(sender, e);
             }
+        }
+
+        internal void Clear()
+        {
+            CancelAndDisposeAysncMethods();
         }
 
     }
