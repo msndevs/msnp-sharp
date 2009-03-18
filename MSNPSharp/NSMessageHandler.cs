@@ -1919,7 +1919,7 @@ namespace MSNPSharp
                     if (AutoSynchronize)
                     {
                         ContactService.msRequest(
-                            "MessengerPendingList",
+                            PartnerScenario.MessengerPendingList,
                             delegate
                             {
                                 XmlDocument xmlDoc = new XmlDocument();
@@ -1979,7 +1979,7 @@ namespace MSNPSharp
             {
                 if (AutoSynchronize)
                 {
-                    ContactService.msRequest("Initial", null);
+                    ContactService.msRequest(PartnerScenario.Initial, null);
                 }
 
                 if (Settings.TraceSwitch.TraceVerbose)
@@ -2020,7 +2020,7 @@ namespace MSNPSharp
         {
             if (AutoSynchronize)
             {
-                ContactService.abRequest("ContactSave", null);
+                ContactService.abRequest(PartnerScenario.ContactSave, null);
             }
         }
 
@@ -2037,7 +2037,7 @@ namespace MSNPSharp
         {
             if (AutoSynchronize)
             {
-                ContactService.abRequest("ContactSave", null);
+                ContactService.abRequest(PartnerScenario.ContactSave, null);
             }
         }
 
@@ -2254,11 +2254,17 @@ namespace MSNPSharp
         protected virtual void Clear()
         {
             ContactList.Clear();
+            CircleList.Clear();
             ContactGroups.Clear();
             ContactService.Clear();
-            ////SwitchBoards.Clear();
+            StorageService.Clear();
+            OIMService.Clear();
+            SpaceService.Clear();
+            WhatsUpService.Clear();
+            // SwitchBoards.Clear();
             Owner.Emoticons.Clear();
             Owner.Places.Clear();
+
             externalEndPoint = null;
             isSignedIn = false;
             msnticket = MSNTicket.Empty;
