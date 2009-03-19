@@ -130,9 +130,12 @@ namespace MSNPSharp
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&
                 NSMessageHandler.ContactList.HasContact(account, ClientType.PassportMember))
             {
-                SpaceService service = CreateSpaceService();
+                MsnServiceObject getXmlFeedObject = new MsnServiceObject(PartnerScenario.None, "GetXmlFeed");
+                SpaceService service = (SpaceService)CreateService(MsnServiceType.Space, getXmlFeedObject);
                 service.GetXmlFeedCompleted += delegate(object sender, GetXmlFeedCompletedEventArgs e)
                 {
+                    DeleteCompletedObject(service);
+
                     if (e.Cancelled)
                         return;
 
@@ -355,7 +358,7 @@ namespace MSNPSharp
                     request.refreshInformation.contactProfileLastViewedSpecified = true;
                 }
 
-                service.GetXmlFeedAsync(request, new object());
+                service.GetXmlFeedAsync(request, getXmlFeedObject);
             }
             else
             {
@@ -371,17 +374,6 @@ namespace MSNPSharp
         {
             if (ContactCardCompleted != null)
                 ContactCardCompleted(this, arg);
-        }
-
-        private SpaceService CreateSpaceService()
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Spaces);
-
-            SpaceService service = new SpaceService();
-            service.Proxy = WebProxy;
-            service.AuthTokenHeaderValue = new AuthTokenHeader();
-            service.AuthTokenHeaderValue.Token = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Spaces].Ticket;
-            return service;
         }
     }
 };

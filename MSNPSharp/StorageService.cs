@@ -58,31 +58,6 @@ namespace MSNPSharp
         }
 
         #region Internal implementation
-        private StorageService CreateStorageService(String scenario)
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Storage);
-
-            StorageService storageService = new StorageService();
-            storageService.Proxy = WebProxy;
-            storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
-            /*if (NSMessageHandler.Credentials.MsnProtocol == MsnProtocol.MSNP18)
-            {
-                storageService.StorageApplicationHeaderValue.ApplicationID = Properties.Resources.ApplicationStrId;
-            }
-            else*/
-            {
-                storageService.StorageApplicationHeaderValue.ApplicationID = "Messenger Client 8.5";
-            }
-            storageService.StorageApplicationHeaderValue.Scenario = scenario;
-            storageService.StorageUserHeaderValue = new StorageUserHeader();
-            storageService.StorageUserHeaderValue.Puid = 0;
-            storageService.StorageUserHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket;
-            storageService.AffinityCacheHeaderValue = new AffinityCacheHeader();
-            storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey)
-                ? NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey] : String.Empty;
-
-            return storageService;
-        }
 
         private static ExpressionProfileAttributesType CreateFullExpressionProfileAttributes()
         {
@@ -132,7 +107,7 @@ namespace MSNPSharp
 
             try
             {
-                StorageService storageService = CreateStorageService("RoamingSeed");
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(PartnerScenario.RoamingSeed));
                 storageService.AllowAutoRedirect = true;
 
                 //1. CreateProfile, create a new profile and return its resource id.
@@ -174,8 +149,7 @@ namespace MSNPSharp
                 srvHandle.Type = ServiceFilterType.Profile;
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    object nullObject = null;
-                    SharingServiceBinding sharingService = NSMessageHandler.ContactService.CreateSharingService("RoamingSeed", nullObject);
+                    SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, new MsnServiceObject(PartnerScenario.RoamingSeed));
                     sharingService.AllowAutoRedirect = true;
 
                     AddMemberRequestType addMemberRequest = new AddMemberRequestType();
@@ -318,7 +292,7 @@ namespace MSNPSharp
                 }
 
                 // 6.2 Get Profile again to get notification.LastChanged
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl("Initial");
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.Initial);
 
                 //7. FindDocuments Hmm....
 
@@ -326,8 +300,7 @@ namespace MSNPSharp
                 //8. UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    object abServiceObject = null;
-                    ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingSeed", abServiceObject);
+                    ABServiceBinding abService = (ABServiceBinding)NSMessageHandler.ContactService.CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingSeed));
                     abService.AllowAutoRedirect = true;
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
@@ -365,7 +338,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: " + ex.Message, GetType().Name);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: You don't receive any contact updates, vice versa! " + ex.Message, GetType().Name);
                     }
 
                     //9. ABContactUpdate
@@ -405,11 +378,11 @@ namespace MSNPSharp
             }
         }
 
-        private OwnerProfile GetProfileImpl(string scenario)
+        private OwnerProfile GetProfileImpl(PartnerScenario scenario)
         {
             try
             {
-                StorageService storageService = CreateStorageService(scenario);
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(scenario));
 
                 GetProfileRequestType request = new GetProfileRequestType();
                 request.profileHandle = new Handle();
@@ -518,7 +491,7 @@ namespace MSNPSharp
             NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
             {
-                StorageService storageService = CreateStorageService("RoamingIdentityChanged");
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
 
                 UpdateProfileRequestType request = new UpdateProfileRequestType();
                 request.profile = new UpdateProfileRequestTypeProfile();
@@ -543,13 +516,12 @@ namespace MSNPSharp
                 }
 
                 // And get profile again
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl("RoamingIdentityChanged");
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
 
                 // UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    object abServiceObject = null;
-                    ABServiceBinding abService = NSMessageHandler.ContactService.CreateABService("RoamingIdentityChanged", abServiceObject);
+                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
                     updateDyItemRequest.abId = Guid.Empty.ToString();
@@ -574,20 +546,21 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(
-                            abService, "UpdateDynamicItem", updateDyItemRequest);
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
+                        HandleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
                     }
                     catch (Exception ex2)
                     {
-                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex2));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex2.Message, GetType().Name);
+                        // OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex2));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "You don't receive any contact updates, vice versa! " + ex2.Message, GetType().Name);
                         return;
                     }
-                    NSMessageHandler.ContactService.HandleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
-                    NSMessageHandler.ContactService.Deltas.Save();
+                    finally
+                    {
+                        NSMessageHandler.ContactService.Deltas.Save();
+                    }
                 }
-
             }
             else
             {
@@ -622,7 +595,7 @@ namespace MSNPSharp
                 NSMessageHandler.MSNTicket != MSNTicket.Empty &&
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified < Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
             {
-                return GetProfileImpl("Initial");
+                return GetProfileImpl(PartnerScenario.Initial);
             }
 
             return NSMessageHandler.ContactService.Deltas.Profile;
@@ -673,7 +646,7 @@ namespace MSNPSharp
             }
 
             // 1. Getprofile
-            NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl("RoamingIdentityChanged");
+            NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
 
             // 2. UpdateProfile
             // To keep the order, we need a sync function.
@@ -683,13 +656,13 @@ namespace MSNPSharp
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                StorageService storageService = CreateStorageService("RoamingIdentityChanged");
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
 
                 Alias mycidAlias = new Alias();
                 mycidAlias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
                 mycidAlias.NameSpace = "MyCidStuff";
 
-                // 3. DeleteRelationships
+                // 3. DeleteRelationships. If an error occurs, don't return, continue...
                 if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
                 {
                     // 3.1 UserTiles -> Photo
@@ -707,7 +680,6 @@ namespace MSNPSharp
                     {
                         OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                        return false;
                     }
 
                     //3.2 Profile -> Photo
@@ -724,7 +696,6 @@ namespace MSNPSharp
                     {
                         OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                        return false;
                     }
                 }
 

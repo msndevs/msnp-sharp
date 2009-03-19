@@ -35,6 +35,7 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using System.Text;
+using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
@@ -57,7 +58,6 @@ namespace MSNPSharp
         private string applicationId = String.Empty;
         private List<int> initialADLs = new List<int>();
         private bool abSynchronized;
-        private Dictionary<SoapHttpClientProtocol, object> asyncStates = new Dictionary<SoapHttpClientProtocol, object>();
 
         internal int initialADLcount;
         internal XMLContactList AddressBook;
@@ -292,14 +292,14 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                 }
                 msRequest(
-                    "Initial",
+                    PartnerScenario.Initial,
                     delegate
                     {
                         if (AddressBook.AddressbookLastChange == DateTime.MinValue)
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                         }
-                        abRequest("Initial",
+                        abRequest(PartnerScenario.Initial,
                             delegate
                             {
                                 SetDefaults();
@@ -367,12 +367,15 @@ namespace MSNPSharp
                     }
                 }
                 string[] adls = ConstructLists(hashlist, true);
-                initialADLcount = adls.Length;
+                Interlocked.Exchange(ref initialADLcount, adls.Length);
                 foreach (string payload in adls)
                 {
                     NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                     NSMessageHandler.MessageProcessor.SendMessage(message);
-                    initialADLs.Add(message.TransactionID);
+                    lock (this)
+                    {
+                        initialADLs.Add(message.TransactionID);
+                    }
                 }
             }
 
@@ -388,8 +391,12 @@ namespace MSNPSharp
         {
             if (initialADLs.Contains(transid))
             {
-                initialADLs.Remove(transid);
-                if (--initialADLcount <= 0)
+                lock (this)
+                {
+                    initialADLs.Remove(transid);
+                }
+
+                if (Interlocked.Decrement(ref initialADLcount) <= 0)
                 {
                     initialADLcount = 0;
 
@@ -430,7 +437,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async membership request completed successfuly</param>
-        internal void msRequest(string partnerScenario, FindMembershipCompletedEventHandler onSuccess)
+        internal void msRequest(PartnerScenario partnerScenario, FindMembershipCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -447,8 +454,8 @@ namespace MSNPSharp
                     serviceLastChange = msLastChange;
                 }
 
-                object FindMembershipObject = partnerScenario;
-                SharingServiceBinding sharingService = CreateSharingService(partnerScenario, FindMembershipObject);
+                MsnServiceObject FindMembershipObject = new MsnServiceObject(partnerScenario, "FindMembership");
+                SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, FindMembershipObject);
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     DeleteCompletedObject(sharingService);
@@ -465,8 +472,8 @@ namespace MSNPSharp
                                 }
                                 else
                                 {
-                                    object ABAddObject = new object();
-                                    ABServiceBinding abservice = CreateABService(partnerScenario, ABAddObject);
+                                    MsnServiceObject ABAddObject = new MsnServiceObject(partnerScenario, "ABAdd");
+                                    ABServiceBinding abservice = (ABServiceBinding)CreateService(MsnServiceType.AB, ABAddObject);
                                     abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
                                     {
                                         DeleteCompletedObject(abservice);
@@ -490,7 +497,7 @@ namespace MSNPSharp
                                     abservice.ABAddAsync(abAddRequest, ABAddObject);
                                 }
                             }
-                            else if ((recursiveCall == 0 && partnerScenario == "Initial")
+                            else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
                                 recursiveCall++;
@@ -540,7 +547,7 @@ namespace MSNPSharp
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
 #if MSNP18
-        internal void abRequest(string partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
+        internal void abRequest(PartnerScenario partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -550,8 +557,8 @@ namespace MSNPSharp
             {
                 bool deltasOnly = false;
 
-                object ABFindContactsPagedObject = partnerScenario;
-                ABServiceBinding abService = CreateABService(partnerScenario, ABFindContactsPagedObject);
+                MsnServiceObject ABFindContactsPagedObject = new MsnServiceObject(partnerScenario, "ABFindContactsPaged");
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindContactsPagedObject);
                 ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
                 request.abView = "MessengerClient8";  //NO default!
                 request.extendedContent = "AB AllGroups CircleResult";
@@ -572,13 +579,12 @@ namespace MSNPSharp
                 abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
                 {
                     DeleteCompletedObject(abService);
-                    string abpartnerScenario = e.UserState.ToString();
 
                     if (!e.Cancelled)
                     {
                         if (e.Error != null)
                         {
-                            if ((recursiveCall == 0 && abpartnerScenario == "Initial")
+                            if ((recursiveCall == 0 && ((MsnServiceObject)e.UserState).PartnerScenario == PartnerScenario.Initial)
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
                                 recursiveCall++;
@@ -612,7 +618,7 @@ namespace MSNPSharp
             }
         }
 #else
-        internal void abRequest(string partnerScenario, ABFindAllCompletedEventHandler onSuccess)
+        internal void abRequest(PartnerScenario partnerScenario, ABFindAllCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -630,18 +636,17 @@ namespace MSNPSharp
                     deltasOnly = true;
                 }
 
-                object ABFindAllObject = partnerScenario;
-                ABServiceBinding abService = CreateABService(partnerScenario, ABFindAllObject);
+                MsnServiceObject ABFindAllObject = new MsnServiceObject(partnerScenario, "ABFindAll");
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindAllObject);
                 abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
                 {
                     DeleteCompletedObject(abService);
-                    string abpartnerScenario = e.UserState.ToString();
 
                     if (!e.Cancelled)
                     {
                         if (e.Error != null)
                         {
-                            if ((recursiveCall == 0 && abpartnerScenario == "Initial")
+                            if ((recursiveCall == 0 && ((MsnServiceObject)e.UserState).PartnerScenario == PartnerScenario.Initial)
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
                                 recursiveCall++;
@@ -683,59 +688,6 @@ namespace MSNPSharp
             }
         }
 #endif
-
-        internal SharingServiceBinding CreateSharingService(string partnerScenario, object asyncObject)
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
-
-            SharingServiceBinding sharingService = new SharingServiceBinding();
-            sharingService.Proxy = WebProxy;
-            sharingService.Timeout = Int32.MaxValue;
-            sharingService.UserAgent = Properties.Resources.WebServiceUserAgent;
-            sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
-            sharingService.ABApplicationHeaderValue.ApplicationId = applicationId;
-            sharingService.ABApplicationHeaderValue.IsMigration = false;
-            sharingService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
-            sharingService.ABApplicationHeaderValue.BrandId = NSMessageHandler.MSNTicket.MainBrandID;
-            sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
-            sharingService.ABAuthHeaderValue = new ABAuthHeader();
-            sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
-            sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
-
-            if (asyncObject != null)
-            {
-                lock (asyncStates)
-                    asyncStates[sharingService] = asyncObject;
-            }
-
-            return sharingService;
-        }
-
-        internal ABServiceBinding CreateABService(string partnerScenario, object asyncObject)
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
-
-            ABServiceBinding abService = new ABServiceBinding();
-            abService.Proxy = WebProxy;
-            abService.Timeout = Int32.MaxValue;
-            abService.UserAgent = Properties.Resources.WebServiceUserAgent;
-            abService.ABApplicationHeaderValue = new ABApplicationHeader();
-            abService.ABApplicationHeaderValue.ApplicationId = applicationId;
-            abService.ABApplicationHeaderValue.IsMigration = false;
-            abService.ABApplicationHeaderValue.PartnerScenario = partnerScenario;
-            abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
-            abService.ABAuthHeaderValue = new ABAuthHeader();
-            abService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
-            abService.ABAuthHeaderValue.ManagedGroupRequest = false;
-
-            if (asyncObject != null)
-            {
-                lock (asyncStates)
-                    asyncStates[abService] = asyncObject;
-            }
-
-            return abService;
-        }
 
         public static string[] ConstructLists(Dictionary<string, MSNLists> contacts, bool initial)
         {
@@ -913,7 +865,7 @@ namespace MSNPSharp
                     System.Threading.Thread.CurrentThread.Join(100);
 
                     // Get all information. LivePending will be Live :)
-                    abRequest("ContactSave", null);
+                    abRequest(PartnerScenario.ContactSave, null);
                 }
             );
         }
@@ -964,7 +916,7 @@ namespace MSNPSharp
                                 }
                             }
 
-                            abRequest("ContactMsgrAPI", null);
+                            abRequest(PartnerScenario.ContactMsgrAPI, null);
                         }
                     );
                 }
@@ -979,8 +931,8 @@ namespace MSNPSharp
             }
             else
             {
-                object ABContactAddObject = new object();
-                ABServiceBinding abService = CreateABService(pending ? "ContactMsgrAPI" : "ContactSave", ABContactAddObject);
+                MsnServiceObject ABContactAddObject = new MsnServiceObject(pending ? PartnerScenario.ContactMsgrAPI : PartnerScenario.ContactSave, "ABContactAdd");
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactAddObject);
                 abService.ABContactAddCompleted += delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     DeleteCompletedObject(abService);
@@ -1146,15 +1098,15 @@ namespace MSNPSharp
                 return;
             }
 
-            object ABContactDeleteObject = new object();
-            ABServiceBinding abService = CreateABService("Timer", ABContactDeleteObject);
+            MsnServiceObject ABContactDeleteObject = new MsnServiceObject(PartnerScenario.Timer, "ABContactDelete");
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactDeleteObject);
             abService.ABContactDeleteCompleted += delegate(object service, ABContactDeleteCompletedEventArgs e)
             {
                 DeleteCompletedObject(abService);
                 if (!e.Cancelled && e.Error == null)
                 {
                     HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactDeleteRequestType));
-                    abRequest("ContactSave", null);
+                    abRequest(PartnerScenario.ContactSave, null);
                 }
                 else if (e.Error != null)
                 {
@@ -1308,15 +1260,15 @@ namespace MSNPSharp
 
             if (propertiesChanged.Count > 0)
             {
-                object ABContactUpdateObject = new object();
-                ABServiceBinding abService = CreateABService(contact.IsMessengerUser ? "ContactSave" : "Timer", ABContactUpdateObject);
+                MsnServiceObject ABContactUpdateObject = new MsnServiceObject(contact.IsMessengerUser ? PartnerScenario.ContactSave : PartnerScenario.Timer, "ABContactUpdate");
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
                     DeleteCompletedObject(abService);
                     if (!e.Cancelled && e.Error == null)
                     {
                         HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
-                        abRequest("ContactSave", null);
+                        abRequest(PartnerScenario.ContactSave, null);
                     }
                     else if (e.Error != null)
                     {
@@ -1365,8 +1317,8 @@ namespace MSNPSharp
 
             if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                object ABContactUpdateObject = new object();
-                ABServiceBinding abService = CreateABService("PrivacyApply", ABContactUpdateObject);  //In msnp17 this is "GeneralDialogApply"
+                MsnServiceObject ABContactUpdateObject = new MsnServiceObject(PartnerScenario.PrivacyApply, "ABContactUpdate"); // In msnp17 this is "GeneralDialogApply"
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
                     DeleteCompletedObject(abService);
@@ -1446,8 +1398,8 @@ namespace MSNPSharp
 
             if (propertiesChanged.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                object ABContactUpdateObject = new object();
-                ABServiceBinding abService = CreateABService("PrivacyApply", ABContactUpdateObject);
+                MsnServiceObject ABContactUpdateObject = new MsnServiceObject(PartnerScenario.PrivacyApply, "ABContactUpdate");
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
                     DeleteCompletedObject(abService);
@@ -1496,8 +1448,8 @@ namespace MSNPSharp
                 return;
             }
 
-            object ABGroupAddObject = new object();
-            ABServiceBinding abService = CreateABService("GroupSave", ABGroupAddObject);
+            MsnServiceObject ABGroupAddObject = new MsnServiceObject(PartnerScenario.GroupSave, "ABGroupAdd");
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupAddObject);
             abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
             {
                 DeleteCompletedObject(abService);
@@ -1553,8 +1505,8 @@ namespace MSNPSharp
                 return;
             }
 
-            object ABGroupDeleteObject = new object();
-            ABServiceBinding abService = CreateABService("Timer", ABGroupDeleteObject);
+            MsnServiceObject ABGroupDeleteObject = new MsnServiceObject(PartnerScenario.Timer, "ABGroupDelete");
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupDeleteObject);
             abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
             {
                 DeleteCompletedObject(abService);
@@ -1594,8 +1546,8 @@ namespace MSNPSharp
                 return;
             }
 
-            object ABGroupUpdateObject = new object();
-            ABServiceBinding abService = CreateABService("GroupSave", ABGroupUpdateObject);
+            MsnServiceObject ABGroupUpdateObject = new MsnServiceObject(PartnerScenario.GroupSave, "ABGroupUpdate");
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupUpdateObject);
             abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
             {
                 DeleteCompletedObject(abService);
@@ -1638,8 +1590,8 @@ namespace MSNPSharp
                 return;
             }
 
-            object ABGroupContactAddObject = new object();
-            ABServiceBinding abService = CreateABService("GroupSave", ABGroupContactAddObject);
+            MsnServiceObject ABGroupContactAddObject = new MsnServiceObject(PartnerScenario.GroupSave, "ABGroupContactAdd");
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupContactAddObject);
             abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
             {
                 DeleteCompletedObject(abService);
@@ -1676,8 +1628,8 @@ namespace MSNPSharp
                 return;
             }
 
-            object ABGroupContactDelete = new object();
-            ABServiceBinding abService = CreateABService("GroupSave", ABGroupContactDelete);
+            MsnServiceObject ABGroupContactDelete = new MsnServiceObject(PartnerScenario.GroupSave, "ABGroupContactDelete");
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupContactDelete);
             abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
             {
                 DeleteCompletedObject(abService);
@@ -1744,8 +1696,8 @@ namespace MSNPSharp
                 return;
             }
 
-            object AddMemberObject = new object();
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.ReverseList) ? "ContactMsgrAPI" : "BlockUnblock", AddMemberObject);
+            MsnServiceObject AddMemberObject = new MsnServiceObject((list == MSNLists.ReverseList) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "AddMember");
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
 
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
@@ -1861,8 +1813,8 @@ namespace MSNPSharp
                 return;
             }
 
-            object DeleteMemberObject = new object();
-            SharingServiceBinding sharingService = CreateSharingService((list == MSNLists.PendingList) ? "ContactMsgrAPI" : "BlockUnblock", DeleteMemberObject);
+            MsnServiceObject DeleteMemberObject = new MsnServiceObject((list == MSNLists.PendingList) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "DeleteMember");
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, DeleteMemberObject);
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
                 DeleteCompletedObject(sharingService);
@@ -2079,10 +2031,10 @@ namespace MSNPSharp
                     switch (keyType)
                     {
                         case CacheKeyType.OmegaContactServiceCacheKey:
-                            webservice.Url = webservice.Url.Replace(originalHost, RDRServiceHost.OmegaContactRDRServiceHost);
+                            webservice.Url = webservice.Url.Replace(originalHost, MSNService.ContactServiceRedirectionHost);
                             break;
                         case CacheKeyType.StorageServiceCacheKey:
-                            webservice.Url = webservice.Url.Replace(originalHost, RDRServiceHost.StorageRDRServiceHost);
+                            webservice.Url = webservice.Url.Replace(originalHost, MSNService.StorageServiceRedirectionHost);
                             break;
                     }
 
@@ -2141,24 +2093,6 @@ namespace MSNPSharp
         }
 
 
-        internal void HandleServiceHeader(ServiceHeader sh, Type requestType)
-        {
-            if (null != sh && Deltas != null)
-            {
-                if (sh.CacheKeyChanged)
-                {
-                    NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
-                }
-
-                if (!String.IsNullOrEmpty(sh.PreferredHostName))
-                {
-                    PreferredHosts[requestType.ToString()] = sh.PreferredHostName;
-                }
-
-                Deltas.Save();
-            }
-        }
-
         #endregion
 
         public string GetMemberRole(MSNLists list)
@@ -2196,41 +2130,15 @@ namespace MSNPSharp
             throw new MSNPSharpException("Unknown MemberRole type");
         }
 
-        internal void Clear()
+        public override void Clear()
         {
-            recursiveCall = 0;
-            initialADLs.Clear();
-            initialADLcount = 0;
+            base.Clear();
 
-            Dictionary<SoapHttpClientProtocol, object> copyStates;
             lock (this)
             {
-                // Copy async states to cancel
-                copyStates = new Dictionary<SoapHttpClientProtocol, object>(asyncStates);
-                asyncStates = new Dictionary<SoapHttpClientProtocol, object>();
-
-                if (copyStates.Count > 0)
-                {
-                    foreach (KeyValuePair<SoapHttpClientProtocol, object> state in copyStates)
-                    {
-                        try
-                        {
-                            state.Key.GetType().InvokeMember("CancelAsync",
-                                System.Reflection.BindingFlags.InvokeMethod,
-                                null, state.Key,
-                                new object[] { state.Value });
-                        }
-                        catch (Exception error)
-                        {
-                            Trace.WriteLineIf(
-                                    Settings.TraceSwitch.TraceError,
-                                    "An error occured while canceling :\r\n" +
-                                    "Service: " + state.Key.ToString() + "\r\n" +
-                                    "State:   " + state.Value.ToString() + "\r\n" +
-                                    "Message: " + error.Message);
-                        }
-                    }
-                }
+                recursiveCall = 0;
+                initialADLs.Clear();
+                initialADLcount = 0;
 
                 // Last save for contact list files
                 if (NSMessageHandler.IsSignedIn && AddressBook != null && Deltas != null)
@@ -2252,12 +2160,6 @@ namespace MSNPSharp
                 Deltas = null;
                 abSynchronized = false;
             }
-        }
-
-        private void DeleteCompletedObject(SoapHttpClientProtocol key)
-        {
-            lock (asyncStates)
-                asyncStates.Remove(key);
         }
     }
 };

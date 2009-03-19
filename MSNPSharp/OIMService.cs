@@ -225,12 +225,14 @@ namespace MSNPSharp
     [Serializable]
     public class SenderThrottleLimitExceededException : Exception
     {
-        public override string Message
+        public SenderThrottleLimitExceededException()
+            : base("OIM: SenderThrottleLimitExceeded. Please wait 11 seconds to send again...")
         {
-            get
-            {
-                return "OIM: SenderThrottleLimitExceeded. Please wait 11 seconds to send again...";
-            }
+        }
+
+        public SenderThrottleLimitExceededException(string message)
+            : base(message)
+        {
         }
 
         public override string ToString()
@@ -261,32 +263,7 @@ namespace MSNPSharp
         {
         }
 
-        private RSIService CreateRSIService()
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Web);
-            string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
-            RSIService rsiService = new RSIService();
-            rsiService.Proxy = WebProxy;
-            rsiService.Timeout = Int32.MaxValue;
-            rsiService.PassportCookieValue = new PassportCookie();
-            rsiService.PassportCookieValue.t = TandP[1];
-            rsiService.PassportCookieValue.p = TandP[2];
-            return rsiService;
-        }
-
-        private OIMStoreService CreateOIMStoreService()
-        {
-            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.OIM);
-
-            OIMStoreService oimService = new OIMStoreService();
-            oimService.Proxy = WebProxy;
-            oimService.TicketValue = new Ticket();
-            oimService.TicketValue.passport = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIM].Ticket;
-            oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
-            oimService.TicketValue.appid = NSMessageHandler.Credentials.ClientID;
-            return oimService;
-        }
 
         internal void ProcessOIM(MSGMessage message, bool initial)
         {
@@ -296,10 +273,16 @@ namespace MSNPSharp
             string xmlstr = message.MimeHeader["Mail-Data"];
             if ("too-large" == xmlstr && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                RSIService rsiService = CreateRSIService();
+                MsnServiceObject getMetadataObject = new MsnServiceObject(PartnerScenario.None, "GetMetadata");
+                RSIService rsiService = (RSIService)CreateService(MsnServiceType.RSI, getMetadataObject);
                 rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
                 {
-                    if (!e.Cancelled && e.Error == null)
+                    DeleteCompletedObject(rsiService);
+
+                    if (e.Cancelled)
+                        return;
+
+                    if (e.Error == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "GetMetadata completed.", GetType().Name);
 
@@ -315,15 +298,13 @@ namespace MSNPSharp
                             }
                         }
                     }
-                    else if (e.Error != null)
+                    else
                     {
-                        OnServiceOperationFailed(sender,
-                            new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
+                        OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
                     }
-                    ((IDisposable)sender).Dispose();
-                    return;
                 };
-                rsiService.GetMetadataAsync(new GetMetadataRequestType(), new object());
+
+                rsiService.GetMetadataAsync(new GetMetadataRequestType(), getMetadataObject);
                 return;
             }
             processOIMS(xmlstr, initial);
@@ -379,9 +360,12 @@ namespace MSNPSharp
                     }
                 }
 
-                RSIService rsiService = CreateRSIService();
+                MsnServiceObject getMessageObject = new MsnServiceObject(PartnerScenario.None, "GetMessage");
+                RSIService rsiService = (RSIService)CreateService(MsnServiceType.RSI, getMessageObject);
                 rsiService.GetMessageCompleted += delegate(object service, GetMessageCompletedEventArgs e)
                 {
+                    DeleteCompletedObject(rsiService);
+
                     if (!e.Cancelled && e.Error == null)
                     {
                         if (friendlyName != String.Empty && friendlyName.Contains("?"))
@@ -480,7 +464,7 @@ namespace MSNPSharp
                 GetMessageRequestType request = new GetMessageRequestType();
                 request.messageId = guid.ToString();
                 request.alsoMarkAsRead = false;
-                rsiService.GetMessageAsync(request, new object());
+                rsiService.GetMessageAsync(request, getMessageObject);
             }
         }
 
@@ -494,35 +478,30 @@ namespace MSNPSharp
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                 return;
 
-            RSIService rsiService = CreateRSIService();
+            MsnServiceObject deleteMessagesObject = new MsnServiceObject(PartnerScenario.None, "DeleteMessages");
+            RSIService rsiService = (RSIService)CreateService(MsnServiceType.RSI, deleteMessagesObject);
             rsiService.DeleteMessagesCompleted += delegate(object service, DeleteMessagesCompletedEventArgs e)
             {
+                DeleteCompletedObject(rsiService);
+
                 if (!e.Cancelled && e.Error == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMessages completed.", GetType().Name);
                 }
                 else if (e.Error != null)
                 {
-                    OnServiceOperationFailed(rsiService,
-                            new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
+                    OnServiceOperationFailed(rsiService, new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
                 }
-                ((IDisposable)service).Dispose();
-                return;
             };
 
             DeleteMessagesRequestType request = new DeleteMessagesRequestType();
             request.messageIds = guids;
-            rsiService.DeleteMessagesAsync(request, new object());
+            rsiService.DeleteMessagesAsync(request, deleteMessagesObject);
         }
 
         private string _RunGuid = Guid.NewGuid().ToString();
 
-        /// <summary>
-        /// Send an offline message to a contact.
-        /// </summary>
-        /// <param name="account">Target user</param>
-        /// <param name="msg">Plain text message</param>
-        public void SendOIMMessage(string account, string msg)
+        private void SendOIMMessage(string account, string msg, OIMUserState userstate)
         {
             Contact contact = NSMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
@@ -544,13 +523,15 @@ namespace MSNPSharp
 
                 string message = messageTemplate.ToString();
 
-                OIMUserState userstate = new OIMUserState(contact.OIMCount, account);
+                if (userstate == null)
+                    userstate = new OIMUserState(contact.OIMCount, account);
 
                 string name48 = NSMessageHandler.Owner.Name;
                 if (name48.Length > 48)
                     name48 = name48.Substring(47);
 
-                OIMStoreService oimService = CreateOIMStoreService();
+                MsnServiceObject storeObject = new MsnServiceObject(PartnerScenario.None, "Store");
+                OIMStoreService oimService = (OIMStoreService)CreateService(MsnServiceType.OIMStore, storeObject);
                 oimService.FromValue = new From();
                 oimService.FromValue.memberName = NSMessageHandler.Owner.Mail;
                 oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
@@ -569,7 +550,8 @@ namespace MSNPSharp
 
                 oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
-                    oimService = service as OIMStoreService;
+                    DeleteCompletedObject(oimService);
+
                     if (e.Cancelled == false && e.Error == null)
                     {
                         SequenceAcknowledgmentAcknowledgmentRange range = oimService.SequenceAcknowledgmentValue.AcknowledgmentRange[0];
@@ -597,7 +579,7 @@ namespace MSNPSharp
                             oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
                             if (userstate.RecursiveCall++ < 5)
                             {
-                                oimService.StoreAsync(MessageType.text, message, userstate); // Call this delegate again.
+                                SendOIMMessage(account, msg, userstate); // Call this method again.
                                 return;
                             }
                             exp = new AuthenticationException("OIM:AuthenticationFailed");
@@ -606,7 +588,7 @@ namespace MSNPSharp
                         {
                             exp = new SenderThrottleLimitExceededException();
 
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "OIM:SenderThrottleLimitExceeded. Please wait 11 seconds to send again...", GetType().Name);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exp.Message, GetType().Name);
                         }
 
                         OnOIMSendCompleted(this,
@@ -617,11 +599,22 @@ namespace MSNPSharp
                                 msg,
                                 exp)
                         );
+
                         OnServiceOperationFailed(oimService, new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
                     }
                 };
-                oimService.StoreAsync(MessageType.text, message, userstate);
+                oimService.StoreAsync(MessageType.text, message, storeObject);
             }
+        }
+
+        /// <summary>
+        /// Send an offline message to a contact.
+        /// </summary>
+        /// <param name="account">Target user</param>
+        /// <param name="msg">Plain text message</param>
+        public void SendOIMMessage(string account, string msg)
+        {
+            SendOIMMessage(account, msg, null);
         }
 
         protected virtual void OnOIMReceived(object sender, OIMReceivedEventArgs e)
