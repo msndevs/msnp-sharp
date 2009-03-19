@@ -368,7 +368,7 @@ namespace MSNPSharp
             return service;
         }
 
-        internal void CancelAndDisposeAysncMethods()
+        private void CancelAndDisposeAysncMethods()
         {
             if (asyncStates.Count > 0)
             {
@@ -424,6 +424,11 @@ namespace MSNPSharp
 
                 NSMessageHandler.ContactService.Deltas.Save();
             }
+        }
+
+        public virtual void Clear()
+        {
+            CancelAndDisposeAysncMethods();
         }
 
         internal void DeleteCompletedObject(SoapHttpClientProtocol key)

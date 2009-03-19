@@ -35,6 +35,7 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using System.Text;
+using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
@@ -55,7 +56,6 @@ namespace MSNPSharp
 
         private int recursiveCall;
         private string applicationId = String.Empty;
-        private object initialADLsSyncRoot = new object();
         private List<int> initialADLs = new List<int>();
         private bool abSynchronized;
 
@@ -391,12 +391,12 @@ namespace MSNPSharp
                     }
                 }
                 string[] adls = ConstructLists(hashlist, true);
-                initialADLcount = adls.Length;
+                Interlocked.Exchange(ref initialADLcount, adls.Length);
                 foreach (string payload in adls)
                 {
                     NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                     NSMessageHandler.MessageProcessor.SendMessage(message);
-                    lock (initialADLsSyncRoot)
+                    lock (this)
                     {
                         initialADLs.Add(message.TransactionID);
                     }
@@ -448,12 +448,12 @@ namespace MSNPSharp
         {
             if (initialADLs.Contains(transid))
             {
-                lock (initialADLsSyncRoot)
+                lock (this)
                 {
                     initialADLs.Remove(transid);
                 }
 
-                if (--initialADLcount <= 0)
+                if (Interlocked.Decrement(ref initialADLcount) <= 0)
                 {
                     initialADLcount = 0;
 
@@ -2351,20 +2351,16 @@ namespace MSNPSharp
             throw new MSNPSharpException("Unknown MemberRole type");
         }
 
-        internal void Clear()
+        public override void Clear()
         {
-            recursiveCall = 0;
-            lock (initialADLsSyncRoot)
-            {
-                initialADLs.Clear();
-            }
-            initialADLcount = 0;
-
-            // Cancel async methods
-            CancelAndDisposeAysncMethods();
+            base.Clear();
 
             lock (this)
             {
+                recursiveCall = 0;
+                initialADLs.Clear();
+                initialADLcount = 0;
+
                 // Last save for contact list files
                 if (NSMessageHandler.IsSignedIn && AddressBook != null && Deltas != null)
                 {

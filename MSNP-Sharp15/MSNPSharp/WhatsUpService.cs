@@ -87,7 +87,10 @@ namespace MSNPSharp
         /// </summary>
         public string FeedUrl
         {
-            get { return feedUrl; }
+            get
+            {
+                return feedUrl;
+            }
         }
 
         public event EventHandler<GetWhatsUpCompletedEventArgs> GetWhatsUpCompleted;
@@ -166,11 +169,5 @@ namespace MSNPSharp
                 GetWhatsUpCompleted(sender, e);
             }
         }
-
-        internal void Clear()
-        {
-            CancelAndDisposeAysncMethods();
-        }
-
     }
 };
