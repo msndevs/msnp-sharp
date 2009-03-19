@@ -375,10 +375,5 @@ namespace MSNPSharp
             if (ContactCardCompleted != null)
                 ContactCardCompleted(this, arg);
         }
-
-        internal void Clear()
-        {
-            CancelAndDisposeAysncMethods();
-        }
     }
 };

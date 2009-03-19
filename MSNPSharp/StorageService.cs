@@ -338,7 +338,7 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: " + ex.Message, GetType().Name);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: You don't receive any contact updates, vice versa! " + ex.Message, GetType().Name);
                     }
 
                     //9. ABContactUpdate
@@ -546,20 +546,21 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(
-                            abService, "UpdateDynamicItem", updateDyItemRequest);
+                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
+                        HandleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
                     }
                     catch (Exception ex2)
                     {
-                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex2));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex2.Message, GetType().Name);
+                        // OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex2));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "You don't receive any contact updates, vice versa! " + ex2.Message, GetType().Name);
                         return;
                     }
-                    HandleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
-                    NSMessageHandler.ContactService.Deltas.Save();
+                    finally
+                    {
+                        NSMessageHandler.ContactService.Deltas.Save();
+                    }
                 }
-
             }
             else
             {
@@ -661,7 +662,7 @@ namespace MSNPSharp
                 mycidAlias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
                 mycidAlias.NameSpace = "MyCidStuff";
 
-                // 3. DeleteRelationships
+                // 3. DeleteRelationships. If an error occurs, don't return, continue...
                 if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
                 {
                     // 3.1 UserTiles -> Photo
@@ -679,7 +680,6 @@ namespace MSNPSharp
                     {
                         OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                        return false;
                     }
 
                     //3.2 Profile -> Photo
@@ -696,7 +696,6 @@ namespace MSNPSharp
                     {
                         OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                        return false;
                     }
                 }
 
@@ -763,12 +762,5 @@ namespace MSNPSharp
 
             return false;
         }
-
-
-        internal void Clear()
-        {
-            CancelAndDisposeAysncMethods();
-        }
-
     }
 };

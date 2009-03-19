@@ -646,7 +646,7 @@ namespace MSNPSharp
                 {
                     err = exp;
                 }
-                
+
                 OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
                                 NSMessageHandler.Owner.Mail,
@@ -677,11 +677,6 @@ namespace MSNPSharp
             {
                 OIMSendCompleted(sender, e);
             }
-        }
-
-        internal void Clear()
-        {
-            CancelAndDisposeAysncMethods();
         }
     }
 
