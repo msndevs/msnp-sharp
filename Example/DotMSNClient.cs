@@ -654,7 +654,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.OwnerPanel);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client (2.5.5)";
+            this.Text = "MSNPSharp Example Client (2.5.5.r939)";
             this.ListPanel.ResumeLayout(false);
             this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
