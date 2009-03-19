@@ -506,8 +506,14 @@ namespace MSNPSharp
                 if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
                 {
                     string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
-                    string payload = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=iso-8859-1\r\nDest-Agent: mobile\r\n\r\n" + text;
-                    NSPayLoadMessage nsMessage = new NSPayLoadMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" }, payload);
+
+                    TextMessage txtMsg = new TextMessage(text);
+                    MSGMessage msgMessage = new MSGMessage();
+                    msgMessage.InnerMessage = txtMsg;
+                    msgMessage.MimeHeader["Dest-Agent"] = "mobile";
+
+                    YIMMessage nsMessage = new YIMMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" });
+                    nsMessage.InnerMessage = msgMessage;
                     MessageProcessor.SendMessage(nsMessage);
                 }
                 else
