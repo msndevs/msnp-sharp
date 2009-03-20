@@ -149,7 +149,7 @@ namespace MSNPSharp
                 srvHandle.Type = ServiceFilterType.Profile;
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    SharingServiceBinding sharingService = (SharingServiceBinding)NSMessageHandler.ContactService.CreateService(MsnServiceType.Sharing, new MsnServiceObject(PartnerScenario.RoamingSeed));
+                    SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, new MsnServiceObject(PartnerScenario.RoamingSeed));
                     sharingService.AllowAutoRedirect = true;
 
                     AddMemberRequestType addMemberRequest = new AddMemberRequestType();
@@ -300,7 +300,7 @@ namespace MSNPSharp
                 //8. UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    ABServiceBinding abService = (ABServiceBinding)NSMessageHandler.ContactService.CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingSeed));
+                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingSeed));
                     abService.AllowAutoRedirect = true;
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
@@ -448,7 +448,7 @@ namespace MSNPSharp
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
-                                NSMessageHandler.ContactService.Deltas.Save();
+                                NSMessageHandler.ContactService.Deltas.Save(true);
 
                                 System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
                                 DisplayImage displayImage = new DisplayImage();
@@ -521,7 +521,7 @@ namespace MSNPSharp
                 // UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    ABServiceBinding abService = (ABServiceBinding)NSMessageHandler.ContactService.CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
+                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
                     updateDyItemRequest.abId = Guid.Empty.ToString();
