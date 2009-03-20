@@ -176,7 +176,7 @@ namespace MSNPSharp.IO
         public void Truncate()
         {
             Empty();
-            Save();
+            Save(true);
         }
 
         /// <summary>
@@ -229,19 +229,27 @@ namespace MSNPSharp.IO
         /// <param name="filename"></param>
         public override void Save(string filename)
         {
-            Version = Properties.Resources.DeltasListVersion;
-
-            if (File.Exists(filename) && File.GetLastWriteTime(filename) > DateTime.Now.AddSeconds(-5))
-            {
-                return;
-            }
-
-            base.Save(filename);
+            FileName = filename;
+            Save(false);
         }
 
         public override void Save()
         {
-            Save(FileName);
+            Save(false);
+        }
+
+        public void Save(bool saveImmediately)
+        {
+            Version = Properties.Resources.DeltasListVersion;
+
+            if (saveImmediately == false &&
+                File.Exists(FileName) &&
+                File.GetLastWriteTime(FileName) > DateTime.Now.AddSeconds(-5))
+            {
+                return;
+            }
+
+            base.Save(FileName);
         }
 
         #endregion
