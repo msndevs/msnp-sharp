@@ -1918,35 +1918,47 @@ namespace MSNPSharp
             Membership memberShip = new Membership();
             memberShip.MemberRole = GetMemberRole(list);
 
-            BaseMember member = new BaseMember();
+            BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
+            // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
+            BaseMember baseMember = AddressBook.GetBaseMember(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
+            int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
 
-            /* If you cannot determind the client type, just use a BaseMember and specify the membershipId.
-             * The offical client just do so. But once the contact is removed and added to another rolelist,its membershipId also changed.
-             * Unless you get your contactlist again, you have to use the account if you wanted to delete that contact once more.
-             * To avoid this,we have to ensure the client type we've got is correct at the very beginning.
-             * */
+            switch (contact.ClientType)
+            {
+                case ClientType.PassportMember:
 
-            if (contact.ClientType == ClientType.PassportMember)
-            {
-                member = new PassportMember();
-                PassportMember passportMember = member as PassportMember;
-                passportMember.PassportName = contact.Mail;
-            }
-            else if (contact.ClientType == ClientType.EmailMember)
-            {
-                member = new EmailMember();
-                EmailMember emailMember = member as EmailMember;
-                emailMember.Email = contact.Mail;
-            }
-            else if (contact.ClientType == ClientType.PhoneMember)
-            {
-                member = new PhoneMember();
-                PhoneMember phoneMember = member as PhoneMember;
-                phoneMember.State = MemberState.Accepted;
-                phoneMember.PhoneNumber = contact.Mail;
+                    deleteMember = new PassportMember();
+
+                    if (membershipId == 0)
+                    {
+                        (deleteMember as PassportMember).PassportName = contact.Mail;
+                    }
+                    break;
+
+                case ClientType.EmailMember:
+
+                    deleteMember = new EmailMember();
+
+                    if (membershipId == 0)
+                    {
+                        (deleteMember as EmailMember).Email = contact.Mail;
+                    }
+                    break;
+
+                case ClientType.PhoneMember:
+
+                    deleteMember = new PhoneMember();
+
+                    if (membershipId == 0)
+                    {
+                        (deleteMember as PhoneMember).PhoneNumber = contact.Mail;
+                    }
+                    break;
             }
 
-            memberShip.Members = new BaseMember[] { member };
+            deleteMember.MembershipId = membershipId.ToString();
+
+            memberShip.Members = new BaseMember[] { deleteMember };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
 
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "DeleteMember", deleteMemberRequest);
