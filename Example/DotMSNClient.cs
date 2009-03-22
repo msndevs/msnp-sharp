@@ -133,15 +133,16 @@ namespace MSNPSharpClient
             this.ContactPanel = new System.Windows.Forms.Panel();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.cbRobotMode = new System.Windows.Forms.CheckBox();
             this.comboProtocol = new System.Windows.Forms.ComboBox();
-            this.pnlNameAndPM = new System.Windows.Forms.Panel();
-            this.lblPM = new System.Windows.Forms.TextBox();
-            this.lblName = new System.Windows.Forms.TextBox();
             this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.accountTextBox = new System.Windows.Forms.TextBox();
             this.loginButton = new System.Windows.Forms.Button();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
             this.comboStatus = new System.Windows.Forms.ComboBox();
+            this.pnlNameAndPM = new System.Windows.Forms.Panel();
+            this.lblPM = new System.Windows.Forms.TextBox();
+            this.lblName = new System.Windows.Forms.TextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
@@ -163,15 +164,14 @@ namespace MSNPSharpClient
             this.cmdNext = new System.Windows.Forms.Button();
             this.cmdPrev = new System.Windows.Forms.Button();
             this.lblWhatsup = new System.Windows.Forms.Label();
-            this.cbRobotMode = new System.Windows.Forms.CheckBox();
             this.ListPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
             this.userMenuStrip.SuspendLayout();
             this.ContactPanel.SuspendLayout();
             this.panel1.SuspendLayout();
-            this.pnlNameAndPM.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).BeginInit();
+            this.pnlNameAndPM.SuspendLayout();
             this.OwnerPanel.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
@@ -442,6 +442,19 @@ namespace MSNPSharpClient
             this.panel1.Size = new System.Drawing.Size(290, 77);
             this.panel1.TabIndex = 5;
             // 
+            // cbRobotMode
+            // 
+            this.cbRobotMode.AutoSize = true;
+            this.cbRobotMode.Location = new System.Drawing.Point(134, 9);
+            this.cbRobotMode.Name = "cbRobotMode";
+            this.cbRobotMode.Size = new System.Drawing.Size(71, 17);
+            this.cbRobotMode.TabIndex = 7;
+            this.cbRobotMode.Text = "Bot mode";
+            this.toolTipChangePhoto.SetToolTip(this.cbRobotMode, "If your account is provisioned, check this. This sets AutoSynchronize property to" +
+                    " false when connected; that will make MSNPSharp don\'t use Address Book anymore, " +
+                    "so your contact list isn\'t loaded.");
+            this.cbRobotMode.UseVisualStyleBackColor = true;
+            // 
             // comboProtocol
             // 
             this.comboProtocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -456,33 +469,6 @@ namespace MSNPSharpClient
             this.comboProtocol.Size = new System.Drawing.Size(70, 21);
             this.comboProtocol.TabIndex = 6;
             this.toolTipChangePhoto.SetToolTip(this.comboProtocol, "Msn protocol used");
-            // 
-            // pnlNameAndPM
-            // 
-            this.pnlNameAndPM.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
-            this.pnlNameAndPM.Controls.Add(this.lblPM);
-            this.pnlNameAndPM.Controls.Add(this.lblName);
-            this.pnlNameAndPM.Location = new System.Drawing.Point(29, 6);
-            this.pnlNameAndPM.Name = "pnlNameAndPM";
-            this.pnlNameAndPM.Size = new System.Drawing.Size(204, 49);
-            this.pnlNameAndPM.TabIndex = 1;
-            this.pnlNameAndPM.Visible = false;
-            // 
-            // lblPM
-            // 
-            this.lblPM.Location = new System.Drawing.Point(4, 25);
-            this.lblPM.Name = "lblPM";
-            this.lblPM.Size = new System.Drawing.Size(197, 20);
-            this.lblPM.TabIndex = 1;
-            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
-            // 
-            // lblName
-            // 
-            this.lblName.Location = new System.Drawing.Point(4, 2);
-            this.lblName.Name = "lblName";
-            this.lblName.Size = new System.Drawing.Size(197, 20);
-            this.lblName.TabIndex = 0;
-            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
             // 
             // displayImageBox
             // 
@@ -546,6 +532,34 @@ namespace MSNPSharpClient
             this.toolTipChangePhoto.SetToolTip(this.comboStatus, "Your status");
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
+            // 
+            // pnlNameAndPM
+            // 
+            this.pnlNameAndPM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlNameAndPM.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.pnlNameAndPM.Controls.Add(this.lblPM);
+            this.pnlNameAndPM.Controls.Add(this.lblName);
+            this.pnlNameAndPM.Location = new System.Drawing.Point(29, 6);
+            this.pnlNameAndPM.Name = "pnlNameAndPM";
+            this.pnlNameAndPM.Size = new System.Drawing.Size(204, 49);
+            this.pnlNameAndPM.TabIndex = 1;
+            this.pnlNameAndPM.Visible = false;
+            // 
+            // lblPM
+            // 
+            this.lblPM.Location = new System.Drawing.Point(4, 25);
+            this.lblPM.Name = "lblPM";
+            this.lblPM.Size = new System.Drawing.Size(197, 20);
+            this.lblPM.TabIndex = 1;
+            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
+            // lblName
+            // 
+            this.lblName.Location = new System.Drawing.Point(4, 2);
+            this.lblName.Name = "lblName";
+            this.lblName.Size = new System.Drawing.Size(197, 20);
+            this.lblName.TabIndex = 0;
+            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
             // 
             // openFileDialog
             // 
@@ -724,19 +738,6 @@ namespace MSNPSharpClient
             this.lblWhatsup.TabIndex = 0;
             this.lblWhatsup.Text = "What\'s Up";
             // 
-            // cbRobotMode
-            // 
-            this.cbRobotMode.AutoSize = true;
-            this.cbRobotMode.Location = new System.Drawing.Point(134, 9);
-            this.cbRobotMode.Name = "cbRobotMode";
-            this.cbRobotMode.Size = new System.Drawing.Size(71, 17);
-            this.cbRobotMode.TabIndex = 7;
-            this.cbRobotMode.Text = "Bot mode";
-            this.toolTipChangePhoto.SetToolTip(this.cbRobotMode, "If your account is provisioned, check this. This sets AutoSynchronize property to" +
-                    " false when connected; that will make MSNPSharp don\'t use Address Book anymore, " +
-                    "so your contact list isn\'t loaded.");
-            this.cbRobotMode.UseVisualStyleBackColor = true;
-            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
@@ -758,9 +759,9 @@ namespace MSNPSharpClient
             this.ContactPanel.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
             this.pnlNameAndPM.ResumeLayout(false);
             this.pnlNameAndPM.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
             this.OwnerPanel.ResumeLayout(false);
             this.sortContextMenu.ResumeLayout(false);
             this.groupContextMenu.ResumeLayout(false);

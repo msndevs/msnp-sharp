@@ -308,7 +308,7 @@ namespace MSNPSharp
         CanReceiveVoiceClips = 0x40000,
         CanSecureChannel = 0x80000,
         CanSIP = 0x100000,
-        UNKNOWN200000 = 0x200000,
+        CanTunneledSip = 0x200000,
         CanShareFolders = 0x400000,
         UNKNOWN800000 = 0x800000,
         HasOneCare = 0x1000000,
@@ -366,13 +366,8 @@ namespace MSNPSharp
     public enum ClientCapacitiesEx : long
     {
         None = 0x00,
-        Can01 = 0x01,
-        Can02 = 0x02,
-        Can04 = 0x04,
-        Can08 = 0x08,
-        Can16 = 0x10,
-        Can32 = 0x20,
-        Can64 = 0x40
+        RTCVideoEnabled = 0x10,
+        CanP2PV2 = 0x20
     }
 
     /// <summary>

@@ -212,6 +212,38 @@ namespace MSNPSharp
             }
         }
 
+        public new ClientCapacities ClientCapacities
+        {
+            get
+            {
+                return base.ClientCapacities;
+            }
+            set
+            {
+                if (base.ClientCapacities != value)
+                {
+                    base.ClientCapacities = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
+        public new ClientCapacitiesEx ClientCapacitiesEx
+        {
+            get
+            {
+                return base.ClientCapacitiesEx;
+            }
+            set
+            {
+                if (base.ClientCapacitiesEx != value)
+                {
+                    base.ClientCapacitiesEx = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
         internal void BroadcastDisplayImage()
         {
             if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
