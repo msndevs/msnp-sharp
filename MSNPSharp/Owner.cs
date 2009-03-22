@@ -212,20 +212,48 @@ namespace MSNPSharp
             }
         }
 
+        public new ClientCapacities ClientCapacities
+        {
+            get
+            {
+                return base.ClientCapacities;
+            }
+            set
+            {
+                if (base.ClientCapacities != value)
+                {
+                    base.ClientCapacities = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
+        public new ClientCapacitiesEx ClientCapacitiesEx
+        {
+            get
+            {
+                return base.ClientCapacitiesEx;
+            }
+            set
+            {
+                if (base.ClientCapacitiesEx != value)
+                {
+                    base.ClientCapacitiesEx = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
         internal void BroadcastDisplayImage()
         {
             if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
-                // resend the user status so other client can see the new msn object
-#if MSNP18
-#if MSNC9
-                string capacities = ((long)ClientCapacities).ToString() + ":48";
-#else
-                string capacities = ((long)ClientCapacities).ToString() + ":0";
-#endif
-#else
-                string capacities = ((long)ClientCapacities).ToString();
-#endif
+                // Resend the user status so other client can see the new msn object
+
+                string capacities = (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                    ? ((long)ClientCapacities).ToString() + ":" + ((long)ClientCapacitiesEx).ToString()
+                    : ((long)ClientCapacities).ToString();
+
                 string context = String.Empty;
 
                 if (DisplayImage != null)

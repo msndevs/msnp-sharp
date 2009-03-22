@@ -659,11 +659,11 @@ namespace MSNPSharp
                 string capacities = ((long)owner.ClientCapacities).ToString();
                 if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
                 {
-#if MSNC9
-                    capacities += ":48";
-#else
-                    capacities += ":0";
-#endif
+                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+                    {
+                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
+                    }
+                    capacities = ((long)owner.ClientCapacities).ToString() + ":0";
                 }
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }

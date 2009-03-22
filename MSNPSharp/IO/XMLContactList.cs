@@ -249,6 +249,17 @@ namespace MSNPSharp.IO
             return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
         }
 
+        public BaseMember GetBaseMember(string servicetype, string account, ClientType type, string memberrole)
+        {
+            string hash = Contact.MakeHash(account, type);
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
+            if ((ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
+            {
+                return ms[memberrole][hash];
+            }
+            return null;
+        }
+
         public virtual void Add(
             Dictionary<Service,
             Dictionary<string,

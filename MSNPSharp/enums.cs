@@ -279,7 +279,7 @@ namespace MSNPSharp
     /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
-    [FlagsAttribute]
+    [Flags]
     public enum ClientCapacities : long
     {
         None = 0x00,
@@ -291,9 +291,11 @@ namespace MSNPSharp
         CanMultiPacketMSG = 0x20,
         IsMobileDevice = 0x40,
         IsDirectDevice = 0x80,
+        UNKNOWN100 = 0x100,
         IsWebClient = 0x200,
+        UNKNOWN400 = 0x400,
         IsTGWClient = 0x800,
-        HasMSNSpaces = 0x1000, // 0x001000
+        HasMSNSpaces = 0x1000,
         UsingXPMediaCenter = 0x2000,
         /// <summary>
         /// Activity support.
@@ -305,11 +307,13 @@ namespace MSNPSharp
         CanReceiveVoiceClips = 0x40000,
         CanSecureChannel = 0x80000,
         CanSIP = 0x100000,
+        CanTunneledSip = 0x200000,
         CanShareFolders = 0x400000,
-
+        UNKNOWN800000 = 0x800000,
         HasOneCare = 0x1000000,
         SupportP2PTURN = 0x2000000,
         SupportP2PUUNBootstrap = 0x4000000,
+        UNKNOWN8000000 = 0x8000000,
 
         /// <summary>
         /// MSN 6.0
@@ -340,13 +344,29 @@ namespace MSNPSharp
         /// </summary>
         CanHandleMSNC7 = 0x70000000,
         /// <summary>
-        /// MSN 8.5
+        /// MSN 8.5 (MSNP15)
         /// </summary>
         CanHandleMSNC8 = 0x80000000,
         /// <summary>
-        /// MSN 9.0
+        /// MSN 9.0 (MSNP16)
         /// </summary>
-        CanHandleMSNC9 = 0x90000000
+        CanHandleMSNC9 = 0x90000000,
+        /// <summary>
+        /// MSN 12.0 (MSNP18)
+        /// </summary>
+        CanHandleMSNC10 = 0xA0000000,
+        /// <summary>
+        /// Mask for MSNC
+        /// </summary>
+        CanHandleMSNCMask = 0xF0000000
+    }
+
+    [Flags]
+    public enum ClientCapacitiesEx : long
+    {
+        None = 0x00,
+        RTCVideoEnabled = 0x10,
+        CanP2PV2 = 0x20
     }
 
     /// <summary>
@@ -473,6 +493,7 @@ namespace MSNPSharp
 
     /// <summary>
     /// Client Type
+    /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string)"/> method.</remarks>
     /// </summary>
     public enum ClientType
     {
@@ -495,6 +516,11 @@ namespace MSNPSharp
         /// Phone member
         /// </summary>
         PhoneMember = 4,
+
+        /// <summary>
+        /// MSN group
+        /// </summary>
+        CircleMember = 9,
 
         /// <summary>
         /// Email member, currently Yahoo!
