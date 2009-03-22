@@ -695,18 +695,15 @@ namespace MSNPSharp
 
                 if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
                 {
-                    ClientCapacitiesEx capsext = ClientCapacitiesEx.None;
+                    ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
                     if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
                     {
                         owner.ClientCapacities |= ClientCapacities.CanHandleMSNC10;
-                        capsext |= ClientCapacitiesEx.Can16 | ClientCapacitiesEx.Can32;
                     }
                     else if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
                     {
                         owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
-                        capsext |= ClientCapacitiesEx.Can16;
                     }
-
                     capacities = ((long)owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
                 }
                 else
