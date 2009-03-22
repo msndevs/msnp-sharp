@@ -156,63 +156,66 @@ namespace MSNPSharp
                         ContactCardItem spacetitle = null;
                         Dictionary<ProfileType, ProfileItem> profiles = null;
 
-                        foreach (elementType element in e.Result.GetXmlFeedResult.contactCard.elements.element)
+                        if (null != e.Result.GetXmlFeedResult.contactCard.elements.element)
                         {
-                            if (element.type == ContactCardElementType.SpaceTitle.ToString())
+                            foreach (elementType element in e.Result.GetXmlFeedResult.contactCard.elements.element)
                             {
-                                // Get space title.
-                                spacetitle = new ContactCardItem(element.url, null, element.title, null);
-                            }
-                            else if (element.type == ContactCardElementType.Blog.ToString())
-                            {
-                                // Get the latest blog post.
-                                if (element.subElement != null && element.subElement.Length > 0)
+                                if (element.type == ContactCardElementType.SpaceTitle.ToString())
                                 {
-                                    blogpost = new ContactCardItem(element.subElement[0].url,
-                                        element.subElement[0].description,
-                                        element.subElement[0].title,
-                                        element.subElement[0].tooltip);
+                                    // Get space title.
+                                    spacetitle = new ContactCardItem(element.url, null, element.title, null);
                                 }
-                            }
-                            else if (element.type == ContactCardElementType.Album.ToString())
-                            {
-                                // Get updated album photos
-                                album = new Album(element.title, element.url);
-                                foreach (subelementBaseType subelemen in element.subElement)
+                                else if (element.type == ContactCardElementType.Blog.ToString())
                                 {
-                                    spaceContactCardElementsElementPhotoSubElement spacePhotoElement = subelemen as spaceContactCardElementsElementPhotoSubElement;
-                                    album.Photos.Add(new ThumbnailImage(
-                                        spacePhotoElement.webReadyUrl,
-                                        spacePhotoElement.thumbnailUrl,
-                                        spacePhotoElement.albumName,
-                                        spacePhotoElement.title,
-                                        spacePhotoElement.description,
-                                        spacePhotoElement.tooltip));
+                                    // Get the latest blog post.
+                                    if (element.subElement != null && element.subElement.Length > 0)
+                                    {
+                                        blogpost = new ContactCardItem(element.subElement[0].url,
+                                            element.subElement[0].description,
+                                            element.subElement[0].title,
+                                            element.subElement[0].tooltip);
+                                    }
                                 }
-                            }
-                            else if (element.type == ContactCardElementType.Profile.ToString())
-                            {
-                                // Get updated profiles
-                                profiles = new Dictionary<ProfileType, ProfileItem>();
-                                foreach (subelementBaseType subelemen in element.subElement)
+                                else if (element.type == ContactCardElementType.Album.ToString())
                                 {
-
-                                    if (subelemen.type == ContactCardSubElementType.GeneralProfile.ToString())
+                                    // Get updated album photos
+                                    album = new Album(element.title, element.url);
+                                    foreach (subelementBaseType subelemen in element.subElement)
                                     {
-                                        profiles[ProfileType.GeneralProfile] = new ProfileItem(
-                                            true, subelemen.url, subelemen.title, subelemen.tooltip);
+                                        spaceContactCardElementsElementPhotoSubElement spacePhotoElement = subelemen as spaceContactCardElementsElementPhotoSubElement;
+                                        album.Photos.Add(new ThumbnailImage(
+                                            spacePhotoElement.webReadyUrl,
+                                            spacePhotoElement.thumbnailUrl,
+                                            spacePhotoElement.albumName,
+                                            spacePhotoElement.title,
+                                            spacePhotoElement.description,
+                                            spacePhotoElement.tooltip));
                                     }
-
-                                    if (subelemen.type == ContactCardSubElementType.PublicProfile.ToString())
+                                }
+                                else if (element.type == ContactCardElementType.Profile.ToString())
+                                {
+                                    // Get updated profiles
+                                    profiles = new Dictionary<ProfileType, ProfileItem>();
+                                    foreach (subelementBaseType subelemen in element.subElement)
                                     {
-                                        profiles[ProfileType.PublicProfile] = new ProfileItem(
-                                            true, subelemen.url, subelemen.title, subelemen.tooltip);
-                                    }
 
-                                    if (subelemen.type == ContactCardSubElementType.SocialProfile.ToString())
-                                    {
-                                        profiles[ProfileType.SocialProfile] = new ProfileItem(
-                                            true, subelemen.url, subelemen.title, subelemen.tooltip);
+                                        if (subelemen.type == ContactCardSubElementType.GeneralProfile.ToString())
+                                        {
+                                            profiles[ProfileType.GeneralProfile] = new ProfileItem(
+                                                true, subelemen.url, subelemen.title, subelemen.tooltip);
+                                        }
+
+                                        if (subelemen.type == ContactCardSubElementType.PublicProfile.ToString())
+                                        {
+                                            profiles[ProfileType.PublicProfile] = new ProfileItem(
+                                                true, subelemen.url, subelemen.title, subelemen.tooltip);
+                                        }
+
+                                        if (subelemen.type == ContactCardSubElementType.SocialProfile.ToString())
+                                        {
+                                            profiles[ProfileType.SocialProfile] = new ProfileItem(
+                                                true, subelemen.url, subelemen.title, subelemen.tooltip);
+                                        }
                                     }
                                 }
                             }
