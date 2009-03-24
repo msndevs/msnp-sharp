@@ -62,6 +62,7 @@ namespace MSNPSharp
         internal int initialADLcount;
         internal XMLContactList AddressBook;
         internal DeltasList Deltas;
+        internal List<int> pendingFQYs = new List<int>();
 
         #endregion
 
@@ -882,15 +883,20 @@ namespace MSNPSharp
 
         #region Add Contact
 
-        private void AddNonPendingContact(string account, ClientType ct, string invitation)
+        private void AddNonPendingContact(string account, ClientType ct, string invitation, string otheremail)
         {
             // Query other networks and add as new contact if available
             if (account.Contains("@") && ct == ClientType.PassportMember)
             {
-                string fqypayload = "<ml l=\"2\"><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
-                fqypayload = fqypayload.Replace("{d}", account.Split('@')[1]);
-                fqypayload = fqypayload.Replace("{n}", account.Split('@')[0]);
-                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("FQY", fqypayload));
+                string federatedQuery = "<ml><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
+                federatedQuery = federatedQuery.Replace("{d}", account.Split('@')[1]);
+                federatedQuery = federatedQuery.Replace("{n}", account.Split('@')[0]);
+                NSPayLoadMessage message = new NSPayLoadMessage("FQY", federatedQuery);
+                NSMessageHandler.MessageProcessor.SendMessage(message);
+                lock (this)
+                {
+                    pendingFQYs.Add(message.TransactionID);
+                }
             }
 
             // Add contact to address book with "ContactSave"
@@ -899,6 +905,7 @@ namespace MSNPSharp
                 false,
                 invitation,
                 ct,
+                otheremail,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     Contact contact = NSMessageHandler.ContactList.GetContact(account, ct);
@@ -945,6 +952,7 @@ namespace MSNPSharp
                 true,
                 String.Empty,
                 contact.ClientType,
+                String.Empty,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
                     contact.Guid = new Guid(e.Result.ABContactAddResult.guid);
@@ -986,7 +994,7 @@ namespace MSNPSharp
            );
         }
 
-        private void AddNewOrPendingContact(string account, bool pending, string invitation, ClientType network, ABContactAddCompletedEventHandler onSuccess)
+        private void AddNewOrPendingContact(string account, bool pending, string invitation, ClientType network, string otheremail, ABContactAddCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1038,15 +1046,28 @@ namespace MSNPSharp
                         break;
 
                     case ClientType.EmailMember:
-                        request.contacts[0].contactInfo.emails = new contactEmailType[] { new contactEmailType() };
-                        request.contacts[0].contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
-                        request.contacts[0].contactInfo.emails[0].email = account;
-                        request.contacts[0].contactInfo.emails[0].isMessengerEnabled = true;
-                        request.contacts[0].contactInfo.emails[0].Capability = "32";
-                        request.contacts[0].contactInfo.emails[0].propertiesChanged =
-                            String.Join(PropertyString.propertySeparator,
+
+                        List<contactEmailType> emails = new List<contactEmailType>();
+
+                        if (!String.IsNullOrEmpty(otheremail))
+                        {
+                            contactEmailType email1 = new contactEmailType();
+                            email1.contactEmailType1 = ContactEmailTypeType.ContactEmailOther;
+                            email1.email = otheremail;
+                            email1.propertiesChanged = PropertyString.Email;
+                            emails.Add(email1);
+                        }
+
+                        contactEmailType emailYahoo = new contactEmailType();
+                        emailYahoo.contactEmailType1 = ContactEmailTypeType.Messenger2;
+                        emailYahoo.email = account;
+                        emailYahoo.isMessengerEnabled = true;
+                        emailYahoo.Capability = ((int)network).ToString();
+                        emailYahoo.propertiesChanged = String.Join(PropertyString.propertySeparator,
                             new string[] { PropertyString.Email, PropertyString.IsMessengerEnabled, PropertyString.Capability });
 
+                        emails.Add(emailYahoo);
+                        request.contacts[0].contactInfo.emails = emails.ToArray();
                         break;
 
                     case ClientType.PhoneMember:
@@ -1091,15 +1112,15 @@ namespace MSNPSharp
                 {
                     account = "+" + account.Substring(2);
                 }
-                AddNewContact(account, ClientType.PhoneMember, invitation);
+                AddNewContact(account, ClientType.PhoneMember, invitation, String.Empty);
             }
             else
             {
-                AddNewContact(account, ClientType.PassportMember, invitation);
+                AddNewContact(account, ClientType.PassportMember, invitation, String.Empty);
             }
         }
 
-        internal void AddNewContact(string account, ClientType network, string invitation)
+        internal void AddNewContact(string account, ClientType network, string invitation, string otheremail)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1117,7 +1138,7 @@ namespace MSNPSharp
                 }
                 else if (contact.Guid == Guid.Empty) // This user is on AL or BL or RL.
                 {
-                    AddNonPendingContact(account, network, invitation);
+                    AddNonPendingContact(account, network, invitation, otheremail);
                 }
                 else if (contact.Guid != Guid.Empty) // Email or Messenger buddy.
                 {
@@ -1137,7 +1158,7 @@ namespace MSNPSharp
             }
             else
             {
-                AddNonPendingContact(account, network, invitation);
+                AddNonPendingContact(account, network, invitation, otheremail);
             }
         }
 
@@ -2372,6 +2393,7 @@ namespace MSNPSharp
                 recursiveCall = 0;
                 initialADLs.Clear();
                 initialADLcount = 0;
+                pendingFQYs.Clear();
 
                 // Last save for contact list files
                 if (NSMessageHandler.IsSignedIn && AddressBook != null && Deltas != null)
