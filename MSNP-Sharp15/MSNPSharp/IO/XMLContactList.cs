@@ -952,18 +952,32 @@ namespace MSNPSharp.IO
 
             if (cit.emails != null && account == null)
             {
-                type = ClientType.EmailMember;
-                account = cit.emails[0].email;
-                ismessengeruser |= cit.emails[0].isMessengerEnabled;
-                displayname = account;
+                foreach (contactEmailType cet in cit.emails)
+                {
+                    if (cet.isMessengerEnabled)
+                    {
+                        type = (ClientType)Enum.Parse(typeof(ClientType), cet.Capability);
+                        account = cet.email;
+                        ismessengeruser |= cet.isMessengerEnabled;
+                        displayname = account;
+                        break;
+                    }
+                }
             }
 
             if (cit.phones != null && account == null)
             {
-                type = ClientType.PhoneMember;
-                account = cit.phones[0].number;
-                ismessengeruser |= cit.phones[0].isMessengerEnabled;
-                displayname = String.IsNullOrEmpty(cit.quickName) ? account : cit.quickName;
+                foreach (contactPhoneType cpt in cit.phones)
+                {
+                    if (cpt.isMessengerEnabled)
+                    {
+                        type = ClientType.PhoneMember;
+                        account = cpt.number;
+                        ismessengeruser |= cpt.isMessengerEnabled;
+                        displayname = account;
+                        break;
+                    }
+                }
             }
 
             if (account != null)
