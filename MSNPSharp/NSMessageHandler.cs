@@ -1971,35 +1971,55 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>Called when a FQY command has been received.
+        /// <summary>Called when a FQY (Federated Query) command has been received.
         /// <remarks>Indicates a client has different network types except PassportMember.</remarks>
+        /// <code>FQY [TransactionID] [PayloadLength]
+        /// <ml><d n="domain"><c n="username" t="clienttype" actual="emailaddresswithoutcountrysuffix" /></d></ml>
+        /// </code>
         /// </summary>
         /// <param name="message"></param>
         protected virtual void OnFQYReceived(NSMessage message)
         {
-            // <ml><d n="domain"><c n="username" [t="clienttype"] /></d></ml>
-            NetworkMessage networkMessage = message as NetworkMessage;
-            if (networkMessage.InnerBody != null)
+            int pendingTransactionId = int.Parse(message.CommandValues[0].ToString());
+            if (ContactService.pendingFQYs.Contains(pendingTransactionId))
             {
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                string domain = String.Empty;
-                foreach (XmlNode domainNode in domains)
-                {
-                    domain = domainNode.Attributes["n"].Value;
-                    XmlNode contactNode = domainNode.FirstChild;
-                    do
-                    {
-                        if (contactNode.Attributes["t"] != null)
-                        {
-                            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
-                            string account = contactNode.Attributes["n"].Value + "@" + domain;
-                            account = account.ToLower(CultureInfo.InvariantCulture);
-                            ContactService.AddNewContact(account, type, String.Empty);
-                        }
+                lock (ContactService.pendingFQYs)
+                    ContactService.pendingFQYs.Remove(pendingTransactionId);
 
-                    } while (contactNode.NextSibling != null);
+                NetworkMessage networkMessage = message as NetworkMessage;
+                if (networkMessage.InnerBody != null)
+                {
+                    XmlDocument xmlDoc = new XmlDocument();
+                    xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                    XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                    string domain = String.Empty;
+                    foreach (XmlNode domainNode in domains)
+                    {
+                        domain = domainNode.Attributes["n"].Value;
+                        XmlNode contactNode = domainNode.FirstChild;
+                        do
+                        {
+                            if (contactNode.Attributes["t"] != null)
+                            {
+                                ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
+                                string account = (contactNode.Attributes["n"].Value + "@" + domain).ToLowerInvariant();
+                                String otherEmail = String.Empty;
+                                if (contactNode.Attributes["actual"] != null)
+                                {
+                                    // Save original (ex: yahoo.com.tr) as other email
+                                    otherEmail = String.Copy(account);
+                                    // Then use actual address, this is stript address (ex: yahoo.com)
+                                    account = contactNode.Attributes["actual"].Value.ToLowerInvariant();
+                                }
+                                ContactService.AddNewContact(account, type, String.Empty, otherEmail);
+                            }
+                            else
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("FQY: {0} has passport network only.", contactNode.Attributes["n"].Value + "@" + domain), GetType().Name);
+                            }
+
+                        } while (contactNode.NextSibling != null);
+                    }
                 }
             }
         }
