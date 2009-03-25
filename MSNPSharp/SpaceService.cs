@@ -241,26 +241,29 @@ namespace MSNPSharp
                                 OnContactCardCompleted(new ContactCardCompletedEventArgs(true, null, cc));
                             }
 
-                            if (NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
+                            if (NSMessageHandler.ContactService.Deltas != null)
                             {
-                                BaseDynamicItemType basedyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
-                                if (basedyItem is PassportDynamicItem)
+                                if (NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
                                 {
-                                    PassportDynamicItem psDyItem = basedyItem as PassportDynamicItem;
-
-                                    psDyItem.ProfileGleamSpecified = true;
-                                    psDyItem.ProfileGleam = false;
-
-                                    psDyItem.SpaceGleamSpecified = true;
-                                    psDyItem.SpaceGleam = false;
-
-                                    if (psDyItem.SpaceStatus == "Exist Access" || psDyItem.ProfileStatus == "Exist Access")
+                                    BaseDynamicItemType basedyItem = NSMessageHandler.ContactService.Deltas.DynamicItems[account];
+                                    if (basedyItem is PassportDynamicItem)
                                     {
-                                        NSMessageHandler.ContactList[account, ClientType.PassportMember].DynamicChanged = DynamicItemState.None;
-                                        NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
-                                    }
+                                        PassportDynamicItem psDyItem = basedyItem as PassportDynamicItem;
 
-                                    NSMessageHandler.ContactService.Deltas.Save();
+                                        psDyItem.ProfileGleamSpecified = true;
+                                        psDyItem.ProfileGleam = false;
+
+                                        psDyItem.SpaceGleamSpecified = true;
+                                        psDyItem.SpaceGleam = false;
+
+                                        if (psDyItem.SpaceStatus == "Exist Access" || psDyItem.ProfileStatus == "Exist Access")
+                                        {
+                                            NSMessageHandler.ContactList[account, ClientType.PassportMember].DynamicChanged = DynamicItemState.None;
+                                            NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
+                                        }
+
+                                        NSMessageHandler.ContactService.Deltas.Save();
+                                    }
                                 }
                             }
                         }
@@ -288,6 +291,11 @@ namespace MSNPSharp
                 request.refreshInformation.storageAuthCache = String.Empty;
                 request.refreshInformation.maxCharacterCount = maxcharcount.ToString();
                 request.refreshInformation.maxImageCount = maximagecount.ToString();
+
+                if (NSMessageHandler.ContactService.Deltas == null)
+                {
+                    return;
+                }
 
                 if (NSMessageHandler.ContactService.Deltas.DynamicItems.ContainsKey(account))
                 {
