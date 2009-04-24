@@ -179,16 +179,9 @@ namespace MSNPSharp.IO
             Save(true);
         }
 
-        /// <summary>
-        /// Load the serialized object from a file.
-        /// </summary>
-        /// <param name="filename">Path of file where the serialized object was saved.</param>
-        /// <param name="nocompress">If true, use gzip to decompress the file(The file must be compressed).</param>
-        /// <param name="handler"></param>
-        /// <returns></returns>
-        public static DeltasList LoadFromFile(string filename, bool nocompress, NSMessageHandler handler)
+        public static DeltasList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler)
         {
-            return LoadFromFile(filename, nocompress, typeof(DeltasList), handler) as DeltasList;
+            return (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler);
         }
 
         public static int CompareAddressBookDeltas(ABFindAllResultType x, ABFindAllResultType y)

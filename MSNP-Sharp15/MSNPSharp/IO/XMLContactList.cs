@@ -50,9 +50,9 @@ namespace MSNPSharp.IO
     [XmlRoot("ContactList")]
     public class XMLContactList : MCLSerializer
     {
-        public static XMLContactList LoadFromFile(string filename, bool nocompress, NSMessageHandler handler)
+        public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler)
         {
-            return LoadFromFile(filename, nocompress, typeof(XMLContactList), handler) as XMLContactList;
+            return (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), handler);
         }
 
         /// <summary>
@@ -579,8 +579,14 @@ namespace MSNPSharp.IO
 
         public SerializableDictionary<Guid, CircleInfo> CircleResults
         {
-            get { return circleResults; }
-            set { circleResults = value; }
+            get
+            {
+                return circleResults;
+            }
+            set
+            {
+                circleResults = value;
+            }
         }
 
         [XmlElement("AddressbookLastChange")]

@@ -37,6 +37,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 
 namespace MSNPSharp.IO
@@ -107,6 +108,27 @@ namespace MSNPSharp.IO
 
     #endregion
 
+    /// <summary>
+    /// Mcl serialization to load/save contact list files.
+    /// A mcl file can be serialized as both compressed and encrypted formats.
+    /// </summary>
+    [Flags]
+    public enum MclSerialization
+    {
+        /// <summary>
+        /// No serialization, use plain text.
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Use compression.
+        /// </summary>
+        Compression = 1,
+        /// <summary>
+        /// Use cryptography.
+        /// </summary>
+        Cryptography = 2
+    }
+
     #region MclFile
 
     /// <summary>
@@ -114,11 +136,38 @@ namespace MSNPSharp.IO
     /// </summary>
     public sealed class MclFile
     {
+        /// <summary>
+        /// Signature for compressed file - mcl.
+        /// </summary>
         public static readonly byte[] MclBytes = new byte[] { (byte)'m', (byte)'c', (byte)'l' };
+        /// <summary>
+        /// Signature for encrypted file - mpw, Mr Pang Wu :)
+        /// </summary>
+        public static readonly byte[] MpwBytes = new byte[] { (byte)'m', (byte)'p', (byte)'w' };
+        /// <summary>
+        /// Signature for compressed+encrypted file - mcp.
+        /// </summary>
+        public static readonly byte[] McpBytes = new byte[] { (byte)'m', (byte)'c', (byte)'p' };
 
+        private MclSerialization mclSerialization = MclSerialization.None;
         private string fileName = String.Empty;
-        private bool noCompression = false;
-        private byte[] uncompressData;
+        private byte[] sha256Password = new byte[32];
+        private byte[] xmlData;
+
+        public MclFile(string filename, MclSerialization st, FileAccess access, string password)
+        {
+            fileName = filename;
+            mclSerialization = st;
+
+            if (!String.IsNullOrEmpty(password))
+            {
+                using (SHA256Managed sha256 = new SHA256Managed())
+                    sha256Password = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            }
+
+            if ((access & FileAccess.Read) == FileAccess.Read)
+                xmlData = GetStruct().content;
+        }
 
         /// <summary>
         /// Opens filename and fills the <see cref="Content"/> with uncompressed data if file is opened for reading.
@@ -127,17 +176,14 @@ namespace MSNPSharp.IO
         /// <param name="nocompress">Use of compression when SAVING file.</param>
         /// <param name="access">The <see cref="Content"/> is filled if the file is opened for reading</param>
         public MclFile(string filename, bool nocompress, FileAccess access)
+            : this(filename, nocompress ? MclSerialization.None : MclSerialization.Compression, access, null)
         {
-            fileName = filename;
-            noCompression = nocompress;
-            if ((access & FileAccess.Read) == FileAccess.Read)
-                uncompressData = GetStruct().content;
         }
 
         #region Public method
         public void Save(string filename)
         {
-            SaveImpl(filename, FillFileStruct(uncompressData));
+            WriteAllBytes(filename, FillFileStruct(xmlData));
         }
 
         public void Save()
@@ -151,7 +197,7 @@ namespace MSNPSharp.IO
         /// <param name="filename"></param>
         public void SaveAndHide(string filename)
         {
-            SaveImpl(filename, FillFileStruct(uncompressData));
+            WriteAllBytes(filename, FillFileStruct(xmlData));
             lock (this)
             {
                 File.SetAttributes(filename, FileAttributes.Hidden);
@@ -186,17 +232,17 @@ namespace MSNPSharp.IO
         }
 
         /// <summary>
-        /// Uncompressed (XML) data of file
+        /// XML data
         /// </summary>
         public byte[] Content
         {
             get
             {
-                return uncompressData;
+                return xmlData;
             }
             set
             {
-                uncompressData = value;
+                xmlData = value;
             }
         }
 
@@ -207,7 +253,7 @@ namespace MSNPSharp.IO
         {
             get
             {
-                return noCompression;
+                return mclSerialization == MclSerialization.None;
             }
         }
 
@@ -215,39 +261,21 @@ namespace MSNPSharp.IO
 
         #region Private
 
-        private void SaveImpl(string filename, byte[] content)
+        private void WriteAllBytes(string filename, byte[] content)
         {
             fileName = filename;
-            if (content == null)
-                return;
 
-            if (File.Exists(filename))
+            if (content != null)
             {
                 lock (this)
                 {
-                    File.SetAttributes(filename, FileAttributes.Normal);
-                }
-            }
+                    if (File.Exists(filename))
+                        File.SetAttributes(filename, FileAttributes.Normal);
 
-            if (!noCompression)
-            {
-                byte[] byt = new byte[content.Length + MclBytes.Length];
-                Array.Copy(MclBytes, byt, MclBytes.Length);
-                Array.Copy(content, 0, byt, MclBytes.Length, content.Length);
-                lock (this)
-                {
-                    File.WriteAllBytes(filename, byt);
-                }
-            }
-            else
-            {
-                lock (this)
-                {
                     File.WriteAllBytes(filename, content);
                 }
             }
         }
-
 
         private static byte[] Compress(byte[] buffer)
         {
@@ -278,23 +306,123 @@ namespace MSNPSharp.IO
         }
 
         /// <summary>
-        /// Compress the data if NoCompression is set to false.
+        /// Public key
         /// </summary>
-        /// <param name="content">Uncompressed data</param>
-        /// <returns></returns>
-        private byte[] FillFileStruct(byte[] content)
+        private static byte[] IV = { 
+            (byte)'m',
+            (byte)'s',
+            (byte)'n',
+            (byte)'p',
+            (byte)'s',
+            (byte)'h',
+            (byte)'a',
+            (byte)'r',
+            (byte)'p',
+            (byte)'l',
+            (byte)'i',
+            (byte)'b',
+            (byte)'r',
+            (byte)'a',
+            (byte)'r',
+            (byte)'y'
+        };
+
+        private static byte[] Encyrpt(byte[] val, byte[] secretKey)
         {
-            if (noCompression)
-                return content;
+            byte[] ret = null;
+            if (val != null)
+            {
+                using (RijndaelManaged rm = new RijndaelManaged())
+                {
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        using (CryptoStream cs = new CryptoStream(ms, rm.CreateEncryptor(secretKey, IV), CryptoStreamMode.Write))
+                        {
+                            using (BinaryWriter bw = new BinaryWriter(cs))
+                            {
+                                bw.Write(val, 0, val.Length);
+                                bw.Flush();
+                                cs.FlushFinalBlock();
+                                ret = ms.ToArray();
+                            }
+                        }
+                    }
+                }
+            }
+            return ret;
+        }
 
-            MclFileStruct mclstruct;
-            mclstruct.content = (content != null) ? Compress(content) : null;
-
-            return mclstruct.content;
+        private static byte[] Decyrpt(byte[] buffer, byte[] secretKey)
+        {
+            MemoryStream ret = new MemoryStream();
+            if (buffer != null)
+            {
+                using (RijndaelManaged rm = new RijndaelManaged())
+                {
+                    using (MemoryStream ms = new MemoryStream(buffer))
+                    {
+                        using (CryptoStream cs = new CryptoStream(ms, rm.CreateDecryptor(secretKey, IV), CryptoStreamMode.Read))
+                        {
+                            using (BinaryReader br = new BinaryReader(cs))
+                            {
+                                byte[] tmp = new byte[16384];
+                                int length;
+                                while ((length = br.Read(tmp, 0, tmp.Length)) > 0)
+                                {
+                                    ret.Write(tmp, 0, length);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return ret.ToArray();
         }
 
         /// <summary>
-        /// Decompress the file and fill the MCLFileStruct struct
+        /// Compress/Encrypt the data.
+        /// </summary>
+        /// <param name="xml">Xml data</param>
+        /// <returns></returns>
+        private byte[] FillFileStruct(byte[] xml)
+        {
+            byte[] ret = null;
+            if (xml != null)
+            {
+                switch (mclSerialization)
+                {
+                    case MclSerialization.None:
+                        ret = xml;
+                        break;
+
+                    case MclSerialization.Compression:
+                        byte[] compressed = Compress(xml);
+                        ret = new byte[MclBytes.Length + compressed.Length];
+                        Array.Copy(MclBytes, 0, ret, 0, MclBytes.Length);
+                        Array.Copy(compressed, 0, ret, MclBytes.Length, compressed.Length);
+                        break;
+
+                    case MclSerialization.Cryptography:
+                        byte[] encyrpted = Encyrpt(xml, sha256Password);
+                        ret = new byte[MpwBytes.Length + encyrpted.Length];
+                        Array.Copy(MpwBytes, 0, ret, 0, MpwBytes.Length);
+                        Array.Copy(encyrpted, 0, ret, MpwBytes.Length, encyrpted.Length);
+                        break;
+
+                    case MclSerialization.Compression | MclSerialization.Cryptography:
+                        byte[] compressed2 = Compress(xml);
+                        byte[] encyrpted2 = Encyrpt(compressed2, sha256Password);
+                        ret = new byte[McpBytes.Length + encyrpted2.Length];
+                        Array.Copy(McpBytes, 0, ret, 0, McpBytes.Length);
+                        Array.Copy(encyrpted2, 0, ret, McpBytes.Length, encyrpted2.Length);
+                        break;
+                }
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// Decompress/Decyrpt the file if the serialization type is not XML.
         /// </summary>
         /// <returns></returns>
         private MclFileStruct GetStruct()
@@ -302,39 +430,59 @@ namespace MSNPSharp.IO
             MclFileStruct mclfile = new MclFileStruct();
             if (File.Exists(fileName))
             {
+                MemoryStream ms = new MemoryStream();
                 FileStream fs = File.Open(fileName, FileMode.Open, FileAccess.Read);
                 try
                 {
-                    byte[] mcl = new byte[MclBytes.Length];
-                    if (MclBytes.Length == fs.Read(mcl, 0, mcl.Length))
+                    byte[] first3 = new byte[MclBytes.Length];
+                    if (MclBytes.Length == fs.Read(first3, 0, first3.Length))
                     {
-                        MemoryStream ms = new MemoryStream();
-                        bool ismcl = true;
-                        for (int i = 0; i < MclBytes.Length; i++)
-                        {
-                            if (MclBytes[i] != mcl[i])
-                            {
-                                ismcl = false;
-                                break;
-                            }
-                        }
+                        MclSerialization st = MclSerialization.None;
 
-                        if (!ismcl)
+                        if (first3[0] == MclBytes[0] && first3[1] == MclBytes[1] && first3[2] == MclBytes[2])
                         {
-                            Debug.Assert(mcl[0] == (byte)'<' && mcl[1] == (byte)'?' && mcl[2] == (byte)'x', "Not valid xml file");
-                            ms.Write(mcl, 0, mcl.Length);
+                            st = MclSerialization.Compression;
+                        }
+                        else if (first3[0] == MpwBytes[0] && first3[1] == MpwBytes[1] && first3[2] == MpwBytes[2])
+                        {
+                            st = MclSerialization.Cryptography;
+                        }
+                        else if (first3[0] == McpBytes[0] && first3[1] == McpBytes[1] && first3[2] == McpBytes[2])
+                        {
+                            st = MclSerialization.Compression | MclSerialization.Cryptography;
+                        }
+                        else
+                        {
+                            st = MclSerialization.None;
+                            ms.Write(first3, 0, first3.Length);
                         }
 
                         int read;
-                        byte[] tmp = new byte[8192];
+                        byte[] tmp = new byte[16384];
                         while ((read = fs.Read(tmp, 0, tmp.Length)) > 0)
                         {
                             ms.Write(tmp, 0, read);
                         }
 
-                        mclfile.content = ismcl ? Decompress(ms.ToArray()) : ms.ToArray();
+                        switch (st)
+                        {
+                            case MclSerialization.None:
+                                mclfile.content = ms.ToArray();
+                                break;
 
-                        ms.Close();
+                            case MclSerialization.Compression:
+                                mclfile.content = Decompress(ms.ToArray());
+                                break;
+
+                            case MclSerialization.Cryptography:
+                                mclfile.content = Decyrpt(ms.ToArray(), sha256Password);
+                                break;
+
+                            case MclSerialization.Compression | MclSerialization.Cryptography:
+                                byte[] compressed = Decyrpt(ms.ToArray(), sha256Password);
+                                mclfile.content = Decompress(compressed);
+                                break;
+                        }
                     }
                 }
                 catch (Exception exception)
@@ -345,6 +493,7 @@ namespace MSNPSharp.IO
                 finally
                 {
                     fs.Close();
+                    ms.Close();
                 }
             }
             return mclfile;
@@ -378,10 +527,11 @@ namespace MSNPSharp.IO
         /// </summary>
         /// <param name="filePath">Full file path</param>
         /// <param name="access">If the file is opened for reading, file content is loaded</param>
-        /// <param name="noCompress">Use file compression or not for SAVING</param>
+        /// <param name="st">Serialization type for SAVING</param>
+        /// <param name="password">File password</param>
         /// <returns>Msnpsharp contact list file</returns>
         /// <remarks>This method is thread safe</remarks>
-        public static MclFile Open(string filePath, FileAccess access, bool noCompress)
+        public static MclFile Open(string filePath, FileAccess access, MclSerialization st, string password)
         {
             filePath = filePath.ToLowerInvariant();
 
@@ -391,7 +541,7 @@ namespace MSNPSharp.IO
                 {
                     if (!storage.ContainsKey(filePath))
                     {
-                        storage[filePath] = new MclInfo(new MclFile(filePath, noCompress, access));
+                        storage[filePath] = new MclInfo(new MclFile(filePath, st, access, password));
                     }
                 }
             }
@@ -403,7 +553,7 @@ namespace MSNPSharp.IO
                     {
                         if (storage[filePath].Refresh())
                         {
-                            storage[filePath] = new MclInfo(new MclFile(filePath, noCompress, access));
+                            storage[filePath] = new MclInfo(new MclFile(filePath, st, access, password));
                         }
                     }
                 }

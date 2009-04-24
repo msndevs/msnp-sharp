@@ -278,14 +278,14 @@ namespace MSNPSharp
                 DeleteRecordFile();
             }
 
-            bool nocompress = Settings.NoCompress;
+            MclSerialization st = Settings.SerializationType;
             string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + ".mcl");
             string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Mail.GetHashCode() + "d" + ".mcl");
 
             try
             {
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, nocompress, NSMessageHandler);
-                Deltas = DeltasList.LoadFromFile(deltasResultsFile, nocompress, NSMessageHandler);
+                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler);
+                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler);
 
                 NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
 
