@@ -120,9 +120,6 @@
   <data name="ApplicationStrId" xml:space="preserve">
     <value>Messenger Client 9.0</value>
   </data>
-  <data name="CacheInfoVersion" xml:space="preserve">
-    <value>3.0.0.0</value>
-  </data>
   <data name="DeltasListVersion" xml:space="preserve">
     <value>3.0.0.0</value>
   </data>
