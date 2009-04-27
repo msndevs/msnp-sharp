@@ -624,7 +624,7 @@ namespace MSNPSharp
         /// <param name="msg"><see cref="TextMessage"/> to send</param>
         public void SendOIMMessage(Contact receiver, TextMessage msg)
         {
-            if (NSMessageHandler.Messenger.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            if (NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
             {
                 Exception err = null;
                 try

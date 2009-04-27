@@ -869,7 +869,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a remote contact was already present in the session that was joined.
-        /// <code>IRO [Transaction] [Current] [Total] [account[;GUID]] [Name]</code>
+        /// <code>IRO [Transaction] [Current] [Total] [account[;GUID]] [DisplayName] [Caps]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnIROReceived(SBMessage message)
@@ -883,19 +883,34 @@ namespace MSNPSharp
             if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
                 return;
 
+            // Get the contact.
             Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
-            if (contact.Lists == MSNLists.None) // Anonymous request
+            // Not in contact list (anonymous). Update it's name and caps.
+            if (contact.Lists == MSNLists.None)
             {
                 if (message.CommandValues.Count >= 5)
-                {
                     contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
+
+                if (message.CommandValues.Count >= 6)
+                {
+                    string caps = message.CommandValues[5].ToString();
+                    if (caps.Contains(":"))
+                    {
+                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
+                        contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                    }
+                    else
+                    {
+                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                    }
                 }
             }
 
+            // Notify the client programmer.
             if (!Contacts.ContainsKey(contact.Mail) || Contacts[contact.Mail] != ContactConversationState.Joined)
             {
-                OnContactJoined(contact); // notify the client programmer
+                OnContactJoined(contact);
             }
         }
 
@@ -905,7 +920,7 @@ namespace MSNPSharp
         /// <remarks>
         /// Indicates that a remote contact has joined the session.
         /// This will fire the <see cref="ContactJoined"/> event.
-        /// <code>JOI [account[;GUID]] [name]</code>
+        /// <code>JOI [account[;GUID]] [DisplayName] [Caps]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnJOIReceived(SBMessage message)
@@ -918,13 +933,34 @@ namespace MSNPSharp
 
             if (NSMessageHandler.Owner.Mail.ToLowerInvariant() != account)
             {
+                // Get the contact.
                 Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
-                // get the contact and update it's name
-                // contact.SetName(message.CommandValues[1].ToString());
+                // Not in contact list (anonymous). Update it's name and caps.
+                if (contact.Lists == MSNLists.None)
+                {
+                    if (message.CommandValues.Count >= 2)
+                        contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[1].ToString()));
+
+                    if (message.CommandValues.Count >= 3)
+                    {
+                        string caps = message.CommandValues[2].ToString();
+                        if (caps.Contains(":"))
+                        {
+                            contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
+                            contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                        }
+                        else
+                        {
+                            contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                        }
+                    }
+                }
+
+                // Notify the client programmer.
                 if (!Contacts.ContainsKey(contact.Mail) || Contacts[contact.Mail] != ContactConversationState.Joined)
                 {
-                    OnContactJoined(contact); // notify the client programmer
+                    OnContactJoined(contact);
                 }
             }
         }
