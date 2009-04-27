@@ -607,11 +607,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public MSNObject Get(string hash)
         {
-            object msnObject = objectCollection[hash];
-            if (msnObject == null)
-                return null;
-            else
-                return (MSNObject)msnObject;
+            return (objectCollection.ContainsKey(hash)) ? (MSNObject)objectCollection[hash] : null;
         }
 
         /// <summary>
