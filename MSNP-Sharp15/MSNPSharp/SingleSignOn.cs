@@ -544,6 +544,7 @@ namespace MSNPSharp
         public void Authenticate(MSNTicket msnticket, bool async)
         {
             SecurityTokenService securService = new SecurityTokenService();
+            securService.EnableDecompression = true;
             securService.Timeout = 60000;
             securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
