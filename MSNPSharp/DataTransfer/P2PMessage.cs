@@ -461,6 +461,14 @@ namespace MSNPSharp.DataTransfer
 
         #region Protected helper methods
 
+        protected internal static ushort ToLittleEndian(ushort val)
+        {
+            if (BitConverter.IsLittleEndian)
+                return val;
+
+            return FlipEndian(val);
+        }
+
         protected internal static uint ToLittleEndian(uint val)
         {
             if (BitConverter.IsLittleEndian)
@@ -472,6 +480,14 @@ namespace MSNPSharp.DataTransfer
         protected internal static ulong ToLittleEndian(ulong val)
         {
             if (BitConverter.IsLittleEndian)
+                return val;
+
+            return FlipEndian(val);
+        }
+
+        protected internal static ushort ToBigEndian(ushort val)
+        {
+            if (!BitConverter.IsLittleEndian)
                 return val;
 
             return FlipEndian(val);
@@ -492,6 +508,14 @@ namespace MSNPSharp.DataTransfer
 
             return FlipEndian(val);
         }
+
+        protected internal static ushort FlipEndian(ushort val)
+        {
+            return (ushort)
+                 (((val & 0x00ff) << 8) +
+                 ((val & 0xff00) >> 8));
+        }
+
 
         protected internal static uint FlipEndian(uint val)
         {
