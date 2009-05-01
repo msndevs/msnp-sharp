@@ -48,6 +48,7 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNSpaceService;
     using MSNPSharp.MSNWS.MSNABSharingService;
 
+    [Obsolete("Function no more supported by Microsoft", false)]
     public class ContactCardCompletedEventArgs : EventArgs
     {
         private Exception error;
@@ -102,6 +103,7 @@ namespace MSNPSharp
     /// <summary>
     /// Provides services that related to MSN Space.
     /// </summary>
+    [Obsolete("Function no more supported by Microsoft", false)]
     public class ContactSpaceService : MSNService
     {
         /// <summary>
@@ -114,6 +116,7 @@ namespace MSNPSharp
         {
         }
 
+        [Obsolete("Function no more supported by Microsoft", false)]
         public void GetContactCard(string account)
         {
             GetContactCard(account, 6, 200);
@@ -125,6 +128,7 @@ namespace MSNPSharp
         /// <param name="account"></param>
         /// <param name="maximagecount">Number of thumbnail image allowed</param>
         /// <param name="maxcharcount">Number of character in the blog post content which is shown as description.</param>
+        [Obsolete("Function no more supported by Microsoft", false)]
         public void GetContactCard(string account, int maximagecount, int maxcharcount)
         {
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&

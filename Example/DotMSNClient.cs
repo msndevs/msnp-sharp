@@ -80,12 +80,10 @@ namespace MSNPSharpClient
         private TreeView treeViewFilterList;
         private TextBox txtSearch;
         private ToolStripMenuItem deleteMenuItem;
-        private ToolStripSeparator toolStripMenuItem4;
         private ComboBox comboStatus;
         private Panel pnlNameAndPM;
         private TextBox lblName;
         private TextBox lblPM;
-        private ToolStripMenuItem viewContactCardMenuItem;
         private ToolTip toolTipChangePhoto;
         private ComboBox comboPlaces;
         private Panel WhatsUpPanel;
@@ -128,8 +126,6 @@ namespace MSNPSharpClient
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unblockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
-            this.viewContactCardMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ContactPanel = new System.Windows.Forms.Panel();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -324,9 +320,7 @@ namespace MSNPSharpClient
             this.toolStripMenuItem2,
             this.blockMenuItem,
             this.unblockMenuItem,
-            this.deleteMenuItem,
-            this.toolStripMenuItem4,
-            this.viewContactCardMenuItem});
+            this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
             this.userMenuStrip.Size = new System.Drawing.Size(201, 198);
             // 
@@ -391,18 +385,6 @@ namespace MSNPSharpClient
             this.deleteMenuItem.Size = new System.Drawing.Size(200, 22);
             this.deleteMenuItem.Text = "Delete";
             this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
-            // 
-            // toolStripMenuItem4
-            // 
-            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
-            this.toolStripMenuItem4.Size = new System.Drawing.Size(197, 6);
-            // 
-            // viewContactCardMenuItem
-            // 
-            this.viewContactCardMenuItem.Name = "viewContactCardMenuItem";
-            this.viewContactCardMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.viewContactCardMenuItem.Text = "View Contact Card";
-            this.viewContactCardMenuItem.Click += new System.EventHandler(this.viewContactCardToolStripMenuItem_Click);
             // 
             // ContactPanel
             // 
@@ -824,7 +806,6 @@ namespace MSNPSharpClient
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
-            messenger.Nameserver.SpaceService.ContactCardCompleted += new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted);
 
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
             messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
@@ -902,23 +883,6 @@ namespace MSNPSharpClient
             if (lblNewsLink.Tag != null)
             {
                 Process.Start(lblNewsLink.Tag.ToString());
-            }
-        }
-
-        void SpaceService_ContactCardCompleted(object sender, ContactCardCompletedEventArgs arg)
-        {
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new EventHandler<ContactCardCompletedEventArgs>(SpaceService_ContactCardCompleted),
-                    new object[] { sender, arg });
-            }
-            else
-            {
-                if (arg.Error == null && arg.Changed)
-                {
-                    ContactCardForm ccform = new ContactCardForm(arg.ContactCard);
-                    ccform.Show();
-                }
             }
         }
 
@@ -1603,8 +1567,6 @@ namespace MSNPSharpClient
                         toolStripMenuItem2.Visible = false;
                     }
 
-                    viewContactCardMenuItem.Visible = (contact.ClientType == ClientType.PassportMember);
-
                     deleteMenuItem.Visible = contact.Guid != Guid.Empty;
 
                     Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
@@ -2018,12 +1980,6 @@ namespace MSNPSharpClient
             {
                 messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, NSMessageHandler.MachineGuid);
             }
-        }
-
-        private void viewContactCardToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Contact contact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
-            messenger.Nameserver.SpaceService.GetContactCard(contact.Mail);
         }
 
         private void comboStatus_KeyPress(object sender, KeyPressEventArgs e)
