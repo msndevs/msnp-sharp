@@ -449,8 +449,8 @@ namespace MSNPSharpClient
             this.comboProtocol.DropDownWidth = 75;
             this.comboProtocol.FormattingEnabled = true;
             this.comboProtocol.Items.AddRange(new object[] {
-            "MSNP16",
-            "MSNP15"});
+            "MSNP15",
+            "MSNP16"});
             this.comboProtocol.Location = new System.Drawing.Point(134, 54);
             this.comboProtocol.Name = "comboProtocol";
             this.comboProtocol.Size = new System.Drawing.Size(70, 21);

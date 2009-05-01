@@ -155,7 +155,7 @@ namespace MSNPSharp
         }
 
         public Credentials(string account, string password)
-            : this(account, password, MsnProtocol.MSNP16)
+            : this(account, password, MsnProtocol.MSNP15)
         {
         }
 
@@ -170,7 +170,7 @@ namespace MSNPSharp
         /// Constructor to instantiate a Credentials object with the specified values.
         /// </summary>
         public Credentials(string account, string password, string clientID, string clientCode)
-            : this(account, password, clientID, clientCode, MsnProtocol.MSNP16)
+            : this(account, password, clientID, clientCode, MsnProtocol.MSNP15)
         {
         }
 
