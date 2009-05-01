@@ -61,6 +61,7 @@ namespace MSNPSharp
         SocialProfile
     }
 
+    [Obsolete("Function no more supported by Microsoft", false)]
     public class ContactCard
     {
         #region Fields
@@ -182,6 +183,7 @@ namespace MSNPSharp
     /// <summary>
     /// Base class for contact card element.
     /// </summary>
+    [Obsolete("Function no more supported by Microsoft", false)]
     public class ContactCardItem
     {
         #region Fields
@@ -266,6 +268,7 @@ namespace MSNPSharp
     /// <summary>
     /// A Thumbnail of space photo.
     /// </summary>
+    [Obsolete("Function no more supported by Microsoft", false)]
     public class ThumbnailImage : ContactCardItem
     {
         private string albumName = string.Empty;
@@ -315,6 +318,7 @@ namespace MSNPSharp
     /// <summary>
     /// Photo album class.
     /// </summary>
+    [Obsolete("Function no more supported by Microsoft", false)]
     public class Album : ContactCardItem
     {
         private List<ThumbnailImage> photos = new List<ThumbnailImage>(0);
@@ -339,6 +343,7 @@ namespace MSNPSharp
     /// <summary>
     /// Profile element of contactcard.
     /// </summary>
+    [Obsolete("Function no more supported by Microsoft", false)]
     public class ProfileItem : ContactCardItem
     {
         private bool hasUpdated = false;
