@@ -8,6 +8,7 @@ namespace MSNPSharp.DataTransfer
 {
     public class P2PDataLayerPacket : NetworkMessage
     {
+        private byte headerLength;
         private byte tFCombination;
         private ushort packageNumber;
         private UInt32 sessionID;
@@ -15,11 +16,11 @@ namespace MSNPSharp.DataTransfer
         private byte[] payloadData;
         private UInt32 footer;
 
-        public UInt64 DataRemaining
+        public byte HeaderLength
         {
-            get { return dataRemaining; }
-            set { dataRemaining = value; }
+            get { return headerLength; }
         }
+
         public byte TFCombination
         {
             get { return tFCombination; }
@@ -38,6 +39,12 @@ namespace MSNPSharp.DataTransfer
             set { sessionID = value; }
         }
 
+        public UInt64 DataRemaining
+        {
+            get { return dataRemaining; }
+            set { dataRemaining = value; }
+        }
+
         public byte[] PayloadData
         {
             get { return payloadData; }
@@ -50,6 +57,9 @@ namespace MSNPSharp.DataTransfer
             set { footer = value; }
         }
 
+        public P2PDataLayerPacket()
+        {
+        }
 
         public P2PDataLayerPacket(byte[] innerBytes)
         {
@@ -64,35 +74,46 @@ namespace MSNPSharp.DataTransfer
 
         public override byte[] GetBytes()
         {
-            byte headerlen = 0x08;
+            headerLength = 0x08;
             if (TFCombination == 4 || 
                 TFCombination == 5 ||
                 TFCombination == 6 ||
                 TFCombination == 7)
             {
-                headerlen = 0x14;
+                headerLength = 0x14;
             }
 
-            byte[] data = new byte[headerlen + PayloadData.Length];
+            ushort payloadLength = 0;
+            if (PayloadData != null)
+            {
+                payloadLength = (ushort)PayloadData.Length;
+            }
+
+            byte[] data = new byte[HeaderLength + payloadLength + 4];
 
 
             MemoryStream memStream = new MemoryStream(data, true);
             BinaryWriter writer = new BinaryWriter(memStream);
 
-            writer.Write(headerlen);
+            writer.Write(HeaderLength);
             writer.Write(TFCombination);
             writer.Write(P2PMessage.ToBigEndian(PackageNumber));
             writer.Write(P2PMessage.ToBigEndian(SessionID));
 
-            if (headerlen == 0x14)
+            if (HeaderLength == 0x14)
             {
                 writer.Write((byte)0x1);
                 writer.Write((byte)0x8);
                 writer.Write(DataRemaining);
             }
 
-            memStream.Seek(headerlen + 1, SeekOrigin.Begin);
-            writer.Write(PayloadData);
+            memStream.Seek(HeaderLength, SeekOrigin.Begin);
+
+            if (PayloadData != null)
+            {
+                writer.Write(PayloadData);
+            }
+
             writer.Write(P2PMessage.ToBigEndian(Footer));
 
             writer.Close();
@@ -107,13 +128,13 @@ namespace MSNPSharp.DataTransfer
         {
             MemoryStream mem = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(mem);
-            byte headerlen = reader.ReadByte();
+            headerLength = reader.ReadByte();
             TFCombination = reader.ReadByte();
             PackageNumber = P2PMessage.ToBigEndian(reader.ReadUInt16());
             SessionID = P2PMessage.ToBigEndian(reader.ReadUInt32());
-            if (headerlen - 8 > 0)  //TLVs
+            if (HeaderLength - 8 > 0)  //TLVs
             {
-                byte[] TLvs = new byte[headerlen - 8];
+                byte[] TLvs = new byte[HeaderLength - 8];
                 TLvs = reader.ReadBytes(TLvs.Length);
                 int index = 0;
                 while (TLvs.Length - (index + 1) >= 4)
@@ -127,9 +148,9 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            if (InnerBody.Length - headerlen - 4 > 0)
+            if (InnerBody.Length - HeaderLength - 4 > 0)
             {
-                PayloadData = reader.ReadBytes(InnerBody.Length - headerlen - 4);
+                PayloadData = reader.ReadBytes(InnerBody.Length - HeaderLength - 4);
             }
 
             Footer = P2PMessage.ToBigEndian(reader.ReadUInt32());
@@ -152,6 +173,30 @@ namespace MSNPSharp.DataTransfer
                 case 2:
                     break;
             }
+        }
+
+        /// <summary>
+        /// Returns debug info
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            byte[] payloadBytes = Encoding.UTF8.GetBytes("[No payload data.]\r\n");
+            if (PayloadData != null)
+            {
+                payloadBytes = PayloadData;
+            }
+
+            string debugLine =
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "HeaderLength    : {1:x} ({0})\r\n", HeaderLength.ToString(System.Globalization.CultureInfo.InvariantCulture), HeaderLength) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TFCombination   : {1:x} ({0})\r\n", TFCombination.ToString(System.Globalization.CultureInfo.InvariantCulture), TFCombination) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "PackageNumber   : {1:x} ({0})\r\n", PackageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), PackageNumber) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionID       : {1:x} ({0})\r\n", SessionID.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionID) +
+                "{\r\n" +
+                Encoding.UTF8.GetString(payloadBytes) +
+                "}\r\n" +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+            return debugLine;
         }
     }
 }
