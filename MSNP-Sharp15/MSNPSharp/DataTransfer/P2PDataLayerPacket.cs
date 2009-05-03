@@ -15,6 +15,12 @@ namespace MSNPSharp.DataTransfer
         private UInt64 dataRemaining;
         private byte[] payloadData;
         private UInt32 footer;
+        private Dictionary<byte, byte[]> unknownTLVs = new Dictionary<byte, byte[]>();
+
+        public Dictionary<byte, byte[]> UnknownTLVs
+        {
+            get { return unknownTLVs; }
+        }
 
         public byte HeaderLength
         {
@@ -89,7 +95,7 @@ namespace MSNPSharp.DataTransfer
                 payloadLength = (ushort)PayloadData.Length;
             }
 
-            byte[] data = new byte[HeaderLength + payloadLength + 4];
+            byte[] data = new byte[HeaderLength + payloadLength];
 
 
             MemoryStream memStream = new MemoryStream(data, true);
@@ -113,8 +119,6 @@ namespace MSNPSharp.DataTransfer
             {
                 writer.Write(PayloadData);
             }
-
-            writer.Write(P2PMessage.ToBigEndian(Footer));
 
             writer.Close();
             memStream.Close();
@@ -142,18 +146,18 @@ namespace MSNPSharp.DataTransfer
                     byte T = TLvs[index];
                     byte L = TLvs[index + 1];
                     byte[] V = new byte[(int)L];
-                    Array.Copy(TLvs, index + 3, V, 0, (int)L);
+                    Array.Copy(TLvs, index + 2, V, 0, (int)L);
                     index = index + 2 + L;
                     ProcessTLVData(T, L, V);
                 }
             }
 
-            if (InnerBody.Length - HeaderLength - 4 > 0)
+            if (InnerBody.Length - HeaderLength > 0)
             {
-                PayloadData = reader.ReadBytes(InnerBody.Length - HeaderLength - 4);
+                PayloadData = reader.ReadBytes(InnerBody.Length - HeaderLength);
             }
 
-            Footer = P2PMessage.ToBigEndian(reader.ReadUInt32());
+            //Footer = P2PMessage.ToBigEndian(reader.ReadUInt32());
 
         }
 
@@ -168,11 +172,15 @@ namespace MSNPSharp.DataTransfer
                     if (L == 8)
                     {
                         DataRemaining = P2PMessage.ToBigEndian(reader.ReadUInt64());
+                        return;
                     }
                     break;
                 case 2:
+                    return;
                     break;
             }
+
+            UnknownTLVs.Add(T, V);
         }
 
         /// <summary>
@@ -194,8 +202,8 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionID       : {1:x} ({0})\r\n", SessionID.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionID) +
                 "{\r\n" +
                 Encoding.UTF8.GetString(payloadBytes) +
-                "}\r\n" +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+                "}\r\n"; //+
+                //String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
             return debugLine;
         }
     }

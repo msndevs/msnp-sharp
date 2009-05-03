@@ -6,6 +6,13 @@ using System.IO;
 
 namespace MSNPSharp.DataTransfer
 {
+    internal enum OperationCode : byte
+    {
+        None = 0x0,
+        NeedACK = 0x2,
+        InitSession = 0x3
+    }
+
     public class P2PTransferLayerPacket : NetworkMessage
     {
         private byte headerLength;
@@ -16,7 +23,12 @@ namespace MSNPSharp.DataTransfer
 
         private bool needACK = false;
         private UInt32 acksequenceNumber;
+        private Dictionary<byte, byte[]> unknownTLVs = new Dictionary<byte, byte[]>();
 
+        public Dictionary<byte, byte[]> UnknownTLVs
+        {
+            get { return unknownTLVs; }
+        }
 
         public byte HeaderLength
         {
@@ -50,14 +62,22 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                OperationCode = 0x0;
                 return needACK;
             }
             set
             {
-                OperationCode = 0x2;
+                if (value)
+                {
+                    OperationCode = (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK;
+                }
+
                 needACK = value;
             }
+        }
+
+        public bool IsACK
+        {
+            get { return AcksequenceNumber > 0; }
         }
 
         public UInt32 AcksequenceNumber
@@ -103,7 +123,7 @@ namespace MSNPSharp.DataTransfer
 
             if (NeedACK)
             {
-                OperationCode = 0x2;
+                OperationCode = (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK;
             }
 
             byte[] data = new byte[HeaderLength + PayloadLength + 4];
@@ -148,7 +168,7 @@ namespace MSNPSharp.DataTransfer
             headerLength = reader.ReadByte();
             OperationCode = reader.ReadByte();
 
-            if (OperationCode == 0x2)
+            if (OperationCode == (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK)
             {
                 NeedACK = true;
             }
@@ -166,13 +186,13 @@ namespace MSNPSharp.DataTransfer
                     byte T = TLvs[index];
                     byte L = TLvs[index + 1];
                     byte[] V = new byte[(int)L];
-                    Array.Copy(TLvs, index + 3, V, 0, (int)L);
+                    Array.Copy(TLvs, index + 2, V, 0, (int)L);
                     index = index + 2 + L;
                     ProcessTLVData(T, L, V);
                 }
             }
 
-            if (PayloadLength > 0)
+            if (payloadLen > 0)
             {
                 DataPacket = new P2PDataLayerPacket(reader.ReadBytes(payloadLen));
             }
@@ -194,9 +214,12 @@ namespace MSNPSharp.DataTransfer
                     if (L == 4)
                     {
                         AcksequenceNumber = P2PMessage.ToBigEndian(reader.ReadUInt32());
+                        return;
                     }
                     break;
             }
+
+            UnknownTLVs.Add(T, V);
         }
 
         /// <summary>

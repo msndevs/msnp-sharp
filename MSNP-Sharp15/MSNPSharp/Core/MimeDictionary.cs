@@ -189,12 +189,16 @@ namespace MSNPSharp.Core
                     int index = param.IndexOf('=');
 
                     object key = i++;
-                    string val = string.Empty;
+                    string val = param; //string.Empty;
 
                     if (index > 0)
                     {
                         key = param.Substring(0, index).Trim();
                         val = param.Substring(index + 1).Trim();
+
+                        //key = param.Substring(0, index);
+                        //val = param.Substring(index + 1);
+
                     }
 
                     attributes[key] = val;

@@ -54,7 +54,7 @@ namespace MSNPSharp.DataTransfer
 
         protected SLPMessage()
         {
-            Via = "MSNSLP/1.0/TLP";
+            Via = "MSNSLP/1.0/TLP ";
             Branch = Guid.NewGuid().ToString("B").ToUpperInvariant();
             CSeq = 0;
             CallId = Guid.NewGuid();
