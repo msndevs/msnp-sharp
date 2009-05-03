@@ -202,6 +202,31 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Gets a reference to a p2p message session with the specified remote contact.
+        /// In case a session does not exist a new session will be created and returned.
+        /// </summary>
+        /// <param name="localContact"></param>
+        /// <param name="remoteContact"></param>
+        /// <returns></returns>
+        public virtual P2PMessageSession GetSession(Contact localContact, Contact remoteContact)
+        {
+            // check for existing session
+            P2PMessageSession existingSession = GetSessionFromRemote(remoteContact);
+            if (existingSession != null)
+                return existingSession;
+
+            // no session available, create a new session
+            P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
+            lock (MessageSessions)
+                MessageSessions.Add(newSession);
+
+            // fire event
+            OnSessionCreated(newSession);
+
+            return newSession;
+        }
+
+        /// <summary>
         /// Creates a p2p session. The session is at the moment of return pure fictive; no actual messages
         /// have been sent to the remote client. The session will use the P2PHandler's messageprocessor as it's default messageprocessor.
         /// </summary>
@@ -215,6 +240,41 @@ namespace MSNPSharp.DataTransfer
             // set the parameters
             session.RemoteContact = remoteContact;
             session.LocalContact = localContact;
+            session.MessageProcessor = MessageProcessor;
+
+            session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
+
+            // generate a local base identifier.
+            session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
+
+            // uses -1 because the first message must be the localbaseidentifier and the identifier
+            // is automatically increased
+            session.LocalIdentifier = (uint)session.LocalBaseIdentifier;// - (ulong)session.LocalInitialCorrection);//session.LocalBaseIdentifier - 4;
+
+            return session;
+        }
+
+        /// <summary>
+        /// Creates a p2p session. The session is at the moment of return pure fictive; no actual messages
+        /// have been sent to the remote client. The session will use the P2PHandler's messageprocessor as it's default messageprocessor.
+        /// </summary>
+        /// <param name="localContact"></param>
+        /// <param name="remoteContact"></param>
+        /// <returns></returns>
+        protected virtual P2PMessageSession CreateSessionFromLocal(Contact localContact, Contact remoteContact)
+        {
+            P2PMessageSession session = Factory.CreateP2PMessageSession();
+
+            if ((localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
+                (remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
+            {
+                session = new P2PMessageSession(P2PVersion.P2PV2);
+            }
+
+
+            // set the parameters
+            session.RemoteClient = remoteContact;
+            session.LocalUser = localContact;
             session.MessageProcessor = MessageProcessor;
 
             session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
@@ -263,6 +323,25 @@ namespace MSNPSharp.DataTransfer
             return null;
         }
 
+        /// <summary>
+        /// Gets the p2p message session for which the remote identifier equals the identifier passed as a parameter.
+        /// This is typically called when an incoming message is processed.
+        /// </summary>
+        /// <param name="remoteContact">The identifier used by the remote client</param>
+        /// <returns></returns>
+        protected P2PMessageSession GetSessionFromRemote(Contact remoteContact)
+        {
+            lock (messageSessions)
+            {
+                foreach (P2PMessageSession session in messageSessions)
+                {
+                    if (session.RemoteClient == remoteContact)
+                        return session;
+                }
+            }
+            return null;
+        }
+
 
         /// <summary>
         /// Creates a session based on a message received from the remote client.
@@ -271,7 +350,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected P2PMessageSession CreateSessionFromRemote(P2PMessage receivedMessage)
         {
-            P2PMessageSession session = Factory.CreateP2PMessageSession();
+            P2PMessageSession session = new P2PMessageSession(receivedMessage.Version); //Factory.CreateP2PMessageSession();
 
             // generate a local base identifier. After the acknowledgement the locals client begins at
             // identifier - 4 as identifiers in the following messages. (Weird)
@@ -410,14 +489,29 @@ namespace MSNPSharp.DataTransfer
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming p2p message " + NSMessageHandler.Owner.Mail, GetType().Name);
 
+            P2PVersion version = P2PVersion.P2PV1;
+            if (msgMessage.MimeHeader.ContainsKey("P2P-Dest"))
+            {
+                if (msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries).Length > 1)
+                {
+                    version = P2PVersion.P2PV2;
+                    Trace.WriteLine("P2P v2 incoming message found. dst: " + msgMessage.MimeHeader["P2P-Dest"].ToString());
+                }
+                else
+                {
+                    Trace.WriteLine("P2P v1 incoming message found. dst: " + msgMessage.MimeHeader["P2P-Dest"].ToString());
+                }
+            }
+
             // create a P2P Message from the msg message
-            P2PMessage p2pMessage = new P2PMessage();
+            P2PMessage p2pMessage = new P2PMessage(version);
             p2pMessage.CreateFromMessage(msgMessage);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Incoming p2p message " + NSMessageHandler.Owner.Mail + "\r\n" + ((P2PMessage)p2pMessage).ToDebugString(), GetType().Name);
 
             // get the associated message session
-            P2PMessageSession session = GetSessionFromRemote((string)sbMessage.CommandValues[0]);// p2pMessage.Identifier);			
+            string remoteAccount = sbMessage.CommandValues[0].ToString();
+            P2PMessageSession session = GetSessionFromRemote(remoteAccount);// p2pMessage.Identifier);			
 
             // check for validity
             if (session == null)
@@ -433,7 +527,16 @@ namespace MSNPSharp.DataTransfer
                     // there is no session available at all. the remote client sends the first message
                     // in the session. So create a new session to handle following messages.
                     session = CreateSessionFromRemote(p2pMessage);
-                    session.RemoteContact = sbMessage.CommandValues[0].ToString();
+                    if (version == P2PVersion.P2PV1)
+                    {
+                        session.RemoteContact = sbMessage.CommandValues[0].ToString();
+                    }
+
+                    if (version == P2PVersion.P2PV2)
+                    {
+                        session.RemoteContact = msgMessage.MimeHeader["P2P-Src"].ToString();
+                    }
+
                     session.LocalContact = msgMessage.MimeHeader["P2P-Dest"].ToString();
 
                     // add the session to the session list
@@ -451,10 +554,25 @@ namespace MSNPSharp.DataTransfer
             System.Diagnostics.Debug.Assert(session != null, "Session is null", "P2P Message session");
 
             // send an acknowledgement after the last message
-            if (p2pMessage.IsAcknowledgement == false && p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
+
+            if (version == P2PVersion.P2PV1)
             {
-                P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                session.SendMessage(ack);
+                if (p2pMessage.IsAcknowledgement == false && p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
+                {
+                    P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                    session.SendMessage(ack);
+                }
+            }
+
+            if (version == P2PVersion.P2PV2)
+            {
+                if (p2pMessage.V2.NeedACK)
+                {
+                    P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                    ack.V2.SequenceNumber = session.LocalIdentifier;
+                    session.SendMessage(ack);
+                    session.CorrectLocalIdentifier(ack.V2.PayloadLength);
+                }
             }
 
             // now handle the message

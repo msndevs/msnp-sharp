@@ -243,6 +243,36 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private P2PVersion version = P2PVersion.P2PV1;
+
+        public P2PVersion Version
+        {
+            get { return version; }
+            set { version = value; }
+        }
+
+        private ushort dataPacketNumber;
+        private bool isIncrease = false;
+
+        public ushort DataPacketNumber
+        {
+            get
+            {
+                if (dataPacketNumber == ushort.MaxValue || dataPacketNumber == 0)
+                    isIncrease = !isIncrease;
+
+                if (isIncrease)
+                    return dataPacketNumber++;
+                else
+                    return dataPacketNumber--;
+            }
+
+            internal set
+            {
+                dataPacketNumber = value;
+            }
+        }
+
         #endregion
 
         #region Public
@@ -253,6 +283,15 @@ namespace MSNPSharp.DataTransfer
         public P2PTransferSession()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object", GetType().Name);
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        public P2PTransferSession(P2PVersion ver)
+        {
+            version = ver;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object, version = " + ver.ToString(), GetType().Name);
         }
 
         ~P2PTransferSession()
@@ -353,85 +392,154 @@ namespace MSNPSharp.DataTransfer
             //    CloseDirectConnection();
             //}
 
-            if (p2pMessage.Flags == P2PFlag.TlpError)
+            if (p2pMessage.Version == P2PVersion.P2PV1)
             {
-                AbortTransfer();
-                return;
-            }
+                #region P2P Version 1
+                if (p2pMessage.Flags == P2PFlag.TlpError)
+                {
+                    AbortTransfer();
+                    return;
+                }
 
-            // check to see if our session data has been transferred correctly
-            if (p2pMessage.SessionId > 0 && p2pMessage.IsAcknowledgement && p2pMessage.AckSessionId == dataMessageIdentifier)
-            {
-                // inform the handlers
-                OnTransferFinished();
+                // check to see if our session data has been transferred correctly
+                if (p2pMessage.SessionId > 0 && p2pMessage.IsAcknowledgement && p2pMessage.AckSessionId == dataMessageIdentifier)
+                {
+                    // inform the handlers
+                    OnTransferFinished();
 
-                // notify the remote client that we are finished
-                SendDisconnectMessage();
+                    // notify the remote client that we are finished
+                    SendDisconnectMessage();
 
-                return;
-            }
+                    return;
+                }
 
-            // check if it is a content message
-            // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
+                // check if it is a content message
+                // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
 #if MSNC12
-            if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0 &&
-               ((p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.DisplayImageFooter) ||  //DisplayImage
-               (p2pMessage.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter) ||       //File
-               (p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.CustomEmoticonFooter)))  //CustomEmoticon
+                if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0 &&
+                   ((p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.DisplayImageFooter) ||  //DisplayImage
+                   (p2pMessage.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter) ||       //File
+                   (p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.CustomEmoticonFooter)))  //CustomEmoticon
 #else
             if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
             && (p2pMessage.Flags == P2PFlag.FileData || p2pMessage.Footer == 1))
 #endif
-            {
-                // indicates whether we must stream this message
-                bool writeToStream = true;
-
-                // check if it is a data preparation message send via the SB
-                if (p2pMessage.TotalSize == 4 && p2pMessage.MessageSize == 4
-                    && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
                 {
-                    writeToStream = false;
+                    // indicates whether we must stream this message
+                    bool writeToStream = true;
+
+                    // check if it is a data preparation message send via the SB
+                    if (p2pMessage.TotalSize == 4 && p2pMessage.MessageSize == 4
+                        && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
+                    {
+                        writeToStream = false;
+                    }
+
+                    if (writeToStream)
+                    {
+                        // store the data message identifier because we want to reference it if we abort the transfer
+                        dataMessageIdentifier = p2pMessage.Identifier;
+
+                        if (DataStream == null)
+                            throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
+
+                        if (DataStream.CanWrite)
+                        {
+                            if (DataStream.Length < (long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length)
+                                DataStream.SetLength((long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length);
+
+                            DataStream.Seek((long)p2pMessage.Offset, SeekOrigin.Begin);
+                            DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+                        }
+                        // check for end of file transfer
+                        if (p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
+                        {
+                            // keep track of the remote identifier									
+                            MessageSession.IncreaseRemoteIdentifier();
+                            P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                            ack.SessionId = p2pMessage.SessionId;
+                            ack.Identifier = 0;
+                            ack.TotalSize = p2pMessage.TotalSize;
+
+                            SendMessage(ack);
+
+                            if (AutoCloseStream)
+                                DataStream.Close();
+
+                            OnTransferFinished();
+                            // notify the remote client we close the direct connection
+                            SendDisconnectMessage();
+                        }
+                    }
+                    // finished handling this message
+                    return;
+
+                } 
+                #endregion
+
+            }
+
+            if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                #region P2P Version 2
+
+                if (p2pMessage.Flags == P2PFlag.TlpError)
+                {
+                    AbortTransfer();
+                    return;
                 }
 
-                if (writeToStream)
+                // check to see if our session data has been transferred correctly
+                if (p2pMessage.SessionId > 0 && p2pMessage.IsAcknowledgement && p2pMessage.AckSessionId == dataMessageIdentifier)
+                {
+                    // inform the handlers
+                    OnTransferFinished();
+
+                    // notify the remote client that we are finished
+                    SendDisconnectMessage();
+
+                    return;
+                }
+
+                if (p2pMessage.V2.DataPacket.PayloadData.Length == 4 &&
+                    p2pMessage.V2.DataPacket.TFCombination == 0x1 &&
+                    BitConverter.ToInt32(p2pMessage.V2.DataPacket.PayloadData, 0) == 0)
+                {
+                    //Data preperation message.
+                    return;
+                }
+
+                // check if it is a content message
+                // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it
+                if (p2pMessage.V2.DataPacket.TFCombination == 0x4 ||
+                    p2pMessage.V2.DataPacket.TFCombination == 0x5 ||
+                    p2pMessage.V2.DataPacket.TFCombination == 0x6 ||
+                    p2pMessage.V2.DataPacket.TFCombination == 0x7)
                 {
                     // store the data message identifier because we want to reference it if we abort the transfer
-                    dataMessageIdentifier = p2pMessage.Identifier;
+                    DataPacketNumber = p2pMessage.V2.DataPacket.PackageNumber;
 
                     if (DataStream == null)
                         throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
 
                     if (DataStream.CanWrite)
                     {
-                        if (DataStream.Length < (long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length)
-                            DataStream.SetLength((long)p2pMessage.Offset + (long)p2pMessage.InnerBody.Length);
-
-                        DataStream.Seek((long)p2pMessage.Offset, SeekOrigin.Begin);
-                        DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+                        DataStream.Seek(0, SeekOrigin.End);
+                        DataStream.Write(p2pMessage.V2.DataPacket.PayloadData, 0, p2pMessage.V2.DataPacket.PayloadData.Length);
                     }
                     // check for end of file transfer
-                    if (p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
+                    if (p2pMessage.V2.DataPacket.DataRemaining == 0)
                     {
-                        // keep track of the remote identifier									
-                        MessageSession.IncreaseRemoteIdentifier();
-                        P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                        ack.SessionId = p2pMessage.SessionId;
-                        ack.Identifier = 0;
-                        ack.TotalSize = p2pMessage.TotalSize;
-
-                        SendMessage(ack);
-
                         if (AutoCloseStream)
                             DataStream.Close();
 
                         OnTransferFinished();
-                        // notify the remote client we close the direct connection
-                        SendDisconnectMessage();
                     }
+                    // finished handling this message
+                    return;
+
                 }
-                // finished handling this message
-                return;
-                
+                #endregion
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2P Info message received", GetType().Name);
@@ -443,8 +551,11 @@ namespace MSNPSharp.DataTransfer
 
             while (p2pMessagePool.MessageAvailable)
             {
-                // keep track of the remote identifier							
-                MessageSession.IncreaseRemoteIdentifier();
+                if (Version == P2PVersion.P2PV1)
+                {
+                    // keep track of the remote identifier							
+                    MessageSession.IncreaseRemoteIdentifier();
+                }
 
                 p2pMessage = p2pMessagePool.GetNextMessage();
 
@@ -473,79 +584,179 @@ namespace MSNPSharp.DataTransfer
             P2PMessage p2pMessage = (P2PMessage)message;
 
             // check whether it's already set. This is important to check for acknowledge messages.
-            if (p2pMessage.Identifier == 0)
-            {
-                MessageSession.IncreaseLocalIdentifier();
-                p2pMessage.Identifier = MessageSession.LocalIdentifier;
-            }
-            if (p2pMessage.AckSessionId == 0)
-            {
-                p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-            }
 
-
-
-            // split up large messages which go to the SB
-            if (MessageSession.DirectConnected == false && p2pMessage.MessageSize > 1202)
+            #region P2P Version 1
+            if (Version == P2PVersion.P2PV1)
             {
-                uint bytesSend = 0;
-                int cnt = ((int)(p2pMessage.MessageSize / 1202)) + 1;
-                for (int i = 0; i < cnt; i++)
+                if (p2pMessage.Identifier == 0)
                 {
-                    P2PMessage chunkMessage = new P2PMessage();
+                    MessageSession.IncreaseLocalIdentifier();
+                    p2pMessage.Identifier = MessageSession.LocalIdentifier;
+                }
+                if (p2pMessage.AckSessionId == 0)
+                {
+                    p2pMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                }
 
-                    // copy the values from the original message
-                    chunkMessage.AckIdentifier = p2pMessage.AckIdentifier;
-                    chunkMessage.AckTotalSize = p2pMessage.AckTotalSize;
-                    chunkMessage.Flags = p2pMessage.Flags;
-                    chunkMessage.Footer = p2pMessage.Footer;
-                    if (p2pMessage.Flags == P2PFlag.FileData)
+                // split up large messages which go to the SB
+                if (MessageSession.DirectConnected == false && p2pMessage.MessageSize > 1202)
+                {
+                    uint bytesSend = 0;
+                    int cnt = ((int)(p2pMessage.MessageSize / 1202)) + 1;
+                    for (int i = 0; i < cnt; i++)
+                    {
+                        P2PMessage chunkMessage = new P2PMessage();
+
+                        // copy the values from the original message
+                        chunkMessage.AckIdentifier = p2pMessage.AckIdentifier;
+                        chunkMessage.AckTotalSize = p2pMessage.AckTotalSize;
+                        chunkMessage.Flags = p2pMessage.Flags;
                         chunkMessage.Footer = p2pMessage.Footer;
-                    chunkMessage.Identifier = p2pMessage.Identifier;
-                    chunkMessage.MessageSize = (uint)Math.Min((uint)1202, (uint)(p2pMessage.TotalSize - bytesSend));
-                    chunkMessage.Offset = bytesSend;
-                    chunkMessage.SessionId = p2pMessage.SessionId;
-                    chunkMessage.TotalSize = p2pMessage.TotalSize;
+                        if (p2pMessage.Flags == P2PFlag.FileData)
+                            chunkMessage.Footer = p2pMessage.Footer;
+                        chunkMessage.Identifier = p2pMessage.Identifier;
+                        chunkMessage.MessageSize = (uint)Math.Min((uint)1202, (uint)(p2pMessage.TotalSize - bytesSend));
+                        chunkMessage.Offset = bytesSend;
+                        chunkMessage.SessionId = p2pMessage.SessionId;
+                        chunkMessage.TotalSize = p2pMessage.TotalSize;
 
-                    chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
-                    Array.Copy(p2pMessage.InnerBody, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
+                        chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
+                        Array.Copy(p2pMessage.InnerBody, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
 
-                    chunkMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                        chunkMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
 
-                    chunkMessage.PrepareMessage();
+                        chunkMessage.PrepareMessage();
 
-                    //SBMessage sbMessage = WrapMessage(chunkMessage);
+                        //SBMessage sbMessage = WrapMessage(chunkMessage);
 
-                    // now send it to propbably a SB processor
-                    if (MessageProcessor != null)
-                        MessageProcessor.SendMessage(chunkMessage);
-                }
-            }
-            else
-            {
-                IMessageProcessor processor = null;
-                bool direct = false;
-                lock (this)
-                {
-                    processor = MessageProcessor;
-                    direct = MessageSession.DirectConnected;
-                }
-                // send a single message
-                if (direct == true)
-                {
-                    // now send it to probably a P2PDirectProcessor
-                    if (processor != null)
-                        processor.SendMessage(p2pMessage);
+                        // now send it to propbably a SB processor
+                        if (MessageProcessor != null)
+                            MessageProcessor.SendMessage(chunkMessage);
+
+                        bytesSend += chunkMessage.MessageSize;
+                    }
                 }
                 else
                 {
-                    // wrap the message before sending it to the SB processor
-                    p2pMessage.PrepareMessage();
-                    //SBMessage sbMessage = WrapMessage(p2pMessage);
-                    if (processor != null)
-                        processor.SendMessage(p2pMessage);
+                    IMessageProcessor processor = null;
+                    bool direct = false;
+                    lock (this)
+                    {
+                        processor = MessageProcessor;
+                        direct = MessageSession.DirectConnected;
+                    }
+                    // send a single message
+                    if (direct == true)
+                    {
+                        // now send it to probably a P2PDirectProcessor
+                        if (processor != null)
+                            processor.SendMessage(p2pMessage);
+                    }
+                    else
+                    {
+                        // wrap the message before sending it to the SB processor
+                        p2pMessage.PrepareMessage();
+                        //SBMessage sbMessage = WrapMessage(p2pMessage);
+                        if (processor != null)
+                            processor.SendMessage(p2pMessage);
+                    }
+                }
+            } 
+            #endregion
+
+
+            #region P2P Version 2
+            if (Version == P2PVersion.P2PV2)
+            {
+                if (p2pMessage.V2.SequenceNumber == 0)
+                {
+                    MessageSession.IncreaseLocalIdentifier();
+                    p2pMessage.V2.SequenceNumber = MessageSession.LocalIdentifier;
+                }
+
+                // split up large messages which go to the SB
+                int totalSize = p2pMessage.V2.DataPacket.PayloadData.Length;
+
+                if (MessageSession.DirectConnected == false && totalSize > 1202)
+                {
+                    uint bytesSend = 0;
+                    uint messageSize = 0;
+
+                    int cnt = ((int)(totalSize / 1202)) + 1;
+                    for (int i = 0; i < cnt; i++)
+                    {
+                        P2PMessage chunkMessage = new P2PMessage(P2PVersion.P2PV2);
+                        chunkMessage.V2.DataPacket = new P2PDataLayerPacket();
+
+                        messageSize = (uint)Math.Min((uint)1202, (uint)(totalSize - bytesSend));
+
+                        chunkMessage.V2.DataPacket.PayloadData = new byte[messageSize];
+                        Array.Copy(p2pMessage.V2.DataPacket.PayloadData, (int)bytesSend, chunkMessage.V2.DataPacket.PayloadData, 0, (int)messageSize);
+
+
+                        chunkMessage.V2.DataPacket.SessionID = p2pMessage.V2.DataPacket.SessionID;
+                        chunkMessage.V2.OperationCode = p2pMessage.V2.OperationCode;
+                        chunkMessage.V2.SequenceNumber = p2pMessage.V2.SequenceNumber + bytesSend;
+
+                        if (i == 0)
+                        {
+                            chunkMessage.V2.AcksequenceNumber = p2pMessage.V2.AcksequenceNumber;
+                            chunkMessage.V2.DataPacket.TFCombination = p2pMessage.V2.DataPacket.TFCombination;
+                        }
+
+                        switch (p2pMessage.V2.DataPacket.TFCombination)
+                        {
+                            case 0x5:
+                            case 0x7:
+                                if (i != 0)
+                                {
+                                    chunkMessage.V2.DataPacket.TFCombination = (byte)(p2pMessage.V2.DataPacket.TFCombination - 1);
+                                }
+                                break;
+                            default:
+                                chunkMessage.V2.DataPacket.TFCombination = p2pMessage.V2.DataPacket.TFCombination;
+                                break;
+                        }
+
+                        chunkMessage.PrepareMessage();
+
+                        //SBMessage sbMessage = WrapMessage(chunkMessage);
+
+                        // now send it to propbably a SB processor
+                        if (MessageProcessor != null)
+                            MessageProcessor.SendMessage(chunkMessage);
+
+                        bytesSend += messageSize;
+                    }
+                }
+                else
+                {
+                    IMessageProcessor processor = null;
+                    bool direct = false;
+                    lock (this)
+                    {
+                        processor = MessageProcessor;
+                        direct = MessageSession.DirectConnected;
+                    }
+                    // send a single message
+                    if (direct == true)
+                    {
+                        // now send it to probably a P2PDirectProcessor
+                        if (processor != null)
+                            processor.SendMessage(p2pMessage);
+                    }
+                    else
+                    {
+                        // wrap the message before sending it to the SB processor
+                        p2pMessage.PrepareMessage();
+                        //SBMessage sbMessage = WrapMessage(p2pMessage);
+                        if (processor != null)
+                            processor.SendMessage(p2pMessage);
+                    }
                 }
             }
+
+            #endregion
         }
 
 
@@ -693,23 +904,44 @@ namespace MSNPSharp.DataTransfer
                 if (direct == false)
                 {
                     // send the data preparation message
-                    P2PDataMessage p2pDataMessage = new P2PDataMessage();
-                    p2pDataMessage.WritePreparationBytes();
+                    if (Version == P2PVersion.P2PV1)
+                    {
+                        P2PDataMessage p2pDataMessage = new P2PDataMessage();
+                        p2pDataMessage.WritePreparationBytes();
 
-                    p2pDataMessage.SessionId = sessionId;
+                        p2pDataMessage.SessionId = sessionId;
 
-                    MessageSession.IncreaseLocalIdentifier();
-                    p2pDataMessage.Identifier = MessageSession.LocalIdentifier;
+                        MessageSession.IncreaseLocalIdentifier();
+                        p2pDataMessage.Identifier = MessageSession.LocalIdentifier;
 
-                    p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                        p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
 
-                    // store the acknowledge identifier so we can accept the acknowledge later on
-                    DataPreparationAck = p2pDataMessage.AckSessionId;
+                        // store the acknowledge identifier so we can accept the acknowledge later on
+                        DataPreparationAck = p2pDataMessage.AckSessionId;
 
-                    MessageProcessor.SendMessage(p2pDataMessage);
+                        MessageProcessor.SendMessage(p2pDataMessage);
+                    }
+
+                    if (Version == P2PVersion.P2PV2)
+                    {
+                        P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
+
+                        MessageSession.IncreaseLocalIdentifier();
+                        p2pDataMessage.V2.SequenceNumber = MessageSession.LocalIdentifier;
+                        p2pDataMessage.V2.OperationCode = (byte)OperationCode.None;
+                        p2pDataMessage.WritePreparationBytes();
+                        p2pDataMessage.V2.DataPacket.SessionID = SessionId;
+
+                        MessageProcessor.SendMessage(p2pDataMessage);
+                        MessageSession.CorrectLocalIdentifier(p2pDataMessage.V2.PayloadLength);
+                    }
                 }
 
-                MessageSession.IncreaseLocalIdentifier();
+                if (Version == P2PVersion.P2PV1)
+                {
+                    MessageSession.IncreaseLocalIdentifier();
+                }
+
                 uint messageIdentifier = MessageSession.LocalIdentifier;
 
                 // keep track of this identifier because it will be used in the disconnecting message.
@@ -717,34 +949,89 @@ namespace MSNPSharp.DataTransfer
 
                 long currentPosition = 0;
                 long lastPosition = dataStream.Length;
+                bool isFirstPacket = true;
 
                 while (currentPosition < lastPosition && (!abortThread))
                 {
-                    // send the data message
-                    P2PDataMessage p2pDataMessage = new P2PDataMessage();
-
-                    p2pDataMessage.SessionId = sessionId;
-
-                    p2pDataMessage.Offset = (uint)currentPosition;
-                    p2pDataMessage.TotalSize = (uint)dataStream.Length;
-
-                    // send the rest of the data						
-                    lock (dataStream)
+                    if (Version == P2PVersion.P2PV1)
                     {
-                        dataStream.Seek(currentPosition, SeekOrigin.Begin);
-                        int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1202);
-                        currentPosition += bytesWritten;
+                        // send the data message
+                        P2PDataMessage p2pDataMessage = new P2PDataMessage();
+
+                        p2pDataMessage.SessionId = sessionId;
+
+                        p2pDataMessage.Offset = (uint)currentPosition;
+                        p2pDataMessage.TotalSize = (uint)dataStream.Length;
+
+                        // send the rest of the data						
+                        lock (dataStream)
+                        {
+                            dataStream.Seek(currentPosition, SeekOrigin.Begin);
+                            int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1202);
+                            currentPosition += bytesWritten;
+                        }
+
+                        p2pDataMessage.Flags = (P2PFlag)MessageFlag;
+
+                        p2pDataMessage.Footer = MessageFooter;
+
+                        p2pDataMessage.Identifier = messageIdentifier;
+
+                        p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+
+                        MessageProcessor.SendMessage(p2pDataMessage);
                     }
 
-                    p2pDataMessage.Flags = (P2PFlag)MessageFlag;
+                    if (Version == P2PVersion.P2PV2)
+                    {
+                        // send the data message
+                        P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
 
-                    p2pDataMessage.Footer = MessageFooter;
+                        P2PDataLayerPacket datapacket = new P2PDataLayerPacket();
+                        p2pDataMessage.V2.DataPacket = datapacket;
 
-                    p2pDataMessage.Identifier = messageIdentifier;
+                        datapacket.SessionID = sessionId;
 
-                    p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                        // send the rest of the data						
+                        lock (dataStream)
+                        {
+                            dataStream.Seek(currentPosition, SeekOrigin.Begin);
+                            int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1202);
+                            currentPosition += bytesWritten;
+                            datapacket.DataRemaining = (ulong)(lastPosition - currentPosition - 1);
+                        }
 
-                    MessageProcessor.SendMessage(p2pDataMessage);
+                        p2pDataMessage.Identifier = MessageSession.LocalIdentifier;
+
+                        if (isFirstPacket)
+                        {
+                            if (MessageFlag == (uint)P2PFlag.MSNObjectData)
+                            {
+                                datapacket.TFCombination = 0x5;
+                            }
+
+                            if (MessageFlag == (uint)P2PFlag.FileData)
+                            {
+                                datapacket.TFCombination = 0x7;
+                            }
+                        }
+                        else
+                        {
+                            if (MessageFlag == (uint)P2PFlag.MSNObjectData)
+                            {
+                                datapacket.TFCombination = 0x4;
+                            }
+
+                            if (MessageFlag == (uint)P2PFlag.FileData)
+                            {
+                                datapacket.TFCombination = 0x6;
+                            }
+                        }
+
+                        MessageSession.CorrectLocalIdentifier(p2pDataMessage.V2.PayloadLength);
+
+                        MessageProcessor.SendMessage(p2pDataMessage);
+                    }
                     //Thread.CurrentThread.Join(1);
                 }
             }

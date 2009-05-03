@@ -219,6 +219,25 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// MachineGuid in PersonalMessage.
+        /// </summary>
+        public Guid MachineGuid
+        {
+            get
+            {
+                if (PersonalMessage != null)
+                {
+                    if (PersonalMessage.MachineGuid != null)
+                    {
+                        if (PersonalMessage.MachineGuid != Guid.Empty)
+                            return PersonalMessage.MachineGuid;
+                    }
+                }
+                return Guid.Empty;
+            }
+        }
+
+        /// <summary>
         /// The contact id of contact, PassportMembers have CID only.
         /// </summary>
         public long? CID

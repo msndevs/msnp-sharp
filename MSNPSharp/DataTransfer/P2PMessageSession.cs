@@ -64,6 +64,48 @@ namespace MSNPSharp.DataTransfer
         private uint remoteIdentifier;
         private string remoteContact;
         private string localContact;
+        private Contact remoteClient;
+
+
+        private Contact localUser;
+
+
+        private P2PVersion version = P2PVersion.P2PV1;
+
+        public Contact LocalUser
+        {
+            get { return localUser; }
+            set 
+            {
+                LocalContact = value.Mail;
+                localUser = value;
+                if (value.MachineGuid == Guid.Empty)
+                {
+                    //Correct the p2p version.
+                    version = P2PVersion.P2PV1;
+                }
+            }
+        }
+
+        public Contact RemoteClient
+        {
+            get { return remoteClient; }
+            set { 
+                remoteClient = value;
+                RemoteContact = value.Mail;
+
+                if (value.MachineGuid == Guid.Empty)
+                {
+                    //Correct the version
+                    version = P2PVersion.P2PV1;
+                }
+            }
+        }
+
+        public P2PVersion Version
+        {
+            get { return version; }
+        }
 
         /// <summary>
         /// This is the processor used before a direct connection. Usually a SB processor.
@@ -174,6 +216,15 @@ namespace MSNPSharp.DataTransfer
         public P2PMessageSession()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        public P2PMessageSession(P2PVersion ver)
+        {
+            version = ver;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object, version = " + ver.ToString(), GetType().Name);
         }
 
         /// <summary>
@@ -318,10 +369,37 @@ namespace MSNPSharp.DataTransfer
         {
             // create wrapper messages
             MSGMessage msgWrapper = new MSGMessage();
-            msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
+            if (Version == P2PVersion.P2PV1)
+            {
+                msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
 #if MSNC12
-            //msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
+                msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
 #endif
+            }
+
+            if (Version == P2PVersion.P2PV2)
+            {
+                if (RemoteClient != null && 
+                    LocalUser != null && 
+                    RemoteClient.MachineGuid != Guid.Empty && 
+                    LocalUser.MachineGuid != Guid.Empty)
+                {
+                    //Created from local.
+                    msgWrapper.MimeHeader["P2P-Dest"] = RemoteClient.Mail + ";" + RemoteClient.MachineGuid.ToString("B");
+#if MSNC12
+                    msgWrapper.MimeHeader["P2P-Src"] = LocalUser.Mail + ";" + LocalUser.MachineGuid.ToString("B");
+#endif
+                }
+                else
+                {
+                    //Created from remote
+                    msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
+#if MSNC12
+                    msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
+#endif
+                }
+            }
+
             msgWrapper.MimeHeader["Content-Type"] = "application/x-msnmsgrp2p";
             msgWrapper.InnerMessage = networkMessage;
 
@@ -372,42 +450,58 @@ namespace MSNPSharp.DataTransfer
 
             System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
-            // check whether it is an acknowledgement to data preparation message
-            if (p2pMessage.Flags == P2PFlag.DirectHandshake && DCHandshakeAck != 0)
+            if (p2pMessage.Version == P2PVersion.P2PV1)
             {
-                OnHandshakeCompleted((P2PDirectProcessor)sender);
-                return;
-            }
-
-            // check if it's a direct connection handshake
-            if (p2pMessage.Flags == P2PFlag.DirectHandshake && AutoHandshake == true)
-            {
-                // create a handshake message based on the incoming p2p message and send it				
-                P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage);
-                sender.SendMessage(dcHsMessage.CreateAcknowledgement());
-                OnHandshakeCompleted((P2PDirectProcessor)sender);
-                return;
-            }
-
-            if (p2pMessage.Flags == P2PFlag.Error)
-            {
-                P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
-                if (session != null)
+                // check whether it is an acknowledgement to data preparation message
+                if (p2pMessage.Flags == P2PFlag.DirectHandshake && DCHandshakeAck != 0)
                 {
-                    session.AbortTransfer();
+                    OnHandshakeCompleted((P2PDirectProcessor)sender);
+                    return;
                 }
 
-                return;
+                // check if it's a direct connection handshake
+                if (p2pMessage.Flags == P2PFlag.DirectHandshake && AutoHandshake == true)
+                {
+                    // create a handshake message based on the incoming p2p message and send it				
+                    P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage);
+                    sender.SendMessage(dcHsMessage.CreateAcknowledgement());
+                    OnHandshakeCompleted((P2PDirectProcessor)sender);
+                    return;
+                }
+
+                if (p2pMessage.Flags == P2PFlag.Error)
+                {
+                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
+                    if (session != null)
+                    {
+                        session.AbortTransfer();
+                    }
+
+                    return;
+                }
+
+                // check if it is a content message
+                if (p2pMessage.SessionId > 0)
+                {
+                    // get the session to handle this message				
+                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
+                    if (session != null)
+                        session.HandleMessage(this, p2pMessage);
+                    return;
+                }
             }
 
-            // check if it is a content message
-            if (p2pMessage.SessionId > 0)
+            if (p2pMessage.Version == P2PVersion.P2PV2)
             {
-                // get the session to handle this message				
-                P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionId];
-                if (session != null)
-                    session.HandleMessage(this, p2pMessage);
-                return;
+                // check if it is a content message
+                if (p2pMessage.V2.DataPacket != null && p2pMessage.V2.DataPacket.SessionID > 0)
+                {
+                    // get the session to handle this message				
+                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.V2.DataPacket.SessionID];
+                    if (session != null)
+                        session.HandleMessage(this, p2pMessage);
+                    return;
+                }
             }
 
             // it is not a datamessage.
@@ -417,8 +511,11 @@ namespace MSNPSharp.DataTransfer
 
             while (p2pMessagePool.MessageAvailable)
             {
-                // keep track of the remote identifier			
-                IncreaseRemoteIdentifier();
+                if (Version == P2PVersion.P2PV1)
+                {
+                    // keep track of the remote identifier			
+                    IncreaseRemoteIdentifier();
+                }
 
                 p2pMessage = p2pMessagePool.GetNextMessage();
 

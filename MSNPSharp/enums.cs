@@ -903,6 +903,16 @@ namespace MSNPSharp
         StorageServiceCacheKey
     }
 
+    /// <summary>
+    /// The current p2p version used in sb data transfer
+    /// </summary>
+    public enum P2PVersion
+    {
+        P2PV1,
+        P2PV2
+    }
+
+
     public static class MemberRole
     {
         public const string Allow = "Allow";

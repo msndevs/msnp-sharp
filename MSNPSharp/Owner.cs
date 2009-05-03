@@ -232,6 +232,7 @@ namespace MSNPSharp
         {
             get
             {
+                base.ClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;   //Test  
                 return base.ClientCapacitiesEx;
             }
             set
