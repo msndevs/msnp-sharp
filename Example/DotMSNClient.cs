@@ -1005,7 +1005,9 @@ namespace MSNPSharpClient
             Contact contact = e.Contact;
             if (messenger.Nameserver.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
             {
-                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList && !contact.OnPendingList))
+                // Show pending window if it is necessary.
+                if (contact.OnPendingList ||
+                    (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
                 {
                     ReverseAddedForm form = new ReverseAddedForm(contact);
                     form.FormClosed += delegate(object f, FormClosedEventArgs fce)
