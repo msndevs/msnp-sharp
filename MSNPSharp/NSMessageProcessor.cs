@@ -62,10 +62,9 @@ namespace MSNPSharp
             }
         }
 
-        protected int IncreaseTransactionID()
+        protected internal int IncreaseTransactionID()
         {
-            transactionID++;
-            return transactionID;
+            return ++transactionID;
         }
 
         protected override void OnMessageReceived(byte[] data)
@@ -75,21 +74,21 @@ namespace MSNPSharp
             NSMessage message = new NSMessage();
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
-
-            // parse the incoming data
             message.ParseBytes(data);
 
-            // trace and dispatch the message
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Dispatching incoming NS command: " + System.Text.Encoding.UTF8.GetString(data)/*message.ToDebugString()*/, GetType().Name);
             DispatchMessage(message);
         }
 
         public override void SendMessage(NetworkMessage message)
         {
-            MSNMessage NSMessage = null;
+            SendMessage(message, IncreaseTransactionID());
+        }
 
-            NSMessage = (MSNMessage)message;
-            NSMessage.TransactionID = IncreaseTransactionID();
+        public virtual void SendMessage(NetworkMessage message, int transactionID)
+        {
+            MSNMessage nsMessage = (MSNMessage)message;
+            nsMessage.TransactionID = transactionID;
             message.PrepareMessage();
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString(), GetType().Name);

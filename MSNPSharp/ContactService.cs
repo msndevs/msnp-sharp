@@ -348,7 +348,12 @@ namespace MSNPSharp
                 // Send BLP
                 NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
 
-                // Send Initial ADL
+                #region Initial ADL
+
+                List<NSPayLoadMessage> adlpayloads = new List<NSPayLoadMessage>();
+                NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
+
+                // Combine initial ADL for Contacts
                 Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
                 lock (NSMessageHandler.ContactList.SyncRoot)
                 {
@@ -372,12 +377,48 @@ namespace MSNPSharp
                 foreach (string payload in adls)
                 {
                     NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                    NSMessageHandler.MessageProcessor.SendMessage(message);
-                    lock (this)
+                    message.TransactionID = nsmp.IncreaseTransactionID();
+                    adlpayloads.Add(message);
+                    initialADLs.Add(message.TransactionID);
+                }
+
+                //////////////////////////////////////////////////////////////////////
+                // We must send a USR SHA A command first, or we will get a 933 error.
+                //////////////////////////////////////////////////////////////////////
+
+                // Combine initial ADL for Circles
+                /*
+                if (NSMessageHandler.CircleList.Count > 0)
+                {
+                    hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
+                    lock (NSMessageHandler.CircleList.SyncRoot)
                     {
+                        foreach (Circle circle in NSMessageHandler.CircleList)
+                        {
+                            string ch = circle.Hash;
+                            MSNLists l = circle.Lists;
+                            hashlist.Add(ch, l);
+                        }
+                    }
+                    string[] circleadls = ConstructLists(hashlist, true);
+                    Interlocked.Exchange(ref initialADLcount, adls.Length + circleadls.Length);
+                    foreach (string payload in circleadls)
+                    {
+                        NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                        message.TransactionID = nsmp.IncreaseTransactionID();
+                        adlpayloads.Add(message);
                         initialADLs.Add(message.TransactionID);
                     }
                 }
+                */
+
+                // Send Initial ADLs
+                foreach (NSPayLoadMessage payload in adlpayloads)
+                {
+                    nsmp.SendMessage(payload, payload.TransactionID);
+                }
+
+                #endregion
             }
 
             // Set screen name
@@ -830,12 +871,12 @@ namespace MSNPSharp
                 string federatedQuery = "<ml><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
                 federatedQuery = federatedQuery.Replace("{d}", account.Split('@')[1]);
                 federatedQuery = federatedQuery.Replace("{n}", account.Split('@')[0]);
+
+                NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
                 NSPayLoadMessage message = new NSPayLoadMessage("FQY", federatedQuery);
-                NSMessageHandler.MessageProcessor.SendMessage(message);
-                lock (this)
-                {
-                    pendingFQYs.Add(message.TransactionID);
-                }
+                message.TransactionID = nsmp.IncreaseTransactionID();
+                pendingFQYs.Add(message.TransactionID);
+                nsmp.SendMessage(message, message.TransactionID);
             }
 
             // Add contact to address book with "ContactSave"
