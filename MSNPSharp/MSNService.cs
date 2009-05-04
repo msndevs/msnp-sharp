@@ -334,10 +334,15 @@ namespace MSNPSharp
                     break;
             }
 
-            if (service != null && asyncObject != null && asyncObject.IsAsync)
+            if (service != null)
             {
-                lock (asyncStates)
-                    asyncStates[service] = asyncObject;
+                service.EnableDecompression = true;
+
+                if (asyncObject != null && asyncObject.IsAsync)
+                {
+                    lock (asyncStates)
+                        asyncStates[service] = asyncObject;
+                }
             }
 
             return service;

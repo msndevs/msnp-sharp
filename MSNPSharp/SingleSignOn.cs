@@ -559,6 +559,7 @@ namespace MSNPSharp
         public void Authenticate(MSNTicket msnticket, bool async)
         {
             MSNSecurityServiceSoapClient securService = new MSNSecurityServiceSoapClient(); //It is a hack
+            securService.EnableDecompression = true;
             securService.Timeout = 60000;
             securService.Proxy = webProxy;
             securService.AuthInfo = new AuthInfoType();
