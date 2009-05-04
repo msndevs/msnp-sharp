@@ -111,12 +111,12 @@ namespace MSNPSharpClient
                             {
                                 // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
                                 // The MSNSLPHandler makes use of the underlying P2P framework.
-                                MSNSLPHandler msnslpHandler = conversation.Messenger.GetMSNSLPHandler(contact.Mail);
+                                MSNSLPHandler msnslpHandler = conversation.Messenger.GetMSNSLPHandler(contact);
 
                                 // by sending an invitation a P2PTransferSession is automatically created.
                                 // the session object takes care of the actual data transfer to the remote client,
                                 // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                                P2PTransferSession session = msnslpHandler.SendInvitation(conversation.Messenger.Owner.Mail, contact.Mail, contact.DisplayImage);
+                                P2PTransferSession session = msnslpHandler.SendInvitation(conversation.Messenger.Owner, contact, contact.DisplayImage);
 
                                 // as usual, via events we want to be notified when a transfer is finished.
                                 // ofcourse, optionally, you can also catch abort and error events.
@@ -954,7 +954,7 @@ namespace MSNPSharpClient
                     {
                         foreach (string filename in openFileDialog.FileNames)
                         {
-                            MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact.Mail);
+                            MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact);
                             FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
                             P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, contact.Mail, Path.GetFileName(filename), fileStream);
                         }
