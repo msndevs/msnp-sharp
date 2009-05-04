@@ -36,6 +36,7 @@ using System.Diagnostics;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.IO;
     using MSNPSharp.Core;
 
     /// <summary>
@@ -47,19 +48,63 @@ namespace MSNPSharp
         /// <summary>
         /// Defines the verbosity of the trace messages.
         /// </summary>
-        public static TraceSwitch TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
+        public static TraceSwitch TraceSwitch;
 
         /// <summary>
-        /// Don't use compression when saving addressbook files.
+        /// Constructor.
         /// </summary>
-        public static bool NoCompress = false;
+        static Settings()
+        {
+            TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
+#if DEBUG
+            TraceSwitch.Level = TraceLevel.Verbose;
+            serializationType = MclSerialization.Compression | MclSerialization.Cryptography;
+#else
+            TraceSwitch.Level = TraceLevel.Error;
+            serializationType = SerializationType.Compress;
+#endif
+        }
+
+        private static string savepath = Path.GetFullPath(".");
+        private static MclSerialization serializationType;
+        private static int msnTicketsCleanupInterval = 5;
+        private static int msnTicketLifeTime = 20;
+        private static bool noSave;
+
+        /// <summary>
+        /// File serialization type when saving.
+        /// </summary>Compression saves spaces on disk, Encrypt protects your addressbook but eats some cpu<remarks>
+        /// </remarks>
+        public static MclSerialization SerializationType
+        {
+            get
+            {
+                return serializationType;
+            }
+            set
+            {
+                serializationType = value;
+            }
+        }
 
         /// <summary>
         /// Don't save addressbook files.
         /// </summary>
-        public static bool NoSave;
+        public static bool NoSave
+        {
+            get
+            {
+                return noSave;
+            }
+            set
+            {
+                noSave = value;
+            }
+        }
 
-        private static string savepath = Path.GetFullPath(".");
+        /// <summary>
+        /// Save directory
+        /// </summary>
         public static string SavePath
         {
             get
@@ -72,7 +117,6 @@ namespace MSNPSharp
             }
         }
 
-        private static int msnTicketLifeTime = 20;
         /// <summary>MSNTicket lifetime in minutes for the internal cache. Default is 20 minutes.</summary>
         /// <remarks>Keep small if the client will connect to the msn network for the short time.</remarks>
         public static int MSNTicketLifeTime
@@ -84,13 +128,12 @@ namespace MSNPSharp
             set
             {
                 if (value <= 0)
-                    throw new ArgumentOutOfRangeException("value");
+                    value = 20;
 
-                    msnTicketLifeTime = value;
+                msnTicketLifeTime = value;
             }
         }
 
-        private static int msnTicketsCleanupInterval = 5;
         /// <summary>
         /// Run clean up code for the MSNTickets in every x minutes. Default is 5 minutes.
         /// </summary>
@@ -103,18 +146,26 @@ namespace MSNPSharp
             set
             {
                 if (value <= 0)
-                    throw new ArgumentOutOfRangeException("value");
+                    value = 5;
 
                 msnTicketsCleanupInterval = value;
             }
         }
 
         /// <summary>
-        /// Constructor.
+        /// Don't use compression when saving addressbook files.
         /// </summary>
-        static Settings()
+        [Obsolete("Please use SerializationType", false)]
+        public static bool NoCompress
         {
-            TraceSwitch.Level = TraceLevel.Error;
+            get
+            {
+                return (serializationType == MclSerialization.None);
+            }
+            set
+            {
+                serializationType = MclSerialization.None;
+            }
         }
     }
 };

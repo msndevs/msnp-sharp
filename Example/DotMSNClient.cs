@@ -654,7 +654,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.OwnerPanel);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client (2.5.5)";
+            this.Text = "MSNPSharp Example Client (2.5.6)";
             this.ListPanel.ResumeLayout(false);
             this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
@@ -895,7 +895,9 @@ namespace MSNPSharpClient
             Contact contact = e.Contact;
             if (messenger.Nameserver.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
             {
-                if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList && !contact.OnPendingList))
+                // Show pending window if it is necessary.
+                if (contact.OnPendingList ||
+                    (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
                 {
                     ReverseAddedForm form = new ReverseAddedForm(contact);
                     form.FormClosed += delegate(object f, FormClosedEventArgs fce)

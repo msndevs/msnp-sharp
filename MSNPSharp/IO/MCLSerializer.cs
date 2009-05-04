@@ -39,7 +39,7 @@ using System.Xml.Serialization;
 namespace MSNPSharp.IO
 {
     /// <summary>
-    /// Object serializer/deserializer class
+    /// Object serializer/deserializer class.
     /// <remarks>This class was used to save/load an object into/from a hidden mcl file.
     /// Any object needs to be serialized as a hidden mcl file should derive from this class.</remarks>
     /// </summary>
@@ -49,7 +49,7 @@ namespace MSNPSharp.IO
         #region Common
 
         [NonSerialized]
-        private bool noCompress;
+        private MclSerialization serializationType;
 
         [NonSerialized]
         private string fileName;
@@ -75,15 +75,15 @@ namespace MSNPSharp.IO
             }
         }
 
-        protected bool NoCompress
+        protected MclSerialization SerializationType
         {
             get
             {
-                return noCompress;
+                return serializationType;
             }
             set
             {
-                noCompress = value;
+                serializationType = value;
             }
         }
 
@@ -115,29 +115,26 @@ namespace MSNPSharp.IO
             }
         }
 
-        protected static object LoadFromFile(string filename, bool nocompress, Type targettype, NSMessageHandler handler)
+        protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler)
         {
-            object rtnobj = Activator.CreateInstance(targettype);
+            MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
             if (Settings.NoSave == false && File.Exists(filename))
             {
-                MclFile file = MclFile.Open(filename, FileAccess.Read, nocompress);
+                MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password);
                 if (file.Content != null)
                 {
-                    MemoryStream mem = new MemoryStream(file.Content);
-                    rtnobj = new XmlSerializer(targettype).Deserialize(mem);
-                    mem.Close();
+                    using (MemoryStream ms = new MemoryStream(file.Content))
+                    {
+                        ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
+                    }
                 }
             }
 
-            // Subclass of MCLSerializer, set the default properties
-            if (targettype.IsSubclassOf(typeof(MCLSerializer)))
-            {
-                MCLSerializer mcls = (MCLSerializer)rtnobj;
-                mcls.NoCompress = nocompress;
-                mcls.FileName = filename;
-                mcls.NSMessageHandler = handler;
-            }
-            return rtnobj;
+            ret.SerializationType = st;
+            ret.FileName = filename;
+            ret.NSMessageHandler = handler;
+
+            return ret;
         }
 
         /// <summary>
@@ -164,7 +161,7 @@ namespace MSNPSharp.IO
                 XmlSerializer ser = new XmlSerializer(this.GetType());
                 MemoryStream ms = new MemoryStream();
                 ser.Serialize(ms, this);
-                MclFile file = MclFile.Open(filename, FileAccess.Write, noCompress);
+                MclFile file = MclFile.Open(filename, FileAccess.Write, serializationType, NSMessageHandler.Credentials.Password);
                 file.Content = ms.ToArray();
                 file.SaveAndHide(filename);
                 ms.Close();
