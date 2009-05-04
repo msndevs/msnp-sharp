@@ -481,7 +481,9 @@ namespace MSNPSharp
                             {
                                 foreach (Contact contact in NSMessageHandler.ContactList.All)
                                 {
-                                    if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                    // At this phase, we requested all memberships including pending.
+                                    if (contact.OnPendingList ||
+                                        (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
                                     {
                                         NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                     }

@@ -1952,7 +1952,7 @@ namespace MSNPSharp
                                             Contact contact = ContactList.GetContact(account, type);
 
                                             // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
-                                            if (contact.OnPendingList || (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                            if (contact.OnPendingList || contact.OnReverseList)
                                             {
                                                 ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                             }
