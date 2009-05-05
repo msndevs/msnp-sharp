@@ -688,27 +688,40 @@ namespace MSNPSharp
             }
             else if (status != owner.Status)
             {
-                //don't set the same status or it will result in disconnection
-                owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
                 string capacities = String.Empty;
+
+                if (owner.ClientCapacities == ClientCapacities.None)
+                {
+                    //don't set the same status or it will result in disconnection
+                    owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
+                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+
+                    if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                    {
+                        if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+                        {
+                            owner.ClientCapacities |= ClientCapacities.CanHandleMSNC10;
+                            owner.ClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
+                        }
+                        else if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+                        {
+                            owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
+                        }
+                    }
+                    else
+                    {
+                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC8;
+                    }
+                }
+
 
                 if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
                 {
                     ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
-                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
-                    {
-                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC10;
-                    }
-                    else if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
-                    {
-                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
-                    }
                     capacities = ((long)owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
                 }
                 else
                 {
-                    owner.ClientCapacities |= ClientCapacities.CanHandleMSNC8;
                     capacities = ((long)owner.ClientCapacities).ToString();
                 }
 
