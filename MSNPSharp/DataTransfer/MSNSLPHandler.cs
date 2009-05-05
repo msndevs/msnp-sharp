@@ -1130,7 +1130,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Close the specified session
         /// </summary>
-        /// <param name="session">Session to close</param>
+        /// <param name="transferSession">Session to close</param>
         public void CloseSession(P2PTransferSession transferSession)
         {
             MSNSLPTransferProperties property = GetTransferProperties(transferSession.CallId);
