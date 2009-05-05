@@ -650,30 +650,35 @@ namespace MSNPSharp
             }
             else if (status != owner.Status)
             {
-                //don't set the same status or it will result in disconnection
-                owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
                 string capacities = String.Empty;
-
-                if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                if (owner.ClientCapacities == ClientCapacities.None)
                 {
-                    ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
-                    /*if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+                    //don't set the same status or it will result in disconnection
+                    owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
+                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+
+                    if (Credentials.MsnProtocol <= MsnProtocol.MSNP15)
                     {
-                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC10;
+                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC8;
                     }
-                    else*/
+
                     if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
                     {
                         owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
                     }
+
+                }
+
+                if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
+                {
+                    ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
                     capacities = ((long)owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
                 }
                 else
                 {
-                    owner.ClientCapacities |= ClientCapacities.CanHandleMSNC8;
                     capacities = ((long)owner.ClientCapacities).ToString();
                 }
+
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
