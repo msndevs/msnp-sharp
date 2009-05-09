@@ -114,7 +114,7 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler;
 
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
-        private Credentials credentials = new Credentials(MsnProtocol.MSNP16);
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP15);
         private ArrayList tsConversations = ArrayList.Synchronized(new ArrayList());
         private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
 
@@ -180,9 +180,12 @@ namespace MSNPSharp
                         }
                     }
                 }
+
                 // Accepts by default owner display images and contact emoticons.
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
                 {
+                    
+
                     if (ie.TransferProperties.DataType == DataTransferType.DisplayImage)
                     {
                         ie.Accept = true;

@@ -288,7 +288,7 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
-        /// Creates a default nameserver processor/
+        /// Creates a default nameserver processor.
         /// </summary>
         /// <returns></returns>
         public static NSMessageProcessor CreateNameserverProcessor()
