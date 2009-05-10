@@ -179,9 +179,9 @@ namespace MSNPSharp.IO
             Save(true);
         }
 
-        public static DeltasList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler)
+        public static DeltasList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
-            return (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler);
+            return (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler, useCache);
         }
 
         public static int CompareAddressBookDeltas(ABFindAllResultType x, ABFindAllResultType y)

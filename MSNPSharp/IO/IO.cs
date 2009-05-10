@@ -529,25 +529,16 @@ namespace MSNPSharp.IO
         /// <param name="access">If the file is opened for reading, file content is loaded</param>
         /// <param name="st">Serialization type for SAVING</param>
         /// <param name="password">File password</param>
+        /// <param name="useCache"></param>
         /// <returns>Msnpsharp contact list file</returns>
         /// <remarks>This method is thread safe</remarks>
-        public static MclFile Open(string filePath, FileAccess access, MclSerialization st, string password)
+        public static MclFile Open(string filePath, FileAccess access, MclSerialization st, string password, bool useCache)
         {
             filePath = filePath.ToLowerInvariant();
 
-            if (!storage.ContainsKey(filePath))
+            if (useCache)
             {
-                lock (SyncObject)
-                {
-                    if (!storage.ContainsKey(filePath))
-                    {
-                        storage[filePath] = new MclInfo(new MclFile(filePath, st, access, password));
-                    }
-                }
-            }
-            else
-            {
-                if (storage[filePath].Refresh())
+                if (storage.ContainsKey(filePath))
                 {
                     lock (SyncObject)
                     {
@@ -557,11 +548,24 @@ namespace MSNPSharp.IO
                         }
                     }
                 }
+                else
+                {
+                    lock (SyncObject)
+                    {
+                        if (!storage.ContainsKey(filePath))
+                        {
+                            storage[filePath] = new MclInfo(new MclFile(filePath, st, access, password));
+                        }
+                    }
+                }
+
+                return storage[filePath].File;
             }
-
-            return storage[filePath].File;
+            else
+            {
+                return new MclFile(filePath, st, access, password);
+            }
         }
-
 
         #endregion
     }
