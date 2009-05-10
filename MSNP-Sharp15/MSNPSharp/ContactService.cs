@@ -284,8 +284,8 @@ namespace MSNPSharp
 
             try
             {
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler);
-                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler);
+                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
+                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
 
                 NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
 
