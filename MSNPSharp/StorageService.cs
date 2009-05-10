@@ -585,17 +585,30 @@ namespace MSNPSharp
         /// </summary>
         public OwnerProfile GetProfile()
         {
-            if (NSMessageHandler.ContactService.Deltas == null)
+            if (NSMessageHandler.BotMode == false)
             {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("GetProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
-                return null;
-            }
+                if (NSMessageHandler.ContactService.Deltas == null)
+                {
+                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("GetProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
+                    return null;
+                }
 
-            if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                NSMessageHandler.ContactService.Deltas.Profile.DateModified < Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
+                if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
+                    NSMessageHandler.MSNTicket != MSNTicket.Empty &&
+                    NSMessageHandler.ContactService.Deltas.Profile.DateModified < Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
+                {
+                    return GetProfileImpl(PartnerScenario.Initial);
+                }
+            }
+            else
             {
-                return GetProfileImpl(PartnerScenario.Initial);
+                SerializableMemoryStream serStream = new SerializableMemoryStream();
+                Properties.Resources.WLXLarge_default.Save(serStream, System.Drawing.Imaging.ImageFormat.Png);
+
+                ProfilePhoto profPhoto = new ProfilePhoto();
+                profPhoto.DisplayImage = serStream;
+
+                NSMessageHandler.ContactService.Deltas.Profile.Photo = profPhoto;
             }
 
             return NSMessageHandler.ContactService.Deltas.Profile;

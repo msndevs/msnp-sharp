@@ -297,7 +297,7 @@ namespace MSNPSharp
         /// <param name="type">Contact type.</param>
         /// <returns>
         /// A <see cref="Contact"/> object.
-        /// If the contact does not exist, return null.
+        /// If the contact does not exist, create it.
         /// </returns>
         internal Contact GetContact(string account, ClientType type)
         {
