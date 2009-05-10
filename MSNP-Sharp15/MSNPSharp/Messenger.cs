@@ -188,9 +188,12 @@ namespace MSNPSharp
                         }
                     }
                 }
+
                 // Accepts by default owner display images and contact emoticons.
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
                 {
+                    
+
                     if (ie.TransferProperties.DataType == DataTransferType.DisplayImage)
                     {
                         ie.Accept = true;

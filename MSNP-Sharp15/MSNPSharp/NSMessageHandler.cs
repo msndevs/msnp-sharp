@@ -67,6 +67,7 @@ namespace MSNPSharp
         private ContactGroupList contactGroups;
         private ContactList contactList;
         private bool autoSynchronize = true;
+        private bool botMode = false;
 
         private bool isSignedIn;
         private Owner owner = new Owner();
@@ -100,6 +101,20 @@ namespace MSNPSharp
         #endregion
 
         #region Properties
+
+        /// <summary>
+        /// The library runs as a bot. Not to auto synchronize the addressbook when login.
+        /// </summary>
+        public bool BotMode
+        {
+            get { return botMode; }
+            set 
+            { 
+                botMode = value;
+                AutoSynchronize = !value;
+            }
+        }
+
 
         public bool AutoSynchronize
         {
@@ -695,6 +710,10 @@ namespace MSNPSharp
                     //don't set the same status or it will result in disconnection
                     owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
                     owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+                    if (BotMode)
+                    {
+                        owner.ClientCapacities |= ClientCapacities.IsBot;
+                    }
 
                     if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
                     {
@@ -2300,6 +2319,8 @@ namespace MSNPSharp
             // SwitchBoards.Clear();
             Owner.Emoticons.Clear();
             Owner.Places.Clear();
+            Owner.ClientCapacities = ClientCapacities.None;
+            Owner.ClientCapacitiesEx = ClientCapacitiesEx.None;
 
             externalEndPoint = null;
             isSignedIn = false;
