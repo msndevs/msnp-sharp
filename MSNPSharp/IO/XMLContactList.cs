@@ -49,9 +49,9 @@ namespace MSNPSharp.IO
     [XmlRoot("ContactList")]
     public class XMLContactList : MCLSerializer
     {
-        public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler)
+        public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
-            return (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), handler);
+            return (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), handler, useCache);
         }
 
         /// <summary>

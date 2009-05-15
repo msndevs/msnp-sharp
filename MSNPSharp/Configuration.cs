@@ -48,20 +48,19 @@ namespace MSNPSharp
         /// <summary>
         /// Defines the verbosity of the trace messages.
         /// </summary>
-        public static TraceSwitch TraceSwitch;
+        public static TraceSwitch TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
 
         /// <summary>
         /// Constructor.
         /// </summary>
         static Settings()
         {
-            TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
 #if DEBUG
             TraceSwitch.Level = TraceLevel.Verbose;
             serializationType = MclSerialization.Compression | MclSerialization.Cryptography;
 #else
-            TraceSwitch.Level = TraceLevel.Error;
-            serializationType = SerializationType.Compress;
+            TraceSwitch.Level = TraceLevel.Info;
+            serializationType = MclSerialization.Compression;
 #endif
         }
 
@@ -164,7 +163,7 @@ namespace MSNPSharp
             }
             set
             {
-                serializationType = MclSerialization.None;
+                serializationType = value ? MclSerialization.None : MclSerialization.Compression;
             }
         }
     }

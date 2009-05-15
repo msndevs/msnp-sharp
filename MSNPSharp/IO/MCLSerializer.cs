@@ -57,6 +57,9 @@ namespace MSNPSharp.IO
         [NonSerialized]
         NSMessageHandler nsMessageHandler;
 
+        [NonSerialized]
+        private bool useCache;
+
         private string version = "1.0";
 
         protected MCLSerializer()
@@ -99,6 +102,18 @@ namespace MSNPSharp.IO
             }
         }
 
+        protected bool UseCache
+        {
+            get
+            {
+                return useCache;
+            }
+            set
+            {
+                useCache = value;
+            }
+        }
+
         /// <summary>
         /// The version of serialized object in the mcl file.
         /// </summary>
@@ -115,12 +130,12 @@ namespace MSNPSharp.IO
             }
         }
 
-        protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler)
+        protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler, bool useCache)
         {
             MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
             if (Settings.NoSave == false && File.Exists(filename))
             {
-                MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password);
+                MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password, useCache);
                 if (file.Content != null)
                 {
                     using (MemoryStream ms = new MemoryStream(file.Content))
@@ -133,6 +148,7 @@ namespace MSNPSharp.IO
             ret.SerializationType = st;
             ret.FileName = filename;
             ret.NSMessageHandler = handler;
+            ret.UseCache = useCache;
 
             return ret;
         }
@@ -161,7 +177,7 @@ namespace MSNPSharp.IO
                 XmlSerializer ser = new XmlSerializer(this.GetType());
                 MemoryStream ms = new MemoryStream();
                 ser.Serialize(ms, this);
-                MclFile file = MclFile.Open(filename, FileAccess.Write, serializationType, NSMessageHandler.Credentials.Password);
+                MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, NSMessageHandler.Credentials.Password, UseCache);
                 file.Content = ms.ToArray();
                 file.SaveAndHide(filename);
                 ms.Close();
