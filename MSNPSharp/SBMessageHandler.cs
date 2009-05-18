@@ -1259,7 +1259,7 @@ namespace MSNPSharp
             catch (Exception e)
             {
                 OnExceptionOccurred(e);
-                throw e;
+                throw; //RethrowToPreserveStackDetails (without e)
             }
         }
 

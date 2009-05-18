@@ -435,7 +435,7 @@ namespace MSNPSharp.Core
                     ConnectingException(this, new ExceptionEventArgs(e));
 
                 // re-throw the exception since the exception is thrown while in a blocking call
-                throw e;
+                throw; //RethrowToPreserveStackDetails (without e)
             }
         }
 

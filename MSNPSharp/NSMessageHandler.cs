@@ -1071,13 +1071,15 @@ namespace MSNPSharp
 
                 if (privateendpoints.Count > 0)
                 {
+                    Guid lastSignedInPlace = NSMessageHandler.MachineGuid; // For AutoLogoff
                     Dictionary<Guid, string> newPlaces = new Dictionary<Guid, string>(privateendpoints.Count);
                     foreach (XmlNode pepdNode in privateendpoints)
                     {
-                        string id = pepdNode.Attributes["id"].Value;
+                        Guid id = new Guid(pepdNode.Attributes["id"].Value);
                         string epname = pepdNode["EpName"].InnerText;
 
-                        newPlaces[new Guid(id)] = epname;
+                        newPlaces[id] = epname;
+                        lastSignedInPlace = id;
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
                     }
@@ -1086,7 +1088,8 @@ namespace MSNPSharp
                     {
                         foreach (KeyValuePair<Guid, string> keyvalue in newPlaces)
                         {
-                            if (keyvalue.Key != NSMessageHandler.MachineGuid)
+                            if (keyvalue.Key != NSMessageHandler.MachineGuid &&
+                                keyvalue.Key != lastSignedInPlace)
                             {
                                 owner.SignoutFrom(keyvalue.Key);
                             }
@@ -1095,6 +1098,15 @@ namespace MSNPSharp
 
                     Owner.Places.Clear();
                     Owner.Places = newPlaces;
+
+                    if (Owner.MPOPMode == MPOP.AutoLogoff &&
+                        newPlaces.Count > 1 &&
+                        lastSignedInPlace != NSMessageHandler.MachineGuid)
+                    {
+                        // No owner.Status = PresenceStatus.Offline, because we haven't signed in yet.
+                        messageProcessor.Disconnect(); 
+                        return;
+                    }
                 }
 
                 Owner.SetPersonalMessage(new PersonalMessage(message));
@@ -2467,7 +2479,7 @@ namespace MSNPSharp
             catch (Exception e)
             {
                 OnExceptionOccurred(new ExceptionEventArgs(e));
-                throw e;
+                throw; //RethrowToPreserveStackDetails (without e)
             }
         }
 
