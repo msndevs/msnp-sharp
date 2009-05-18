@@ -38,35 +38,13 @@ namespace MSNPSharp.Core
 
     public abstract class NetworkMessage
     {
-        #region Private
-
         byte[] innerBody;
         NetworkMessage parentMessage;
         NetworkMessage innerMessage;
 
-        #endregion
-
         protected NetworkMessage()
         {
-
         }
-
-        #region Protected helper methods
-
-        public static byte[] AppendArray(byte[] originalArray, byte[] appendingArray)
-        {
-            if (appendingArray != null)
-            {
-                byte[] newArray = new byte[originalArray.Length + appendingArray.Length];
-                Array.Copy(originalArray, 0, newArray, 0, originalArray.Length);
-                Array.Copy(appendingArray, 0, newArray, originalArray.Length, appendingArray.Length);
-                return newArray;
-            }
-            else
-                return originalArray;
-        }
-
-        #endregion
 
         public virtual void CreateFromMessage(NetworkMessage containerMessage)
         {
@@ -142,15 +120,8 @@ namespace MSNPSharp.Core
                 InnerMessage.PrepareMessage();
         }
 
-        public virtual byte[] GetBytes()
-        {
-            throw new NotImplementedException("GetBytes() on the base class NetworkMessage is invalid.");
-        }
-
-        public virtual void ParseBytes(byte[] data)
-        {
-            throw new NotImplementedException("GetBytes() on the base class NetworkMessage is invalid.");
-        }
+        public abstract byte[] GetBytes();
+        public abstract void ParseBytes(byte[] data);
 
         public virtual string ToDebugString()
         {
@@ -159,5 +130,19 @@ namespace MSNPSharp.Core
             else
                 return ToString();
         }
+
+        public static byte[] AppendArray(byte[] originalArray, byte[] appendingArray)
+        {
+            if (appendingArray != null)
+            {
+                byte[] newArray = new byte[originalArray.Length + appendingArray.Length];
+                Array.Copy(originalArray, 0, newArray, 0, originalArray.Length);
+                Array.Copy(appendingArray, 0, newArray, originalArray.Length, appendingArray.Length);
+                return newArray;
+            }
+            else
+                return originalArray;
+        }
+
     }
 };
