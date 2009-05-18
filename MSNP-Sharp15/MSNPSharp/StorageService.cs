@@ -76,6 +76,8 @@ namespace MSNPSharp
             expAttrib.PersonalStatusSpecified = true;
             expAttrib.Photo = true;
             expAttrib.PhotoSpecified = true;
+            expAttrib.Attachments = true;
+            expAttrib.AttachmentsSpecified = true;
             expAttrib.ResourceID = true;
             expAttrib.ResourceIDSpecified = true;
             expAttrib.StaticUserTilePublicURL = true;
@@ -444,6 +446,7 @@ namespace MSNPSharp
                                 }
                                 stream.Close();
 
+                                NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = response.GetProfileResult.ExpressionProfile.Photo.Name;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
@@ -657,19 +660,61 @@ namespace MSNPSharp
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("UpdateProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
                 return false;
             }
-
-            // 1. Getprofile
-            NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
-
-            // 2. UpdateProfile
-            // To keep the order, we need a sync function.
-            UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
-                              NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
-                              "Update", 1);
+            
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
+
+                // 1. Getprofile
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
+
+                // 1.1 UpdateDocument
+                if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
+                {
+                    UpdateDocumentRequestType request = new UpdateDocumentRequestType();
+                    request.document = new Photo();
+                    request.document.Name = NSMessageHandler.ContactService.Deltas.Profile.Photo.Name;
+                    request.document.ResourceID = NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID;
+                    request.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
+                    request.document.DocumentStreams[0].DataSize = 0;
+                    request.document.DocumentStreams[0].MimeType = "image/png";
+                    request.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
+                    request.document.DocumentStreams[0].Data = SerializableMemoryStream.FromImage(photo).ToArray();
+
+                    try
+                    {
+                        storageService.UpdateDocument(request);
+
+                        // UpdateDynamicItem
+                        UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
+                                  NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
+                                  "Update", 0); // 1= begin transaction, 0=commit transaction
+
+                        DisplayImage displayImage = new DisplayImage();
+                        displayImage.Image = photo;  //Set to new photo
+
+                        NSMessageHandler.Owner.DisplayImage = displayImage;
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(request.document.DocumentStreams[0].Data, 0, request.document.DocumentStreams[0].Data.Length);
+                        NSMessageHandler.ContactService.Deltas.Save(true);
+
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateDocument", ex));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Creating new document", GetType().Name);
+                    }
+                }
+
+                // 2. UpdateProfile
+                // To keep the order, we need a sync function.
+                UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
+                                  NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
+                                  "Update", 1); // 1= begin transaction, 0=commit transaction
 
                 Alias mycidAlias = new Alias();
                 mycidAlias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
@@ -727,9 +772,10 @@ namespace MSNPSharp
                 createDocRequest.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
                 createDocRequest.document.DocumentStreams[0].Data = mem.ToArray();
 
-                DisplayImage displayImage = new DisplayImage();
-                displayImage.Image = photo;  //Set to new photo
-                NSMessageHandler.Owner.DisplayImage = displayImage;
+                DisplayImage dp = new DisplayImage();
+                dp.Image = photo;  //Set to new photo
+                NSMessageHandler.Owner.DisplayImage = dp;
+                NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
                 NSMessageHandler.ContactService.Deltas.Save();
@@ -768,7 +814,7 @@ namespace MSNPSharp
                 //6. ok, done - Updateprofile again
                 UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
                                   NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
-                                  "Update", 0);
+                                  "Update", 0); // 1= begin transaction, 0=commit transaction
 
                 return true;
             }
