@@ -110,7 +110,6 @@ namespace MSNPSharp
     {
         #region Members
 
-        private P2PHandler p2pHandler;
         private NSMessageProcessor nsMessageProcessor;
         private NSMessageHandler nsMessageHandler;
 
@@ -128,10 +127,6 @@ namespace MSNPSharp
         {
             nsMessageProcessor = Factory.CreateNameserverProcessor();
             nsMessageHandler = Factory.CreateNameserverHandler();
-            nsMessageHandler.Messenger = this;
-
-            p2pHandler = Factory.CreateP2PHandler();
-            p2pHandler.NSMessageHandler = nsMessageHandler;
 
             #region private events
             nsMessageProcessor.ConnectionClosed += delegate
@@ -142,10 +137,10 @@ namespace MSNPSharp
             nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
             {
                 //Register the p2phandler to handle all incoming p2p message through this switchboard.
-                ce.Switchboard.MessageProcessor.RegisterHandler(P2PHandler);
+                ce.Switchboard.MessageProcessor.RegisterHandler(nsMessageHandler.P2PHandler);
 
                 // check if the request is remote or on our initiative
-                if (ce.Initiator != null && (ce.Initiator == this || ce.Initiator == p2pHandler))
+                if (ce.Initiator != null && (ce.Initiator == this || ce.Initiator == nsMessageHandler.P2PHandler))
                 {
                     return;
                 }
@@ -165,7 +160,7 @@ namespace MSNPSharp
                 return;
             };
 
-            p2pHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
+            nsMessageHandler.P2PHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
             {
                 MSNSLPHandler msnslpHandler = CreateMSNSLPHandler();
                 msnslpHandler.MessageProcessor = see.Session;
@@ -174,9 +169,9 @@ namespace MSNPSharp
                 tsMsnslpHandlers.Add(msnslpHandler);
 
                 // set the correct switchboard to send messages to
-                lock (p2pHandler.SwitchboardSessions)
+                lock (nsMessageHandler.P2PHandler.SwitchboardSessions)
                 {
-                    foreach (SBMessageHandler sb in p2pHandler.SwitchboardSessions)
+                    foreach (SBMessageHandler sb in nsMessageHandler.P2PHandler.SwitchboardSessions)
                     {
                         if (sb.GetType() == typeof(SBMessageHandler))
                         {
@@ -230,7 +225,7 @@ namespace MSNPSharp
                 return;
             };
 
-            p2pHandler.SessionClosed += delegate(object sender, P2PSessionAffectedEventArgs e)
+            nsMessageHandler.P2PHandler.SessionClosed += delegate(object sender, P2PSessionAffectedEventArgs e)
             {
                 MSNSLPHandler handler = GetMSNSLPHandler(e.Session);
                 if (handler != null)
@@ -266,27 +261,6 @@ namespace MSNPSharp
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// The handler that handles all incoming P2P framework messages.
-        /// </summary>
-        /// <remarks>
-        /// The handler is defined at the messenger niveau which implies there is a single
-        /// p2p handler instance for every logged in account. All switchboard sessions route their messages
-        /// to this p2p handler. This enables the feature to start a p2p session in one switchboard session,
-        /// and continue, or close it, in another switchboard session.
-        /// </remarks>
-        public P2PHandler P2PHandler
-        {
-            get
-            {
-                return p2pHandler;
-            }
-            set
-            {
-                p2pHandler = value;
-            }
-        }
 
         /// <summary>
         /// The message processor that is used to send and receive nameserver messages.
@@ -470,6 +444,20 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The handler that handles all incoming P2P framework messages.
+        /// </summary>
+        /// <remarks>
+        /// This property is a reference to the P2PHandler object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
+        /// </remarks>
+        public P2PHandler P2PHandler
+        {
+            get
+            {
+                return nsMessageHandler.P2PHandler;
+            }
+        }
+
         #endregion
 
         #region Methods
@@ -548,7 +536,7 @@ namespace MSNPSharp
             if (!Nameserver.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
                 throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
 
-            P2PMessageSession p2pSession = p2pHandler.GetSession(Owner.Mail, remoteAccount);
+            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Owner.Mail, remoteAccount);
             MSNSLPHandler msnslpHandler = (MSNSLPHandler)p2pSession.GetHandler(typeof(MSNSLPHandler));
             if (msnslpHandler == null)
             {
@@ -570,7 +558,7 @@ namespace MSNPSharp
             if (!Nameserver.ContactList.HasContact(remoteContact.Mail, remoteContact.ClientType))
                 throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
 
-            P2PMessageSession p2pSession = p2pHandler.GetSession(Owner, remoteContact);
+            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Owner, remoteContact);
             MSNSLPHandler msnslpHandler = (MSNSLPHandler)p2pSession.GetHandler(typeof(MSNSLPHandler));
             if (msnslpHandler == null)
             {
@@ -607,9 +595,9 @@ namespace MSNPSharp
         {
             tsMsnslpHandlers.Clear();
 
-            if (null != p2pHandler)
+            if (null != nsMessageHandler.P2PHandler)
             {
-                p2pHandler.ClearMessageSessions();
+                nsMessageHandler.P2PHandler.ClearMessageSessions();
             }
         }
 

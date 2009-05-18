@@ -46,6 +46,7 @@ using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.DataTransfer;
     using MSNPSharp.Core;
 
     /// <summary>
@@ -62,6 +63,7 @@ namespace MSNPSharp
         private SocketMessageProcessor messageProcessor;
         private ConnectivitySettings connectivitySettings;
         private IPEndPoint externalEndPoint;
+        private P2PHandler p2pHandler;
 
         private CircleList circleList;
         private ContactGroupList contactGroups;
@@ -81,12 +83,13 @@ namespace MSNPSharp
         private WhatsUpService whatsUpService;
 
         private List<Regex> censorWords = new List<Regex>(0);
-        private Messenger messenger = null;
 
         private NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-            owner.ClientCapacities = ClientCapacities.None;
+
+            p2pHandler = Factory.CreateP2PHandler();
+            p2pHandler.NSMessageHandler = this;
 
             circleList = new CircleList(this);
             contactGroups = new ContactGroupList(this);
@@ -329,6 +332,27 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The handler that handles all incoming P2P framework messages.
+        /// </summary>
+        /// <remarks>
+        /// The handler is defined at the name server niveau which implies there is a single
+        /// p2p handler instance for every logged in account. All switchboard sessions route their messages
+        /// to this p2p handler. This enables the feature to start a p2p session in one switchboard session,
+        /// and continue, or close it, in another switchboard session.
+        /// </remarks>
+        public P2PHandler P2PHandler
+        {
+            get
+            {
+                return p2pHandler;
+            }
+            internal protected set
+            {
+                p2pHandler = value;
+            }
+        }
+
         internal MSNTicket MSNTicket
         {
             get
@@ -340,23 +364,7 @@ namespace MSNPSharp
                 msnticket = value;
             }
         }
-
-        internal Messenger Messenger
-        {
-            get
-            {
-                if (messenger == null)
-                {
-                    throw new ArgumentNullException("messenger");
-                }
-
-                return messenger;
-            }
-            set
-            {
-                messenger = value;
-            }
-        }
+        
 
         #endregion
 
@@ -1650,9 +1658,9 @@ namespace MSNPSharp
             if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))   //filter the typing message
                 && ContactList.HasContact(sender, ClientType.EmailMember))
             {
-                lock (messenger.P2PHandler.SwitchboardSessions)
+                lock (P2PHandler.SwitchboardSessions)
                 {
-                    foreach (YIMMessageHandler YimHandler in messenger.P2PHandler.SwitchboardSessions)
+                    foreach (YIMMessageHandler YimHandler in P2PHandler.SwitchboardSessions)
                     {
                         if (YimHandler.Contacts.ContainsKey(sender))
                         {
@@ -1666,9 +1674,9 @@ namespace MSNPSharp
                 switchboard.NSMessageHandler = this;
 
                 switchboard.MessageProcessor = MessageProcessor;
-                lock (messenger.P2PHandler.SwitchboardSessions)
+                lock (P2PHandler.SwitchboardSessions)
                 {
-                    messenger.P2PHandler.SwitchboardSessions.Add(switchboard);
+                    P2PHandler.SwitchboardSessions.Add(switchboard);
                 }
 
                 messageProcessor.RegisterHandler(switchboard);

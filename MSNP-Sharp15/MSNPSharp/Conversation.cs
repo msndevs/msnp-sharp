@@ -438,7 +438,7 @@ namespace MSNPSharp
                 e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
 
                 // create a session and send the invitation
-                P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.Nameserver.Owner.Mail, e.Sender.Mail);
+                P2PMessageSession session = Messenger.Nameserver.P2PHandler.GetSession(Messenger.Nameserver.Owner.Mail, e.Sender.Mail);
 
                 object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
                 if (handlerObject != null)
@@ -923,11 +923,11 @@ namespace MSNPSharp
                 _yimHandler.NSMessageHandler = Messenger.Nameserver;
                 _yimHandler.MessageProcessor = Messenger.Nameserver.MessageProcessor;
 
-                lock (Messenger.P2PHandler.SwitchboardSessions)
+                lock (Messenger.Nameserver.P2PHandler.SwitchboardSessions)
                 {
-                    if (!Messenger.P2PHandler.SwitchboardSessions.Contains(_yimHandler))
+                    if (!Messenger.Nameserver.P2PHandler.SwitchboardSessions.Contains(_yimHandler))
                     {
-                        Messenger.P2PHandler.SwitchboardSessions.Add(_yimHandler);
+                        Messenger.Nameserver.P2PHandler.SwitchboardSessions.Add(_yimHandler);
                     }
                 }
 
@@ -955,11 +955,11 @@ namespace MSNPSharp
                     }
                 }
 
-                lock (Messenger.P2PHandler.SwitchboardSessions)
+                lock (Messenger.Nameserver.P2PHandler.SwitchboardSessions)
                 {
-                    if (!Messenger.P2PHandler.SwitchboardSessions.Contains(_switchboard))
+                    if (!Messenger.Nameserver.P2PHandler.SwitchboardSessions.Contains(_switchboard))
                     {
-                        Messenger.P2PHandler.SwitchboardSessions.Add(_switchboard);
+                        Messenger.Nameserver.P2PHandler.SwitchboardSessions.Add(_switchboard);
                     }
                 }
 
