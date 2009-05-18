@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
-<xsd:schema xmlns="http://www.msn.com/webservices/storage/w10" xmlns:msnss="http://www.msn.com/webservices/storage/w10" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.msn.com/webservices/storage/w10" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+<!-- edited with XMLSpy v2008 rel. 2 (http://www.altova.com) by ee (darksiderg) -->
+<xsd:schema xmlns="http://www.msn.com/webservices/storage/2008" xmlns:msnss="http://www.msn.com/webservices/storage/2008" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.msn.com/webservices/storage/2008" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
     <xsd:include schemaLocation="msnstorage_datatypes.xsd"/>
     <xsd:element name="StorageApplicationHeader">
         <xsd:complexType>
@@ -180,6 +180,13 @@
         </xsd:sequence>
     </xsd:complexType>
     <xsd:element name="ShareItemResponse" type="ShareItemResponseType"/>
+    <xsd:element name="UpdateDocument" type="UpdateDocumentRequestType"/>
+    <xsd:complexType name="UpdateDocumentRequestType">
+        <xsd:sequence>
+            <xsd:element name="document" type="documentBaseType"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:element name="UpdateDocumentResponse"/>
     <xsd:complexType name="CreateDocumentRequestType">
         <xsd:sequence>
             <xsd:element name="parentHandle" type="Handle"/>

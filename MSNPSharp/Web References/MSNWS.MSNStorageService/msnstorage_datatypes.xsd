@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema xmlns="http://www.msn.com/webservices/storage/w10" xmlns:msnss="http://www.msn.com/webservices/storage/w10" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/storage/w10" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns="http://www.msn.com/webservices/storage/2008" xmlns:msnss="http://www.msn.com/webservices/storage/2008" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.msn.com/webservices/storage/2008" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:complexType name="Alias">
     <xsd:sequence>
       <xsd:element name="Name" type="xsd:string" />
@@ -22,18 +22,20 @@
   </xsd:complexType>
   <xsd:complexType name="DocumentStream">
     <xsd:sequence>
-      <xsd:element name="DocumentStreamType" type="xsd:string" />
+      <xsd:element name="DocumentStreamName" type="xsd:string" />
       <xsd:element name="MimeType" type="xsd:string" />
       <xsd:element minOccurs="0" name="Data" type="xsd:base64Binary" />
       <xsd:element name="DataSize" type="xsd:int" />
+      <xsd:element minOccurs="0" name="PreAuthURL" type="xsd:anyURI" />
+      <xsd:element minOccurs="0" name="PreAuthURLPartner" type="xsd:anyURI" />
+      <xsd:element name="DocumentStreamType" type="xsd:string" />
+      <xsd:element name="WriteMode" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="PhotoStream">
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnss:DocumentStream">
         <xsd:sequence>
-          <xsd:element minOccurs="0" name="PreAuthURL" type="xsd:anyURI" />
-          <xsd:element minOccurs="0" name="PreAuthURLPartner" type="xsd:anyURI" />
           <xsd:element minOccurs="0" name="SizeX" type="xsd:int" />
           <xsd:element minOccurs="0" name="SizeY" type="xsd:int" />
         </xsd:sequence>
@@ -59,11 +61,13 @@
       <xsd:element minOccurs="0" name="PersonalStatusLastModified" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="StaticUserTilePublicURL" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="Photo" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="Attachments" type="xsd:boolean" />
       <xsd:element minOccurs="0" name="Flag" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="documentBaseType">
     <xsd:sequence>
+      <xsd:element minOccurs="0" name="ResourceID" type="xsd:string" />
       <xsd:element name="Name" type="xsd:string" />
       <xsd:element name="DocumentStreams">
         <xsd:complexType>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by wp (freezingsoft) -->
-<definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns="http://www.w3.org/2001/XMLSchema" xmlns:msnss="http://www.msn.com/webservices/storage/w10" xmlns:ns1="http://schemas.xmlsoap.org/soap/encoding/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://www.msn.com/webservices/storage/w10">
+<definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns="http://www.w3.org/2001/XMLSchema" xmlns:msnss="http://www.msn.com/webservices/storage/2008" xmlns:ns1="http://schemas.xmlsoap.org/soap/encoding/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://www.msn.com/webservices/storage/2008">
     <types>
         <ns:schema xmlns="http://www.w3.org/2001/XMLSchema">
-            <ns:import schemaLocation="msnstorage_servicetypes.xsd" namespace="http://www.msn.com/webservices/storage/w10"/>
+            <ns:import schemaLocation="msnstorage_servicetypes.xsd" namespace="http://www.msn.com/webservices/storage/2008"/>
         </ns:schema>
     </types>
     <message name="SSHeader">
@@ -47,6 +47,12 @@
     <message name="CreateDocumentResponseMessage">
         <part name="CreateDocumentResponse" element="msnss:CreateDocumentResponse"/>
     </message>
+       <message name="UpdateDocumentMessage">
+        <part name="UpdateDocument" element="msnss:UpdateDocument"/>
+    </message>
+        <message name="UpdateDocumentResponseMessage">
+        <part name="UpdateDocumentResponse" element="msnss:UpdateDocumentResponse"/>
+    </message>
     <message name="CreateRelationshipsMessage">
         <part name="CreateRelationships" element="msnss:CreateRelationships"/>
     </message>
@@ -84,6 +90,10 @@
             <input message="msnss:CreateDocumentMessage"/>
             <output message="msnss:CreateDocumentResponseMessage"/>
         </operation>
+        <operation name="UpdateDocument">
+            <input message="msnss:UpdateDocumentMessage"/>
+            <output message="msnss:UpdateDocumentResponseMessage"/>
+        </operation>
         <operation name="CreateRelationships">
             <input message="msnss:CreateRelationshipsMessage"/>
             <output message="msnss:CreateRelationshipsResponseMessage"/>
@@ -96,7 +106,7 @@
     <binding name="StorageServiceBinding" type="msnss:StorageServicePortType">
         <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
         <operation name="GetProfile">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/GetProfile"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/GetProfile"/>
             <input>
                 <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
                 <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal"/>
@@ -110,7 +120,7 @@
             </output>
         </operation>
         <operation name="UpdateProfile">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/UpdateProfile"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/UpdateProfile"/>
             <input>
                 <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
                 <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal"/>
@@ -124,7 +134,7 @@
             </output>
         </operation>
         <operation name="FindDocuments">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/FindDocuments"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/FindDocuments"/>
             <input>
                 <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
                 <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal"/>
@@ -138,7 +148,7 @@
             </output>
         </operation>
         <operation name="CreateProfile">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/CreateProfile"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/CreateProfile"/>
             <input>
                 <soap:body use="literal"/>
                 <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal"/>
@@ -150,7 +160,7 @@
             </output>
         </operation>
         <operation name="ShareItem">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/ShareItem"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/ShareItem"/>
             <input>
                 <soap:body use="literal"/>
                 <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal"/>
@@ -163,7 +173,21 @@
             </output>
         </operation>
         <operation name="CreateDocument">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/CreateDocument"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/CreateDocument"/>
+            <input>
+                <soap:body use="literal"/>
+                <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
+                <soap:header message="msnss:SSHeader" part="StorageApplicationHeader" use="literal"/>
+                <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+                <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
+                <soap:header message="msnss:SSHeader" part="StorageUserHeader" use="literal"/>
+            </output>
+        </operation>
+        <operation name="UpdateDocument">
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/UpdateDocument"/>
             <input>
                 <soap:body use="literal"/>
                 <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
@@ -177,7 +201,7 @@
             </output>
         </operation>
         <operation name="CreateRelationships">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/CreateRelationships"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/CreateRelationships"/>
             <input>
                 <soap:body use="literal"/>
                 <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
@@ -191,7 +215,7 @@
             </output>
         </operation>
         <operation name="DeleteRelationships">
-            <soap:operation soapAction="http://www.msn.com/webservices/storage/w10/DeleteRelationships"/>
+            <soap:operation soapAction="http://www.msn.com/webservices/storage/2008/DeleteRelationships"/>
             <input>
                 <soap:body use="literal"/>
                 <soap:header message="msnss:SSHeader" part="AffinityCacheHeader" use="literal"/>
@@ -222,6 +246,9 @@
             <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx"/>
         </port>
         <port name="CreateDocumentPort" binding="msnss:StorageServiceBinding">
+            <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx"/>
+        </port>
+        <port name="UpdateDocumentPort" binding="msnss:StorageServiceBinding">
             <soap:address location="https://storage.msn.com/storageservice/SchematizedStore.asmx"/>
         </port>
         <port name="CreateRelationshipsPort" binding="msnss:StorageServiceBinding">
