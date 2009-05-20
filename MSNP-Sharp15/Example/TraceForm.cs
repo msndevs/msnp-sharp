@@ -11,6 +11,7 @@ using System.Security.Permissions;
 
 namespace MSNPSharpClient
 {
+    using MSNPSharp;
     
     public partial class TraceForm : Form
     {
@@ -46,6 +47,16 @@ namespace MSNPSharpClient
             rtbTraceListener.Resume();
             tsbStart.Enabled = false;
             tsbStop.Enabled = true;
+        }
+
+        private void TraceForm_Load(object sender, EventArgs e)
+        {
+            toolStripComboBoxLevel.SelectedItem = "Verbose";
+        }
+
+        private void toolStripComboBoxLevel_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MSNPSharp.Settings.TraceSwitch.Level = (TraceLevel)Enum.Parse(typeof(TraceLevel), toolStripComboBoxLevel.SelectedItem.ToString());
         }
     }
     
