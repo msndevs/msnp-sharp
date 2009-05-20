@@ -675,13 +675,7 @@ namespace MSNPSharpClient
             TraceForm traceform = new TraceForm();
             traceform.Show();
 
-#if DEBUG
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
-#elif TRACE
-            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Info;
-#else
-            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Warning;
-#endif
 
             // set the events that we will handle
             // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
