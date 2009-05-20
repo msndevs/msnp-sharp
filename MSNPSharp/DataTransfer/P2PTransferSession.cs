@@ -502,7 +502,7 @@ namespace MSNPSharp.DataTransfer
                 }
 
                 if (p2pMessage.V2.DataPacket.PayloadData.Length == 4 &&
-                    p2pMessage.V2.DataPacket.TFCombination == 0x1 &&
+                    p2pMessage.V2.DataPacket.TlvFlags == 0x1 &&
                     BitConverter.ToInt32(p2pMessage.V2.DataPacket.PayloadData, 0) == 0)
                 {
                     //Data preperation message.
@@ -511,10 +511,10 @@ namespace MSNPSharp.DataTransfer
 
                 // check if it is a content message
                 // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it
-                if (p2pMessage.V2.DataPacket.TFCombination == 0x4 ||
-                    p2pMessage.V2.DataPacket.TFCombination == 0x5 ||
-                    p2pMessage.V2.DataPacket.TFCombination == 0x6 ||
-                    p2pMessage.V2.DataPacket.TFCombination == 0x7)
+                if (p2pMessage.V2.DataPacket.TlvFlags == 0x4 ||
+                    p2pMessage.V2.DataPacket.TlvFlags == 0x5 ||
+                    p2pMessage.V2.DataPacket.TlvFlags == 0x6 ||
+                    p2pMessage.V2.DataPacket.TlvFlags == 0x7)
                 {
                     // store the data message identifier because we want to reference it if we abort the transfer
                     DataPacketNumber = p2pMessage.V2.DataPacket.PackageNumber;
@@ -695,26 +695,26 @@ namespace MSNPSharp.DataTransfer
 
 
                         chunkMessage.V2.DataPacket.SessionID = p2pMessage.V2.DataPacket.SessionID;
-                        chunkMessage.V2.OperationCode = p2pMessage.V2.OperationCode;
+                        chunkMessage.V2.TlvFlags = p2pMessage.V2.TlvFlags;
                         chunkMessage.V2.SequenceNumber = p2pMessage.V2.SequenceNumber + bytesSend;
 
                         if (i == 0)
                         {
                             chunkMessage.V2.AcksequenceNumber = p2pMessage.V2.AcksequenceNumber;
-                            chunkMessage.V2.DataPacket.TFCombination = p2pMessage.V2.DataPacket.TFCombination;
+                            chunkMessage.V2.DataPacket.TlvFlags = p2pMessage.V2.DataPacket.TlvFlags;
                         }
 
-                        switch (p2pMessage.V2.DataPacket.TFCombination)
+                        switch (p2pMessage.V2.DataPacket.TlvFlags)
                         {
                             case 0x5:
                             case 0x7:
                                 if (i != 0)
                                 {
-                                    chunkMessage.V2.DataPacket.TFCombination = (byte)(p2pMessage.V2.DataPacket.TFCombination - 1);
+                                    chunkMessage.V2.DataPacket.TlvFlags = (byte)(p2pMessage.V2.DataPacket.TlvFlags - 1);
                                 }
                                 break;
                             default:
-                                chunkMessage.V2.DataPacket.TFCombination = p2pMessage.V2.DataPacket.TFCombination;
+                                chunkMessage.V2.DataPacket.TlvFlags = p2pMessage.V2.DataPacket.TlvFlags;
                                 break;
                         }
 
@@ -928,7 +928,7 @@ namespace MSNPSharp.DataTransfer
 
                         MessageSession.IncreaseLocalIdentifier();
                         p2pDataMessage.V2.SequenceNumber = MessageSession.LocalIdentifier;
-                        p2pDataMessage.V2.OperationCode = (byte)OperationCode.None;
+                        p2pDataMessage.V2.TlvFlags = (byte)OperationCode.None;
                         p2pDataMessage.WritePreparationBytes();
                         p2pDataMessage.V2.DataPacket.SessionID = SessionId;
 
@@ -1007,24 +1007,24 @@ namespace MSNPSharp.DataTransfer
                         {
                             if (MessageFlag == (uint)P2PFlag.MSNObjectData)
                             {
-                                datapacket.TFCombination = 0x5;
+                                datapacket.TlvFlags = 0x5;
                             }
 
                             if (MessageFlag == (uint)P2PFlag.FileData)
                             {
-                                datapacket.TFCombination = 0x7;
+                                datapacket.TlvFlags = 0x7;
                             }
                         }
                         else
                         {
                             if (MessageFlag == (uint)P2PFlag.MSNObjectData)
                             {
-                                datapacket.TFCombination = 0x4;
+                                datapacket.TlvFlags = 0x4;
                             }
 
                             if (MessageFlag == (uint)P2PFlag.FileData)
                             {
-                                datapacket.TFCombination = 0x6;
+                                datapacket.TlvFlags = 0x6;
                             }
                         }
 

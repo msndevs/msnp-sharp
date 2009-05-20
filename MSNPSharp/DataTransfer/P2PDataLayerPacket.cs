@@ -1,66 +1,146 @@
+#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+/*
+Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+All rights reserved. http://code.google.com/p/msnp-sharp/
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
+#endregion
+
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
-using MSNPSharp.Core;
-using System.IO;
 
 namespace MSNPSharp.DataTransfer
 {
+    using MSNPSharp.Core;
+
     public class P2PDataLayerPacket : NetworkMessage
     {
+        // Header (8 bytes = 1+1+2+4)
         private byte headerLength;
-        private byte tFCombination;
+        private byte tlvFlags;
         private ushort packageNumber;
         private UInt32 sessionID;
-        private UInt64 dataRemaining;
+        // TLVs = Header length - 8 
+        private Dictionary<byte, byte[]> typeAndValues = new Dictionary<byte, byte[]>();
+        // Payload (InnerBody)
         private byte[] payloadData;
+        // Footer
         private UInt32 footer;
-        private Dictionary<byte, byte[]> unknownTLVs = new Dictionary<byte, byte[]>();
 
-        public Dictionary<byte, byte[]> UnknownTLVs
-        {
-            get { return unknownTLVs; }
-        }
+        #region Header
 
         public byte HeaderLength
         {
-            get { return headerLength; }
+            get
+            {
+                return headerLength;
+            }
         }
 
-        public byte TFCombination
+        public byte TlvFlags
         {
-            get { return tFCombination; }
-            set { tFCombination = value; }
+            get
+            {
+                return tlvFlags;
+            }
+            set
+            {
+                tlvFlags = value;
+            }
         }
 
         public ushort PackageNumber
         {
-            get { return packageNumber; }
-            set { packageNumber = value; }
+            get
+            {
+                return packageNumber;
+            }
+            set
+            {
+                packageNumber = value;
+            }
         }
 
         public UInt32 SessionID
         {
-            get { return sessionID; }
-            set { sessionID = value; }
+            get
+            {
+                return sessionID;
+            }
+            set
+            {
+                sessionID = value;
+            }
         }
+
+        #endregion
 
         public UInt64 DataRemaining
         {
-            get { return dataRemaining; }
-            set { dataRemaining = value; }
+            get
+            {
+                if (typeAndValues.ContainsKey(0x1))
+                    return BitConverter.ToUInt64(typeAndValues[0x1], 0);
+
+                return 0;
+            }
+            set
+            {
+                if (value == 0)
+                    typeAndValues.Remove(0x1);
+                else
+                    typeAndValues[0x1] = BitConverter.GetBytes(value);
+            }
         }
 
         public byte[] PayloadData
         {
-            get { return payloadData; }
-            set { payloadData = value; }
+            get
+            {
+                return payloadData;
+            }
+            set
+            {
+                payloadData = value;
+            }
         }
 
         public UInt32 Footer
         {
-            get { return footer; }
-            set { footer = value; }
+            get
+            {
+                return footer;
+            }
+            set
+            {
+                footer = value;
+            }
         }
 
         public P2PDataLayerPacket()
@@ -81,12 +161,10 @@ namespace MSNPSharp.DataTransfer
         public override byte[] GetBytes()
         {
             headerLength = 0x08;
-            if (TFCombination == 4 || 
-                TFCombination == 5 ||
-                TFCombination == 6 ||
-                TFCombination == 7)
+
+            foreach (byte[] val in typeAndValues.Values)
             {
-                headerLength = 0x14;
+                headerLength += (byte)(1 + 1 + val.Length); //T+L+V
             }
 
             ushort payloadLength = 0;
@@ -102,15 +180,15 @@ namespace MSNPSharp.DataTransfer
             BinaryWriter writer = new BinaryWriter(memStream);
 
             writer.Write(HeaderLength);
-            writer.Write(TFCombination);
+            writer.Write((byte)TlvFlags);
             writer.Write(P2PMessage.ToBigEndian(PackageNumber));
             writer.Write(P2PMessage.ToBigEndian(SessionID));
 
-            if (HeaderLength == 0x14)
+            foreach (KeyValuePair<byte, byte[]> keyvalue in typeAndValues)
             {
-                writer.Write((byte)0x1);
-                writer.Write((byte)0x8);
-                writer.Write(DataRemaining);
+                writer.Write(keyvalue.Key); // Type
+                writer.Write((byte)keyvalue.Value.Length); // Length
+                writer.Write(keyvalue.Value, 0, keyvalue.Value.Length); // Value
             }
 
             memStream.Seek(HeaderLength, SeekOrigin.Begin);
@@ -133,23 +211,23 @@ namespace MSNPSharp.DataTransfer
             MemoryStream mem = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(mem);
             headerLength = reader.ReadByte();
-            TFCombination = reader.ReadByte();
+            TlvFlags = reader.ReadByte();
             PackageNumber = P2PMessage.ToBigEndian(reader.ReadUInt16());
             SessionID = P2PMessage.ToBigEndian(reader.ReadUInt32());
             if (HeaderLength - 8 > 0)  //TLVs
             {
-                byte[] TLvs = new byte[HeaderLength - 8];
-                TLvs = reader.ReadBytes(TLvs.Length);
+                byte[] TLvs = reader.ReadBytes(HeaderLength - 8);
                 int index = 0;
-                while (TLvs.Length - (index + 1) >= 4)
+                do
                 {
                     byte T = TLvs[index];
                     byte L = TLvs[index + 1];
                     byte[] V = new byte[(int)L];
                     Array.Copy(TLvs, index + 2, V, 0, (int)L);
-                    index = index + 2 + L;
-                    ProcessTLVData(T, L, V);
+                    typeAndValues[T] = V;
+                    index += 2 + L;
                 }
+                while (index < TLvs.Length);
             }
 
             if (InnerBody.Length - HeaderLength > 0)
@@ -159,28 +237,6 @@ namespace MSNPSharp.DataTransfer
 
             //Footer = P2PMessage.ToBigEndian(reader.ReadUInt32());
 
-        }
-
-        protected void ProcessTLVData(byte T, byte L, byte[] V)
-        {
-            MemoryStream mem = new MemoryStream(V);
-            BinaryReader reader = new BinaryReader(mem);
-
-            switch (T)
-            {
-                case 1:
-                    if (L == 8)
-                    {
-                        DataRemaining = P2PMessage.ToBigEndian(reader.ReadUInt64());
-                        return;
-                    }
-                    break;
-                case 2:
-                    return;
-                    break;
-            }
-
-            UnknownTLVs.Add(T, V);
         }
 
         /// <summary>
@@ -197,14 +253,15 @@ namespace MSNPSharp.DataTransfer
 
             string debugLine =
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "HeaderLength    : {1:x} ({0})\r\n", HeaderLength.ToString(System.Globalization.CultureInfo.InvariantCulture), HeaderLength) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TFCombination   : {1:x} ({0})\r\n", TFCombination.ToString(System.Globalization.CultureInfo.InvariantCulture), TFCombination) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TlvFlags        : {1:x} ({0})\r\n", TlvFlags.ToString(System.Globalization.CultureInfo.InvariantCulture), TlvFlags) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "PackageNumber   : {1:x} ({0})\r\n", PackageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), PackageNumber) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionID       : {1:x} ({0})\r\n", SessionID.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionID) +
                 "{\r\n" +
                 Encoding.UTF8.GetString(payloadBytes) +
                 "}\r\n"; //+
-                //String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+
+            //String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
             return debugLine;
         }
     }
-}
+};
