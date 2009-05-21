@@ -143,18 +143,14 @@ namespace MSNPSharp
         /// <param name="place">The place guid to be signed out</param>
         public void SignoutFrom(Guid place)
         {
-            if (place == NSMessageHandler.MachineGuid)
-            {
-                Status = PresenceStatus.Offline;
-            }
-            else if (Places.ContainsKey(place))
+            if (Places.ContainsKey(place))
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
                     new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
             }
             else
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place: " + place.ToString(), GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place (signed out already): " + place.ToString(), GetType().Name);
             }
         }
 
