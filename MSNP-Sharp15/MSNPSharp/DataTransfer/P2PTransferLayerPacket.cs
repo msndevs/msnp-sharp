@@ -198,6 +198,11 @@ namespace MSNPSharp.DataTransfer
             {
                 headerLength += (byte)(1 + 1 + val.Length); //T+L+V
             }
+            // 4 bytes padding
+            if ((headerLength % 4) != 0)
+            {
+                headerLength += (byte)(4 - (headerLength % 4));
+            }
 
             if (NeedACK)
             {
@@ -262,6 +267,10 @@ namespace MSNPSharp.DataTransfer
                 do
                 {
                     byte T = TLvs[index];
+
+                    if (T == 0x0)
+                        break; // Skip padding bytes
+
                     byte L = TLvs[index + 1];
                     byte[] V = new byte[(int)L];
                     Array.Copy(TLvs, index + 2, V, 0, (int)L);
