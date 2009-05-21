@@ -50,7 +50,7 @@ namespace MSNPSharp.DataTransfer
     {
         // Header (8 bytes = 1+1+2+4)
         private byte headerLength;
-        private byte tlvFlags;
+        private byte operationCode;
         private UInt32 sequenceNumber;
         // TLVs = Header length - 8 
         private Dictionary<byte, byte[]> typeAndValues = new Dictionary<byte, byte[]>();
@@ -71,15 +71,15 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        public byte TlvFlags
+        public byte OperationCode
         {
             get
             {
-                return tlvFlags;
+                return operationCode;
             }
             set
             {
-                tlvFlags = value;
+                operationCode = value;
             }
         }
 
@@ -118,7 +118,7 @@ namespace MSNPSharp.DataTransfer
             {
                 if (value)
                 {
-                    TlvFlags = (byte)OperationCode.NeedACK;
+                    OperationCode = (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK;
                 }
 
                 needACK = value;
@@ -201,7 +201,7 @@ namespace MSNPSharp.DataTransfer
 
             if (NeedACK)
             {
-                TlvFlags = (byte)OperationCode.NeedACK;
+                OperationCode = (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK;
             }
 
             // Header + Payload + Footer(for SB sessions only)
@@ -212,7 +212,7 @@ namespace MSNPSharp.DataTransfer
             BinaryWriter writer = new BinaryWriter(memStream);
 
             writer.Write(HeaderLength);
-            writer.Write(TlvFlags);
+            writer.Write(OperationCode);
             writer.Write(P2PMessage.ToBigEndian(PayloadLength));
             writer.Write(P2PMessage.ToBigEndian(SequenceNumber));
 
@@ -245,9 +245,9 @@ namespace MSNPSharp.DataTransfer
             MemoryStream mem = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(mem);
             headerLength = reader.ReadByte();
-            TlvFlags = reader.ReadByte();
+            OperationCode = reader.ReadByte();
 
-            if (TlvFlags == (byte)OperationCode.NeedACK)
+            if (OperationCode == (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK)
             {
                 NeedACK = true;
             }
@@ -255,7 +255,7 @@ namespace MSNPSharp.DataTransfer
             ushort payloadLen = P2PMessage.ToBigEndian(reader.ReadUInt16());
             SequenceNumber = P2PMessage.ToBigEndian(reader.ReadUInt32());
 
-            if (HeaderLength - 8 > 0)  //TLVs
+            if (HeaderLength > 8)  //TLVs
             {
                 byte[] TLvs = reader.ReadBytes(HeaderLength - 8);
                 int index = 0;
@@ -297,12 +297,28 @@ namespace MSNPSharp.DataTransfer
                 dataString = DataPacket.ToString();
             }
 
+            StringBuilder sb = new StringBuilder();
+            foreach (KeyValuePair<byte, byte[]> keyvalue in typeAndValues)
+            {
+                sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
+                sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
+                foreach (byte b in keyvalue.Value)
+                {
+                    sb.Append(string.Format(System.Globalization.CultureInfo.InvariantCulture, "0x{0:x2} ", b));
+                }
+                sb.Append("); ");
+            }
+
             string debugLine =
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "HeaderLength        : {1:x} ({0})\r\n", HeaderLength.ToString(System.Globalization.CultureInfo.InvariantCulture), HeaderLength) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TlvFlags            : {1:x} ({0})\r\n", TlvFlags.ToString(System.Globalization.CultureInfo.InvariantCulture), TlvFlags) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "OperationCode       : {1:x} ({0})\r\n", OperationCode.ToString(System.Globalization.CultureInfo.InvariantCulture), OperationCode) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "PayloadLength       : {1:x} ({0})\r\n", PayloadLength.ToString(System.Globalization.CultureInfo.InvariantCulture), PayloadLength) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "SequenceNumber      : {1:x} ({0})\r\n", SequenceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), SequenceNumber) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AcksequenceNumber   : {1:x} ({0})\r\n", AcksequenceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), AcksequenceNumber) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TLV({0})              : {1}\r\n", typeAndValues.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), sb.ToString());
+
+            debugLine +=
+
                 "{\r\n" +
                 dataString +
                 "}\r\n" +
