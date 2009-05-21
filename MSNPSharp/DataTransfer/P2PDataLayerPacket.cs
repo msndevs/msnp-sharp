@@ -43,7 +43,7 @@ namespace MSNPSharp.DataTransfer
     {
         // Header (8 bytes = 1+1+2+4)
         private byte headerLength;
-        private byte tlvFlags;
+        private byte tFCombination;
         private ushort packageNumber;
         private UInt32 sessionID;
         // TLVs = Header length - 8 
@@ -63,15 +63,15 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        public byte TlvFlags
+        public byte TFCombination
         {
             get
             {
-                return tlvFlags;
+                return tFCombination;
             }
             set
             {
-                tlvFlags = value;
+                tFCombination = value;
             }
         }
 
@@ -180,7 +180,7 @@ namespace MSNPSharp.DataTransfer
             BinaryWriter writer = new BinaryWriter(memStream);
 
             writer.Write(HeaderLength);
-            writer.Write((byte)TlvFlags);
+            writer.Write(TFCombination);
             writer.Write(P2PMessage.ToBigEndian(PackageNumber));
             writer.Write(P2PMessage.ToBigEndian(SessionID));
 
@@ -211,10 +211,10 @@ namespace MSNPSharp.DataTransfer
             MemoryStream mem = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(mem);
             headerLength = reader.ReadByte();
-            TlvFlags = reader.ReadByte();
+            TFCombination = reader.ReadByte();
             PackageNumber = P2PMessage.ToBigEndian(reader.ReadUInt16());
             SessionID = P2PMessage.ToBigEndian(reader.ReadUInt32());
-            if (HeaderLength - 8 > 0)  //TLVs
+            if (HeaderLength > 8) //TLVs
             {
                 byte[] TLvs = reader.ReadBytes(HeaderLength - 8);
                 int index = 0;
@@ -251,16 +251,33 @@ namespace MSNPSharp.DataTransfer
                 payloadBytes = PayloadData;
             }
 
+
+            StringBuilder sb = new StringBuilder();
+            foreach (KeyValuePair<byte, byte[]> keyvalue in typeAndValues)
+            {
+                sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
+                sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
+                foreach (byte b in keyvalue.Value)
+                {
+                    sb.Append(string.Format(System.Globalization.CultureInfo.InvariantCulture, "0x{0:x2} ", b));
+                }
+                sb.Append("); ");
+            }
+
+
             string debugLine =
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "HeaderLength    : {1:x} ({0})\r\n", HeaderLength.ToString(System.Globalization.CultureInfo.InvariantCulture), HeaderLength) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TlvFlags        : {1:x} ({0})\r\n", TlvFlags.ToString(System.Globalization.CultureInfo.InvariantCulture), TlvFlags) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TFCombination   : {1:x} ({0})\r\n", TFCombination.ToString(System.Globalization.CultureInfo.InvariantCulture), TFCombination) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "PackageNumber   : {1:x} ({0})\r\n", PackageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), PackageNumber) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionID       : {1:x} ({0})\r\n", SessionID.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionID) +
-                "{\r\n" +
-                Encoding.UTF8.GetString(payloadBytes) +
-                "}\r\n"; //+
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TLV({0})          : {1}\r\n", typeAndValues.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), sb.ToString());
 
-            //String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+            debugLine +=
+            "{\r\n" +
+                Encoding.UTF8.GetString(payloadBytes) +
+            "}\r\n"; //+
+
+            //String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer          : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
             return debugLine;
         }
     }
