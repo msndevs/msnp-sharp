@@ -1030,7 +1030,7 @@ namespace MSNPSharp
                         lastSignedInPlace != NSMessageHandler.MachineGuid)
                     {
                         // No owner.Status = PresenceStatus.Offline, because we haven't signed in yet.
-                        messageProcessor.Disconnect(); 
+                        Owner.SignoutFrom(NSMessageHandler.MachineGuid);
                         return;
                     }
                 }
