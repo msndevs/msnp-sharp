@@ -106,8 +106,8 @@ namespace MSNPSharp
                         currentmedia = currentmedia + media + @"\0";
                     }
 
-                    if (Format == null)
-                        Format = "";
+                    if (Format == null || Format == "" || Format == String.Empty)
+                        Format = "{0}";
 
                     currentmedia = @"\0" + mediaType.ToString() + @"\01\0" + Format + @"\0" + currentmedia;
                 }
