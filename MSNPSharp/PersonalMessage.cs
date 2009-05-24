@@ -60,12 +60,13 @@ namespace MSNPSharp
 
         private string[] content;
 
-        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, Guid machineguid)
+        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, string contentformat, Guid machineguid)
         {
             Message = personalmsg;
             mediaType = mediatype;
             content = currentmediacontent;
             machineGuid = machineguid;
+            Format = contentformat;
         }
 
         internal PersonalMessage(NSMessage message)
@@ -99,7 +100,17 @@ namespace MSNPSharp
                 string currentmedia = String.Empty;
 
                 if (mediaType != MediaType.None)
-                    currentmedia = MSNHttpUtility.XmlEncode(String.Join(@"\0", content));
+                {
+                    foreach (string media in content)
+                    {
+                        currentmedia = currentmedia + media + @"\0";
+                    }
+
+                    if (Format == null)
+                        Format = "";
+
+                    currentmedia = @"\0" + mediaType.ToString() + @"\01\0" + Format + @"\0" + currentmedia;
+                }
 
                 string pload = String.Format(
                     "<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia>" +

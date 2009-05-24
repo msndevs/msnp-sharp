@@ -606,6 +606,8 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
 
+            
+
             if (AutoSynchronize)
             {
                 StorageService.UpdateProfile(Owner.Name, pmsg.Message);
