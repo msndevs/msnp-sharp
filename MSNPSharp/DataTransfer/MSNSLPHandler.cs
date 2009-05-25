@@ -782,7 +782,7 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage.V2.OperationCode = (byte)OperationCode.InitSession;
                 p2pMessage.V2.DataPacket = new P2PDataLayerPacket();
                 p2pMessage.V2.DataPacket.PayloadData = slpMessage.GetBytes();
-                p2pMessage.V2.DataPacket.TFCombination = 0x1;
+                p2pMessage.V2.DataPacket.TFCombination = TFCombination.First;
                 p2pMessage.V2.DataPacket.SessionID = 0;
                 p2pMessage.V2.DataPacket.PackageNumber = 0;// session.DataPacketNumber;
 
@@ -1110,7 +1110,7 @@ namespace MSNPSharp.DataTransfer
                 {
                     closeMessage.V2.DataPacket = new P2PDataLayerPacket();
                     closeMessage.V2.DataPacket.PayloadData = closeMessage.InnerMessage.GetBytes();
-                    closeMessage.V2.DataPacket.TFCombination = 0x1;
+                    closeMessage.V2.DataPacket.TFCombination = TFCombination.First;
                     closeMessage.V2.DataPacket.PackageNumber = transferSession.DataPacketNumber;
 
                     closeMessage.V2.SequenceNumber = session.LocalIdentifier;
@@ -1145,7 +1145,7 @@ namespace MSNPSharp.DataTransfer
             {
                 closeMessage.V2.DataPacket = new P2PDataLayerPacket();
                 closeMessage.V2.DataPacket.PayloadData = closeMessage.InnerMessage.GetBytes();
-                closeMessage.V2.DataPacket.TFCombination = 0x1;
+                closeMessage.V2.DataPacket.TFCombination = TFCombination.First;
                 closeMessage.V2.DataPacket.PackageNumber = transferSession.DataPacketNumber;
 
                 closeMessage.V2.SequenceNumber = transferSession.MessageSession.LocalIdentifier;
@@ -1512,7 +1512,7 @@ namespace MSNPSharp.DataTransfer
                 {
                     p2pMessage.V2.DataPacket = new P2PDataLayerPacket();
                     p2pMessage.V2.DataPacket.PayloadData = CreateClosingMessage(GetTransferProperties(transferSession.CallId)).GetBytes();
-                    p2pMessage.V2.DataPacket.TFCombination = 0x1;
+                    p2pMessage.V2.DataPacket.TFCombination = TFCombination.First;
                     p2pMessage.V2.DataPacket.PackageNumber = transferSession.DataPacketNumber;
 
                     p2pMessage.V2.SequenceNumber = transferSession.MessageSession.LocalIdentifier;
@@ -1568,7 +1568,7 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 if (p2pMessage.V2.DataPacket == null ||
-                    (p2pMessage.V2.DataPacket != null && p2pMessage.V2.DataPacket.TFCombination != 0x1))
+                    (p2pMessage.V2.DataPacket != null && p2pMessage.V2.DataPacket.TFCombination != TFCombination.First))
                 {
                     // 4 bytes... prepare...
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
@@ -1576,7 +1576,7 @@ namespace MSNPSharp.DataTransfer
                 }
 
                 if (p2pMessage.V2.DataPacket != null &&
-                    p2pMessage.V2.DataPacket.TFCombination == 0x1 &&
+                    p2pMessage.V2.DataPacket.TFCombination == TFCombination.First &&
                     p2pMessage.V2.DataPacket.PayloadData.Length == 4 &&
                     BitConverter.ToInt32(p2pMessage.V2.DataPacket.PayloadData, 0) == 0
                     )
