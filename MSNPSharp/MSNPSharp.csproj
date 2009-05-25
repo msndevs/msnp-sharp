@@ -58,6 +58,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DataTransfer\P2PDataLayerPacket.cs" />
+    <Compile Include="DataTransfer\P2PHeader.cs" />
     <Compile Include="DataTransfer\P2PTransferLayerPacket.cs" />
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
