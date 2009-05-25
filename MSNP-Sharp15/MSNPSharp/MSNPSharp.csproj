@@ -52,6 +52,7 @@
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
     <Compile Include="Conversation.cs" />
+    <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />
     <Compile Include="Credentials.cs" />

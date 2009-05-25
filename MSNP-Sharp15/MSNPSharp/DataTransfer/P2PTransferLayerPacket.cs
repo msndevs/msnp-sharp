@@ -48,26 +48,33 @@ namespace MSNPSharp.DataTransfer
 
     public class P2PTransferLayerPacket : NetworkMessage
     {
-        // Header (8 bytes = 1+1+2+4)
-        private byte headerLength;
-        private byte operationCode;
+        private Byte operationCode;
         private UInt32 sequenceNumber;
-        // TLVs = Header length - 8 
-        private Dictionary<byte, byte[]> typeAndValues = new Dictionary<byte, byte[]>();
-        // Payload (InnerBody)
+        private Dictionary<byte, byte[]> knownTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
+        private Dictionary<byte, byte[]> unknownTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
         private P2PDataLayerPacket dataPacket;
-        // Footer
         private UInt32 footer;
-
         private bool needACK = false;
-
-        #region Header
 
         public byte HeaderLength
         {
             get
             {
-                return headerLength;
+                byte length = 8;
+                if (knownTLVs.Count > 0)
+                {
+                    // Sum TLV lengths
+                    foreach (byte[] val in knownTLVs.Values)
+                    {
+                        length += (byte)(1 + 1 + val.Length);
+                    }
+                    // 4 bytes padding
+                    if ((length % 4) != 0)
+                    {
+                        length += (byte)(4 - (length % 4));
+                    }
+                }
+                return length;
             }
         }
 
@@ -106,8 +113,6 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        #endregion
-
         public bool NeedACK
         {
             get
@@ -133,21 +138,25 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private UInt32 acksequenceNumber;
         public UInt32 AcksequenceNumber
         {
             get
             {
-                if (typeAndValues.ContainsKey(0x2))
-                    return BitConverter.ToUInt32(typeAndValues[0x2], 0);
-
-                return 0;
+                return acksequenceNumber;
             }
             set
             {
+                acksequenceNumber = value;
+
                 if (value == 0)
-                    typeAndValues.Remove(0x2);
+                {
+                    knownTLVs.Remove(0x2);
+                }
                 else
-                    typeAndValues[0x2] = BitConverter.GetBytes(value);
+                {                    
+                    knownTLVs[0x2] = BitUtility.GetBytes(value, false);
+                }
             }
         }
 
@@ -192,50 +201,39 @@ namespace MSNPSharp.DataTransfer
 
         public override byte[] GetBytes()
         {
-            headerLength = 0x08;
-
-            foreach (byte[] val in typeAndValues.Values)
-            {
-                headerLength += (byte)(1 + 1 + val.Length); //T+L+V
-            }
-            // 4 bytes padding
-            if ((headerLength % 4) != 0)
-            {
-                headerLength += (byte)(4 - (headerLength % 4));
-            }
-
             if (NeedACK)
             {
                 OperationCode = (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK;
             }
 
+            byte headerLen = HeaderLength;
+
             // Header + Payload + Footer(for SB sessions only)
-            byte[] data = new byte[HeaderLength + PayloadLength + 4];
+            byte[] data = new byte[headerLen + PayloadLength + 4];
 
-
-            MemoryStream memStream = new MemoryStream(data, true);
+            MemoryStream memStream = new MemoryStream(data);
             BinaryWriter writer = new BinaryWriter(memStream);
 
-            writer.Write(HeaderLength);
-            writer.Write(OperationCode);
-            writer.Write(P2PMessage.ToBigEndian(PayloadLength));
-            writer.Write(P2PMessage.ToBigEndian(SequenceNumber));
+            writer.Write((byte)headerLen);
+            writer.Write((byte)OperationCode);
+            writer.Write(BitUtility.ToBigEndian((ushort)PayloadLength));
+            writer.Write(BitUtility.ToBigEndian((uint)SequenceNumber));
 
-            foreach (KeyValuePair<byte, byte[]> keyvalue in typeAndValues)
+            foreach (KeyValuePair<byte, byte[]> keyvalue in knownTLVs)
             {
-                writer.Write(keyvalue.Key); // Type
+                writer.Write((byte)keyvalue.Key); // Type
                 writer.Write((byte)keyvalue.Value.Length); // Length
                 writer.Write(keyvalue.Value, 0, keyvalue.Value.Length); // Value
             }
 
-            memStream.Seek(HeaderLength, SeekOrigin.Begin);
+            memStream.Seek(headerLen, SeekOrigin.Begin); // Skip padding bytes for TLVs
 
             if (PayloadLength > 0)
             {
                 writer.Write(DataPacket.GetBytes());
             }
 
-            writer.Write(P2PMessage.ToBigEndian(Footer));
+            writer.Write(BitUtility.ToBigEndian(Footer));
 
             writer.Close();
             memStream.Close();
@@ -249,20 +247,20 @@ namespace MSNPSharp.DataTransfer
         {
             MemoryStream mem = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(mem);
-            headerLength = reader.ReadByte();
-            OperationCode = reader.ReadByte();
+
+            byte headerLen = reader.ReadByte();
+            OperationCode = (byte)reader.ReadByte();
+            ushort payloadLen = BitUtility.ToBigEndian(reader.ReadUInt16());
+            SequenceNumber = BitUtility.ToBigEndian(reader.ReadUInt32());
 
             if (OperationCode == (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK)
             {
                 NeedACK = true;
             }
 
-            ushort payloadLen = P2PMessage.ToBigEndian(reader.ReadUInt16());
-            SequenceNumber = P2PMessage.ToBigEndian(reader.ReadUInt32());
-
-            if (HeaderLength > 8)  //TLVs
+            if (headerLen > 8)  //TLVs
             {
-                byte[] TLvs = reader.ReadBytes(HeaderLength - 8);
+                byte[] TLvs = reader.ReadBytes(headerLen - 8);
                 int index = 0;
                 do
                 {
@@ -274,19 +272,46 @@ namespace MSNPSharp.DataTransfer
                     byte L = TLvs[index + 1];
                     byte[] V = new byte[(int)L];
                     Array.Copy(TLvs, index + 2, V, 0, (int)L);
-                    typeAndValues[T] = V;
+                    ProcessTLVData(T, L, V);
                     index += 2 + L;
                 }
                 while (index < TLvs.Length);
             }
+
+            mem.Seek(headerLen, SeekOrigin.Begin); // Skip padding bytes for TLVs
 
             if (payloadLen > 0)
             {
                 DataPacket = new P2PDataLayerPacket(reader.ReadBytes(payloadLen));
             }
 
-            Footer = P2PMessage.ToBigEndian(reader.ReadUInt32());
+            Footer = BitUtility.ToBigEndian(reader.ReadUInt32());
 
+            mem.Close();
+            reader.Close();
+        }
+
+        protected void ProcessTLVData(byte T, byte L, byte[] V)
+        {
+            switch (T)
+            {
+                case 1:
+                    P2PDataLayerPacket initialData = new P2PDataLayerPacket();
+                    initialData.InnerBody = V;
+                    knownTLVs[T] = V;
+                    return;
+
+                case 2:
+                    if (L == 4)
+                    {
+                        AcksequenceNumber = BitUtility.ToUInt32(V, 0, false);
+                        knownTLVs[T] = V;
+                        return;
+                    }
+                    break;
+            }
+
+            unknownTLVs.Add(T, V);
         }
 
         /// <summary>
@@ -307,7 +332,7 @@ namespace MSNPSharp.DataTransfer
             }
 
             StringBuilder sb = new StringBuilder();
-            foreach (KeyValuePair<byte, byte[]> keyvalue in typeAndValues)
+            foreach (KeyValuePair<byte, byte[]> keyvalue in knownTLVs)
             {
                 sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
                 sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
@@ -324,7 +349,7 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "PayloadLength       : {1:x} ({0})\r\n", PayloadLength.ToString(System.Globalization.CultureInfo.InvariantCulture), PayloadLength) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "SequenceNumber      : {1:x} ({0})\r\n", SequenceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), SequenceNumber) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AcksequenceNumber   : {1:x} ({0})\r\n", AcksequenceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), AcksequenceNumber) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TLV({0})              : {1}\r\n", typeAndValues.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), sb.ToString());
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TLV({0})              : {1}\r\n", knownTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), sb.ToString());
 
             debugLine +=
 

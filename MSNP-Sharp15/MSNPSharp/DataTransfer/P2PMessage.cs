@@ -500,86 +500,7 @@ namespace MSNPSharp.DataTransfer
             return "[P2Pv2 Message]\r\n" + V2.ToString();
         }
 
-        #region Protected helper methods
-
-        protected internal static ushort ToLittleEndian(ushort val)
-        {
-            if (BitConverter.IsLittleEndian)
-                return val;
-
-            return FlipEndian(val);
-        }
-
-        protected internal static uint ToLittleEndian(uint val)
-        {
-            if (BitConverter.IsLittleEndian)
-                return val;
-
-            return FlipEndian(val);
-        }
-
-        protected internal static ulong ToLittleEndian(ulong val)
-        {
-            if (BitConverter.IsLittleEndian)
-                return val;
-
-            return FlipEndian(val);
-        }
-
-        protected internal static ushort ToBigEndian(ushort val)
-        {
-            if (!BitConverter.IsLittleEndian)
-                return val;
-
-            return FlipEndian(val);
-        }
-
-        protected internal static uint ToBigEndian(uint val)
-        {
-            if (!BitConverter.IsLittleEndian)
-                return val;
-
-            return FlipEndian(val);
-        }
-
-        protected internal static ulong ToBigEndian(ulong val)
-        {
-            if (!BitConverter.IsLittleEndian)
-                return val;
-
-            return FlipEndian(val);
-        }
-
-        protected internal static ushort FlipEndian(ushort val)
-        {
-            return (ushort)
-                 (((val & 0x00ff) << 8) +
-                 ((val & 0xff00) >> 8));
-        }
-
-
-        protected internal static uint FlipEndian(uint val)
-        {
-            return (uint)
-                 (((val & 0x000000ff) << 24) +
-                 ((val & 0x0000ff00) << 8) +
-                 ((val & 0x00ff0000) >> 8) +
-                 ((val & 0xff000000) >> 24));
-        }
-
-        protected internal static ulong FlipEndian(ulong val)
-        {
-            return (ulong)
-                 (((val & 0x00000000000000ff) << 56) +
-                 ((val & 0x000000000000ff00) << 40) +
-                 ((val & 0x0000000000ff0000) << 24) +
-                 ((val & 0x00000000ff000000) << 8) +
-                 ((val & 0x000000ff00000000) >> 8) +
-                 ((val & 0x0000ff0000000000) >> 24) +
-                 ((val & 0x00ff000000000000) >> 40) +
-                 ((val & 0xff00000000000000) >> 56));
-        }
-        #endregion
+        
 
         /// <summary>
         /// Sets the D as acknowledgement in the ParentMessage.ParentMessage. This should be a SBMessage object.
@@ -602,15 +523,15 @@ namespace MSNPSharp.DataTransfer
                 Stream memStream = new System.IO.MemoryStream(data);
                 BinaryReader reader = new System.IO.BinaryReader(memStream);
 
-                SessionId = ToLittleEndian(reader.ReadUInt32());
-                Identifier = ToLittleEndian(reader.ReadUInt32());
-                Offset = ToLittleEndian(reader.ReadUInt64());
-                TotalSize = ToLittleEndian(reader.ReadUInt64());
-                MessageSize = ToLittleEndian(reader.ReadUInt32());
-                Flags = (P2PFlag)ToLittleEndian(reader.ReadUInt32());
-                AckSessionId = ToLittleEndian(reader.ReadUInt32());
-                AckIdentifier = ToLittleEndian(reader.ReadUInt32());
-                AckTotalSize = ToLittleEndian(reader.ReadUInt64());
+                SessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                Identifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                Offset = BitUtility.ToLittleEndian(reader.ReadUInt64());
+                TotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
+                MessageSize = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                Flags = (P2PFlag)BitUtility.ToLittleEndian(reader.ReadUInt32());
+                AckSessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                AckIdentifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                AckTotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
 
                 // now move to the footer while reading the message contents
                 InnerBody = new byte[MessageSize];
@@ -618,7 +539,7 @@ namespace MSNPSharp.DataTransfer
 
                 // this is big-endian
                 if (data.Length > 48 + MessageSize)
-                    Footer = ToBigEndian(reader.ReadUInt32());
+                    Footer = BitUtility.ToBigEndian(reader.ReadUInt32());
 
                 // clean up
                 reader.Close();
@@ -675,18 +596,18 @@ namespace MSNPSharp.DataTransfer
                 Stream memStream = new MemoryStream(p2pMessage, true);
                 BinaryWriter writer = new BinaryWriter(memStream);
 
-                writer.Write(ToLittleEndian(SessionId));
-                writer.Write(ToLittleEndian(Identifier));
-                writer.Write(ToLittleEndian(Offset));
-                writer.Write(ToLittleEndian(TotalSize));
-                writer.Write(ToLittleEndian(MessageSize));
-                writer.Write(ToLittleEndian((uint)Flags));
-                writer.Write(ToLittleEndian(AckSessionId));
-                writer.Write(ToLittleEndian(AckIdentifier));
-                writer.Write(ToLittleEndian(AckTotalSize));
+                writer.Write(BitUtility.ToLittleEndian(SessionId));
+                writer.Write(BitUtility.ToLittleEndian(Identifier));
+                writer.Write(BitUtility.ToLittleEndian(Offset));
+                writer.Write(BitUtility.ToLittleEndian(TotalSize));
+                writer.Write(BitUtility.ToLittleEndian(MessageSize));
+                writer.Write(BitUtility.ToLittleEndian((uint)Flags));
+                writer.Write(BitUtility.ToLittleEndian(AckSessionId));
+                writer.Write(BitUtility.ToLittleEndian(AckIdentifier));
+                writer.Write(BitUtility.ToLittleEndian(AckTotalSize));
                 writer.Write(innerBytes);
 
-                writer.Write(ToBigEndian(Footer));
+                writer.Write(BitUtility.ToBigEndian(Footer));
 
                 // clean up
                 writer.Close();
@@ -907,16 +828,16 @@ namespace MSNPSharp.DataTransfer
                 Stream memStream = new System.IO.MemoryStream(p2pMessage, true);
                 BinaryWriter writer = new System.IO.BinaryWriter(memStream);
 
-                writer.Write(ToLittleEndian((uint)(48 + MessageSize)));
-                writer.Write(ToLittleEndian(SessionId));
-                writer.Write(ToLittleEndian(Identifier));
-                writer.Write(ToLittleEndian(Offset));
-                writer.Write(ToLittleEndian(TotalSize));
-                writer.Write(ToLittleEndian(MessageSize));
-                writer.Write(ToLittleEndian((uint)Flags));
-                writer.Write(ToLittleEndian(AckSessionId));
-                writer.Write(ToLittleEndian(AckIdentifier));
-                writer.Write(ToLittleEndian(AckTotalSize));
+                writer.Write(BitUtility.ToLittleEndian((uint)(48 + MessageSize)));
+                writer.Write(BitUtility.ToLittleEndian(SessionId));
+                writer.Write(BitUtility.ToLittleEndian(Identifier));
+                writer.Write(BitUtility.ToLittleEndian(Offset));
+                writer.Write(BitUtility.ToLittleEndian(TotalSize));
+                writer.Write(BitUtility.ToLittleEndian(MessageSize));
+                writer.Write(BitUtility.ToLittleEndian((uint)Flags));
+                writer.Write(BitUtility.ToLittleEndian(AckSessionId));
+                writer.Write(BitUtility.ToLittleEndian(AckIdentifier));
+                writer.Write(BitUtility.ToLittleEndian(AckTotalSize));
 
                 writer.Write(innerBytes);
 
@@ -947,15 +868,15 @@ namespace MSNPSharp.DataTransfer
                 Stream memStream = new System.IO.MemoryStream(data);
                 BinaryReader reader = new System.IO.BinaryReader(memStream);
 
-                SessionId = ToLittleEndian(reader.ReadUInt32());
-                Identifier = ToLittleEndian(reader.ReadUInt32());
-                Offset = ToLittleEndian(reader.ReadUInt64());
-                TotalSize = ToLittleEndian(reader.ReadUInt64());
-                MessageSize = ToLittleEndian(reader.ReadUInt32());
-                Flags = (P2PFlag)ToLittleEndian(reader.ReadUInt32());
-                AckSessionId = ToLittleEndian(reader.ReadUInt32());
-                AckIdentifier = ToLittleEndian(reader.ReadUInt32());
-                AckTotalSize = ToLittleEndian(reader.ReadUInt64());
+                SessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                Identifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                Offset = BitUtility.ToLittleEndian(reader.ReadUInt64());
+                TotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
+                MessageSize = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                Flags = (P2PFlag)BitUtility.ToLittleEndian(reader.ReadUInt32());
+                AckSessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                AckIdentifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
+                AckTotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
 
                 // now read the message contents
                 InnerBody = new byte[MessageSize];
