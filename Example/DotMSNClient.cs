@@ -1876,7 +1876,7 @@ namespace MSNPSharpClient
 
             if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
             {
-                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, null, NSMessageHandler.MachineGuid);
+                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, NSMessageHandler.MachineGuid);
             }
         }
 

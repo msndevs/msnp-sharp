@@ -60,6 +60,15 @@ namespace MSNPSharp
 
         private string[] content;
 
+        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, Guid machineguid)
+        {
+            Message = personalmsg;
+            mediaType = mediatype;
+            content = currentmediacontent;
+            machineGuid = machineguid;
+            Format = "{0}";
+        }
+
         public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, string contentformat, Guid machineguid)
         {
             Message = personalmsg;
