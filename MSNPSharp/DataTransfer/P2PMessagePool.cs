@@ -69,31 +69,33 @@ namespace MSNPSharp.DataTransfer
 
             if (message.Version == P2PVersion.P2PV1)
             {
-                if (message.IsAcknowledgement == true || message.MessageSize == 0 || message.MessageSize == message.TotalSize)
+                if (message.Header.IsAcknowledgement ||
+                    message.Header.MessageSize == 0 ||
+                    message.Header.MessageSize == message.Header.TotalSize)
                 {
                     availableMessages.Enqueue(message);
                 }
                 else
                 {
                     // if this message already exists in the buffer append the current p2p message to the buffer
-                    if (messageStreams.ContainsKey(message.Identifier))
+                    if (messageStreams.ContainsKey(message.Header.Identifier))
                     {
-                        ((MemoryStream)messageStreams[message.Identifier]).Write(message.InnerBody, 0, message.InnerBody.Length);
+                        ((MemoryStream)messageStreams[message.Header.Identifier]).Write(message.InnerBody, 0, message.InnerBody.Length);
                     }
                     else
                     {
                         MemoryStream bufferStream = new MemoryStream();
-                        messageStreams.Add(message.Identifier, bufferStream);
+                        messageStreams.Add(message.Header.Identifier, bufferStream);
                         bufferStream.Write(message.InnerBody, 0, message.InnerBody.Length);
                     }
 
                     // check whether this is the last message
-                    if (message.Offset + message.MessageSize == message.TotalSize)
+                    if (message.V1Header.Offset + message.Header.MessageSize == message.Header.TotalSize)
                     {
                         // set the correct fields to match the whole message
-                        message.Offset = 0;
-                        message.MessageSize = (uint)message.TotalSize;
-                        MemoryStream bufferStream = (MemoryStream)messageStreams[message.Identifier];
+                        message.V1Header.Offset = 0;
+                        message.Header.MessageSize = (uint)message.Header.TotalSize;
+                        MemoryStream bufferStream = (MemoryStream)messageStreams[message.Header.Identifier];
 
                         // set the inner body to the whole message
                         message.InnerBody = bufferStream.ToArray();
@@ -103,14 +105,16 @@ namespace MSNPSharp.DataTransfer
 
                         // remove the old memorystream buffer, and clear up resources in the hashtable
                         bufferStream.Close();
-                        messageStreams.Remove(message.Identifier);
+                        messageStreams.Remove(message.Header.Identifier);
                     }
                 }
             }
 
             if (message.Version == P2PVersion.P2PV2)
             {
-                if (message.V2.IsACK == true || message.V2.PayloadLength == 0)
+                if (message.Header.IsAcknowledgement ||
+                    message.InnerBody == null ||
+                    message.InnerBody.Length == 0)
                 {
                     availableMessages.Enqueue(message);
                 }
@@ -118,15 +122,16 @@ namespace MSNPSharp.DataTransfer
                 {
                     // if this message already exists in the buffer append the current p2p message to the buffer
 
-                    byte[] innerBytes = message.V2.GetBytes();
-                    if (messageStreams.ContainsKey(message.V2.SequenceNumber))
+                    // XXX TODO?
+                    byte[] innerBytes = message.GetBytes();
+                    if (messageStreams.ContainsKey(message.Header.Identifier))
                     {
-                        ((MemoryStream)messageStreams[message.V2.SequenceNumber]).Write(innerBytes, 0, innerBytes.Length);
+                        ((MemoryStream)messageStreams[message.Header.Identifier]).Write(innerBytes, 0, innerBytes.Length);
                     }
                     else
                     {
                         MemoryStream bufferStream = new MemoryStream();
-                        messageStreams.Add(message.V2.SequenceNumber, bufferStream);
+                        messageStreams.Add(message.Header.Identifier, bufferStream);
                         bufferStream.Write(innerBytes, 0, innerBytes.Length);
                     }
 

@@ -188,192 +188,85 @@ namespace MSNPSharp.DataTransfer
         public const uint FileTransAppID = 2;
     }
 
+
+    internal enum OperationCode : byte
+    {
+        None = 0x0,
+        NeedACK = 0x2,
+        InitSession = 0x3
+    }
+
     /// <summary>
     /// Represents a single P2P framework message.
     /// </summary>
     [Serializable()]
     public class P2PMessage : NetworkMessage
     {
-        private uint sessionId;
-        private uint identifier;
-        private ulong offset;
-        private ulong totalSize;
-        private uint messageSize;
-        private P2PFlag flags;
-        private uint ackSessionId;
-        private uint ackIdentifier;
-        private ulong ackTotalSize;
+        protected P2PVersion version;
+        private P2PHeader header;
         private uint footer;
 
-        protected P2PVersion version;
-        private P2PTransferLayerPacket v2 = new P2PTransferLayerPacket();
-
-        public P2PMessage()
+        public P2PMessage(P2PVersion ver)
+            : this(ver, new byte[0])
         {
-            version = P2PVersion.P2PV1;
         }
 
-        public P2PMessage(P2PVersion ver)
+        public P2PMessage(P2PVersion ver, byte[] data)
         {
             version = ver;
-        }
 
-        /// <summary>
-        /// P2Pv2 message
-        /// </summary>
-        public P2PTransferLayerPacket V2
-        {
-            get { return v2; }
-            set { v2 = value; }
-        }
+            if (ver == P2PVersion.P2PV1)
+            {
+                header = new P2Pv1Header();
+            }
+            else if (ver == P2PVersion.P2PV2)
+            {
+                header = new P2Pv2Header();
+            }
 
+            if (data.Length > 0)
+            {
+                ParseBytes(data);
+            }
+        }
 
         /// <summary>
         /// The p2p framework currently using.
         /// </summary>
         public P2PVersion Version
         {
-            get { return version; }
+            get
+            {
+                return version;
+            }
         }
 
-
-        /// <summary>
-        /// The session identifier field. Bytes 0-3 in the binary header.
-        /// </summary>
-        public uint SessionId
+        public P2PHeader Header
         {
             get
             {
-                return sessionId;
-            }
-            set
-            {
-                sessionId = value;
+                return header;
             }
         }
 
-        /// <summary>
-        /// The identifier of this message. Bytes 5-8 in the binary header.
-        /// </summary>
-        public uint Identifier
+        public P2Pv1Header V1Header
         {
             get
             {
-                return identifier;
-            }
-            set
-            {
-                identifier = value;
+                return (P2Pv1Header)header;
             }
         }
 
-        /// <summary>
-        /// The offset in bytes from the begin of the total message. Bytes 9-16 in the binary header.
-        /// </summary>
-        public ulong Offset
+        public P2Pv2Header V2Header
         {
             get
             {
-                return offset;
-            }
-            set
-            {
-                offset = value;
+                return (P2Pv2Header)header;
             }
         }
 
         /// <summary>
-        /// Total message length in bytes.  Bytes 17-24 in the binary header.
-        /// </summary>
-        public ulong TotalSize
-        {
-            get
-            {
-                return totalSize;
-            }
-            set
-            {
-                totalSize = value;
-            }
-        }
-
-        /// <summary>
-        /// Message length in bytes of the current message. Bytes 25-28 in the binary header.
-        /// </summary>
-        public uint MessageSize
-        {
-            get
-            {
-                return messageSize;
-            }
-            set
-            {
-                messageSize = value;
-            }
-        }
-
-        /// <summary>
-        /// Flag parameter. Bytes 29-32 in the binary header.
-        /// </summary>
-        public P2PFlag Flags
-        {
-            get
-            {
-                return flags;
-            }
-            set
-            {
-                flags = value;
-            }
-        }
-
-        /// <summary>
-        /// Acknowledge session identifier. Acknowledgement messages respond with this number in their acknowledge identfier. Bytes 33-36 in the binary header.
-        /// </summary>
-        public uint AckSessionId
-        {
-            get
-            {
-                return ackSessionId;
-            }
-            set
-            {
-                ackSessionId = value;
-            }
-        }
-
-        /// <summary>
-        /// Acknowledge identifier. Set when the message is an acknowledgement to a received message. Bytes 37-40 in the binary header.
-        /// </summary>
-        public uint AckIdentifier
-        {
-            get
-            {
-                return ackIdentifier;
-            }
-            set
-            {
-                ackIdentifier = value;
-            }
-        }
-
-        /// <summary>
-        /// Acknowledged total message length. Set when the message is an acknowledgement to a received message. Bytes 41-48 in the binary header.
-        /// </summary>
-        public ulong AckTotalSize
-        {
-            get
-            {
-                return ackTotalSize;
-            }
-            set
-            {
-                ackTotalSize = value;
-            }
-        }
-
-        /// <summary>
-        /// The footer, or Application Identifier. Bytes 0-3 in the binary footer (BIG ENDIAN).
+        /// The footer, or Application Identifier (BIG ENDIAN).
         /// </summary>
         public uint Footer
         {
@@ -387,16 +280,112 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+
         /// <summary>
-        /// Indicates whether the message is an acknowledgement message
+        /// Payload data
         /// </summary>
-        public bool IsAcknowledgement
+        public new byte[] InnerBody
         {
             get
             {
-                return AckIdentifier > 0;
+                return base.InnerBody;
+            }
+            set
+            {
+                base.InnerBody = value;
+
+                if (version == P2PVersion.P2PV1)
+                {
+                    header.MessageSize = (uint)value.Length;
+                    header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+                }
+                else if (version == P2PVersion.P2PV2)
+                {
+                    P2PDataLayerPacket dataPacket = new P2PDataLayerPacket();
+                    dataPacket.PayloadData = value;
+
+                    header.MessageSize = (uint)dataPacket.GetBytes().Length;
+                    header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+                }
             }
         }
+
+        /// <summary>
+        /// SLP Message
+        /// </summary>
+        public new NetworkMessage InnerMessage
+        {
+            get
+            {
+                if (base.InnerMessage == null && InnerBody != null && InnerBody.Length > 0)
+                    base.InnerMessage = SLPMessage.Parse(InnerBody);
+
+                return base.InnerMessage;
+            }
+            set
+            {
+                this.InnerBody = value.GetBytes();
+                base.InnerMessage = value;
+            }
+        }
+
+        #region Remove these later...
+
+        private uint sessionID;
+        public uint SessionID
+        {
+            get
+            {
+                return sessionID;
+            }
+            set
+            {
+                sessionID = value;
+            }
+        }
+
+        private TFCombination tfCombination;
+        public TFCombination TFCombination
+        {
+            get
+            {
+                return tfCombination;
+            }
+            set
+            {
+                tfCombination = value;
+            }
+        }
+
+        private ushort packageNumber;
+        public ushort PackageNumber
+        {
+            get
+            {
+                return packageNumber;
+            }
+            set
+            {
+                packageNumber = value;
+            }
+        }
+
+        private ulong dataRemaining;
+        public ulong DataRemaining
+        {
+            get
+            {
+                return dataRemaining;
+            }
+            set
+            {
+                dataRemaining = value;
+            }
+        }
+
+
+        #endregion
+
 
         /// <summary>
         /// Indicates whether the message will be acked. If so, send a message returned from CreateAcknowledgement(). 
@@ -405,15 +394,15 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                if ((Offset + MessageSize) != TotalSize)
+                if (Version == P2PVersion.P2PV1 && (V1Header.Offset + Header.MessageSize) != Header.TotalSize)
                     return false;
-                if (AckIdentifier > 0)
+                if (Header.IsAcknowledgement)
                     return false;
                 if (InnerBody != null)
                     return false;
-                if ((Flags & P2PFlag.Waiting) == P2PFlag.Waiting)
+                if (Version == P2PVersion.P2PV1 && (V1Header.Flags & P2PFlag.Waiting) == P2PFlag.Waiting)
                     return false;
-                if ((Flags & P2PFlag.CloseSession) == P2PFlag.CloseSession)
+                if (Version == P2PVersion.P2PV1 && (V1Header.Flags & P2PFlag.CloseSession) == P2PFlag.CloseSession)
                     return false;
                 return true;
             }
@@ -429,51 +418,98 @@ namespace MSNPSharp.DataTransfer
 
             if (Version == P2PVersion.P2PV1)
             {
-                ack.TotalSize = TotalSize;
-                ack.Flags = P2PFlag.Acknowledgement;
-                ack.AckSessionId = Identifier;
-                ack.AckIdentifier = AckSessionId;
-                ack.AckTotalSize = TotalSize;
+                ack.Header.TotalSize = Header.TotalSize;
+                ack.V1Header.Flags = P2PFlag.Acknowledgement;
+                ack.V1Header.AckSessionId = Header.Identifier;
+                ack.Header.AckIdentifier = V1Header.AckSessionId;
+                ack.V1Header.AckTotalSize = Header.TotalSize;
             }
             else if (Version == P2PVersion.P2PV2)
             {
-                ack.V2.AcksequenceNumber = V2.SequenceNumber + V2.PayloadLength;
+                // XXX TODO...
+                //ack.Header.AckIdentifier = 1; // To calculate ack.Header.MessageSize correctly.
+                ack.Header.AckIdentifier = ack.Header.Identifier + ack.Header.MessageSize;
             }
 
             return ack;
         }
 
-        public P2PMessage[] SplitMessage(int maxSize)
+        /// <summary>
+        /// Split big P2PMessages to transport over sb or dc.
+        /// </summary>
+        /// <param name="p2pMessage"></param>
+        /// <param name="maxSize"></param>
+        /// <returns></returns>
+        public static P2PMessage[] SplitMessage(P2PMessage p2pMessage, int maxSize)
         {
-            if (MessageSize <= maxSize)
-                return new P2PMessage[] { this };
+            if (p2pMessage.Header.MessageSize <= maxSize)
+                return new P2PMessage[] { p2pMessage };
 
-            uint offset = 0;
+            ulong offset = 0;
             Random rand = new Random();
-            int cnt = ((int)(MessageSize / maxSize)) + 1;
+            int cnt = ((int)(p2pMessage.Header.MessageSize / maxSize)) + 1;
             List<P2PMessage> chunks = new List<P2PMessage>(cnt);
-            byte[] totalMessage = (InnerBody != null) ? InnerBody : InnerMessage.GetBytes();
+            byte[] totalMessage = (p2pMessage.InnerBody != null) ?
+                p2pMessage.InnerBody : p2pMessage.InnerMessage.GetBytes();
+
             for (int i = 0; i < cnt; i++)
             {
-                P2PMessage chunkMessage = new P2PMessage();
-                chunkMessage.AckIdentifier = AckIdentifier;
-                chunkMessage.AckTotalSize = AckTotalSize;
-                chunkMessage.Flags = Flags;
-                chunkMessage.Footer = Footer;
-                chunkMessage.Identifier = Identifier;
-                chunkMessage.MessageSize = (uint)Math.Min((uint)maxSize, (uint)(MessageSize - offset));
-                chunkMessage.Offset = offset;
-                chunkMessage.SessionId = SessionId;
-                chunkMessage.TotalSize = MessageSize;
-                chunkMessage.InnerBody = new byte[chunkMessage.MessageSize];
-                Array.Copy(totalMessage, (int)chunkMessage.Offset, chunkMessage.InnerBody, 0, (int)chunkMessage.MessageSize);
-                chunkMessage.AckSessionId = (uint)rand.Next(50000, int.MaxValue);
+                P2PMessage chunkMessage = new P2PMessage(p2pMessage.Version);
+
+                if (p2pMessage.Version == P2PVersion.P2PV1)
+                {
+                    chunkMessage.V1Header.AckIdentifier = p2pMessage.V1Header.AckIdentifier;
+                    chunkMessage.V1Header.AckTotalSize = p2pMessage.V1Header.AckTotalSize;
+                    chunkMessage.V1Header.Flags = p2pMessage.V1Header.Flags;
+                    chunkMessage.V1Header.Identifier = p2pMessage.V1Header.Identifier;
+                    chunkMessage.V1Header.MessageSize = (uint)Math.Min((uint)maxSize, (uint)(p2pMessage.Header.TotalSize - offset));
+                    chunkMessage.V1Header.Offset = offset;
+                    chunkMessage.V1Header.SessionId = p2pMessage.V1Header.SessionId;
+                    chunkMessage.V1Header.TotalSize = p2pMessage.V1Header.TotalSize;
+
+                    chunkMessage.InnerBody = new byte[chunkMessage.Header.MessageSize];
+                    Array.Copy(totalMessage, (int)offset, chunkMessage.InnerBody, 0, (int)chunkMessage.Header.MessageSize);
+
+                    chunkMessage.V1Header.AckSessionId = (uint)rand.Next(50000, int.MaxValue);
+                    chunkMessage.Footer = p2pMessage.Footer;
+                }
+                else
+                {
+                    P2PDataLayerPacket DataPacket = new P2PDataLayerPacket();
+                    uint messageSize = (uint)Math.Min((uint)maxSize, (uint)(p2pMessage.Header.TotalSize - offset));
+
+                    chunkMessage.V2Header.OperationCode = p2pMessage.V2Header.OperationCode;
+
+                    chunkMessage.Header.MessageSize = messageSize;
+                    DataPacket.PayloadData = new byte[messageSize];
+                    Array.Copy(totalMessage, (int)offset, DataPacket.PayloadData, 0, (int)messageSize);
+
+                    chunkMessage.SessionID = p2pMessage.SessionID;
+
+                    chunkMessage.Header.Identifier = (uint)(chunkMessage.Header.Identifier + offset);
+                    chunkMessage.TFCombination = p2pMessage.TFCombination;
+
+                    if (i == 0)
+                    {
+                        chunkMessage.Header.AckIdentifier = p2pMessage.Header.AckIdentifier;
+                    }
+
+                    if ((i != 0) &&
+                        TFCombination.First == (p2pMessage.TFCombination & TFCombination.First))
+                    {
+                        chunkMessage.TFCombination = (TFCombination)(p2pMessage.TFCombination - TFCombination.First);
+                    }
+                }
+
                 chunkMessage.PrepareMessage();
                 chunks.Add(chunkMessage);
-                offset += chunkMessage.MessageSize;
+
+                offset += chunkMessage.Header.MessageSize;
             }
+
             return chunks.ToArray();
         }
+
 
         /// <summary>
         /// Returns debug info
@@ -481,26 +517,11 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public override string ToString()
         {
-            if (Version == P2PVersion.P2PV1)
-            {
-                string debugLine =
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionId     : {1:x} ({0})\r\n", SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionId) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier    : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Offset        : {1:x} ({0})\r\n", Offset.ToString(System.Globalization.CultureInfo.InvariantCulture), Offset) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "TotalSize     : {1:x} ({0})\r\n", TotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), TotalSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "MessageSize   : {1:x} ({0})\r\n", MessageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), MessageSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Flags         : {1:x} ({0})\r\n", (uint)Flags, Convert.ToString(Flags)) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckSessionId  : {1:x} ({0})\r\n", AckSessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), AckSessionId) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({1})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
-                return "[P2PMessage]\r\n" + debugLine;
-            }
-
-            return "[P2Pv2 Message]\r\n" + V2.ToString();
+            return "[P2PMessage]\r\n" +
+                header.ToString() +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "FOOTER        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer) +
+                ((InnerMessage != null) ? InnerMessage.ToString() : String.Empty);
         }
-
-        
 
         /// <summary>
         /// Sets the D as acknowledgement in the ParentMessage.ParentMessage. This should be a SBMessage object.
@@ -513,42 +534,97 @@ namespace MSNPSharp.DataTransfer
                     ((SBMessage)ParentMessage.ParentMessage).Acknowledgement = "D";
         }
 
+        public override byte[] GetBytes()
+        {
+            return GetBytes(true);
+        }
+
+        /// <summary>
+        /// Creates a P2P Message. This sets the MessageSize and TotalSize properly.
+        /// </summary>
+        /// <param name="appendFooter"></param>
+        /// <returns></returns>
+        public byte[] GetBytes(bool appendFooter)
+        {
+            byte[] innerBytes = (InnerMessage != null)
+                ? InnerMessage.GetBytes()
+                : (InnerBody != null ? InnerBody : new byte[0]);
+
+            if (version == P2PVersion.P2PV1)
+            {
+                header.MessageSize = (uint)innerBytes.Length;
+                header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+            }
+            else if (version == P2PVersion.P2PV2)
+            {
+                P2PDataLayerPacket dataPacket = new P2PDataLayerPacket();
+
+                dataPacket.SessionID = SessionID;
+                dataPacket.TFCombination = TFCombination;
+                dataPacket.PackageNumber = PackageNumber;
+                dataPacket.DataRemaining = DataRemaining;
+
+                dataPacket.PayloadData = innerBytes; // Set payload
+                innerBytes = dataPacket.GetBytes(); // Set inner bytes
+
+                header.MessageSize = (uint)innerBytes.Length;
+                header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+            }
+
+            byte[] allData = new byte[header.HeaderLength + innerBytes.Length + (appendFooter ? 4 : 0)];
+
+            MemoryStream stream = new MemoryStream(allData);
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(header.GetBytes());
+            writer.Write(innerBytes);
+
+            if (appendFooter)
+                writer.Write(BitUtility.ToBigEndian(footer));
+
+            writer.Close();
+            stream.Close();
+
+            return allData;
+        }
+
+
         /// <summary>
         /// Parses the given message.
         /// </summary>
         public override void ParseBytes(byte[] data)
         {
-            if (Version == P2PVersion.P2PV1)
+            int headerLen = header.ParseHeader(data);
+
+            Stream stream = new MemoryStream(data);
+            BinaryReader reader = new BinaryReader(stream);
+            stream.Seek(headerLen, SeekOrigin.Begin);
+
+            if (version == P2PVersion.P2PV1)
             {
-                Stream memStream = new System.IO.MemoryStream(data);
-                BinaryReader reader = new System.IO.BinaryReader(memStream);
+                InnerBody = new byte[header.MessageSize];
+                reader.Read(InnerBody, 0, (int)header.MessageSize);
 
-                SessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                Identifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                Offset = BitUtility.ToLittleEndian(reader.ReadUInt64());
-                TotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
-                MessageSize = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                Flags = (P2PFlag)BitUtility.ToLittleEndian(reader.ReadUInt32());
-                AckSessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                AckIdentifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                AckTotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
+                SessionID = V1Header.SessionId;
 
-                // now move to the footer while reading the message contents
-                InnerBody = new byte[MessageSize];
-                memStream.Read(InnerBody, 0, (int)MessageSize);
-
-                // this is big-endian
-                if (data.Length > 48 + MessageSize)
-                    Footer = BitUtility.ToBigEndian(reader.ReadUInt32());
-
-                // clean up
-                reader.Close();
-                memStream.Close();
             }
-            else if(Version == P2PVersion.P2PV2)
+            else if (version == P2PVersion.P2PV2)
             {
-                V2 = new P2PTransferLayerPacket(data);
+                P2PDataLayerPacket dataPacket =
+                    new P2PDataLayerPacket(reader.ReadBytes((int)header.MessageSize));
+
+                SessionID = dataPacket.SessionID;
+                DataRemaining = dataPacket.DataRemaining;
+                TFCombination = dataPacket.TFCombination;
+                PackageNumber = dataPacket.PackageNumber;
+                InnerBody = dataPacket.PayloadData;
             }
+
+            if ((data.Length - (headerLen + (InnerBody != null ? InnerBody.Length : 0))) >= 4)
+                footer = BitUtility.ToBigEndian(reader.ReadUInt32());
+
+            reader.Close();
+            stream.Close();
         }
 
         /// <summary>
@@ -573,56 +649,6 @@ namespace MSNPSharp.DataTransfer
                 return new byte[0];
             }
         }
-
-        /// <summary>
-        /// Creates a P2P Message. This sets the MessageSize properly.
-        /// </summary>
-        /// <returns></returns>
-        public override byte[] GetBytes()
-        {
-            if (Version == P2PVersion.P2PV1)
-            {
-                // get the inner contents and set the message size
-                byte[] innerBytes = GetInnerBytes();
-                MessageSize = (uint)innerBytes.Length;
-
-                // if no total size is specified, then we assume this is the whole message.
-                if (TotalSize == 0)
-                    TotalSize = MessageSize;
-
-                // total size is header (48) + footer (4) + messagesize
-                byte[] p2pMessage = new byte[52 + MessageSize];
-
-                Stream memStream = new MemoryStream(p2pMessage, true);
-                BinaryWriter writer = new BinaryWriter(memStream);
-
-                writer.Write(BitUtility.ToLittleEndian(SessionId));
-                writer.Write(BitUtility.ToLittleEndian(Identifier));
-                writer.Write(BitUtility.ToLittleEndian(Offset));
-                writer.Write(BitUtility.ToLittleEndian(TotalSize));
-                writer.Write(BitUtility.ToLittleEndian(MessageSize));
-                writer.Write(BitUtility.ToLittleEndian((uint)Flags));
-                writer.Write(BitUtility.ToLittleEndian(AckSessionId));
-                writer.Write(BitUtility.ToLittleEndian(AckIdentifier));
-                writer.Write(BitUtility.ToLittleEndian(AckTotalSize));
-                writer.Write(innerBytes);
-
-                writer.Write(BitUtility.ToBigEndian(Footer));
-
-                // clean up
-                writer.Close();
-                memStream.Close();
-
-                // return the total message
-                return p2pMessage;
-            }
-            else if (Version == P2PVersion.P2PV2)
-            {
-                return V2.GetBytes();
-            }
-
-            return new byte[0];
-        }
     }
 
 
@@ -642,15 +668,10 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructs a P2P data message.
         /// </summary>
-        public P2PDataMessage()
+        public P2PDataMessage(P2PVersion v)
+            : base(v)
         {
             Footer = 1;
-            version = P2PVersion.P2PV1;
-        }
-
-        public P2PDataMessage(P2PVersion ver)
-        {
-            version = ver;
         }
 
         /// <summary>
@@ -658,20 +679,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void WritePreparationBytes()
         {
-            if (version == P2PVersion.P2PV1)
-            {
-                InnerBody = new byte[4] { 0, 0, 0, 0 };
-            }
-
-            if (version == P2PVersion.P2PV2)
-            {
-                if (V2.DataPacket == null)
-                {
-                    V2.DataPacket = new P2PDataLayerPacket();
-                }
-
-                V2.DataPacket.PayloadData = new byte[4] { 0, 0, 0, 0 };
-            }
+            InnerBody = new byte[4] { 0, 0, 0, 0 };
         }
 
         /// <summary>
@@ -682,24 +690,8 @@ namespace MSNPSharp.DataTransfer
         public int WriteBytes(Stream ioStream, int maxLength)
         {
             long readLength = Math.Min(maxLength, ioStream.Length - ioStream.Position);
-            if (Version == P2PVersion.P2PV1)
-            {
-                InnerBody = new byte[readLength];
-                return ioStream.Read(InnerBody, 0, (int)readLength);
-            }
-            else if (Version == P2PVersion.P2PV2)
-            {
-                if (V2.DataPacket == null)
-                {
-                    V2.DataPacket = new P2PDataLayerPacket();
-                }
-
-                V2.DataPacket.PayloadData = new byte[readLength];
-
-                return ioStream.Read(V2.DataPacket.PayloadData, 0, (int)readLength);
-            }
-
-            return 0;
+            InnerBody = new byte[readLength];
+            return ioStream.Read(InnerBody, 0, (int)readLength);
         }
 
 
@@ -708,29 +700,9 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public override string ToString()
         {
-            if (Version == P2PVersion.P2PV1)
-            {
-                string debugLine =
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionId     : {1:x} ({0})\r\n", SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionId) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier    : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Offset        : {1:x} ({0})\r\n", Offset.ToString(System.Globalization.CultureInfo.InvariantCulture), Offset) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "TotalSize     : {1:x} ({0})\r\n", TotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), TotalSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "MessageSize   : {1:x} ({0})\r\n", MessageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), MessageSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Flags         : {1:x} ({0})\r\n", (uint)Flags, Convert.ToString(Flags)) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckSessionId  : {1:x} ({0})\r\n", AckSessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), AckSessionId) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({1})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
-                return "[P2PDataMessage]\r\n" + debugLine;
-            }
-            else if (Version == P2PVersion.P2PV2)
-            {
-                return "[P2Pv2 DataMessage]\r\n" + V2.ToString();
-            }
-
-            return string.Empty;
+            return "[P2PDataMessage]\r\n" +
+                base.ToString();
         }
-
     }
 
 
@@ -746,41 +718,12 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public override string ToString()
         {
-            if (Version == P2PVersion.P2PV1)
-            {
-                string debugLine =
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionId     : {1:x} ({0})\r\n", SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionId) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier    : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Offset        : {1:x} ({0})\r\n", Offset.ToString(System.Globalization.CultureInfo.InvariantCulture), Offset) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "TotalSize     : {1:x} ({0})\r\n", TotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), TotalSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "MessageSize   : {1:x} ({0})\r\n", MessageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), MessageSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Flags         : {1:x} ({0})\r\n", (uint)Flags, Convert.ToString(Flags)) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckSessionId	: {1:x} ({0})\r\n", AckSessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), AckSessionId) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({1})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize) +
-                    String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
-                return "[P2PDCMessage]\r\n" + debugLine;
-            }
-            else if (Version == P2PVersion.P2PV2)
-            {
-                return "[P2Pv2 DCMessage]\r\n" + V2.ToString();
-            }
-
-            return string.Empty;
-        }
-
-
-        /// <summary>
-        /// Basic constructor.
-        /// </summary>
-        public P2PDCMessage()
-        {
-            version = P2PVersion.P2PV1;
+            return "[P2PDCMessage]\r\n" + base.ToString();
         }
 
         public P2PDCMessage(P2PVersion ver)
+            : base(ver)
         {
-            version = ver;
         }
 
         /// <summary>
@@ -788,21 +731,19 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="message"></param>
         public P2PDCMessage(P2PMessage message)
+            : base(message.Version)
         {
-            SessionId = message.SessionId;
-            Identifier = message.Identifier;
-            Offset = message.Offset;
-            TotalSize = message.TotalSize;
-            MessageSize = message.MessageSize;
-            Flags = message.Flags;
-            AckSessionId = message.AckSessionId;
-            AckIdentifier = message.AckIdentifier;
-            AckTotalSize = message.AckTotalSize;
+            SessionID = message.SessionID;
+            Header.Identifier = message.Header.Identifier;
+            V1Header.Offset = message.V1Header.Offset; // V!
+            Header.TotalSize = message.Header.TotalSize;
+            Header.MessageSize = message.Header.MessageSize;
+            V1Header.Flags = message.V1Header.Flags; // 
+            V1Header.AckSessionId = message.V1Header.AckSessionId;
+            Header.AckIdentifier = message.Header.AckIdentifier;
+            V1Header.AckTotalSize = message.V1Header.AckTotalSize;
             InnerMessage = message.InnerMessage;
             InnerBody = message.InnerBody;
-
-            version = message.Version;
-            V2 = message.V2;
         }
 
         /// <summary>
@@ -811,49 +752,16 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public override byte[] GetBytes()
         {
-            if (Version == P2PVersion.P2PV1)
-            {
-                // get the inner contents and set the message size
-                byte[] innerBytes = GetInnerBytes();
+            byte[] dataWithoutFooter = base.GetBytes(false);
+            byte[] p2pMessage = new byte[4 + dataWithoutFooter.Length];
+            Stream memStream = new MemoryStream(p2pMessage);
+            BinaryWriter writer = new BinaryWriter(memStream);
+            writer.Write(BitUtility.ToLittleEndian((uint)dataWithoutFooter.Length));
+            writer.Write(dataWithoutFooter);
+            writer.Close();
+            memStream.Close();
 
-                MessageSize = (uint)innerBytes.Length;
-
-                // if no total size is specified, then we assume this is the whole message.
-                if (TotalSize == 0)
-                    TotalSize = MessageSize;
-
-                // total size is size(4) + header (48) + messagesize
-                byte[] p2pMessage = new byte[52 + MessageSize];
-
-                Stream memStream = new System.IO.MemoryStream(p2pMessage, true);
-                BinaryWriter writer = new System.IO.BinaryWriter(memStream);
-
-                writer.Write(BitUtility.ToLittleEndian((uint)(48 + MessageSize)));
-                writer.Write(BitUtility.ToLittleEndian(SessionId));
-                writer.Write(BitUtility.ToLittleEndian(Identifier));
-                writer.Write(BitUtility.ToLittleEndian(Offset));
-                writer.Write(BitUtility.ToLittleEndian(TotalSize));
-                writer.Write(BitUtility.ToLittleEndian(MessageSize));
-                writer.Write(BitUtility.ToLittleEndian((uint)Flags));
-                writer.Write(BitUtility.ToLittleEndian(AckSessionId));
-                writer.Write(BitUtility.ToLittleEndian(AckIdentifier));
-                writer.Write(BitUtility.ToLittleEndian(AckTotalSize));
-
-                writer.Write(innerBytes);
-
-                // clean up
-                writer.Close();
-                memStream.Close();
-
-                // return the total message
-                return p2pMessage;
-            }
-            else if (Version == P2PVersion.P2PV2)
-            {
-                return V2.GetBytes();
-            }
-
-            return new byte[0];
+            return p2pMessage;
         }
 
 
@@ -863,35 +771,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="data"></param>
         public override void ParseBytes(byte[] data)
         {
-            if (Version == P2PVersion.P2PV1)
-            {
-                Stream memStream = new System.IO.MemoryStream(data);
-                BinaryReader reader = new System.IO.BinaryReader(memStream);
-
-                SessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                Identifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                Offset = BitUtility.ToLittleEndian(reader.ReadUInt64());
-                TotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
-                MessageSize = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                Flags = (P2PFlag)BitUtility.ToLittleEndian(reader.ReadUInt32());
-                AckSessionId = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                AckIdentifier = BitUtility.ToLittleEndian(reader.ReadUInt32());
-                AckTotalSize = BitUtility.ToLittleEndian(reader.ReadUInt64());
-
-                // now read the message contents
-                InnerBody = new byte[MessageSize];
-                memStream.Read(InnerBody, 0, (int)MessageSize);
-
-                // there is no footer
-
-                // clean up
-                reader.Close();
-                memStream.Close();
-            }
-            else if (Version == P2PVersion.P2PV2)
-            {
-                V2 = new P2PTransferLayerPacket(data);
-            }
+            base.ParseBytes(data);
         }
     }
 
@@ -911,9 +791,9 @@ namespace MSNPSharp.DataTransfer
         /// Defaults the Flags property to 0x100
         /// </remarks>
         public P2PDCHandshakeMessage()
+            : base(P2PVersion.P2PV1)
         {
-            Flags = P2PFlag.DirectHandshake;
-            version = P2PVersion.P2PV1;
+            V1Header.Flags = P2PFlag.DirectHandshake;
         }
 
         /// <summary>
@@ -924,17 +804,17 @@ namespace MSNPSharp.DataTransfer
             : base(message)
         {
             Guid = new Guid(
-                (int)message.AckSessionId,
-                (short)(message.AckIdentifier & 0x0000FFFF),
-                (short)((message.AckIdentifier & 0xFFFF0000) >> 16),
-                (byte)((message.AckTotalSize & 0x00000000000000FF)),
-                (byte)((message.AckTotalSize & 0x000000000000FF00) >> 8),
-                (byte)((message.AckTotalSize & 0x0000000000FF0000) >> 16),
-                (byte)((message.AckTotalSize & 0x00000000FF000000) >> 24),
-                (byte)((message.AckTotalSize & 0x000000FF00000000) >> 32),
-                (byte)((message.AckTotalSize & 0x0000FF0000000000) >> 40),
-                (byte)((message.AckTotalSize & 0x00FF000000000000) >> 48),
-                (byte)((message.AckTotalSize & 0xFF00000000000000) >> 56));
+                (int)message.V1Header.AckSessionId,
+                (short)(message.Header.AckIdentifier & 0x0000FFFF),
+                (short)((message.Header.AckIdentifier & 0xFFFF0000) >> 16),
+                (byte)((message.V1Header.AckTotalSize & 0x00000000000000FF)),
+                (byte)((message.V1Header.AckTotalSize & 0x000000000000FF00) >> 8),
+                (byte)((message.V1Header.AckTotalSize & 0x0000000000FF0000) >> 16),
+                (byte)((message.V1Header.AckTotalSize & 0x00000000FF000000) >> 24),
+                (byte)((message.V1Header.AckTotalSize & 0x000000FF00000000) >> 32),
+                (byte)((message.V1Header.AckTotalSize & 0x0000FF0000000000) >> 40),
+                (byte)((message.V1Header.AckTotalSize & 0x00FF000000000000) >> 48),
+                (byte)((message.V1Header.AckTotalSize & 0xFF00000000000000) >> 56));
         }
 
         /// <summary>
@@ -947,7 +827,7 @@ namespace MSNPSharp.DataTransfer
             P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this);
 
             // set the identifier to 0 to set our own local identifier
-            ackMessage.Identifier = 0;
+            ackMessage.Header.Identifier = 0;
             return ackMessage;
         }
 
@@ -968,41 +848,30 @@ namespace MSNPSharp.DataTransfer
 
 
         /// <summary>
-        /// Writes no footer, but a 4 byte length size in front of the header.
+        /// Foo+HandshakeMessage+Guid. Writes no footer.
         /// </summary>
         /// <returns></returns>
         public override byte[] GetBytes()
         {
-
-            // first get the bytes for the handshake
-            byte[] handshakeMessage = base.GetBytes();
-
+            // Get the bytes for the handshake
+            byte[] handshakeMessage = base.GetBytes(); // Calls P2PDCMessage.GetBytes();
 
             byte[] totalMessage = new byte[handshakeMessage.Length + 8];
             byte[] fooMessage = new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 };
             byte[] guidMessage = guid.ToByteArray();
+
             Array.Copy(fooMessage, 0, totalMessage, 0, 8);
             Array.Copy(handshakeMessage, 0, totalMessage, 8, handshakeMessage.Length);
             Array.Copy(guidMessage, 0, totalMessage, totalMessage.Length - 16, 16);
 
-            // return the total message
             return totalMessage;
         }
 
-        /// <summary>
-        /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
-            string debugLine =
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionId    : {1:x} ({0})\r\n", SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionId) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier   : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Offset       : {1:x} ({0})\r\n", Offset.ToString(System.Globalization.CultureInfo.InvariantCulture), Offset) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TotalSize    : {1:x} ({0})\r\n", TotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), TotalSize) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "MessageSize  : {1:x} ({0})\r\n", MessageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), MessageSize) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Flags        : {1:x} ({0})\r\n", (uint)Flags, Convert.ToString(Flags)) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Guid         : {0}\r\n", this.Guid.ToString());
-            return "[P2PDCHandshakeMessage]\r\n" + debugLine;
+            return "[P2PDCHandshakeMessage]\r\n" +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Guid         : {0}\r\n", this.Guid.ToString()) +
+                base.ToString();
         }
     }
 };

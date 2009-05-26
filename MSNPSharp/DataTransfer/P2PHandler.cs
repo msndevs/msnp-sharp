@@ -360,8 +360,8 @@ namespace MSNPSharp.DataTransfer
             session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
 
             // setup the remote identifier
-            session.RemoteBaseIdentifier = receivedMessage.Identifier;
-            session.RemoteIdentifier = receivedMessage.Identifier;
+            session.RemoteBaseIdentifier = receivedMessage.Header.Identifier;
+            session.RemoteIdentifier = receivedMessage.Header.Identifier;
 
             return session;
         }
@@ -372,14 +372,15 @@ namespace MSNPSharp.DataTransfer
         /// <param name="receivedMessage"></param>
         protected P2PMessageSession SetSessionIdentifiersAfterAck(P2PMessage receivedMessage)
         {
-            P2PMessageSession session = GetSessionFromLocal(receivedMessage.AckSessionId);
+            //////////////////// V! (INVALIDCAST V1Header)
+            P2PMessageSession session = GetSessionFromLocal(receivedMessage.V1Header.AckSessionId);
 
             if (session == null)
                 throw new MSNPSharpException("P2PHandler: an acknowledgement for the creation of a P2P session was received, but no local created session could be found with the specified identifier.");
 
             // set the remote identifiers. 
-            session.RemoteBaseIdentifier = receivedMessage.Identifier;
-            session.RemoteIdentifier = (uint)(receivedMessage.Identifier);// - (ulong)session.RemoteInitialCorrection);
+            session.RemoteBaseIdentifier = receivedMessage.Header.Identifier;
+            session.RemoteIdentifier = (uint)(receivedMessage.Header.Identifier);// - (ulong)session.RemoteInitialCorrection);
 
             return session;
         }
@@ -516,11 +517,12 @@ namespace MSNPSharp.DataTransfer
             // check for validity
             if (session == null)
             {
-                if (p2pMessage.IsAcknowledgement)
+                if (p2pMessage.Header.IsAcknowledgement)
                 {
                     // if it is an acknowledgement then the local client initiated the session.
                     // this means the session alread exists, but the remote identifier are not yet set.
                     session = SetSessionIdentifiersAfterAck(p2pMessage);
+                    /// XXX TODO - V1. SetSessionIdentifiersAfterAck
                 }
                 else
                 {
@@ -557,7 +559,8 @@ namespace MSNPSharp.DataTransfer
 
             if (version == P2PVersion.P2PV1)
             {
-                if (p2pMessage.IsAcknowledgement == false && p2pMessage.Offset + p2pMessage.MessageSize == p2pMessage.TotalSize)
+                if (p2pMessage.Header.IsAcknowledgement == false &&
+                    p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
                 {
                     P2PMessage ack = p2pMessage.CreateAcknowledgement();
                     session.SendMessage(ack);
@@ -566,12 +569,12 @@ namespace MSNPSharp.DataTransfer
 
             if (version == P2PVersion.P2PV2)
             {
-                if (p2pMessage.V2.NeedACK)
+                if (p2pMessage.V2Header.OperationCode == (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK)
                 {
                     P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                    ack.V2.SequenceNumber = session.LocalIdentifier;
+                    ack.Header.Identifier = session.LocalIdentifier;
                     session.SendMessage(ack);
-                    session.CorrectLocalIdentifier(ack.V2.PayloadLength);
+                    session.CorrectLocalIdentifier((int)ack.Header.MessageSize);
                 }
             }
 
@@ -693,11 +696,12 @@ namespace MSNPSharp.DataTransfer
         private void Switchboard_ContactJoined(object sender, ContactEventArgs e)
         {
             SBMessageHandler handler = (SBMessageHandler)sender;
-#if MSNC12
-            if (handler.Contacts.Count > 2) //MSNP18: owner in the switchboard, so there're 2 contacts.
-#else
-            if (handler.Contacts.Count > 1)
-#endif
+            //MSNP18: owner in the switchboard, so there're 2 contacts.
+            bool canremove = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+                ? (handler.Contacts.Count > 2)
+                : (handler.Contacts.Count > 1);
+
+            if (canremove)
             {
                 // in a conversation with multiple contacts we don't want to send p2p messages.
                 foreach (P2PMessageSession session in messageSessions)
@@ -712,11 +716,12 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-#if MSNC12
-            if (handler.Contacts.Count == 2)  //MSNP18: owner in the switchboard, so there're 2 contacts.
-#else
-            if (handler.Contacts.Count == 1)
-#endif
+            // MSNP18: owner in the switchboard, so there're 2 contacts.
+            bool canadd = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+                ? (handler.Contacts.Count == 2)
+                : (handler.Contacts.Count == 1);
+
+            if (canadd)
             {
                 P2PMessageSession session = GetSessionFromRemote(e.Contact.Mail);
 

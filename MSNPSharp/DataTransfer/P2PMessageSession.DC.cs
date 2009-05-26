@@ -280,10 +280,10 @@ namespace MSNPSharp.DataTransfer
             }
 
             IncreaseLocalIdentifier();
-            HandshakeMessage.Identifier = LocalIdentifier;
-
-            HandshakeMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-            DCHandshakeAck = HandshakeMessage.AckSessionId;
+            HandshakeMessage.Header.Identifier = LocalIdentifier;
+            ///////////// V!
+            HandshakeMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+            DCHandshakeAck = HandshakeMessage.V1Header.AckSessionId;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
 

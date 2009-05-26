@@ -142,7 +142,7 @@ namespace MSNPSharp.DataTransfer
                 return;
 
             // convert to a p2pdc message
-            P2PDCMessage dcMessage = new P2PDCMessage();
+            P2PDCMessage dcMessage = new P2PDCMessage(P2PVersion.P2PV1); // V!
             dcMessage.ParseBytes(data);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, dcMessage.ToDebugString(), "P2PDirect In");
