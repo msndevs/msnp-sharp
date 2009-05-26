@@ -51,18 +51,39 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Sequence number
+        /// </summary>
+        public UInt32 Identifier
+        {
+            get
+            {
+                return _identifier;
+            }
+            set
+            {
+                _identifier = value;
+            }
+        }
+
+        /// <summary>
         /// Payload length
         /// </summary>
-        public abstract uint MessageSize
+        public UInt32 MessageSize
         {
-            get;
-            set;
+            get
+            {
+                return _messageSize;
+            }
+            set
+            {
+                _messageSize = value;
+            }
         }
 
         /// <summary>
         /// Total size
         /// </summary>
-        public ulong TotalSize
+        public UInt64 TotalSize
         {
             get
             {
@@ -96,17 +117,19 @@ namespace MSNPSharp.DataTransfer
         {
         }
 
-        private ulong _totalSize;
+        private UInt32 _identifier;
+        private UInt64 _totalSize;
+        private UInt32 _messageSize;
     };
 
     [Serializable]
     public class P2Pv1Header : P2PHeader
     {
         private UInt32 sessionId;
-        private UInt32 identifier;
+        //private UInt32 identifier;
         private UInt64 offset;
         //private UInt64 totalSize;
-        private UInt32 messageSize;
+        //private UInt32 messageSize;
         private P2PFlag flags;
         private UInt32 ackSessionId;
         private UInt32 ackIdentifier;
@@ -132,15 +155,15 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// The identifier of this message. Bytes 5-8 in the binary header.
         /// </summary>
-        public uint Identifier
+        public new uint Identifier
         {
             get
             {
-                return identifier;
+                return base.Identifier;
             }
             set
             {
-                identifier = value;
+                base.Identifier = value;
             }
         }
 
@@ -177,15 +200,15 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Message length in bytes of the current message. Bytes 25-28 in the binary header.
         /// </summary>
-        public override uint MessageSize
+        public new uint MessageSize
         {
             get
             {
-                return messageSize;
+                return base.MessageSize;
             }
             set
             {
-                messageSize = value;
+                base.MessageSize = value;
             }
         }
 
@@ -332,8 +355,8 @@ namespace MSNPSharp.DataTransfer
     public class P2Pv2Header : P2PHeader
     {
         private Byte operationCode;
-        private UInt16 messageSize;
-        private UInt32 sequenceNumber;
+        //private UInt16 messageSize;
+        //private UInt32 identifier;
         private Dictionary<byte, byte[]> knownTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
         private Dictionary<byte, byte[]> unknownTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
 
@@ -379,27 +402,27 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        public override uint MessageSize
+        public new uint MessageSize
         {
             get
             {
-                return messageSize;
+                return base.MessageSize;
             }
             set
             {
-                messageSize = (ushort)value;
+                base.MessageSize = value;
             }
         }
 
-        public uint SequenceNumber
+        public new uint Identifier
         {
             get
             {
-                return sequenceNumber;
+                return base.Identifier;
             }
             set
             {
-                sequenceNumber = value;
+                base.Identifier = value;
             }
         }
 
@@ -428,7 +451,7 @@ namespace MSNPSharp.DataTransfer
         public override P2PHeader CreateAck()
         {
             P2Pv2Header ack = new P2Pv2Header();
-            ack.AckIdentifier = SequenceNumber + MessageSize;
+            ack.AckIdentifier = Identifier + MessageSize;
             return ack;
         }
 
@@ -440,7 +463,7 @@ namespace MSNPSharp.DataTransfer
             int headerLen = (int)(Byte)reader.ReadByte();
             OperationCode = (Byte)reader.ReadByte();
             MessageSize = (uint)(UInt16)BitUtility.ToBigEndian(reader.ReadUInt16());
-            SequenceNumber = (uint)(UInt32)BitUtility.ToBigEndian(reader.ReadUInt32());
+            Identifier = (uint)(UInt32)BitUtility.ToBigEndian(reader.ReadUInt32());
             if (headerLen > 8) //TLVs
             {
                 byte[] TLvs = reader.ReadBytes(headerLen - 8);
@@ -498,7 +521,7 @@ namespace MSNPSharp.DataTransfer
             writer.Write((byte)headerLen);
             writer.Write((byte)OperationCode);
             writer.Write(BitUtility.ToBigEndian((ushort)MessageSize));
-            writer.Write(BitUtility.ToBigEndian((uint)SequenceNumber));
+            writer.Write(BitUtility.ToBigEndian((uint)Identifier));
 
             foreach (KeyValuePair<byte, byte[]> keyvalue in knownTLVs)
             {
@@ -531,9 +554,9 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "HeaderLength        : {1:x} ({0})\r\n", HeaderLength.ToString(System.Globalization.CultureInfo.InvariantCulture), HeaderLength) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "OperationCode       : {1:x} ({0})\r\n", OperationCode.ToString(System.Globalization.CultureInfo.InvariantCulture), OperationCode) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "MessageSize         : {1:x} ({0})\r\n", MessageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), MessageSize) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "SequenceNumber      : {1:x} ({0})\r\n", SequenceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), SequenceNumber) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier          : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier       : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TLV({0})          : {1}\r\n)\r\n", knownTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), sb.ToString());
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TLV({0})             : {1}\r\n)\r\n", knownTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), sb.ToString());
         }
     }
 };

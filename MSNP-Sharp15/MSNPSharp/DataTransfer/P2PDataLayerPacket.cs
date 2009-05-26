@@ -157,7 +157,9 @@ namespace MSNPSharp.DataTransfer
         public P2PDataLayerPacket(byte[] innerBytes)
         {
             InnerBody = innerBytes;
-            ParseBytes(InnerBody);
+
+            if (InnerBody.Length > 0)
+                ParseBytes(InnerBody);
         }
 
         public override void PrepareMessage()
