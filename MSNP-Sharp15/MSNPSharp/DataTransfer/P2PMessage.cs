@@ -32,6 +32,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
+using System.Text;
 using System.Collections.Generic;
 
 namespace MSNPSharp.DataTransfer
@@ -519,8 +520,55 @@ namespace MSNPSharp.DataTransfer
         {
             return "[P2PMessage]\r\n" +
                 header.ToString() +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "FOOTER        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer) +
-                ((InnerMessage != null) ? InnerMessage.ToString() : String.Empty);
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TFCombination       : {1:x} ({0})\r\n", (byte)TFCombination, Convert.ToString(TFCombination)) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "PackageNumber       : {1:x} ({0})\r\n", PackageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), PackageNumber) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionID           : {1:x} ({0})\r\n", SessionID.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionID) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DataRemaining       : {1:x} ({0})\r\n", DataRemaining.ToString(System.Globalization.CultureInfo.InvariantCulture), DataRemaining) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "FOOTER              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n", ((InnerMessage != null) ? InnerMessage.ToString() : DumpBytes(InnerBody)));
+        }
+
+        public static string DumpBytes(byte[] data)
+        {
+            if (data == null || data.Length == 0)
+                return string.Empty;
+
+            StringBuilder sb = new StringBuilder();
+            uint hexChars = 0;
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                string str = string.Format("0x{0:x2} ", data[i]).ToLower();
+
+                if ((i >= 48) && (i < data.Length))
+                {
+                    try
+                    {
+                        char c = Encoding.ASCII.GetChars(new byte[] { data[i] })[0];
+
+                        if (char.IsLetterOrDigit(c) || char.IsPunctuation(c) || char.IsWhiteSpace(c) ||
+                            (c == '<') || (c == '>') || (c == '='))
+                        {
+                            str = c.ToString();
+                        }
+
+                        hexChars = 0;
+                    }
+                    catch
+                    {
+                        hexChars++;
+                    }
+                }
+                else
+                    hexChars++;
+
+                sb.Append(str);
+
+                if ((hexChars > 0) && (hexChars % 10 == 0))
+                    sb.AppendLine();
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
