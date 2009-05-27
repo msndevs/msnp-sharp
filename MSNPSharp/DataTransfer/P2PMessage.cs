@@ -446,66 +446,56 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Header.MessageSize <= maxSize)
                 return new P2PMessage[] { p2pMessage };
 
-            ulong offset = 0;
-            Random rand = new Random();
-            int cnt = ((int)(p2pMessage.Header.MessageSize / maxSize)) + 1;
-            List<P2PMessage> chunks = new List<P2PMessage>(cnt);
-            byte[] totalMessage = (p2pMessage.InnerBody != null) ?
-                p2pMessage.InnerBody : p2pMessage.InnerMessage.GetBytes();
 
-            for (int i = 0; i < cnt; i++)
+            Random rand = new Random();
+            List<P2PMessage> chunks = new List<P2PMessage>();
+            byte[] totalMessage = (p2pMessage.InnerBody != null)
+                ? p2pMessage.InnerBody
+                : p2pMessage.InnerMessage.GetBytes();
+
+            long offset = 0;
+            while (offset < totalMessage.LongLength)
             {
                 P2PMessage chunkMessage = new P2PMessage(p2pMessage.Version);
+                uint messageSize = (uint)Math.Min((uint)maxSize, (totalMessage.LongLength - offset));
+                byte[] chunk = new byte[messageSize];
+                Array.Copy(totalMessage, (int)offset, chunk, 0, (int)messageSize);
 
                 if (p2pMessage.Version == P2PVersion.P2PV1)
                 {
+                    chunkMessage.V1Header.Flags = p2pMessage.V1Header.Flags;
                     chunkMessage.V1Header.AckIdentifier = p2pMessage.V1Header.AckIdentifier;
                     chunkMessage.V1Header.AckTotalSize = p2pMessage.V1Header.AckTotalSize;
-                    chunkMessage.V1Header.Flags = p2pMessage.V1Header.Flags;
                     chunkMessage.V1Header.Identifier = p2pMessage.V1Header.Identifier;
-                    chunkMessage.V1Header.MessageSize = (uint)Math.Min((uint)maxSize, (uint)(p2pMessage.Header.TotalSize - offset));
-                    chunkMessage.V1Header.Offset = offset;
                     chunkMessage.V1Header.SessionId = p2pMessage.V1Header.SessionId;
                     chunkMessage.V1Header.TotalSize = p2pMessage.V1Header.TotalSize;
-
-                    chunkMessage.InnerBody = new byte[chunkMessage.Header.MessageSize];
-                    Array.Copy(totalMessage, (int)offset, chunkMessage.InnerBody, 0, (int)chunkMessage.Header.MessageSize);
+                    chunkMessage.V1Header.Offset = (ulong)offset;
+                    chunkMessage.V1Header.MessageSize = messageSize;
+                    chunkMessage.InnerBody = chunk;
 
                     chunkMessage.V1Header.AckSessionId = (uint)rand.Next(50000, int.MaxValue);
                     chunkMessage.Footer = p2pMessage.Footer;
                 }
-                else
+                else if (p2pMessage.Version == P2PVersion.P2PV2)
                 {
-                    P2PDataLayerPacket DataPacket = new P2PDataLayerPacket();
-                    uint messageSize = (uint)Math.Min((uint)maxSize, (uint)(p2pMessage.Header.TotalSize - offset));
-
                     chunkMessage.V2Header.OperationCode = p2pMessage.V2Header.OperationCode;
-
-                    chunkMessage.Header.MessageSize = messageSize;
-                    DataPacket.PayloadData = new byte[messageSize];
-                    Array.Copy(totalMessage, (int)offset, DataPacket.PayloadData, 0, (int)messageSize);
-
                     chunkMessage.SessionID = p2pMessage.SessionID;
-
-                    chunkMessage.Header.Identifier = (uint)(chunkMessage.Header.Identifier + offset);
                     chunkMessage.TFCombination = p2pMessage.TFCombination;
+                    chunkMessage.PackageNumber = p2pMessage.PackageNumber;
+                    chunkMessage.DataRemaining = (ulong)(totalMessage.LongLength - (messageSize + offset));
 
-                    if (i == 0)
+                    if (offset == 0)
                     {
                         chunkMessage.Header.AckIdentifier = p2pMessage.Header.AckIdentifier;
                     }
 
-                    if ((i != 0) &&
-                        TFCombination.First == (p2pMessage.TFCombination & TFCombination.First))
-                    {
-                        chunkMessage.TFCombination = (TFCombination)(p2pMessage.TFCombination - TFCombination.First);
-                    }
+                    chunkMessage.InnerBody = chunk;
                 }
 
                 chunkMessage.PrepareMessage();
                 chunks.Add(chunkMessage);
 
-                offset += chunkMessage.Header.MessageSize;
+                offset += messageSize;
             }
 
             return chunks.ToArray();
@@ -654,7 +644,6 @@ namespace MSNPSharp.DataTransfer
                 reader.Read(InnerBody, 0, (int)header.MessageSize);
 
                 SessionID = V1Header.SessionId;
-
             }
             else if (version == P2PVersion.P2PV2)
             {
@@ -668,7 +657,7 @@ namespace MSNPSharp.DataTransfer
                 InnerBody = dataPacket.PayloadData;
             }
 
-            if ((data.Length - (headerLen + (InnerBody != null ? InnerBody.Length : 0))) >= 4)
+            if (data.Length - (headerLen + header.MessageSize) >= 4)
                 footer = BitUtility.ToBigEndian(reader.ReadUInt32());
 
             reader.Close();
