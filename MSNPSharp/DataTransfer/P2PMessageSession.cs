@@ -581,26 +581,17 @@ namespace MSNPSharp.DataTransfer
         public void SendMessage(NetworkMessage message)
         {
             P2PMessage p2pMessage = (P2PMessage)message;
-            if (Version == P2PVersion.P2PV1)
+
+            // check whether it's already set. This is important to check for acknowledge messages.
+            if (p2pMessage.Header.Identifier == 0)
             {
-                // check whether it's already set. This is important to check for acknowledge messages.
-                if (p2pMessage.V1Header.Identifier == 0)
-                {
-                    IncreaseLocalIdentifier();
-                    p2pMessage.V1Header.Identifier = LocalIdentifier;
-                }
-                if (p2pMessage.V1Header.AckSessionId == 0)
-                {
-                    p2pMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-                }
+                IncreaseLocalIdentifier();
+                p2pMessage.Header.Identifier = LocalIdentifier;
             }
-            else if (Version == P2PVersion.P2PV2)
+
+            if (Version == P2PVersion.P2PV1 && 0 == p2pMessage.V1Header.AckSessionId)
             {
-                if (p2pMessage.Header.Identifier == 0)
-                {
-                    IncreaseLocalIdentifier();
-                    p2pMessage.Header.Identifier = LocalIdentifier;                    
-                }
+                p2pMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
             }
 
             // check whether we have a direct connection (send p2pdc messages) or not (send sb messages)
