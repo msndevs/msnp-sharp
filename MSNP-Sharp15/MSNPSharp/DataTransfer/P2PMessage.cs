@@ -489,6 +489,13 @@ namespace MSNPSharp.DataTransfer
                         chunkMessage.Header.AckIdentifier = p2pMessage.Header.AckIdentifier;
                     }
 
+                    if ((offset != 0) &&
+                        TFCombination.First == (p2pMessage.TFCombination & TFCombination.First))
+                    {
+                        chunkMessage.TFCombination = (TFCombination)(p2pMessage.TFCombination - TFCombination.First);
+                    }
+
+                    chunkMessage.Header.Identifier = (uint)(chunkMessage.Header.Identifier + offset);
                     chunkMessage.InnerBody = chunk;
                 }
 
@@ -592,6 +599,8 @@ namespace MSNPSharp.DataTransfer
             {
                 header.MessageSize = (uint)innerBytes.Length;
                 header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+
+                SessionID = V1Header.SessionId;
             }
             else if (version == P2PVersion.P2PV2)
             {
