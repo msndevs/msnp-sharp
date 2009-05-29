@@ -95,6 +95,7 @@ namespace MSNPSharpClient
         private LinkLabel lblNewsLink;
         private ComboBox comboProtocol;
         private CheckBox cbRobotMode;
+        private Button btnSetMusic;
         private IContainer components;
         #endregion
 
@@ -160,6 +161,7 @@ namespace MSNPSharpClient
             this.cmdNext = new System.Windows.Forms.Button();
             this.cmdPrev = new System.Windows.Forms.Button();
             this.lblWhatsup = new System.Windows.Forms.Label();
+            this.btnSetMusic = new System.Windows.Forms.Button();
             this.ListPanel.SuspendLayout();
             this.SortPanel.SuspendLayout();
             this.treeViewPanel.SuspendLayout();
@@ -519,6 +521,7 @@ namespace MSNPSharpClient
             // 
             this.pnlNameAndPM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlNameAndPM.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.pnlNameAndPM.Controls.Add(this.btnSetMusic);
             this.pnlNameAndPM.Controls.Add(this.lblPM);
             this.pnlNameAndPM.Controls.Add(this.lblName);
             this.pnlNameAndPM.Location = new System.Drawing.Point(29, 6);
@@ -531,7 +534,7 @@ namespace MSNPSharpClient
             // 
             this.lblPM.Location = new System.Drawing.Point(4, 25);
             this.lblPM.Name = "lblPM";
-            this.lblPM.Size = new System.Drawing.Size(197, 20);
+            this.lblPM.Size = new System.Drawing.Size(166, 20);
             this.lblPM.TabIndex = 1;
             this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
             // 
@@ -719,6 +722,18 @@ namespace MSNPSharpClient
             this.lblWhatsup.Size = new System.Drawing.Size(66, 13);
             this.lblWhatsup.TabIndex = 0;
             this.lblWhatsup.Text = "What\'s Up";
+            // 
+            // btnSetMusic
+            // 
+            this.btnSetMusic.Location = new System.Drawing.Point(175, 24);
+            this.btnSetMusic.Name = "btnSetMusic";
+            this.btnSetMusic.Size = new System.Drawing.Size(26, 21);
+            this.btnSetMusic.TabIndex = 5;
+            this.btnSetMusic.Tag = "0";
+            this.btnSetMusic.Text = "M";
+            this.toolTipChangePhoto.SetToolTip(this.btnSetMusic, "Set music");
+            this.btnSetMusic.UseVisualStyleBackColor = true;
+            this.btnSetMusic.Click += new System.EventHandler(this.btnSetMusic_Click);
             // 
             // ClientForm
             // 
@@ -2000,6 +2015,19 @@ namespace MSNPSharpClient
                 {
                     messenger.Nameserver.StorageService.UpdateProfile(Image.FromFile(openImageDialog.FileName), "MyPhoto");
                 }
+            }
+        }
+
+        private void btnSetMusic_Click(object sender, EventArgs e)
+        {
+            MusicForm musicForm = new MusicForm();
+            if (musicForm.ShowDialog() == DialogResult.OK)
+            {
+                messenger.Owner.PersonalMessage = new PersonalMessage(
+                    messenger.Owner.PersonalMessage.Message,
+                    MediaType.Music,
+                    new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" },
+                    NSMessageHandler.MachineGuid);
             }
         }
         
