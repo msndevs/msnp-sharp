@@ -245,7 +245,7 @@ namespace MSNPSharp.DataTransfer
             builder.Append(body);
             builder.Append("\r\n");
 
-            // get the bytes			
+            // get the bytes
             byte[] message = Encoding.GetBytes(builder.ToString());
 
             // add the additional 0x00
@@ -259,7 +259,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Parses an MSNSLP message and stores the values in the object's fields.
         /// </summary>
-        /// <param name="data">The messagedata to parse</param>			
+        /// <param name="data">The messagedata to parse</param>
         public override void ParseBytes(byte[] data)
         {
             int lineLen = MSNHttpUtility.IndexOf(data, "\r\n");

@@ -155,7 +155,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="processor"></param>
         protected void AddPendingProcessor(P2PDirectProcessor processor)
         {
-            // we want to handle message from this processor			
+            // we want to handle message from this processor
             processor.RegisterHandler(this);
 
             // inform the session of connected/disconnected events

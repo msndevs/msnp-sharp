@@ -48,7 +48,7 @@ namespace MSNPSharp.DataTransfer
 
     /// <summary>
     /// Defines the type of datatransfer for a MSNSLPHandler
-    /// </summary>	
+    /// </summary>
     public enum DataTransferType
     {
         /// <summary>
@@ -562,7 +562,7 @@ namespace MSNPSharp.DataTransfer
     /// through the TransferInvitationReceived event. The client programmer must handle this event and set the Accept and DataStream property in the event argument, see <see cref="MSNSLPInvitationEventArgs"/>.
     /// When the receiver of the invitation has accepted a <see cref="P2PTransferSession"/> is created and used to actually send the data. In the case
     /// of user displays or other msn objects the data transfer always goes over the switchboard. In case of a file transfer there will be negotiating about the direct connection to setup.
-    /// Depending on the connectivity of both clients, a request for a direct connection is send to associated the <see cref="P2PTransferSession"/> object.		
+    /// Depending on the connectivity of both clients, a request for a direct connection is send to associated the <see cref="P2PTransferSession"/> object.
     /// </remarks>
     public class MSNSLPHandler : IMessageHandler, IDisposable
     {
@@ -948,7 +948,7 @@ namespace MSNPSharp.DataTransfer
             // don't know some sort of flag
             binWriter.Write((int)2);
 
-            // send the total size of the file we are to transfer			
+            // send the total size of the file we are to transfer
 
             binWriter.Write((long)file.Length);
 
@@ -1349,7 +1349,7 @@ namespace MSNPSharp.DataTransfer
                 properties.CallId = message.CallId;
                 properties.SessionId = uint.Parse(message.BodyValues["SessionID"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
 
-                // set the contacts who send and receive it				
+                // set the contacts who send and receive it
                 properties.LocalContact = message.ToMail;
                 properties.RemoteContact = message.FromMail;
             }
@@ -1367,7 +1367,7 @@ namespace MSNPSharp.DataTransfer
             //8-15: file size
             //16-19: I don't know or need it so...
             //20-540: location I use to get the file name
-            // set class variables							
+            // set class variables
 
 
             // create a new branch, but keep the same callid as the first invitation
@@ -1412,7 +1412,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["NetID"] = "2042264281"; // unknown variable
             slpMessage.BodyValues["Conn-Type"] = connectionType;
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
-            slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled		
+            slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
 
             P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // V!
             p2pMessage.InnerMessage = slpMessage;
@@ -1446,7 +1446,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected static SLPStatusMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
         {
-            // create 603 Decline message			
+            // create 603 Decline message
             SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContact, 603, "Decline");
             newMessage.ToMail = properties.RemoteContact;
             newMessage.FromMail = properties.LocalContact;
@@ -1762,10 +1762,10 @@ namespace MSNPSharp.DataTransfer
                 if (properties.DataType == DataTransferType.File)
                 {
                     // set the filetransfer values in the EventArgs object.
-                    // see the SendInvitation(..) method for more info about the layout of the context string		
+                    // see the SendInvitation(..) method for more info about the layout of the context string
                     MemoryStream memStream = new MemoryStream(Convert.FromBase64String(message.BodyValues["Context"].ToString()));
                     BinaryReader reader = new BinaryReader(memStream);
-                    reader.ReadInt32();	// previewDataLength, 4
+                    reader.ReadInt32(); // previewDataLength, 4
                     reader.ReadInt32(); // first flag, 4
                     invitationArgs.FileSize = reader.ReadInt64(); // 8
                     reader.ReadInt32(); // 2nd flag, 4
@@ -1854,7 +1854,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="message"></param>
         protected virtual void OnDCRequest(SLPMessage message)
         {
-            // let's listen			
+            // let's listen
 
 
             // Find host by name
@@ -1926,7 +1926,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="message"></param>
         protected virtual void OnDCResponse(SLPMessage message)
         {
-            // read the values			
+            // read the values
             MimeDictionary bodyValues = message.BodyValues;
 
             // check the protocol

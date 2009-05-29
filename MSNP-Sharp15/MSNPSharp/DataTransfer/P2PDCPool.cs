@@ -68,7 +68,7 @@ namespace MSNPSharp.DataTransfer
                 // make sure no overflow occurs
                 int length = (int)Math.Min(bytesLeft, (uint)(reader.BaseStream.Length - reader.BaseStream.Position));
 
-                // read in the bytes				
+                // read in the bytes
                 reader.Read(lastMessage, lastMessage.Length - bytesLeft, (int)length);
 
                 bytesLeft -= length;

@@ -388,7 +388,7 @@ namespace MSNPSharp.DataTransfer
 
             // close connection flag
             //if(p2pMessage.Flags == 0x40)
-            //{				
+            //{
             //    CloseDirectConnection();
             //}
 
@@ -417,16 +417,13 @@ namespace MSNPSharp.DataTransfer
 
                 // check if it is a content message
                 // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
-#if MSNC12
                 if (p2pMessage.SessionID > 0 &&
                     p2pMessage.InnerBody.Length > 0 &&
                    ((p2pMessage.V1Header.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.DisplayImageFooter) ||  //DisplayImage
-                   (p2pMessage.V1Header.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter) ||       //File
-                   (p2pMessage.V1Header.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.CustomEmoticonFooter)))  //CustomEmoticon
-#else
-            if (p2pMessage.SessionID > 0 && p2pMessage.InnerBody.Length > 0
-            && (p2pMessage.V1Header.Flags == P2PFlag.FileData || p2pMessage.Footer == 1))
-#endif
+                   (p2pMessage.V1Header.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter) ||  //File
+                   (p2pMessage.V1Header.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.CustomEmoticonFooter) || //CustomEmoticon
+
+                   (p2pMessage.V1Header.Flags == P2PFlag.FileData || p2pMessage.Footer == 1))) // Old style
                 {
                     // indicates whether we must stream this message
                     bool writeToStream = true;
@@ -458,7 +455,7 @@ namespace MSNPSharp.DataTransfer
                         // check for end of file transfer
                         if (p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
                         {
-                            // keep track of the remote identifier									
+                            // keep track of the remote identifier
                             MessageSession.IncreaseRemoteIdentifier();
                             P2PMessage ack = p2pMessage.CreateAcknowledgement();
                             ack.SessionID = p2pMessage.SessionID;
@@ -478,7 +475,7 @@ namespace MSNPSharp.DataTransfer
                     // finished handling this message
                     return;
 
-                } 
+                }
                 #endregion
 
             }
@@ -486,26 +483,6 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 #region P2P Version 2
-                /*
-                if (p2pMessage.V1Header.Flags == P2PFlag.TlpError)
-                {
-                    AbortTransfer();
-                    return;
-                }
-                */
-                // check to see if our session data has been transferred correctly
-                if (p2pMessage.SessionID > 0 &&
-                    p2pMessage.Header.IsAcknowledgement &&
-                    p2pMessage.V1Header.AckSessionId == dataMessageIdentifier)
-                {
-                    // inform the handlers
-                    OnTransferFinished();
-
-                    // notify the remote client that we are finished
-                    SendDisconnectMessage();
-
-                    return;
-                }
 
                 if (p2pMessage.InnerBody.Length == 4 &&
                     /*p2pMessage.V2.DataPacket.TFCombination == TFCombination.First &&*/
@@ -542,6 +519,8 @@ namespace MSNPSharp.DataTransfer
                         OnTransferFinished();
                     }
                     // finished handling this message
+
+
                     return;
 
                 }
@@ -559,7 +538,7 @@ namespace MSNPSharp.DataTransfer
             {
                 if (Version == P2PVersion.P2PV1)
                 {
-                    // keep track of the remote identifier							
+                    // keep track of the remote identifier
                     MessageSession.IncreaseRemoteIdentifier();
                 }
 
@@ -828,7 +807,7 @@ namespace MSNPSharp.DataTransfer
             {
                 bool direct = false;
 
-                // check whether we have a direct connection								
+                // check whether we have a direct connection
                 direct = MessageSession.DirectConnected;
 
                 if (direct == false)
@@ -892,7 +871,7 @@ namespace MSNPSharp.DataTransfer
                         p2pDataMessage.V1Header.Offset = (uint)currentPosition;
                         p2pDataMessage.Header.TotalSize = (uint)dataStream.Length;
 
-                        // send the rest of the data						
+                        // send the rest of the data
                         lock (dataStream)
                         {
                             dataStream.Seek(currentPosition, SeekOrigin.Begin);
@@ -917,7 +896,7 @@ namespace MSNPSharp.DataTransfer
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
                         p2pDataMessage.SessionID = sessionId;
 
-                        // send the rest of the data						
+                        // send the rest of the data
                         lock (dataStream)
                         {
                             dataStream.Seek(currentPosition, SeekOrigin.Begin);

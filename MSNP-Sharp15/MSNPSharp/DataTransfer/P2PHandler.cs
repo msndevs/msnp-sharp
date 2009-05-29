@@ -372,8 +372,9 @@ namespace MSNPSharp.DataTransfer
         /// <param name="receivedMessage"></param>
         protected P2PMessageSession SetSessionIdentifiersAfterAck(P2PMessage receivedMessage)
         {
-            //////////////////// V! (INVALIDCAST V1Header)
-            P2PMessageSession session = GetSessionFromLocal(receivedMessage.V1Header.AckSessionId);
+            P2PMessageSession session = (receivedMessage.Version == P2PVersion.P2PV1)
+                ? GetSessionFromLocal(receivedMessage.V1Header.AckSessionId)
+                : CreateSessionFromRemote(receivedMessage); // TODO V!
 
             if (session == null)
                 throw new MSNPSharpException("P2PHandler: an acknowledgement for the creation of a P2P session was received, but no local created session could be found with the specified identifier.");
@@ -511,8 +512,8 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Incoming p2p message " + NSMessageHandler.Owner.Mail + "\r\n" + ((P2PMessage)p2pMessage).ToDebugString(), GetType().Name);
 
             // get the associated message session
-            string remoteAccount = sbMessage.CommandValues[0].ToString();
-            P2PMessageSession session = GetSessionFromRemote(remoteAccount);// p2pMessage.Identifier);			
+            string remoteAccount = sbMessage.CommandValues[0].ToString(); // CommandValues.Count=0, Clone issue????????????????????
+            P2PMessageSession session = GetSessionFromRemote(remoteAccount);// p2pMessage.Identifier); V!
 
             // check for validity
             if (session == null)
@@ -522,7 +523,7 @@ namespace MSNPSharp.DataTransfer
                     // if it is an acknowledgement then the local client initiated the session.
                     // this means the session alread exists, but the remote identifier are not yet set.
                     session = SetSessionIdentifiersAfterAck(p2pMessage);
-                    /// XXX TODO - V1. SetSessionIdentifiersAfterAck
+                    /// XXX TODO - V1. SetSessionIdentifiersAfterAck, V!
                 }
                 else
                 {
