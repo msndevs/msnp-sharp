@@ -61,7 +61,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// Buffers the incoming raw data internal.This method is often used after receiving incoming data from a socket or another source.
-        /// </summary>		
+        /// </summary>
         /// <param name="message">The message to buffer.</param>
         public void BufferMessage(P2PMessage message)
         {
@@ -159,7 +159,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// Defines whether there is a message available to retrieve
-        /// </summary>		
+        /// </summary>
         public bool MessageAvailable
         {
             get

@@ -200,7 +200,7 @@ namespace MSNPSharp.DataTransfer
     /// <summary>
     /// Represents a single P2P framework message.
     /// </summary>
-    [Serializable()]
+    [Serializable]
     public class P2PMessage : NetworkMessage
     {
         protected P2PVersion version;
@@ -591,9 +591,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public byte[] GetBytes(bool appendFooter)
         {
-            byte[] innerBytes = (InnerMessage != null)
-                ? InnerMessage.GetBytes()
-                : (InnerBody != null ? InnerBody : new byte[0]);
+            byte[] innerBytes = GetInnerBytes();
 
             if (version == P2PVersion.P2PV1)
             {
@@ -676,39 +674,30 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Returns the inner message as a byte array.
         /// </summary>
-        /// <remarks>If the inner message is set the GetBytes() method is called upon that inner message. If there is no inner message set, but the InnerBody property contains data then that data is returned.</remarks>
+        /// <remarks>
+        /// If the inner message is set the GetBytes() method is called upon that inner message.
+        /// If there is no inner message set, but the InnerBody property contains data then
+        /// that data is returned.
+        /// </remarks>
         /// <returns></returns>
         protected virtual byte[] GetInnerBytes()
         {
-            if (Version == P2PVersion.P2PV1)
-            {
-                // if there is a message we contain get the contents
-                if (InnerMessage != null)
-                    return InnerMessage.GetBytes();
-                else if (InnerBody != null)
-                    return InnerBody;
-                else
-                    return new byte[0];
-            }
-            else
-            {
-                return new byte[0];
-            }
+            return (InnerMessage != null)
+                ? InnerMessage.GetBytes()
+                : (InnerBody != null ? InnerBody : new byte[0]);
         }
-    }
-
-
+    };
 
 
     /// <summary>
     /// Represents a single P2PDataMessage which is used for the actual data transfer. No negotiation handling.
     /// </summary>
     /// <remarks>
-    /// A p2p data message can be identified by looking at the footer in the P2P Message. When this value is > 0 a
-    /// data message is send. When this value is 0 a normal, and more complex, MSNSLPMessage is send.
+    /// A p2p data message can be identified by looking at the footer in the P2P Message.
+    /// When this value is > 0 a data message is send. When this value is 0 a normal, and more complex, MSNSLPMessage is send.
     /// This class is created to provide a fast way of sending messages.
     /// </remarks>
-    [Serializable()]
+    [Serializable]
     public class P2PDataMessage : P2PMessage
     {
         /// <summary>
@@ -740,33 +729,23 @@ namespace MSNPSharp.DataTransfer
             return ioStream.Read(InnerBody, 0, (int)readLength);
         }
 
-
-        /// <summary>
-        /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
-            return "[P2PDataMessage]\r\n" +
-                base.ToString();
+            return "[P2PDataMessage]\r\n" + base.ToString();
         }
-    }
+    };
 
 
     /// <summary>
     /// A P2P Message which is send in a direct-connection.
     /// </summary>
-    /// <remarks>The innerbody contents are used as message contents (data). The InnerMessage object is ignored.</remarks>
-    [Serializable()]
+    /// <remarks>
+    /// The innerbody contents are used as message contents (data).
+    /// The InnerMessage object and footer is ignored.
+    /// </remarks>
+    [Serializable]
     public class P2PDCMessage : P2PDataMessage
     {
-        /// <summary>
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return "[P2PDCMessage]\r\n" + base.ToString();
-        }
-
         public P2PDCMessage(P2PVersion ver)
             : base(ver)
         {
@@ -781,15 +760,47 @@ namespace MSNPSharp.DataTransfer
         {
             SessionID = message.SessionID;
             Header.Identifier = message.Header.Identifier;
-            V1Header.Offset = message.V1Header.Offset; // V!
             Header.TotalSize = message.Header.TotalSize;
             Header.MessageSize = message.Header.MessageSize;
-            V1Header.Flags = message.V1Header.Flags; // 
-            V1Header.AckSessionId = message.V1Header.AckSessionId;
             Header.AckIdentifier = message.Header.AckIdentifier;
-            V1Header.AckTotalSize = message.V1Header.AckTotalSize;
-            InnerMessage = message.InnerMessage;
-            InnerBody = message.InnerBody;
+
+            if (message.Version == P2PVersion.P2PV1)
+            {
+                V1Header.Offset = message.V1Header.Offset;
+                V1Header.Flags = message.V1Header.Flags;
+                V1Header.AckSessionId = message.V1Header.AckSessionId;
+                V1Header.AckTotalSize = message.V1Header.AckTotalSize;
+            }
+            else if (message.Version == P2PVersion.P2PV2)
+            {
+                V2Header.OperationCode = message.V2Header.OperationCode;
+                TFCombination = message.TFCombination;
+                PackageNumber = message.PackageNumber;
+                DataRemaining = message.DataRemaining;
+
+                if (message.V2Header.KnownTLVs.Count > 0)
+                {
+                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.KnownTLVs)
+                    {
+                        V2Header.KnownTLVs[keyvalue.Key] = keyvalue.Value;
+                    }
+                }
+                if (message.V2Header.UnknownTLVs.Count > 0)
+                {
+                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.UnknownTLVs)
+                    {
+                        V2Header.UnknownTLVs[keyvalue.Key] = keyvalue.Value;
+                    }
+                }
+            }
+
+            if (message.InnerMessage != null)
+                InnerMessage = message.InnerMessage;
+
+            if (message.InnerBody != null)
+                InnerBody = message.InnerBody;
+
+            Footer = message.Footer;
         }
 
         /// <summary>
@@ -810,7 +821,6 @@ namespace MSNPSharp.DataTransfer
             return p2pMessage;
         }
 
-
         /// <summary>
         /// Parses a data message without the 4-byte length header and without a 4 byte footer.
         /// </summary>
@@ -819,13 +829,20 @@ namespace MSNPSharp.DataTransfer
         {
             base.ParseBytes(data);
         }
-    }
+
+        public override string ToString()
+        {
+            return "[P2PDCMessage]\r\n" + base.ToString();
+        }
+    };
 
     /// <summary>
-    /// A P2P Message which is send in a direct-connection.
+    /// A P2P Message which is send in a direct-connection. (P2Pv1?)
     /// </summary>
-    /// <remarks>The innerbody contents are used as message contents (data). The InnerMessage object is ignored.</remarks>
-    [Serializable()]
+    /// <remarks>The innerbody contents are used as message contents (data).
+    /// The InnerMessage object is ignored.
+    /// </remarks>
+    [Serializable]
     public class P2PDCHandshakeMessage : P2PDCMessage
     {
         private Guid guid;
@@ -839,6 +856,7 @@ namespace MSNPSharp.DataTransfer
         public P2PDCHandshakeMessage()
             : base(P2PVersion.P2PV1)
         {
+            // V!
             V1Header.Flags = P2PFlag.DirectHandshake;
         }
 
@@ -851,8 +869,10 @@ namespace MSNPSharp.DataTransfer
         {
             Guid = new Guid(
                 (int)message.V1Header.AckSessionId,
+
                 (short)(message.Header.AckIdentifier & 0x0000FFFF),
                 (short)((message.Header.AckIdentifier & 0xFFFF0000) >> 16),
+
                 (byte)((message.V1Header.AckTotalSize & 0x00000000000000FF)),
                 (byte)((message.V1Header.AckTotalSize & 0x000000000000FF00) >> 8),
                 (byte)((message.V1Header.AckTotalSize & 0x0000000000FF0000) >> 16),

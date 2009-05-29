@@ -62,7 +62,7 @@ namespace MSNPSharp.DataTransfer
         {
             ProxySocket socket = GetPreparedSocket();
 
-            // begin waiting for the incoming connection			
+            // begin waiting for the incoming connection
             socket.Bind(new IPEndPoint(address, port));
 
             socket.Listen(100);
@@ -103,7 +103,7 @@ namespace MSNPSharp.DataTransfer
             dcSocket = listenSocket.EndAccept(ar);
 
             //listenSocket.Shutdown(SocketShutdown.Both);
-            //listenSocket.Close();																	
+            //listenSocket.Close();
 
             // begin accepting messages
             BeginDataReceive(dcSocket);
