@@ -135,7 +135,7 @@ namespace MSNPSharpClient
                         }
                         catch (Exception)
                         {
-
+                            throw;
                         }
                     }
                     else
