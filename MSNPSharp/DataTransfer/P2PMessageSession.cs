@@ -463,7 +463,7 @@ namespace MSNPSharp.DataTransfer
                 if (p2pMessage.V1Header.Flags == P2PFlag.DirectHandshake && AutoHandshake == true)
                 {
                     // create a handshake message based on the incoming p2p message and send it
-                    P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage);
+                    P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(p2pMessage); // V!
                     sender.SendMessage(dcHsMessage.CreateAcknowledgement());
                     OnHandshakeCompleted((P2PDirectProcessor)sender);
                     return;

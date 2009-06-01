@@ -880,6 +880,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["AppID"] = activityID.ToString();
             slpMessage.BodyValues["Context"] = base64Context;
 
+            
             P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // V!
             p2pMessage.InnerMessage = slpMessage;
 
@@ -1242,7 +1243,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual P2PDCHandshakeMessage CreateHandshakeMessage(MSNSLPTransferProperties properties)
         {
-            P2PDCHandshakeMessage dcMessage = new P2PDCHandshakeMessage();
+            P2PDCHandshakeMessage dcMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1); // v!
             dcMessage.SessionID = 0;
 
             System.Diagnostics.Debug.Assert(properties.Nonce != Guid.Empty, "Direct connection established, but no Nonce GUID is available.");
@@ -1599,7 +1600,7 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
-                
+
                 if (p2pMessage.InnerBody == null ||
                     (p2pMessage.InnerBody != null && p2pMessage.TFCombination != TFCombination.First))
                 {
@@ -1607,10 +1608,10 @@ namespace MSNPSharp.DataTransfer
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
                     return;
                 }
-                
+
 
                 if (p2pMessage.InnerBody != null &&
-                    p2pMessage.TFCombination == TFCombination.First && 
+                    p2pMessage.TFCombination == TFCombination.First &&
 
                     p2pMessage.InnerBody.Length == 4 &&
                     BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0
@@ -1636,28 +1637,32 @@ namespace MSNPSharp.DataTransfer
             }
             */
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "MSNSLPMessage incoming:\r\n" + slpMessage.ToDebugString(), GetType().Name);
-
-            // call the methods belonging to the content-type to handle the message
-            switch (slpMessage.ContentType)
+            if (slpMessage != null)
             {
-                case "application/x-msnmsgr-sessionreqbody":
-                    OnSessionRequest(slpMessage);
-                    break;
-                case "application/x-msnmsgr-transreqbody":
-                    OnDCRequest(slpMessage);
-                    break;
-                case "application/x-msnmsgr-transrespbody":
-                    OnDCResponse(slpMessage);
-                    break;
-                case "application/x-msnmsgr-sessionclosebody":
-                    OnSessionCloseRequest(slpMessage);
-                    break;
-                default:
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Content-type not supported: " + slpMessage.ContentType, GetType().Name);
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "MSNSLPMessage incoming:\r\n" + slpMessage.ToDebugString(), GetType().Name);
+
+                // call the methods belonging to the content-type to handle the message
+                switch (slpMessage.ContentType)
+                {
+                    case "application/x-msnmsgr-sessionreqbody":
+                        OnSessionRequest(slpMessage);
                         break;
-                    }
+                    case "application/x-msnmsgr-transreqbody":
+                        OnDCRequest(slpMessage);
+                        break;
+                    case "application/x-msnmsgr-transrespbody":
+                        OnDCResponse(slpMessage);
+                        break;
+                    case "application/x-msnmsgr-sessionclosebody":
+                        OnSessionCloseRequest(slpMessage);
+                        break;
+                    default:
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Content-type not supported: " + slpMessage.ContentType, GetType().Name);
+                            break;
+                        }
+                }
             }
         }
 
@@ -1904,12 +1909,12 @@ namespace MSNPSharp.DataTransfer
             }
 
 
-            P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // V!
+            P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // v!
             p2pMessage.InnerMessage = slpMessage;
 
 
             ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
-            P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
+            P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1); // v!
             hsMessage.Guid = properties.Nonce;
             MessageSession.HandshakeMessage = hsMessage;
 
@@ -1948,7 +1953,7 @@ namespace MSNPSharp.DataTransfer
                     properties.Nonce = new Guid(bodyValues["Nonce"].ToString());
 
                     // create the handshake message to send upon connection                    
-                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage();
+                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1); // v!
                     hsMessage.Guid = properties.Nonce;
                     MessageSession.HandshakeMessage = hsMessage;
 

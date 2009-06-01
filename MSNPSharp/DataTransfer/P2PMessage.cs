@@ -231,6 +231,54 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        public P2PMessage(P2PMessage message)
+            : this(message.Version)
+        {
+            SessionID = message.SessionID;
+            Header.Identifier = message.Header.Identifier;
+            Header.TotalSize = message.Header.TotalSize;
+            Header.MessageSize = message.Header.MessageSize;
+            Header.AckIdentifier = message.Header.AckIdentifier;
+
+            if (message.Version == P2PVersion.P2PV1)
+            {
+                V1Header.Offset = message.V1Header.Offset;
+                V1Header.Flags = message.V1Header.Flags;
+                V1Header.AckSessionId = message.V1Header.AckSessionId;
+                V1Header.AckTotalSize = message.V1Header.AckTotalSize;
+            }
+            else if (message.Version == P2PVersion.P2PV2)
+            {
+                V2Header.OperationCode = message.V2Header.OperationCode;
+                TFCombination = message.TFCombination;
+                PackageNumber = message.PackageNumber;
+                DataRemaining = message.DataRemaining;
+
+                if (message.V2Header.KnownTLVs.Count > 0)
+                {
+                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.KnownTLVs)
+                    {
+                        V2Header.KnownTLVs[keyvalue.Key] = keyvalue.Value;
+                    }
+                }
+                if (message.V2Header.UnknownTLVs.Count > 0)
+                {
+                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.UnknownTLVs)
+                    {
+                        V2Header.UnknownTLVs[keyvalue.Key] = keyvalue.Value;
+                    }
+                }
+            }
+
+            if (message.InnerMessage != null)
+                InnerMessage = message.InnerMessage;
+
+            if (message.InnerBody != null)
+                InnerBody = message.InnerBody;
+
+            Footer = message.Footer;
+        }
+
         /// <summary>
         /// The p2p framework currently using.
         /// </summary>
@@ -709,6 +757,11 @@ namespace MSNPSharp.DataTransfer
             Footer = 1;
         }
 
+        public P2PDataMessage(P2PMessage copy)
+            : base(copy)
+        {
+        }
+
         /// <summary>
         /// Writes 4 nul-bytes in the inner body. This message can then be used as a data preparation message.
         /// </summary>
@@ -756,51 +809,8 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="message"></param>
         public P2PDCMessage(P2PMessage message)
-            : base(message.Version)
+            : base(message)
         {
-            SessionID = message.SessionID;
-            Header.Identifier = message.Header.Identifier;
-            Header.TotalSize = message.Header.TotalSize;
-            Header.MessageSize = message.Header.MessageSize;
-            Header.AckIdentifier = message.Header.AckIdentifier;
-
-            if (message.Version == P2PVersion.P2PV1)
-            {
-                V1Header.Offset = message.V1Header.Offset;
-                V1Header.Flags = message.V1Header.Flags;
-                V1Header.AckSessionId = message.V1Header.AckSessionId;
-                V1Header.AckTotalSize = message.V1Header.AckTotalSize;
-            }
-            else if (message.Version == P2PVersion.P2PV2)
-            {
-                V2Header.OperationCode = message.V2Header.OperationCode;
-                TFCombination = message.TFCombination;
-                PackageNumber = message.PackageNumber;
-                DataRemaining = message.DataRemaining;
-
-                if (message.V2Header.KnownTLVs.Count > 0)
-                {
-                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.KnownTLVs)
-                    {
-                        V2Header.KnownTLVs[keyvalue.Key] = keyvalue.Value;
-                    }
-                }
-                if (message.V2Header.UnknownTLVs.Count > 0)
-                {
-                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.UnknownTLVs)
-                    {
-                        V2Header.UnknownTLVs[keyvalue.Key] = keyvalue.Value;
-                    }
-                }
-            }
-
-            if (message.InnerMessage != null)
-                InnerMessage = message.InnerMessage;
-
-            if (message.InnerBody != null)
-                InnerBody = message.InnerBody;
-
-            Footer = message.Footer;
         }
 
         /// <summary>
@@ -853,11 +863,13 @@ namespace MSNPSharp.DataTransfer
         /// <remarks>
         /// Defaults the Flags property to 0x100
         /// </remarks>
-        public P2PDCHandshakeMessage()
-            : base(P2PVersion.P2PV1)
+        public P2PDCHandshakeMessage(P2PVersion ver)
+            : base(ver)
         {
-            // V!
-            V1Header.Flags = P2PFlag.DirectHandshake;
+            if (ver == P2PVersion.P2PV1)
+                V1Header.Flags = P2PFlag.DirectHandshake;
+            else if (ver == P2PVersion.P2PV2)
+                V2Header.OperationCode = 0x0; //v!
         }
 
         /// <summary>
@@ -867,20 +879,27 @@ namespace MSNPSharp.DataTransfer
         public P2PDCHandshakeMessage(P2PMessage message)
             : base(message)
         {
-            Guid = new Guid(
-                (int)message.V1Header.AckSessionId,
+            if (message.Version == P2PVersion.P2PV1)
+            {
+                Guid = new Guid(
+                    (int)message.V1Header.AckSessionId,
 
-                (short)(message.Header.AckIdentifier & 0x0000FFFF),
-                (short)((message.Header.AckIdentifier & 0xFFFF0000) >> 16),
+                    (short)(message.Header.AckIdentifier & 0x0000FFFF),
+                    (short)((message.Header.AckIdentifier & 0xFFFF0000) >> 16),
 
-                (byte)((message.V1Header.AckTotalSize & 0x00000000000000FF)),
-                (byte)((message.V1Header.AckTotalSize & 0x000000000000FF00) >> 8),
-                (byte)((message.V1Header.AckTotalSize & 0x0000000000FF0000) >> 16),
-                (byte)((message.V1Header.AckTotalSize & 0x00000000FF000000) >> 24),
-                (byte)((message.V1Header.AckTotalSize & 0x000000FF00000000) >> 32),
-                (byte)((message.V1Header.AckTotalSize & 0x0000FF0000000000) >> 40),
-                (byte)((message.V1Header.AckTotalSize & 0x00FF000000000000) >> 48),
-                (byte)((message.V1Header.AckTotalSize & 0xFF00000000000000) >> 56));
+                    (byte)((message.V1Header.AckTotalSize & 0x00000000000000FF)),
+                    (byte)((message.V1Header.AckTotalSize & 0x000000000000FF00) >> 8),
+                    (byte)((message.V1Header.AckTotalSize & 0x0000000000FF0000) >> 16),
+                    (byte)((message.V1Header.AckTotalSize & 0x00000000FF000000) >> 24),
+                    (byte)((message.V1Header.AckTotalSize & 0x000000FF00000000) >> 32),
+                    (byte)((message.V1Header.AckTotalSize & 0x0000FF0000000000) >> 40),
+                    (byte)((message.V1Header.AckTotalSize & 0x00FF000000000000) >> 48),
+                    (byte)((message.V1Header.AckTotalSize & 0xFF00000000000000) >> 56));
+            }
+            else if (message.Version == P2PVersion.P2PV2)
+            {
+                // v2, v!
+            }
         }
 
         /// <summary>
@@ -890,7 +909,7 @@ namespace MSNPSharp.DataTransfer
         public override P2PMessage CreateAcknowledgement()
         {
             // create a copy of this message
-            P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this);
+            P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this); // V!
 
             // set the identifier to 0 to set our own local identifier
             ackMessage.Header.Identifier = 0;

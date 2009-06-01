@@ -45,7 +45,7 @@ namespace MSNPSharp.Core
     /// <remarks>
     /// These messages are receid from, and send to, a nameserver. NOT messages are rececived for MSN-Calendar or MSN-Alert notifications.
     /// IPG commands are received/send to exchange pager (sms) messages.
-    ///	</remarks>
+    /// </remarks>
     [Serializable()]
     public class NotificationMessage : MSNMessage
     {
@@ -65,7 +65,7 @@ namespace MSNPSharp.Core
             ParseBytes(message.InnerBody);
             message.InnerMessage = this;
         }
-        /*	Example notification
+        /* Example notification
          * <NOTIFICATION ver="1" siteid="111100200" siteurl="http://calendar.msn.com" id="1">\r\n
           <TO pid="0x00060000:0x81ee5a43" name="example@passport.com" />\r\n
           <MSG pri="" id="1">\r\n
@@ -213,7 +213,7 @@ namespace MSNPSharp.Core
         /// </summary>
         /// <remarks>
         /// Remember to set the transaction ID before calling this method.
-        /// Uses UTF8 Encoding.				
+        /// Uses UTF8 Encoding.
         /// </remarks>
         /// <returns></returns>
         public override byte[] GetBytes()
