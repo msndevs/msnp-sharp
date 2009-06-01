@@ -190,10 +190,10 @@ namespace MSNPSharp.DataTransfer
     }
 
 
-    internal enum OperationCode : byte
+    public enum OperationCode : byte
     {
         None = 0x0,
-        NeedACK = 0x2,
+        Acknowledgement = 0x2,
         InitSession = 0x3
     }
 
@@ -234,7 +234,7 @@ namespace MSNPSharp.DataTransfer
         public P2PMessage(P2PMessage message)
             : this(message.Version)
         {
-            SessionID = message.SessionID;
+            Header.SessionId = message.Header.SessionId;
             Header.Identifier = message.Header.Identifier;
             Header.TotalSize = message.Header.TotalSize;
             Header.MessageSize = message.Header.MessageSize;
@@ -250,9 +250,9 @@ namespace MSNPSharp.DataTransfer
             else if (message.Version == P2PVersion.P2PV2)
             {
                 V2Header.OperationCode = message.V2Header.OperationCode;
-                TFCombination = message.TFCombination;
-                PackageNumber = message.PackageNumber;
-                DataRemaining = message.DataRemaining;
+                V2Header.TFCombination = message.V2Header.TFCombination;
+                V2Header.PackageNumber = message.V2Header.PackageNumber;
+                V2Header.DataRemaining = message.V2Header.DataRemaining;
 
                 if (message.V2Header.KnownTLVs.Count > 0)
                 {
@@ -378,64 +378,6 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        #region Remove these later...
-
-        private uint sessionID;
-        public uint SessionID
-        {
-            get
-            {
-                return sessionID;
-            }
-            set
-            {
-                sessionID = value;
-            }
-        }
-
-        private TFCombination tfCombination;
-        public TFCombination TFCombination
-        {
-            get
-            {
-                return tfCombination;
-            }
-            set
-            {
-                tfCombination = value;
-            }
-        }
-
-        private ushort packageNumber;
-        public ushort PackageNumber
-        {
-            get
-            {
-                return packageNumber;
-            }
-            set
-            {
-                packageNumber = value;
-            }
-        }
-
-        private ulong dataRemaining;
-        public ulong DataRemaining
-        {
-            get
-            {
-                return dataRemaining;
-            }
-            set
-            {
-                dataRemaining = value;
-            }
-        }
-
-
-        #endregion
-
-
         /// <summary>
         /// Indicates whether the message will be acked. If so, send a message returned from CreateAcknowledgement(). 
         /// </summary>
@@ -527,10 +469,10 @@ namespace MSNPSharp.DataTransfer
                 else if (p2pMessage.Version == P2PVersion.P2PV2)
                 {
                     chunkMessage.V2Header.OperationCode = p2pMessage.V2Header.OperationCode;
-                    chunkMessage.SessionID = p2pMessage.SessionID;
-                    chunkMessage.TFCombination = p2pMessage.TFCombination;
-                    chunkMessage.PackageNumber = p2pMessage.PackageNumber;
-                    chunkMessage.DataRemaining = (ulong)(totalMessage.LongLength - (messageSize + offset));
+                    chunkMessage.V2Header.SessionId = p2pMessage.V2Header.SessionId;
+                    chunkMessage.V2Header.TFCombination = p2pMessage.V2Header.TFCombination;
+                    chunkMessage.V2Header.PackageNumber = p2pMessage.V2Header.PackageNumber;
+                    chunkMessage.V2Header.DataRemaining = (ulong)(totalMessage.LongLength - (messageSize + offset));
 
                     if (offset == 0)
                     {
@@ -538,9 +480,9 @@ namespace MSNPSharp.DataTransfer
                     }
 
                     if ((offset != 0) &&
-                        TFCombination.First == (p2pMessage.TFCombination & TFCombination.First))
+                        TFCombination.First == (p2pMessage.V2Header.TFCombination & TFCombination.First))
                     {
-                        chunkMessage.TFCombination = (TFCombination)(p2pMessage.TFCombination - TFCombination.First);
+                        chunkMessage.V2Header.TFCombination = (TFCombination)(p2pMessage.V2Header.TFCombination - TFCombination.First);
                     }
 
                     chunkMessage.Header.Identifier = (uint)(chunkMessage.Header.Identifier + offset);
@@ -565,10 +507,6 @@ namespace MSNPSharp.DataTransfer
         {
             return "[P2PMessage]\r\n" +
                 header.ToString() +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TFCombination       : {1:x} ({0})\r\n", (byte)TFCombination, Convert.ToString(TFCombination)) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "PackageNumber       : {1:x} ({0})\r\n", PackageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), PackageNumber) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionID           : {1:x} ({0})\r\n", SessionID.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionID) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DataRemaining       : {1:x} ({0})\r\n", DataRemaining.ToString(System.Globalization.CultureInfo.InvariantCulture), DataRemaining) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "FOOTER              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n", ((InnerMessage != null) ? InnerMessage.ToString() : DumpBytes(InnerBody)));
         }
@@ -645,17 +583,15 @@ namespace MSNPSharp.DataTransfer
             {
                 header.MessageSize = (uint)innerBytes.Length;
                 header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
-
-                SessionID = V1Header.SessionId;
             }
             else if (version == P2PVersion.P2PV2)
             {
                 P2PDataLayerPacket dataPacket = new P2PDataLayerPacket();
 
-                dataPacket.SessionID = SessionID;
-                dataPacket.TFCombination = TFCombination;
-                dataPacket.PackageNumber = PackageNumber;
-                dataPacket.DataRemaining = DataRemaining;
+                dataPacket.SessionID = Header.SessionId;
+                dataPacket.TFCombination = V2Header.TFCombination;
+                dataPacket.PackageNumber = V2Header.PackageNumber;
+                dataPacket.DataRemaining = V2Header.DataRemaining;
 
                 dataPacket.PayloadData = innerBytes; // Set payload
                 innerBytes = dataPacket.GetBytes(); // Set inner bytes
@@ -697,18 +633,16 @@ namespace MSNPSharp.DataTransfer
             {
                 InnerBody = new byte[header.MessageSize];
                 reader.Read(InnerBody, 0, (int)header.MessageSize);
-
-                SessionID = V1Header.SessionId;
             }
             else if (version == P2PVersion.P2PV2)
             {
                 P2PDataLayerPacket dataPacket =
                     new P2PDataLayerPacket(reader.ReadBytes((int)header.MessageSize));
 
-                SessionID = dataPacket.SessionID;
-                DataRemaining = dataPacket.DataRemaining;
-                TFCombination = dataPacket.TFCombination;
-                PackageNumber = dataPacket.PackageNumber;
+                Header.SessionId = dataPacket.SessionID;
+                V2Header.DataRemaining = dataPacket.DataRemaining;
+                V2Header.TFCombination = dataPacket.TFCombination;
+                V2Header.PackageNumber = dataPacket.PackageNumber;
                 InnerBody = dataPacket.PayloadData;
             }
 
