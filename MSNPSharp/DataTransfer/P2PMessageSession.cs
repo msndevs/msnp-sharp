@@ -471,7 +471,7 @@ namespace MSNPSharp.DataTransfer
 
                 if (p2pMessage.V1Header.Flags == P2PFlag.Error)
                 {
-                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionID];
+                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.Header.SessionId];
                     if (session != null)
                     {
                         session.AbortTransfer();
@@ -481,10 +481,10 @@ namespace MSNPSharp.DataTransfer
                 }
 
                 // check if it is a content message
-                if (p2pMessage.SessionID > 0)
+                if (p2pMessage.Header.SessionId > 0)
                 {
                     // get the session to handle this message
-                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionID];
+                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.Header.SessionId];
                     if (session != null)
                         session.HandleMessage(this, p2pMessage);
                     return;
@@ -494,10 +494,10 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 // check if it is a content message
-                if (p2pMessage.InnerBody != null && p2pMessage.SessionID > 0)
+                if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0)
                 {
                     // get the session to handle this message
-                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.SessionID];
+                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.Header.SessionId];
                     if (session != null)
                         session.HandleMessage(this, p2pMessage);
                     return;

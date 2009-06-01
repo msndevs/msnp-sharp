@@ -786,12 +786,10 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
-                p2pMessage.V2Header.OperationCode = (byte)OperationCode.InitSession;
-
-                p2pMessage.TFCombination = TFCombination.First;
-                p2pMessage.SessionID = 0;
-                p2pMessage.PackageNumber = 0;// session.DataPacketNumber;
-
+                p2pMessage.V2Header.OperationCode = OperationCode.InitSession;
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
+                p2pMessage.V2Header.PackageNumber = 0;// session.DataPacketNumber;
+                p2pMessage.Header.SessionId = 0;
 
             }
 
@@ -1133,8 +1131,8 @@ namespace MSNPSharp.DataTransfer
                     
                     
 
-                    closeMessage.TFCombination = TFCombination.First;
-                    closeMessage.PackageNumber = transferSession.DataPacketNumber;
+                    closeMessage.V2Header.TFCombination = TFCombination.First;
+                    closeMessage.V2Header.PackageNumber = transferSession.DataPacketNumber;
                     
                     closeMessage.Header.Identifier = session.LocalIdentifier;
                     session.CorrectLocalIdentifier((int)closeMessage.Header.MessageSize);
@@ -1169,11 +1167,11 @@ namespace MSNPSharp.DataTransfer
 
             if (closeMessage.Version == P2PVersion.P2PV2)
             {
-                
-                
 
-                closeMessage.TFCombination = TFCombination.First;
-                closeMessage.PackageNumber = transferSession.DataPacketNumber;
+
+
+                closeMessage.V2Header.TFCombination = TFCombination.First;
+                closeMessage.V2Header.PackageNumber = transferSession.DataPacketNumber;
                 
 
                 closeMessage.Header.Identifier = transferSession.MessageSession.LocalIdentifier;
@@ -1244,7 +1242,7 @@ namespace MSNPSharp.DataTransfer
         protected virtual P2PDCHandshakeMessage CreateHandshakeMessage(MSNSLPTransferProperties properties)
         {
             P2PDCHandshakeMessage dcMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1); // v!
-            dcMessage.SessionID = 0;
+            dcMessage.Header.SessionId = 0;
 
             System.Diagnostics.Debug.Assert(properties.Nonce != Guid.Empty, "Direct connection established, but no Nonce GUID is available.");
             System.Diagnostics.Debug.Assert(properties.SessionId != 0, "Direct connection established, but no session id is available.");
@@ -1541,10 +1539,10 @@ namespace MSNPSharp.DataTransfer
 
                 if (p2pMessage.Version == P2PVersion.P2PV2)
                 {
-                    
-                   
-                    p2pMessage.TFCombination = TFCombination.First;
-                    p2pMessage.PackageNumber = transferSession.DataPacketNumber;
+
+
+                    p2pMessage.V2Header.TFCombination = TFCombination.First;
+                    p2pMessage.V2Header.PackageNumber = transferSession.DataPacketNumber;
                     
 
                     p2pMessage.Header.Identifier = transferSession.MessageSession.LocalIdentifier;
@@ -1602,7 +1600,7 @@ namespace MSNPSharp.DataTransfer
             {
 
                 if (p2pMessage.InnerBody == null ||
-                    (p2pMessage.InnerBody != null && p2pMessage.TFCombination != TFCombination.First))
+                    (p2pMessage.InnerBody != null && p2pMessage.V2Header.TFCombination != TFCombination.First))
                 {
                     // 4 bytes... prepare...
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
@@ -1611,7 +1609,7 @@ namespace MSNPSharp.DataTransfer
 
 
                 if (p2pMessage.InnerBody != null &&
-                    p2pMessage.TFCombination == TFCombination.First &&
+                    p2pMessage.V2Header.TFCombination == TFCombination.First &&
 
                     p2pMessage.InnerBody.Length == 4 &&
                     BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0

@@ -402,7 +402,7 @@ namespace MSNPSharp.DataTransfer
                 }
 
                 // check to see if our session data has been transferred correctly
-                if (p2pMessage.SessionID > 0 &&
+                if (p2pMessage.Header.SessionId > 0 &&
                     p2pMessage.Header.IsAcknowledgement &&
                     p2pMessage.V1Header.AckSessionId == dataMessageIdentifier)
                 {
@@ -417,7 +417,7 @@ namespace MSNPSharp.DataTransfer
 
                 // check if it is a content message
                 // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
-                if (p2pMessage.SessionID > 0 &&
+                if (p2pMessage.Header.SessionId > 0 &&
                     p2pMessage.InnerBody.Length > 0 &&
                    ((p2pMessage.V1Header.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.DisplayImageFooter) ||  //DisplayImage
                    (p2pMessage.V1Header.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter) ||  //File
@@ -458,7 +458,7 @@ namespace MSNPSharp.DataTransfer
                             // keep track of the remote identifier
                             MessageSession.IncreaseRemoteIdentifier();
                             P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                            ack.SessionID = p2pMessage.SessionID;
+                            ack.Header.SessionId = p2pMessage.Header.SessionId;
                             ack.Header.Identifier = 0;
                             ack.Header.TotalSize = p2pMessage.Header.TotalSize;
 
@@ -494,13 +494,13 @@ namespace MSNPSharp.DataTransfer
 
                 // check if it is a content message
                 // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it
-                if (p2pMessage.TFCombination == (TFCombination.MsnObject) ||
-                    p2pMessage.TFCombination == (TFCombination.MsnObject | TFCombination.First) ||
-                    p2pMessage.TFCombination == (TFCombination.FileTransfer) ||
-                    p2pMessage.TFCombination == (TFCombination.FileTransfer | TFCombination.First))
+                if (p2pMessage.V2Header.TFCombination == (TFCombination.MsnObject) ||
+                    p2pMessage.V2Header.TFCombination == (TFCombination.MsnObject | TFCombination.First) ||
+                    p2pMessage.V2Header.TFCombination == (TFCombination.FileTransfer) ||
+                    p2pMessage.V2Header.TFCombination == (TFCombination.FileTransfer | TFCombination.First))
                 {
                     // store the data message identifier because we want to reference it if we abort the transfer
-                    DataPacketNumber = p2pMessage.PackageNumber;
+                    DataPacketNumber = p2pMessage.V2Header.PackageNumber;
 
                     if (DataStream == null)
                         throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
@@ -511,7 +511,7 @@ namespace MSNPSharp.DataTransfer
                         DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
                     }
                     // check for end of file transfer
-                    if (p2pMessage.DataRemaining == 0)
+                    if (p2pMessage.V2Header.DataRemaining == 0)
                     {
                         if (AutoCloseStream)
                             DataStream.Close();
@@ -713,7 +713,7 @@ namespace MSNPSharp.DataTransfer
         {
             P2PMessage disconnectMessage = new P2PMessage(P2PVersion.P2PV1); // V!
             disconnectMessage.V1Header.Flags = P2PFlag.TlpError;
-            disconnectMessage.SessionID = SessionId;
+            disconnectMessage.V1Header.SessionId = SessionId;
             disconnectMessage.V1Header.AckSessionId = dataMessageIdentifier;
             MessageProcessor.SendMessage(disconnectMessage);
         }
@@ -818,7 +818,7 @@ namespace MSNPSharp.DataTransfer
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV1);
                         p2pDataMessage.WritePreparationBytes();
 
-                        p2pDataMessage.SessionID = sessionId;
+                        p2pDataMessage.Header.SessionId = sessionId;
 
                         MessageSession.IncreaseLocalIdentifier();
                         p2pDataMessage.Header.Identifier = MessageSession.LocalIdentifier;
@@ -836,9 +836,9 @@ namespace MSNPSharp.DataTransfer
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
                         MessageSession.IncreaseLocalIdentifier();
                         p2pDataMessage.Header.Identifier = MessageSession.LocalIdentifier;
-                        p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.None;
+                        p2pDataMessage.V2Header.OperationCode = OperationCode.None;
                         p2pDataMessage.WritePreparationBytes();
-                        p2pDataMessage.SessionID = SessionId;
+                        p2pDataMessage.Header.SessionId = SessionId;
 
                         MessageProcessor.SendMessage(p2pDataMessage);
                         MessageSession.CorrectLocalIdentifier((int)p2pDataMessage.Header.MessageSize);
@@ -866,7 +866,7 @@ namespace MSNPSharp.DataTransfer
                         // send the data message
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV1);
 
-                        p2pDataMessage.SessionID = sessionId;
+                        p2pDataMessage.Header.SessionId = sessionId;
 
                         p2pDataMessage.V1Header.Offset = (uint)currentPosition;
                         p2pDataMessage.Header.TotalSize = (uint)dataStream.Length;
@@ -894,7 +894,7 @@ namespace MSNPSharp.DataTransfer
                     {
                         // send the data message
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
-                        p2pDataMessage.SessionID = sessionId;
+                        p2pDataMessage.Header.SessionId = sessionId;
 
                         // send the rest of the data
                         lock (dataStream)
@@ -902,7 +902,7 @@ namespace MSNPSharp.DataTransfer
                             dataStream.Seek(currentPosition, SeekOrigin.Begin);
                             int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1202);
                             currentPosition += bytesWritten;
-                            p2pDataMessage.DataRemaining = (ulong)(lastPosition - currentPosition - 1);
+                            p2pDataMessage.V2Header.DataRemaining = (ulong)(lastPosition - currentPosition - 1);
                         }
 
                         p2pDataMessage.Header.Identifier = MessageSession.LocalIdentifier;
@@ -911,24 +911,24 @@ namespace MSNPSharp.DataTransfer
                         {
                             if (MessageFlag == (uint)P2PFlag.MSNObjectData)
                             {
-                                p2pDataMessage.TFCombination = (TFCombination.MsnObject | TFCombination.First);
+                                p2pDataMessage.V2Header.TFCombination = (TFCombination.MsnObject | TFCombination.First);
                             }
 
                             if (MessageFlag == (uint)P2PFlag.FileData)
                             {
-                                p2pDataMessage.TFCombination = (TFCombination.FileTransfer | TFCombination.First);
+                                p2pDataMessage.V2Header.TFCombination = (TFCombination.FileTransfer | TFCombination.First);
                             }
                         }
                         else
                         {
                             if (MessageFlag == (uint)P2PFlag.MSNObjectData)
                             {
-                                p2pDataMessage.TFCombination = TFCombination.MsnObject;
+                                p2pDataMessage.V2Header.TFCombination = TFCombination.MsnObject;
                             }
 
                             if (MessageFlag == (uint)P2PFlag.FileData)
                             {
-                                p2pDataMessage.TFCombination = TFCombination.FileTransfer;
+                                p2pDataMessage.V2Header.TFCombination = TFCombination.FileTransfer;
                             }
                         }
 
@@ -981,7 +981,7 @@ namespace MSNPSharp.DataTransfer
         {
             P2PMessage disconnectMessage = new P2PMessage(P2PVersion.P2PV1); // V!
             disconnectMessage.V1Header.Flags = P2PFlag.CloseSession; // v1
-            disconnectMessage.SessionID = SessionId;
+            disconnectMessage.Header.SessionId = SessionId;
             disconnectMessage.V1Header.AckSessionId = dataMessageIdentifier; // aargh it took me long to figure this one out
             MessageProcessor.SendMessage(disconnectMessage);
         }

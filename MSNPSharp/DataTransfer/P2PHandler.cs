@@ -570,7 +570,7 @@ namespace MSNPSharp.DataTransfer
 
             if (version == P2PVersion.P2PV2)
             {
-                if (p2pMessage.V2Header.OperationCode == (byte)MSNPSharp.DataTransfer.OperationCode.NeedACK)
+                if (p2pMessage.V2Header.OperationCode == MSNPSharp.DataTransfer.OperationCode.Acknowledgement)
                 {
                     P2PMessage ack = p2pMessage.CreateAcknowledgement();
                     ack.Header.Identifier = session.LocalIdentifier;
