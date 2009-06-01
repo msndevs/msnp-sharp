@@ -69,8 +69,6 @@ namespace MSNPSharp
 
         protected override void OnMessageReceived(byte[] data)
         {
-            base.OnMessageReceived(data);
-
             NSMessage message = new NSMessage();
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);

@@ -41,10 +41,10 @@ namespace MSNPSharp.Core
     /// Stores incoming messages in a buffer and releases them only when all contents are received.
     /// </summary>
     /// <remarks>
-    ///	MessagePool buffers incoming raw byte data and releases this data only when the message is fully retrieved. 
-    ///	This supports when a single message is send in multiple packets.
-    ///	The descendants of this class have simple knowledge of the used protocol to identify whether a message is fully retrieved or not.
-    ///	</remarks>
+    /// MessagePool buffers incoming raw byte data and releases this data only when the message is fully retrieved. 
+    /// This supports when a single message is send in multiple packets.
+    /// The descendants of this class have simple knowledge of the used protocol to identify whether a message is fully retrieved or not.
+    /// </remarks>
     public abstract class MessagePool
     {
         /// <summary>
@@ -55,30 +55,24 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
-        /// Buffers the incoming raw data internal.This method is often used after receiving incoming data from a socket or another source.
-        /// </summary>		
-        /// <param name="reader"></param>
-        public virtual void BufferData(BinaryReader reader)
+        /// Defines whether there is a message available to retrieve.
+        /// </summary>
+        public abstract bool MessageAvailable
         {
+            get;
         }
 
         /// <summary>
-        /// Defines whether there is a message available to retrieve.
-        /// </summary>		
-        public virtual bool MessageAvailable
-        {
-            get
-            {
-                return false;
-            }
-        }
+        /// Buffers the incoming raw data internal. This method is often used after receiving incoming data from a socket or another source.
+        /// </summary>
+        /// <param name="reader"></param>
+        public abstract void BufferData(BinaryReader reader);
+
 
         /// <summary>
         /// Retrieves the next message data from the buffer.
         /// </summary>
         /// <returns></returns>
         public abstract byte[] GetNextMessageData();
-
-
     }
 };

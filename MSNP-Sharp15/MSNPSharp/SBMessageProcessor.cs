@@ -72,7 +72,6 @@ namespace MSNPSharp
 
         protected override void OnMessageReceived(byte[] data)
         {
-            base.OnMessageReceived(data);
             // first get the general expected switchboard message
             SBMessage message = new SBMessage();
 
