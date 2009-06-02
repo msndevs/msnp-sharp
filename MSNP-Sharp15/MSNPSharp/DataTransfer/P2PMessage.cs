@@ -582,18 +582,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public byte[] GetBytes(bool appendFooter)
         {
-            byte[] innerBytes = GetInnerBytes();
-
-            if (version == P2PVersion.P2PV1)
-            {
-                header.MessageSize = (uint)innerBytes.Length;
-                header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
-            }
-            else if (version == P2PVersion.P2PV2)
-            {
-                header.MessageSize = (uint)(V2Header.DataPacketHeaderLength + innerBytes.Length);
-                header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
-            }
+            InnerBody = GetInnerBytes();
 
             byte[] allData = new byte[header.HeaderLength + header.MessageSize + (appendFooter ? 4 : 0)];
 
@@ -601,7 +590,7 @@ namespace MSNPSharp.DataTransfer
             BinaryWriter writer = new BinaryWriter(stream);
 
             writer.Write(header.GetBytes());
-            writer.Write(innerBytes);
+            writer.Write(InnerBody);
 
             if (appendFooter)
                 writer.Write(BitUtility.ToBigEndian(footer));
