@@ -39,6 +39,16 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp.Core;
 
+    [Flags]
+    public enum TFCombination : byte
+    {
+        None = 0,
+        First = 1,
+        Unknown2 = 2,
+        MsnObject = 4,
+        FileTransfer = 6,
+    }
+
     [Serializable]
     public abstract class P2PHeader
     {
@@ -373,16 +383,9 @@ namespace MSNPSharp.DataTransfer
         private OperationCode operationCode;
         //private UInt16 messageSize;
         //private UInt32 identifier;
-        private Dictionary<byte, byte[]> knownTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
-        private Dictionary<byte, byte[]> unknownTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
+        private Dictionary<byte, byte[]> headerTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
+        private Dictionary<byte, byte[]> dataPacketTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
 
-        public Dictionary<byte, byte[]> UnknownTLVs
-        {
-            get
-            {
-                return unknownTLVs;
-            }
-        }
 
         /// <summary>
         /// Header length (dynamic)
@@ -393,12 +396,34 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 int length = 8;
-                if (knownTLVs.Count > 0)
+                if (headerTLVs.Count > 0)
                 {
                     // Sum TLV lengths
-                    foreach (byte[] val in knownTLVs.Values)
+                    foreach (byte[] val in headerTLVs.Values)
                     {
                         length += 1 + 1 + val.Length;
+                    }
+                    // 4 bytes padding
+                    if ((length % 4) != 0)
+                    {
+                        length += (4 - (length % 4));
+                    }
+                }
+                return length;
+            }
+        }
+
+        public int DataPacketHeaderLength
+        {
+            get
+            {
+                int length = 8;
+                if (dataPacketTLVs.Count > 0)
+                {
+                    // Sum TLV lengths
+                    foreach (byte[] val in dataPacketTLVs.Values)
+                    {
+                        length += (1 + 1 + val.Length);
                     }
                     // 4 bytes padding
                     if ((length % 4) != 0)
@@ -413,11 +438,19 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Type, Length, Values. Max length (t+l+v): 244. Header length - 8 = TLVs length
         /// </summary>
-        public Dictionary<byte, byte[]> KnownTLVs
+        public Dictionary<byte, byte[]> HeaderTLVs
         {
             get
             {
-                return knownTLVs;
+                return headerTLVs;
+            }
+        }
+
+        public Dictionary<byte, byte[]> DataPacketTLVs
+        {
+            get
+            {
+                return dataPacketTLVs;
             }
         }
 
@@ -479,11 +512,11 @@ namespace MSNPSharp.DataTransfer
 
                 if (value == 0)
                 {
-                    knownTLVs.Remove(0x2);
+                    headerTLVs.Remove(0x2);
                 }
                 else
                 {
-                    knownTLVs[0x2] = BitUtility.GetBytes(value, false);
+                    headerTLVs[0x2] = BitUtility.GetBytes(value, false);
                 }
             }
         }
@@ -515,7 +548,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         private ulong dataRemaining;
-        public ulong DataRemaining
+        public UInt64 DataRemaining
         {
             get
             {
@@ -524,6 +557,15 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 dataRemaining = value;
+
+                if (value == 0)
+                {
+                    dataPacketTLVs.Remove(0x1);
+                }
+                else
+                {
+                    dataPacketTLVs[0x1] = BitUtility.GetBytes(value, false);
+                }
             }
         }
 
@@ -563,25 +605,58 @@ namespace MSNPSharp.DataTransfer
                     byte L = TLvs[index + 1];
                     byte[] V = new byte[(int)L];
                     Array.Copy(TLvs, index + 2, V, 0, (int)L);
-                    ProcessTLVData(T, L, V);
+                    ProcessHeaderTLVData(T, L, V);
                     index += 2 + L;
                 }
                 while (index < TLvs.Length);
             }
+
+            mem.Seek(headerLen, SeekOrigin.Begin);
+            int dataHeaderLen = 0;
+
+            if (MessageSize > 0)
+            {
+                dataHeaderLen = (int)(Byte)reader.ReadByte();
+                TFCombination = (TFCombination)(Byte)reader.ReadByte();
+                PackageNumber = (ushort)(UInt16)BitUtility.ToBigEndian(reader.ReadUInt16());
+                SessionId = (uint)(UInt32)BitUtility.ToBigEndian(reader.ReadUInt32());
+                if (dataHeaderLen > 8) //TLVs
+                {
+                    byte[] TLvs = reader.ReadBytes(dataHeaderLen - 8);
+                    int index = 0;
+                    do
+                    {
+                        byte T = TLvs[index];
+
+                        if (T == 0x0)
+                            break; // Skip padding bytes
+
+                        byte L = TLvs[index + 1];
+                        byte[] V = new byte[(int)L];
+                        Array.Copy(TLvs, index + 2, V, 0, (int)L);
+                        ProcessDataPacketTLVData(T, L, V);
+                        index += 2 + L;
+                    }
+                    while (index < TLvs.Length);
+                }
+
+                mem.Seek(headerLen + dataHeaderLen, SeekOrigin.Begin); // Skip padding bytes for TLVs
+            }
+
             reader.Close();
             mem.Close();
 
-            return headerLen;
+            return headerLen + dataHeaderLen;
         }
 
-        protected void ProcessTLVData(byte T, byte L, byte[] V)
+        protected void ProcessHeaderTLVData(byte T, byte L, byte[] V)
         {
+            headerTLVs[T] = V;
+
             switch (T)
             {
                 case 1:
-                    P2PDataLayerPacket initialData = new P2PDataLayerPacket();
-                    initialData.InnerBody = V;
-                    // knownTLVs[T] = V;
+                    // IP
                     return;
 
                 case 2:
@@ -592,14 +667,33 @@ namespace MSNPSharp.DataTransfer
                     }
                     break;
             }
+        }
 
-            unknownTLVs[T] = V;
+        protected void ProcessDataPacketTLVData(byte T, byte L, byte[] V)
+        {
+            dataPacketTLVs[T] = V;
+
+            switch (T)
+            {
+                case 1:
+                    if (L == 8)
+                    {
+                        DataRemaining = BitUtility.ToUInt64(V, 0, false);
+                        return;
+                    }
+                    break;
+
+                case 2:
+                    return;
+            }
         }
 
         public override byte[] GetBytes()
         {
             int headerLen = HeaderLength;
-            byte[] data = new byte[headerLen];
+            int dataHeaderLen = (MessageSize > 0) ? DataPacketHeaderLength : 0;
+
+            byte[] data = new byte[headerLen + dataHeaderLen];
             MemoryStream memStream = new MemoryStream(data);
             BinaryWriter writer = new BinaryWriter(memStream);
 
@@ -608,11 +702,30 @@ namespace MSNPSharp.DataTransfer
             writer.Write(BitUtility.ToBigEndian((ushort)MessageSize));
             writer.Write(BitUtility.ToBigEndian((uint)Identifier));
 
-            foreach (KeyValuePair<byte, byte[]> keyvalue in knownTLVs)
+            foreach (KeyValuePair<byte, byte[]> keyvalue in headerTLVs)
             {
                 writer.Write((byte)keyvalue.Key); // Type
                 writer.Write((byte)keyvalue.Value.Length); // Length
                 writer.Write(keyvalue.Value, 0, keyvalue.Value.Length); // Value
+            }
+
+            memStream.Seek(headerLen, SeekOrigin.Begin);
+
+            if (dataHeaderLen > 0)
+            {
+                writer.Write((byte)dataHeaderLen);
+                writer.Write((byte)TFCombination);
+                writer.Write(BitUtility.ToBigEndian((ushort)PackageNumber));
+                writer.Write(BitUtility.ToBigEndian((uint)SessionId));
+
+                foreach (KeyValuePair<byte, byte[]> keyvalue in dataPacketTLVs)
+                {
+                    writer.Write((byte)keyvalue.Key); // Type
+                    writer.Write((byte)keyvalue.Value.Length); // Length
+                    writer.Write(keyvalue.Value, 0, keyvalue.Value.Length); // Value
+                }
+
+                memStream.Seek(headerLen + dataHeaderLen, SeekOrigin.Begin); // Skip padding bytes for TLVs
             }
 
             writer.Close();
@@ -625,10 +738,10 @@ namespace MSNPSharp.DataTransfer
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "Known TLVs ({0})      : ", knownTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            if (knownTLVs.Count > 0)
+            sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "Header TLVs  ({0})    : ", headerTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            if (headerTLVs.Count > 0)
             {                
-                foreach (KeyValuePair<byte, byte[]> keyvalue in knownTLVs)
+                foreach (KeyValuePair<byte, byte[]> keyvalue in headerTLVs)
                 {
                     sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
                     sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
@@ -642,10 +755,10 @@ namespace MSNPSharp.DataTransfer
             }
             sb.Append("\r\n");
 
-            sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "Unknown TLVs ({0})    : ", unknownTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            if (unknownTLVs.Count > 0)
+            sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "DataPacket TLVs ({0}) : ", dataPacketTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            if (dataPacketTLVs.Count > 0)
             {                
-                foreach (KeyValuePair<byte, byte[]> keyvalue in unknownTLVs)
+                foreach (KeyValuePair<byte, byte[]> keyvalue in dataPacketTLVs)
                 {
                     sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
                     sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));

@@ -254,18 +254,18 @@ namespace MSNPSharp.DataTransfer
                 V2Header.PackageNumber = message.V2Header.PackageNumber;
                 V2Header.DataRemaining = message.V2Header.DataRemaining;
 
-                if (message.V2Header.KnownTLVs.Count > 0)
+                if (message.V2Header.HeaderTLVs.Count > 0)
                 {
-                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.KnownTLVs)
+                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.HeaderTLVs)
                     {
-                        V2Header.KnownTLVs[keyvalue.Key] = keyvalue.Value;
+                        V2Header.HeaderTLVs[keyvalue.Key] = keyvalue.Value;
                     }
                 }
-                if (message.V2Header.UnknownTLVs.Count > 0)
+                if (message.V2Header.DataPacketTLVs.Count > 0)
                 {
-                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.UnknownTLVs)
+                    foreach (KeyValuePair<byte, byte[]> keyvalue in message.V2Header.DataPacketTLVs)
                     {
-                        V2Header.UnknownTLVs[keyvalue.Key] = keyvalue.Value;
+                        V2Header.DataPacketTLVs[keyvalue.Key] = keyvalue.Value;
                     }
                 }
             }
@@ -350,11 +350,16 @@ namespace MSNPSharp.DataTransfer
                 }
                 else if (version == P2PVersion.P2PV2)
                 {
-                    P2PDataLayerPacket dataPacket = new P2PDataLayerPacket();
-                    dataPacket.PayloadData = value;
-
-                    header.MessageSize = (uint)dataPacket.GetBytes().Length;
-                    header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+                    if (value.Length > 0)
+                    {
+                        header.MessageSize = (uint)(V2Header.DataPacketHeaderLength + value.Length);
+                        header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+                    }
+                    else
+                    {
+                        header.MessageSize = 0;
+                        header.TotalSize = 0;
+                    }
                 }
             }
         }
@@ -586,21 +591,11 @@ namespace MSNPSharp.DataTransfer
             }
             else if (version == P2PVersion.P2PV2)
             {
-                P2PDataLayerPacket dataPacket = new P2PDataLayerPacket();
-
-                dataPacket.SessionID = Header.SessionId;
-                dataPacket.TFCombination = V2Header.TFCombination;
-                dataPacket.PackageNumber = V2Header.PackageNumber;
-                dataPacket.DataRemaining = V2Header.DataRemaining;
-
-                dataPacket.PayloadData = innerBytes; // Set payload
-                innerBytes = dataPacket.GetBytes(); // Set inner bytes
-
-                header.MessageSize = (uint)innerBytes.Length;
+                header.MessageSize = (uint)(V2Header.DataPacketHeaderLength + innerBytes.Length);
                 header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
             }
 
-            byte[] allData = new byte[header.HeaderLength + innerBytes.Length + (appendFooter ? 4 : 0)];
+            byte[] allData = new byte[header.HeaderLength + header.MessageSize + (appendFooter ? 4 : 0)];
 
             MemoryStream stream = new MemoryStream(allData);
             BinaryWriter writer = new BinaryWriter(stream);
@@ -623,31 +618,36 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public override void ParseBytes(byte[] data)
         {
-            int headerLen = header.ParseHeader(data);
+            int headerAndBodyHeaderLen = header.ParseHeader(data);
+            byte[] bodyAndFooter = new byte[data.Length - headerAndBodyHeaderLen];
+            Array.Copy(data, headerAndBodyHeaderLen, bodyAndFooter, 0, bodyAndFooter.Length);
 
-            Stream stream = new MemoryStream(data);
+            Stream stream = new MemoryStream(bodyAndFooter);
             BinaryReader reader = new BinaryReader(stream);
-            stream.Seek(headerLen, SeekOrigin.Begin);
+            int innerBodyLen = 0;
 
-            if (version == P2PVersion.P2PV1)
+            if (header.MessageSize > 0)
             {
-                InnerBody = new byte[header.MessageSize];
-                reader.Read(InnerBody, 0, (int)header.MessageSize);
+                if (version == P2PVersion.P2PV1)
+                {
+                    InnerBody = reader.ReadBytes((int)header.MessageSize);
+                    innerBodyLen = InnerBody.Length;
+                }
+                else if (version == P2PVersion.P2PV2)
+                {
+                    InnerBody = reader.ReadBytes((int)(header.MessageSize - V2Header.DataPacketHeaderLength));
+                    innerBodyLen = InnerBody.Length;
+                }
             }
-            else if (version == P2PVersion.P2PV2)
+            else
             {
-                P2PDataLayerPacket dataPacket =
-                    new P2PDataLayerPacket(reader.ReadBytes((int)header.MessageSize));
-
-                Header.SessionId = dataPacket.SessionID;
-                V2Header.DataRemaining = dataPacket.DataRemaining;
-                V2Header.TFCombination = dataPacket.TFCombination;
-                V2Header.PackageNumber = dataPacket.PackageNumber;
-                InnerBody = dataPacket.PayloadData;
+                InnerBody = new byte[0];
             }
 
-            if (data.Length - (headerLen + header.MessageSize) >= 4)
+            if ((data.Length - headerAndBodyHeaderLen + innerBodyLen) >= 4)
+            {
                 footer = BitUtility.ToBigEndian(reader.ReadUInt32());
+            }
 
             reader.Close();
             stream.Close();
