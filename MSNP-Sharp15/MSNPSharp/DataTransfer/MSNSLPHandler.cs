@@ -1610,7 +1610,6 @@ namespace MSNPSharp.DataTransfer
 
                 if (p2pMessage.InnerBody != null &&
                     p2pMessage.V2Header.TFCombination == TFCombination.First &&
-
                     p2pMessage.InnerBody.Length == 4 &&
                     BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0
                     )
@@ -1622,18 +1621,6 @@ namespace MSNPSharp.DataTransfer
             }
 
             SLPMessage slpMessage = SLPMessage.Parse(p2pMessage.InnerBody);
-
-            /*
-            if (p2pMessage.Version == P2PVersion.P2PV1)
-            {
-                slpMessage = p2pMessage.InnerBody;
-            }
-
-            if (p2pMessage.Version == P2PVersion.P2PV2)
-            {
-                slpMessage = SLPMessage.Parse(p2pMessage.V2.DataPacket.PayloadData);
-            }
-            */
 
             if (slpMessage != null)
             {

@@ -736,53 +736,59 @@ namespace MSNPSharp.DataTransfer
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder headerTLVBuilder = new StringBuilder();
 
-            sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "Header TLVs  ({0})    : ", headerTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            headerTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "Header TLVs  ({0})    : ", headerTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             if (headerTLVs.Count > 0)
-            {                
+            {
                 foreach (KeyValuePair<byte, byte[]> keyvalue in headerTLVs)
                 {
-                    sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
-                    sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
+                    headerTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
+                    headerTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
                     foreach (byte b in keyvalue.Value)
                     {
-                        sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "0x{0:x2} ", b));
+                        headerTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "0x{0:x2} ", b));
                     }
-                    sb.Append("); ");
-                    
+                    headerTLVBuilder.Append("); ");
+
                 }
             }
-            sb.Append("\r\n");
+            headerTLVBuilder.Append("\r\n");
 
-            sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "DataPacket TLVs ({0}) : ", dataPacketTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            StringBuilder bodyTLVBuilder = new StringBuilder();
+
+            bodyTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, " DataPacket TLVs ({0}): ", dataPacketTLVs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             if (dataPacketTLVs.Count > 0)
-            {                
+            {
                 foreach (KeyValuePair<byte, byte[]> keyvalue in dataPacketTLVs)
                 {
-                    sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
-                    sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
+                    bodyTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),", keyvalue.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Key));
+                    bodyTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{1:x}({0}),( ", keyvalue.Value.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), keyvalue.Value.Length));
                     foreach (byte b in keyvalue.Value)
                     {
-                        sb.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "0x{0:x2} ", b));
+                        bodyTLVBuilder.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "0x{0:x2} ", b));
                     }
-                    sb.Append("); ");
+                    bodyTLVBuilder.Append("); ");
                 }
             }
-            sb.Append("\r\n");
+            bodyTLVBuilder.Append("\r\n");
+
+            int dataHeaderLen = (MessageSize > 0) ? DataPacketHeaderLength : 0;
 
             return "[P2Pv2Header]\r\n" +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "SessionId           : {1:x} ({0})\r\n", SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionId) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "TFCombination       : {1:x} ({0})\r\n", (byte)TFCombination, Convert.ToString(TFCombination)) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "PackageNumber       : {1:x} ({0})\r\n", PackageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), PackageNumber) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DataRemaining       : {1:x} ({0})\r\n", DataRemaining.ToString(System.Globalization.CultureInfo.InvariantCulture), DataRemaining) +
-
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "HeaderLength        : {1:x} ({0})\r\n", HeaderLength.ToString(System.Globalization.CultureInfo.InvariantCulture), HeaderLength) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "OperationCode       : {1:x} ({0})\r\n", (byte)OperationCode, Convert.ToString(OperationCode)) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "MessageSize         : {1:x} ({0})\r\n", MessageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), MessageSize) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier          : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier       : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
-                sb.ToString();
+                headerTLVBuilder.ToString() +
+
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, " Data HeaderLength  : {1:x} ({0})\r\n", dataHeaderLen.ToString(System.Globalization.CultureInfo.InvariantCulture), dataHeaderLen) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, " TFCombination      : {1:x} ({0})\r\n", (byte)TFCombination, Convert.ToString(TFCombination)) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, " PackageNumber      : {1:x} ({0})\r\n", PackageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), PackageNumber) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, " SessionId          : {1:x} ({0})\r\n", SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), SessionId) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, " DataRemaining      : {1:x} ({0})\r\n", DataRemaining.ToString(System.Globalization.CultureInfo.InvariantCulture), DataRemaining) +
+                bodyTLVBuilder.ToString();
         }
     }
 };
