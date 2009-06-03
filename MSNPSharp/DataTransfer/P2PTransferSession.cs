@@ -485,7 +485,7 @@ namespace MSNPSharp.DataTransfer
                 #region P2P Version 2
 
                 if (p2pMessage.InnerBody.Length == 4 &&
-                    /*p2pMessage.V2.DataPacket.TFCombination == TFCombination.First &&*/
+                    p2pMessage.V2Header.TFCombination == TFCombination.First &&
                     BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
                 {
                     //Data preperation message.
