@@ -431,9 +431,14 @@ namespace MSNPSharp
         public event EventHandler<MailChangedEventArgs> MailboxChanged;
 
         /// <summary>
-        /// Occurs when the the server send an error.
+        /// Occurs when the server sends an error.
         /// </summary>
         public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
+
+        /// <summary>
+        /// Occurs when we receive a mobile message.
+        /// </summary>
+        public event EventHandler<TextMessageEventArgs> MobileMessageReceived;
 
         #endregion
 
@@ -1655,34 +1660,84 @@ namespace MSNPSharp
 
             YIMMessage msg = new YIMMessage(message);
 
-            if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))   //filter the typing message
-                && ContactList.HasContact(sender, ClientType.EmailMember))
+            if (msg.CommandValues.Count > 2)
             {
-                lock (P2PHandler.SwitchboardSessions)
+                if (msg.CommandValues[1].ToString() == ((int)ClientType.EmailMember).ToString())  //Verify sender.
                 {
-                    foreach (YIMMessageHandler YimHandler in P2PHandler.SwitchboardSessions)
+                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
                     {
-                        if (YimHandler.Contacts.ContainsKey(sender))
+                        if (msg.CommandValues.Count > 3)
                         {
-                            return;  //The handler have been registered, return.
+                            //Verify receiver.
+                            if (msg.CommandValues[2].ToString() != Owner.Mail ||
+                                msg.CommandValues[3].ToString() != ((int)Owner.ClientType).ToString())
+                            {
+                                return;
+                            }
                         }
+                    }
+
+                    if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))   //filter the typing message
+                        && ContactList.HasContact(sender, ClientType.EmailMember))
+                    {
+                        lock (P2PHandler.SwitchboardSessions)
+                        {
+                            foreach (YIMMessageHandler YimHandler in P2PHandler.SwitchboardSessions)
+                            {
+                                if (YimHandler.Contacts.ContainsKey(sender))
+                                {
+                                    return;  //The handler have been registered, return.
+                                }
+                            }
+                        }
+
+                        //YIMMessageHandler not found, we create a new one and register it.
+                        YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
+                        switchboard.NSMessageHandler = this;
+
+                        switchboard.MessageProcessor = MessageProcessor;
+                        lock (P2PHandler.SwitchboardSessions)
+                        {
+                            P2PHandler.SwitchboardSessions.Add(switchboard);
+                        }
+
+                        messageProcessor.RegisterHandler(switchboard);
+                        OnSBCreated(switchboard, null, sender, sender, false);
+
+                        switchboard.HandleMessage(MessageProcessor, messageClone);
                     }
                 }
 
-                //YIMMessageHandler not found, we create a new one and register it.
-                YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
-                switchboard.NSMessageHandler = this;
-
-                switchboard.MessageProcessor = MessageProcessor;
-                lock (P2PHandler.SwitchboardSessions)
+                if (msg.CommandValues[1].ToString() == ((int)ClientType.PhoneMember).ToString())
                 {
-                    P2PHandler.SwitchboardSessions.Add(switchboard);
+                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+                    {
+                        if (msg.CommandValues.Count > 3)
+                        {
+                            //Verify receiver.
+                            if (msg.CommandValues[2].ToString() != Owner.Mail ||
+                                msg.CommandValues[3].ToString() != ((int)Owner.ClientType).ToString())
+                            {
+                                return;
+                            }
+                        }
+                    }
+
+                    if (ContactList.HasContact(msg.CommandValues[0].ToString(), 
+                        ((ClientType)(int.Parse(msg.CommandValues[1].ToString())))))
+                    {
+                        Contact msgSender = ContactList.GetContact(msg.CommandValues[0].ToString(),
+                        ((ClientType)(int.Parse(msg.CommandValues[1].ToString()))));
+
+                        TextMessage txtmsg = new TextMessage();
+                        txtmsg.CreateFromMessage(msg.InnerMessage);
+
+                        TextMessageEventArgs e = new TextMessageEventArgs(txtmsg, msgSender);
+
+                        OnMobileMessageReceived(e);
+
+                    }
                 }
-
-                messageProcessor.RegisterHandler(switchboard);
-                OnSBCreated(switchboard, null, sender, sender, false);
-
-                switchboard.HandleMessage(MessageProcessor, messageClone);
             }
         }
 
@@ -1920,6 +1975,19 @@ namespace MSNPSharp
             if (NewMailReceived != null)
             {
                 NewMailReceived(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="MobileMessageReceived"/> event.
+        /// </summary>
+        /// <remarks>Called when the owner has received a mobile message.</remarks>
+        /// <param name="e"></param>
+        protected virtual void OnMobileMessageReceived(TextMessageEventArgs e)
+        {
+            if (MobileMessageReceived != null)
+            {
+                MobileMessageReceived(this, e);
             }
         }
 

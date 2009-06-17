@@ -45,15 +45,25 @@ namespace MSNPSharp.Core
     public class YIMMessage : MSNMessage
     {
         string _user = "";
-        string _msgtype = "1";
-        string _clienttype = "32";
+        string _msgtype = ((uint)TextMessageType.Text).ToString();
+        string _clienttype = ((int)ClientType.EmailMember).ToString();
+
+#if MSNP18
+        string _dstuser = "";
+        string _dstclienttype = ((int)ClientType.PassportMember).ToString();
+#endif
 
         public YIMMessage(NSMessage message)
             : base("UBM", (ArrayList)message.CommandValues.Clone())
         {
             _user = message.CommandValues[0].ToString();
 #if MSNP18
-            _msgtype = message.CommandValues[3].ToString();
+            if (message.CommandValues.Count > 4)
+            {
+                _msgtype = message.CommandValues[4].ToString();
+                _dstuser = message.CommandValues[2].ToString();
+                _dstclienttype = message.CommandValues[3].ToString();
+            }
 #else
             _msgtype = message.CommandValues[2].ToString();
 #endif
@@ -71,7 +81,20 @@ namespace MSNPSharp.Core
         {
             _user = commandValues[0];
             _clienttype = commandValues[1];
-            _msgtype = commandValues[2];
+#if MSNP18
+            if (command.ToLowerInvariant() == "UBM" && commandValues.Length > 4)
+            {
+                _msgtype = commandValues[4].ToString();
+                _dstuser = commandValues[2].ToString();
+                _dstclienttype = commandValues[3].ToString();
+            }
+            else
+            {
+                _msgtype = commandValues[2].ToString();
+            }
+#else
+            _msgtype = commandValues[2].ToString();
+#endif
         }
 
         public YIMMessage(string command, ArrayList commandValues)
@@ -79,7 +102,21 @@ namespace MSNPSharp.Core
         {
             _user = commandValues[0].ToString();
             _clienttype = commandValues[1].ToString();
+
+#if MSNP18
+            if (command.ToLowerInvariant() == "UBM" && commandValues.Count > 4)
+            {
+                _msgtype = commandValues[4].ToString();
+                _dstuser = commandValues[2].ToString();
+                _dstclienttype = commandValues[3].ToString();
+            }
+            else
+            {
+                _msgtype = commandValues[2].ToString();
+            }
+#else
             _msgtype = commandValues[2].ToString();
+#endif
         }
 
         public override byte[] GetBytes()
@@ -99,6 +136,13 @@ namespace MSNPSharp.Core
 
                     CommandValues.Add(_user);
                     CommandValues.Add(_clienttype);
+                    
+                    if (_dstuser != "" && Command == "UBM")
+                    {
+                        CommandValues.Add(_dstuser);
+                        CommandValues.Add(_dstclienttype);
+                    }
+
                     CommandValues.Add(_msgtype);
                     CommandValues.Add(contents.Length.ToString(CultureInfo.InvariantCulture));
                 }

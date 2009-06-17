@@ -887,6 +887,32 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Types of text messages send through switchboard.
+    /// </summary>
+    public enum TextMessageType : uint
+    {
+        /// <summary>
+        /// Unspecified
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Plain text message
+        /// </summary>
+        Text = 1,
+
+        /// <summary>
+        /// User typing message
+        /// </summary>
+        Typing = 2,
+
+        /// <summary>
+        /// A nudge message
+        /// </summary>
+        Nudge = 3
+    }
+
+    /// <summary>
     /// CacheKey for webservices
     /// </summary>
     [Serializable()]

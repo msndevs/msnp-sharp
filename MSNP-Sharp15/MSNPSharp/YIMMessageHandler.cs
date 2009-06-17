@@ -68,7 +68,11 @@ namespace MSNPSharp
             IEnumerator iemu = Contacts.Keys.GetEnumerator();
             iemu.MoveNext();
 
-            YIMMessage nsMessage = new YIMMessage("UUM", new string[] { (string)(iemu.Current), "32", "3" });
+            YIMMessage nsMessage = new YIMMessage("UUM", 
+                new string[] { (string)(iemu.Current), 
+                ((int)ClientType.EmailMember).ToString(), 
+                 ((uint)TextMessageType.Nudge).ToString() });
+
             MSGMessage msgMessage = new MSGMessage();
 
             msgMessage.MimeHeader["Content-Type"] = "text/x-msnmsgr-datacast\r\n\r\nID: 1\r\n\r\n\r\n";
@@ -83,7 +87,11 @@ namespace MSNPSharp
             IEnumerator iemu = Contacts.Keys.GetEnumerator();
             iemu.MoveNext();
 
-            YIMMessage nsMessage = new YIMMessage("UUM", new string[] { (string)(iemu.Current), "32", "1" });
+            YIMMessage nsMessage = new YIMMessage("UUM",
+                new string[] { (string)(iemu.Current), 
+                ((int)ClientType.EmailMember).ToString(), 
+                ((uint)TextMessageType.Text).ToString()});
+
             MSGMessage msgMessage = new MSGMessage();
 
             nsMessage.InnerMessage = msgMessage;
@@ -97,7 +105,11 @@ namespace MSNPSharp
             IEnumerator iemu = Contacts.Keys.GetEnumerator();
             iemu.MoveNext();
 
-            YIMMessage nsMessage = new YIMMessage("UUM", new string[] { (string)(iemu.Current), "32", "2" });
+            YIMMessage nsMessage = new YIMMessage("UUM", 
+                new string[] { (string)(iemu.Current), 
+                ((int)ClientType.EmailMember).ToString(), 
+                ((uint)TextMessageType.Typing).ToString()});
+
             MSGMessage msgMessage = new MSGMessage();
 
             msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
@@ -140,6 +152,21 @@ namespace MSNPSharp
                     case "UBM":
                         {
                             YIMMessage yimMessage = new YIMMessage(nsMessage);
+
+                            if (NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+                            {
+                                if (yimMessage.CommandValues.Count > 3)
+                                {
+                                    //Verify receiver.
+                                    if (yimMessage.CommandValues[2].ToString() != NSMessageHandler.Owner.Mail ||
+                                        yimMessage.CommandValues[3].ToString() != ((int)NSMessageHandler.Owner.ClientType).ToString())
+                                    {
+                                        return;
+                                    }
+                                }
+                            }
+
+                            
                             OnUBMReceived(yimMessage);
                             break;
                         }
