@@ -48,25 +48,30 @@ namespace MSNPSharp.Core
         string _msgtype = ((uint)TextMessageType.Text).ToString();
         string _clienttype = ((int)ClientType.EmailMember).ToString();
 
-#if MSNP18
+        MsnProtocol _protocol = MsnProtocol.MSNP15;
+
         string _dstuser = "";
         string _dstclienttype = ((int)ClientType.PassportMember).ToString();
-#endif
 
-        public YIMMessage(NSMessage message)
+        public YIMMessage(NSMessage message, MsnProtocol protocol)
             : base("UBM", (ArrayList)message.CommandValues.Clone())
         {
+            _protocol = protocol;
             _user = message.CommandValues[0].ToString();
-#if MSNP18
-            if (message.CommandValues.Count > 4)
+
+            if (_protocol >= MsnProtocol.MSNP16)
             {
-                _msgtype = message.CommandValues[4].ToString();
-                _dstuser = message.CommandValues[2].ToString();
-                _dstclienttype = message.CommandValues[3].ToString();
+                if (message.CommandValues.Count > 4)
+                {
+                    _msgtype = message.CommandValues[4].ToString();
+                    _dstuser = message.CommandValues[2].ToString();
+                    _dstclienttype = message.CommandValues[3].ToString();
+                }
             }
-#else
-            _msgtype = message.CommandValues[2].ToString();
-#endif
+            else
+            {
+                _msgtype = message.CommandValues[2].ToString();
+            }
 
             Command = "UBM";
 
@@ -76,47 +81,57 @@ namespace MSNPSharp.Core
             InnerBody = GetBytes();
         }
 
-        public YIMMessage(string command, string[] commandValues)
+        public YIMMessage(string command, string[] commandValues, MsnProtocol protocol)
             : base(command, new ArrayList(commandValues))
         {
+            _protocol = protocol;
             _user = commandValues[0];
             _clienttype = commandValues[1];
-#if MSNP18
-            if (command.ToLowerInvariant() == "UBM" && commandValues.Length > 4)
+
+            if (_protocol >= MsnProtocol.MSNP16)
             {
-                _msgtype = commandValues[4].ToString();
-                _dstuser = commandValues[2].ToString();
-                _dstclienttype = commandValues[3].ToString();
+                if (command.ToLowerInvariant() == "UBM" && commandValues.Length > 4)
+                {
+                    _msgtype = commandValues[4].ToString();
+                    _dstuser = commandValues[2].ToString();
+                    _dstclienttype = commandValues[3].ToString();
+                }
+                else
+                {
+                    _msgtype = commandValues[2].ToString();
+                }
             }
             else
             {
                 _msgtype = commandValues[2].ToString();
             }
-#else
-            _msgtype = commandValues[2].ToString();
-#endif
+
         }
 
-        public YIMMessage(string command, ArrayList commandValues)
+        public YIMMessage(string command, ArrayList commandValues, MsnProtocol protocol)
             : base(command, commandValues)
         {
+            _protocol = protocol;
             _user = commandValues[0].ToString();
             _clienttype = commandValues[1].ToString();
 
-#if MSNP18
-            if (command.ToLowerInvariant() == "UBM" && commandValues.Count > 4)
+            if (_protocol >= MsnProtocol.MSNP16)
             {
-                _msgtype = commandValues[4].ToString();
-                _dstuser = commandValues[2].ToString();
-                _dstclienttype = commandValues[3].ToString();
+                if (command.ToLowerInvariant() == "UBM" && commandValues.Count > 4)
+                {
+                    _msgtype = commandValues[4].ToString();
+                    _dstuser = commandValues[2].ToString();
+                    _dstclienttype = commandValues[3].ToString();
+                }
+                else
+                {
+                    _msgtype = commandValues[2].ToString();
+                }
             }
             else
             {
                 _msgtype = commandValues[2].ToString();
             }
-#else
-            _msgtype = commandValues[2].ToString();
-#endif
         }
 
         public override byte[] GetBytes()

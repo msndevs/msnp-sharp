@@ -637,7 +637,9 @@ namespace MSNPSharp
                     YIMMessage nsMessage = new YIMMessage("UUM",
                         new string[] { receiver.Mail, 
                         ((int)receiver.ClientType).ToString(), 
-                        "1" });
+                        "1" },
+                        NSMessageHandler.Credentials.MsnProtocol);
+
                     nsMessage.InnerMessage = msgMessage;
 
                     NSMessageHandler.MessageProcessor.SendMessage(nsMessage);

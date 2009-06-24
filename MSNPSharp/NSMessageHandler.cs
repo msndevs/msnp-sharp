@@ -540,7 +540,10 @@ namespace MSNPSharp
                     msgMessage.InnerMessage = txtMsg;
                     msgMessage.MimeHeader["Dest-Agent"] = "mobile";
 
-                    YIMMessage nsMessage = new YIMMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" });
+                    YIMMessage nsMessage = new YIMMessage("UUM",
+                        new string[] { to, ((int)receiver.ClientType).ToString(), "1" },
+                        Credentials.MsnProtocol);
+
                     nsMessage.InnerMessage = msgMessage;
                     MessageProcessor.SendMessage(nsMessage);
                 }
@@ -1658,7 +1661,7 @@ namespace MSNPSharp
                 sender = message.CommandValues[0].ToString();
             }
 
-            YIMMessage msg = new YIMMessage(message);
+            YIMMessage msg = new YIMMessage(message, Credentials.MsnProtocol);
 
             if (msg.CommandValues.Count > 2)
             {

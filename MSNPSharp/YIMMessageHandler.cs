@@ -68,10 +68,11 @@ namespace MSNPSharp
             IEnumerator iemu = Contacts.Keys.GetEnumerator();
             iemu.MoveNext();
 
-            YIMMessage nsMessage = new YIMMessage("UUM", 
+            YIMMessage nsMessage = new YIMMessage("UUM",
                 new string[] { (string)(iemu.Current), 
                 ((int)ClientType.EmailMember).ToString(), 
-                 ((uint)TextMessageType.Nudge).ToString() });
+                 ((uint)TextMessageType.Nudge).ToString() },
+                 NSMessageHandler.Credentials.MsnProtocol);
 
             MSGMessage msgMessage = new MSGMessage();
 
@@ -90,7 +91,8 @@ namespace MSNPSharp
             YIMMessage nsMessage = new YIMMessage("UUM",
                 new string[] { (string)(iemu.Current), 
                 ((int)ClientType.EmailMember).ToString(), 
-                ((uint)TextMessageType.Text).ToString()});
+                ((uint)TextMessageType.Text).ToString()},
+                NSMessageHandler.Credentials.MsnProtocol);
 
             MSGMessage msgMessage = new MSGMessage();
 
@@ -105,10 +107,11 @@ namespace MSNPSharp
             IEnumerator iemu = Contacts.Keys.GetEnumerator();
             iemu.MoveNext();
 
-            YIMMessage nsMessage = new YIMMessage("UUM", 
+            YIMMessage nsMessage = new YIMMessage("UUM",
                 new string[] { (string)(iemu.Current), 
                 ((int)ClientType.EmailMember).ToString(), 
-                ((uint)TextMessageType.Typing).ToString()});
+                ((uint)TextMessageType.Typing).ToString()},
+                NSMessageHandler.Credentials.MsnProtocol);
 
             MSGMessage msgMessage = new MSGMessage();
 
@@ -151,7 +154,7 @@ namespace MSNPSharp
                 {
                     case "UBM":
                         {
-                            YIMMessage yimMessage = new YIMMessage(nsMessage);
+                            YIMMessage yimMessage = new YIMMessage(nsMessage, NSMessageHandler.Credentials.MsnProtocol);
 
                             if (NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP16)
                             {
