@@ -1527,6 +1527,9 @@ namespace MSNPSharp.DataTransfer
             {
                 P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
 
+                if (session == null)
+                    return;
+
                 // remove the resources
                 RemoveTransferSession(session);
                 // and close the connection
