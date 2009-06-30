@@ -169,15 +169,31 @@ namespace MSNPSharp.Core
             SendSocketData(socket, data);
         }
 
-        protected static void SendSocketData(Socket psocket, byte[] data)
+        protected void SendSocketData(Socket psocket, byte[] data)
         {
             try
             {
-                if (psocket != null)
+                if (psocket != null && psocket.Connected)
+                {
                     lock (psocket)
                     {
                         psocket.Send(data);
                     }
+                }
+                else
+                {
+                    OnDisconnected();
+                }
+            }
+            catch (SocketException sex)
+            {
+                if (sex.NativeErrorCode != 10035)  //10035: WSAEWOULDBLOCK
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error while sending network message. Error message: " + sex.Message);
+                    OnDisconnected();
+                }
+
+                return;
             }
             catch (Exception e)
             {
