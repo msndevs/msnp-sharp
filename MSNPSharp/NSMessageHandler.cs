@@ -1930,6 +1930,42 @@ namespace MSNPSharp
 
                             });
                     }
+                    else
+                    {
+                        XmlDocument xmlDoc = new XmlDocument();
+                        xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
+                        XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
+                        string domain = String.Empty;
+                        foreach (XmlNode domainNode in domains)
+                        {
+                            domain = domainNode.Attributes["n"].Value;
+                            XmlNode contactNode = domainNode.FirstChild;
+                            do
+                            {
+                                string account = contactNode.Attributes["n"].Value + "@" + domain;
+                                ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
+                                MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                                string displayName = account;
+                                try
+                                {
+                                    displayName = contactNode.Attributes["f"].Value;
+                                }
+                                catch (Exception)
+                                {
+                                }
+
+                                if (list == MSNLists.ReverseList)
+                                {
+                                    Contact contact = ContactList.GetContact(account, displayName, type);
+                                    contact.Lists |= MSNLists.ReverseList;
+                                    ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                }
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
+
+                            } while (contactNode.NextSibling != null);
+                        }
+                    }
                 }
             }
         }
