@@ -417,67 +417,67 @@ namespace MSNPSharp.DataTransfer
 
                 // check if it is a content message
                 // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
-                if (p2pMessage.Header.SessionId > 0 &&
-                    p2pMessage.InnerBody.Length > 0 &&
-                   ((p2pMessage.V1Header.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.DisplayImageFooter) ||  //DisplayImage
-                   (p2pMessage.V1Header.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter) ||  //File
-                   (p2pMessage.V1Header.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.CustomEmoticonFooter) || //CustomEmoticon
-
-                   (p2pMessage.V1Header.Flags == P2PFlag.FileData || p2pMessage.Footer == 1))) // Old style
+                if (p2pMessage.Header.SessionId > 0 && p2pMessage.InnerBody.Length > 0)
                 {
-                    // indicates whether we must stream this message
-                    bool writeToStream = true;
-
-                    // check if it is a data preparation message send via the SB
-                    if (p2pMessage.Header.TotalSize == 4 &&
-                        p2pMessage.Header.MessageSize == 4
-                        && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
+                    if (
+                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.DisplayImageFooter12) ||
+                        (p2pMessage.V1Header.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter2) ||
+                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.CustomEmoticonFooter11) ||
+                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data || p2pMessage.Footer == 1) // Old client, footer is 1 (always?)
+                       )
                     {
-                        writeToStream = false;
-                    }
+                        // indicates whether we must stream this message
+                        bool writeToStream = true;
 
-                    if (writeToStream)
-                    {
-                        // store the data message identifier because we want to reference it if we abort the transfer
-                        dataMessageIdentifier = p2pMessage.Header.Identifier;
-
-                        if (DataStream == null)
-                            throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
-
-                        if (DataStream.CanWrite)
+                        // check if it is a data preparation message send via the SB
+                        if (p2pMessage.Header.TotalSize == 4 &&
+                            p2pMessage.Header.MessageSize == 4
+                            && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0)
                         {
-                            if (DataStream.Length < (long)p2pMessage.V1Header.Offset + (long)p2pMessage.InnerBody.Length)
-                                DataStream.SetLength((long)p2pMessage.V1Header.Offset + (long)p2pMessage.InnerBody.Length);
-
-                            DataStream.Seek((long)p2pMessage.V1Header.Offset, SeekOrigin.Begin);
-                            DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+                            writeToStream = false;
                         }
-                        // check for end of file transfer
-                        if (p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
+
+                        if (writeToStream)
                         {
-                            // keep track of the remote identifier
-                            MessageSession.IncreaseRemoteIdentifier();
-                            P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                            ack.Header.SessionId = p2pMessage.Header.SessionId;
-                            ack.Header.Identifier = 0;
-                            ack.Header.TotalSize = p2pMessage.Header.TotalSize;
+                            // store the data message identifier because we want to reference it if we abort the transfer
+                            dataMessageIdentifier = p2pMessage.Header.Identifier;
 
-                            SendMessage(ack);
+                            if (DataStream == null)
+                                throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
 
-                            if (AutoCloseStream)
-                                DataStream.Close();
+                            if (DataStream.CanWrite)
+                            {
+                                if (DataStream.Length < (long)p2pMessage.V1Header.Offset + (long)p2pMessage.InnerBody.Length)
+                                    DataStream.SetLength((long)p2pMessage.V1Header.Offset + (long)p2pMessage.InnerBody.Length);
 
-                            OnTransferFinished();
-                            // notify the remote client we close the direct connection
-                            SendDisconnectMessage();
+                                DataStream.Seek((long)p2pMessage.V1Header.Offset, SeekOrigin.Begin);
+                                DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+                            }
+                            // check for end of file transfer
+                            if (p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
+                            {
+                                // keep track of the remote identifier
+                                MessageSession.IncreaseRemoteIdentifier();
+                                P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                                ack.Header.SessionId = p2pMessage.Header.SessionId;
+                                ack.Header.Identifier = 0;
+                                ack.Header.TotalSize = p2pMessage.Header.TotalSize;
+
+                                SendMessage(ack);
+
+                                if (AutoCloseStream)
+                                    DataStream.Close();
+
+                                OnTransferFinished();
+                                // notify the remote client we close the direct connection
+                                SendDisconnectMessage();
+                            }
                         }
+                        // finished handling this message
+                        return;
                     }
-                    // finished handling this message
-                    return;
-
                 }
                 #endregion
-
             }
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
