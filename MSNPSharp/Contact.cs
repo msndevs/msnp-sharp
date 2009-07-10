@@ -353,6 +353,14 @@ namespace MSNPSharp
             }
         }
 
+        public ClientCapacities ClientVersion
+        {
+            get
+            {
+                return (clientCapacities & ClientCapacities.CanHandleMSNCMask);
+            }
+        }
+
         /// <summary>
         /// When DynamicChanged = HasNew, the official client will show a gleam before the contact.
         /// </summary>

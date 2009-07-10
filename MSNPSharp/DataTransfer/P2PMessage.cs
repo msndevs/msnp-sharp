@@ -102,39 +102,35 @@ namespace MSNPSharp.DataTransfer
 
     public enum AppFlags
     {
-
-#if MSNC12
         /// <summary>
         /// Footer for a msn DisplayImage p2pMessage.
         /// </summary>
-        DisplayImageFooter = 0xc,
+        DisplayImageFooter12 = 12,
 
         /// <summary>
         /// Footer for a filetransfer p2pMessage.
         /// </summary>
-        FileTransFooter = 0x2,
+        FileTransFooter2 = 2,
 
         /// <summary>
         /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
-        CustomEmoticonFooter = 0x0b
-#else
+        CustomEmoticonFooter11 = 11,
+
         /// <summary>
         /// Footer for a msn object p2pMessage.
         /// </summary>
-        DisplayImageFooter = 0x1,
+        DisplayImageFooter1 = 1,
 
         /// <summary>
         /// Footer for a filetransfer p2pMessage.
         /// </summary>
-        FileTransFooter = 0x1,
+        FileTransFooter1 = 1,
 
         /// <summary>
         /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
-        CustomEmoticonFooter = 0x1
-#endif
-
+        CustomEmoticonFooter1 = 1
     }
 
     internal static class P2PConst
@@ -158,35 +154,6 @@ namespace MSNPSharp.DataTransfer
         /// The guid used in invitations for an activity.
         /// </summary>
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
-
-
-#if MSNC12
-        /// <summary>
-        /// The AppID used in invitations for DisplayImage p2p transfer.
-        /// </summary>
-        public const uint DisplayImageAppID = 12;
-
-        /// <summary>
-        /// The AppID used in invitations for CustomEmoticon p2p transfer.
-        /// </summary>
-        public const uint CustomEmoticonAppID = 11;
-#else
-
-        /// <summary>
-        /// The AppID used in invitations for DisplayImage p2p transfer.
-        /// </summary>
-        public const uint DisplayImageAppID = 1;
-
-        /// <summary>
-        /// The AppID used in invitations for CustomEmoticon p2p transfer.
-        /// </summary>
-        public const uint CustomEmoticonAppID = 1;
-#endif
-
-        /// <summary>
-        /// The AppID(footer) used in invitations for a filetransfer.
-        /// </summary>
-        public const uint FileTransAppID = 2;
     }
 
 

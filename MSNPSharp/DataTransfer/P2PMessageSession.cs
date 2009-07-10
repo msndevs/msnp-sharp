@@ -372,31 +372,25 @@ namespace MSNPSharp.DataTransfer
             if (Version == P2PVersion.P2PV1)
             {
                 msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
-#if MSNC12
                 msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
-#endif
             }
 
             if (Version == P2PVersion.P2PV2)
             {
-                if (RemoteClient != null && 
-                    LocalUser != null && 
-                    RemoteClient.MachineGuid != Guid.Empty && 
+                if (RemoteClient != null &&
+                    LocalUser != null &&
+                    RemoteClient.MachineGuid != Guid.Empty &&
                     LocalUser.MachineGuid != Guid.Empty)
                 {
                     //Created from local.
                     msgWrapper.MimeHeader["P2P-Dest"] = RemoteClient.Mail + ";" + RemoteClient.MachineGuid.ToString("B");
-#if MSNC12
                     msgWrapper.MimeHeader["P2P-Src"] = LocalUser.Mail + ";" + LocalUser.MachineGuid.ToString("B");
-#endif
                 }
                 else
                 {
                     //Created from remote
                     msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
-#if MSNC12
                     msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
-#endif
                 }
             }
 
