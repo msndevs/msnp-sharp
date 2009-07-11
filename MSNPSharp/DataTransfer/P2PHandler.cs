@@ -374,7 +374,7 @@ namespace MSNPSharp.DataTransfer
         {
             P2PMessageSession session = (receivedMessage.Version == P2PVersion.P2PV1)
                 ? GetSessionFromLocal(receivedMessage.V1Header.AckSessionId)
-                : CreateSessionFromRemote(receivedMessage); // TODO V!
+                : null; // We only do things step by step.
 
             if (session == null)
                 throw new MSNPSharpException("P2PHandler: an acknowledgement for the creation of a P2P session was received, but no local created session could be found with the specified identifier.");
@@ -512,45 +512,88 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Incoming p2p message " + NSMessageHandler.Owner.Mail + "\r\n" + ((P2PMessage)p2pMessage).ToDebugString(), GetType().Name);
 
             // get the associated message session
-            string remoteAccount = sbMessage.CommandValues[0].ToString(); // CommandValues.Count=0, Clone issue????????????????????
-            P2PMessageSession session = GetSessionFromRemote(remoteAccount);// p2pMessage.Identifier); V!
+            string remoteAccount = string.Empty;
+            string localAccount = string.Empty;
+
+            Guid remoteMachineGuid = Guid.Empty;
+            Guid localMachineGuid = Guid.Empty;
+
+            if (version == P2PVersion.P2PV1)
+            {
+                remoteAccount = sbMessage.CommandValues[0].ToString(); // CommandValues.Count=0, Clone issue????????????????????
+                localAccount = msgMessage.MimeHeader["P2P-Dest"].ToString();
+            }
+
+            if (version == P2PVersion.P2PV2)
+            {
+                if (msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries).Length > 1)
+                {
+                    remoteAccount = msgMessage.MimeHeader["P2P-Src"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
+                    remoteMachineGuid = new Guid(msgMessage.MimeHeader["P2P-Src"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+
+                    localAccount = msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
+                    localMachineGuid = new Guid(msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                }
+                else
+                {
+                    remoteAccount = msgMessage.MimeHeader["P2P-Src"].ToString();
+                    localAccount = msgMessage.MimeHeader["P2P-Dest"].ToString();
+                }
+            }
+
+            P2PMessageSession session = GetSessionFromRemote(remoteAccount); // GetSessionFromRemote(remoteMachineGuid == Guid.Empty ? remoteAccount : (remoteAccount + ";" + remoteMachineGuid.ToString("B")));
+
+            if (session == null && remoteMachineGuid != Guid.Empty)
+            {
+                session = GetSessionFromRemote(remoteAccount + ";" + remoteMachineGuid.ToString("B"));
+            }
 
             // check for validity
             if (session == null)
             {
-                if (p2pMessage.Header.IsAcknowledgement)
+                if (version == P2PVersion.P2PV1)
                 {
-                    // if it is an acknowledgement then the local client initiated the session.
-                    // this means the session alread exists, but the remote identifier are not yet set.
-                    session = SetSessionIdentifiersAfterAck(p2pMessage);
-                    // XXX TODO - V1. SetSessionIdentifiersAfterAck, V!
+                    if (p2pMessage.V1Header.IsAcknowledgement)
+                    {
+                        // if it is an acknowledgement then the local client initiated the session.
+                        // this means the session alread exists, but the remote identifier are not yet set.
+                        session = SetSessionIdentifiersAfterAck(p2pMessage);
+                    }
+                    else
+                    {
+                        // there is no session available at all. the remote client sends the first message
+                        // in the session. So create a new session to handle following messages.
+                        session = CreateSessionFromRemote(p2pMessage);
+                    }
                 }
-                else
+
+                if (version == P2PVersion.P2PV2)
                 {
                     // there is no session available at all. the remote client sends the first message
                     // in the session. So create a new session to handle following messages.
-                    session = CreateSessionFromRemote(p2pMessage);
-                    if (version == P2PVersion.P2PV1)
+                    if (p2pMessage.V2Header.OperationCode == OperationCode.InitSession)
                     {
-                        session.RemoteContact = sbMessage.CommandValues[0].ToString();
+                        session = CreateSessionFromRemote(p2pMessage);
                     }
-
-                    if (version == P2PVersion.P2PV2)
-                    {
-                        session.RemoteContact = msgMessage.MimeHeader["P2P-Src"].ToString();
-                    }
-
-                    session.LocalContact = msgMessage.MimeHeader["P2P-Dest"].ToString();
-
-                    // add the session to the session list
-                    messageSessions.Add(session);
-
-                    // set the default message processor
-                    session.MessageProcessor = sender;
-
-                    // notify the client programmer
-                    OnSessionCreated(session);
                 }
+
+                if (session == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "P2PHandler get session failed.");
+                    return;
+                }
+
+                session.RemoteContact = remoteMachineGuid == Guid.Empty ? remoteAccount : (remoteAccount + ";" + remoteMachineGuid.ToString("B"));
+                session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));
+
+                // add the session to the session list
+                messageSessions.Add(session);
+
+                // set the default message processor
+                session.MessageProcessor = sender;
+
+                // notify the client programmer
+                OnSessionCreated(session);
             }
 
             // diagnostic check
@@ -570,7 +613,7 @@ namespace MSNPSharp.DataTransfer
 
             if (version == P2PVersion.P2PV2)
             {
-                if (p2pMessage.V2Header.OperationCode == MSNPSharp.DataTransfer.OperationCode.Acknowledgement)
+                if (p2pMessage.V2Header.OperationCode == OperationCode.Acknowledgement)
                 {
                     P2PMessage ack = p2pMessage.CreateAcknowledgement();
                     ack.Header.Identifier = session.LocalIdentifier;
