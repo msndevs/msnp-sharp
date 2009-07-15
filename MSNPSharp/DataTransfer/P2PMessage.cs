@@ -100,39 +100,6 @@ namespace MSNPSharp.DataTransfer
         MSNObjectData = MSNSLPInfo | P2PFlag.Data
     }
 
-    public enum AppFlags
-    {
-        /// <summary>
-        /// Footer for a msn DisplayImage p2pMessage.
-        /// </summary>
-        DisplayImageFooter12 = 12,
-
-        /// <summary>
-        /// Footer for a filetransfer p2pMessage.
-        /// </summary>
-        FileTransFooter2 = 2,
-
-        /// <summary>
-        /// Footer for a msn CustomEmoticon p2pMessage.
-        /// </summary>
-        CustomEmoticonFooter11 = 11,
-
-        /// <summary>
-        /// Footer for a msn object p2pMessage.
-        /// </summary>
-        DisplayImageFooter1 = 1,
-
-        /// <summary>
-        /// Footer for a filetransfer p2pMessage.
-        /// </summary>
-        FileTransFooter1 = 1,
-
-        /// <summary>
-        /// Footer for a msn CustomEmoticon p2pMessage.
-        /// </summary>
-        CustomEmoticonFooter1 = 1
-    }
-
     internal static class P2PConst
     {
         /// <summary>
@@ -154,6 +121,31 @@ namespace MSNPSharp.DataTransfer
         /// The guid used in invitations for an activity.
         /// </summary>
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
+
+        /// <summary>
+        /// Footer for a msn DisplayImage p2pMessage.
+        /// </summary>
+        public const uint DisplayImageFooter12 = 12;
+
+        /// <summary>
+        /// Footer for a filetransfer p2pMessage.
+        /// </summary>
+        public const uint FileTransFooter2 = 2;
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        public const uint CustomEmoticonFooter11 = 11;
+
+        /// <summary>
+        /// Footer for a msn object p2pMessage.
+        /// </summary>
+        public const uint DisplayImageFooter1 = 1;
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        public const uint CustomEmoticonFooter1 = 1;
     }
 
 
@@ -175,11 +167,6 @@ namespace MSNPSharp.DataTransfer
         private uint footer;
 
         public P2PMessage(P2PVersion ver)
-            : this(ver, new byte[0])
-        {
-        }
-
-        public P2PMessage(P2PVersion ver, byte[] data)
         {
             version = ver;
 
@@ -190,11 +177,6 @@ namespace MSNPSharp.DataTransfer
             else if (ver == P2PVersion.P2PV2)
             {
                 header = new P2Pv2Header();
-            }
-
-            if (data.Length > 0)
-            {
-                ParseBytes(data);
             }
         }
 
@@ -644,7 +626,6 @@ namespace MSNPSharp.DataTransfer
         public P2PDataMessage(P2PVersion v)
             : base(v)
         {
-            Footer = 1;
         }
 
         public P2PDataMessage(P2PMessage copy)
