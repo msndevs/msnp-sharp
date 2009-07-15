@@ -2349,7 +2349,10 @@ namespace MSNPSharp
                 Deltas.Save();
             }
 
-            webservice.Url = originalUrl.Replace(originalHost, PreferredHosts[param.GetType().ToString()]);
+            if (originalHost != null && originalHost != String.Empty)
+            {
+                webservice.Url = originalUrl.Replace(originalHost, PreferredHosts[param.GetType().ToString()]);
+            }
 
         }
 
