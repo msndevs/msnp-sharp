@@ -420,10 +420,12 @@ namespace MSNPSharp.DataTransfer
                 if (p2pMessage.Header.SessionId > 0 && p2pMessage.InnerBody.Length > 0)
                 {
                     if (
-                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.DisplayImageFooter12) ||
-                        (p2pMessage.V1Header.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)AppFlags.FileTransFooter2) ||
-                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data && p2pMessage.Footer == (uint)AppFlags.CustomEmoticonFooter11) ||
-                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data || p2pMessage.Footer == 1) // Old client, footer is 1 (always?)
+                        /* m$n 7.5 (MSNC5) >=, footer: dp=12,emo=11,file=2 */
+                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data && p2pMessage.Footer == P2PConst.DisplayImageFooter12) ||
+                        (p2pMessage.V1Header.Flags == P2PFlag.FileData && p2pMessage.Footer == P2PConst.FileTransFooter2) ||
+                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data && p2pMessage.Footer == (uint)P2PConst.CustomEmoticonFooter11) ||
+                        /* m$n 7.0 (MSNC4) <=, footer is 1 (dp and custom emoticon) */
+                        ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data || p2pMessage.Footer == 1)
                        )
                     {
                         // indicates whether we must stream this message
