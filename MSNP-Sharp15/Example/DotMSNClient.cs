@@ -438,6 +438,7 @@ namespace MSNPSharpClient
                     " false when connected; that will make MSNPSharp don\'t use Address Book anymore, " +
                     "so your contact list isn\'t loaded.");
             this.cbRobotMode.UseVisualStyleBackColor = true;
+            this.cbRobotMode.CheckedChanged += new EventHandler(this.cbRobotMode_CheckedChanged);
             // 
             // comboProtocol
             // 
@@ -1018,7 +1019,8 @@ namespace MSNPSharpClient
             }
 
             Contact contact = e.Contact;
-            if (messenger.Nameserver.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
+            if (messenger.Nameserver.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd
+                /* || messenger.Nameserver.BotMode */)  //If you want your provisioned account in botmode to fire ReverseAdded event, uncomment this.
             {
                 // Show pending window if it is necessary.
                 if (contact.OnPendingList || 
@@ -1243,6 +1245,12 @@ namespace MSNPSharpClient
                     }
                 }
             }
+        }
+
+        void cbRobotMode_CheckedChanged(object sender, EventArgs e)
+        {
+            ComboBox cbBotMode = sender as ComboBox;
+            messenger.Nameserver.BotMode = cbRobotMode.Checked;
         }
 
         private void Owner_PlacesChanged(object sender, EventArgs e)
