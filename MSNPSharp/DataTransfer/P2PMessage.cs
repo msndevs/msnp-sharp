@@ -96,7 +96,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         MSNObjectData = MSNSLPInfo | P2PFlag.Data,
 
-#if MSNC9
+//#if MSNC9
         /// <summary>
         /// Footer for a msn DisplayImage p2pMessage.
         /// </summary>
@@ -111,7 +111,7 @@ namespace MSNPSharp.DataTransfer
         /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
         CustomEmoticonFooter = 0x0b
-#else
+/*#else
         /// <summary>
         /// Footer for a msn object p2pMessage.
         /// </summary>
@@ -126,7 +126,7 @@ namespace MSNPSharp.DataTransfer
         /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
         CustomEmoticonFooter = 0x1
-#endif
+#endif*/
 
     }
 
@@ -153,7 +153,7 @@ namespace MSNPSharp.DataTransfer
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
         
-#if MSNC9
+//#if MSNC9
         /// <summary>
         /// The AppID used in invitations for DisplayImage p2p transfer.
         /// </summary>
@@ -163,7 +163,7 @@ namespace MSNPSharp.DataTransfer
         /// The AppID used in invitations for CustomEmoticon p2p transfer.
         /// </summary>
         public const uint CustomEmoticonAppID = 11;
-#else
+/*#else
 
         /// <summary>
         /// The AppID used in invitations for DisplayImage p2p transfer.
@@ -174,7 +174,7 @@ namespace MSNPSharp.DataTransfer
         /// The AppID used in invitations for CustomEmoticon p2p transfer.
         /// </summary>
         public const uint CustomEmoticonAppID = 1;
-#endif
+#endif*/
 
         /// <summary>
         /// The AppID(footer) used in invitations for a filetransfer.
