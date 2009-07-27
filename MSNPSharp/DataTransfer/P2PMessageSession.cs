@@ -539,9 +539,7 @@ namespace MSNPSharp.DataTransfer
             // create wrapper messages
             MSGMessage msgWrapper = new MSGMessage();
             msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
-#if MSNC9
-            //msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
-#endif
+
             msgWrapper.MimeHeader["Content-Type"] = "application/x-msnmsgrp2p";
             msgWrapper.InnerMessage = networkMessage;
 

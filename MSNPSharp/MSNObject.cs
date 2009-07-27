@@ -540,7 +540,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetXmlString()
         {
-            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + Location + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() + "\"/>";
+            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + Location + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha /*+ "\" SHA1C=\"" + CalculateChecksum()*/ + "\"/>";
         }
 
         /// <summary>

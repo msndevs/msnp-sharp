@@ -678,12 +678,12 @@ namespace MSNPSharp
                         owner.ClientCapacities |= ClientCapacities.IsBot;
                     }
 
-                    if (Credentials.MsnProtocol <= MsnProtocol.MSNP15)
+                    if (Credentials.MsnProtocol < MsnProtocol.MSNP15)
                     {
                         owner.ClientCapacities |= ClientCapacities.CanHandleMSNC8;
                     }
 
-                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP15)
                     {
                         owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
                     }
@@ -1675,6 +1675,7 @@ namespace MSNPSharp
                 {
                     // set the external end point. This can be used in file transfer connectivity determing
                     externalEndPoint = new IPEndPoint(ip, clientPort);
+
                 }
 
                 ContactService.SynchronizeContactList();

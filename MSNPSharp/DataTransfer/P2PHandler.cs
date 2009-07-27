@@ -575,11 +575,8 @@ namespace MSNPSharp.DataTransfer
         private void Switchboard_ContactJoined(object sender, ContactEventArgs e)
         {
             SBMessageHandler handler = (SBMessageHandler)sender;
-#if MSNC9
-            if (handler.Contacts.Count > 2) //MSNP18: owner in the switchboard, so there're 2 contacts.
-#else
-            if (handler.Contacts.Count > 1)
-#endif
+
+            if (handler.Contacts.Count > 2)
             {
                 // in a conversation with multiple contacts we don't want to send p2p messages.
                 foreach (P2PMessageSession session in messageSessions)
@@ -594,11 +591,8 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-#if MSNC9
-            if (handler.Contacts.Count == 2)  //MSNP18: owner in the switchboard, so there're 2 contacts.
-#else
-            if (handler.Contacts.Count == 1)
-#endif
+
+            if (handler.Contacts.Count == 2)
             {
                 P2PMessageSession session = GetSessionFromRemote(e.Contact.Mail);
 

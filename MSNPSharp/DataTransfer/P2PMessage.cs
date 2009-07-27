@@ -371,7 +371,7 @@ namespace MSNPSharp.DataTransfer
         public virtual P2PMessage CreateAcknowledgement()
         {
             P2PMessage ack = new P2PMessage();
-            ack.TotalSize = TotalSize;
+            ack.TotalSize = (ulong)0;  //ACK dose NOT have totalsize
             ack.Flags = P2PFlag.Acknowledgement;
             ack.AckSessionId = Identifier;
             ack.AckIdentifier = AckSessionId;
@@ -575,7 +575,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PDataMessage()
         {
-            Footer = 1;
+            Footer = 0;
         }
 
         /// <summary>

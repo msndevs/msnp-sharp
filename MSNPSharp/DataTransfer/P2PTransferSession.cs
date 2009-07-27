@@ -706,6 +706,8 @@ namespace MSNPSharp.DataTransfer
                     // store the acknowledge identifier so we can accept the acknowledge later on
                     DataPreparationAck = p2pDataMessage.AckSessionId;
 
+                    p2pDataMessage.Footer = MessageFooter;
+
                     MessageProcessor.SendMessage(p2pDataMessage);
                 }
 
