@@ -183,47 +183,23 @@ namespace MSNPSharp.DataTransfer
         /// <param name="localContact"></param>
         /// <param name="remoteContact"></param>
         /// <returns></returns>
-        public virtual P2PMessageSession GetSession(string localContact, string remoteContact)
-        {
-            // check for existing session
-            P2PMessageSession existingSession = GetSessionFromRemote(remoteContact);
-            if (existingSession != null)
-                return existingSession;
-
-            // no session available, create a new session
-            P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
-            lock (MessageSessions)
-                MessageSessions.Add(newSession);
-
-            // fire event
-            OnSessionCreated(newSession);
-
-            return newSession;
-        }
-
-        /// <summary>
-        /// Gets a reference to a p2p message session with the specified remote contact.
-        /// In case a session does not exist a new session will be created and returned.
-        /// </summary>
-        /// <param name="localContact"></param>
-        /// <param name="remoteContact"></param>
-        /// <returns></returns>
         public virtual P2PMessageSession GetSession(Contact localContact, Contact remoteContact)
         {
             // check for existing session
-            P2PMessageSession existingSession = GetSessionFromRemote(remoteContact);
-            if (existingSession != null)
-                return existingSession;
+            P2PMessageSession p2pMessageSession = GetSessionFromRemote(remoteContact);
 
-            // no session available, create a new session
-            P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
-            lock (MessageSessions)
-                MessageSessions.Add(newSession);
+            if (p2pMessageSession == null)
+            {
+                // no session available, create a new session
+                p2pMessageSession = CreateSessionFromLocal(localContact, remoteContact);
 
-            // fire event
-            OnSessionCreated(newSession);
+                lock (MessageSessions)
+                    MessageSessions.Add(p2pMessageSession);
 
-            return newSession;
+                OnSessionCreated(p2pMessageSession);
+            }
+
+            return p2pMessageSession;
         }
 
         /// <summary>
@@ -233,7 +209,8 @@ namespace MSNPSharp.DataTransfer
         /// <param name="localContact"></param>
         /// <param name="remoteContact"></param>
         /// <returns></returns>
-        protected virtual P2PMessageSession CreateSessionFromLocal(string localContact, string remoteContact)
+        [Obsolete]
+        protected virtual P2PMessageSession CreateSessionFromLocalOld(string localContact, string remoteContact)
         {
             P2PMessageSession session = Factory.CreateP2PMessageSession();
 
@@ -263,18 +240,16 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual P2PMessageSession CreateSessionFromLocal(Contact localContact, Contact remoteContact)
         {
-            P2PMessageSession session = Factory.CreateP2PMessageSession();
-
-            if ((localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
-                (remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
-            {
-                session = new P2PMessageSession(P2PVersion.P2PV2);
-            }
-
+            P2PMessageSession session =
+                ((localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 && (remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
+                ? new P2PMessageSession(P2PVersion.P2PV2) : new P2PMessageSession(P2PVersion.P2PV1);
 
             // set the parameters
             session.RemoteClient = remoteContact;
             session.LocalUser = localContact;
+            session.RemoteContact = (session.Version == P2PVersion.P2PV1) ? remoteContact.Mail : remoteContact.Mail + ";" + remoteContact.MachineGuid.ToString("B");
+            session.LocalContact = (session.Version == P2PVersion.P2PV1) ? localContact.Mail : localContact.Mail + ";" + localContact.MachineGuid.ToString("B");
+            
             session.MessageProcessor = MessageProcessor;
 
             session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
@@ -583,6 +558,8 @@ namespace MSNPSharp.DataTransfer
                     return;
                 }
 
+                session.LocalUser = NSMessageHandler.Owner;
+                session.RemoteClient = NSMessageHandler.ContactList.GetContact(remoteAccount, ClientType.PassportMember);
                 session.RemoteContact = remoteMachineGuid == Guid.Empty ? remoteAccount : (remoteAccount + ";" + remoteMachineGuid.ToString("B"));
                 session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));
 
