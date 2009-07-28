@@ -438,7 +438,7 @@ namespace MSNPSharp
                 e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
 
                 // create a session and send the invitation
-                P2PMessageSession session = Messenger.Nameserver.P2PHandler.GetSession(Messenger.Nameserver.Owner, e.Sender);
+                P2PMessageSession session = Messenger.Nameserver.P2PHandler.GetSession(Messenger.Nameserver.Owner.Mail, e.Sender.Mail);
 
                 object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
                 if (handlerObject != null)
