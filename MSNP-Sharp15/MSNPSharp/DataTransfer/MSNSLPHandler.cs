@@ -76,10 +76,24 @@ namespace MSNPSharp.DataTransfer
     /// <summary>
     /// Holds all properties for a single data transfer.
     /// </summary>
-    [Serializable()]
+    [Serializable]
     public class MSNSLPTransferProperties
     {
-        private string dataTypeGuid = string.Empty;
+        private string dataTypeGuid = String.Empty;
+        private DataTransferType dataType = DataTransferType.Unknown;
+        private bool remoteInvited;
+        private Guid nonce = Guid.Empty;
+        private Guid lastBranch = Guid.Empty;
+        private Guid callId = Guid.Empty;
+        private uint sessionId;
+        private uint dataSize;
+        private string context = String.Empty;
+        private string checksum = String.Empty;
+        private int lastCSeq;
+        private string localContact = String.Empty;
+        private string remoteContact = String.Empty;
+
+        #region Properties
 
         internal string DataTypeGuid
         {
@@ -107,14 +121,6 @@ namespace MSNPSharp.DataTransfer
                 dataType = value;
             }
         }
-
-        /// <summary>
-        /// </summary>
-        private DataTransferType dataType = DataTransferType.Unknown;
-
-        /// <summary>
-        /// </summary>
-        private bool remoteInvited;
 
         /// <summary>
         /// Defines whether the remote client has invited the transfer (true) or the local client has initiated the transfer (false).
@@ -147,10 +153,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// </summary>
-        private Guid nonce = Guid.Empty;
-
-        /// <summary>
         /// The branch last received in the message session
         /// </summary>
         public Guid LastBranch
@@ -164,10 +166,6 @@ namespace MSNPSharp.DataTransfer
                 lastBranch = value;
             }
         }
-
-        /// <summary>
-        /// </summary>
-        private Guid lastBranch = Guid.Empty;
 
         /// <summary>
         /// The unique call id for this transfer
@@ -185,10 +183,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// </summary>
-        private Guid callId = Guid.Empty;
-
-        /// <summary>
         /// The unique session id for the transfer
         /// </summary>
         public uint SessionId
@@ -202,10 +196,6 @@ namespace MSNPSharp.DataTransfer
                 sessionId = value;
             }
         }
-
-        /// <summary>
-        /// </summary>
-        private uint sessionId;
 
         /// <summary>
         /// The total length of the data, in bytes
@@ -223,10 +213,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// </summary>
-        private uint dataSize;
-
-        /// <summary>
         /// The context send in the invitation. This informs the client about the type of transfer, filename, file-hash, msn object settings, etc.
         /// </summary>
         public string Context
@@ -240,10 +226,6 @@ namespace MSNPSharp.DataTransfer
                 context = value;
             }
         }
-
-        /// <summary>
-        /// </summary>
-        private string context = "";
 
         /// <summary>
         /// The checksum of the fields used in the context
@@ -261,10 +243,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// </summary>
-        private string checksum = "";
-
-        /// <summary>
         /// CSeq identifier
         /// </summary>
         public int LastCSeq
@@ -278,10 +256,6 @@ namespace MSNPSharp.DataTransfer
                 lastCSeq = value;
             }
         }
-
-        /// <summary>
-        /// </summary>
-        private int lastCSeq;
 
         /// <summary>
         /// The account of the local contact
@@ -299,10 +273,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// </summary>
-        private string localContact = "";
-
-        /// <summary>
         /// The account of the remote contact
         /// </summary>
         public string RemoteContact
@@ -317,18 +287,16 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// </summary>
-        private string remoteContact = "";
+        #endregion
     }
+
+    #region EventArgs
 
     /// <summary>
     /// Used as event argument when a P2PTransferSession is affected.
     /// </summary>
     public class P2PTransferSessionEventArgs : EventArgs
     {
-        /// <summary>
-        /// </summary>
         private P2PTransferSession transferSession;
 
         /// <summary>
@@ -346,16 +314,11 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="transferSession"></param>
         public P2PTransferSessionEventArgs(P2PTransferSession transferSession)
         {
             this.transferSession = transferSession;
         }
     }
-
 
     /// <summary>
     /// Used as event argument when an invitation is received.
@@ -366,9 +329,20 @@ namespace MSNPSharp.DataTransfer
     [Serializable()]
     public class MSNSLPInvitationEventArgs : EventArgs
     {
-        /// <summary>
-        /// </summary>
         private MSNSLPTransferProperties transferProperties;
+        private SLPMessage invitationMessage;
+        private MSNObject msnObject;
+        private string filename;
+        private long fileSize;
+
+        private bool accept;
+        private bool delayprocess;
+
+        [NonSerialized]
+        private P2PTransferSession transferSession = null;
+
+        [NonSerialized]
+        private MSNSLPHandler transferhandler = null;
 
         /// <summary>
         /// The affected transfer session
@@ -384,10 +358,6 @@ namespace MSNPSharp.DataTransfer
                 transferProperties = value;
             }
         }
-
-        /// <summary>
-        /// </summary>
-        private MSNObject msnObject;
 
         /// <summary>
         /// The corresponding msnobject defined in the invitation. Only available in case of an msn object transfer (image display, emoticons).
@@ -408,10 +378,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// </summary>
-        private string filename;
-
-        /// <summary>
         /// Name of the file the remote contact wants to send. Only available in case of a filetransfer session.
         /// </summary>
         public string Filename
@@ -425,10 +391,6 @@ namespace MSNPSharp.DataTransfer
                 filename = value;
             }
         }
-
-        /// <summary>
-        /// </summary>
-        private long fileSize;
 
         /// <summary>
         /// The total size of the file in bytes. Only available in case of a filetransfer session.
@@ -446,60 +408,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// </summary>
-        private SLPMessage invitationMessage;
-
-        /// <summary>
-        /// The affected transfer session
-        /// </summary>
-        public SLPMessage InvitationMessage
-        {
-            get
-            {
-                return invitationMessage;
-            }
-            set
-            {
-                invitationMessage = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        [NonSerialized]
-        private P2PTransferSession transferSession = null;
-
-        /// <summary>
-        /// The p2p transfer session that will transfer the session data
-        /// </summary>
-        public P2PTransferSession TransferSession
-        {
-            get
-            {
-                return transferSession;
-            }
-            set
-            {
-                transferSession = value;
-            }
-        }
-
-        [NonSerialized]
-        private MSNSLPHandler transferhandler = null;
-
-        public MSNSLPHandler TransferHandler
-        {
-            get
-            {
-                return transferhandler;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private bool accept;
-
-        /// <summary>
         /// Defines if the transfer is accepted. This must be set by the client programmer in a event handler. By default this property is set to false, which means the invitation is rejected. If this property is set to true, the invitation is accepted.
         /// </summary>
         public bool Accept
@@ -513,8 +421,6 @@ namespace MSNPSharp.DataTransfer
                 accept = value;
             }
         }
-
-        private bool delayprocess;
 
         /// <summary>
         /// Whether process the invitation request right after the event was fired.
@@ -532,14 +438,45 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Constructor.
+        /// The affected transfer session
         /// </summary>
-        /// <param name="transferProperties"></param>
-        /// <param name="invitationMessage"></param>
-        /// <param name="transferSession"></param>
-        /// <param name="handler"></param>
-        public MSNSLPInvitationEventArgs
-            (MSNSLPTransferProperties transferProperties,
+        public SLPMessage InvitationMessage
+        {
+            get
+            {
+                return invitationMessage;
+            }
+            set
+            {
+                invitationMessage = value;
+            }
+        }
+
+        /// <summary>
+        /// The p2p transfer session that will transfer the session data
+        /// </summary>
+        public P2PTransferSession TransferSession
+        {
+            get
+            {
+                return transferSession;
+            }
+            set
+            {
+                transferSession = value;
+            }
+        }
+
+        public MSNSLPHandler TransferHandler
+        {
+            get
+            {
+                return transferhandler;
+            }
+        }
+
+        public MSNSLPInvitationEventArgs(
+            MSNSLPTransferProperties transferProperties,
             SLPMessage invitationMessage,
             P2PTransferSession transferSession,
             MSNSLPHandler handler)
@@ -551,6 +488,7 @@ namespace MSNPSharp.DataTransfer
         }
     }
 
+    #endregion
 
     /// <summary>
     /// Handles invitations and requests for file transfers, emoticons, user displays and other msn objects.
