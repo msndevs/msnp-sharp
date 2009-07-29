@@ -373,15 +373,16 @@ namespace MSNPSharp.DataTransfer
 
             // check if it is a content message
             // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
-//#if MSNC9
+
             if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0 &&
-               ((p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)P2PFlag.DisplayImageFooter) ||  //DisplayImage
-               (p2pMessage.Flags == P2PFlag.FileData && p2pMessage.Footer == (uint)P2PFlag.FileTransFooter) ||       //File
-               (p2pMessage.Flags == P2PFlag.Data && p2pMessage.Footer == (uint)P2PFlag.CustomEmoticonFooter)))  //CustomEmoticon
-/*#else
-            if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
-            && (p2pMessage.Flags == P2PFlag.FileData || p2pMessage.Footer == 1))
-#endif*/
+               ((p2pMessage.Flags == P2PFlag.MSNObjectData && p2pMessage.Footer == P2PMessageFooter.DisplayImageFooter) ||  //DisplayImage
+               (p2pMessage.Flags == P2PFlag.FileData && p2pMessage.Footer == P2PMessageFooter.FileTransFooter) ||       //File
+               (p2pMessage.Flags == P2PFlag.MSNObjectData && p2pMessage.Footer == P2PMessageFooter.CustomEmoticonFooter)))  //CustomEmoticon
+
+            //if (p2pMessage.SessionId > 0 && p2pMessage.InnerBody.Length > 0
+            //&& (p2pMessage.Flags == P2PFlag.FileData || 
+            //p2pMessage.Footer == 1))
+
             {
                 // indicates whether we must stream this message
                 bool writeToStream = true;
@@ -706,7 +707,7 @@ namespace MSNPSharp.DataTransfer
                     // store the acknowledge identifier so we can accept the acknowledge later on
                     DataPreparationAck = p2pDataMessage.AckSessionId;
 
-                    p2pDataMessage.Footer = MessageFooter;
+                    p2pDataMessage.Footer = (P2PMessageFooter)MessageFooter;
 
                     MessageProcessor.SendMessage(p2pDataMessage);
                 }
@@ -740,7 +741,7 @@ namespace MSNPSharp.DataTransfer
 
                     p2pDataMessage.Flags = (P2PFlag)MessageFlag;
 
-                    p2pDataMessage.Footer = MessageFooter;
+                    p2pDataMessage.Footer = (P2PMessageFooter)MessageFooter;
 
                     p2pDataMessage.Identifier = messageIdentifier;
 

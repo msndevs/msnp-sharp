@@ -333,7 +333,7 @@ namespace MSNPSharp
                 NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
             }
 
-            Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
+            Deltas.Profile = NSMessageHandler.StorageService.GetProfile();  //Get displayimage and other profile items. Displayimage not broadcasted.
 
             // Set display name, personal status and photo
             string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
@@ -341,7 +341,7 @@ namespace MSNPSharp
 
             NSMessageHandler.Owner.SetName(mydispName);
             NSMessageHandler.Owner.SetPersonalMessage(pm);
-            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);  //Set and broadcast displayimage.
 
             if (NSMessageHandler.AutoSynchronize)
             {

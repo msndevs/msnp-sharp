@@ -576,7 +576,7 @@ namespace MSNPSharp.DataTransfer
         {
             SBMessageHandler handler = (SBMessageHandler)sender;
 
-            if (handler.Contacts.Count > 2)
+            if (handler.Contacts.Count > 1)
             {
                 // in a conversation with multiple contacts we don't want to send p2p messages.
                 foreach (P2PMessageSession session in messageSessions)
@@ -592,7 +592,7 @@ namespace MSNPSharp.DataTransfer
             }
 
 
-            if (handler.Contacts.Count == 2)
+            if (handler.Contacts.Count == 1)
             {
                 P2PMessageSession session = GetSessionFromRemote(e.Contact.Mail);
 

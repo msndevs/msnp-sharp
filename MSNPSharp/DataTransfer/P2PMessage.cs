@@ -64,14 +64,6 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         Error = 0x8,
         /// <summary>
-        /// File
-        /// </summary>
-        File = 0x10,
-        /// <summary>
-        /// Messages defines a msn object.
-        /// </summary>
-        Data = 0x20,
-        /// <summary>
         /// Close session
         /// </summary>
         CloseSession = 0x40,
@@ -86,17 +78,33 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages for info data, such as INVITE, 200 OK, 500 INTERNAL ERROR
         /// </summary>
+#if MSNC9
         MSNSLPInfo = 0x01000000,
+#else
+        MSNSLPInfo = 0x00000000,
+#endif
         /// <summary>
         /// Messages defines data for a filetransfer.
         /// </summary>
-        FileData = MSNSLPInfo | P2PFlag.Data | P2PFlag.File,
+        FileData = 0x01000030,
         /// <summary>
         /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        MSNObjectData = MSNSLPInfo | P2PFlag.Data,
+        MSNObjectData = 0x00000020
 
-//#if MSNC9
+    }
+
+    /// <summary>
+    /// Message footers for p2p data transfer.
+    /// </summary>
+    public enum P2PMessageFooter : uint
+    {
+        #if MSNC9
+        /// <summary>
+        /// Footer for MSNSLP Messages or ACK Messages.
+        /// </summary>
+        DefaultFooter = 0x0,
+
         /// <summary>
         /// Footer for a msn DisplayImage p2pMessage.
         /// </summary>
@@ -110,8 +118,8 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
-        CustomEmoticonFooter = 0x0b
-/*#else
+        CustomEmoticonFooter = 0x0b,
+#else
         /// <summary>
         /// Footer for a msn object p2pMessage.
         /// </summary>
@@ -120,15 +128,15 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Footer for a filetransfer p2pMessage.
         /// </summary>
-        FileTransFooter = 0x1,
+        FileTransFooter = 0x0,
 
         /// <summary>
         /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
-        CustomEmoticonFooter = 0x1
-#endif*/
-
+        CustomEmoticonFooter = 0x1,
+#endif
     }
+
 
     internal static class P2PConst
     {
@@ -153,7 +161,7 @@ namespace MSNPSharp.DataTransfer
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
         
-//#if MSNC9
+#if MSNC9
         /// <summary>
         /// The AppID used in invitations for DisplayImage p2p transfer.
         /// </summary>
@@ -163,7 +171,7 @@ namespace MSNPSharp.DataTransfer
         /// The AppID used in invitations for CustomEmoticon p2p transfer.
         /// </summary>
         public const uint CustomEmoticonAppID = 11;
-/*#else
+#else
 
         /// <summary>
         /// The AppID used in invitations for DisplayImage p2p transfer.
@@ -174,12 +182,13 @@ namespace MSNPSharp.DataTransfer
         /// The AppID used in invitations for CustomEmoticon p2p transfer.
         /// </summary>
         public const uint CustomEmoticonAppID = 1;
-#endif*/
+#endif
 
         /// <summary>
         /// The AppID(footer) used in invitations for a filetransfer.
         /// </summary>
         public const uint FileTransAppID = 2;
+
     }
 
     /// <summary>
@@ -197,7 +206,7 @@ namespace MSNPSharp.DataTransfer
         private uint ackSessionId;
         private uint ackIdentifier;
         private ulong ackTotalSize;
-        private uint footer;
+        private P2PMessageFooter footer;
 
         /// <summary>
         /// The session identifier field. Bytes 0-3 in the binary header.
@@ -337,7 +346,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// The footer, or Application Identifier. Bytes 0-3 in the binary footer (BIG ENDIAN).
         /// </summary>
-        public uint Footer
+        public P2PMessageFooter Footer
         {
             get
             {
@@ -395,7 +404,7 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckSessionId  : {1:x} ({0})\r\n", AckSessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), AckSessionId) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({1})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({0})\r\n", (uint)Footer, Convert.ToString(Footer));
             return "[P2PMessage]\r\n" + debugLine;
         }
 
@@ -491,7 +500,7 @@ namespace MSNPSharp.DataTransfer
 
             // this is big-endian
             if (data.Length > 48 + MessageSize)
-                Footer = ToBigEndian(reader.ReadUInt32());
+                Footer = (P2PMessageFooter)ToBigEndian(reader.ReadUInt32());
 
             // clean up
             reader.Close();
@@ -545,7 +554,7 @@ namespace MSNPSharp.DataTransfer
             writer.Write(ToLittleEndian(AckTotalSize));
             writer.Write(innerBytes);
 
-            writer.Write(ToBigEndian(Footer));
+            writer.Write(ToBigEndian((uint)Footer));
 
             // clean up
             writer.Close();
@@ -615,7 +624,7 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckSessionId  : {1:x} ({0})\r\n", AckSessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), AckSessionId) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({1})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({0})\r\n", (uint)Footer, Convert.ToString(Footer));
             return "[P2PDataMessage]\r\n" + debugLine;
         }
 
@@ -644,7 +653,7 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckSessionId	: {1:x} ({0})\r\n", AckSessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), AckSessionId) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({1})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer);
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "Footer        : {1:x} ({0})\r\n", (uint)Footer, Convert.ToString(Footer));
             return "[P2PDCMessage]\r\n" + debugLine;
         }
 
