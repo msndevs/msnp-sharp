@@ -44,7 +44,7 @@ namespace MSNPSharp.DataTransfer
     public enum P2PFlag : uint
     {
         /// <summary>
-        /// Normal (protocl) message.
+        /// Normal (protocol) message.
         /// </summary>
         Normal = 0,
         /// <summary>
@@ -64,6 +64,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         Error = 0x8,
         /// <summary>
+        /// File
+        /// </summary>
+        File = 0x10,
+        /// <summary>
+        /// Messages defines a msn object.
+        /// </summary>
+        Data = 0x20,
+        /// <summary>
         /// Close session
         /// </summary>
         CloseSession = 0x40,
@@ -78,65 +86,16 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages for info data, such as INVITE, 200 OK, 500 INTERNAL ERROR
         /// </summary>
-#if MSNC9
         MSNSLPInfo = 0x01000000,
-#else
-        MSNSLPInfo = 0x00000000,
-#endif
         /// <summary>
         /// Messages defines data for a filetransfer.
         /// </summary>
-        FileData = 0x01000030,
+        FileData = MSNSLPInfo | P2PFlag.Data | P2PFlag.File,
         /// <summary>
         /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        MSNObjectData = 0x00000020
-
+        MSNObjectData = MSNSLPInfo | P2PFlag.Data
     }
-
-    /// <summary>
-    /// Message footers for p2p data transfer.
-    /// </summary>
-    public enum P2PMessageFooter : uint
-    {
-        #if MSNC9
-        /// <summary>
-        /// Footer for MSNSLP Messages or ACK Messages.
-        /// </summary>
-        DefaultFooter = 0x0,
-
-        /// <summary>
-        /// Footer for a msn DisplayImage p2pMessage.
-        /// </summary>
-        DisplayImageFooter = 0xc,
-
-        /// <summary>
-        /// Footer for a filetransfer p2pMessage.
-        /// </summary>
-        FileTransFooter = 0x2,
-
-        /// <summary>
-        /// Footer for a msn CustomEmoticon p2pMessage.
-        /// </summary>
-        CustomEmoticonFooter = 0x0b,
-#else
-        /// <summary>
-        /// Footer for a msn object p2pMessage.
-        /// </summary>
-        DisplayImageFooter = 0x1,
-
-        /// <summary>
-        /// Footer for a filetransfer p2pMessage.
-        /// </summary>
-        FileTransFooter = 0x0,
-
-        /// <summary>
-        /// Footer for a msn CustomEmoticon p2pMessage.
-        /// </summary>
-        CustomEmoticonFooter = 0x1,
-#endif
-    }
-
 
     internal static class P2PConst
     {
@@ -160,35 +119,30 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
 
-        
-#if MSNC9
         /// <summary>
-        /// The AppID used in invitations for DisplayImage p2p transfer.
+        /// Footer for a msn DisplayImage p2pMessage.
         /// </summary>
-        public const uint DisplayImageAppID = 12;
+        public const uint DisplayImageFooter12 = 12;
 
         /// <summary>
-        /// The AppID used in invitations for CustomEmoticon p2p transfer.
+        /// Footer for a filetransfer p2pMessage.
         /// </summary>
-        public const uint CustomEmoticonAppID = 11;
-#else
+        public const uint FileTransFooter2 = 2;
 
         /// <summary>
-        /// The AppID used in invitations for DisplayImage p2p transfer.
+        /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
-        public const uint DisplayImageAppID = 1;
+        public const uint CustomEmoticonFooter11 = 11;
 
         /// <summary>
-        /// The AppID used in invitations for CustomEmoticon p2p transfer.
+        /// Footer for a msn object p2pMessage.
         /// </summary>
-        public const uint CustomEmoticonAppID = 1;
-#endif
+        public const uint DisplayImageFooter1 = 1;
 
         /// <summary>
-        /// The AppID(footer) used in invitations for a filetransfer.
+        /// Footer for a msn CustomEmoticon p2pMessage.
         /// </summary>
-        public const uint FileTransAppID = 2;
-
+        public const uint CustomEmoticonFooter1 = 1;
     }
 
     /// <summary>
@@ -206,7 +160,7 @@ namespace MSNPSharp.DataTransfer
         private uint ackSessionId;
         private uint ackIdentifier;
         private ulong ackTotalSize;
-        private P2PMessageFooter footer;
+        private uint footer;
 
         /// <summary>
         /// The session identifier field. Bytes 0-3 in the binary header.
@@ -346,7 +300,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// The footer, or Application Identifier. Bytes 0-3 in the binary footer (BIG ENDIAN).
         /// </summary>
-        public P2PMessageFooter Footer
+        public uint Footer
         {
             get
             {
@@ -500,7 +454,7 @@ namespace MSNPSharp.DataTransfer
 
             // this is big-endian
             if (data.Length > 48 + MessageSize)
-                Footer = (P2PMessageFooter)ToBigEndian(reader.ReadUInt32());
+                Footer = (uint)ToBigEndian(reader.ReadUInt32());
 
             // clean up
             reader.Close();

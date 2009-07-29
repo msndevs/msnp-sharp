@@ -682,14 +682,14 @@ namespace MSNPSharp.DataTransfer
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
             {
                 properties.DataType = DataTransferType.Emoticon;
-                AppID = P2PConst.CustomEmoticonAppID.ToString();
-                session.MessageFooter = (uint)P2PMessageFooter.CustomEmoticonFooter;
+                AppID = P2PConst.CustomEmoticonFooter1.ToString();
+                session.MessageFooter = P2PConst.CustomEmoticonFooter1;
             }
             else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
             {
                 properties.DataType = DataTransferType.DisplayImage;
-                AppID = P2PConst.DisplayImageAppID.ToString();
-                session.MessageFooter = (uint)P2PMessageFooter.DisplayImageFooter;
+                AppID = P2PConst.DisplayImageFooter1.ToString();
+                session.MessageFooter = P2PConst.DisplayImageFooter1;
             }
 
             p2pMessage.Flags = P2PFlag.MSNSLPInfo;
@@ -716,9 +716,7 @@ namespace MSNPSharp.DataTransfer
 
             slpMessage.BodyValues["EUF-GUID"] = P2PConst.UserDisplayGuid;
             slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
-#if MSNC9
             slpMessage.BodyValues["SChannelState"] = "0";
-#endif
             slpMessage.BodyValues["AppID"] = AppID;
             slpMessage.BodyValues["Context"] = base64Context;
 
@@ -909,7 +907,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
             slpMessage.BodyValues["EUF-GUID"] = P2PConst.FileTransferGuid;
             slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
-            slpMessage.BodyValues["AppID"] = P2PConst.FileTransAppID.ToString();
+            slpMessage.BodyValues["AppID"] = P2PConst.FileTransFooter2.ToString();
             slpMessage.BodyValues["Context"] = base64Context;
 
             P2PMessage p2pMessage = new P2PMessage();
@@ -925,7 +923,7 @@ namespace MSNPSharp.DataTransfer
 
             MessageSession.AddTransferSession(session);
             session.MessageFlag = (uint)P2PFlag.FileData;
-            session.MessageFooter = (uint)P2PMessageFooter.FileTransFooter;
+            session.MessageFooter = P2PConst.FileTransFooter2;
 
             // set the data stream to read from
             session.DataStream = file;
@@ -991,7 +989,7 @@ namespace MSNPSharp.DataTransfer
                         ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
                         p2pTransfer.IsSender = true;
                         p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
-                        p2pTransfer.MessageFooter = (uint)P2PMessageFooter.DisplayImageFooter;
+                        p2pTransfer.MessageFooter = P2PConst.DisplayImageFooter1;
 
                         break;
                     }
@@ -999,7 +997,7 @@ namespace MSNPSharp.DataTransfer
                 case P2PConst.FileTransferGuid:
                     {
                         p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
-                        p2pTransfer.MessageFooter = (uint)P2PMessageFooter.FileTransFooter;
+                        p2pTransfer.MessageFooter = P2PConst.DisplayImageFooter1;
                         p2pTransfer.IsSender = false;
                         break;
                     }
