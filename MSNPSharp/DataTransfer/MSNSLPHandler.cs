@@ -1700,17 +1700,10 @@ namespace MSNPSharp.DataTransfer
             slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
             slpMessage.BodyValues["Bridge"] = "TCPv1";
             slpMessage.BodyValues["Listening"] = "true";
-            slpMessage.BodyValues["Hashed-Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.AddressList[0].ToString();
             slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
             
-            //
-            slpMessage.BodyValues["Conn-Type"] = "Port-Restrict-NAT";
-            slpMessage.BodyValues["TCP-Conn-Type"] = "Port-Restrict-NAT";
-            slpMessage.BodyValues["Capabilities-Flags"] = "1";
-            slpMessage.BodyValues["SChannelState"] = "0";
-            slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
-            //
 
             // check if client is behind firewall (NAT-ted)
             // if so, send the public ip also the client, so it can try to connect to that ip

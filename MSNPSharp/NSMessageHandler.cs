@@ -672,33 +672,16 @@ namespace MSNPSharp
                 {
                     //don't set the same status or it will result in disconnection
                     owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC4;
                     if (BotMode)
                     {
                         owner.ClientCapacities |= ClientCapacities.IsBot;
                     }
 
-                    if (Credentials.MsnProtocol < MsnProtocol.MSNP15)
-                    {
-                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC8;
-                    }
-
-                    if (Credentials.MsnProtocol >= MsnProtocol.MSNP15)
-                    {
-                        owner.ClientCapacities |= ClientCapacities.CanHandleMSNC9;
-                    }
-
                 }
 
-                if (Credentials.MsnProtocol > MsnProtocol.MSNP15)
-                {
-                    ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
-                    capacities = ((long)owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
-                }
-                else
-                {
-                    capacities = ((long)owner.ClientCapacities).ToString();
-                }
+
+                capacities = ((long)owner.ClientCapacities).ToString();
 
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
