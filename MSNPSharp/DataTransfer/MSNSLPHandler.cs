@@ -692,7 +692,7 @@ namespace MSNPSharp.DataTransfer
                 session.MessageFooter = P2PConst.DisplayImageFooter1;
             }
 
-            p2pMessage.Flags = P2PFlag.MSNSLPInfo;
+            p2pMessage.Flags = P2PFlag.Normal;
             session.MessageFlag = (uint)P2PFlag.MSNObjectData;
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
@@ -946,11 +946,11 @@ namespace MSNPSharp.DataTransfer
 
             P2PMessage replyMessage = new P2PMessage();
             replyMessage.InnerMessage = CreateDeclineMessage(properties);
-            replyMessage.Flags = P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.Normal;
             MessageProcessor.SendMessage(replyMessage);
 
             replyMessage.InnerMessage = CreateClosingMessage(properties);
-            replyMessage.Flags = P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.Normal;
             MessageProcessor.SendMessage(replyMessage);
         }
 
@@ -979,7 +979,7 @@ namespace MSNPSharp.DataTransfer
 
             p2pTransfer.DataStream = invitationArgs.TransferSession.DataStream;
             replyMessage.InnerMessage = CreateAcceptanceMessage(properties);
-            replyMessage.Flags = P2PFlag.MSNSLPInfo;
+            replyMessage.Flags = P2PFlag.Normal;
 
             switch (message.BodyValues["EUF-GUID"].ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture))
             {
@@ -1026,7 +1026,7 @@ namespace MSNPSharp.DataTransfer
                 P2PMessageSession session = (P2PMessageSession)MessageProcessor;
                 P2PTransferSession transferSession = session.GetTransferSession(properties.SessionId);
                 P2PMessage closeMessage = new P2PMessage();
-                closeMessage.Flags = P2PFlag.MSNSLPInfo;
+                closeMessage.Flags = P2PFlag.Normal;
                 closeMessage.InnerMessage = CreateClosingMessage(properties);
                 MessageProcessor.SendMessage(closeMessage);
                 if (transferSession != null)
@@ -1045,7 +1045,7 @@ namespace MSNPSharp.DataTransfer
             MSNSLPTransferProperties property = GetTransferProperties(session.CallId);
             P2PMessage closeMessage = new P2PMessage();
             closeMessage.InnerMessage = CreateClosingMessage(property);
-            closeMessage.Flags = P2PFlag.MSNSLPInfo;
+            closeMessage.Flags = P2PFlag.Normal;
             MessageProcessor.SendMessage(closeMessage);
             if (session != null)
             {
@@ -1411,7 +1411,7 @@ namespace MSNPSharp.DataTransfer
                 // we are the receiver. send close message back
                 P2PMessage p2pMessage = new P2PMessage();
                 p2pMessage.InnerMessage = CreateClosingMessage(GetTransferProperties(session.CallId));
-                p2pMessage.Flags = P2PFlag.MSNSLPInfo;
+                p2pMessage.Flags = P2PFlag.Normal;
                 session.SendMessage(p2pMessage);
 
                 // close it
@@ -1560,7 +1560,7 @@ namespace MSNPSharp.DataTransfer
                 if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
                 {
                     P2PMessage replyMessage = new P2PMessage();
-                    replyMessage.Flags = P2PFlag.MSNSLPInfo;
+                    replyMessage.Flags = P2PFlag.Normal;
                     replyMessage.InnerMessage = CreateInternalErrorMessage(properties);
                     MessageProcessor.SendMessage(replyMessage);
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
@@ -1679,6 +1679,15 @@ namespace MSNPSharp.DataTransfer
                     break;
                 }
             }
+
+            //if (message.BodyValues.ContainsKey("Conn-Type"))
+            //{
+            //    if (message.BodyValues["Conn-Type"].Value == "Port-Restrict-NAT" ||
+            //        message.BodyValues["Conn-Type"].Value == "Symmetric-NAT")
+            //    {
+            //        return;
+            //    }
+            //}
 
             MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
 

@@ -86,15 +86,19 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Messages for info data, such as INVITE, 200 OK, 500 INTERNAL ERROR
         /// </summary>
-        MSNSLPInfo = 0x01000000,
+        MSNSLPInfoMSNC8 = 0x01000000,
         /// <summary>
         /// Messages defines data for a filetransfer.
         /// </summary>
-        FileData = MSNSLPInfo | P2PFlag.Data | P2PFlag.File,
+        FileData = 0x01000030,
         /// <summary>
         /// Messages defines data for a MSNObject transfer.
         /// </summary>
-        MSNObjectData = MSNSLPInfo | P2PFlag.Data
+        MSNObjectDataMSNC8 = MSNSLPInfoMSNC8 | P2PFlag.Data,
+        /// <summary>
+        /// Messages defines data for a MSNObject transfer.
+        /// </summary>
+        MSNObjectData = P2PFlag.Data
     }
 
     internal static class P2PConst
