@@ -1680,14 +1680,14 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            //if (message.BodyValues.ContainsKey("Conn-Type"))
-            //{
-            //    if (message.BodyValues["Conn-Type"].Value == "Port-Restrict-NAT" ||
-            //        message.BodyValues["Conn-Type"].Value == "Symmetric-NAT")
-            //    {
-            //        return;
-            //    }
-            //}
+            if (message.BodyValues.ContainsKey("Conn-Type"))
+            {
+                if (message.BodyValues["Conn-Type"].Value == "Port-Restrict-NAT" ||
+                    message.BodyValues["Conn-Type"].Value == "Symmetric-NAT")
+                {
+                    return;
+                }
+            }
 
             MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
 
