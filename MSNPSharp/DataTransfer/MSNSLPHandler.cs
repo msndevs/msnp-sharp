@@ -693,7 +693,12 @@ namespace MSNPSharp.DataTransfer
             }
 
             p2pMessage.Flags = P2PFlag.Normal;
-            session.MessageFlag = (uint)P2PFlag.MSNObjectData;
+
+            //I think this flag is related to the footer you set.
+            //If you set the footer to 0xc, this should be 0x20
+            //If the footer is 0x1, this should be 0x0
+            //Any unmatched flag-footer pair will cause official client have problem getting the displayimage.
+            session.MessageFlag = (uint)P2PFlag.Normal;  //Come on man, this MUST be zero, or we can't get the displayimage unless you change it.
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
 
@@ -716,7 +721,6 @@ namespace MSNPSharp.DataTransfer
 
             slpMessage.BodyValues["EUF-GUID"] = P2PConst.UserDisplayGuid;
             slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
-            slpMessage.BodyValues["SChannelState"] = "0";
             slpMessage.BodyValues["AppID"] = AppID;
             slpMessage.BodyValues["Context"] = base64Context;
 
