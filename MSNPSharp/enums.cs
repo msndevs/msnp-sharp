@@ -955,6 +955,8 @@ namespace MSNPSharp
         public const string ProfileEducation = "ProfileEducation";
         public const string OneWayRelationship = "OneWayRelationship";
         public const string TwoWayRelationship = "TwoWayRelationship";
+        public const string ApplicationRead = "ApplicationRead";
+        public const string ApplicationWrite = "ApplicationWrite";
     }
 
     public static class MessengerContactType
