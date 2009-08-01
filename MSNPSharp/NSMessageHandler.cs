@@ -732,20 +732,7 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             // VER: MSN Protocol used
-            /*if (Credentials.MsnProtocol >= MsnProtocol.MSNP18)
-            {
-                MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18 MSNP16 MSNP15", "CVR0" }));
-            }
-            else 
-            */
-            if (Credentials.MsnProtocol == MsnProtocol.MSNP16)
-            {
-                MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP16 MSNP15", "CVR0" }));
-            }
-            else
-            {
-                MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
-            }
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
         }
 
         /// <summary>
@@ -1042,7 +1029,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnILNReceived(NSMessage message)
         {
-            if (Credentials.MsnProtocol <= MsnProtocol.MSNP16)
+            if (Credentials.MsnProtocol <= MsnProtocol.MSNP15)
             {
                 PresenceStatus newstatus = ParseStatus(message.CommandValues[1].ToString());
                 string account = message.CommandValues[2].ToString().ToLowerInvariant();
@@ -1336,10 +1323,6 @@ namespace MSNPSharp
         protected virtual void OnCHGReceived(NSMessage message)
         {
             Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
-            if (Credentials.MsnProtocol >= MsnProtocol.MSNP16)
-            {
-                Owner.EpName = Owner.EpName;
-            }
         }
 
         #endregion

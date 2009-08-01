@@ -210,10 +210,6 @@ namespace MSNPSharp
             msnp15.MessengerClientBrand = "msmsgs";
             DefaultCredentials[msnp15.MsnProtocol] = msnp15;
 
-            // We haven't msnp16 client information so clone MSNP15
-            ClientInfo msnp16 = (ClientInfo)msnp15.Clone();
-            msnp16.MsnProtocol = MsnProtocol.MSNP16;
-            DefaultCredentials[msnp16.MsnProtocol] = msnp16;
         }
     }
 

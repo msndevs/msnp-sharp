@@ -715,7 +715,7 @@ namespace MSNPSharp
                 createDocRequest.document.Name = photoName;
                 createDocRequest.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
                 createDocRequest.document.DocumentStreams[0].DataSize = 0;
-                createDocRequest.document.DocumentStreams[0].MimeType = "png";
+                createDocRequest.document.DocumentStreams[0].MimeType = @"image/png";
                 createDocRequest.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
                 createDocRequest.document.DocumentStreams[0].Data = mem.ToArray();
 
