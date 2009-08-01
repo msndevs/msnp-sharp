@@ -164,6 +164,16 @@
       <xsd:extension base="msnab:BaseMember" />
     </xsd:complexContent>
   </xsd:complexType>
+  <xsd:complexType name="PartnerMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="AppId" type="xsd:long" />
+          <xsd:element name="Scope" type="xsd:integer" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
   <xsd:complexType name="GroupMember">
     <xsd:complexContent mixed="false">
       <xsd:extension base="msnab:BaseMember">
