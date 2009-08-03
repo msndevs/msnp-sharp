@@ -152,7 +152,7 @@ namespace MSNPSharp.Core
                             }
                             else if(type == EscapeType.EscapeExceptPlus)
                             {
-                                result.Append("+");
+                                result.Append("%2B");
                             }
                             
                             break;
@@ -206,7 +206,7 @@ namespace MSNPSharp.Core
         {
             if (type == EscapeType.EscapeExceptPlus)
             {
-                return HttpUtility.UrlDecode(str, e);
+                return HttpUtility.UrlDecode(str.Replace("%2b", "+").Replace("%2B","+"), e);
             }
 
             return HttpUtility.UrlDecode(str.Replace("%20", "+"), e);
