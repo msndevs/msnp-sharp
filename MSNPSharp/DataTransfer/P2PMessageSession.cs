@@ -855,12 +855,15 @@ namespace MSNPSharp.DataTransfer
                         {
                             if (DirectConnected == true)
                             {
-                                MessageProcessor.SendMessage(new P2PDCMessage(chunkMessage));
+                                P2PDCMessage dcChunkMessage = new P2PDCMessage(chunkMessage);
+                                MessageProcessor.SendMessage(dcChunkMessage);
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
                             }
                             else
                             {
                                 // wrap the message before sending it to the (probably) SB processor
                                 MessageProcessor.SendMessage(WrapMessage(chunkMessage));
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + chunkMessage.GetType().Name + ":\r\n" + chunkMessage.ToDebugString() + "\r\n", GetType().Name);
                             }
                         }
 
@@ -887,12 +890,15 @@ namespace MSNPSharp.DataTransfer
                     {
                         if (DirectConnected == true)
                         {
-                            MessageProcessor.SendMessage(new P2PDCMessage(p2pMessage));
+                            P2PDCMessage dcChunkMessage = new P2PDCMessage(p2pMessage);
+                            MessageProcessor.SendMessage(dcChunkMessage);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
                         }
                         else
                         {
                             // wrap the message before sending it to the (probably) SB processor
                             MessageProcessor.SendMessage(WrapMessage(p2pMessage));
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
                         }
                     }
                     else

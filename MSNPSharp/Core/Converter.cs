@@ -36,6 +36,12 @@ using System.Text;
 
 namespace MSNPSharp.Core
 {
+    internal enum EscapeType
+    {
+        EscapeAll,
+        EscapeExceptPlus
+    }
+
     /// <summary>
     /// Provides methods for encoding and decoding URLs when processing Web requests. This class cannot be inherited. 
     /// </summary>
@@ -95,13 +101,24 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
+        /// Encodes a MSNObject description using UTF-8 encoding by default.
+        /// </summary>
+        /// <param name="str">The MSNObject description to encode.</param>
+        /// <returns>An encoded string.</returns>
+        public static string MSNObjectUrlEncode(string str)
+        {
+            return UrlEncode(str, Encoding.UTF8, EscapeType.EscapeExceptPlus);
+        }
+
+
+        /// <summary>
         /// Encodes a URL string using UTF-8 encoding by default.
         /// </summary>
         /// <param name="str">The text to encode.</param>
         /// <returns>An encoded string.</returns>
         public static string UrlEncode(string str)
         {
-            return UrlEncode(str, Encoding.UTF8);
+            return UrlEncode(str, Encoding.UTF8, EscapeType.EscapeAll);
         }
 
         /// <summary>
@@ -111,6 +128,11 @@ namespace MSNPSharp.Core
         /// <param name="e">The <see cref="Encoding"/> object that specifies the encoding scheme. </param>
         /// <returns>An encoded string.</returns>
         public static string UrlEncode(string str, Encoding e)
+        {
+            return UrlEncode(str, e, EscapeType.EscapeAll);
+        }
+
+        private static string UrlEncode(string str, Encoding e, EscapeType type)
         {
             if (str == null)
                 return string.Empty;
@@ -124,7 +146,15 @@ namespace MSNPSharp.Core
                     switch (chr)
                     {
                         case (byte)'+':
-                            result.Append("%20");
+                            if (type == EscapeType.EscapeAll)
+                            {
+                                result.Append("%20");
+                            }
+                            else if(type == EscapeType.EscapeExceptPlus)
+                            {
+                                result.Append("+");
+                            }
+                            
                             break;
                         default:
                             result.Append("%" + ((int)chr).ToString("X2"));
@@ -142,13 +172,23 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
+        /// Decode an encoded <see cref="MSNObject"/>.
+        /// </summary>
+        /// <param name="str">The encoded MSNObject description.</param>
+        /// <returns>A decoded string.</returns>
+        public static string MSNObjectUrlDecode(string str)
+        {
+            return UrlDecode(str, Encoding.UTF8, EscapeType.EscapeExceptPlus);
+        }
+
+        /// <summary>
         /// Converts a string that has been encoded for transmission in a URL into a decoded string using UTF-8 encoding by default.
         /// </summary>
         /// <param name="str">The string to decode.</param>
         /// <returns>A decoded string.</returns>
         public static string UrlDecode(string str)
         {
-            return UrlDecode(str, Encoding.UTF8);
+            return UrlDecode(str, Encoding.UTF8, EscapeType.EscapeAll);
         }
 
         /// <summary>
@@ -159,6 +199,16 @@ namespace MSNPSharp.Core
         /// <returns>A decoded string.</returns>
         public static string UrlDecode(string str, Encoding e)
         {
+            return UrlDecode(str, e, EscapeType.EscapeAll);
+        }
+
+        private static string UrlDecode(string str, Encoding e, EscapeType type)
+        {
+            if (type == EscapeType.EscapeExceptPlus)
+            {
+                return HttpUtility.UrlDecode(str, e);
+            }
+
             return HttpUtility.UrlDecode(str.Replace("%20", "+"), e);
         }
 

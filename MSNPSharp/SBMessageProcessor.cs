@@ -121,8 +121,10 @@ namespace MSNPSharp
 
             sbMessage.TransactionID = IncreaseTransactionID();
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
-
+            if (sbMessage.InnerMessage == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+            }
             // prepare the message
             sbMessage.PrepareMessage();
 

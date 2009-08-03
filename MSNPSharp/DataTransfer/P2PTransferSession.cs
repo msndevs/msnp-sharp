@@ -94,10 +94,17 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+
+        private uint dataPreparationAck = 0;
+
         /// <summary>
         /// Tracked to know when an acknowledgement for the (switchboards) data preparation message is received
         /// </summary>
-        private uint DataPreparationAck;
+        internal uint DataPreparationAck
+        {
+            get { return dataPreparationAck; }
+            set { dataPreparationAck = value; }
+        }
 
         /// <summary>
         /// Tracked to send the disconnecting message (0x40 flag) with the correct datamessage identifiers as it's acknowledge identifier. (protocol)
@@ -362,12 +369,8 @@ namespace MSNPSharp.DataTransfer
             // check to see if our session data has been transferred correctly
             if (p2pMessage.SessionId > 0 && p2pMessage.IsAcknowledgement && p2pMessage.AckSessionId == dataMessageIdentifier)
             {
-                // inform the handlers
+                // inform the handlers, we are sender.
                 OnTransferFinished();
-
-                // notify the remote client that we are finished
-                SendDisconnectMessage();
-
                 return;
             }
 
@@ -414,8 +417,6 @@ namespace MSNPSharp.DataTransfer
                         MessageSession.IncreaseRemoteIdentifier();
                         P2PMessage ack = p2pMessage.CreateAcknowledgement();
                         ack.SessionId = p2pMessage.SessionId;
-                        ack.Identifier = 0;
-                        ack.TotalSize = p2pMessage.TotalSize;
 
                         SendMessage(ack);
 
@@ -424,15 +425,13 @@ namespace MSNPSharp.DataTransfer
 
                         OnTransferFinished();
                         // notify the remote client we close the direct connection
-                        SendDisconnectMessage();
+                        SendDisconnectMessage();  //Can't capture this message in msnp15
                     }
                 }
                 // finished handling this message
                 return;
 
             }
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2P Info message received", GetType().Name);
 
             // it is not a datamessage.
             // fill up the buffer with this message and extract the messages one-by-one and dispatch
@@ -669,6 +668,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         bool abortThread;
+
         /// <summary>
         /// Entry point for the thread. This thread will send the data messages to the message processor.
         /// In case it is a direct connection P2PDCMessages will be send. If no direct connection is established
@@ -699,10 +699,14 @@ namespace MSNPSharp.DataTransfer
                     MessageSession.IncreaseLocalIdentifier();
                     p2pDataMessage.Identifier = MessageSession.LocalIdentifier;
 
-                    p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-
-                    // store the acknowledge identifier so we can accept the acknowledge later on
-                    DataPreparationAck = p2pDataMessage.AckSessionId;
+                    if (DataPreparationAck == 0)
+                    {
+                        p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);  //In fact this will lead to displayimage undisplay.
+                    }
+                    else
+                    {
+                        p2pDataMessage.AckSessionId = DataPreparationAck;
+                    }
 
                     p2pDataMessage.Footer = MessageFooter;
 
@@ -717,6 +721,7 @@ namespace MSNPSharp.DataTransfer
 
                 long currentPosition = 0;
                 long lastPosition = dataStream.Length;
+                uint currentACK = DataPreparationAck;
 
                 while (currentPosition < lastPosition && (!abortThread))
                 {
@@ -742,7 +747,11 @@ namespace MSNPSharp.DataTransfer
 
                     p2pDataMessage.Identifier = messageIdentifier;
 
-                    p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                    if (currentACK < uint.MaxValue)
+                    {
+                        p2pDataMessage.AckSessionId = currentACK;  // (uint)new Random().Next(50000, int.MaxValue);
+                        currentACK++;
+                    }
 
                     MessageProcessor.SendMessage(p2pDataMessage);
                     //Thread.CurrentThread.Join(1);

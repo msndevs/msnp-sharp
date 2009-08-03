@@ -672,7 +672,7 @@ namespace MSNPSharp
                 {
                     //don't set the same status or it will result in disconnection
                     owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC8;
+                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC7;
                     if (BotMode)
                     {
                         owner.ClientCapacities |= ClientCapacities.IsBot;

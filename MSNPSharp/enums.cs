@@ -335,11 +335,11 @@ namespace MSNPSharp
         /// </summary>
         CanHandleMSNC5 = 0x50000000,
         /// <summary>
-        /// MSN 8.0
+        /// MSN 8.0 (MSNP15)
         /// </summary>
         CanHandleMSNC6 = 0x60000000,
         /// <summary>
-        /// MSN 8.1
+        /// MSN 8.1 (MSNP15)
         /// </summary>
         CanHandleMSNC7 = 0x70000000,
         /// <summary>
