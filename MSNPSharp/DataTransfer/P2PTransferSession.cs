@@ -688,7 +688,7 @@ namespace MSNPSharp.DataTransfer
                 // check whether we have a direct connection								
                 direct = MessageSession.DirectConnected;
 
-                if (direct == false)
+                if (direct == false && DataPreparationAck > 0) //File transfer has no data prepare message.
                 {
                     // send the data preparation message
                     P2PDataMessage p2pDataMessage = new P2PDataMessage();
@@ -699,14 +699,8 @@ namespace MSNPSharp.DataTransfer
                     MessageSession.IncreaseLocalIdentifier();
                     p2pDataMessage.Identifier = MessageSession.LocalIdentifier;
 
-                    if (DataPreparationAck == 0)
-                    {
-                        p2pDataMessage.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);  //In fact this will lead to displayimage undisplay.
-                    }
-                    else
-                    {
-                        p2pDataMessage.AckSessionId = DataPreparationAck;
-                    }
+
+                    p2pDataMessage.AckSessionId = DataPreparationAck;
 
                     p2pDataMessage.Footer = MessageFooter;
 
@@ -721,7 +715,15 @@ namespace MSNPSharp.DataTransfer
 
                 long currentPosition = 0;
                 long lastPosition = dataStream.Length;
-                uint currentACK = DataPreparationAck;
+                uint currentACK = 0;
+                if (DataPreparationAck > 0)
+                {
+                    currentACK = DataPreparationAck;
+                }
+                else
+                {
+                    currentACK = (uint)new Random().Next(50000, int.MaxValue);
+                }
 
                 while (currentPosition < lastPosition && (!abortThread))
                 {
@@ -746,11 +748,14 @@ namespace MSNPSharp.DataTransfer
                     p2pDataMessage.Footer = MessageFooter;
 
                     p2pDataMessage.Identifier = messageIdentifier;
-
+                    p2pDataMessage.AckSessionId = currentACK;  // (uint)new Random().Next(50000, int.MaxValue);
                     if (currentACK < uint.MaxValue)
                     {
-                        p2pDataMessage.AckSessionId = currentACK;  // (uint)new Random().Next(50000, int.MaxValue);
                         currentACK++;
+                    }
+                    else
+                    {
+                        currentACK--;
                     }
 
                     MessageProcessor.SendMessage(p2pDataMessage);
