@@ -998,7 +998,6 @@ namespace MSNPSharp.DataTransfer
                 case P2PConst.UserDisplayGuid:
                     {
                         // for some kind of weird behavior, our local identifier must now subtract 4 ?
-                        ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-1);
                         p2pTransfer.IsSender = true;
                         p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
                         p2pTransfer.MessageFooter = P2PConst.DisplayImageFooter12;
