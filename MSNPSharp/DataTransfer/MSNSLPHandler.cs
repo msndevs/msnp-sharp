@@ -814,7 +814,7 @@ namespace MSNPSharp.DataTransfer
 
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
-            p2pMessage.Flags = P2PFlag.MSNSLPInfoMSNC8;
+            p2pMessage.Flags = P2PFlag.Normal;
 
             // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
             p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
@@ -1301,7 +1301,7 @@ namespace MSNPSharp.DataTransfer
 
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
-            p2pMessage.Flags = P2PFlag.MSNSLPInfoMSNC8;
+            p2pMessage.Flags = P2PFlag.Normal;
             p2pMessage.Footer = 0;
 
 
@@ -1762,7 +1762,7 @@ namespace MSNPSharp.DataTransfer
             P2PMessage p2pMessage = new P2PMessage();
             p2pMessage.InnerMessage = slpMessage;
             p2pMessage.Footer = 0;
-            p2pMessage.Flags = P2PFlag.MSNSLPInfoMSNC8;
+            p2pMessage.Flags = P2PFlag.Normal;
 
 
             ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
