@@ -62,6 +62,7 @@ namespace MSNPSharpClient
         private ToolStripSeparator toolStripMenuItem3;
         private ToolStripMenuItem sendFileMenuItem;
         private ToolStripMenuItem sendMIMMenuItem;
+        private ToolStripMenuItem sendActivityTestMenuItem;
         private StatusBar statusBar;
         private Panel OwnerPanel;
         private Panel panel1;
@@ -116,6 +117,7 @@ namespace MSNPSharpClient
             this.sendMIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.sendFileMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sendActivityTestMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -288,6 +290,7 @@ namespace MSNPSharpClient
             this.sendMIMMenuItem,
             this.toolStripMenuItem3,
             this.sendFileMenuItem,
+            this.sendActivityTestMenuItem,
             this.importContactsMenuItem,
             this.toolStripMenuItem2,
             this.blockMenuItem,
@@ -331,6 +334,13 @@ namespace MSNPSharpClient
             this.sendFileMenuItem.Size = new System.Drawing.Size(200, 22);
             this.sendFileMenuItem.Text = "Send File";
             this.sendFileMenuItem.Click += new System.EventHandler(this.sendFileMenuItem_Click);
+            // 
+            // sendActivityTestMenuItem
+            // 
+            this.sendActivityTestMenuItem.Name = "sendActivityTestMenuItem";
+            this.sendActivityTestMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.sendActivityTestMenuItem.Text = "Activity Test";
+            this.sendActivityTestMenuItem.Click += new System.EventHandler(this.sendActivityTestMenuItem_Click);
             // 
             // importContactsMenuItem
             // 
@@ -1476,6 +1486,7 @@ namespace MSNPSharpClient
                         sendOIMMenuItem.Visible = false;
 
                         sendFileMenuItem.Visible = true;
+                        sendActivityTestMenuItem.Visible = true;
                         toolStripMenuItem2.Visible = true;
                     }
                     else
@@ -1484,6 +1495,7 @@ namespace MSNPSharpClient
                         sendOIMMenuItem.Visible = true;
 
                         sendFileMenuItem.Visible = false;
+                        sendActivityTestMenuItem.Visible = false;
                         toolStripMenuItem2.Visible = false;
                     }
 
@@ -1591,6 +1603,21 @@ namespace MSNPSharpClient
                 {
                     MessageBox.Show(ex.Message);
                 }
+            }
+        }
+
+        private void sendActivityTestMenuItem_Click(object sender, EventArgs e)
+        {
+            Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
+            this.propertyGrid.SelectedObject = selectedContact;
+
+            if (selectedContact.Online)
+            {
+                String activityID = "20521364";        //The activityID of Music Mix activity.
+                String activityName = "Music Mix";     //Th name of acticvity
+                MSNSLPHandler msnslpHandler = messenger.GetMSNSLPHandler(selectedContact.Mail);
+                P2PTransferSession session = msnslpHandler.SendInvitation(messenger.Owner.Mail, selectedContact.Mail, activityID, activityName);
+
             }
         }
 
