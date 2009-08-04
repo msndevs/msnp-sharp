@@ -73,6 +73,63 @@ namespace MSNPSharp.DataTransfer
     }
 
     /// <summary>
+    /// Holds the property of activity such as AppID and activity name.
+    /// </summary>
+    public class ActivityInfo
+    {
+        private uint appID = 0;
+
+        /// <summary>
+        /// The AppID of activity.
+        /// </summary>
+        public uint AppID
+        {
+            get { return appID; }
+        }
+
+        private string activityName = string.Empty;
+
+        /// <summary>
+        /// The name of activity.
+        /// </summary>
+        public string ActivityName
+        {
+            get { return activityName; }
+        }
+
+        protected ActivityInfo()
+        {
+        }
+
+        public ActivityInfo(string contextString)
+        {
+            try
+            {
+                byte[] byts = Convert.FromBase64String(contextString);
+                string activityUrl = System.Text.Encoding.Unicode.GetString(byts);
+                string[] activityProperties = activityUrl.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                if (activityProperties.Length >= 3)
+                {
+                    uint.TryParse(activityProperties[0], out appID);
+                    activityName = activityProperties[2];
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    "An error occurs while parsing activity context, error info: " +
+                    ex.Message);
+            }
+        }
+
+        public override string ToString()
+        {
+            return "Activity info: " + appID.ToString() + " name: " + activityName;
+        }
+
+    }
+
+    /// <summary>
     /// Holds all properties for a single data transfer.
     /// </summary>
     [Serializable()]
@@ -438,6 +495,18 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private ActivityInfo activity = null;
+
+        /// <summary>
+        /// The activity properties.
+        /// </summary>
+        public ActivityInfo Activity
+        {
+            get { return activity; }
+            set { activity = value; }
+        }
+
+
         /// <summary>
         /// </summary>
         private MSNSLPMessage invitationMessage;
@@ -694,11 +763,7 @@ namespace MSNPSharp.DataTransfer
 
             p2pMessage.Flags = P2PFlag.Normal;
 
-            //I think this flag is related to the footer you set.
-            //If you set the footer to 0xc, this should be 0x20
-            //If the footer is 0x1, this should be 0x0
-            //Any unmatched flag-footer pair will cause official client have problem getting the displayimage.
-            session.MessageFlag = (uint)P2PFlag.MSNObjectData;  //Come on man, this MUST be zero, or we can't get the displayimage unless you change it.
+            session.MessageFlag = (uint)P2PFlag.MSNObjectData;
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
 
@@ -947,7 +1012,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// The client programmer should call this if he wants to reject the transfer
+        /// The client programmer should call this if he wants to reject the transfer or an activity invotation.
         /// </summary>
         public void RejectTransfer(MSNSLPInvitationEventArgs invitationArgs)
         {
@@ -968,7 +1033,7 @@ namespace MSNPSharp.DataTransfer
 
 
         /// <summary>
-        /// The client programmer should call this if he wants to accept the transfer
+        /// The client programmer should call this if he wants to accept the file transfer or activity invitation.
         /// </summary>
         public void AcceptTransfer(MSNSLPInvitationEventArgs invitationArgs)
         {
@@ -997,7 +1062,6 @@ namespace MSNPSharp.DataTransfer
             {
                 case P2PConst.UserDisplayGuid:
                     {
-                        // for some kind of weird behavior, our local identifier must now subtract 4 ?
                         p2pTransfer.IsSender = true;
                         p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
                         p2pTransfer.MessageFooter = P2PConst.DisplayImageFooter12;
@@ -1009,6 +1073,19 @@ namespace MSNPSharp.DataTransfer
                     {
                         p2pTransfer.MessageFlag = (uint)P2PFlag.FileData;
                         p2pTransfer.MessageFooter = P2PConst.FileTransFooter2;
+                        p2pTransfer.IsSender = false;
+                        break;
+                    }
+
+                case P2PConst.ActivityGuid:
+                    {
+                        p2pTransfer.MessageFlag = (uint)P2PFlag.Normal;
+                        if (message.BodyValues.ContainsKey("AppID"))
+                        {
+                            uint appID = 0;
+                            uint.TryParse(message.BodyValues["AppID"].Value, out appID);
+                            p2pTransfer.MessageFooter = appID;
+                        }
                         p2pTransfer.IsSender = false;
                         break;
                     }
@@ -1154,6 +1231,14 @@ namespace MSNPSharp.DataTransfer
             slpMessage.CallId = transferProperties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
+            slpMessage.BodyValues["SessionID"] = transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            if (transferProperties.DataType == DataTransferType.Activity)
+            {
+                slpMessage.BodyValues["Context"] = "dAMAgQ==";
+
+            }
+
             return slpMessage;
         }
 
@@ -1622,6 +1707,15 @@ namespace MSNPSharp.DataTransfer
                     invitationArgs.MSNObject = new MSNObject();
                     invitationArgs.MSNObject.ParseContext(properties.Context, false);
                 }
+                else if (properties.DataType == DataTransferType.Activity)
+                {
+                    if (message.BodyValues.ContainsKey("Context"))
+                    {
+                        string activityContextString = message.BodyValues["Context"].Value;
+                        ActivityInfo info = new ActivityInfo(activityContextString);
+                        invitationArgs.Activity = info;
+                    }
+                }
 
                 OnTransferInvitationReceived(invitationArgs);
 
@@ -1716,7 +1810,7 @@ namespace MSNPSharp.DataTransfer
                     message.BodyValues["Conn-Type"].Value == "Firewall")
                 {
                     slpMessage.BodyValues["Listening"] = "false";
-                    slpMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                    slpMessage.BodyValues["Nonce"] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
                 }
                 else
                 {
