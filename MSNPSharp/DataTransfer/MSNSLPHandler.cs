@@ -1559,7 +1559,7 @@ namespace MSNPSharp.DataTransfer
 
             Debug.Assert(p2pMessage != null, "Message is not a P2P message in MSNSLP handler", "");            
 
-            if (p2pMessage.InnerBody.Length == 0)
+            if (!(p2pMessage.Footer == 0 && p2pMessage.SessionId == 0 && p2pMessage.Flags != P2PFlag.Acknowledgement))
             {
                 //We don't process any p2p message because this is a SIP message handler.
                 return;
@@ -1607,16 +1607,22 @@ namespace MSNPSharp.DataTransfer
             MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);
             if (properties != null) // Closed before or never accepted?
             {
-                P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+                P2PMessageSession msgSession = MessageProcessor as P2PMessageSession;
+                if (msgSession != null)
+                {
+                    P2PTransferSession session = msgSession.GetTransferSession(properties.SessionId);
 
-                if (session == null)
-                    return;
+                    if (session == null)
+                        return;
 
-                // remove the resources
-                RemoveTransferSession(session);
-                // and close the connection
-                if (session.MessageSession.DirectConnected)
-                    session.MessageSession.CloseDirectConnection();
+                    // remove the resources
+                    RemoveTransferSession(session);
+                    // and close the connection
+                    if (session.MessageSession.DirectConnected)
+                        session.MessageSession.CloseDirectConnection();
+
+                    msgSession.CleanUp();
+                }
             }
             else
             {

@@ -269,7 +269,10 @@ namespace MSNPSharp.DataTransfer
             StopAllPendingProcessors();
             AbortAllTransfers();
 
-            handlers.Clear();
+            lock (handlers.SyncRoot)
+            {
+                handlers.Clear();
+            }
 
             MessageProcessor = null;
 
@@ -462,7 +465,7 @@ namespace MSNPSharp.DataTransfer
         {
             session.MessageProcessor = this;
 
-            lock (handlers)
+            lock (handlers.SyncRoot)
             {
                 foreach (IMessageHandler handler in handlers)
                 {
@@ -499,10 +502,13 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public object GetHandler(Type handlerType)
         {
-            foreach (IMessageHandler handler in handlers)
+            lock (handlers.SyncRoot)
             {
-                if (handler.GetType() == handlerType)
-                    return handler;
+                foreach (IMessageHandler handler in handlers)
+                {
+                    if (handler.GetType() == handlerType)
+                        return handler;
+                }
             }
             return null;
         }
@@ -761,12 +767,12 @@ namespace MSNPSharp.DataTransfer
 
                 p2pMessage = p2pMessagePool.GetNextMessage();
 
-                lock (handlers)
-                {
-                    // the message is not a datamessage, send it to the handlers
-                    foreach (IMessageHandler handler in handlers)
-                        handler.HandleMessage(this, message);
-                }
+                object[] cpHandlers = handlers.ToArray();
+
+                // the message is not a datamessage, send it to the handlers
+                foreach (IMessageHandler handler in cpHandlers)
+                    handler.HandleMessage(this, message);
+
             }
         }
 
@@ -1015,7 +1021,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="handler"></param>
         public void RegisterHandler(IMessageHandler handler)
         {
-            lock (handlers)
+            lock (handlers.SyncRoot)
             {
                 if (handlers.Contains(handler) == true)
                     return;
@@ -1029,7 +1035,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="handler"></param>
         public void UnregisterHandler(IMessageHandler handler)
         {
-            lock (handlers)
+            lock (handlers.SyncRoot)
             {
                 handlers.Remove(handler);
             }

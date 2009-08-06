@@ -446,11 +446,11 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage = p2pMessagePool.GetNextMessage();
 
                 // the message is not a datamessage, send it to the handlers
-                lock (handlers)
-                {
-                    foreach (IMessageHandler handler in handlers)
-                        handler.HandleMessage(this, message);
-                }
+                object[] cpHandlers = handlers.ToArray();
+
+                foreach (IMessageHandler handler in cpHandlers)
+                    handler.HandleMessage(this, message);
+
             }
         }
 
