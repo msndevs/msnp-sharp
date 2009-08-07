@@ -280,9 +280,9 @@ namespace MSNPSharp.DataTransfer
             if (transferThread != null && transferThread.ThreadState == System.Threading.ThreadState.Running)
             {
                 AbortTransferThread();
+                OnTransferAborted();
             }
 
-            OnTransferAborted();
             MessageSession.RemoveTransferSession(this);
             if (AutoCloseStream)
                 DataStream.Close();
