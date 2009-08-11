@@ -198,21 +198,6 @@ namespace MSNPSharp
             msnp18.MessengerClientBrand = "msmsgs";
             DefaultCredentials[msnp18.MsnProtocol] = msnp18;
 
-            // MSNP15
-            ClientInfo msnp15 = new ClientInfo();
-            msnp15.MsnProtocol = MsnProtocol.MSNP15;
-            msnp15.ProductID = "PROD0119GSJUC$18";
-            msnp15.ProductKey = "ILTXC!4IXB5FB*PX";
-            msnp15.MessengerClientName = "MSNMSGR";
-            msnp15.MessengerClientBuildVer = "8.5.1302";
-            msnp15.ApplicationId = "CFE80F9D-180F-4399-82AB-413F33A1FA11";
-            msnp15.MessengerClientBrand = "msmsgs";
-            DefaultCredentials[msnp15.MsnProtocol] = msnp15;
-
-            // We haven't msnp16 client information so clone MSNP15
-            ClientInfo msnp16 = (ClientInfo)msnp15.Clone();
-            msnp16.MsnProtocol = MsnProtocol.MSNP16;
-            DefaultCredentials[msnp16.MsnProtocol] = msnp16;
         }
     }
 

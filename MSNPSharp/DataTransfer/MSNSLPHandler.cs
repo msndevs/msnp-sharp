@@ -608,7 +608,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private IPEndPoint localEndPoint;
+        private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
         /// <summary>
         /// The client's local end-point. This can differ from the external endpoint through the use of routers.
@@ -618,11 +618,18 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
+                IPAddress iphostentry = IPAddress.Any;
+                IPAddress[] addrList = Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList;
+
+                for (int IPC = 0; IPC < addrList.Length; IPC++)
+                {
+                    if (addrList[IPC].AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        localEndPoint.Address = addrList[IPC];
+                        break;
+                    }
+                }
                 return localEndPoint;
-            }
-            set
-            {
-                localEndPoint = value;
             }
         }
 
@@ -1844,33 +1851,42 @@ namespace MSNPSharp.DataTransfer
         protected virtual void OnDCRequest(SLPMessage message)
         {
             // let's listen
+            
+
+           // Find host by name
+            IPAddress iphostentry = LocalEndPoint.Address;
+
+            MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
+            SLPStatusMessage slpMessage = new SLPStatusMessage(properties.RemoteContact, 200, "OK");
+            properties.Nonce = Guid.NewGuid();
 
 
-            // Find host by name
-            IPHostEntry iphostentry = new IPHostEntry();
-            iphostentry.AddressList = new IPAddress[1];
-            int IPC = 0;
-            for (IPC = 0; IPC < Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.Length; IPC++)
+            if (!iphostentry.Equals(ExternalEndPoint.Address))
             {
-                if (Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC].AddressFamily == AddressFamily.InterNetwork)
-                {
-                    iphostentry.AddressList[0] = Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC];
+                slpMessage.BodyValues["Listening"] = "false";
+                slpMessage.BodyValues["Nonce"] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                int port = GetNextDirectConnectionPort();
 
-                    break;
+                MessageSession.ListenForDirectConnection(iphostentry, port);
+                slpMessage.BodyValues["Listening"] = "true";
+                slpMessage.BodyValues["Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.ToString();
+                slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+
+                // check if client is behind firewall (NAT-ted)
+                // if so, send the public ip also the client, so it can try to connect to that ip
+                if (ExternalEndPoint != null && ExternalEndPoint.Address != iphostentry)
+                {
+                    slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
+                    slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 }
             }
 
-            MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
 
-
-            properties.Nonce = Guid.NewGuid();
-
-            int port = GetNextDirectConnectionPort();
-
-            MessageSession.ListenForDirectConnection(iphostentry.AddressList[0], port);
-
-            // create the message
-            SLPStatusMessage slpMessage = new SLPStatusMessage(properties.RemoteContact, 200, "OK");
             slpMessage.ToMail = properties.RemoteContact;
             slpMessage.FromMail = properties.LocalContact;
             slpMessage.Branch = properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture).ToUpper(System.Globalization.CultureInfo.InvariantCulture);
@@ -1879,18 +1895,8 @@ namespace MSNPSharp.DataTransfer
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
             slpMessage.BodyValues["Bridge"] = "TCPv1";
-            slpMessage.BodyValues["Listening"] = "true";
-            slpMessage.BodyValues["Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
-            slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.AddressList[0].ToString();
-            slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            
 
-            // check if client is behind firewall (NAT-ted)
-            // if so, send the public ip also the client, so it can try to connect to that ip
-            if (ExternalEndPoint != null && ExternalEndPoint.Address != iphostentry.AddressList[0])
-            {
-                slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
-                slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            }
 
 
             P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // v!

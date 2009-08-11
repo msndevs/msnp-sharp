@@ -246,9 +246,7 @@ namespace MSNPSharp
             {
                 // Resend the user status so other client can see the new msn object
 
-                string capacities = (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
-                    ? ((long)ClientCapacities).ToString() + ":" + ((long)ClientCapacitiesEx).ToString()
-                    : ((long)ClientCapacities).ToString();
+                string capacities = ((long)ClientCapacities).ToString() + ":" + ((long)ClientCapacitiesEx).ToString();
 
                 string context = String.Empty;
 

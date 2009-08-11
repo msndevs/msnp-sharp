@@ -624,45 +624,38 @@ namespace MSNPSharp
         /// <param name="msg"><see cref="TextMessage"/> to send</param>
         public void SendOIMMessage(Contact receiver, TextMessage msg)
         {
-            if (NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
+            Exception err = null;
+            try
             {
-                Exception err = null;
-                try
-                {
-                    TextMessage txtmsgClone = msg.Clone() as TextMessage;
-                    MSGMessage msgMessage = new MSGMessage();
-                    msgMessage.InnerMessage = txtmsgClone;
-                    msgMessage.MimeHeader["Dest-Agent"] = "client";
+                TextMessage txtmsgClone = msg.Clone() as TextMessage;
+                MSGMessage msgMessage = new MSGMessage();
+                msgMessage.InnerMessage = txtmsgClone;
+                msgMessage.MimeHeader["Dest-Agent"] = "client";
 
-                    YIMMessage nsMessage = new YIMMessage("UUM",
-                        new string[] { receiver.Mail, 
+                YIMMessage nsMessage = new YIMMessage("UUM",
+                    new string[] { receiver.Mail, 
                         ((int)receiver.ClientType).ToString(), 
                         "1" },
-                        NSMessageHandler.Credentials.MsnProtocol);
+                    NSMessageHandler.Credentials.MsnProtocol);
 
-                    nsMessage.InnerMessage = msgMessage;
+                nsMessage.InnerMessage = msgMessage;
 
-                    NSMessageHandler.MessageProcessor.SendMessage(nsMessage);
-                }
-                catch (Exception exp)
-                {
-                    err = exp;
-                }
-
-                OnOIMSendCompleted(this,
-                                new OIMSendCompletedEventArgs(
-                                NSMessageHandler.Owner.Mail,
-                                receiver.Mail,
-                                0,
-                                msg.Text,
-                                err));
-
+                NSMessageHandler.MessageProcessor.SendMessage(nsMessage);
             }
-            else
+            catch (Exception exp)
             {
-                //Older version
-                SendOIMMessage(receiver.Mail, msg.Text);
+                err = exp;
             }
+
+            OnOIMSendCompleted(this,
+                            new OIMSendCompletedEventArgs(
+                            NSMessageHandler.Owner.Mail,
+                            receiver.Mail,
+                            0,
+                            msg.Text,
+                            err));
+
+
         }
 
         protected virtual void OnOIMReceived(object sender, OIMReceivedEventArgs e)

@@ -741,9 +741,7 @@ namespace MSNPSharp.DataTransfer
         {
             SBMessageHandler handler = (SBMessageHandler)sender;
             //MSNP18: owner in the switchboard, so there're 2 contacts.
-            bool canremove = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
-                ? (handler.Contacts.Count > 2)
-                : (handler.Contacts.Count > 1);
+            bool canremove = (handler.Contacts.Count > 2);
 
             if (canremove)
             {
@@ -761,9 +759,7 @@ namespace MSNPSharp.DataTransfer
             }
 
             // MSNP18: owner in the switchboard, so there're 2 contacts.
-            bool canadd = (handler.NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
-                ? (handler.Contacts.Count == 2)
-                : (handler.Contacts.Count == 1);
+            bool canadd = (handler.Contacts.Count == 2);
 
             if (canadd)
             {

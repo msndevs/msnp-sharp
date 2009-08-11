@@ -48,7 +48,7 @@ namespace MSNPSharp.Core
         string _msgtype = ((uint)TextMessageType.Text).ToString();
         string _clienttype = ((int)ClientType.EmailMember).ToString();
 
-        MsnProtocol _protocol = MsnProtocol.MSNP15;
+        MsnProtocol _protocol = MsnProtocol.MSNP18;
 
         string _dstuser = "";
         string _dstclienttype = ((int)ClientType.PassportMember).ToString();
@@ -59,19 +59,13 @@ namespace MSNPSharp.Core
             _protocol = protocol;
             _user = message.CommandValues[0].ToString();
 
-            if (_protocol >= MsnProtocol.MSNP16)
+            if (message.CommandValues.Count > 4)
             {
-                if (message.CommandValues.Count > 4)
-                {
-                    _msgtype = message.CommandValues[4].ToString();
-                    _dstuser = message.CommandValues[2].ToString();
-                    _dstclienttype = message.CommandValues[3].ToString();
-                }
+                _msgtype = message.CommandValues[4].ToString();
+                _dstuser = message.CommandValues[2].ToString();
+                _dstclienttype = message.CommandValues[3].ToString();
             }
-            else
-            {
-                _msgtype = message.CommandValues[2].ToString();
-            }
+
 
             Command = "UBM";
 
@@ -88,23 +82,17 @@ namespace MSNPSharp.Core
             _user = commandValues[0];
             _clienttype = commandValues[1];
 
-            if (_protocol >= MsnProtocol.MSNP16)
+            if (command.ToLowerInvariant() == "UBM" && commandValues.Length > 4)
             {
-                if (command.ToLowerInvariant() == "UBM" && commandValues.Length > 4)
-                {
-                    _msgtype = commandValues[4].ToString();
-                    _dstuser = commandValues[2].ToString();
-                    _dstclienttype = commandValues[3].ToString();
-                }
-                else
-                {
-                    _msgtype = commandValues[2].ToString();
-                }
+                _msgtype = commandValues[4].ToString();
+                _dstuser = commandValues[2].ToString();
+                _dstclienttype = commandValues[3].ToString();
             }
             else
             {
                 _msgtype = commandValues[2].ToString();
             }
+
 
         }
 
@@ -115,23 +103,17 @@ namespace MSNPSharp.Core
             _user = commandValues[0].ToString();
             _clienttype = commandValues[1].ToString();
 
-            if (_protocol >= MsnProtocol.MSNP16)
+            if (command.ToLowerInvariant() == "UBM" && commandValues.Count > 4)
             {
-                if (command.ToLowerInvariant() == "UBM" && commandValues.Count > 4)
-                {
-                    _msgtype = commandValues[4].ToString();
-                    _dstuser = commandValues[2].ToString();
-                    _dstclienttype = commandValues[3].ToString();
-                }
-                else
-                {
-                    _msgtype = commandValues[2].ToString();
-                }
+                _msgtype = commandValues[4].ToString();
+                _dstuser = commandValues[2].ToString();
+                _dstclienttype = commandValues[3].ToString();
             }
             else
             {
                 _msgtype = commandValues[2].ToString();
             }
+
         }
 
         public override byte[] GetBytes()
