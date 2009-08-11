@@ -156,20 +156,18 @@ namespace MSNPSharp
                         {
                             YIMMessage yimMessage = new YIMMessage(nsMessage, NSMessageHandler.Credentials.MsnProtocol);
 
-                            if (NSMessageHandler.Credentials.MsnProtocol >= MsnProtocol.MSNP16)
+
+                            if (yimMessage.CommandValues.Count > 3)
                             {
-                                if (yimMessage.CommandValues.Count > 3)
+                                //Verify receiver.
+                                if (yimMessage.CommandValues[2].ToString() != NSMessageHandler.Owner.Mail ||
+                                    yimMessage.CommandValues[3].ToString() != ((int)NSMessageHandler.Owner.ClientType).ToString())
                                 {
-                                    //Verify receiver.
-                                    if (yimMessage.CommandValues[2].ToString() != NSMessageHandler.Owner.Mail ||
-                                        yimMessage.CommandValues[3].ToString() != ((int)NSMessageHandler.Owner.ClientType).ToString())
-                                    {
-                                        return;
-                                    }
+                                    return;
                                 }
                             }
 
-                            
+
                             OnUBMReceived(yimMessage);
                             break;
                         }

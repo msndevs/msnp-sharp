@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Threading;
 using System.Xml;
 
 namespace MSNPSharpClient
@@ -15,6 +16,7 @@ namespace MSNPSharpClient
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
     using MSNPSharp.MSNWS.MSNABSharingService;
+
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -49,7 +51,7 @@ namespace MSNPSharpClient
         private OpenFileDialog openFileDialog;
         private SaveFileDialog saveFileDialog;
         private OpenFileDialog openImageDialog;
-        private Timer tmrKeepOnLine;
+        private System.Windows.Forms.Timer tmrKeepOnLine;
         private TreeView treeViewFavoriteList;
         private ImageList ImageList1;
         private ContextMenuStrip userMenuStrip;
@@ -445,10 +447,7 @@ namespace MSNPSharpClient
             this.comboProtocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboProtocol.DropDownWidth = 75;
             this.comboProtocol.FormattingEnabled = true;
-            this.comboProtocol.Items.AddRange(new object[] {
-            "MSNP18",
-            "MSNP16",
-            "MSNP15"});
+            this.comboProtocol.Items.AddRange(new object[] {"MSNP18"});
             this.comboProtocol.Location = new System.Drawing.Point(134, 53);
             this.comboProtocol.Name = "comboProtocol";
             this.comboProtocol.Size = new System.Drawing.Size(70, 21);
@@ -1683,15 +1682,8 @@ namespace MSNPSharpClient
         {
             Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
             this.propertyGrid.SelectedObject = selectedContact;
+            messenger.Nameserver.OIMService.SendOIMMessage(selectedContact, new TextMessage("MSNP offline message"));
 
-            if (messenger.Credentials.MsnProtocol >= MsnProtocol.MSNP18)
-            {
-                messenger.Nameserver.OIMService.SendOIMMessage(selectedContact, new TextMessage("MSNP offline message"));
-            }
-            else
-            {
-                messenger.Nameserver.OIMService.SendOIMMessage(selectedContact.Mail, "MSNP offline message");
-            }
         }
 
         private void sendMIMMenuItem_Click(object sender, EventArgs e)
@@ -1998,13 +1990,22 @@ namespace MSNPSharpClient
             string dn = lblName.Text;
             string pm = lblPM.Text;
 
+            List<string> lstPersonalMessage = new List<string>(new string[] { "", "" });
+
             if (dn != messenger.Nameserver.Owner.Name)
-                messenger.Nameserver.Owner.Name = dn;
+            {
+
+                lstPersonalMessage[0] = dn;
+            }
 
             if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
             {
-                messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(pm, MediaType.None, null, NSMessageHandler.MachineGuid);
+                lstPersonalMessage[1] = pm;
+
             }
+
+            Thread updateThread = new Thread(new ParameterizedThreadStart(UpdateProfile));
+            updateThread.Start(lstPersonalMessage);
         }
 
         private void comboStatus_KeyPress(object sender, KeyPressEventArgs e)
@@ -2021,8 +2022,37 @@ namespace MSNPSharpClient
             {
                 if (openImageDialog.ShowDialog() == DialogResult.OK)
                 {
-                    messenger.Nameserver.StorageService.UpdateProfile(Image.FromFile(openImageDialog.FileName), "MyPhoto");
+                    Image newImage = Image.FromFile(openImageDialog.FileName, true);
+                    Thread updateThread = new Thread(new ParameterizedThreadStart(UpdateProfile));
+                    updateThread.Start(newImage);
                 }
+            }
+        }
+
+        private void UpdateProfile(object profileObject)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Updating owner profile, please wait....");
+
+            if (profileObject is Image)
+            {
+                messenger.Nameserver.StorageService.UpdateProfile(profileObject as Image, "MyPhoto");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update displayimage completed.");
+            }
+
+            if (profileObject is List<string>)
+            {
+                List<string> lstPersonalMessage = profileObject as List<string>;
+                if (lstPersonalMessage[0] != "")
+                {
+                    messenger.Nameserver.Owner.Name = lstPersonalMessage[0];
+                }
+
+                if (lstPersonalMessage[1] != "")
+                {
+                    messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1], MediaType.None, null, NSMessageHandler.MachineGuid);
+                }
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update personal message completed.");
             }
         }
 

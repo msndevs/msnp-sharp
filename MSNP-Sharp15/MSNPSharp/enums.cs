@@ -42,9 +42,7 @@ namespace MSNPSharp
     /// </summary>
     public enum MsnProtocol
     {
-        MSNP18 = 18,
-        MSNP16 = 16,
-        MSNP15 = 15
+        MSNP18 = 18
     }
 
 
