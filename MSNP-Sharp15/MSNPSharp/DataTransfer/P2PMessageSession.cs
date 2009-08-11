@@ -513,12 +513,12 @@ namespace MSNPSharp.DataTransfer
 
                 p2pMessage = p2pMessagePool.GetNextMessage(Version);
 
-                lock (handlers)
-                {
-                    // the message is not a datamessage, send it to the handlers
-                    foreach (IMessageHandler handler in handlers)
-                        handler.HandleMessage(this, message);
-                }
+                object[] cpHandlers = handlers.ToArray();
+
+                // the message is not a datamessage, send it to the handlers
+                foreach (IMessageHandler handler in cpHandlers)
+                    handler.HandleMessage(this, message);
+
             }
         }
 
@@ -606,12 +606,15 @@ namespace MSNPSharp.DataTransfer
                         {
                             if (DirectConnected)
                             {
-                                MessageProcessor.SendMessage(new P2PDCMessage(chunkMessage));
+                                P2PDCMessage dcChunkMessage = new P2PDCMessage(chunkMessage);
+                                MessageProcessor.SendMessage(dcChunkMessage);
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
                             }
                             else
                             {
                                 // wrap the message before sending it to the (probably) SB processor
                                 MessageProcessor.SendMessage(WrapMessage(chunkMessage));
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + chunkMessage.GetType().Name + ":\r\n" + chunkMessage.ToDebugString() + "\r\n", GetType().Name);
                             }
                         }
                         else
@@ -635,12 +638,15 @@ namespace MSNPSharp.DataTransfer
                     {
                         if (DirectConnected)
                         {
-                            MessageProcessor.SendMessage(new P2PDCMessage(p2pMessage));
+                            P2PDCMessage dcChunkMessage = new P2PDCMessage(p2pMessage);
+                            MessageProcessor.SendMessage(dcChunkMessage);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
                         }
                         else
                         {
                             // wrap the message before sending it to the (probably) SB processor
                             MessageProcessor.SendMessage(WrapMessage(p2pMessage));
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
                         }
                     }
                     else
