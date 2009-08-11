@@ -34,17 +34,65 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Diagnostics;
+using System.Timers;
 using Org.Mentalis.Network.ProxySocket;
 
 namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp.Core;
 
+
     /// <summary>
     /// Handles the direct connections in P2P sessions.
     /// </summary>
     public class P2PDirectProcessor : SocketMessageProcessor
     {
+        private Timer socketExpireTimer = new Timer(5000);
+        private ProxySocket socketListener = null;
+
+        private void socketExpireTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (socketListener != null)
+            {
+                try
+                {
+                    socketListener.Shutdown(SocketShutdown.Both);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().ToString() + " Error: " + ex.Message);
+                }
+                finally
+                {
+                    socketListener.Close();
+                }
+
+                // clean up the socket properly
+                if (dcSocket == null || !dcSocket.Connected)
+                {
+                    base.Disconnect();
+
+                    if (dcSocket != null)
+                    {
+                        try
+                        {
+                            dcSocket.Shutdown(SocketShutdown.Both);
+                        }
+                        catch (Exception dcex)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, dcex.Message);
+                        }
+                        finally
+                        {
+                            dcSocket.Close();
+                        }
+
+                        dcSocket = null;
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -62,13 +110,18 @@ namespace MSNPSharp.DataTransfer
         {
             ProxySocket socket = GetPreparedSocket();
 
-            // begin waiting for the incoming connection
+            // begin waiting for the incoming connection			
             socket.Bind(new IPEndPoint(address, port));
 
             socket.Listen(100);
 
             // set this value so we know whether to send a handshake message or not later in the process
             isListener = true;
+            socketListener = socket;
+
+            socketExpireTimer.Elapsed += new ElapsedEventHandler(socketExpireTimer_Elapsed);
+            socketExpireTimer.AutoReset = false;
+            socketExpireTimer.Enabled = true;
 
             socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
         }
@@ -101,9 +154,6 @@ namespace MSNPSharp.DataTransfer
         {
             ProxySocket listenSocket = (ProxySocket)ar.AsyncState;
             dcSocket = listenSocket.EndAccept(ar);
-
-            //listenSocket.Shutdown(SocketShutdown.Both);
-            //listenSocket.Close();
 
             // begin accepting messages
             BeginDataReceive(dcSocket);

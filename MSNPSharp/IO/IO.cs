@@ -269,10 +269,17 @@ namespace MSNPSharp.IO
             {
                 lock (this)
                 {
-                    if (File.Exists(filename))
-                        File.SetAttributes(filename, FileAttributes.Normal);
+                    try
+                    {
+                        if (File.Exists(filename))
+                            File.SetAttributes(filename, FileAttributes.Normal);
 
-                    File.WriteAllBytes(filename, content);
+                        File.WriteAllBytes(filename, content);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "MCL File write error: " + ex.Message);
+                    }
                 }
             }
         }

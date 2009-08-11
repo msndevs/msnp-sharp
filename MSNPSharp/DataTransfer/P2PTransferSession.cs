@@ -94,10 +94,16 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private uint dataPreparationAck = 0;
+
         /// <summary>
         /// Tracked to know when an acknowledgement for the (switchboards) data preparation message is received
         /// </summary>
-        private uint DataPreparationAck;
+        internal uint DataPreparationAck
+        {
+            get { return dataPreparationAck; }
+            set { dataPreparationAck = value; }
+        }
 
         /// <summary>
         /// Tracked to send the disconnecting message (0x40 flag) with the correct datamessage identifiers as it's acknowledge identifier. (protocol)
@@ -312,9 +318,9 @@ namespace MSNPSharp.DataTransfer
             if (transferThread != null && transferThread.ThreadState == System.Threading.ThreadState.Running)
             {
                 AbortTransferThread();
+                OnTransferAborted();
             }
 
-            OnTransferAborted();
             MessageSession.RemoveTransferSession(this);
             if (AutoCloseStream)
                 DataStream.Close();
@@ -409,9 +415,6 @@ namespace MSNPSharp.DataTransfer
                     // inform the handlers
                     OnTransferFinished();
 
-                    // notify the remote client that we are finished
-                    SendDisconnectMessage();
-
                     return;
                 }
 
@@ -458,12 +461,12 @@ namespace MSNPSharp.DataTransfer
                             // check for end of file transfer
                             if (p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
                             {
-                                // keep track of the remote identifier
+
+
+                                // keep track of the remote identifier									
                                 MessageSession.IncreaseRemoteIdentifier();
                                 P2PMessage ack = p2pMessage.CreateAcknowledgement();
                                 ack.Header.SessionId = p2pMessage.Header.SessionId;
-                                ack.Header.Identifier = 0;
-                                ack.Header.TotalSize = p2pMessage.Header.TotalSize;
 
                                 SendMessage(ack);
 
@@ -536,7 +539,7 @@ namespace MSNPSharp.DataTransfer
             // it to all handlers.
             p2pMessagePool.BufferMessage(p2pMessage);
 
-            while (p2pMessagePool.MessageAvailable)
+            while (p2pMessagePool.MessageAvailable(Version))
             {
                 if (Version == P2PVersion.P2PV1)
                 {
@@ -544,14 +547,13 @@ namespace MSNPSharp.DataTransfer
                     MessageSession.IncreaseRemoteIdentifier();
                 }
 
-                p2pMessage = p2pMessagePool.GetNextMessage();
+                p2pMessage = p2pMessagePool.GetNextMessage(Version);
 
                 // the message is not a datamessage, send it to the handlers
-                lock (handlers)
-                {
-                    foreach (IMessageHandler handler in handlers)
-                        handler.HandleMessage(this, message);
-                }
+                object[] cpHandlers = handlers.ToArray();
+
+                foreach (IMessageHandler handler in cpHandlers)
+                    handler.HandleMessage(this, message);
             }
         }
 
@@ -825,10 +827,8 @@ namespace MSNPSharp.DataTransfer
                         MessageSession.IncreaseLocalIdentifier();
                         p2pDataMessage.Header.Identifier = MessageSession.LocalIdentifier;
 
-                        p2pDataMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-
-                        // store the acknowledge identifier so we can accept the acknowledge later on
-                        DataPreparationAck = p2pDataMessage.V1Header.AckSessionId;
+                        p2pDataMessage.V1Header.AckSessionId = DataPreparationAck;
+                        p2pDataMessage.Footer = MessageFooter;
 
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }
@@ -860,6 +860,15 @@ namespace MSNPSharp.DataTransfer
                 long currentPosition = 0;
                 long lastPosition = dataStream.Length;
                 bool isFirstPacket = true;
+                uint currentACK = 0;
+                if (DataPreparationAck > 0)
+                {
+                    currentACK = DataPreparationAck;
+                }
+                else
+                {
+                    currentACK = (uint)new Random().Next(50000, int.MaxValue);
+                }
 
                 while (currentPosition < lastPosition && (!abortThread))
                 {
@@ -882,13 +891,18 @@ namespace MSNPSharp.DataTransfer
                         }
 
                         p2pDataMessage.V1Header.Flags = (P2PFlag)MessageFlag;
-
                         p2pDataMessage.Footer = MessageFooter;
-
                         p2pDataMessage.Header.Identifier = messageIdentifier;
+                        p2pDataMessage.V1Header.AckSessionId = currentACK;// (uint)new Random().Next(50000, int.MaxValue);
 
-                        p2pDataMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-
+                        if (currentACK < uint.MaxValue)
+                        {
+                            currentACK++;
+                        }
+                        else
+                        {
+                            currentACK--;
+                        }
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }
 

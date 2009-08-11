@@ -363,11 +363,16 @@ namespace MSNPSharp.DataTransfer
 
             if (Version == P2PVersion.P2PV1)
             {
-                ack.Header.TotalSize = Header.TotalSize;
-                ack.V1Header.Flags = P2PFlag.Acknowledgement;
-                ack.V1Header.AckSessionId = Header.Identifier;
+                ack.Header.SessionId = Header.SessionId;
+                ack.Header.TotalSize = (ulong)0;               //ACK dose NOT have totalsize
                 ack.Header.AckIdentifier = V1Header.AckSessionId;
+
+                ack.V1Header.Flags = P2PFlag.Acknowledgement;
+                ack.V1Header.AckSessionId = Header.Identifier;          //Identifier of the message to acknowladge.
                 ack.V1Header.AckTotalSize = Header.TotalSize;
+
+                ack.Footer = Footer;                    //Keep the same as the message to acknowladge.
+
             }
             else if (Version == P2PVersion.P2PV2)
             {
