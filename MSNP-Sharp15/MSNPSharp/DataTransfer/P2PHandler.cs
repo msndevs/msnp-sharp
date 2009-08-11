@@ -187,8 +187,22 @@ namespace MSNPSharp.DataTransfer
         {
             // check for existing session
             P2PMessageSession existingSession = GetSessionFromRemote(remoteContact);
+
             if (existingSession != null)
-                return existingSession;
+            {
+                if (existingSession.MessageProcessor != null && existingSession.MessageProcessor is SocketMessageProcessor)
+                {
+                    if (((SocketMessageProcessor)existingSession.MessageProcessor).Connected)
+                        return existingSession;
+                    else
+                    {
+                        lock (MessageSessions)
+                        {
+                            MessageSessions.Remove(existingSession);
+                        }
+                    }
+                }
+            }
 
             // no session available, create a new session
             P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
