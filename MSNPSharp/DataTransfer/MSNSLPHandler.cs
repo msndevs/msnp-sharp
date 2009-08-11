@@ -1818,7 +1818,7 @@ namespace MSNPSharp.DataTransfer
                 MessageSession.ListenForDirectConnection(iphostentry, port);
 
                 slpMessage.BodyValues["Listening"] = "true";
-                slpMessage.BodyValues["Hashed-Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                slpMessage.BodyValues["Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
                 slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.ToString();
                 slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
