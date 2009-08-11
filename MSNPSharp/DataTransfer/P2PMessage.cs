@@ -164,7 +164,7 @@ namespace MSNPSharp.DataTransfer
     {
         protected P2PVersion version;
         private P2PHeader header;
-        private uint footer;
+        private uint footer = 0;
 
         public P2PMessage(P2PVersion ver)
         {
@@ -467,7 +467,7 @@ namespace MSNPSharp.DataTransfer
             return "[P2PMessage]\r\n" +
                 header.ToString() +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "FOOTER              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n", ((InnerMessage != null) ? InnerMessage.ToString() : DumpBytes(InnerBody)));
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n", ((InnerMessage != null) ? InnerMessage.ToString() : "{Binary data}" /* DumpBytes(InnerBody) */));
         }
 
         public static string DumpBytes(byte[] data)
@@ -482,27 +482,7 @@ namespace MSNPSharp.DataTransfer
             {
                 string str = string.Format("0x{0:x2} ", data[i]).ToLower();
 
-                if ((i >= 48) && (i < data.Length))
-                {
-                    try
-                    {
-                        char c = Encoding.ASCII.GetChars(new byte[] { data[i] })[0];
-
-                        if (char.IsLetterOrDigit(c) || char.IsPunctuation(c) || char.IsWhiteSpace(c) ||
-                            (c == '<') || (c == '>') || (c == '='))
-                        {
-                            str = c.ToString();
-                        }
-
-                        hexChars = 0;
-                    }
-                    catch
-                    {
-                        hexChars++;
-                    }
-                }
-                else
-                    hexChars++;
+                hexChars++;
 
                 sb.Append(str);
 
