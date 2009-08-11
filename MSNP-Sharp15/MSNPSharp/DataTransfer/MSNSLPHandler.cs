@@ -717,7 +717,7 @@ namespace MSNPSharp.DataTransfer
 
             P2PMessage p2pMessage = new P2PMessage(version);
             P2PTransferSession session = new P2PTransferSession(p2pMessage.Version);
-            Contact remote = MessageSession.RemoteClient;
+            Contact remote = MessageSession.RemoteUser;
             string AppID = "1";
 
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
@@ -1018,7 +1018,7 @@ namespace MSNPSharp.DataTransfer
         public void RejectTransfer(MSNSLPInvitationEventArgs invitationArgs)
         {
             MSNSLPTransferProperties properties = invitationArgs.TransferProperties;
-            Contact remote = invitationArgs.TransferSession.MessageSession.RemoteClient;
+            Contact remote = invitationArgs.TransferSession.MessageSession.RemoteUser;
 
             P2PMessage replyMessage = new P2PMessage(invitationArgs.TransferSession.Version);
             replyMessage.InnerMessage = CreateDeclineMessage(properties);
@@ -1052,7 +1052,7 @@ namespace MSNPSharp.DataTransfer
             P2PTransferSession p2pTransfer = invitationArgs.TransferSession;
             SLPMessage message = invitationArgs.InvitationMessage;
             P2PMessage replyMessage = new P2PMessage(p2pTransfer.Version);
-            Contact remote = invitationArgs.TransferSession.MessageSession.RemoteClient;
+            Contact remote = invitationArgs.TransferSession.MessageSession.RemoteUser;
 
             // check for a valid datastream
             if (invitationArgs.TransferSession.DataStream == null)
@@ -1082,7 +1082,6 @@ namespace MSNPSharp.DataTransfer
                 case P2PConst.UserDisplayGuid:
                     {
                         // for some kind of weird behavior, our local identifier must now subtract 4 ?
-                        ((P2PMessageSession)MessageProcessor).CorrectLocalIdentifier(-4);
                         p2pTransfer.IsSender = true;
                         p2pTransfer.MessageFlag = (uint)P2PFlag.MSNObjectData;
                         p2pTransfer.MessageFooter = (remote.ClientCapacities >= ClientCapacities.CanHandleMSNC5)
@@ -1106,11 +1105,11 @@ namespace MSNPSharp.DataTransfer
             OnTransferSessionCreated(p2pTransfer);
 
             MessageProcessor.SendMessage(replyMessage);
+            //After sending this message, we can get the data prepare message ackId.
+            p2pTransfer.DataPreparationAck = replyMessage.V1Header.AckSessionId;
 
             if (p2pTransfer.IsSender)
                 p2pTransfer.StartDataTransfer(false);
-
-            //startAcknowledgeSession = replyMessage.AckSessionId;
         }
 
         /// <summary>
@@ -1122,7 +1121,7 @@ namespace MSNPSharp.DataTransfer
             {
                 P2PMessageSession session = (P2PMessageSession)MessageProcessor;
                 P2PTransferSession transferSession = session.GetTransferSession(properties.SessionId);
-                Contact remote = session.RemoteClient;
+                Contact remote = session.RemoteUser;
 
                 P2PMessage closeMessage = new P2PMessage(session.Version);
                 if (closeMessage.Version == P2PVersion.P2PV1)
@@ -1156,7 +1155,7 @@ namespace MSNPSharp.DataTransfer
         public void CloseSession(P2PTransferSession transferSession)
         {
             MSNSLPTransferProperties property = GetTransferProperties(transferSession.CallId);
-            Contact remote = MessageSession.RemoteClient;
+            Contact remote = MessageSession.RemoteUser;
             P2PMessage closeMessage = new P2PMessage(transferSession.Version);
             closeMessage.InnerMessage = CreateClosingMessage(property);
             if (closeMessage.Version == P2PVersion.P2PV1)
@@ -1522,7 +1521,7 @@ namespace MSNPSharp.DataTransfer
         private void MSNSLPHandler_TransferFinished(object sender, EventArgs e)
         {
             P2PTransferSession transferSession = (P2PTransferSession)sender;
-            Contact remote = MessageSession.RemoteClient;
+            Contact remote = MessageSession.RemoteUser;
 
             MSNSLPTransferProperties properties = this.GetTransferProperties(transferSession.CallId);
 
@@ -1591,11 +1590,11 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV1)
             {
-                if (p2pMessage.InnerBody.Length == 0 ||
-                    (p2pMessage.InnerBody.Length == 4 && BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0))
+                if (!(p2pMessage.Footer == 0 && p2pMessage.V1Header.SessionId == 0 && 
+                    p2pMessage.V1Header.Flags != P2PFlag.Acknowledgement && p2pMessage.V1Header.MessageSize > 0))
                 {
-                    // 4 bytes... prepare...
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2PMessage incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
+                    //We don't process any p2p message because this is a SIP message handler.
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv1 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
                     return;
                 }
             }
@@ -1739,7 +1738,7 @@ namespace MSNPSharp.DataTransfer
                 if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
                 {
                     P2PMessage replyMessage = new P2PMessage(P2PVersion.P2PV1); // V!
-                    Contact remote = MessageSession.RemoteClient;
+                    Contact remote = MessageSession.RemoteUser;
 
                     if (replyMessage.Version == P2PVersion.P2PV1)
                     {

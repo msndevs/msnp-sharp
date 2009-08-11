@@ -529,28 +529,6 @@ namespace MSNPSharp
         /// <summary>
         /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send or receive invitations from the remote contact.
         /// </summary>
-        /// <param name="remoteAccount"></param>
-        /// <returns></returns>
-        public MSNSLPHandler GetMSNSLPHandler(string remoteAccount)
-        {
-            if (!Nameserver.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
-                throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
-
-            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Owner.Mail, remoteAccount);
-            MSNSLPHandler msnslpHandler = (MSNSLPHandler)p2pSession.GetHandler(typeof(MSNSLPHandler));
-            if (msnslpHandler == null)
-            {
-                // create a msn slp handler
-                msnslpHandler = CreateMSNSLPHandler();
-                p2pSession.RegisterHandler(msnslpHandler);
-                msnslpHandler.MessageProcessor = p2pSession;
-            }
-            return msnslpHandler;
-        }
-
-        /// <summary>
-        /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send or receive invitations from the remote contact.
-        /// </summary>
         /// <param name="remoteContact"></param>
         /// <returns></returns>
         public MSNSLPHandler GetMSNSLPHandler(Contact remoteContact)

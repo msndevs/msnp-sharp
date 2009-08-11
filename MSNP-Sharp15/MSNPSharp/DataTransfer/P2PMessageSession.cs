@@ -87,7 +87,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        public Contact RemoteClient
+        public Contact RemoteUser
         {
             get { return remoteClient; }
             set { 
@@ -213,7 +213,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PMessageSession()
+        protected P2PMessageSession()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
         }
@@ -235,10 +235,10 @@ namespace MSNPSharp.DataTransfer
             StopAllPendingProcessors();
             AbortAllTransfers();
 
-            handlers.Clear();
+            lock (handlers)
+                handlers.Clear();
 
             MessageProcessor = null;
-
             transferSessions.Clear();
         }
 
@@ -377,13 +377,13 @@ namespace MSNPSharp.DataTransfer
 
             if (Version == P2PVersion.P2PV2)
             {
-                if (RemoteClient != null &&
+                if (RemoteUser != null &&
                     LocalUser != null &&
-                    RemoteClient.MachineGuid != Guid.Empty &&
+                    RemoteUser.MachineGuid != Guid.Empty &&
                     LocalUser.MachineGuid != Guid.Empty)
                 {
                     //Created from local.
-                    msgWrapper.MimeHeader["P2P-Dest"] = RemoteClient.Mail + ";" + RemoteClient.MachineGuid.ToString("B");
+                    msgWrapper.MimeHeader["P2P-Dest"] = RemoteUser.Mail + ";" + RemoteUser.MachineGuid.ToString("B");
                     msgWrapper.MimeHeader["P2P-Src"] = LocalUser.Mail + ";" + LocalUser.MachineGuid.ToString("B");
                 }
                 else
@@ -503,7 +503,7 @@ namespace MSNPSharp.DataTransfer
             // it to all handlers. Usually the MSNSLP handler.
             p2pMessagePool.BufferMessage(p2pMessage);
 
-            while (p2pMessagePool.MessageAvailable)
+            while (p2pMessagePool.MessageAvailable(Version))
             {
                 if (Version == P2PVersion.P2PV1)
                 {
@@ -511,7 +511,7 @@ namespace MSNPSharp.DataTransfer
                     IncreaseRemoteIdentifier();
                 }
 
-                p2pMessage = p2pMessagePool.GetNextMessage();
+                p2pMessage = p2pMessagePool.GetNextMessage(Version);
 
                 lock (handlers)
                 {

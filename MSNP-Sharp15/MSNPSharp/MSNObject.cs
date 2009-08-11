@@ -481,14 +481,14 @@ namespace MSNPSharp
         /// <returns></returns>
         public virtual string GetEncodeString(string context)
         {
-            return MSNHttpUtility.UrlEncode(context);
+            return MSNHttpUtility.MSNObjectUrlEncode(context);
         }
 
         public static string GetDecodeString(string context)
         {
             if (context.IndexOf(" ") == -1)
             {
-                return MSNHttpUtility.UrlDecode(context);
+                return MSNHttpUtility.MSNObjectUrlDecode(context);
             }
             return context;
         }
@@ -549,7 +549,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetEncodedString()
         {
-            return MSNHttpUtility.UrlEncode(GetXmlString(), Encoding.UTF8);
+            return MSNHttpUtility.MSNObjectUrlEncode(GetXmlString());
         }
 
         public static bool operator == (MSNObject obj1, MSNObject obj2)

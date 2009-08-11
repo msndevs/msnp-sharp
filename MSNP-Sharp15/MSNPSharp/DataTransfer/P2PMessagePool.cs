@@ -45,11 +45,13 @@ namespace MSNPSharp.DataTransfer
     {
         /// <summary>
         /// </summary>
-        private Hashtable messageStreams = new Hashtable();
+        private Hashtable messageStreamsV1 = new Hashtable();
+        private Hashtable messageStreamsV2 = new Hashtable();
 
         /// <summary>
         /// </summary>
-        private Queue availableMessages = new Queue(1);
+        private Queue availableMessagesV1 = new Queue(1);
+        private Queue availableMessagesV2 = new Queue(1);
 
         /// <summary>
         /// Constructor
@@ -73,19 +75,19 @@ namespace MSNPSharp.DataTransfer
                     message.Header.MessageSize == 0 ||
                     message.Header.MessageSize == message.Header.TotalSize)
                 {
-                    availableMessages.Enqueue(message);
+                    availableMessagesV1.Enqueue(message);
                 }
                 else
                 {
                     // if this message already exists in the buffer append the current p2p message to the buffer
-                    if (messageStreams.ContainsKey(message.Header.Identifier))
+                    if (messageStreamsV1.ContainsKey(message.Header.Identifier))
                     {
-                        ((MemoryStream)messageStreams[message.Header.Identifier]).Write(message.InnerBody, 0, message.InnerBody.Length);
+                        ((MemoryStream)messageStreamsV1[message.Header.Identifier]).Write(message.InnerBody, 0, message.InnerBody.Length);
                     }
                     else
                     {
                         MemoryStream bufferStream = new MemoryStream();
-                        messageStreams.Add(message.Header.Identifier, bufferStream);
+                        messageStreamsV1.Add(message.Header.Identifier, bufferStream);
                         bufferStream.Write(message.InnerBody, 0, message.InnerBody.Length);
                     }
 
@@ -95,17 +97,17 @@ namespace MSNPSharp.DataTransfer
                         // set the correct fields to match the whole message
                         message.V1Header.Offset = 0;
                         message.Header.MessageSize = (uint)message.Header.TotalSize;
-                        MemoryStream bufferStream = (MemoryStream)messageStreams[message.Header.Identifier];
+                        MemoryStream bufferStream = (MemoryStream)messageStreamsV1[message.Header.Identifier];
 
                         // set the inner body to the whole message
                         message.InnerBody = bufferStream.ToArray();
 
                         // and make it available for the client
-                        availableMessages.Enqueue(message);
+                        availableMessagesV1.Enqueue(message);
 
                         // remove the old memorystream buffer, and clear up resources in the hashtable
                         bufferStream.Close();
-                        messageStreams.Remove(message.Header.Identifier);
+                        messageStreamsV1.Remove(message.Header.Identifier);
                     }
                 }
             }
@@ -116,7 +118,7 @@ namespace MSNPSharp.DataTransfer
                     message.InnerBody == null ||
                     message.InnerBody.Length == 0)
                 {
-                    availableMessages.Enqueue(message);
+                    availableMessagesV2.Enqueue(message);
                 }
                 else
                 {
@@ -124,14 +126,14 @@ namespace MSNPSharp.DataTransfer
 
                     // XXX TODO?
                     byte[] innerBytes = message.GetBytes();
-                    if (messageStreams.ContainsKey(message.Header.Identifier))
+                    if (messageStreamsV2.ContainsKey(message.Header.Identifier))
                     {
-                        ((MemoryStream)messageStreams[message.Header.Identifier]).Write(innerBytes, 0, innerBytes.Length);
+                        ((MemoryStream)messageStreamsV2[message.Header.Identifier]).Write(innerBytes, 0, innerBytes.Length);
                     }
                     else
                     {
                         MemoryStream bufferStream = new MemoryStream();
-                        messageStreams.Add(message.Header.Identifier, bufferStream);
+                        messageStreamsV2.Add(message.Header.Identifier, bufferStream);
                         bufferStream.Write(innerBytes, 0, innerBytes.Length);
                     }
 
@@ -160,23 +162,24 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Defines whether there is a message available to retrieve
         /// </summary>
-        public bool MessageAvailable
+        public bool MessageAvailable(P2PVersion version)
         {
-            get
-            {
-                return availableMessages.Count > 0;
-            }
+            if (version == P2PVersion.P2PV2)
+                return availableMessagesV2.Count > 0;
+            return availableMessagesV1.Count > 0;
         }
 
         /// <summary>
         /// Retrieves the next p2p message from the buffer.
         /// </summary>
         /// <returns></returns>
-        public P2PMessage GetNextMessage()
+        public P2PMessage GetNextMessage(P2PVersion msgVersion)
         {
-            System.Diagnostics.Debug.Assert(availableMessages.Count > 0, "No p2p messages available in queue");
+            System.Diagnostics.Debug.Assert(availableMessagesV1.Count > 0, "No p2p messages available in queue");
+            if (msgVersion == P2PVersion.P2PV2)
+                return availableMessagesV2.Dequeue() as P2PMessage;
 
-            return (P2PMessage)availableMessages.Dequeue();
+            return availableMessagesV1.Dequeue() as P2PMessage;
         }
     }
 };
