@@ -356,7 +356,13 @@ namespace MSNPSharp
 
             if (service != null)
             {
-                service.EnableDecompression = true;
+                try
+                {
+                    service.EnableDecompression = true;
+                }
+                catch (NotImplementedException)
+                {
+                }
 
                 if (asyncObject != null && asyncObject.IsAsync)
                 {
