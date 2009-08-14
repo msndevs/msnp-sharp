@@ -1628,7 +1628,6 @@ namespace MSNPSharp.DataTransfer
                     if (session.MessageSession.DirectConnected)
                         session.MessageSession.CloseDirectConnection();
 
-                    msgSession.CleanUp();
                 }
             }
             else
