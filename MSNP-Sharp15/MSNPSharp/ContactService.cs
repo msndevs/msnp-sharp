@@ -675,6 +675,8 @@ namespace MSNPSharp
                                 AddressBook.Merge(e.Result.ABFindContactsPagedResult);
                                 Deltas.AddressBookDeltas.Add(e.Result.ABFindContactsPagedResult);
                                 Deltas.Save();
+
+                                NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
                             }
                             if (onSuccess != null)
                             {

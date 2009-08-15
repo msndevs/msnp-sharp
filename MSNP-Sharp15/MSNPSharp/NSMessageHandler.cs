@@ -770,6 +770,13 @@ namespace MSNPSharp
             return transID;
         }
 
+        internal void SendSHAAMessage(string circleTicket)
+        {
+            byte[] utf8ByteArray = Encoding.UTF8.GetBytes(circleTicket);
+            string nonce = Convert.ToBase64String(utf8ByteArray);
+            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SHA", "A", nonce }));
+        }
+
         #endregion
 
         #endregion
