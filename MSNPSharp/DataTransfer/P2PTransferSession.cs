@@ -105,6 +105,7 @@ namespace MSNPSharp.DataTransfer
             set { dataPreparationAck = value; }
         }
 
+
         /// <summary>
         /// Tracked to send the disconnecting message (0x40 flag) with the correct datamessage identifiers as it's acknowledge identifier. (protocol)
         /// </summary>
@@ -257,10 +258,13 @@ namespace MSNPSharp.DataTransfer
             set { version = value; }
         }
 
-        private ushort dataPacketNumber;
+        private ushort dataPacketNumber = 0;
         private bool isIncrease = false;
 
-        public ushort DataPacketNumber
+        /// <summary>
+        /// The PackageNumber field used by p2pv2 messages.
+        /// </summary>
+        internal ushort DataPacketNumber
         {
             get
             {
@@ -268,12 +272,12 @@ namespace MSNPSharp.DataTransfer
                     isIncrease = !isIncrease;
 
                 if (isIncrease)
-                    return dataPacketNumber++;
+                    return ++dataPacketNumber;
                 else
-                    return dataPacketNumber--;
+                    return --dataPacketNumber;
             }
 
-            internal set
+            set
             {
                 dataPacketNumber = value;
             }
@@ -420,7 +424,7 @@ namespace MSNPSharp.DataTransfer
 
                 // check if it is a content message
                 // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
-                if (p2pMessage.Header.SessionId > 0 && p2pMessage.InnerBody.Length > 0)
+                if (p2pMessage.Header.SessionId == SessionId && p2pMessage.InnerBody.Length > 0)
                 {
                     if (
                         /* m$n 7.5 (MSNC5) >=, footer: dp=12,emo=11,file=2 */
@@ -497,38 +501,48 @@ namespace MSNPSharp.DataTransfer
                     return;
                 }
 
-                // check if it is a content message
-                // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it
-                if (p2pMessage.V2Header.TFCombination == (TFCombination.MsnObject) ||
-                    p2pMessage.V2Header.TFCombination == (TFCombination.MsnObject | TFCombination.First) ||
-                    p2pMessage.V2Header.TFCombination == (TFCombination.FileTransfer) ||
-                    p2pMessage.V2Header.TFCombination == (TFCombination.FileTransfer | TFCombination.First))
+                if (p2pMessage.V2Header.OperationCode == OperationCode.None &&
+                    p2pMessage.V2Header.AckIdentifier == DataPreparationAck)
                 {
-                    // store the data message identifier because we want to reference it if we abort the transfer
-                    DataPacketNumber = p2pMessage.V2Header.PackageNumber;
-
-                    if (DataStream == null)
-                        throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
-
-                    if (DataStream.CanWrite)
-                    {
-                        DataStream.Seek(0, SeekOrigin.End);
-                        DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
-                    }
-                    // check for end of file transfer
-                    if (p2pMessage.V2Header.DataRemaining == 0)
-                    {
-                        if (AutoCloseStream)
-                            DataStream.Close();
-
-                        OnTransferFinished();
-                    }
-                    // finished handling this message
-
-
-                    return;
-
+                    StartDataTransfer(false);  //In p2pv2 I don't want to support any direct contection transfer.
                 }
+
+                // check if it is a content message
+                // if it is not a file transfer message, and the footer is not set to the corresponding value, ignore it.
+                if (p2pMessage.V2Header.MessageSize > 0 && p2pMessage.V2Header.SessionId == SessionId)
+                {
+                    if (p2pMessage.V2Header.TFCombination == (TFCombination.MsnObject) ||
+                        p2pMessage.V2Header.TFCombination == (TFCombination.MsnObject | TFCombination.First) ||
+                        p2pMessage.V2Header.TFCombination == (TFCombination.FileTransfer) ||
+                        p2pMessage.V2Header.TFCombination == (TFCombination.FileTransfer | TFCombination.First))
+                    {
+                        // store the data message identifier because we want to reference it if we abort the transfer
+                        DataPacketNumber = p2pMessage.V2Header.PackageNumber;
+
+                        if (DataStream == null)
+                            throw new MSNPSharpException("Data was received in a P2P session, but no datastream has been specified to write to.");
+
+                        if (DataStream.CanWrite)
+                        {
+                            DataStream.Seek(0, SeekOrigin.End);
+                            DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+                        }
+                        // check for end of file transfer
+                        if (p2pMessage.V2Header.DataRemaining == 0)
+                        {
+                            if (AutoCloseStream)
+                                DataStream.Close();
+
+                            OnTransferFinished();
+                        }
+                        // finished handling this message
+
+
+                        return;
+
+                    }
+                }
+
                 #endregion
             }
 
@@ -577,8 +591,17 @@ namespace MSNPSharp.DataTransfer
             // Check whether it's already set. This is important to check for acknowledge messages.
             if (p2pMessage.Header.Identifier == 0)
             {
-                MessageSession.IncreaseLocalIdentifier();
-                p2pMessage.Header.Identifier = MessageSession.LocalIdentifier;
+                if (Version == P2PVersion.P2PV1)
+                {
+                    MessageSession.IncreaseLocalIdentifier();
+                    p2pMessage.Header.Identifier = MessageSession.LocalIdentifier;
+                }
+
+                if (Version == P2PVersion.P2PV2)
+                {
+                    p2pMessage.V2Header.Identifier = MessageSession.LocalIdentifier;
+                    MessageSession.CorrectLocalIdentifier((int)p2pMessage.V2Header.MessageSize);
+                }
             }
 
             if (Version == P2PVersion.P2PV1)
@@ -633,7 +656,7 @@ namespace MSNPSharp.DataTransfer
                 int totalSize = p2pMessage.InnerBody.Length;
 
                 if (MessageSession.DirectConnected == false &&
-                    totalSize > 1202)
+                    totalSize > 1222)
                 {
                     foreach (P2PMessage chunkMessage in P2PMessage.SplitMessage(p2pMessage, 1202))
                     {
@@ -803,6 +826,19 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected void TransferDataEntry()
         {
+            if (Version == P2PVersion.P2PV2 && DataPreparationAck == 0)
+            {
+                ////First send a 0x08 0x02 prepare message.
+                P2PMessage prepareMessage = new P2PMessage(P2PVersion.P2PV2);
+                prepareMessage.V2Header.OperationCode = OperationCode.TransferPrepare;
+                MessageProcessor.SendMessage(prepareMessage);
+                DataPreparationAck = prepareMessage.V2Header.Identifier;
+                TransferThread = null;  //To start again.
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Preparing transfer session", GetType().Name);
+                return;
+            }
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Starting transfer thread", GetType().Name);
 
             OnTransferStarted();
@@ -835,15 +871,19 @@ namespace MSNPSharp.DataTransfer
 
                     if (Version == P2PVersion.P2PV2)
                     {
+
+                        //Then send data preparation message.
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
-                        MessageSession.IncreaseLocalIdentifier();
-                        p2pDataMessage.Header.Identifier = MessageSession.LocalIdentifier;
+
                         p2pDataMessage.V2Header.OperationCode = OperationCode.None;
+                        p2pDataMessage.V2Header.TFCombination = TFCombination.First;
+
                         p2pDataMessage.WritePreparationBytes();
                         p2pDataMessage.Header.SessionId = SessionId;
 
                         MessageProcessor.SendMessage(p2pDataMessage);
-                        MessageSession.CorrectLocalIdentifier((int)p2pDataMessage.Header.MessageSize);
+                        return;
+
                     }
                 }
 
@@ -861,6 +901,9 @@ namespace MSNPSharp.DataTransfer
                 long lastPosition = dataStream.Length;
                 bool isFirstPacket = true;
                 uint currentACK = 0;
+                ushort dataPackageNumber = (ushort)(DataPacketNumber + (DataPacketNumber - DataPacketNumber));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "DataPackageNumber: " + dataPackageNumber.ToString());
+
                 if (DataPreparationAck > 0)
                 {
                     currentACK = DataPreparationAck;
@@ -916,12 +959,16 @@ namespace MSNPSharp.DataTransfer
                         lock (dataStream)
                         {
                             dataStream.Seek(currentPosition, SeekOrigin.Begin);
-                            int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1202);
+                            int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1222);
                             currentPosition += bytesWritten;
-                            p2pDataMessage.V2Header.DataRemaining = (ulong)(lastPosition - currentPosition - 1);
-                        }
+                            if (lastPosition - currentPosition - 1 > 0)
+                            {
+                                p2pDataMessage.V2Header.DataRemaining = (ulong)(lastPosition - currentPosition - 1);
+                            }
+                            p2pDataMessage.InnerBody = p2pDataMessage.InnerBody; //Refresh the MessageSize, placing MessageSize field to header is a bad desin.
 
-                        p2pDataMessage.Header.Identifier = MessageSession.LocalIdentifier;
+                            p2pDataMessage.V2Header.PackageNumber = 1; //dataPackageNumber;
+                        }
 
                         if (isFirstPacket)
                         {
@@ -934,6 +981,7 @@ namespace MSNPSharp.DataTransfer
                             {
                                 p2pDataMessage.V2Header.TFCombination = (TFCombination.FileTransfer | TFCombination.First);
                             }
+                            isFirstPacket = false;
                         }
                         else
                         {
@@ -947,8 +995,6 @@ namespace MSNPSharp.DataTransfer
                                 p2pDataMessage.V2Header.TFCombination = TFCombination.FileTransfer;
                             }
                         }
-
-                        MessageSession.CorrectLocalIdentifier((int)p2pDataMessage.Header.MessageSize);
 
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }

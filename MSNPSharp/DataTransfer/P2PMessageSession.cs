@@ -79,11 +79,6 @@ namespace MSNPSharp.DataTransfer
             {
                 LocalContact = value.Mail;
                 localUser = value;
-                if (value.MachineGuid == Guid.Empty)
-                {
-                    //Correct the p2p version.
-                    version = P2PVersion.P2PV1;
-                }
             }
         }
 
@@ -93,12 +88,6 @@ namespace MSNPSharp.DataTransfer
             set { 
                 remoteClient = value;
                 RemoteContact = value.Mail;
-
-                if (value.MachineGuid == Guid.Empty)
-                {
-                    //Correct the version
-                    version = P2PVersion.P2PV1;
-                }
             }
         }
 
@@ -488,13 +477,23 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 // check if it is a content message
-                if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0)
+                if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0)              //Data messages.
                 {
                     // get the session to handle this message
                     P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.Header.SessionId];
                     if (session != null)
                         session.HandleMessage(this, p2pMessage);
                     return;
+                }
+
+                if (p2pMessage.V2Header.AckIdentifier != 0)
+                {
+                    P2PTransferSession[] sessions = new P2PTransferSession[transferSessions.Count];
+                    transferSessions.Values.CopyTo(sessions, 0);
+                    foreach (P2PTransferSession session in sessions)
+                    {
+                        session.HandleMessage(this, p2pMessage);
+                    }
                 }
             }
 
@@ -579,8 +578,17 @@ namespace MSNPSharp.DataTransfer
             // check whether it's already set. This is important to check for acknowledge messages.
             if (p2pMessage.Header.Identifier == 0)
             {
-                IncreaseLocalIdentifier();
-                p2pMessage.Header.Identifier = LocalIdentifier;
+                if (Version == P2PVersion.P2PV1)
+                {
+                    IncreaseLocalIdentifier();
+                    p2pMessage.Header.Identifier = LocalIdentifier;
+                }
+
+                if (Version == P2PVersion.P2PV2)
+                {
+                    p2pMessage.V2Header.Identifier = LocalIdentifier;
+                    CorrectLocalIdentifier((int)p2pMessage.V2Header.MessageSize);
+                }
             }
 
             if (Version == P2PVersion.P2PV1 && 0 == p2pMessage.V1Header.AckSessionId)
@@ -588,49 +596,88 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
             }
 
+            #region P2P Version 1
             // check whether we have a direct connection (send p2pdc messages) or not (send sb messages)
             int maxSize = DirectConnected ? 1352 : 1202;
 
             // split up large messages which go to the SB
-            if (p2pMessage.Header.MessageSize > maxSize)
+            if (Version == P2PVersion.P2PV1)
             {
-                P2PMessage[] messages = P2PMessage.SplitMessage(p2pMessage, maxSize);
-
-                foreach (P2PMessage chunkMessage in messages)
+                if (p2pMessage.Header.MessageSize > maxSize)
                 {
-                    // now send it to propbably a SB processor
+
+                    P2PMessage[] messages = P2PMessage.SplitMessage(p2pMessage, maxSize);
+
+                    foreach (P2PMessage chunkMessage in messages)
+                    {
+                        // now send it to propbably a SB processor
+                        try
+                        {
+                            if (MessageProcessor != null &&
+                                ((SocketMessageProcessor)MessageProcessor).Connected)
+                            {
+                                if (DirectConnected)
+                                {
+                                    P2PDCMessage dcChunkMessage = new P2PDCMessage(chunkMessage);
+                                    MessageProcessor.SendMessage(dcChunkMessage);
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
+                                }
+                                else
+                                {
+                                    // wrap the message before sending it to the (probably) SB processor
+                                    MessageProcessor.SendMessage(WrapMessage(chunkMessage));
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + chunkMessage.GetType().Name + ":\r\n" + chunkMessage.ToDebugString() + "\r\n", GetType().Name);
+                                }
+                            }
+                            else
+                            {
+                                InvalidateProcessor();
+                                BufferMessage(chunkMessage);
+                            }
+                        }
+                        catch (System.Net.Sockets.SocketException)
+                        {
+                            InvalidateProcessor();
+                            BufferMessage(chunkMessage);
+                        }
+                    }
+                }
+                else
+                {
                     try
                     {
-                        if (MessageProcessor != null &&
-                            ((SocketMessageProcessor)MessageProcessor).Connected)
+                        if (MessageProcessor != null)
                         {
                             if (DirectConnected)
                             {
-                                P2PDCMessage dcChunkMessage = new P2PDCMessage(chunkMessage);
+                                P2PDCMessage dcChunkMessage = new P2PDCMessage(p2pMessage);
                                 MessageProcessor.SendMessage(dcChunkMessage);
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
                             }
                             else
                             {
                                 // wrap the message before sending it to the (probably) SB processor
-                                MessageProcessor.SendMessage(WrapMessage(chunkMessage));
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + chunkMessage.GetType().Name + ":\r\n" + chunkMessage.ToDebugString() + "\r\n", GetType().Name);
+                                MessageProcessor.SendMessage(WrapMessage(p2pMessage));
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
                             }
                         }
                         else
                         {
                             InvalidateProcessor();
-                            BufferMessage(chunkMessage);
+                            BufferMessage(p2pMessage);
                         }
                     }
                     catch (System.Net.Sockets.SocketException)
                     {
                         InvalidateProcessor();
-                        BufferMessage(chunkMessage);
+                        BufferMessage(p2pMessage);
                     }
                 }
-            }
-            else
+            } 
+            #endregion
+
+            #region P2P Version 2
+            if (Version == P2PVersion.P2PV2)
             {
                 try
                 {
@@ -661,6 +708,7 @@ namespace MSNPSharp.DataTransfer
                     BufferMessage(p2pMessage);
                 }
             }
+            #endregion
         }
 
         /// <summary>

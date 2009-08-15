@@ -311,7 +311,8 @@ namespace MSNPSharp.DataTransfer
         public override P2PHeader CreateAck()
         {
             P2Pv1Header ack = new P2Pv1Header();
-            ack.TotalSize = TotalSize;
+            ack.SessionId = SessionId;
+            ack.TotalSize = 0;
             ack.Flags = P2PFlag.Acknowledgement;
             ack.AckSessionId = Identifier;
             ack.AckIdentifier = AckSessionId;
@@ -388,7 +389,7 @@ namespace MSNPSharp.DataTransfer
 
 
         /// <summary>
-        /// Header length (dynamic)
+        /// Header length (dynamic).  Byte 0 in the binary header.
         /// </summary>
         /// <remarks>Min: 8, Max: 252. Padding: 4</remarks>
         public override int HeaderLength
@@ -413,6 +414,9 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        /// <summary>
+        /// The header length for data package.
+        /// </summary>
         public int DataPacketHeaderLength
         {
             get
@@ -455,7 +459,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Operation code
+        /// Operation code. Byte 1 in the binary header.
         /// </summary>
         public OperationCode OperationCode
         {
@@ -470,7 +474,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Payload size
+        /// Payload size.  Bytes 2-4 in the binary header.
         /// </summary>
         public new uint MessageSize
         {
@@ -485,7 +489,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Message identifier
+        /// Message identifier. Bytes 5-8 in the binary header.
         /// </summary>
         public new uint Identifier
         {
@@ -500,6 +504,10 @@ namespace MSNPSharp.DataTransfer
         }
 
         private UInt32 ackIdentifier;
+
+        /// <summary>
+        /// The Identifier we acknowledge to.
+        /// </summary>
         public override UInt32 AckIdentifier
         {
             get
@@ -573,7 +581,16 @@ namespace MSNPSharp.DataTransfer
         public override P2PHeader CreateAck()
         {
             P2Pv2Header ack = new P2Pv2Header();
-            ack.AckIdentifier = Identifier + MessageSize;
+            if (OperationCode > 0)
+            {
+                ack.AckIdentifier = Identifier + MessageSize;
+            }
+            else
+            {
+                ack.AckIdentifier = Identifier;
+            }
+
+            ack.OperationCode = this.OperationCode;
             return ack;
         }
 
@@ -699,6 +716,7 @@ namespace MSNPSharp.DataTransfer
 
             writer.Write((byte)headerLen);
             writer.Write((byte)OperationCode);
+
             writer.Write(BitUtility.ToBigEndian((ushort)MessageSize));
             writer.Write(BitUtility.ToBigEndian((uint)Identifier));
 

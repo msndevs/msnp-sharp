@@ -107,7 +107,9 @@ namespace MSNPSharp.DataTransfer
                     session.AbortAllTransfers();
                 }
             }
-            MessageSessions.Clear();
+
+            lock (MessageSessions)
+                MessageSessions.Clear();
         }
 
         /// <summary>
@@ -193,7 +195,9 @@ namespace MSNPSharp.DataTransfer
                 if (existingSession.MessageProcessor != null && existingSession.MessageProcessor is SocketMessageProcessor)
                 {
                     if (((SocketMessageProcessor)existingSession.MessageProcessor).Connected)
+                    {
                         return existingSession;
+                    }
                     else
                     {
                         lock (MessageSessions)
@@ -254,7 +258,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="remoteContact"></param>
         /// <returns></returns>
-        protected SBMessageHandler GetSwitchboardSession(string remoteContact)
+        protected SBMessageHandler GetSwitchboardSession(Contact remoteContact)
         {
             foreach (SBMessageHandler handler in switchboardSessions)
             {
@@ -537,7 +541,10 @@ namespace MSNPSharp.DataTransfer
                     session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));
 
                     // add the session to the session list
-                    messageSessions.Add(session);
+                    lock (messageSessions)
+                    {
+                        messageSessions.Add(session);
+                    }
 
                     // set the default message processor
                     session.MessageProcessor = sender;
@@ -564,12 +571,20 @@ namespace MSNPSharp.DataTransfer
 
                 if (version == P2PVersion.P2PV2)
                 {
-                    if (p2pMessage.V2Header.OperationCode == OperationCode.Acknowledgement)
+                    //Case 1: 0x18 0x03 Invite
+                    if (p2pMessage.V2Header.MessageSize > 0)
                     {
-                        P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                        ack.Header.Identifier = session.LocalIdentifier;
-                        session.SendMessage(ack);
-                        session.CorrectLocalIdentifier((int)ack.Header.MessageSize);
+                        if (p2pMessage.V2Header.SessionId == 0)
+                        {
+                            P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                            foreach (byte bytKey in p2pMessage.V2Header.HeaderTLVs.Keys)
+                            {
+                                ack.V2Header.HeaderTLVs.Add(bytKey, p2pMessage.V2Header.HeaderTLVs[bytKey]);
+                            }
+                            ack.V2Header.HeaderTLVs[0x1] = new byte[] { 0x00, 0x02, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x0f, 0x01, 0x00, 0x00 };
+
+                            session.SendMessage(ack);
+                        }
                     }
                 }
 
@@ -589,11 +604,9 @@ namespace MSNPSharp.DataTransfer
         /// This is done by delegating the request to the nameserver handler. The supplied contact is also direct invited to the newly created switchboard session.
         /// </remarks>
         /// <param name="remoteContact"></param>
-        protected virtual SBMessageHandler RequestSwitchboard(string remoteContact)
+        protected virtual SBMessageHandler RequestSwitchboard(Contact remoteContact)
         {
 
-            if (nsMessageHandler.ContactList.HasContact(remoteContact, ClientType.PassportMember))
-            {
                 SBMessageHandler handler = null;
 
                 handler = Factory.CreateSwitchboardHandler();
@@ -603,10 +616,9 @@ namespace MSNPSharp.DataTransfer
                 NSMessageHandler.RequestSwitchboard(handler, this);
                 handler.NSMessageHandler = NSMessageHandler;
 
-                handler.Invite(((Contact)NSMessageHandler.ContactList[remoteContact, ClientType.PassportMember]).Mail);
+                handler.Invite(remoteContact);
                 return handler;
-            }
-            return null;
+
         }
 
         /// <summary>
@@ -697,15 +709,18 @@ namespace MSNPSharp.DataTransfer
 
             if (canremove)
             {
-                // in a conversation with multiple contacts we don't want to send p2p messages.
-                foreach (P2PMessageSession session in messageSessions)
+                lock (messageSessions)
                 {
-                    if (session.MessageProcessor == handler.MessageProcessor)
+                    // in a conversation with multiple contacts we don't want to send p2p messages.
+                    foreach (P2PMessageSession session in messageSessions)
                     {
-                        // set this to null to prevent sending messages to this processor.
-                        // it will invalidate the processor when trying to send messages and thus
-                        // force the p2p handler to create a new switchboard
-                        RemoveSessionProcessor(session);
+                        if (session.MessageProcessor == handler.MessageProcessor)
+                        {
+                            // set this to null to prevent sending messages to this processor.
+                            // it will invalidate the processor when trying to send messages and thus
+                            // force the p2p handler to create a new switchboard
+                            RemoveSessionProcessor(session);
+                        }
                     }
                 }
             }
@@ -787,10 +802,10 @@ namespace MSNPSharp.DataTransfer
             P2PMessageSession session = (P2PMessageSession)sender;
 
             // create a new switchboard to fill the hole
-            SBMessageHandler sbHandler = GetSwitchboardSession(session.RemoteContact);
+            SBMessageHandler sbHandler = GetSwitchboardSession(session.RemoteUser);
 
             // if the contact is offline, there is no need to request a new switchboard. close the session.
-            if ((NSMessageHandler.ContactList[session.RemoteContact, ClientType.PassportMember]).Status == PresenceStatus.Offline)
+            if (session.RemoteUser.Status == PresenceStatus.Offline)
             {
                 CloseMessageSession(session);
                 return;
@@ -800,9 +815,9 @@ namespace MSNPSharp.DataTransfer
             // if that is the case, use that processor. Otherwise request a new session.
             if (sbHandler == null || sbHandler.MessageProcessor == null ||
                 ((SocketMessageProcessor)sbHandler.MessageProcessor).Connected == false ||
-                (sbHandler.Contacts.ContainsKey(session.RemoteContact) == false))
+                (sbHandler.Contacts.ContainsKey(session.RemoteUser) == false))
             {
-                RequestSwitchboard(session.RemoteContact);
+                RequestSwitchboard(session.RemoteUser);
             }
             else
             {

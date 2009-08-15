@@ -104,6 +104,7 @@ namespace MSNPSharp
                         "<PrivateEndpointData>" +
                         "<EpName>" + MSNHttpUtility.XmlEncode(value) + "</EpName>" +
                         "<Idle>" + ((Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
+                        "<ClientType>1</ClientType>" +
                         "<State>" + NSMessageHandler.ParseStatus(Status) + "</State>" +
                         "</PrivateEndpointData>"));
                 }

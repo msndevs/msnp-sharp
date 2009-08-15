@@ -316,17 +316,11 @@ namespace MSNPSharp.IO
 
             if (deltas.AddressBookDeltas.Count > 0)
             {
-#if MSNP18
                 foreach (ABFindContactsPagedResultType findcontactspagedResult in deltas.AddressBookDeltas)
                 {
                     Merge(findcontactspagedResult);
                 }
-#else
-                foreach (ABFindAllResultType abfindallResult in deltas.AddressBookDeltas)
-                {
-                    Merge(abfindallResult);
-                }
-#endif
+
             }
 
             return this;
