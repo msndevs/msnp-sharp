@@ -292,7 +292,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            transferSessions.Add(session.SessionId, session);
+            transferSessions.Add(session.TransferProperties.SessionId, session);
         }
 
         /// <summary>
@@ -301,7 +301,7 @@ namespace MSNPSharp.DataTransfer
         public void RemoveTransferSession(P2PTransferSession session)
         {
             if (session != null)
-                transferSessions.Remove(session.SessionId);
+                transferSessions.Remove(session.TransferProperties.SessionId);
         }
 
         /// <summary>

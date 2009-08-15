@@ -381,7 +381,7 @@ namespace MSNPSharp.DataTransfer
     [Serializable]
     public class P2Pv2Header : P2PHeader
     {
-        private OperationCode operationCode;
+        private byte operationCode;
         //private UInt16 messageSize;
         //private UInt32 identifier;
         private Dictionary<byte, byte[]> headerTLVs = new Dictionary<byte, byte[]>(); // BIG ENDIAN
@@ -461,7 +461,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Operation code. Byte 1 in the binary header.
         /// </summary>
-        public OperationCode OperationCode
+        public byte OperationCode
         {
             get
             {
@@ -589,8 +589,6 @@ namespace MSNPSharp.DataTransfer
             {
                 ack.AckIdentifier = Identifier;
             }
-
-            ack.OperationCode = this.OperationCode;
             return ack;
         }
 
@@ -605,7 +603,7 @@ namespace MSNPSharp.DataTransfer
             BinaryReader reader = new BinaryReader(mem);
 
             int headerLen = (int)(Byte)reader.ReadByte();
-            OperationCode = (OperationCode)(Byte)reader.ReadByte();
+            OperationCode = /*(OperationCode)*/(Byte)reader.ReadByte();
             MessageSize = (uint)(UInt16)BitUtility.ToBigEndian(reader.ReadUInt16());
             Identifier = (uint)(UInt32)BitUtility.ToBigEndian(reader.ReadUInt32());
             if (headerLen > 8) //TLVs
