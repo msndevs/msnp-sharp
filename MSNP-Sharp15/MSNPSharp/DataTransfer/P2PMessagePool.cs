@@ -114,48 +114,51 @@ namespace MSNPSharp.DataTransfer
 
             if (message.Version == P2PVersion.P2PV2)
             {
-                if (message.Header.IsAcknowledgement ||
-                    message.InnerBody == null ||
-                    message.InnerBody.Length == 0)
-                {
-                    availableMessagesV2.Enqueue(message);
-                }
-                else
-                {
-                    // if this message already exists in the buffer append the current p2p message to the buffer
+                availableMessagesV2.Enqueue(message);
+                
 
-                    // XXX TODO?
-                    byte[] innerBytes = message.GetBytes();
-                    if (messageStreamsV2.ContainsKey(message.Header.Identifier))
-                    {
-                        ((MemoryStream)messageStreamsV2[message.Header.Identifier]).Write(innerBytes, 0, innerBytes.Length);
-                    }
-                    else
-                    {
-                        MemoryStream bufferStream = new MemoryStream();
-                        messageStreamsV2.Add(message.Header.Identifier, bufferStream);
-                        bufferStream.Write(innerBytes, 0, innerBytes.Length);
-                    }
+                //if (message.Header.IsAcknowledgement ||
+                //    message.InnerBody == null ||
+                //    message.InnerBody.Length == 0)
+                //{
+                //    availableMessagesV2.Enqueue(message);
+                //}
+                //else
+                //{
+                //    // if this message already exists in the buffer append the current p2p message to the buffer
 
-                    //// check whether this is the last message
-                    //if (message.Offset + message.MessageSize == message.TotalSize)
-                    //{
-                    //    // set the correct fields to match the whole message
-                    //    message.Offset = 0;
-                    //    message.MessageSize = (uint)message.TotalSize;
-                    //    MemoryStream bufferStream = (MemoryStream)messageStreams[message.Identifier];
+                //    // XXX TODO?
+                //    byte[] innerBytes = message.GetBytes();
+                //    if (messageStreamsV2.ContainsKey(message.Header.Identifier))
+                //    {
+                //        ((MemoryStream)messageStreamsV2[message.Header.Identifier]).Write(innerBytes, 0, innerBytes.Length);
+                //    }
+                //    else
+                //    {
+                //        MemoryStream bufferStream = new MemoryStream();
+                //        messageStreamsV2.Add(message.Header.Identifier, bufferStream);
+                //        bufferStream.Write(innerBytes, 0, innerBytes.Length);
+                //    }
 
-                    //    // set the inner body to the whole message
-                    //    message.InnerBody = bufferStream.ToArray();
+                //    //// check whether this is the last message
+                //    //if (message.Offset + message.MessageSize == message.TotalSize)
+                //    //{
+                //    //    // set the correct fields to match the whole message
+                //    //    message.Offset = 0;
+                //    //    message.MessageSize = (uint)message.TotalSize;
+                //    //    MemoryStream bufferStream = (MemoryStream)messageStreams[message.Identifier];
 
-                    //    // and make it available for the client
-                    //    availableMessages.Enqueue(message);
+                //    //    // set the inner body to the whole message
+                //    //    message.InnerBody = bufferStream.ToArray();
 
-                    //    // remove the old memorystream buffer, and clear up resources in the hashtable
-                    //    bufferStream.Close();
-                    //    messageStreams.Remove(message.Identifier);
-                    //}
-                }
+                //    //    // and make it available for the client
+                //    //    availableMessages.Enqueue(message);
+
+                //    //    // remove the old memorystream buffer, and clear up resources in the hashtable
+                //    //    bufferStream.Close();
+                //    //    messageStreams.Remove(message.Identifier);
+                //    //}
+                //}
             }
         }
 
@@ -175,10 +178,15 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public P2PMessage GetNextMessage(P2PVersion msgVersion)
         {
-            System.Diagnostics.Debug.Assert(availableMessagesV1.Count > 0, "No p2p messages available in queue");
-            if (msgVersion == P2PVersion.P2PV2)
-                return availableMessagesV2.Dequeue() as P2PMessage;
 
+            if (msgVersion == P2PVersion.P2PV2)
+            {
+                System.Diagnostics.Debug.Assert(availableMessagesV2.Count > 0, "No p2pv2 messages available in queue");
+                return availableMessagesV2.Dequeue() as P2PMessage;
+            }
+
+
+            System.Diagnostics.Debug.Assert(availableMessagesV1.Count > 0, "No p2pv1 messages available in queue");
             return availableMessagesV1.Dequeue() as P2PMessage;
         }
     }

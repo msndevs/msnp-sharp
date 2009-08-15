@@ -162,7 +162,7 @@ namespace MSNPSharp
 
             nsMessageHandler.P2PHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
             {
-                MSNSLPHandler msnslpHandler = CreateMSNSLPHandler();
+                MSNSLPHandler msnslpHandler = new MSNSLPHandler(see.Session.Version);
                 msnslpHandler.MessageProcessor = see.Session;
                 see.Session.RegisterHandler(msnslpHandler);
 
@@ -175,7 +175,7 @@ namespace MSNPSharp
                     {
                         if (sb.GetType() == typeof(SBMessageHandler))
                         {
-                            if (sb.Contacts.ContainsKey(see.Session.RemoteContact))
+                            if (sb.Contacts.ContainsKey(see.Session.RemoteUser)) //if (sb.Contacts.ContainsKey(see.Session.RemoteContact))
                             {
                                 see.Session.MessageProcessor = sb.MessageProcessor;
                                 break;
@@ -541,7 +541,7 @@ namespace MSNPSharp
             if (msnslpHandler == null)
             {
                 // create a msn slp handler
-                msnslpHandler = CreateMSNSLPHandler();
+                msnslpHandler = CreateMSNSLPHandler(p2pSession.Version);
                 p2pSession.RegisterHandler(msnslpHandler);
                 msnslpHandler.MessageProcessor = p2pSession;
             }
@@ -587,9 +587,9 @@ namespace MSNPSharp
         /// Creates the object and sets the external end point.
         /// </summary>
         /// <returns></returns>
-        private MSNSLPHandler CreateMSNSLPHandler()
+        private MSNSLPHandler CreateMSNSLPHandler(P2PVersion ver)
         {
-            MSNSLPHandler msnslpHandler = Factory.CreateMSNSLPHandler();
+            MSNSLPHandler msnslpHandler = new MSNSLPHandler(ver);
             msnslpHandler.ExternalEndPoint = Nameserver.ExternalEndPoint;
             return msnslpHandler;
         }

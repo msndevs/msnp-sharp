@@ -152,7 +152,7 @@ namespace MSNPSharp.DataTransfer
     public enum OperationCode : byte
     {
         None = 0x0,
-        Acknowledgement = 0x2,
+        TransferPrepare = 0x2,
         InitSession = 0x3
     }
 
@@ -244,6 +244,15 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 return header;
+            }
+
+            private set
+            {
+                if ((Version == P2PVersion.P2PV1 && value is P2Pv1Header)
+                    || (Version == P2PVersion.P2PV2 && value is P2Pv2Header))
+                {
+                    header = value;
+                }
             }
         }
 
@@ -360,17 +369,10 @@ namespace MSNPSharp.DataTransfer
         public virtual P2PMessage CreateAcknowledgement()
         {
             P2PMessage ack = new P2PMessage(Version);
+            ack.Header = Header.CreateAck();
 
             if (Version == P2PVersion.P2PV1)
             {
-                ack.Header.SessionId = Header.SessionId;
-                ack.Header.TotalSize = (ulong)0;               //ACK dose NOT have totalsize
-                ack.Header.AckIdentifier = V1Header.AckSessionId;
-
-                ack.V1Header.Flags = P2PFlag.Acknowledgement;
-                ack.V1Header.AckSessionId = Header.Identifier;          //Identifier of the message to acknowladge.
-                ack.V1Header.AckTotalSize = Header.TotalSize;
-
                 ack.Footer = Footer;                    //Keep the same as the message to acknowladge.
 
             }
@@ -378,7 +380,7 @@ namespace MSNPSharp.DataTransfer
             {
                 // XXX TODO...
                 //ack.Header.AckIdentifier = 1; // To calculate ack.Header.MessageSize correctly.
-                ack.Header.AckIdentifier = ack.Header.Identifier + ack.Header.MessageSize;
+                //ack.Header.AckIdentifier = ack.Header.Identifier + ack.Header.MessageSize;
             }
 
             return ack;
@@ -392,7 +394,19 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public static P2PMessage[] SplitMessage(P2PMessage p2pMessage, int maxSize)
         {
-            if (p2pMessage.Header.MessageSize <= maxSize)
+            uint payloadMessageSize = 0;
+
+            if (p2pMessage.Version == P2PVersion.P2PV1)
+            {
+                payloadMessageSize = p2pMessage.V1Header.MessageSize;
+            }
+
+            if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                payloadMessageSize = (uint)p2pMessage.V2Header.MessageSize - (uint)p2pMessage.V2Header.DataPacketHeaderLength;
+            }
+
+            if (payloadMessageSize <= maxSize)
                 return new P2PMessage[] { p2pMessage };
 
 
@@ -444,7 +458,6 @@ namespace MSNPSharp.DataTransfer
                         chunkMessage.V2Header.TFCombination = (TFCombination)(p2pMessage.V2Header.TFCombination - TFCombination.First);
                     }
 
-                    chunkMessage.Header.Identifier = (uint)(chunkMessage.Header.Identifier + offset);
                     chunkMessage.InnerBody = chunk;
                 }
 

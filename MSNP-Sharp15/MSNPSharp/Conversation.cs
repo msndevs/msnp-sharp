@@ -270,7 +270,7 @@ namespace MSNPSharp
             leftcontacts = new List<Contact>(_leftContacts);
             foreach (Contact contact in leftcontacts)
             {
-                _switchboard.Invite(contact.Mail);
+                _switchboard.Invite(contact);
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard " + _switchboard.SessionHash + " inviting user: " + contact.Mail);
             }
         }
@@ -439,7 +439,7 @@ namespace MSNPSharp
                 {
                     MSNSLPHandler msnslpHandler = (MSNSLPHandler)handlerObject;
 
-                    P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalContact, session.RemoteContact, e.Emoticon);
+                    P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalUser, session.RemoteUser, e.Emoticon);
                     transferSession.DataStream = e.Emoticon.OpenStream();
                     transferSession.ClientData = e.Emoticon;
 
@@ -927,9 +927,9 @@ namespace MSNPSharp
 
                 Messenger.Nameserver.MessageProcessor.RegisterHandler(_yimHandler);
                 yimInitialized = true;
-                if (!_yimHandler.Contacts.ContainsKey(contactMail))
+                if (!_yimHandler.Contacts.ContainsKey(contact))
                 {
-                    _yimHandler.Invite(contactMail);
+                    _yimHandler.Invite(contact);
                 }
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "YIM hanlder inviting user: " + contactMail);
                 return;
@@ -940,9 +940,9 @@ namespace MSNPSharp
                 if (Switchboard.NSMessageHandler == null)
                     Switchboard.NSMessageHandler = Messenger.Nameserver;
 
-                foreach (string acc in _switchboard.Contacts.Keys)
+                foreach (Contact acc in _switchboard.Contacts.Keys)
                 {
-                    if (acc != Messenger.Nameserver.Owner.Mail)  //MSNP18: owner in switch
+                    if (acc != Messenger.Nameserver.Owner)  //MSNP18: owner in switch
                     {
                         _type |= ConversationType.MutipleUsers;
                         break;
@@ -966,14 +966,14 @@ namespace MSNPSharp
                     return;
                 }
 
-                if (Switchboard.Contacts.ContainsKey(contactMail) &&
-                    (Switchboard.Contacts[contactMail] == ContactConversationState.Left ||
-                    Switchboard.Contacts[contactMail] == ContactConversationState.Invited))
+                if (Switchboard.Contacts.ContainsKey(contact) &&
+                    (Switchboard.Contacts[contact] == ContactConversationState.Left ||
+                    Switchboard.Contacts[contact] == ContactConversationState.Invited))
                 {
                     LeftContactEnqueue(contact); //Enqueue the contact if user send message before it join.
                 }
 
-                Switchboard.Invite(contactMail);
+                Switchboard.Invite(contact);
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard inviting user: " + contactMail);
             }
         }
@@ -1032,14 +1032,14 @@ namespace MSNPSharp
                 return false;
             if ((_type & ConversationType.YIM) == ConversationType.YIM && contact.ClientType == ClientType.EmailMember)
             {
-                if (_yimHandler.Contacts.ContainsKey(contact.Mail))
+                if (_yimHandler.Contacts.ContainsKey(contact))
                     return true;
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard &&
                 (contact.ClientType == ClientType.PassportMember || contact.ClientType == ClientType.LCS))
             {
-                if (_switchboard.Contacts.ContainsKey(contact.Mail))
+                if (_switchboard.Contacts.ContainsKey(contact))
                     return true;
             }
 

@@ -45,13 +45,13 @@ namespace MSNPSharp.Core
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
 
-    public abstract class SocketMessageProcessor : IMessageProcessor
+    public class SocketMessageProcessor : IMessageProcessor
     {
-        ProxySocket socket;
-        IPEndPoint proxyEndPoint;
-        MessagePool messagePool;
-        byte[] socketBuffer = new byte[1500];
         ConnectivitySettings connectivitySettings = new ConnectivitySettings();
+        byte[] socketBuffer = new byte[1500];
+        IPEndPoint proxyEndPoint;
+        ProxySocket socket;
+        MessagePool messagePool;
         List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
 
         public event EventHandler<EventArgs> ConnectionEstablished;
@@ -59,8 +59,9 @@ namespace MSNPSharp.Core
         public event EventHandler<ExceptionEventArgs> ConnectingException;
         public event EventHandler<ExceptionEventArgs> ConnectionException;
 
-        protected SocketMessageProcessor()
+        public SocketMessageProcessor()
         {
+
         }
 
         protected IPEndPoint ProxyEndPoint
@@ -87,83 +88,12 @@ namespace MSNPSharp.Core
             }
         }
 
-        protected List<IMessageHandler> MessageHandlers
-        {
-            get
-            {
-                return messageHandlers;
-            }
-        }
-
-        public EndPoint LocalEndPoint
-        {
-            get
-            {
-                return socket.LocalEndPoint;
-            }
-        }
-
-        public ConnectivitySettings ConnectivitySettings
-        {
-            get
-            {
-                return connectivitySettings;
-            }
-            set
-            {
-                connectivitySettings = value;
-            }
-        }
-
-        public bool Connected
-        {
-            get
-            {
-                if (socket != null)
-                {
-                    lock (socket)
-                    {
-                        // Socket.Connected doesn't tell us if the socket is actually connected...
-                        // http://msdn2.microsoft.com/en-us/library/system.net.sockets.socket.connected.aspx
-
-                        bool disposed = false;
-                        bool blocking = socket.Blocking;
-                        try
-                        {
-                            socket.Blocking = false;
-                            socket.Send(new byte[0], 0, 0);
-                            return true;
-                        }
-                        catch (SocketException ex)
-                        {
-                            // 10035 == WSAEWOULDBLOCK
-                            if (ex.NativeErrorCode.Equals(10035))
-                                return true;
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                            disposed = true;
-                            return false;
-                        }
-                        finally
-                        {
-                            if (!disposed)
-                            {
-                                socket.Blocking = blocking;
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
-        }
-
         protected virtual ProxySocket GetPreparedSocket()
         {
-            // Creates the Socket for sending data over TCP.
+            //Creates the Socket for sending data over TCP.
             ProxySocket socket = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-            // incorporate the connection settings like proxy's
+            // incorporate the connection settings like proxy's						
             // Note: ProxyType is in MSNPSharp namespace, ProxyTypes in ProxySocket namespace.
             if (ConnectivitySettings.ProxyType != ProxyType.None)
             {
@@ -271,6 +201,11 @@ namespace MSNPSharp.Core
             }
         }
 
+        protected virtual void OnMessageReceived(byte[] data)
+        {
+            // do nothing since this is a base class
+        }
+
         protected virtual void EndReceiveCallback(IAsyncResult ar)
         {
             int cnt = 0;
@@ -292,13 +227,17 @@ namespace MSNPSharp.Core
                 {
                     messagePool.BufferData(reader);
                 }
-
                 while (messagePool.MessageAvailable)
                 {
-                    OnMessageReceived(messagePool.GetNextMessageData());
+                    // retrieve the message
+                    byte[] incomingMessage = messagePool.GetNextMessageData();
+
+
+                    // call the virtual method to perform polymorphism, descendant classes can take care of it
+                    OnMessageReceived(incomingMessage);
                 }
 
-                // start a new read
+                // start a new read				
                 BeginDataReceive(socket);
             }
             catch (SocketException e)
@@ -332,6 +271,7 @@ namespace MSNPSharp.Core
                     ConnectionException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor encountered a general exception while retrieving data. See the inner exception for more information.", e)));
             }
         }
+
 
         protected virtual void EndConnectCallback(IAsyncResult ar)
         {
@@ -385,6 +325,77 @@ namespace MSNPSharp.Core
                 ConnectionClosed(this, new EventArgs());
         }
 
+        public ConnectivitySettings ConnectivitySettings
+        {
+            get
+            {
+                return connectivitySettings;
+            }
+            set
+            {
+                connectivitySettings = value;
+            }
+        }
+
+        public bool Connected
+        {
+            get
+            {
+                if (socket != null)
+                {
+                    lock (socket)
+                    {
+                        // Socket.Connected doesn't tell us if the socket is actually connected...
+                        // http://msdn2.microsoft.com/en-us/library/system.net.sockets.socket.connected.aspx
+
+                        bool disposed = false;
+                        bool blocking = socket.Blocking;
+                        try
+                        {
+                            socket.Blocking = false;
+                            socket.Send(new byte[0], 0, 0);
+                            return true;
+                        }
+                        catch (SocketException ex)
+                        {
+                            // 10035 == WSAEWOULDBLOCK
+                            if (ex.NativeErrorCode.Equals(10035))
+                                return true;
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            disposed = true;
+                            return false;
+                        }
+                        finally
+                        {
+                            if (!disposed)
+                            {
+                                socket.Blocking = blocking;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+
+
+        public EndPoint LocalEndPoint
+        {
+            get
+            {
+                return socket.LocalEndPoint;
+            }
+        }
+
+        protected List<IMessageHandler> MessageHandlers
+        {
+            get
+            {
+                return messageHandlers;
+            }
+        }
 
         public virtual void RegisterHandler(IMessageHandler handler)
         {
@@ -424,7 +435,7 @@ namespace MSNPSharp.Core
 
                 if (IPAddress.TryParse(ConnectivitySettings.Host, out hostIP))
                 {
-                    // start connecting
+                    // start connecting				
                     ((ProxySocket)socket).BeginConnect(new System.Net.IPEndPoint(IPAddress.Parse(ConnectivitySettings.Host), ConnectivitySettings.Port), new AsyncCallback(EndConnectCallback), socket);
                 }
                 else
@@ -457,7 +468,9 @@ namespace MSNPSharp.Core
             }
         }
 
-        protected abstract void OnMessageReceived(byte[] data);
-        public abstract void SendMessage(NetworkMessage message);
+        public virtual void SendMessage(NetworkMessage message)
+        {
+            throw new NotImplementedException("SendMessage() on the base class SocketMessageProcessor is invalid.");
+        }
     }
 };

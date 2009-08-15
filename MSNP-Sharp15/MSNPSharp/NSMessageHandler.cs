@@ -648,6 +648,18 @@ namespace MSNPSharp
             }
         }
 
+        public virtual void SetEndPointCapabilities()
+        {
+            if (owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            string xmlstr = "<EndpointData><Capabilities>" +
+                ((long)Owner.ClientCapacities).ToString() + ":" + ((long)Owner.ClientCapacitiesEx).ToString()
+            +"</Capabilities></EndpointData>";
+
+            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", xmlstr));
+        }
+
         #endregion
 
         #region SetPrivacyMode & SetNotifyPrivacyMode & SetPresenceStatus
@@ -707,14 +719,12 @@ namespace MSNPSharp
                 {
                     //don't set the same status or it will result in disconnection
                     owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks;
+                    owner.ClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.SupportP2PUUNBootstrap | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
                     if (BotMode)
                     {
                         owner.ClientCapacities |= ClientCapacities.IsBot;
                     }
 
-
-                    owner.ClientCapacities |= ClientCapacities.CanHandleMSNC10;
                     owner.ClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
                 }
@@ -1249,6 +1259,72 @@ namespace MSNPSharp
             {
                 switch (message.CommandValues[1].ToString())
                 {
+                    case "3":
+                        {
+                            SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
+                            if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
+                            {
+                                SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.FromMail, 200, "OK");
+                                slpResponseMessage.FromMail = slpMessage.ToMail;
+                                slpResponseMessage.Via = slpMessage.Via;
+                                slpResponseMessage.CSeq = slpMessage.CSeq;
+                                slpResponseMessage.CallId = slpMessage.CallId;
+                                slpResponseMessage.MaxForwards = slpMessage.MaxForwards;
+                                slpResponseMessage.ContentType = @"application/x-msnmsgr-transrespbody";
+
+                                slpResponseMessage.BodyValues["Listening"] = "false";
+                                slpResponseMessage.BodyValues["Conn-Type"] = "Firewall";
+                                slpResponseMessage.BodyValues["TCP-Conn-Type"] = "Firewall";
+                                slpResponseMessage.BodyValues["IPv6-global"] = string.Empty;
+                                slpResponseMessage.BodyValues["UPnPNat"] = "false";
+                                slpResponseMessage.BodyValues["Capabilities-Flags"] = "1";
+                                slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
+                                slpResponseMessage.BodyValues["Bridge"] = "TCPv1";
+
+                                if (slpMessage.BodyValues.ContainsKey("Hashed-Nonce"))
+                                {
+                                    slpResponseMessage.BodyValues["Hashed-Nonce"] = slpMessage.BodyValues["Hashed-Nonce"].Value;
+                                }
+                                else
+                                {
+                                    slpResponseMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B");
+                                }
+
+                                byte[] slpBytes = slpResponseMessage.GetBytes();
+                                byte[] slpTextBytes = new byte[slpBytes.Length - 1];
+                                Array.Copy(slpBytes, slpTextBytes, slpTextBytes.Length);
+
+                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" }, 
+                                    System.Text.Encoding.UTF8.GetString(slpTextBytes));
+
+                                MessageProcessor.SendMessage(uunResponse);
+                            }
+                            else if (slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
+                            {
+                                SLPRequestMessage slpResponseMessage = new SLPRequestMessage(slpMessage.FromMail, "ACK");
+                                slpResponseMessage.FromMail = slpMessage.ToMail;
+                                slpResponseMessage.Via = slpMessage.Via;
+                                slpResponseMessage.CSeq = 0;
+                                slpResponseMessage.CallId = Guid.Empty;
+                                slpResponseMessage.MaxForwards = 0;
+                                slpResponseMessage.ContentType = @"application/x-msnmsgr-transdestaddrupdate";
+
+                                slpResponseMessage.BodyValues["stroPdnAsrddAlanretnI4vPI"] = "0435:001.2.861.291";
+                                slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Updated-Connecting-Port";
+
+                                byte[] slpBytes = slpResponseMessage.GetBytes();
+                                byte[] slpTextBytes = new byte[slpBytes.Length - 1];
+                                Array.Copy(slpBytes, slpTextBytes, slpTextBytes.Length);
+
+                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
+                                    System.Text.Encoding.UTF8.GetString(slpTextBytes));
+
+                                MessageProcessor.SendMessage(uunResponse);
+                            }
+
+
+                            break;
+                        }
                     case "4":
                     case "8":
                         {
@@ -1532,7 +1608,7 @@ namespace MSNPSharp
                         {
                             foreach (YIMMessageHandler YimHandler in P2PHandler.SwitchboardSessions)
                             {
-                                if (YimHandler.Contacts.ContainsKey(sender))
+                                if (YimHandler.Contacts.ContainsKey(ContactList.GetContact(sender, ClientType.EmailMember)))
                                 {
                                     return;  //The handler have been registered, return.
                                 }

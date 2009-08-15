@@ -69,11 +69,8 @@ namespace MSNPSharp
         public ContactService(NSMessageHandler nsHandler)
             : base(nsHandler)
         {
-#if MSNP18
             applicationId = nsHandler.Credentials.ClientInfo.ApplicationId;
-#else
-            applicationId = "996CDE1E-AA53-4477-B943-2BE802EA6166";  //This must be strictly matched now.
-#endif
+
         }
 
         #region Events
@@ -443,6 +440,10 @@ namespace MSNPSharp
                 #endregion
             }
 
+            NSMessageHandler.SetEndPointCapabilities();
+            NSMessageHandler.Owner.EpName = NSMessageHandler.Owner.EpName;
+            NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
+
             // Set screen name
             NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
 
@@ -467,7 +468,6 @@ namespace MSNPSharp
                     if (NSMessageHandler.AutoSynchronize)
                     {
                         NSMessageHandler.OnSignedIn(EventArgs.Empty);
-                        NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
                     }
 
                     if (!AddressBookSynchronized)
@@ -618,7 +618,6 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
-#if MSNP18
         internal void abRequest(PartnerScenario partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
@@ -689,77 +688,6 @@ namespace MSNPSharp
                 abService.ABFindContactsPagedAsync(request, ABFindContactsPagedObject);
             }
         }
-#else
-        internal void abRequest(PartnerScenario partnerScenario, ABFindAllCompletedEventHandler onSuccess)
-        {
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
-            {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindAll", new MSNPSharpException("You don't have access right on this action anymore.")));
-            }
-            else
-            {
-                bool deltasOnly = false;
-                DateTime lastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
-                DateTime dynamicItemLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
-                if (AddressBook.AddressbookLastChange != DateTime.MinValue)
-                {
-                    lastChange = AddressBook.AddressbookLastChange;
-                    dynamicItemLastChange = AddressBook.DynamicItemLastChange;
-                    deltasOnly = true;
-                }
-
-                MsnServiceObject ABFindAllObject = new MsnServiceObject(partnerScenario, "ABFindAll");
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindAllObject);
-                ABFindAllRequestType request = new ABFindAllRequestType();
-                request.abView = "Full";  //NO default!
-                request.deltasOnly = deltasOnly;
-                request.lastChange = lastChange;
-                request.dynamicItemLastChange = dynamicItemLastChange;
-                request.dynamicItemView = "Gleam";
-
-                abService.ABFindAllCompleted += delegate(object sender, ABFindAllCompletedEventArgs e)
-                {
-                    DeleteCompletedObject(abService);
-
-                    if (!e.Cancelled)
-                    {
-                        if (e.Error != null)
-                        {
-                            if ((recursiveCall == 0 && ((MsnServiceObject)e.UserState).PartnerScenario == PartnerScenario.Initial)
-                                || (e.Error.Message.Contains("Need to do full sync")))
-                            {
-                                recursiveCall++;
-                                SynchronizeContactList();
-                            }
-                            else
-                            {
-                                OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ABFindAll", e.Error));
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
-                            }
-                        }
-                        else
-                        {
-                            HandleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindAllRequestType));
-
-                            if (null != e.Result.ABFindAllResult)
-                            {
-                                AddressBook.Merge(e.Result.ABFindAllResult);
-                                Deltas.AddressBookDeltas.Add(e.Result.ABFindAllResult);
-                                Deltas.Save();
-                            }
-                            if (onSuccess != null)
-                            {
-                                onSuccess(abService, e);
-                            }
-                        }
-                    }
-                };
-
-                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindAll", request);
-                abService.ABFindAllAsync(request, ABFindAllObject);
-            }
-        }
-#endif
 
         public static string[] ConstructLists(Dictionary<string, MSNLists> contacts, bool initial)
         {

@@ -67,7 +67,6 @@ namespace MSNPSharp.IO
             }
         }
 
-#if MSNP18
         private List<ABFindContactsPagedResultType> addressBookDeltas = new List<ABFindContactsPagedResultType>(0);
         public List<ABFindContactsPagedResultType> AddressBookDeltas
         {
@@ -81,21 +80,6 @@ namespace MSNPSharp.IO
                 addressBookDeltas = value;
             }
         }
-#else
-        private List<ABFindAllResultType> addressBookDeltas = new List<ABFindAllResultType>(0);
-        public List<ABFindAllResultType> AddressBookDeltas
-        {
-            get
-            {
-                addressBookDeltas.Sort(CompareAddressBookDeltas);
-                return addressBookDeltas;
-            }
-            set
-            {
-                addressBookDeltas = value;
-            }
-        }
-#endif
 
         public List<FindMembershipResultType> MembershipDeltas
         {
