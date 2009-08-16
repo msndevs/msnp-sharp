@@ -236,7 +236,8 @@ namespace MSNPSharp
                 createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
 
                 DisplayImage displayImage = new DisplayImage();
-                NSMessageHandler.Owner.DisplayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
+                displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
+                NSMessageHandler.Owner.DisplayImage = displayImage;
 
                 string resId_Doc = "";
                 try
@@ -412,7 +413,10 @@ namespace MSNPSharp
                     if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL)
                     {
                         System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
-                        NSMessageHandler.Owner.DisplayImage.Image = fileImage;
+                        DisplayImage newDisplayImage = new DisplayImage();
+                        newDisplayImage.Image = fileImage;
+
+                        NSMessageHandler.Owner.DisplayImage = newDisplayImage;
                     }
                     else
                     {
@@ -450,7 +454,10 @@ namespace MSNPSharp
                                 NSMessageHandler.ContactService.Deltas.Save(true);
 
                                 System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
-                                NSMessageHandler.Owner.DisplayImage.Image = fileImage;
+                                DisplayImage newDisplayImage = new DisplayImage();
+                                newDisplayImage.Image = fileImage;
+
+                                NSMessageHandler.Owner.DisplayImage = newDisplayImage;
                             }
                             catch (Exception ex)
                             {
@@ -684,10 +691,6 @@ namespace MSNPSharp
                                   NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
                                   "Update", 0); // 1= begin transaction, 0=commit transaction
 
-                        DisplayImage displayImage = new DisplayImage();
-                        displayImage.Image = photo;  //Set to new photo
-
-                        NSMessageHandler.Owner.DisplayImage = displayImage;
                         NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
                         NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
                         NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(request.document.DocumentStreams[0].Data, 0, request.document.DocumentStreams[0].Data.Length);
@@ -765,9 +768,6 @@ namespace MSNPSharp
                 createDocRequest.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
                 createDocRequest.document.DocumentStreams[0].Data = mem.ToArray();
 
-                DisplayImage dp = new DisplayImage();
-                dp.Image = photo;  //Set to new photo
-                NSMessageHandler.Owner.DisplayImage = dp;
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
