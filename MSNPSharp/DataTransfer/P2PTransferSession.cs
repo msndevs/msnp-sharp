@@ -243,13 +243,7 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                if (dataPacketNumber == ushort.MaxValue || dataPacketNumber == 0)
-                    isIncrease = !isIncrease;
-
-                if (isIncrease)
-                    return ++dataPacketNumber;
-                else
-                    return --dataPacketNumber;
+                return dataPacketNumber;
             }
 
             set
@@ -284,6 +278,55 @@ namespace MSNPSharp.DataTransfer
         {
             Dispose(false);
         }
+
+        /// <summary>
+        /// Get the next data package number for the SIP request text message, such as INVITE and BYE.
+        /// </summary>
+        /// <returns></returns>
+        public static ushort GetNextSLPRequestDataPacketNumber(ushort baseDataPacketNumber)
+        {
+            if (baseDataPacketNumber < ushort.MaxValue)
+                return ++baseDataPacketNumber;
+
+                return baseDataPacketNumber;
+        }
+
+        /// <summary>
+        /// Get the next data package number to the SIP status text message, such as 200 OK and 603 Decline.
+        /// </summary>
+        /// <returns></returns>
+        public static ushort GetNextSLPStatusDataPacketNumber(ushort baseDataPacketNumber)
+        {
+            if (baseDataPacketNumber > 0)
+                return --baseDataPacketNumber;
+
+            return baseDataPacketNumber;
+        }
+
+        /// <summary>
+        /// Get the next data package number for the SIP request text message, such as INVITE and BYE.
+        /// </summary>
+        /// <returns></returns>
+        public ushort GetNextSLPRequestDataPacketNumber()
+        {
+            if (dataPacketNumber < ushort.MaxValue)
+                return ++dataPacketNumber;
+
+            return dataPacketNumber;
+        }
+
+        /// <summary>
+        /// Get the next data package number to the SIP status text message, such as 200 OK and 603 Decline.
+        /// </summary>
+        /// <returns></returns>
+        public ushort GetNextSLPStatusDataPacketNumber()
+        {
+            if (dataPacketNumber > 0)
+                return --dataPacketNumber;
+
+            return dataPacketNumber;
+        }
+
 
         /// <summary>
         /// Aborts the datatransfer, if available. This will send a P2P abort message and stop the sending thread.
@@ -372,11 +415,6 @@ namespace MSNPSharp.DataTransfer
 
             System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
-            // close connection flag
-            //if(p2pMessage.Flags == 0x40)
-            //{
-            //    CloseDirectConnection();
-            //}
 
             if (p2pMessage.Version == P2PVersion.P2PV1)
             {
@@ -475,13 +513,6 @@ namespace MSNPSharp.DataTransfer
                 {
                     //Data preperation message.
                     return;
-                }
-
-                if (p2pMessage.V2Header.OperationCode == (byte)OperationCode.None &&
-                    p2pMessage.V2Header.AckIdentifier == DataPreparationAck && 
-                    DataPreparationAck > 0)
-                {
-                    StartDataTransfer(false);  //In p2pv2 I don't want to support any direct contection transfer.
                 }
 
                 // check if it is a content message
@@ -803,46 +834,6 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected void TransferDataEntry()
         {
-            if (Version == P2PVersion.P2PV2 && DataPreparationAck == 0)
-            {
-                Thread.Sleep(6000);
-
-                ////First send a 0x08 0x02 prepare message.
-                P2PMessage prepareMessage = new P2PMessage(P2PVersion.P2PV2);
-                prepareMessage.V2Header.OperationCode = (byte)OperationCode.TransferPrepare;
-                MessageProcessor.SendMessage(prepareMessage);
-                DataPreparationAck = prepareMessage.V2Header.Identifier;
-                TransferThread = null;  //To start again.
-
-                SLPRequestMessage slpMessage = new SLPRequestMessage(TransferProperties.RemoteContact, "INVITE");
-                slpMessage.ToMail = TransferProperties.RemoteContact;
-                slpMessage.FromMail = TransferProperties.LocalContact;
-                slpMessage.Branch = TransferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
-                slpMessage.CSeq = 0;
-                slpMessage.CallId = TransferProperties.CallId;
-                slpMessage.MaxForwards = 0;
-                slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
-                slpMessage.BodyValues["Bridges"] = "TCPv1 SBBridge";
-                slpMessage.BodyValues["NetID"] = "0"; // unknown variable
-                slpMessage.BodyValues["Conn-Type"] = "Firewall";
-                slpMessage.BodyValues["TCP-Conn-Type"] = "Firewall";
-                slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
-                slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
-                slpMessage.BodyValues["IPv6-global"] = string.Empty;
-                slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Req";
-                slpMessage.BodyValues["Capabilities-Flags"] = "1";
-                slpMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
-
-                P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV2);
-                p2pMessage.V2Header.TFCombination = TFCombination.First;
-                p2pMessage.V2Header.PackageNumber = 1;
-
-                p2pMessage.InnerMessage = slpMessage;
-                MessageSession.SendMessage(p2pMessage);
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Preparing transfer session", GetType().Name);
-            }
-
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Starting transfer thread", GetType().Name);
 
             OnTransferStarted();
@@ -875,6 +866,10 @@ namespace MSNPSharp.DataTransfer
 
                     if (Version == P2PVersion.P2PV2)
                     {
+                        ////First send a 0x08 0x02 prepare message.
+                        P2PMessage prepareMessage = new P2PMessage(P2PVersion.P2PV2);
+                        prepareMessage.V2Header.OperationCode = (byte)OperationCode.TransferPrepare;
+                        MessageProcessor.SendMessage(prepareMessage);
 
                         //Then send data preparation message.
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
@@ -904,8 +899,6 @@ namespace MSNPSharp.DataTransfer
                 long lastPosition = dataStream.Length;
                 bool isFirstPacket = true;
                 uint currentACK = 0;
-                ushort dataPackageNumber = (ushort)(DataPacketNumber + (DataPacketNumber - DataPacketNumber));
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "DataPackageNumber: " + dataPackageNumber.ToString());
 
                 if (DataPreparationAck > 0)
                 {
@@ -962,15 +955,15 @@ namespace MSNPSharp.DataTransfer
                         lock (dataStream)
                         {
                             dataStream.Seek(currentPosition, SeekOrigin.Begin);
-                            int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1000);
+                            int bytesWritten = p2pDataMessage.WriteBytes(dataStream, 1202);  //The official client set this to 1222.
                             currentPosition += bytesWritten;
                             if (lastPosition - currentPosition - 1 > 0)
                             {
-                                p2pDataMessage.V2Header.DataRemaining = (ulong)(lastPosition - currentPosition - 1);
+                                p2pDataMessage.V2Header.DataRemaining = (ulong)(lastPosition - currentPosition);
                             }
                             p2pDataMessage.InnerBody = p2pDataMessage.InnerBody; //Refresh the MessageSize, placing MessageSize field to header is a bad desin.
 
-                            p2pDataMessage.V2Header.PackageNumber = 1; //dataPackageNumber;
+                            p2pDataMessage.V2Header.PackageNumber = 1; //Always sets to 1.
                         }
 
                         if (isFirstPacket)
@@ -1001,7 +994,6 @@ namespace MSNPSharp.DataTransfer
 
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }
-                    //Thread.CurrentThread.Join(1);
                 }
             }
             catch (System.Net.Sockets.SocketException sex)

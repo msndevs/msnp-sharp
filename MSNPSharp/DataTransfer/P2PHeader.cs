@@ -589,6 +589,9 @@ namespace MSNPSharp.DataTransfer
             {
                 ack.AckIdentifier = Identifier;
             }
+
+            ack.OperationCode = OperationCode;
+
             return ack;
         }
 

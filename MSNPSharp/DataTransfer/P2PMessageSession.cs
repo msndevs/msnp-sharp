@@ -485,16 +485,6 @@ namespace MSNPSharp.DataTransfer
                         session.HandleMessage(this, p2pMessage);
                     return;
                 }
-
-                if (p2pMessage.V2Header.AckIdentifier != 0)
-                {
-                    P2PTransferSession[] sessions = new P2PTransferSession[transferSessions.Count];
-                    transferSessions.Values.CopyTo(sessions, 0);
-                    foreach (P2PTransferSession session in sessions)
-                    {
-                        session.HandleMessage(this, p2pMessage);
-                    }
-                }
             }
 
             // it is not a datamessage.

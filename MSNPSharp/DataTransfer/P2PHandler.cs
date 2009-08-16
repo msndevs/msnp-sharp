@@ -577,16 +577,11 @@ namespace MSNPSharp.DataTransfer
                         if (p2pMessage.V2Header.SessionId == 0)
                         {
                             P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                            if ((byte)p2pMessage.V2Header.OperationCode > 1)
-                            {
-                                ack.V2Header.OperationCode = p2pMessage.V2Header.OperationCode;
-                            }
 
                             foreach (byte bytKey in p2pMessage.V2Header.HeaderTLVs.Keys)
                             {
                                 ack.V2Header.HeaderTLVs.Add(bytKey, p2pMessage.V2Header.HeaderTLVs[bytKey]);
                             }
-                            ack.V2Header.HeaderTLVs[0x1] = new byte[] { 0x00, 0x02, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x0f, 0x01, 0x00, 0x00 };
 
                             session.SendMessage(ack);
                         }
