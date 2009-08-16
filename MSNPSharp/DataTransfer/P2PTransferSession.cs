@@ -234,7 +234,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         private ushort dataPacketNumber = 0;
-        private bool isIncrease = false;
 
         /// <summary>
         /// The PackageNumber field used by p2pv2 messages.
@@ -612,6 +611,8 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
+            #region P2P Version 1
+
             if (Version == P2PVersion.P2PV1)
             {
                 if (p2pMessage.V1Header.AckSessionId == 0)
@@ -658,17 +659,25 @@ namespace MSNPSharp.DataTransfer
                     }
                 }
             }
-            else if (Version == P2PVersion.P2PV2)
+
+            #endregion
+            
+            if (Version == P2PVersion.P2PV2)
             {
                 // split up large messages which go to the SB
                 int totalSize = p2pMessage.InnerBody.Length;
 
                 if (MessageSession.DirectConnected == false &&
-                    totalSize > 1222)
+                    p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
                 {
+                    MessageSession.CorrectLocalIdentifier(-(int)p2pMessage.V2Header.MessageSize);
+
                     foreach (P2PMessage chunkMessage in P2PMessage.SplitMessage(p2pMessage, 1202))
                     {
                         //SBMessage sbMessage = WrapMessage(chunkMessage);
+
+                        chunkMessage.V2Header.Identifier = MessageSession.LocalIdentifier;
+                        MessageSession.CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
 
                         // now send it to propbably a SB processor
                         if (MessageProcessor != null)
