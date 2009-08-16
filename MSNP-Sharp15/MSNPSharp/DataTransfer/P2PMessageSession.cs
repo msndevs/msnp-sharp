@@ -630,7 +630,8 @@ namespace MSNPSharp.DataTransfer
                             InvalidateProcessor();
                             BufferMessage(chunkMessage);
                         }
-                    }
+                    } 
+
                 }
                 else
                 {
@@ -669,33 +670,80 @@ namespace MSNPSharp.DataTransfer
             #region P2P Version 2
             if (Version == P2PVersion.P2PV2)
             {
-                try
+                if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > maxSize)
                 {
-                    if (MessageProcessor != null)
+                    CorrectLocalIdentifier(-(int)p2pMessage.V2Header.MessageSize);
+
+                    P2PMessage[] messages = P2PMessage.SplitMessage(p2pMessage, maxSize);
+
+                    foreach (P2PMessage chunkMessage in messages)
                     {
-                        if (DirectConnected)
+                        chunkMessage.V2Header.Identifier = LocalIdentifier;
+                        CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
+
+                        // now send it to propbably a SB processor
+                        try
                         {
-                            P2PDCMessage dcChunkMessage = new P2PDCMessage(p2pMessage);
-                            MessageProcessor.SendMessage(dcChunkMessage);
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
+                            if (MessageProcessor != null)
+                            {
+                                if (DirectConnected)
+                                {
+                                    P2PDCMessage dcChunkMessage = new P2PDCMessage(chunkMessage);
+                                    MessageProcessor.SendMessage(dcChunkMessage);
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
+                                }
+                                else
+                                {
+                                    // wrap the message before sending it to the (probably) SB processor
+                                    MessageProcessor.SendMessage(WrapMessage(chunkMessage));
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + chunkMessage.GetType().Name + ":\r\n" + chunkMessage.ToDebugString() + "\r\n", GetType().Name);
+                                }
+                            }
+                            else
+                            {
+                                InvalidateProcessor();
+                                BufferMessage(chunkMessage);
+                            }
+                        }
+                        catch (System.Net.Sockets.SocketException)
+                        {
+                            InvalidateProcessor();
+                            BufferMessage(chunkMessage);
+                        }
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        if (MessageProcessor != null)
+                        {
+                            if (DirectConnected)
+                            {
+                                P2PDCMessage dcChunkMessage = new P2PDCMessage(p2pMessage);
+                                MessageProcessor.SendMessage(dcChunkMessage);
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + dcChunkMessage.GetType().Name + ":\r\n" + dcChunkMessage.ToDebugString() + "\r\n", GetType().Name);
+                            }
+                            else
+                            {
+                                // wrap the message before sending it to the (probably) SB processor
+                                MessageProcessor.SendMessage(WrapMessage(p2pMessage));
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
+                            }
                         }
                         else
                         {
-                            // wrap the message before sending it to the (probably) SB processor
-                            MessageProcessor.SendMessage(WrapMessage(p2pMessage));
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
+                            InvalidateProcessor();
+                            BufferMessage(p2pMessage);
                         }
                     }
-                    else
+                    catch (System.Net.Sockets.SocketException)
                     {
                         InvalidateProcessor();
                         BufferMessage(p2pMessage);
                     }
-                }
-                catch (System.Net.Sockets.SocketException)
-                {
-                    InvalidateProcessor();
-                    BufferMessage(p2pMessage);
                 }
             }
             #endregion

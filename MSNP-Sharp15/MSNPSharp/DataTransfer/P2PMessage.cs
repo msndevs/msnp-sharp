@@ -417,15 +417,16 @@ namespace MSNPSharp.DataTransfer
                 : p2pMessage.InnerMessage.GetBytes();
 
             long offset = 0;
-            while (offset < totalMessage.LongLength)
-            {
-                P2PMessage chunkMessage = new P2PMessage(p2pMessage.Version);
-                uint messageSize = (uint)Math.Min((uint)maxSize, (totalMessage.LongLength - offset));
-                byte[] chunk = new byte[messageSize];
-                Array.Copy(totalMessage, (int)offset, chunk, 0, (int)messageSize);
 
-                if (p2pMessage.Version == P2PVersion.P2PV1)
+            if (p2pMessage.Version == P2PVersion.P2PV1)
+            {
+                while (offset < totalMessage.LongLength)
                 {
+                    P2PMessage chunkMessage = new P2PMessage(p2pMessage.Version);
+                    uint messageSize = (uint)Math.Min((uint)maxSize, (totalMessage.LongLength - offset));
+                    byte[] chunk = new byte[messageSize];
+                    Array.Copy(totalMessage, (int)offset, chunk, 0, (int)messageSize);
+
                     chunkMessage.V1Header.Flags = p2pMessage.V1Header.Flags;
                     chunkMessage.V1Header.AckIdentifier = p2pMessage.V1Header.AckIdentifier;
                     chunkMessage.V1Header.AckTotalSize = p2pMessage.V1Header.AckTotalSize;
@@ -438,14 +439,36 @@ namespace MSNPSharp.DataTransfer
 
                     chunkMessage.V1Header.AckSessionId = (uint)rand.Next(50000, int.MaxValue);
                     chunkMessage.Footer = p2pMessage.Footer;
+
+                    chunkMessage.PrepareMessage();
+                    chunks.Add(chunkMessage);
+
+                    offset += messageSize;
                 }
-                else if (p2pMessage.Version == P2PVersion.P2PV2)
+            }
+
+            
+
+            if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                long dataRemain = (long)p2pMessage.V2Header.DataRemaining;
+                while (offset < totalMessage.LongLength)
                 {
+                    P2PMessage chunkMessage = new P2PMessage(p2pMessage.Version);
+                    uint dataSize = (uint)Math.Min((uint)maxSize, (totalMessage.LongLength - offset));
+
+                    byte[] chunk = new byte[dataSize];
+                    Array.Copy(totalMessage, (int)offset, chunk, 0, (int)dataSize);
+
                     chunkMessage.V2Header.OperationCode = p2pMessage.V2Header.OperationCode;
                     chunkMessage.V2Header.SessionId = p2pMessage.V2Header.SessionId;
                     chunkMessage.V2Header.TFCombination = p2pMessage.V2Header.TFCombination;
                     chunkMessage.V2Header.PackageNumber = p2pMessage.V2Header.PackageNumber;
-                    chunkMessage.V2Header.DataRemaining = (ulong)(totalMessage.LongLength - (messageSize + offset));
+
+                    if (totalMessage.LongLength + dataRemain - (dataSize + offset) > 0)
+                    {
+                        chunkMessage.V2Header.DataRemaining = (ulong)(totalMessage.LongLength + dataRemain - (dataSize + offset));
+                    }
 
                     if (offset == 0)
                     {
@@ -459,12 +482,12 @@ namespace MSNPSharp.DataTransfer
                     }
 
                     chunkMessage.InnerBody = chunk;
+
+                    chunkMessage.PrepareMessage();
+                    chunks.Add(chunkMessage);
+
+                    offset += dataSize;
                 }
-
-                chunkMessage.PrepareMessage();
-                chunks.Add(chunkMessage);
-
-                offset += messageSize;
             }
 
             return chunks.ToArray();

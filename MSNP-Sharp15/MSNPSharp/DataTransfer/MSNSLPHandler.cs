@@ -866,11 +866,18 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 p2pMessage.V2Header.OperationCode = (byte)OperationCode.InitSession;
-                p2pMessage.V2Header.TFCombination = TFCombination.First;
-                p2pMessage.V2Header.PackageNumber = 0;
-                transferSession.DataPacketNumber = 0;
 
-                p2pMessage.Header.SessionId = 0;
+                if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
+                {
+                    p2pMessage.V2Header.PackageNumber = (ushort)((p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength) / 1202 + 1);
+                }
+                else
+                {
+                    p2pMessage.V2Header.PackageNumber = 0;
+                }
+                transferSession.DataPacketNumber = p2pMessage.V2Header.PackageNumber;
+
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
 
             }
 
@@ -987,7 +994,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="remoteContact"></param>
         /// <param name="filename"></param>
         /// <param name="file"></param>
-        public P2PTransferSession SendInvitation(string localContact, string remoteContact, string filename, Stream file)
+        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string filename, Stream file)
         {
             //0-7: location of the FT preview
             //8-15: file size
@@ -1001,8 +1008,20 @@ namespace MSNPSharp.DataTransfer
             }
             while (MessageSession.GetTransferSession(properties.SessionId) != null);
 
-            properties.LocalContact = localContact;
-            properties.RemoteContact = remoteContact;
+            properties.LocalContact = localContact.Mail;
+            properties.RemoteContact = remoteContact.Mail;
+
+            if ((remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
+                (localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
+            {
+                if (localContact.MachineGuid != Guid.Empty && remoteContact.MachineGuid != Guid.Empty)
+                {
+                    properties.LocalContact = localContact.Mail + ";" + localContact.MachineGuid.ToString("B");
+                    properties.RemoteContact = remoteContact.Mail + ";" + remoteContact.MachineGuid.ToString("B"); ;
+                }
+            }
+
+            
 
             properties.LastBranch = Guid.NewGuid();
             properties.CallId = Guid.NewGuid();
@@ -1045,9 +1064,9 @@ namespace MSNPSharp.DataTransfer
             TransferProperties[properties.CallId] = properties;
 
             // create the message
-            SLPRequestMessage slpMessage = new SLPRequestMessage(remoteContact, "INVITE");
-            slpMessage.ToMail = remoteContact;
-            slpMessage.FromMail = localContact;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContact, "INVITE");
+            slpMessage.ToMail = properties.RemoteContact;
+            slpMessage.FromMail = properties.LocalContact;
             slpMessage.Branch = properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
             slpMessage.CallId = properties.CallId;
@@ -1058,7 +1077,12 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["AppID"] = P2PConst.FileTransFooter2.ToString();
             slpMessage.BodyValues["Context"] = base64Context;
 
-            P2PMessage p2pMessage = new P2PMessage(MessageSession.Version); // V!
+            if (Version == P2PVersion.P2PV2)
+            {
+                slpMessage.BodyValues["RequestFlags"] = "16";
+            }
+
+            P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
 
             // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
@@ -1068,10 +1092,28 @@ namespace MSNPSharp.DataTransfer
             P2PTransferSession transferSession = new P2PTransferSession(Version, properties);
             transferSession.MessageSession = (P2PMessageSession)MessageProcessor;
 
-            MessageSession.AddTransferSession(transferSession);
+            if (Version == P2PVersion.P2PV2)
+            {
+                if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
+                {
+                    p2pMessage.V2Header.PackageNumber = (ushort)((p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength) / 1202 + 1);
+                }
+                else
+                {
+                    p2pMessage.V2Header.PackageNumber = 0;
+                }
+                transferSession.DataPacketNumber = p2pMessage.V2Header.PackageNumber;
 
-            transferSession.MessageFlag = (uint)P2PFlag.FileData;
-            transferSession.MessageFooter = P2PConst.FileTransFooter2;
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
+            }
+
+            if (Version == P2PVersion.P2PV1)
+            {
+                transferSession.MessageFlag = (uint)P2PFlag.FileData;
+                transferSession.MessageFooter = P2PConst.FileTransFooter2;
+            }
+
+            MessageSession.AddTransferSession(transferSession);
 
             // set the data stream to read from
             transferSession.DataStream = file;
@@ -1945,7 +1987,7 @@ namespace MSNPSharp.DataTransfer
         /// Called when the remote client sends a file and sends us it's direct-connect capabilities.
         /// A reply will be send with the local client's connectivity.
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="p2pMessage"></param>
         protected virtual void OnDCRequest(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
@@ -2039,7 +2081,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Called when the remote client send us it's direct-connect capabilities
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="p2pMessage"></param>
         protected virtual void OnDCResponse(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
