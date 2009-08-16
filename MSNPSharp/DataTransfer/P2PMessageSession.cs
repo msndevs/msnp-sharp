@@ -791,10 +791,18 @@ namespace MSNPSharp.DataTransfer
             {
                 while (sendMessages.Count > 0)
                 {
+                    NetworkMessage p2pMessage = sendMessages.Dequeue() as NetworkMessage;
+
                     if (DirectConnected == true)
-                        MessageProcessor.SendMessage(new P2PDCMessage((P2PMessage)sendMessages.Dequeue()));
+                    {
+                        MessageProcessor.SendMessage(new P2PDCMessage(p2pMessage as P2PMessage));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
+                    }
                     else
-                        MessageProcessor.SendMessage(WrapMessage((NetworkMessage)sendMessages.Dequeue()));
+                    {
+                        MessageProcessor.SendMessage(WrapMessage(p2pMessage));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
+                    }
                 }
             }
             catch (System.Net.Sockets.SocketException)

@@ -1680,7 +1680,7 @@ namespace MSNPSharp.DataTransfer
                     p2pMessage.V1Header.Flags != P2PFlag.Acknowledgement && p2pMessage.V1Header.MessageSize > 0))
                 {
                     //We don't process any p2p message because this is a SIP message handler.
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv1 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
+                    //Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv1 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
                     return;
                 }
             }
@@ -1690,29 +1690,10 @@ namespace MSNPSharp.DataTransfer
                 if (!(p2pMessage.V2Header.SessionId == 0 &&
                     p2pMessage.V2Header.MessageSize > 0 && p2pMessage.V2Header.TFCombination == TFCombination.First))
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
+                    //Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
                     return;
                 }
 
-                //if (p2pMessage.InnerBody == null ||
-                //    (p2pMessage.InnerBody != null && p2pMessage.V2Header.TFCombination != TFCombination.First))
-                //{
-                //    // 4 bytes... prepare...
-                //    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
-                //    return;
-                //}
-
-
-                //if (p2pMessage.InnerBody != null &&
-                //    p2pMessage.V2Header.TFCombination == TFCombination.First &&
-                //    p2pMessage.InnerBody.Length == 4 &&
-                //    BitConverter.ToInt32(p2pMessage.InnerBody, 0) == 0
-                //    )
-                //{
-                //    // 4 bytes... prepare...
-                //    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 data prepare Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
-                //    return;
-                //}
             }
 
             SLPMessage slpMessage = SLPMessage.Parse(p2pMessage.InnerBody);
@@ -1955,13 +1936,17 @@ namespace MSNPSharp.DataTransfer
         /// <param name="message"></param>
         protected virtual void OnDCRequest(SLPMessage message)
         {
-            // let's listen
+           // let's listen
             
 
            // Find host by name
             IPAddress iphostentry = LocalEndPoint.Address;
 
             MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
+
+            if (properties == null)
+                return;
+
             SLPStatusMessage slpMessage = new SLPStatusMessage(properties.RemoteContact, 200, "OK");
             properties.Nonce = Guid.NewGuid();
 
@@ -2004,15 +1989,24 @@ namespace MSNPSharp.DataTransfer
 
 
 
-            P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // v!
+            P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
+
+            if (Version == P2PVersion.P2PV2)
+            {
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
+                p2pMessage.V2Header.PackageNumber = 1;
+            }
 
 
             ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
-            P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1); // v!
-            hsMessage.Guid = properties.Nonce;
-            MessageSession.HandshakeMessage = hsMessage;
 
+            if (Version == P2PVersion.P2PV1)
+            {
+                P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1);
+                hsMessage.Guid = properties.Nonce;
+                MessageSession.HandshakeMessage = hsMessage;
+            }
 
 
             // and notify the remote client that he can connect
