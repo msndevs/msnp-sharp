@@ -1099,6 +1099,13 @@ namespace MSNPSharp.DataTransfer
             {
                 replyMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
             }
+
+            if (replyMessage.Version == P2PVersion.P2PV2)
+            {
+                replyMessage.V2Header.TFCombination = TFCombination.First;
+                replyMessage.V2Header.PackageNumber = invitationArgs.TransferSession.GetNextSLPStatusDataPacketNumber();
+            }
+
             MessageProcessor.SendMessage(replyMessage);
 
             replyMessage.InnerMessage = CreateClosingMessage(properties);
@@ -1106,6 +1113,13 @@ namespace MSNPSharp.DataTransfer
             {
                 replyMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
             }
+
+            if (replyMessage.Version == P2PVersion.P2PV2)
+            {
+                replyMessage.V2Header.TFCombination = TFCombination.First;
+                replyMessage.V2Header.PackageNumber = invitationArgs.TransferSession.GetNextSLPRequestDataPacketNumber();
+            }
+
             MessageProcessor.SendMessage(replyMessage);
         }
 
@@ -1242,8 +1256,6 @@ namespace MSNPSharp.DataTransfer
             {
                 closeMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
             }
-
-            closeMessage.InnerMessage = CreateClosingMessage(property);
 
             if (closeMessage.Version == P2PVersion.P2PV2)
             {
@@ -1623,6 +1635,7 @@ namespace MSNPSharp.DataTransfer
 
             if (Version == P2PVersion.P2PV2)
             {
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
                 p2pMessage.V2Header.PackageNumber = transferSession.GetNextSLPRequestDataPacketNumber();
                 MessageProcessor.SendMessage(p2pMessage);
             }
