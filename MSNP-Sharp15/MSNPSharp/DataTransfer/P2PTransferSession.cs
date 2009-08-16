@@ -478,7 +478,8 @@ namespace MSNPSharp.DataTransfer
                 }
 
                 if (p2pMessage.V2Header.OperationCode == (byte)OperationCode.None &&
-                    p2pMessage.V2Header.AckIdentifier == DataPreparationAck)
+                    p2pMessage.V2Header.AckIdentifier == DataPreparationAck && 
+                    DataPreparationAck > 0)
                 {
                     StartDataTransfer(false);  //In p2pv2 I don't want to support any direct contection transfer.
                 }
@@ -804,6 +805,8 @@ namespace MSNPSharp.DataTransfer
         {
             if (Version == P2PVersion.P2PV2 && DataPreparationAck == 0)
             {
+                Thread.Sleep(6000);
+
                 ////First send a 0x08 0x02 prepare message.
                 P2PMessage prepareMessage = new P2PMessage(P2PVersion.P2PV2);
                 prepareMessage.V2Header.OperationCode = (byte)OperationCode.TransferPrepare;

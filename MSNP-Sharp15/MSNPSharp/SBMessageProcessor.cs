@@ -77,7 +77,7 @@ namespace MSNPSharp
 
             message.ParseBytes(data);
 
-            if (message.InnerMessage == null)
+            if (message.InnerBody == null)
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
             // send the message
             DispatchMessage(message);
