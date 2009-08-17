@@ -572,19 +572,10 @@ namespace MSNPSharp.DataTransfer
                 if (version == P2PVersion.P2PV2)
                 {
                     //Case 1: 0x18 0x03 Invite
-                    if (p2pMessage.V2Header.MessageSize > 0)
+                    if (p2pMessage.V2Header.OperationCode > 0)
                     {
-                        if (p2pMessage.V2Header.SessionId == 0)
-                        {
-                            P2PMessage ack = p2pMessage.CreateAcknowledgement();
-
-                            foreach (byte bytKey in p2pMessage.V2Header.HeaderTLVs.Keys)
-                            {
-                                ack.V2Header.HeaderTLVs.Add(bytKey, p2pMessage.V2Header.HeaderTLVs[bytKey]);
-                            }
-
-                            session.SendMessage(ack);
-                        }
+                        P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                        session.SendMessage(ack);
                     }
                 }
 
