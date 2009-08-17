@@ -81,6 +81,8 @@ namespace MSNPSharp
         private ContactSpaceService spaceService;
         private MSNStorageService storageService;
         private WhatsUpService whatsUpService;
+        private ClientCapacities defaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.SupportP2PUUNBootstrap | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
+        private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
         private List<Regex> censorWords = new List<Regex>(0);
 
@@ -703,6 +705,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
 
             string context = String.Empty;
+            bool isSetDefault = false;
 
             if (owner.DisplayImage != null)
                 context = owner.DisplayImage.Context;
@@ -717,24 +720,53 @@ namespace MSNPSharp
 
                 if (owner.ClientCapacities == ClientCapacities.None)
                 {
+                    isSetDefault = true;
+
                     //don't set the same status or it will result in disconnection
                     owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                    owner.ClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.SupportP2PUUNBootstrap | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
+                    owner.ClientCapacities = defaultClientCapacities;
                     if (BotMode)
                     {
                         owner.ClientCapacities |= ClientCapacities.IsBot;
                     }
 
-                    owner.ClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
+                    owner.ClientCapacitiesEx = defaultClientCapacitiesEx;
 
+                    SetEndPointCapabilities();
+                    Owner.EpName = Owner.EpName;
+                    SetPersonalMessage(Owner.PersonalMessage);
                 }
 
                 ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
                 capacities = ((long)owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
 
+                if (!isSetDefault)
+                {
+                    //Well, only update the status after receiving the CHG command is right. However,
+                    //we need to send UUX before CHG.
 
+                    MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
+                         "<PrivateEndpointData>" +
+                         "<EpName>" + MSNHttpUtility.XmlEncode(Owner.EpName) + "</EpName>" +
+                         "<Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
+                         "<ClientType>1</ClientType>" +
+                         "<State>" + ParseStatus(status) + "</State>" +
+                         "</PrivateEndpointData>"));
+                }
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
+
+                if (isSetDefault)
+                {
+                    if (AutoSynchronize)
+                    {
+                        // Send BLP
+                        SetPrivacyMode(Owner.Privacy);
+                    }
+
+                    // Set screen name
+                    SetScreenName(Owner.Name);
+                }
             }
         }
 
@@ -1375,7 +1407,6 @@ namespace MSNPSharp
         protected virtual void OnCHGReceived(NSMessage message)
         {
             Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
-            Owner.EpName = Owner.EpName;
         }
 
         #endregion
