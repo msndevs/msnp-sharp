@@ -364,9 +364,6 @@ namespace MSNPSharp
 
             if (NSMessageHandler.AutoSynchronize)
             {
-                // Send BLP
-                NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
-
                 #region Initial ADL
 
                 List<NSPayLoadMessage> adlpayloads = new List<NSPayLoadMessage>();
@@ -439,13 +436,6 @@ namespace MSNPSharp
 
                 #endregion
             }
-
-            NSMessageHandler.SetEndPointCapabilities();
-            NSMessageHandler.Owner.EpName = NSMessageHandler.Owner.EpName;
-            NSMessageHandler.SetPersonalMessage(NSMessageHandler.Owner.PersonalMessage);
-
-            // Set screen name
-            NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
 
             // Save addressbook and then truncate deltas file.
             AddressBook.Save();
