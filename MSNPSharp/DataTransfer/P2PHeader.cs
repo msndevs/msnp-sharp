@@ -590,7 +590,25 @@ namespace MSNPSharp.DataTransfer
                 ack.AckIdentifier = Identifier;
             }
 
-            ack.OperationCode = OperationCode;
+            if (MessageSize == 0)
+            {
+                //Message begins with 0x1c, 0x03 or 0x08, 0x02
+                ack.OperationCode = 0;
+            }
+            else
+            {
+                //Message begins with 0x18, 0x03 or 0x08, 0x03
+                ack.OperationCode = OperationCode;
+
+
+                foreach (byte bytKey in HeaderTLVs.Keys)
+                {
+                    if (HeaderTLVs[bytKey].Length != 4)  //Ignore the ackIdentifier field.
+                    {
+                        ack.HeaderTLVs.Add(bytKey, HeaderTLVs[bytKey]);
+                    }
+                }
+            }
 
             return ack;
         }

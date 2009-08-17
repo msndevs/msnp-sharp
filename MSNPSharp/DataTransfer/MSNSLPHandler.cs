@@ -1662,25 +1662,25 @@ namespace MSNPSharp.DataTransfer
             P2PMessage p2pMessage = new P2PMessage(transferSession.Version);
             p2pMessage.InnerMessage = CreateClosingMessage(properties);
 
-            if (properties.RemoteInvited == false)
-            {
-                if (p2pMessage.Version == P2PVersion.P2PV1)
-                {
-                    p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
-                }
-
-                MessageProcessor.SendMessage(p2pMessage);
-
-                // close it
-                RemoveTransferSession(transferSession);
-            }
-
             if (Version == P2PVersion.P2PV2)
             {
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
                 p2pMessage.V2Header.PackageNumber = transferSession.GetNextSLPRequestDataPacketNumber();
                 MessageProcessor.SendMessage(p2pMessage);
             }
+
+            if (properties.RemoteInvited == false)
+            {
+                if (p2pMessage.Version == P2PVersion.P2PV1)
+                {
+                    p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
+                    MessageProcessor.SendMessage(p2pMessage);
+                }
+                // close it
+                RemoveTransferSession(transferSession);
+            }
+
+            
         }
 
 

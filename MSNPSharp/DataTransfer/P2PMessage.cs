@@ -376,12 +376,6 @@ namespace MSNPSharp.DataTransfer
                 ack.Footer = Footer;                    //Keep the same as the message to acknowladge.
 
             }
-            else if (Version == P2PVersion.P2PV2)
-            {
-                // XXX TODO...
-                //ack.Header.AckIdentifier = 1; // To calculate ack.Header.MessageSize correctly.
-                //ack.Header.AckIdentifier = ack.Header.Identifier + ack.Header.MessageSize;
-            }
 
             return ack;
         }
