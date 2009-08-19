@@ -78,7 +78,6 @@ namespace MSNPSharp
 
         private ContactService contactService;
         private OIMService oimService;
-        private ContactSpaceService spaceService;
         private MSNStorageService storageService;
         private WhatsUpService whatsUpService;
         private ClientCapacities defaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.SupportP2PUUNBootstrap | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
@@ -98,7 +97,6 @@ namespace MSNPSharp
             contactList = new ContactList(this);
             contactService = new ContactService(this);
             oimService = new OIMService(this);
-            spaceService = new ContactSpaceService(this);
             storageService = new MSNStorageService(this);
             whatsUpService = new WhatsUpService(this);
         }
@@ -271,17 +269,6 @@ namespace MSNPSharp
             get
             {
                 return oimService;
-            }
-        }
-
-        /// <summary>
-        /// Contactcard service.
-        /// </summary>
-        public ContactSpaceService SpaceService
-        {
-            get
-            {
-                return spaceService;
             }
         }
 
@@ -1121,23 +1108,6 @@ namespace MSNPSharp
                 Contact contact = ContactList.GetContact(account, type);
                 contact.SetPersonalMessage(new PersonalMessage(message));
             }
-        }
-
-        /// <summary>
-        /// Called when a ILN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// ILN indicates the initial status of a contact. Used for MSNP15 and MSNP16, not MSNP18.
-        /// It is send after initial log on or after adding/removing contact from the contactlist.
-        /// Fires the <see cref="ContactOnline"/> and/or the <see cref="ContactStatusChanged"/> events.
-        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities:0] [displayimage] (MSNP16)</code>
-        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities] [displayimage] (MSNP15)</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        [Obsolete("MSNP18 no more supported")]
-        protected virtual void OnILNReceived(NSMessage message)
-        {
-            
         }
 
         /// <summary>
@@ -2397,7 +2367,6 @@ namespace MSNPSharp
             ContactService.Clear();
             StorageService.Clear();
             OIMService.Clear();
-            SpaceService.Clear();
             WhatsUpService.Clear();
             // SwitchBoards.Clear();
             Owner.Emoticons.Clear();
@@ -2472,9 +2441,6 @@ namespace MSNPSharp
                     case "GCF":
                         OnGCFReceived(nsMessage);
                         return;
-                    case "ILN":
-                        OnILNReceived(nsMessage);
-                        return;
                     case "NOT":
                         OnNOTReceived(nsMessage);
                         return;
@@ -2523,6 +2489,9 @@ namespace MSNPSharp
                     // Outdated
                     case "BPR":
                         OnBPRReceived(nsMessage);
+                        return;
+                    case "ILN":
+                        OnILNReceived(nsMessage);
                         return;
                 }
 

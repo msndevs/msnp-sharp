@@ -961,7 +961,7 @@ namespace MSNPSharpClient
                         {
                             MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact);
                             FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, contact.Mail, Path.GetFileName(filename), fileStream);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner, contact, Path.GetFileName(filename), fileStream);
                         }
                     }
                 }

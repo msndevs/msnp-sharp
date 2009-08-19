@@ -538,22 +538,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// State of dynamic items.
-    /// </summary>
-    public enum DynamicItemState
-    {
-        /// <summary>
-        /// The contact has no dynamic items.
-        /// </summary>
-        None,
-
-        /// <summary>
-        /// The contact has changed his/her space or profiles. 
-        /// </summary>
-        HasNew
-    }
-
-    /// <summary>
     /// Specifies an error a MSN Server can send.
     /// </summary>	
     public enum MSNError
@@ -974,7 +958,6 @@ namespace MSNPSharp
         public const string Messenger = "Messenger";
         public const string Invitation = "Invitation";
         public const string SocialNetwork = "SocialNetwork";
-        public const string Space = "Space";
         public const string Profile = "Profile";
         public const string Folder = "Folder";
         public const string Event = "Event";
