@@ -117,6 +117,9 @@
     <Compile Include="DotMSNClient.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="DotMSNClient.Designer.cs">
+      <DependentUpon>DotMSNClient.cs</DependentUpon>
+    </Compile>
     <Compile Include="ImportContacts.cs">
       <SubType>Form</SubType>
     </Compile>
