@@ -385,9 +385,8 @@ namespace MSNPSharpClient
             this.displayImageBox.Dock = System.Windows.Forms.DockStyle.Right;
             this.displayImageBox.Location = new System.Drawing.Point(213, 0);
             this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Padding = new System.Windows.Forms.Padding(3);
             this.displayImageBox.Size = new System.Drawing.Size(77, 77);
-            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.displayImageBox.TabIndex = 2;
             this.displayImageBox.TabStop = false;
             this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Click to change the photo");
@@ -425,19 +424,22 @@ namespace MSNPSharpClient
             // 
             // comboStatus
             // 
+            this.comboStatus.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.comboStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboStatus.FormattingEnabled = true;
+            this.comboStatus.ItemHeight = 15;
             this.comboStatus.Items.AddRange(new object[] {
             "Online",
             "Busy",
             "Away",
             "Hidden",
             "Offline"});
-            this.comboStatus.Location = new System.Drawing.Point(6, 54);
+            this.comboStatus.Location = new System.Drawing.Point(6, 53);
             this.comboStatus.Name = "comboStatus";
             this.comboStatus.Size = new System.Drawing.Size(121, 21);
             this.comboStatus.TabIndex = 3;
             this.toolTipChangePhoto.SetToolTip(this.comboStatus, "Your status");
+            this.comboStatus.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboStatus_DrawItem);
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
             // 

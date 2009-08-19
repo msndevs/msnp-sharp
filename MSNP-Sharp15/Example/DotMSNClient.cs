@@ -433,29 +433,6 @@ namespace MSNPSharpClient
 
             PresenceStatus newstatus = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
-            switch (newstatus)
-            {
-                case PresenceStatus.Online:
-                    displayImageBox.BackColor = Color.Green;
-                    break;
-
-                case PresenceStatus.Busy:
-                    displayImageBox.BackColor = Color.Red;
-                    break;
-
-                case PresenceStatus.Away:
-                    displayImageBox.BackColor = Color.Yellow;
-                    break;
-
-                case PresenceStatus.Hidden:
-                    displayImageBox.BackColor = Color.Gray;
-                    break;
-
-                case PresenceStatus.Offline:
-                    displayImageBox.BackColor = Color.White;
-                    break;
-            }
-
             if (messenger.Connected)
             {
                 if (newstatus == PresenceStatus.Offline)
@@ -492,6 +469,48 @@ namespace MSNPSharpClient
                 MessageBox.Show("You can not login as Offline :)");
                 comboStatus.SelectedIndex = 0;
             }
+        }
+
+        private void comboStatus_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index == -1)
+                return;
+
+            e.Graphics.FillRectangle(Brushes.White, e.Bounds);
+            if ((e.State & DrawItemState.Selected) != DrawItemState.None)
+                e.DrawBackground();
+
+            PresenceStatus newstatus = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Items[e.Index].ToString());
+            Brush brush = Brushes.Green;
+
+            switch (newstatus)
+            {
+                case PresenceStatus.Online:
+                    brush = Brushes.Green;
+                    break;
+
+                case PresenceStatus.Busy:
+                    brush = Brushes.Red;
+                    break;
+
+                case PresenceStatus.Away:
+                    brush = Brushes.Yellow;
+                    break;
+
+                case PresenceStatus.Hidden:
+                    brush = Brushes.Gray;
+                    break;
+
+                case PresenceStatus.Offline:
+                    brush = Brushes.Wheat;
+                    break;
+            }
+
+            Point imageLocation = new Point(e.Bounds.X + 2, e.Bounds.Y + 2);
+            e.Graphics.FillRectangle(brush, new Rectangle(imageLocation, new Size(12, 12)));
+
+            PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
+            e.Graphics.DrawString(newstatus.ToString(), comboStatus.Font, Brushes.Black, textLocation);
         }
 
         private void comboPlaces_SelectedIndexChanged(object sender, EventArgs e)
@@ -1345,6 +1364,8 @@ namespace MSNPSharpClient
                     NSMessageHandler.MachineGuid);
             }
         }
+
+
         
     }
 }
