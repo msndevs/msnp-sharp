@@ -37,6 +37,8 @@ namespace MSNPSharp.DataTransfer
     using System.IO;
     using MSNPSharp.Core;
     using MSNPSharp;
+    using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// Buffers incomplete P2PMessage and releases them when the message is fully received.
@@ -46,7 +48,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// </summary>
         private Hashtable messageStreamsV1 = new Hashtable();
-        private Hashtable messageStreamsV2 = new Hashtable();
+        private Dictionary<uint, P2PMessage> messageStreamsV2 = new Dictionary<uint, P2PMessage>(); 
 
         /// <summary>
         /// </summary>
@@ -69,53 +71,157 @@ namespace MSNPSharp.DataTransfer
         {
             // assume the start of a p2p message
 
+            #region P2P Version 1 message pooling
+
             if (message.Version == P2PVersion.P2PV1)
             {
                 if (message.Header.IsAcknowledgement ||
                     message.Header.MessageSize == 0 ||
                     message.Header.MessageSize == message.Header.TotalSize)
                 {
-                    availableMessagesV1.Enqueue(message);
+                    lock (availableMessagesV1)
+                        availableMessagesV1.Enqueue(message);
                 }
                 else
                 {
-                    // if this message already exists in the buffer append the current p2p message to the buffer
-                    if (messageStreamsV1.ContainsKey(message.Header.Identifier))
+                    lock (messageStreamsV1)
                     {
-                        ((MemoryStream)messageStreamsV1[message.Header.Identifier]).Write(message.InnerBody, 0, message.InnerBody.Length);
-                    }
-                    else
-                    {
-                        MemoryStream bufferStream = new MemoryStream();
-                        messageStreamsV1.Add(message.Header.Identifier, bufferStream);
-                        bufferStream.Write(message.InnerBody, 0, message.InnerBody.Length);
-                    }
+                        // if this message already exists in the buffer append the current p2p message to the buffer
+                        if (messageStreamsV1.ContainsKey(message.Header.Identifier))
+                        {
+                            ((MemoryStream)messageStreamsV1[message.Header.Identifier]).Write(message.InnerBody, 0, message.InnerBody.Length);
+                        }
+                        else
+                        {
+                            MemoryStream bufferStream = new MemoryStream();
+                            messageStreamsV1.Add(message.Header.Identifier, bufferStream);
+                            bufferStream.Write(message.InnerBody, 0, message.InnerBody.Length);
+                        }
 
-                    // check whether this is the last message
-                    if (message.V1Header.Offset + message.Header.MessageSize == message.Header.TotalSize)
-                    {
-                        // set the correct fields to match the whole message
-                        message.V1Header.Offset = 0;
-                        message.Header.MessageSize = (uint)message.Header.TotalSize;
-                        MemoryStream bufferStream = (MemoryStream)messageStreamsV1[message.Header.Identifier];
+                        // check whether this is the last message
+                        if (message.V1Header.Offset + message.Header.MessageSize == message.Header.TotalSize)
+                        {
+                            // set the correct fields to match the whole message
+                            message.V1Header.Offset = 0;
+                            message.Header.MessageSize = (uint)message.Header.TotalSize;
+                            MemoryStream bufferStream = (MemoryStream)messageStreamsV1[message.Header.Identifier];
 
-                        // set the inner body to the whole message
-                        message.InnerBody = bufferStream.ToArray();
+                            // set the inner body to the whole message
+                            message.InnerBody = bufferStream.ToArray();
 
-                        // and make it available for the client
-                        availableMessagesV1.Enqueue(message);
+                            // and make it available for the client
+                            lock (availableMessagesV1)
+                                availableMessagesV1.Enqueue(message);
 
-                        // remove the old memorystream buffer, and clear up resources in the hashtable
-                        bufferStream.Close();
-                        messageStreamsV1.Remove(message.Header.Identifier);
+                            // remove the old memorystream buffer, and clear up resources in the hashtable
+                            bufferStream.Close();
+                            messageStreamsV1.Remove(message.Header.Identifier);
+                        }
                     }
                 }
-            }
+            } 
+            #endregion
+
+            #region P2P Version 2 message pooling
 
             if (message.Version == P2PVersion.P2PV2)
             {
-                availableMessagesV2.Enqueue(message);
-                
+                if (message.V2Header.DataPacketHeaderLength == 0)
+                {
+                    lock (availableMessagesV2)
+                        availableMessagesV2.Enqueue(message);
+                }
+
+                if (message.V2Header.DataPacketHeaderLength > 0)
+                {
+                    if ((message.V2Header.TFCombination == TFCombination.First && message.V2Header.DataRemaining == 0) ||
+                        message.V2Header.TFCombination > TFCombination.First)
+                    {
+                        //Unsplitted SLP messages, data preparation messages, p2p data messages, donot buffer.
+                        lock (availableMessagesV2)
+                            availableMessagesV2.Enqueue(message);
+                    }
+
+                    if (message.V2Header.TFCombination == TFCombination.First && message.V2Header.DataRemaining > 0)
+                    {
+                        lock (messageStreamsV2)
+                        {
+                            //First splitted SLP message.
+                            messageStreamsV2[message.V2Header.Identifier + message.V2Header.MessageSize] = message;
+                        }
+                    }
+
+                    if (message.V2Header.TFCombination == TFCombination.None)
+                    {
+                        lock (messageStreamsV2)
+                        {
+                            if (messageStreamsV2.ContainsKey(message.V2Header.Identifier))
+                            {
+                                if (messageStreamsV2[message.V2Header.Identifier].V2Header.PackageNumber == message.V2Header.PackageNumber)
+                                {
+                                    uint originalIdentifier = message.V2Header.Identifier;
+                                    P2PMessage lastMessage = messageStreamsV2[message.V2Header.Identifier];
+
+                                    long dataSize = lastMessage.V2Header.MessageSize - lastMessage.V2Header.DataPacketHeaderLength;
+                                    dataSize += (long)(lastMessage.V2Header.DataRemaining - message.V2Header.DataRemaining);
+
+                                    lastMessage.V2Header.DataRemaining = message.V2Header.DataRemaining;
+                                    lastMessage.V2Header.MessageSize = (uint)(dataSize + lastMessage.V2Header.DataPacketHeaderLength);
+
+                                    byte[] newPayLoad = new byte[lastMessage.InnerBody.Length + message.InnerBody.Length];
+                                    byte[] newbytMessage = new byte[lastMessage.V2Header.GetBytes().Length + newPayLoad.Length + 4];
+
+                                    Array.Copy(lastMessage.InnerBody, newPayLoad, lastMessage.InnerBody.Length);
+                                    Array.Copy(message.InnerBody, 0, newPayLoad, lastMessage.InnerBody.Length, message.InnerBody.Length);
+
+                                    Array.Copy(lastMessage.V2Header.GetBytes(), newbytMessage, lastMessage.V2Header.GetBytes().Length);
+                                    Array.Copy(newPayLoad, 0, newbytMessage, lastMessage.V2Header.GetBytes().Length, newPayLoad.Length);
+
+                                    P2PMessage newMessage = new P2PMessage(P2PVersion.P2PV2);
+                                    newMessage.ParseBytes(newbytMessage);
+
+                                    uint newIdentifier = message.V2Header.Identifier + message.V2Header.MessageSize;
+                                    messageStreamsV2[newIdentifier] = newMessage;
+                                    newMessage.V2Header.Identifier = newIdentifier;
+
+                                    if (newIdentifier != originalIdentifier)
+                                    {
+                                        messageStreamsV2.Remove(originalIdentifier);
+                                    }
+
+                                    if (newMessage.V2Header.DataRemaining == 0)
+                                    {
+                                        newMessage.V2Header.Identifier -= newMessage.V2Header.MessageSize;
+                                        messageStreamsV2.Remove(newIdentifier);
+
+                                        lock (availableMessagesV2)
+                                            availableMessagesV2.Enqueue(newMessage);
+
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A splitted message was combined :\r\n" + newMessage.ToDebugString());
+                                    }
+                                    else
+                                    {
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Buffering splitted messages :\r\n" + newMessage.ToDebugString());
+                                    }
+
+                                }
+                                else
+                                {
+                                    lock (availableMessagesV2)
+                                        availableMessagesV2.Enqueue(message);  //Maybe there are errors, pass the message to the upper layer.
+                                }
+                            }
+                            else
+                            {
+                                lock (availableMessagesV2)
+                                    availableMessagesV2.Enqueue(message); //Maybe there are errors, pass the message to the upper layer.
+                            }
+                        }
+                    }
+
+                } 
+            #endregion
+
 
                 //if (message.Header.IsAcknowledgement ||
                 //    message.InnerBody == null ||
@@ -168,8 +274,13 @@ namespace MSNPSharp.DataTransfer
         public bool MessageAvailable(P2PVersion version)
         {
             if (version == P2PVersion.P2PV2)
-                return availableMessagesV2.Count > 0;
-            return availableMessagesV1.Count > 0;
+            {
+                lock (availableMessagesV2)
+                    return availableMessagesV2.Count > 0;
+            }
+
+            lock (availableMessagesV1)
+                return availableMessagesV1.Count > 0;
         }
 
         /// <summary>
@@ -181,13 +292,18 @@ namespace MSNPSharp.DataTransfer
 
             if (msgVersion == P2PVersion.P2PV2)
             {
-                System.Diagnostics.Debug.Assert(availableMessagesV2.Count > 0, "No p2pv2 messages available in queue");
-                return availableMessagesV2.Dequeue() as P2PMessage;
+                lock (availableMessagesV2)
+                {
+                    System.Diagnostics.Debug.Assert(availableMessagesV2.Count > 0, "No p2pv2 messages available in queue");
+                    return availableMessagesV2.Dequeue() as P2PMessage;
+                }
             }
 
-
-            System.Diagnostics.Debug.Assert(availableMessagesV1.Count > 0, "No p2pv1 messages available in queue");
-            return availableMessagesV1.Dequeue() as P2PMessage;
+            lock (availableMessagesV1)
+            {
+                System.Diagnostics.Debug.Assert(availableMessagesV1.Count > 0, "No p2pv1 messages available in queue");
+                return availableMessagesV1.Dequeue() as P2PMessage;
+            }
         }
     }
 };

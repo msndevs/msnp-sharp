@@ -506,7 +506,7 @@ namespace MSNPSharp.DataTransfer
 
                 // the message is not a datamessage, send it to the handlers
                 foreach (IMessageHandler handler in cpHandlers)
-                    handler.HandleMessage(this, message);
+                    handler.HandleMessage(this, p2pMessage);
 
             }
         }
