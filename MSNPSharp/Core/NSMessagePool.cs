@@ -186,54 +186,73 @@ namespace MSNPSharp.Core
 
                         // check if it's a payload command
                         bufferStream.Position = 0;
-                        byte[] cmd = new byte[3] { 
+                        string cmd3 = System.Text.Encoding.ASCII.GetString(new byte[3] { 
                             (byte)bufferStream.ReadByte(),
                             (byte)bufferStream.ReadByte(),
                             (byte)bufferStream.ReadByte() 
-                        };
+                        });
 
-                        if ((cmd[0] == 'M' && cmd[1] == 'S' && cmd[2] == 'G') ||    // MSG payload command
-                           (cmd[0] == 'I' && cmd[1] == 'P' && cmd[2] == 'G') ||     // IPG pager command
-                           (cmd[0] == 'N' && cmd[1] == 'O' && cmd[2] == 'T') ||     // NOT notification command
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'X') ||     // UBX personal message
-                           (cmd[0] == 'G' && cmd[1] == 'C' && cmd[2] == 'F') ||     // GCF privacy settings
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'M') ||     // UBM Yahoo messenger message
-                           (cmd[0] == 'U' && cmd[1] == 'B' && cmd[2] == 'N') ||     // UBN Unified Budy Notification (for SIP requests)
-                           (cmd[0] == 'U' && cmd[1] == 'U' && cmd[2] == 'N') ||     // UUN Unified User Notification
-                           (cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'L') ||     // ADL Add List command
-                           (cmd[0] == 'R' && cmd[1] == 'M' && cmd[2] == 'L') ||     // RML Remove List command
-                           (cmd[0] == 'F' && cmd[1] == 'Q' && cmd[2] == 'Y') ||     // FQY Federated QuerY command
-                           (cmd[0] == '2' && cmd[1] == '0' && cmd[2] == '4') ||     // 204 Invalid contact network in ADL/RML (payload)
-                           (cmd[0] == '2' && cmd[1] == '4' && cmd[2] == '1') ||     // 241 Invalid membership for ADL/RML (payload)
-                           (cmd[0] == '5' && cmd[1] == '0' && cmd[2] == '9'))       // 509 UpsFailure, when sending mobile message (payload)
+                        switch (cmd3)
                         {
-                            bufferStream.Seek(-3, SeekOrigin.End);
+                            case "MSG": // MSG payload command
+                            case "NOT": // NOT notification command
+                            case "GCF": // GCF privacy settings
+                            case "UBN": // UBN Unified Budy Notification (for SIP requests)
+                            case "FQY": // FQY Federated QuerY command
+                            case "DEL": // DEL
+                            case "GET": // GET
+                            case "PUT": // PUT
+                            case "NFY": // NFY
+                            case "SDG": // SDG
+                            case "IPG": // IPG pager command 
+                            case "UBX": // UBX personal message
+                            case "UBM": // UBM Yahoo messenger message
+                            case "UUN": // UUN Unified User Notification
+                            case "ADL": // ADL Add List command
+                            case "RML": // RML Remove List command
+                            case "203": // 203
+                            case "204": // 204 Invalid contact network in ADL/RML
+                            case "205": // 205
+                            case "210": // 210
+                            case "234": // 234
+                            case "241": // 241 Invalid membership for ADL/RML
+                            case "508": // 508
+                            case "509": // 509 UpsFailure, when sending mobile message
+                            case "511": // 511
+                            case "933": // 933
+                                {
+                                    bufferStream.Seek(-3, SeekOrigin.End);
 
-                            // calculate the length by reading backwards from the end
-                            remainingBuffer = 0;
-                            int size = 0;
+                                    // calculate the length by reading backwards from the end
+                                    remainingBuffer = 0;
+                                    int size = 0;
 
-                            for (int i = 0; ((size = bufferStream.ReadByte()) > 0) && size >= '0' && size <= '9'; i++)
-                            {
-                                remainingBuffer += (int)((size - '0') * Math.Pow(10, i));
-                                bufferStream.Seek(-2, SeekOrigin.Current);
-                            }
+                                    for (int i = 0; ((size = bufferStream.ReadByte()) > 0) && size >= '0' && size <= '9'; i++)
+                                    {
+                                        remainingBuffer += (int)((size - '0') * Math.Pow(10, i));
+                                        bufferStream.Seek(-2, SeekOrigin.Current);
+                                    }
 
-                            // move to the end of the stream before we are going to write
-                            bufferStream.Seek(0, SeekOrigin.End);
+                                    // move to the end of the stream before we are going to write
+                                    bufferStream.Seek(0, SeekOrigin.End);
 
-                            if (remainingBuffer == 0)
-                            {
-                                EnqueueCurrentBuffer();
-                                CreateNewBuffer();
-                            }
+                                    if (remainingBuffer == 0)
+                                    {
+                                        EnqueueCurrentBuffer();
+                                        CreateNewBuffer();
+                                    }
+                                }
+                                break;
+
+                            default:
+                                {
+                                    // it was just a plain command start a new message
+                                    EnqueueCurrentBuffer();
+                                    CreateNewBuffer();
+                                }
+                                break;
                         }
-                        else
-                        {
-                            // it was just a plain command start a new message
-                            EnqueueCurrentBuffer();
-                            CreateNewBuffer();
-                        }
+
                     }
                     length--;
                 }

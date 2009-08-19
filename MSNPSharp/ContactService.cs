@@ -398,12 +398,7 @@ namespace MSNPSharp
                     initialADLs.Add(message.TransactionID);
                 }
 
-                //////////////////////////////////////////////////////////////////////
-                // We must send a USR SHA A command first, or we will get a 933 error.
-                //////////////////////////////////////////////////////////////////////
-
                 // Combine initial ADL for Circles
-                /*
                 if (NSMessageHandler.CircleList.Count > 0)
                 {
                     hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
@@ -426,7 +421,6 @@ namespace MSNPSharp
                         initialADLs.Add(message.TransactionID);
                     }
                 }
-                */
 
                 // Send Initial ADLs
                 foreach (NSPayLoadMessage payload in adlpayloads)

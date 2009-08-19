@@ -1922,7 +1922,7 @@ namespace MSNPSharp
 
         #endregion
 
-        #region Contact and Group
+        #region Contact, Circle and Group
 
         /// <summary>
         /// Translates the codes used by the MSN server to a MSNList object.
@@ -2182,6 +2182,10 @@ namespace MSNPSharp
             }
         }
 
+
+        protected virtual void OnNFYReceived(NSMessage message)
+        {
+        }
 
         #endregion
 
@@ -2485,6 +2489,9 @@ namespace MSNPSharp
                         return;
                     case "SBS":
                         OnSBSReceived(nsMessage);
+                        return;
+                    case "NFY":
+                        OnNFYReceived(nsMessage);
                         return;
                     // Outdated
                     case "BPR":
