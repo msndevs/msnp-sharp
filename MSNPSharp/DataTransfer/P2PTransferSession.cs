@@ -574,7 +574,7 @@ namespace MSNPSharp.DataTransfer
                 object[] cpHandlers = handlers.ToArray();
 
                 foreach (IMessageHandler handler in cpHandlers)
-                    handler.HandleMessage(this, message);
+                    handler.HandleMessage(this, p2pMessage);
             }
         }
 

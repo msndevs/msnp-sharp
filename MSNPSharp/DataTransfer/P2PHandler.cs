@@ -297,10 +297,9 @@ namespace MSNPSharp.DataTransfer
         {
             P2PMessageSession session = new P2PMessageSession(receivedMessage.Version);
 
-            // generate a local base identifier. After the acknowledgement the locals client begins at
-            // identifier - 4 as identifiers in the following messages. (Weird)
+            // generate a local base identifier.
             session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
-            session.LocalIdentifier = (uint)(session.LocalBaseIdentifier);// - (ulong)session.LocalInitialCorrection);
+            session.LocalIdentifier = (uint)(session.LocalBaseIdentifier);
 
             session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
 
