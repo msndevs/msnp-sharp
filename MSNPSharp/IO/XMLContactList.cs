@@ -114,7 +114,7 @@ namespace MSNPSharp.IO
                 NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, NSMessageHandler));
             }
 
-            //Create Circles.
+            // Create Circles.
             foreach (CircleInfo circle in CircleResults.Values)
             {
                 NSMessageHandler.CircleList.AddCircle(CombineCircle(circle.CircleMember, circle.CircleResultInfo));
@@ -124,58 +124,6 @@ namespace MSNPSharp.IO
             foreach (ContactType contactType in AddressbookContacts.Values)
             {
                 UpdateContact(contactType);
-            }
-
-            // Update dynamic items
-            List<string> dyItemsToRemove = new List<string>();
-            foreach (PassportDynamicItem dyItem in NSMessageHandler.ContactService.Deltas.DynamicItems.Values)
-            {
-                if (null != dyItem.PassportName)
-                {
-                    if (NSMessageHandler.ContactList.HasContact(dyItem.PassportName, ClientType.PassportMember))
-                    {
-                        if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam) ||
-                            (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam))
-                        {
-                            NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.HasNew;
-                        }
-
-                        if ((dyItem.ProfileStatus == "Exist Access" && dyItem.ProfileGleam == false) ||
-                            (dyItem.SpaceStatus == "Exist Access" && dyItem.SpaceGleam == false))
-                        {
-                            NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.None;
-                            dyItemsToRemove.Add(dyItem.PassportName);
-                        }
-
-                        if (dyItem.ProfileStatus == null && dyItem.SpaceStatus == null)  //"Exist Access" means the contact has space or profile
-                        {
-                            NSMessageHandler.ContactList[dyItem.PassportName].DynamicChanged = DynamicItemState.None;
-                            dyItemsToRemove.Add(dyItem.PassportName);
-                        }
-                    }
-                    else if (dyItem.PassportName == NSMessageHandler.Owner.Mail && dyItem.Notifications != null)
-                    {
-                        foreach (NotificationDataType notifydata in dyItem.Notifications)
-                        {
-                            if (notifydata.StoreService.Info.Handle.Type == ServiceFilterType.Profile)
-                            {
-                                if (NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
-                                {
-                                    NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] =
-                                        XmlConvert.ToString(notifydata.LastChanged, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
-                                }
-                            }
-                        }
-                        dyItemsToRemove.Add(dyItem.PassportName);
-                    }
-                }
-            }
-            lock (NSMessageHandler.ContactService.Deltas.DynamicItems)
-            {
-                foreach (string account in dyItemsToRemove)
-                {
-                    NSMessageHandler.ContactService.Deltas.DynamicItems.Remove(account);
-                }
             }
 
             Merge(deltas);
@@ -678,116 +626,6 @@ namespace MSNPSharp.IO
             }
         }
 
-        public XMLContactList Merge(ABFindAllResultType forwardList)
-        {
-            if (forwardList.ab != null && AddressbookLastChange < forwardList.ab.lastChange)
-            {
-                if (null != forwardList.groups)
-                {
-                    foreach (GroupType groupType in forwardList.groups)
-                    {
-                        Guid key = new Guid(groupType.groupId);
-                        if (groupType.fDeleted)
-                        {
-                            Groups.Remove(key);
-
-                            ContactGroup contactGroup = NSMessageHandler.ContactGroups[groupType.groupId];
-                            if (contactGroup != null)
-                            {
-                                NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
-                                NSMessageHandler.ContactService.OnContactGroupRemoved(new ContactGroupEventArgs(contactGroup));
-                            }
-                        }
-                        else
-                        {
-                            Groups[key] = groupType;
-
-                            // Add a new group
-                            NSMessageHandler.ContactGroups.AddGroup(
-                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, NSMessageHandler));
-
-                            // Fire the event
-                            NSMessageHandler.ContactService.OnContactGroupAdded(
-                                new ContactGroupEventArgs(NSMessageHandler.ContactGroups[groupType.groupId]));
-                        }
-                    }
-                }
-
-                if (null != forwardList.contacts)
-                {
-                    foreach (ContactType contactType in forwardList.contacts)
-                    {
-                        if (null != contactType.contactInfo)
-                        {
-                            Contact contact = NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
-
-                            if (contactType.fDeleted)
-                            {
-                                AddressbookContacts.Remove(new Guid(contactType.contactId));
-
-                                if (contact != null)
-                                {
-                                    contact.RemoveFromList(MSNLists.ForwardList);
-                                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
-
-                                    contact.Guid = Guid.Empty;
-                                    contact.SetIsMessengerUser(false);
-
-                                    if (MSNLists.None == contact.Lists)
-                                    {
-                                        NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
-                                        contact.NSMessageHandler = null;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                AddressbookContacts[new Guid(contactType.contactId)] = contactType;
-                                UpdateContact(contactType);
-                                NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
-                            }
-                        }
-                    }
-                }
-
-                // Update lastchange
-                AddressbookLastChange = forwardList.ab.lastChange;
-                DynamicItemLastChange = forwardList.ab.DynamicItemLastChanged;
-            }
-
-            // Update dynamic items
-            if (forwardList.DynamicItems != null)
-            {
-                foreach (BaseDynamicItemType dyItem in forwardList.DynamicItems)
-                {
-                    PassportDynamicItem pdi = dyItem as PassportDynamicItem;
-                    if (pdi != null && pdi.PassportName != null)
-                    {
-                        if (pdi.SpaceGleam || pdi.ProfileGleam)
-                        {
-                            NSMessageHandler.ContactService.Deltas.DynamicItems[pdi.PassportName] = dyItem;
-                        }
-                        else if (pdi.PassportName == NSMessageHandler.Owner.Mail && pdi.Notifications != null)
-                        {
-                            foreach (NotificationDataType notifydata in dyItem.Notifications)
-                            {
-                                if (notifydata.StoreService.Info.Handle.Type == ServiceFilterType.Profile)
-                                {
-                                    if (NSMessageHandler.ContactService.Deltas.Profile.DateModified < notifydata.LastChanged)
-                                    {
-                                        NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] =
-                                            XmlConvert.ToString(notifydata.LastChanged, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return this;
-        }
-
         public XMLContactList Merge(ABFindContactsPagedResultType forwardList)
         {
             if (forwardList.Ab != null && AddressbookLastChange < forwardList.Ab.lastChange)
@@ -904,17 +742,6 @@ namespace MSNPSharp.IO
 
             //NO DynamicItems any more
             return this;
-        }
-
-        /// <summary>
-        /// Merge changes to addressbook and add address book contacts
-        /// </summary>
-        /// <param name="xmlcl">Addressbook</param>
-        /// <param name="forwardList"></param>
-        /// <returns></returns>
-        public static XMLContactList operator +(XMLContactList xmlcl, ABFindAllResultType forwardList)
-        {
-            return xmlcl.Merge(forwardList);
         }
 
         /// <summary>

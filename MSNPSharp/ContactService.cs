@@ -522,7 +522,6 @@ namespace MSNPSharp
                     ServiceFilterType.Messenger,
                     ServiceFilterType.Invitation,
                     ServiceFilterType.SocialNetwork,
-                    ServiceFilterType.Space,
                     ServiceFilterType.Profile,
                     ServiceFilterType.Folder,
                     ServiceFilterType.OfficeLiveWebNotification

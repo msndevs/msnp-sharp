@@ -40,78 +40,21 @@ namespace MSNPSharp
 
     partial class NSMessageHandler
     {
-        [Obsolete("No more used. Using this method causes error!!!", true)]
-        public virtual void SynchronizeContactList()
+        /// <summary>
+        /// Called when a ILN command has been received.
+        /// </summary>
+        /// <remarks>
+        /// ILN indicates the initial status of a contact. Used for MSNP15 and MSNP16, not MSNP18.
+        /// It is send after initial log on or after adding/removing contact from the contactlist.
+        /// Fires the <see cref="ContactOnline"/> and/or the <see cref="ContactStatusChanged"/> events.
+        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities:0] [displayimage] (MSNP16)</code>
+        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities] [displayimage] (MSNP15)</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        [Obsolete("MSNP18 no more supported")]
+        protected virtual void OnILNReceived(NSMessage message)
         {
         }
-
-        [Obsolete("Please use NSMessageHandler.ContactService.AddNewContact", true)]
-        public virtual void AddNewContact(string account)
-        {
-        }
-
-        [Obsolete("Please use NSMessageHandler.ContactService.RemoveContact", true)]
-        public virtual void RemoveContact(Contact contact)
-        {
-        }
-
-        [Obsolete("Please use NSMessageHandler.ContactService.AddContactToGroup", true)]
-        public virtual void AddContactToGroup(Contact contact, ContactGroup group)
-        {
-        }
-
-        [Obsolete("Please use NSMessageHandler.ContactService.RemoveContactFromGroup", true)]
-        public virtual void RemoveContactFromGroup(Contact contact, ContactGroup group)
-        {
-        }
-
-        [Obsolete("Please use NSMessageHandler.ContactService.BlockContact", true)]
-        public virtual void BlockContact(Contact contact)
-        {
-        }
-
-        [Obsolete("Please use NSMessageHandler.ContactService.UnBlockContact", true)]
-        public virtual void UnBlockContact(Contact contact)
-        {
-        }
-
-        [Obsolete("Please use NSMessageHandler.OIMService.SendOIMMessage", true)]
-        public virtual void SendOIMMessage(string account, string msg)
-        {
-        }
-
-        [Obsolete("Deprecated as of MSNP13. Instead, the client will fetch the contact list through a SOAP request.", true)]
-        protected virtual void OnLSTReceived(NSMessage message)
-        {
-        }
-
-        [Obsolete("Deprecated as of MSNP13. Instead, the client will fetch the contact list through a SOAP request.", true)]
-        protected virtual void OnSYNReceived(NSMessage message)
-        {
-        }
-
-        [Obsolete("Deprecated as of MSNP13. The GTC command is no longer accepted by the server.", true)]
-        protected virtual void OnGTCReceived(NSMessage message)
-        {
-        }
-
-        #region Outdated Contact and Group Handlers
-
-        [Obsolete("Deprecated as of MSNP13. Instead, the client will fetch the contact list through a SOAP request.", true)]
-        protected virtual void OnLSGReceived(NSMessage message)
-        {
-        }
-
-        [Obsolete("Deprecated as of MSNP13. ADC command has been replaced by ADL.", true)]
-        protected virtual void OnADCReceived(NSMessage message)
-        {
-        }
-
-        [Obsolete("Deprecated as of MSNP13. REM command has been replaced by RML.", true)]
-        protected virtual void OnREMReceived(NSMessage message)
-        {
-        }
-
 
         /// <summary>
         /// Called when a BPR command has been received.
@@ -121,7 +64,7 @@ namespace MSNPSharp
         /// <code>BPR [Type] [Number]</code>
         /// </remarks>
         /// <param name="message"></param>
-        [Obsolete]
+        [Obsolete("Echo")]
         protected virtual void OnBPRReceived(NSMessage message)
         {
             string commandone = (string)message.CommandValues[0];
@@ -164,57 +107,5 @@ namespace MSNPSharp
             else
                 throw new MSNPSharpException("Phone numbers are sent but lastContact == null");
         }
-
-        [Obsolete("Please use NSMessageHandler.Owner.OnProfileReceived", true)]
-        protected virtual void OnProfileReceived(EventArgs e)
-        {
-        }
-
-        #endregion
-
-        #region Obsolete Events
-        /// <summary>
-        /// Occurs when a new contactgroup is created
-        /// </summary>
-        [Obsolete("Please use NSMessageHandler.ContactService.ContactGroupAdded.", true)]
-        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
-
-        /// <summary>
-        /// Occurs when a contactgroup is removed
-        /// </summary>
-        [Obsolete("Please use NSMessageHandler.ContactService.ContactGroupRemoved.", true)]
-        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
-
-        /// <summary>
-        /// Occurs when a contact is added to any list (including reverse list)
-        /// </summary>
-        [Obsolete("Please use NSMessageHandler.ContactService.ContactAdded.", true)]
-        public event EventHandler<ListMutateEventArgs> ContactAdded;
-
-        /// <summary>
-        /// Occurs when a contact is removed from any list (including reverse list)
-        /// </summary>
-        [Obsolete("Please use NSMessageHandler.ContactService.ContactRemoved.", true)]
-        public event EventHandler<ListMutateEventArgs> ContactRemoved;
-
-        /// <summary>
-        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
-        /// </summary>
-        [Obsolete("Please use NSMessageHandler.ContactService.ReverseAdded.", true)]
-        public event EventHandler<ContactEventArgs> ReverseAdded;
-
-        /// <summary>
-        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
-        /// </summary>
-        [Obsolete("Please use NSMessageHandler.ContactService.ReverseRemoved.", true)]
-        public event EventHandler<ContactEventArgs> ReverseRemoved;
-
-        /// <summary>
-        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
-        /// This means all contact-updates are received from the server and processed.
-        /// </summary>
-        [Obsolete("Please use NSMessageHandler.ContactService.SynchronizationCompleted.", true)]
-        public event EventHandler<EventArgs> SynchronizationCompleted;
-        #endregion
     }
 };

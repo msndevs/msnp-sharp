@@ -381,20 +381,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Space contactcard service.
-        /// </summary>
-        /// <remarks>
-        /// This property is a reference to the SpaceService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
-        /// </remarks>
-        public ContactSpaceService SpaceService
-        {
-            get
-            {
-                return nsMessageHandler.SpaceService;
-            }
-        }
-
-        /// <summary>
         /// Storage service to get/update display name, personal status, display picture etc.
         /// </summary>
         /// <remarks>
