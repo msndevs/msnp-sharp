@@ -222,49 +222,6 @@ namespace MSNPSharp.DataTransfer
                 } 
             #endregion
 
-
-                //if (message.Header.IsAcknowledgement ||
-                //    message.InnerBody == null ||
-                //    message.InnerBody.Length == 0)
-                //{
-                //    availableMessagesV2.Enqueue(message);
-                //}
-                //else
-                //{
-                //    // if this message already exists in the buffer append the current p2p message to the buffer
-
-                //    // XXX TODO?
-                //    byte[] innerBytes = message.GetBytes();
-                //    if (messageStreamsV2.ContainsKey(message.Header.Identifier))
-                //    {
-                //        ((MemoryStream)messageStreamsV2[message.Header.Identifier]).Write(innerBytes, 0, innerBytes.Length);
-                //    }
-                //    else
-                //    {
-                //        MemoryStream bufferStream = new MemoryStream();
-                //        messageStreamsV2.Add(message.Header.Identifier, bufferStream);
-                //        bufferStream.Write(innerBytes, 0, innerBytes.Length);
-                //    }
-
-                //    //// check whether this is the last message
-                //    //if (message.Offset + message.MessageSize == message.TotalSize)
-                //    //{
-                //    //    // set the correct fields to match the whole message
-                //    //    message.Offset = 0;
-                //    //    message.MessageSize = (uint)message.TotalSize;
-                //    //    MemoryStream bufferStream = (MemoryStream)messageStreams[message.Identifier];
-
-                //    //    // set the inner body to the whole message
-                //    //    message.InnerBody = bufferStream.ToArray();
-
-                //    //    // and make it available for the client
-                //    //    availableMessages.Enqueue(message);
-
-                //    //    // remove the old memorystream buffer, and clear up resources in the hashtable
-                //    //    bufferStream.Close();
-                //    //    messageStreams.Remove(message.Identifier);
-                //    //}
-                //}
             }
         }
 

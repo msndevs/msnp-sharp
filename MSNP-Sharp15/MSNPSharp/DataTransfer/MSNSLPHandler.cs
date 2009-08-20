@@ -780,14 +780,6 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Sends the remote contact a request for the given context. The invitation message is send over the current MessageProcessor.
         /// </summary>
-        public P2PTransferSession SendInvitation(string localContact, string remoteContact, MSNObject msnObject)
-        {
-            return SendInvitationImpl(localContact, remoteContact, msnObject, P2PVersion.P2PV1);
-        }
-
-        /// <summary>
-        /// Sends the remote contact a request for the given context. The invitation message is send over the current MessageProcessor.
-        /// </summary>
         private P2PTransferSession SendInvitationImpl(string localContact, string remoteContact, MSNObject msnObject, P2PVersion version)
         {
             // set class variables
@@ -924,14 +916,24 @@ namespace MSNPSharp.DataTransfer
         /// slpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, remoteaccount, activityID, activityName);
         /// </code>
         /// </example>
-        public P2PTransferSession SendInvitation(string localContact, string remoteContact, string activityID, string activityName)
+        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string activityID, string activityName)
         {
             // set class variables
             MSNSLPTransferProperties properties = new MSNSLPTransferProperties();
             properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
 
-            properties.LocalContact = localContact;
-            properties.RemoteContact = remoteContact;
+            properties.LocalContact = localContact.Mail;
+            properties.RemoteContact = remoteContact.Mail;
+
+            if ((remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
+                (localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
+            {
+                if (localContact.MachineGuid != Guid.Empty && remoteContact.MachineGuid != Guid.Empty)
+                {
+                    properties.LocalContact = localContact.Mail + ";" + localContact.MachineGuid.ToString("B");
+                    properties.RemoteContact = remoteContact.Mail + ";" + remoteContact.MachineGuid.ToString("B"); ;
+                }
+            }
 
             properties.DataType = DataTransferType.Activity;
 
@@ -948,9 +950,9 @@ namespace MSNPSharp.DataTransfer
             properties.LastBranch = Guid.NewGuid();
             properties.CallId = Guid.NewGuid();
 
-            SLPRequestMessage slpMessage = new SLPRequestMessage(remoteContact, "INVITE");
-            slpMessage.ToMail = remoteContact;
-            slpMessage.FromMail = localContact;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContact, "INVITE");
+            slpMessage.ToMail = properties.RemoteContact;
+            slpMessage.FromMail = properties.LocalContact;
             slpMessage.Branch = properties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
             slpMessage.CallId = properties.CallId;
@@ -964,7 +966,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["Context"] = base64Context;
 
 
-            P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // V!
+            P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
 
             // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
@@ -1498,6 +1500,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void SendDCInvitation(MSNSLPTransferProperties transferProperties)
         {
+            if (Version == P2PVersion.P2PV2)  //In p2pv2 our library don't support any direct connection.
+                return;
+
             //0-7: location of the FT preview
             //8-15: file size
             //16-19: I don't know or need it so...
@@ -1549,7 +1554,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
 
-            P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1); // V!
+            P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1);
             p2pMessage.InnerMessage = slpMessage;
 
             MessageProcessor.SendMessage(p2pMessage);
@@ -1658,24 +1663,19 @@ namespace MSNPSharp.DataTransfer
             Contact remote = MessageSession.RemoteUser;
 
             MSNSLPTransferProperties properties = transferSession.TransferProperties;
-            // we are the receiver. send close message back
-            P2PMessage p2pMessage = new P2PMessage(transferSession.Version);
-            p2pMessage.InnerMessage = CreateClosingMessage(properties);
-
-            if (Version == P2PVersion.P2PV2)
-            {
-                p2pMessage.V2Header.TFCombination = TFCombination.First;
-                p2pMessage.V2Header.PackageNumber = transferSession.GetNextSLPRequestDataPacketNumber();
-                MessageProcessor.SendMessage(p2pMessage);
-            }
+            
 
             if (properties.RemoteInvited == false)
             {
-                if (p2pMessage.Version == P2PVersion.P2PV1)
+                if (Version == P2PVersion.P2PV1)
                 {
+                    // we are the receiver. send close message back
+                    P2PMessage p2pMessage = new P2PMessage(transferSession.Version);
+                    p2pMessage.InnerMessage = CreateClosingMessage(properties);
                     p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
                     MessageProcessor.SendMessage(p2pMessage);
                 }
+
                 // close it
                 RemoveTransferSession(transferSession);
             }
@@ -1794,8 +1794,6 @@ namespace MSNPSharp.DataTransfer
                     // and close the connection
                     if (session.MessageSession.DirectConnected)
                         session.MessageSession.CloseDirectConnection();
-
-                    msgSession.CleanUp();
                 }
             }
             else
@@ -1832,9 +1830,12 @@ namespace MSNPSharp.DataTransfer
                     P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
                     if (properties.DataType == DataTransferType.File)
                     {
-                        // ok we can receive the OK message. we can no send the invitation to setup a transfer connection
-                        if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
-                            SendDCInvitation(properties);
+                        if (Version == P2PVersion.P2PV1)
+                        {
+                            // ok we can receive the OK message. we can now send the invitation to setup a transfer connection
+                            if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
+                                SendDCInvitation(properties);
+                        }
 
                         session.StartDataTransfer(true);
                     }

@@ -784,7 +784,7 @@ namespace MSNPSharp.DataTransfer
             }
             else if (message.Version == P2PVersion.P2PV2)
             {
-                // v2, v!
+                throw new NotSupportedException("Not support direct connection in p2pv2.");
             }
         }
 
@@ -795,7 +795,7 @@ namespace MSNPSharp.DataTransfer
         public override P2PMessage CreateAcknowledgement()
         {
             // create a copy of this message
-            P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this); // V!
+            P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this);
 
             // set the identifier to 0 to set our own local identifier
             ackMessage.Header.Identifier = 0;

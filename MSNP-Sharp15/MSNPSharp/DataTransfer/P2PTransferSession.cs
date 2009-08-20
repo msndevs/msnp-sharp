@@ -491,7 +491,8 @@ namespace MSNPSharp.DataTransfer
                                     DataStream.Close();
 
                                 OnTransferFinished();
-                                // notify the remote client we close the direct connection
+
+                                // notify the remote client we close the session
                                 SendDisconnectMessage();
                             }
                         }
@@ -541,6 +542,8 @@ namespace MSNPSharp.DataTransfer
                                 DataStream.Close();
 
                             OnTransferFinished();
+
+                            SendDisconnectMessage();
                         }
                         // finished handling this message
 
@@ -750,16 +753,57 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region Protected
+
+        /// <summary>
+        /// Creates a message which is send directly after the last data message.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual SLPRequestMessage CreateClosingMessage()
+        {
+            SLPRequestMessage slpMessage = new SLPRequestMessage(TransferProperties.RemoteContact, "BYE");
+            slpMessage.ToMail = transferProperties.RemoteContact;
+            slpMessage.FromMail = transferProperties.LocalContact;
+
+            slpMessage.Branch = TransferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.CSeq = 0;
+            slpMessage.CallId = TransferProperties.CallId;
+            slpMessage.MaxForwards = 0;
+            slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
+
+            slpMessage.BodyValues["SessionID"] = TransferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            if (transferProperties.DataType == DataTransferType.Activity)
+            {
+                slpMessage.BodyValues["Context"] = "dAMAgQ==";
+
+            }
+
+            return slpMessage;
+        }
+
         /// <summary>
         /// Sends the remote client a p2p message with the 0x80 flag to abort.
         /// </summary>
         protected virtual void SendAbortMessage()
         {
-            P2PMessage disconnectMessage = new P2PMessage(P2PVersion.P2PV1); // V!
-            disconnectMessage.V1Header.Flags = P2PFlag.TlpError;
-            disconnectMessage.V1Header.SessionId = TransferProperties.SessionId;
-            disconnectMessage.V1Header.AckSessionId = dataMessageIdentifier;
-            MessageProcessor.SendMessage(disconnectMessage);
+            if (Version == P2PVersion.P2PV2)  //In p2pv2, just send a MSNSLP BYE instead.
+            {
+                P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV2);
+                p2pMessage.InnerMessage = CreateClosingMessage();
+
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
+                p2pMessage.V2Header.PackageNumber = GetNextSLPRequestDataPacketNumber();
+                MessageProcessor.SendMessage(p2pMessage);
+            }
+
+            if (Version == P2PVersion.P2PV1)
+            {
+                P2PMessage disconnectMessage = new P2PMessage(P2PVersion.P2PV1);
+                disconnectMessage.V1Header.Flags = P2PFlag.TlpError;
+                disconnectMessage.V1Header.SessionId = TransferProperties.SessionId;
+                disconnectMessage.V1Header.AckSessionId = dataMessageIdentifier;
+                MessageProcessor.SendMessage(disconnectMessage);
+            }
         }
 
         /// <summary>
@@ -857,7 +901,9 @@ namespace MSNPSharp.DataTransfer
                 if (direct == false)
                 {
                     // send the data preparation message
-                    if (Version == P2PVersion.P2PV1)
+                    if (Version == P2PVersion.P2PV1 && 
+                        (TransferProperties.DataType != DataTransferType.File && 
+                        TransferProperties.DataType != DataTransferType.Unknown))
                     {
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV1);
                         p2pDataMessage.WritePreparationBytes();
@@ -880,16 +926,20 @@ namespace MSNPSharp.DataTransfer
                         prepareMessage.V2Header.OperationCode = (byte)OperationCode.TransferPrepare;
                         MessageProcessor.SendMessage(prepareMessage);
 
-                        //Then send data preparation message.
-                        P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
+                        if (TransferProperties.DataType != DataTransferType.File &&
+                        TransferProperties.DataType != DataTransferType.Unknown)
+                        {
+                            //Then send data preparation message.
+                            P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
 
-                        p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.None;
-                        p2pDataMessage.V2Header.TFCombination = TFCombination.First;
+                            p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.None;
+                            p2pDataMessage.V2Header.TFCombination = TFCombination.First;
 
-                        p2pDataMessage.WritePreparationBytes();
-                        p2pDataMessage.Header.SessionId = TransferProperties.SessionId;
+                            p2pDataMessage.WritePreparationBytes();
+                            p2pDataMessage.Header.SessionId = TransferProperties.SessionId;
 
-                        MessageProcessor.SendMessage(p2pDataMessage);
+                            MessageProcessor.SendMessage(p2pDataMessage);
+                        }
 
                     }
                 }
@@ -1038,6 +1088,7 @@ namespace MSNPSharp.DataTransfer
                 if (Version == P2PVersion.P2PV2)
                 {
                     OnTransferFinished();
+                    SendDisconnectMessage();
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Stopping transfer thread", GetType().Name);
@@ -1050,11 +1101,24 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void SendDisconnectMessage()
         {
-            P2PMessage disconnectMessage = new P2PMessage(Version); // V!
-            disconnectMessage.V1Header.Flags = P2PFlag.CloseSession; // v1
-            disconnectMessage.Header.SessionId = TransferProperties.SessionId;
-            disconnectMessage.V1Header.AckSessionId = dataMessageIdentifier; // aargh it took me long to figure this one out
-            MessageProcessor.SendMessage(disconnectMessage);
+            if (Version == P2PVersion.P2PV2)  //In p2pv2, just send a MSNSLP BYE instead.
+            {
+                P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV2);
+                p2pMessage.InnerMessage = CreateClosingMessage();
+
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
+                p2pMessage.V2Header.PackageNumber = GetNextSLPRequestDataPacketNumber();
+                MessageProcessor.SendMessage(p2pMessage);
+            }
+
+            if (Version == P2PVersion.P2PV1)
+            {
+                P2PMessage disconnectMessage = new P2PMessage(P2PVersion.P2PV1);
+                disconnectMessage.V1Header.Flags = P2PFlag.CloseSession;
+                disconnectMessage.Header.SessionId = TransferProperties.SessionId;
+                disconnectMessage.V1Header.AckSessionId = dataMessageIdentifier; // aargh it took me long to figure this one out
+                MessageProcessor.SendMessage(disconnectMessage);
+            }
         }
 
         /// <summary>
