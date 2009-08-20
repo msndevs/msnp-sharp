@@ -162,7 +162,7 @@ namespace MSNPSharp
 
             nsMessageHandler.P2PHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
             {
-                MSNSLPHandler msnslpHandler = new MSNSLPHandler(see.Session.Version);
+                MSNSLPHandler msnslpHandler = CreateMSNSLPHandler(see.Session.Version);
                 msnslpHandler.MessageProcessor = see.Session;
                 see.Session.RegisterHandler(msnslpHandler);
 
