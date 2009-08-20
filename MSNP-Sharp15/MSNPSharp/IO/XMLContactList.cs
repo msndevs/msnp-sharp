@@ -454,6 +454,7 @@ namespace MSNPSharp.IO
                                                     case "Role":
                                                     case "Service":
                                                     case "Everyone":
+                                                    case "Partner":
                                                         account = bm.Type + "/" + bm.MembershipId;
                                                         break;
 
@@ -829,6 +830,13 @@ namespace MSNPSharp.IO
                     {
                         if (contact.Name == contact.Mail && displayname != contact.Mail)
                             contact.SetName(displayname);
+                    }
+
+                    if (cit.contactType == MessengerContactType.Live &&
+                        cit.NetworkInfoList != null &&
+                        !String.IsNullOrEmpty(cit.NetworkInfoList[0].UserTileURL))
+                    {
+                        contact.UserTile = new Uri(cit.NetworkInfoList[0].UserTileURL);
                     }
 
                     if (cit.phones != null)
