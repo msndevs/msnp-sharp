@@ -321,12 +321,33 @@ namespace MSNPSharp
 
         public Contact GetContactByGuid(Guid guid)
         {
-            foreach (Contact contact in Values)
+            if (guid != Guid.Empty)
             {
-                if (contact.Guid == guid)
-                    return contact;
+                lock (SyncRoot)
+                {
+                    foreach (Contact contact in Forward)
+                    {
+                        if (contact.Guid == guid)
+                            return contact;
+                    }
+                }
             }
+            return null;
+        }
 
+        public Contact GetContactByCID(long cid)
+        {
+            if (cid != 0)
+            {
+                lock (SyncRoot)
+                {
+                    foreach (Contact contact in Values)
+                    {
+                        if (contact.CID == cid)
+                            return contact;
+                    }
+                }                
+            }
             return null;
         }
 

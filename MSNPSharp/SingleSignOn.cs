@@ -36,6 +36,7 @@ using System.Net;
 using System.Xml;
 using System.Text;
 using System.Threading;
+using System.Diagnostics;
 using System.Globalization;
 using System.Xml.Serialization;
 using System.Collections.Generic;
@@ -394,6 +395,8 @@ namespace MSNPSharp
                 }
                 else
                 {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Request new tickets: " + expiredtickets, "SingleSignOnManager");
+
                     SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, policy);
                     if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
                         sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
@@ -419,6 +422,8 @@ namespace MSNPSharp
 
                 if (ExpiryState.NotExpired != es)
                 {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Re-new ticket: " + renew, "SingleSignOnManager");
+
                     SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, ticket.Policy);
                     if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
                         sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;

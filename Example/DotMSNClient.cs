@@ -62,6 +62,7 @@ namespace MSNPSharpClient
 
 #if DEBUG || MSNP18
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
+            Settings.SerializationType = MSNPSharp.IO.MclSerialization.None;
 #elif TRACE
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Info;
 #else
@@ -128,6 +129,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.WhatsUpService.GetWhatsUp(200);
         }
 
+        List<ActivityDetailsType> activities = new List<ActivityDetailsType>();
         void WhatsUpService_GetWhatsUpCompleted(object sender, GetWhatsUpCompletedEventArgs e)
         {
             if (InvokeRequired)
@@ -142,24 +144,35 @@ namespace MSNPSharpClient
             }
             else
             {
-                //foreach (XmlNode[] activityDetails in e.Response.Activities)
-                //{
-                //    foreach (XmlNode xn in activityDetails)
-                //    {
-                //        Trace.WriteLine(xn.InnerXml);
-                //    }
-                //}
-                //foreach (XmlNode[] templates in e.Response.Templates)
-                //{
-                //    foreach (XmlNode tn in templates)
-                //    {
-                //        Trace.WriteLine(tn.InnerXml);
-                //    }
-                //}
+                activities.Clear();
+
+                foreach (ActivityDetailsType activityDetails in e.Response.Activities)
+                {
+                    // Show status news
+                    if (activityDetails.ApplicationId == "6262816084389410")
+                    {
+                        activities.Add(activityDetails);
+                    }
+
+                    Contact c = messenger.ContactList.GetContactByCID(long.Parse(activityDetails.OwnerCID));
+
+                    if (c != null)
+                    {                        
+                        c.Activities.Add(activityDetails);                        
+                    }
+                }
+
+                foreach (RecentActivityTemplateContainerType template in e.Response.Templates)
+                {
+                    Trace.WriteLine(template.Templates.Length);
+                }
                 
                 lblNewsLink.Text = "Get Feeds";
                 lblNewsLink.Tag = e.Response.FeedUrl;
+                tmrNews.Enabled = true;
             }
+
+            
 
         }
 
@@ -625,6 +638,7 @@ namespace MSNPSharpClient
             }
 
             tmrKeepOnLine.Enabled = false;
+            tmrNews.Enabled = false;
 
             displayImageBox.Image = null;
             loginButton.Tag = 0;
@@ -788,6 +802,66 @@ namespace MSNPSharpClient
                 nextPing--;
             if (nextPing == 0)
                 messenger.Nameserver.SendPing();
+        }
+
+        private int currentActivity = 0;
+        private void tmrNews_Tick(object sender, EventArgs e)
+        {
+            if (currentActivity >= activities.Count)
+            {
+                currentActivity = 0;
+            }
+
+            ActivityDetailsType activitiy = activities[currentActivity];
+            if (activitiy.ApplicationId == "6262816084389410")
+            {
+                string name = string.Empty;
+                string status = string.Empty;
+
+                foreach (TemplateVariableBaseType t in activitiy.TemplateVariables)
+                {
+                    if (t is PublisherIdTemplateVariable)
+                    {
+                        name = ((PublisherIdTemplateVariable)t).NameHint;
+                    }
+                    else if (t is TextTemplateVariable)
+                    {
+                        status = ((TextTemplateVariable)t).Value;
+                    }
+                }
+
+                lblNews.Text = name + ": " + status;
+
+                Contact c = messenger.ContactList.GetContactByCID(long.Parse(activitiy.OwnerCID));
+
+                if (c != null)
+                {
+                    if (c.DisplayImage != null && c.DisplayImage.Image != null)
+                    {
+                        pbNewsPicture.Image = c.DisplayImage.Image;
+                    }
+                    else if (c.UserTile != null)
+                    {
+                        pbNewsPicture.LoadAsync(c.UserTile.AbsoluteUri);
+                    }
+                    else
+                    {
+                        pbNewsPicture.Image = null;
+                    }
+                }
+
+
+
+            }
+
+
+
+
+
+
+
+
+            currentActivity++;
         }
 
         private static Font PARENT_NODE_FONT = new Font("Tahoma", 8f, FontStyle.Bold);
@@ -1381,6 +1455,8 @@ namespace MSNPSharpClient
                     NSMessageHandler.MachineGuid);
             }
         }
+
+       
 
 
         

@@ -164,6 +164,21 @@ namespace MSNPSharp
         private ulong oimCount = 1;
         private object clientData;
 
+        private List<ActivityDetailsType> activities = new List<ActivityDetailsType>(0);
+        private Uri userTile;
+
+        public Uri UserTile
+        {
+            get
+            {
+                return userTile;
+            }
+            set
+            {
+                userTile = value;
+            }
+        }
+
         [NonSerialized]
         private NSMessageHandler nsMessageHandler;
 
@@ -436,6 +451,14 @@ namespace MSNPSharp
             get
             {
                 return emoticons;
+            }
+        }
+
+        public List<ActivityDetailsType> Activities
+        {
+            get
+            {
+                return activities;
             }
         }
 
