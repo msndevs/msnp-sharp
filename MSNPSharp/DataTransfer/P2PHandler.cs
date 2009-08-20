@@ -397,7 +397,7 @@ namespace MSNPSharp.DataTransfer
                     ArrayList list = new ArrayList(messageSessions);
                     foreach (P2PMessageSession p2psession in list)
                     {
-                        if (p2psession.RemoteContact == account)
+                        if (p2psession.RemoteContact.ToLowerInvariant() == account.ToLowerInvariant())
                         {
                             messageSessions.Remove(p2psession);
                             p2psession.CleanUp();

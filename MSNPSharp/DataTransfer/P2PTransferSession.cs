@@ -134,7 +134,7 @@ namespace MSNPSharp.DataTransfer
         }
 
 
-        private MSNSLPTransferProperties transferProperties = new MSNSLPTransferProperties();
+        private MSNSLPTransferProperties transferProperties;
 
         /// <summary>
         /// The transfer properties for this transfer session.
@@ -760,9 +760,9 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual SLPRequestMessage CreateClosingMessage()
         {
-            SLPRequestMessage slpMessage = new SLPRequestMessage(TransferProperties.RemoteContact, "BYE");
-            slpMessage.ToMail = transferProperties.RemoteContact;
-            slpMessage.FromMail = transferProperties.LocalContact;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(TransferProperties.RemoteContactIDString, "BYE");
+            slpMessage.ToMail = transferProperties.RemoteContactIDString;
+            slpMessage.FromMail = transferProperties.LocalContactIDString;
 
             slpMessage.Branch = TransferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.CSeq = 0;
