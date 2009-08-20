@@ -745,19 +745,36 @@ namespace MSNPSharpClient
         /// <param name="e"></param>
         private void messenger_TransferInvitationReceived(object sender, MSNSLPInvitationEventArgs e)
         {
-            if (MessageBox.Show(
-                e.TransferProperties.RemoteContact +
-                " wants to send you a file.\r\nFilename: " +
-                e.Filename + "\r\nLength (bytes): " + e.FileSize,
-                "Filetransfer invitation",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (e.TransferProperties.DataType == DataTransferType.File)
             {
-                // by setting the Accept property in the EventArgs to true we give the transfer a green light
-                saveFileDialog.FileName = e.Filename;
-                if ((DialogResult)Invoke(new ShowFileDialogDelegate(ShowFileDialog), new object[] { saveFileDialog }) == DialogResult.OK)
+                if (MessageBox.Show(
+                    e.TransferProperties.RemoteContact.Name +
+                    " wants to send you a file.\r\nFilename: " +
+                    e.Filename + "\r\nLength (bytes): " + e.FileSize,
+                    "Filetransfer invitation",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    e.TransferSession.DataStream = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
-                    //e.Handler.AcceptTransfer (e);
+                    // by setting the Accept property in the EventArgs to true we give the transfer a green light				
+                    saveFileDialog.FileName = e.Filename;
+                    if ((DialogResult)Invoke(new ShowFileDialogDelegate(ShowFileDialog), new object[] { saveFileDialog }) == DialogResult.OK)
+                    {
+                        e.TransferSession.DataStream = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
+                        //e.Handler.AcceptTransfer (e);
+                        e.Accept = true;
+                        e.TransferSession.AutoCloseStream = true;
+                    }
+                }
+            }
+            else if (e.TransferProperties.DataType == DataTransferType.Activity)
+            {
+                if (MessageBox.Show(
+                    e.TransferProperties.RemoteContact.Name +
+                    " wants to invite you to join an activity.\r\nActivity name: " +
+                    e.Activity.ActivityName + "\r\nAppID: " + e.Activity.AppID,
+                    "Activity invitation",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    e.TransferSession.DataStream = new MemoryStream();
                     e.Accept = true;
                     e.TransferSession.AutoCloseStream = true;
                 }
