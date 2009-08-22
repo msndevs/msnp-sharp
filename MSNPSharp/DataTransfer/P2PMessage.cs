@@ -310,7 +310,8 @@ namespace MSNPSharp.DataTransfer
                 {
                     if (value.Length > 0)
                     {
-                        header.MessageSize = (uint)(V2Header.DataPacketHeaderLength + value.Length);
+                        header.MessageSize = (uint)value.Length; // DataPacketHeaderLength depends on MessageSize
+                        header.MessageSize += (uint)V2Header.DataPacketHeaderLength;
                         header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
                     }
                     else
