@@ -507,7 +507,7 @@ namespace MSNPSharpClient
                     break;
 
                 case PresenceStatus.Away:
-                    brush = Brushes.Yellow;
+                    brush = Brushes.Orange;
                     break;
 
                 case PresenceStatus.Hidden:
@@ -515,7 +515,7 @@ namespace MSNPSharpClient
                     break;
 
                 case PresenceStatus.Offline:
-                    brush = Brushes.Wheat;
+                    brush = Brushes.Black;
                     break;
             }
 
@@ -523,7 +523,70 @@ namespace MSNPSharpClient
             e.Graphics.FillRectangle(brush, new Rectangle(imageLocation, new Size(12, 12)));
 
             PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
-            e.Graphics.DrawString(newstatus.ToString(), comboStatus.Font, Brushes.Black, textLocation);
+            e.Graphics.DrawString(newstatus.ToString(), PARENT_NODE_FONT, Brushes.Black, textLocation);
+        }
+
+        private void treeViewFavoriteList_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        {
+            if (e.Node.Level == 0)
+            {
+                Point[] points = !e.Node.IsExpanded
+                    ? new Point[] {
+                        new Point(e.Bounds.X+4, e.Bounds.Y +4),
+                        new Point(e.Bounds.X+4, e.Bounds.Y +12),
+                        new Point(e.Bounds.X+12, e.Bounds.Y + 8) }
+                    : new Point[] {
+                        new Point(e.Bounds.X + 12, e.Bounds.Y + 12),
+                        new Point(e.Bounds.X + 12, e.Bounds.Y + 4),
+                        new Point(e.Bounds.X + 4, e.Bounds.Y + 12)
+                   };
+                Point imageLocation = new Point(e.Bounds.X + 2, e.Bounds.Y + 2);
+                e.Graphics.FillPolygon(Brushes.Black, points);
+
+                PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
+                e.Graphics.DrawString(e.Node.Text, PARENT_NODE_FONT, Brushes.Black, textLocation);
+            }
+            else if (e.Node.Level == 1 && e.Node.Tag is Contact)
+            {
+                Contact contact = e.Node.Tag as Contact;
+                Brush brush = Brushes.Green;
+
+                switch (contact.Status)
+                {
+                    case PresenceStatus.Online:
+                        brush = Brushes.Green;
+                        break;
+
+                    case PresenceStatus.Busy:
+                        brush = Brushes.Red;
+                        break;
+
+                    case PresenceStatus.Away:
+                    case PresenceStatus.Idle:
+                        brush = Brushes.Orange;
+                        break;
+
+                    default:
+                        brush = Brushes.Gray;
+                        break;
+                }
+
+                Point imageLocation = new Point(e.Bounds.X + 2, e.Bounds.Y + 2);
+                //e.Graphics.DrawImage((Image)MSNPSharpClient.Properties.Resources.smiley, imageLocation.X, imageLocation.Y, 14, 14);
+                e.Graphics.FillEllipse(brush, new Rectangle(imageLocation, new Size(12, 12)));
+
+                string text = contact.Name;
+                if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                {
+                    text += " - " + contact.PersonalMessage.Message;
+                }
+
+                PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
+                e.Graphics.DrawString(text, USER_NODE_FONT, Brushes.Black, textLocation);
+
+            }
+
+
         }
 
         private void comboPlaces_SelectedIndexChanged(object sender, EventArgs e)
@@ -1455,6 +1518,8 @@ namespace MSNPSharpClient
                     NSMessageHandler.MachineGuid);
             }
         }
+
+        
 
        
 

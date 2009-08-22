@@ -183,6 +183,7 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
             this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFavoriteList.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawText;
             this.treeViewFavoriteList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.treeViewFavoriteList.FullRowSelect = true;
             this.treeViewFavoriteList.HideSelection = false;
@@ -196,6 +197,7 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 394);
             this.treeViewFavoriteList.TabIndex = 0;
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFavoriteList.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeViewFavoriteList_DrawNode);
             this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
             this.treeViewFavoriteList.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragEnter);
             this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
@@ -338,10 +340,10 @@ namespace MSNPSharpClient
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
+            this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.cbRobotMode);
             this.panel1.Controls.Add(this.comboPlaces);
             this.panel1.Controls.Add(this.comboProtocol);
-            this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.accountTextBox);
             this.panel1.Controls.Add(this.loginButton);
             this.panel1.Controls.Add(this.passwordTextBox);
@@ -513,9 +515,10 @@ namespace MSNPSharpClient
             // 
             // statusBar
             // 
-            this.statusBar.Location = new System.Drawing.Point(0, 4);
+            this.statusBar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.statusBar.Location = new System.Drawing.Point(0, 0);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(539, 22);
+            this.statusBar.Size = new System.Drawing.Size(539, 26);
             this.statusBar.TabIndex = 5;
             // 
             // OwnerPanel
