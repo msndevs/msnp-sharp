@@ -582,7 +582,7 @@ namespace MSNPSharpClient
                 }
 
                 PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
-                e.Graphics.DrawString(text, USER_NODE_FONT, Brushes.Black, textLocation);
+                e.Graphics.DrawString(text, contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT, Brushes.Black, textLocation);
 
             }
 

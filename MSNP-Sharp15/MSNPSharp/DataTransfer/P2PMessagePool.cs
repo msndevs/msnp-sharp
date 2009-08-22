@@ -126,22 +126,16 @@ namespace MSNPSharp.DataTransfer
 
             if (message.Version == P2PVersion.P2PV2)
             {
-                if (message.V2Header.DataPacketHeaderLength == 0)
+                // ACK, Unsplitted SLP messages, data preparation messages, p2p data messages, donot buffer.
+                if ((message.V2Header.MessageSize == 0) ||
+                    (message.V2Header.TFCombination == TFCombination.First && message.V2Header.DataRemaining == 0) ||
+                    (message.V2Header.TFCombination > TFCombination.First))
                 {
                     lock (availableMessagesV2)
                         availableMessagesV2.Enqueue(message);
                 }
-
-                if (message.V2Header.DataPacketHeaderLength > 0)
+                else
                 {
-                    if ((message.V2Header.TFCombination == TFCombination.First && message.V2Header.DataRemaining == 0) ||
-                        message.V2Header.TFCombination > TFCombination.First)
-                    {
-                        //Unsplitted SLP messages, data preparation messages, p2p data messages, donot buffer.
-                        lock (availableMessagesV2)
-                            availableMessagesV2.Enqueue(message);
-                    }
-
                     if (message.V2Header.TFCombination == TFCombination.First && message.V2Header.DataRemaining > 0)
                     {
                         lock (messageStreamsV2)

@@ -421,6 +421,9 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
+                if (MessageSize == 0)
+                    return 0;
+
                 int length = 8;
                 if (dataPacketTLVs.Count > 0)
                 {
@@ -727,7 +730,7 @@ namespace MSNPSharp.DataTransfer
         public override byte[] GetBytes()
         {
             int headerLen = HeaderLength;
-            int dataHeaderLen = (MessageSize > 0) ? DataPacketHeaderLength : 0;
+            int dataHeaderLen = DataPacketHeaderLength;
 
             byte[] data = new byte[headerLen + dataHeaderLen];
             MemoryStream memStream = new MemoryStream(data);
@@ -810,7 +813,7 @@ namespace MSNPSharp.DataTransfer
             }
             bodyTLVBuilder.Append("\r\n");
 
-            int dataHeaderLen = (MessageSize > 0) ? DataPacketHeaderLength : 0;
+            int dataHeaderLen = DataPacketHeaderLength;
 
             return "[P2Pv2Header]\r\n" +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "HeaderLength        : {1:x} ({0})\r\n", HeaderLength.ToString(System.Globalization.CultureInfo.InvariantCulture), HeaderLength) +
