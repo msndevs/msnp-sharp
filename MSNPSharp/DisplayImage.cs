@@ -68,7 +68,7 @@ namespace MSNPSharp
         {
             get
             {
-                return image;
+                return image == null ? null : image.Clone() as Image;
             }
             set
             {
@@ -79,7 +79,7 @@ namespace MSNPSharp
 
         void UpdateStream()
         {
-            image.Save(DataStream, ImageFormat.Png);
+            image.Save(DataStream, image.RawFormat);
             Size = (int)DataStream.Length;
             Sha = GetStreamHash(DataStream);
         }
