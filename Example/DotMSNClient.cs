@@ -60,11 +60,12 @@ namespace MSNPSharpClient
             TraceForm traceform = new TraceForm();
             traceform.Show();
 
-#if DEBUG
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
+
+#if DEBUG
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.None;
 #elif TRACE
-            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Info;
+            Settings.SerializationType = MSNPSharp.IO.MclSerialization.Compression | MSNPSharp.IO.MclSerialization.Cryptography;
 #else
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Warning;
 #endif
