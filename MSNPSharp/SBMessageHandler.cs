@@ -756,8 +756,6 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             string auth = NSMessageHandler.Owner.Mail;
-            if (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
-                auth += ";" + NSMessageHandler.MachineGuid.ToString("B");
 
             if (Invited)
                 MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { auth, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
@@ -879,15 +877,7 @@ namespace MSNPSharp
                 if (message.CommandValues.Count >= 6)
                 {
                     string caps = message.CommandValues[5].ToString();
-                    if (caps.Contains(":"))
-                    {
-                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                        contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
-                    }
-                    else
-                    {
-                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
-                    }
+                    contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
                 }
             }
 
@@ -929,15 +919,7 @@ namespace MSNPSharp
                     if (message.CommandValues.Count >= 3)
                     {
                         string caps = message.CommandValues[2].ToString();
-                        if (caps.Contains(":"))
-                        {
-                            contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                            contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
-                        }
-                        else
-                        {
-                            contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
-                        }
+                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
                     }
                 }
 

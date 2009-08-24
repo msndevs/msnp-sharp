@@ -255,27 +255,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
-    /// </summary>
-    public enum MPOP
-    {
-        /// <summary>
-        /// Unspecified
-        /// </summary>
-        Unspecified,
-
-        /// <summary>
-        /// When the same user sign in at another place, sign the owner out.
-        /// </summary>
-        AutoLogoff,
-
-        /// <summary>
-        /// When the same user sign in at another place, keep the owner sign in.
-        /// </summary>
-        KeepOnline
-    }
-
-    /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
     [Flags]
@@ -358,14 +337,6 @@ namespace MSNPSharp
         /// Mask for MSNC
         /// </summary>
         CanHandleMSNCMask = 0xF0000000
-    }
-
-    [Flags]
-    public enum ClientCapacitiesEx : long
-    {
-        None = 0x00,
-        RTCVideoEnabled = 0x10,
-        CanP2PV2 = 0x20
     }
 
     /// <summary>
@@ -525,32 +496,6 @@ namespace MSNPSharp
         /// Email member, currently Yahoo!
         /// </summary>
         EmailMember = 32
-    }
-
-    /// <summary>
-    /// Type of profiles that store in msn space.
-    /// </summary>
-    public enum ProfileType
-    {
-        GeneralProfile,
-        PublicProfile,
-        SocialProfile
-    }
-
-    /// <summary>
-    /// State of dynamic items.
-    /// </summary>
-    public enum DynamicItemState
-    {
-        /// <summary>
-        /// The contact has no dynamic items.
-        /// </summary>
-        None,
-
-        /// <summary>
-        /// The contact has changed his/her space or profiles. 
-        /// </summary>
-        HasNew
     }
 
     /// <summary>
@@ -938,7 +883,6 @@ namespace MSNPSharp
         public const string Messenger = "Messenger";
         public const string Invitation = "Invitation";
         public const string SocialNetwork = "SocialNetwork";
-        public const string Space = "Space";
         public const string Profile = "Profile";
         public const string Folder = "Folder";
         public const string Event = "Event";

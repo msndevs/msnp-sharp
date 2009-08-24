@@ -88,7 +88,6 @@ namespace MSNPSharpClient
         private TextBox lblName;
         private TextBox lblPM;
         private ToolTip toolTipChangePhoto;
-        private ComboBox comboPlaces;
         private ComboBox comboProtocol;
         private CheckBox cbRobotMode;
         private IContainer components;
@@ -127,7 +126,6 @@ namespace MSNPSharpClient
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
             this.cbRobotMode = new System.Windows.Forms.CheckBox();
-            this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.comboProtocol = new System.Windows.Forms.ComboBox();
             this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.accountTextBox = new System.Windows.Forms.TextBox();
@@ -297,7 +295,7 @@ namespace MSNPSharpClient
             this.unblockMenuItem,
             this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 220);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 214);
             // 
             // sendIMMenuItem
             // 
@@ -401,7 +399,6 @@ namespace MSNPSharpClient
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
             this.panel1.Controls.Add(this.cbRobotMode);
-            this.panel1.Controls.Add(this.comboPlaces);
             this.panel1.Controls.Add(this.comboProtocol);
             this.panel1.Controls.Add(this.displayImageBox);
             this.panel1.Controls.Add(this.accountTextBox);
@@ -425,19 +422,7 @@ namespace MSNPSharpClient
                     " false when connected; that will make MSNPSharp don\'t use Address Book anymore, " +
                     "so your contact list isn\'t loaded.");
             this.cbRobotMode.UseVisualStyleBackColor = true;
-            this.cbRobotMode.CheckedChanged += new EventHandler(this.cbRobotMode_CheckedChanged);
-            // 
-            // comboPlaces
-            // 
-            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboPlaces.DropDownWidth = 170;
-            this.comboPlaces.FormattingEnabled = true;
-            this.comboPlaces.Location = new System.Drawing.Point(134, 54);
-            this.comboPlaces.Name = "comboPlaces";
-            this.comboPlaces.Size = new System.Drawing.Size(70, 21);
-            this.comboPlaces.TabIndex = 5;
-            this.comboPlaces.Visible = false;
-            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
+            this.cbRobotMode.CheckedChanged += new System.EventHandler(this.cbRobotMode_CheckedChanged);
             // 
             // comboProtocol
             // 
@@ -649,7 +634,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.OwnerPanel);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client (2.5.6)";
+            this.Text = "MSNPSharp Example Client (2.5.8)";
             this.ListPanel.ResumeLayout(false);
             this.treeViewPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
@@ -713,7 +698,6 @@ namespace MSNPSharpClient
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            messenger.Nameserver.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
 
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
             messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
@@ -722,7 +706,6 @@ namespace MSNPSharpClient
             // Handle Service Operation Errors
             messenger.ContactService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
-            messenger.SpaceService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
 
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
@@ -983,7 +966,6 @@ namespace MSNPSharpClient
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = false;
-                        comboPlaces.Visible = false;
                     }
                     break;
 
@@ -1001,7 +983,6 @@ namespace MSNPSharpClient
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = true;
-                        comboPlaces.Visible = true;
                     }
                     break;
             }
@@ -1047,8 +1028,6 @@ namespace MSNPSharpClient
                         loginButton.Tag = 2;
                         loginButton.PerformClick();
                         pnlNameAndPM.Visible = false;
-                        comboPlaces.Visible = false;
-
                     }
                     comboStatus.SelectedIndex = comboStatus.FindString(old.ToString());
                 }
@@ -1064,69 +1043,10 @@ namespace MSNPSharpClient
             }
         }
 
-        private void comboPlaces_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (comboPlaces.SelectedIndex > 0)
-            {
-                string place = comboPlaces.Text.Split(' ')[comboPlaces.Text.Split(' ').Length - 1];
-                if (comboPlaces.SelectedIndex == 1)
-                {
-                    messenger.Owner.Status = PresenceStatus.Offline;
-                    comboPlaces.Visible = false;
-                }
-                else if (comboPlaces.SelectedIndex == comboPlaces.Items.Count - 1)
-                {
-                    messenger.Owner.SignoutFromEverywhere();
-                    comboPlaces.Visible = false;
-                }
-                else
-                {
-                    foreach (KeyValuePair<Guid, string> keyvalue in messenger.Owner.Places)
-                    {
-                        if (keyvalue.Value == place)
-                        {
-                            messenger.Owner.SignoutFrom(keyvalue.Key);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
         private void cbRobotMode_CheckedChanged(object sender, EventArgs e)
         {
             ComboBox cbBotMode = sender as ComboBox;
             messenger.Nameserver.BotMode = cbRobotMode.Checked;
-        }
-
-        private void Owner_PlacesChanged(object sender, EventArgs e)
-        {
-            if (comboPlaces.InvokeRequired)
-            {
-                comboPlaces.Invoke(new EventHandler(Owner_PlacesChanged), sender, e);
-                return;
-            }
-
-            // if (messenger.Owner.Places.Count > 1)
-            {
-                comboPlaces.BeginUpdate();
-                comboPlaces.Items.Clear();
-                comboPlaces.Items.Add("(" + messenger.Owner.Places.Count + ") Places");
-                comboPlaces.Items.Add("Signout from here (" + messenger.Owner.EpName + ")");
-
-                foreach (KeyValuePair<Guid, string> keyvalue in messenger.Owner.Places)
-                {
-                    if (keyvalue.Key != NSMessageHandler.MachineGuid)
-                    {
-                        comboPlaces.Items.Add("Signout from " + keyvalue.Value);
-                    }
-                }
-
-                comboPlaces.Items.Add("Signout from everywhere");
-                comboPlaces.SelectedIndex = 0;
-                comboPlaces.Visible = true;
-                comboPlaces.EndUpdate();
-            }
         }
 
         private void NameserverProcessor_ConnectionEstablished(object sender, EventArgs e)
@@ -1157,7 +1077,6 @@ namespace MSNPSharpClient
             loginButton.Tag = 2;
             loginButton.Text = "Sign off";
             pnlNameAndPM.Visible = true;
-            comboPlaces.Visible = true;
 
             messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
@@ -1182,7 +1101,6 @@ namespace MSNPSharpClient
             loginButton.Tag = 0;
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
-            comboPlaces.Visible = false;
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
@@ -1672,7 +1590,7 @@ namespace MSNPSharpClient
             foreach (Contact contact in messenger.ContactList.All)
             {
                 TreeNode newnode = contact.Online ? onlinenode.Nodes.Add(contact.Mail, contact.Name) : offlinenode.Nodes.Add(contact.Mail, contact.Name);
-                newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : (contact.DynamicChanged != DynamicItemState.None) ? PARENT_NODE_FONT : USER_NODE_FONT;
+                newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                 newnode.Tag = contact;
             }
 
@@ -1720,7 +1638,7 @@ namespace MSNPSharpClient
                 if (contact.ContactGroups.Count == 0)
                 {
                     TreeNode newnode = common.Nodes.Add(contact.Mail, contact.Name);
-                    newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : (contact.DynamicChanged != DynamicItemState.None) ? PARENT_NODE_FONT : USER_NODE_FONT;
+                    newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                     newnode.Tag = contact;
                     if (contact.Online)
                         common.Text = (Convert.ToInt32(common.Text) + 1).ToString();
@@ -1731,7 +1649,7 @@ namespace MSNPSharpClient
                     {
                         TreeNode found = treeViewFavoriteList.Nodes.Find(group.Guid, false)[0];
                         TreeNode newnode = found.Nodes.Add(contact.Mail, contact.Name);
-                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : (contact.DynamicChanged != DynamicItemState.None) ? PARENT_NODE_FONT : USER_NODE_FONT;
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                         newnode.Tag = contact;
                         if (contact.Online)
                             found.Text = (Convert.ToInt32(found.Text) + 1).ToString();

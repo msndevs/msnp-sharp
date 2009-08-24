@@ -51,11 +51,7 @@ namespace MSNPSharp.Core
             : base("UBM", (ArrayList)message.CommandValues.Clone())
         {
             _user = message.CommandValues[0].ToString();
-#if MSNP18
-            _msgtype = message.CommandValues[3].ToString();
-#else
             _msgtype = message.CommandValues[2].ToString();
-#endif
 
             Command = "UBM";
 

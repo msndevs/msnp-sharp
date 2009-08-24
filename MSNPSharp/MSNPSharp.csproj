@@ -45,7 +45,6 @@
     <Compile Include="ConnectivityException.cs" />
     <Compile Include="ConnectivitySettings.cs" />
     <Compile Include="Contact.cs" />
-    <Compile Include="ContactCard.cs" />
     <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
@@ -127,7 +126,6 @@
     <Compile Include="Core\SBMSGMessage.cs" />
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
-    <Compile Include="SpaceService.cs" />
     <Compile Include="StorageService.cs" />
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
@@ -149,11 +147,6 @@
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
     <Compile Include="Web References\MSNWS.MSNSecurityTokenService\Reference.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reference.map</DependentUpon>
-    </Compile>
-    <Compile Include="Web References\MSNWS.MSNSpaceService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
@@ -329,17 +322,6 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNSpaceService\</RelPath>
-      <UpdateFromURL>http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNSpaceService/space_ws.wsdl</UpdateFromURL>
-      <ServiceLocationURL>
-      </ServiceLocationURL>
-      <CachedDynamicPropName>
-      </CachedDynamicPropName>
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSpaceService_SpaceService</CachedSettingsPropName>
-    </WebReferenceUrl>
     <WebReferenceUrl Include="http://127.0.0.1/msnws/25/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
@@ -400,20 +382,6 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\xmldsig-core-schema.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNSpaceService\GetXmlFeedResponseType.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNSpaceService\Reference.map">
-      <Generator>MSDiscoCodeGenerator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-    <None Include="Web References\MSNWS.MSNSpaceService\space_ws.wsdl" />
-    <None Include="Web References\MSNWS.MSNSpaceService\space_ws_datatype.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNSpaceService\space_ws_servicetype.xsd">
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNStorageService\CreateDocumentResponseType.datasource">

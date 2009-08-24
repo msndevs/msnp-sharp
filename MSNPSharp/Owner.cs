@@ -46,9 +46,6 @@ namespace MSNPSharp
     [Serializable]
     public class Owner : Contact
     {
-        private Dictionary<Guid, string> places = new Dictionary<Guid, string>();
-        private string epName = Environment.MachineName;
-
         private bool passportVerified;
         private PrivacyMode privacy = PrivacyMode.Unknown;
         private NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
@@ -58,11 +55,6 @@ namespace MSNPSharp
         /// Fired when owner profile received.
         /// </summary>
         public event EventHandler<EventArgs> ProfileReceived;
-
-        /// <summary>
-        /// Fired when owner places changed.
-        /// </summary>
-        public event EventHandler<EventArgs> PlacesChanged;
 
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
@@ -85,73 +77,6 @@ namespace MSNPSharp
         internal void SetRoamLiveProperty(RoamLiveProperty mode)
         {
             roamLiveProperty = mode;
-        }
-
-        /// <summary>
-        /// This place's name
-        /// </summary>
-        public string EpName
-        {
-            get
-            {
-                return epName;
-            }
-            set
-            {
-                if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline)
-                {
-                    NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                        "<PrivateEndpointData>" +
-                        "<EpName>" + MSNHttpUtility.XmlEncode(value) + "</EpName>" +
-                        "<Idle>" + ((Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
-                        "<State>" + NSMessageHandler.ParseStatus(Status) + "</State>" +
-                        "</PrivateEndpointData>"));
-                }
-
-                epName = value;
-            }
-        }
-
-        /// <summary>
-        /// The end points.
-        /// </summary>
-        public Dictionary<Guid, string> Places
-        {
-            get
-            {
-                return places;
-            }
-            internal set
-            {
-                places = value;
-                OnPlacesChanged(EventArgs.Empty);
-            }
-        }
-
-        /// <summary>
-        /// Sign the owner out from every place.
-        /// </summary>
-        public void SignoutFromEverywhere()
-        {
-            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail, "8" }, "gtfo"));
-            Status = PresenceStatus.Offline;
-        }
-
-        /// <summary>
-        /// Sign the owner out from the specificed place.
-        /// </summary>
-        /// <param name="place">The place guid to be signed out</param>
-        public void SignoutFrom(Guid place)
-        {
-            if (Places.ContainsKey(place))
-            {
-                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
-                    new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
-            }
-            else
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place (signed out already): " + place.ToString(), GetType().Name);
-            }
         }
 
         /// <summary>
@@ -224,32 +149,13 @@ namespace MSNPSharp
             }
         }
 
-        public new ClientCapacitiesEx ClientCapacitiesEx
-        {
-            get
-            {
-                return base.ClientCapacitiesEx;
-            }
-            set
-            {
-                if (base.ClientCapacitiesEx != value)
-                {
-                    base.ClientCapacitiesEx = value;
-                    BroadcastDisplayImage();
-                }
-            }
-        }
-
         internal void BroadcastDisplayImage()
         {
             if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
             {
                 // Resend the user status so other client can see the new msn object
 
-                string capacities = (NSMessageHandler.Credentials.MsnProtocol > MsnProtocol.MSNP15)
-                    ? ((long)ClientCapacities).ToString() + ":" + ((long)ClientCapacitiesEx).ToString()
-                    : ((long)ClientCapacities).ToString();
-
+                string capacities = ((long)ClientCapacities).ToString();
                 string context = String.Empty;
 
                 if (DisplayImage != null)
@@ -388,77 +294,6 @@ namespace MSNPSharp
                 roamLiveProperty = value;
                 if (NSMessageHandler != null)
                 {
-                    NSMessageHandler.ContactService.UpdateMe();
-                }
-            }
-        }
-
-        bool mpopEnabled;
-        MPOP mpopMode = MPOP.Unspecified;
-        string _routeInfo = string.Empty;
-
-        /// <summary>
-        /// Route address, used for PNRP??
-        /// </summary>
-        public string RouteInfo
-        {
-            get
-            {
-                return _routeInfo;
-            }
-            internal set
-            {
-                _routeInfo = value;
-            }
-        }
-
-        /// <summary>
-        /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
-        /// </summary>
-        public bool MPOPEnable
-        {
-            get
-            {
-                return mpopEnabled;
-            }
-            internal set
-            {
-                mpopEnabled = value;
-            }
-        }
-
-
-        internal void SetMPOP(MPOP mpop)
-        {
-            MPOPMode = mpop;
-        }
-
-        /// <summary>
-        /// Reaction when sign in at another place.
-        /// </summary>
-        public MPOP MPOPMode
-        {
-            get
-            {
-                if (mpopMode == MPOP.Unspecified && mpopEnabled)  //If unspecified, we get it from profile.
-                {
-                    if (NSMessageHandler != null)
-                    {
-                        if (NSMessageHandler.ContactService.AddressBook != null)
-                        {
-                            if (NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey("mpop"))
-                                mpopMode = NSMessageHandler.ContactService.AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
-
-                        }
-                    }
-                }
-                return mpopMode;
-            }
-            set
-            {
-                if (NSMessageHandler != null && MPOPEnable)
-                {
-                    mpopMode = value;
                     NSMessageHandler.ContactService.UpdateMe();
                 }
             }
@@ -787,9 +622,7 @@ namespace MSNPSharp
             string kid, string age, string birthday,
             string wallet, string sid, string kv,
             string mspAuth, IPAddress clientIP, int clientPort,
-            string nick,
-            bool mpop,
-            string routeInfo)
+            string nick)
         {
             LoginTime = loginTime;
             EmailEnabled = emailEnabled;
@@ -809,8 +642,6 @@ namespace MSNPSharp
             MSPAuth = mspAuth;
             ClientIP = clientIP;
             ClientPort = clientPort;
-            MPOPEnable = mpop;
-            RouteInfo = routeInfo;
             SetNickName(nick);
             ValidProfile = true;
 
@@ -825,16 +656,6 @@ namespace MSNPSharp
         {
             if (ProfileReceived != null)
                 ProfileReceived(this, e);
-        }
-
-        /// <summary>
-        /// Called when the <see cref="Places "/> (End Points) changed.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnPlacesChanged(EventArgs e)
-        {
-            if (PlacesChanged != null)
-                PlacesChanged(this, e);
         }
     }
 };

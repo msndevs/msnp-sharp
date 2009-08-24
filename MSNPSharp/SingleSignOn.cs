@@ -55,7 +55,6 @@ namespace MSNPSharp
         Clear = 0x01,
         Contact = 0x02,
         OIM = 0x04,
-        Spaces = 0x08,
         Storage = 0x10,
         Web = 0x20
     }
@@ -515,7 +514,6 @@ namespace MSNPSharp
             AuthenticationAdd("messenger.msn.com", "?id=507");
             AuthenticationAdd("contacts.msn.com", "MBI");
             AuthenticationAdd("messengersecure.live.com", "MBI_SSL");
-            AuthenticationAdd("spaces.live.com", "MBI");
             AuthenticationAdd("storage.msn.com", "MBI");
         }
 
@@ -535,10 +533,6 @@ namespace MSNPSharp
 
                     case SSOTicketType.OIM:
                         AuthenticationAdd("messengersecure.live.com", "MBI_SSL");
-                        break;
-
-                    case SSOTicketType.Spaces:
-                        AuthenticationAdd("spaces.live.com", "MBI");
                         break;
 
                     case SSOTicketType.Clear:
@@ -665,9 +659,6 @@ namespace MSNPSharp
                         break;
                     case "messengerclear.live.com":
                         ticketype = SSOTicketType.Clear;
-                        break;
-                    case "spaces.live.com":
-                        ticketype = SSOTicketType.Spaces;
                         break;
                     case "storage.msn.com":
                         ticketype = SSOTicketType.Storage;

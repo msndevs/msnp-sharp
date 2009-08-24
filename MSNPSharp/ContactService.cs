@@ -330,7 +330,6 @@ namespace MSNPSharp
                 NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
                 NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
                 NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
-                NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
             }
 
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();  //Get displayimage and other profile items. Displayimage not broadcasted.
@@ -590,78 +589,6 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
-#if MSNP18
-        internal void abRequest(PartnerScenario partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
-        {
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
-            {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", new MSNPSharpException("You don't have access right on this action anymore.")));
-            }
-            else
-            {
-                bool deltasOnly = false;
-
-                MsnServiceObject ABFindContactsPagedObject = new MsnServiceObject(partnerScenario, "ABFindContactsPaged");
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindContactsPagedObject);
-                ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
-                request.abView = "MessengerClient8";  //NO default!
-                request.extendedContent = "AB AllGroups CircleResult";
-
-                request.filterOptions = new filterOptionsType();
-                request.filterOptions.ContactFilter = new ContactFilterType();
-
-                if (AddressBook.AddressbookLastChange != DateTime.MinValue)
-                {
-                    deltasOnly = true;
-                    request.filterOptions.LastChanged = AddressBook.AddressbookLastChange;
-                    request.filterOptions.LastChangedSpecified = true;
-                }
-
-                request.filterOptions.DeltasOnly = deltasOnly;
-                request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
-
-                abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
-                {
-                    DeleteCompletedObject(abService);
-
-                    if (!e.Cancelled)
-                    {
-                        if (e.Error != null)
-                        {
-                            if ((recursiveCall == 0 && ((MsnServiceObject)e.UserState).PartnerScenario == PartnerScenario.Initial)
-                                || (e.Error.Message.Contains("Need to do full sync")))
-                            {
-                                recursiveCall++;
-                                SynchronizeContactList();
-                            }
-                            else
-                            {
-                                OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ABFindContactsPaged", e.Error));
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
-                            }
-                        }
-                        else
-                        {
-                            HandleServiceHeader(abService.ServiceHeaderValue, typeof(ABFindContactsPagedRequestType));
-                            if (null != e.Result.ABFindContactsPagedResult)
-                            {
-                                AddressBook.Merge(e.Result.ABFindContactsPagedResult);
-                                Deltas.AddressBookDeltas.Add(e.Result.ABFindContactsPagedResult);
-                                Deltas.Save();
-                            }
-                            if (onSuccess != null)
-                            {
-                                onSuccess(abService, e);
-                            }
-                        }
-                    }
-                };
-
-                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABFindContactsPaged", request);
-                abService.ABFindContactsPagedAsync(request, ABFindContactsPagedObject);
-            }
-        }
-#else
         internal void abRequest(PartnerScenario partnerScenario, ABFindAllCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
@@ -731,7 +658,6 @@ namespace MSNPSharp
                 abService.ABFindAllAsync(request, ABFindAllObject);
             }
         }
-#endif
 
         public static string[] ConstructLists(Dictionary<string, MSNLists> contacts, bool initial)
         {
@@ -1354,59 +1280,6 @@ namespace MSNPSharp
             }
         }
 
-        private void UpdateGeneralDialogSettings()
-        {
-            Owner owner = NSMessageHandler.Owner;
-
-            if (owner == null)
-                throw new InvalidOperationException("This is not a valid Messenger contact.");
-
-            MPOP oldMPOP = AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
-
-            List<Annotation> annos = new List<Annotation>();
-
-
-            if (oldMPOP != owner.MPOPMode)
-            {
-                Annotation anno = new Annotation();
-                anno.Name = "MSN.IM.MPOP";
-                anno.Value = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
-                annos.Add(anno);
-            }
-
-
-            if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
-            {
-                MsnServiceObject ABContactUpdateObject = new MsnServiceObject(PartnerScenario.PrivacyApply, "ABContactUpdate"); // In msnp17 this is "GeneralDialogApply"
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
-                abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
-                {
-                    DeleteCompletedObject(abService);
-                    if (!e.Cancelled && e.Error == null)
-                    {
-                        HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactUpdateRequestType));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateGeneralDialogSetting completed.", GetType().Name);
-                        AddressBook.MyProperties["mpop"] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
-                    }
-                    else if (e.Error != null)
-                    {
-                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateGeneralDialogSetting", e.Error));
-                    }
-                };
-
-                ABContactUpdateRequestType request = new ABContactUpdateRequestType();
-                request.abId = "00000000-0000-0000-0000-000000000000";
-                request.contacts = new ContactType[] { new ContactType() };
-                request.contacts[0].contactInfo = new contactInfoType();
-                request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
-                request.contacts[0].contactInfo.annotations = annos.ToArray();
-                request.contacts[0].propertiesChanged = PropertyString.Annotation;
-
-                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "ABContactUpdate", request);
-                abService.ABContactUpdateAsync(request, ABContactUpdateObject);
-            }
-        }
-
         private void UpdatePrivacySettings()
         {
             Owner owner = NSMessageHandler.Owner;
@@ -1980,16 +1853,10 @@ namespace MSNPSharp
                     MSNLists.AllowedList,
                     delegate
                     {
-                        System.Threading.Thread.CurrentThread.Join(100);
-
                         if (!contact.OnBlockedList)
                             AddContactToList(contact, MSNLists.BlockedList, null);
                     }
                 );
-
-                // wait some time before sending the other request. If not we may block before we removed
-                // from the allow list which will give an error
-                System.Threading.Thread.CurrentThread.Join(100);
             }
             else if (!contact.OnBlockedList)
             {
@@ -2011,14 +1878,10 @@ namespace MSNPSharp
                     MSNLists.BlockedList,
                     delegate
                     {
-                        System.Threading.Thread.CurrentThread.Join(100);
-
                         if (!contact.OnAllowedList)
                             AddContactToList(contact, MSNLists.AllowedList, null);
                     }
                 );
-
-                System.Threading.Thread.CurrentThread.Join(100);
             }
             else if (!contact.OnAllowedList)
             {

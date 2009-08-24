@@ -42,7 +42,6 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
-    using MSNPSharp.MSNWS.MSNSpaceService;
 
     internal enum MsnServiceType
     {
@@ -50,8 +49,7 @@ namespace MSNPSharp
         Sharing,
         Storage,
         RSI,
-        OIMStore,
-        Space
+        OIMStore
     }
 
     internal enum PartnerScenario
@@ -319,18 +317,6 @@ namespace MSNPSharp
                     oimService.TicketValue.appid = NSMessageHandler.Credentials.ClientID;
 
                     service = oimService;
-                    break;
-
-                case MsnServiceType.Space:
-
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Spaces);
-
-                    SpaceService spaceService = new SpaceService();
-                    spaceService.Proxy = WebProxy;
-                    spaceService.AuthTokenHeaderValue = new AuthTokenHeader();
-                    spaceService.AuthTokenHeaderValue.Token = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Spaces].Ticket;
-
-                    service = spaceService;
                     break;
             }
 

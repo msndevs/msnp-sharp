@@ -14,9 +14,6 @@
     <Setting Name="MSNPSharp_MSNWS_MSNABSharingService_SharingService" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">https://contacts.msn.com/abservice/SharingService.asmx</Value>
     </Setting>
-    <Setting Name="MSNPSharp_MSNWS_MSNSpaceService_SpaceService" Type="(Web Service URL)" Scope="Application">
-      <Value Profile="(Default)">http://cc.services.spaces.live.com/contactcard/contactcardservice.asmx</Value>
-    </Setting>
     <Setting Name="MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">https://login.live.com/RST.srf</Value>
     </Setting>
