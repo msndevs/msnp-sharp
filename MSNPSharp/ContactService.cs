@@ -1917,16 +1917,10 @@ namespace MSNPSharp
                     MSNLists.AllowedList,
                     delegate
                     {
-                        System.Threading.Thread.CurrentThread.Join(100);
-
                         if (!contact.OnBlockedList)
                             AddContactToList(contact, MSNLists.BlockedList, null);
                     }
                 );
-
-                // wait some time before sending the other request. If not we may block before we removed
-                // from the allow list which will give an error
-                System.Threading.Thread.CurrentThread.Join(100);
             }
             else if (!contact.OnBlockedList)
             {
@@ -1948,14 +1942,10 @@ namespace MSNPSharp
                     MSNLists.BlockedList,
                     delegate
                     {
-                        System.Threading.Thread.CurrentThread.Join(100);
-
                         if (!contact.OnAllowedList)
                             AddContactToList(contact, MSNLists.AllowedList, null);
                     }
                 );
-
-                System.Threading.Thread.CurrentThread.Join(100);
             }
             else if (!contact.OnAllowedList)
             {
