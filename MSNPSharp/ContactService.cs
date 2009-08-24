@@ -513,12 +513,7 @@ namespace MSNPSharp
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
                 request.serviceFilter.Types = new string[]
                 {
-                    ServiceFilterType.Messenger,
-                    ServiceFilterType.Invitation,
-                    ServiceFilterType.SocialNetwork,
-                    ServiceFilterType.Profile,
-                    ServiceFilterType.Folder,
-                    ServiceFilterType.OfficeLiveWebNotification
+                    ServiceFilterType.Messenger
                 };
 
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)

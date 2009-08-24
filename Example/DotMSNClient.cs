@@ -60,7 +60,7 @@ namespace MSNPSharpClient
             TraceForm traceform = new TraceForm();
             traceform.Show();
 
-#if DEBUG || MSNP18
+#if DEBUG
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.None;
 #elif TRACE
