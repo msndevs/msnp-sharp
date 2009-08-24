@@ -100,13 +100,7 @@ namespace MSNPSharp
             {
                 if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline)
                 {
-                    NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                        "<PrivateEndpointData>" +
-                        "<EpName>" + MSNHttpUtility.XmlEncode(value) + "</EpName>" +
-                        "<Idle>" + ((Status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
-                        "<ClientType>1</ClientType>" +
-                        "<State>" + NSMessageHandler.ParseStatus(Status) + "</State>" +
-                        "</PrivateEndpointData>"));
+                    NSMessageHandler.SetPresenceStatusUUX(Status);
                 }
 
                 epName = value;

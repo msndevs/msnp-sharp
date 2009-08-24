@@ -720,7 +720,7 @@ namespace MSNPSharp
                     owner.ClientCapacitiesEx = defaultClientCapacitiesEx;
 
                     SetEndPointCapabilities();
-                    Owner.EpName = Owner.EpName;
+                    SetPresenceStatusUUX(status);
                     SetPersonalMessage(Owner.PersonalMessage);
                 }
 
@@ -732,13 +732,7 @@ namespace MSNPSharp
                     //Well, only update the status after receiving the CHG command is right. However,
                     //we need to send UUX before CHG.
 
-                    MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                         "<PrivateEndpointData>" +
-                         "<EpName>" + MSNHttpUtility.XmlEncode(Owner.EpName) + "</EpName>" +
-                         "<Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
-                         "<ClientType>1</ClientType>" +
-                         "<State>" + ParseStatus(status) + "</State>" +
-                         "</PrivateEndpointData>"));
+                    SetPresenceStatusUUX(status);
                 }
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
@@ -755,6 +749,18 @@ namespace MSNPSharp
                     SetScreenName(Owner.Name);
                 }
             }
+        }
+
+        internal void SetPresenceStatusUUX(PresenceStatus status)
+        {
+            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
+                "<PrivateEndpointData>" +
+                "<EpName>" + MSNHttpUtility.XmlEncode(Owner.EpName) + "</EpName>" +
+                "<Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
+                "<ClientType>1</ClientType>" +
+                "<State>" + ParseStatus(status) + "</State>" +
+                "</PrivateEndpointData>")
+            );
         }
 
 
