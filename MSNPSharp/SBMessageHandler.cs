@@ -877,7 +877,7 @@ namespace MSNPSharp
             Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
             // Not in contact list (anonymous). Update it's name and caps.
-            if (contact.Lists == MSNLists.None)
+            //if (contact.Lists == MSNLists.None)
             {
                 if (message.CommandValues.Count >= 5)
                     contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
@@ -927,7 +927,7 @@ namespace MSNPSharp
                 Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
                 // Not in contact list (anonymous). Update it's name and caps.
-                if (contact.Lists == MSNLists.None)
+                //if (contact.Lists == MSNLists.None)
                 {
                     if (message.CommandValues.Count >= 2)
                         contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[1].ToString()));

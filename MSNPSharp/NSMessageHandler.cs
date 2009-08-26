@@ -1127,8 +1127,25 @@ namespace MSNPSharp
         protected virtual void OnNLNReceived(NSMessage message)
         {
             PresenceStatus newstatus = ParseStatus(message.CommandValues[0].ToString());
-            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
-            string account = message.CommandValues[1].ToString().Split(':')[1].ToLowerInvariant();
+
+            ClientType type;
+            string account;
+            string fullaccount = message.CommandValues[1].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
+            if (fullaccount.Contains(";"))
+            {
+                string[] usernameAndCircle = fullaccount.Split(';');
+                type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
+                account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
+
+                string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
+                Circle circle = CircleList[new Guid(circleMail.Split('@')[0])];
+            }
+            else
+            {
+                type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
+                account = fullaccount.Split(':')[1].ToLowerInvariant();
+            }
+
             string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
             ClientCapacities newcaps = ClientCapacities.None;
             ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
@@ -1161,7 +1178,7 @@ namespace MSNPSharp
             contact.ClientCapacities = newcaps;
             contact.ClientCapacitiesEx = newcapsex;
 
-            if (contact != Owner && !String.IsNullOrEmpty(newdp))
+            if (contact != Owner && !String.IsNullOrEmpty(newdp) && newdp != "0")
             {
                 DisplayImage userDisplay = new DisplayImage();
                 userDisplay.Context = newdp;
@@ -1194,6 +1211,22 @@ namespace MSNPSharp
         {
             ClientType type;
             string account;
+            string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
+            if (fullaccount.Contains(";"))
+            {
+                string[] usernameAndCircle = fullaccount.Split(';');
+                type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
+                account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
+
+                string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
+                Circle circle = CircleList[new Guid(circleMail.Split('@')[0])];
+            }
+            else
+            {
+                type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
+                account = fullaccount.Split(':')[1].ToLowerInvariant();
+            }
+
             ClientCapacities oldcaps = ClientCapacities.None;
             ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
             string networkpng;
