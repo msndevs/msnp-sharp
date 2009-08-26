@@ -94,7 +94,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
-
+            messenger.Nameserver.Owner.StatusChanged += new EventHandler<StatusChangeEventArgs>(Owner_StatusChanged);
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
             messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
             
@@ -119,6 +119,8 @@ namespace MSNPSharpClient
             comboProtocol.SelectedIndex = 0;
 
         }
+
+        
 
         void ServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {
@@ -436,6 +438,20 @@ namespace MSNPSharpClient
             }
         }
 
+        void Owner_StatusChanged(object sender, StatusChangeEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<StatusChangeEventArgs>(Owner_StatusChanged), sender, e);
+                return;
+            }
+
+            if (messenger.Nameserver.IsSignedIn)
+            {
+                comboStatus.SelectedIndex = comboStatus.FindString(messenger.Owner.Status.ToString());
+            }
+        }
+
 
         private void comboStatus_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -531,6 +547,7 @@ namespace MSNPSharpClient
         {
             if (e.Node.Level == 0)
             {
+
                 Point[] points = !e.Node.IsExpanded
                     ? new Point[] {
                         new Point(e.Bounds.X+4, e.Bounds.Y +4),
@@ -546,9 +563,13 @@ namespace MSNPSharpClient
 
                 PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
                 e.Graphics.DrawString(e.Node.Text, PARENT_NODE_FONT, Brushes.Black, textLocation);
+
+
             }
             else if (e.Node.Level == 1 && e.Node.Tag is Contact)
             {
+
+
                 Contact contact = e.Node.Tag as Contact;
                 Brush brush = Brushes.Green;
 
@@ -585,7 +606,12 @@ namespace MSNPSharpClient
                 PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
                 e.Graphics.DrawString(text, contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT, Brushes.Black, textLocation);
 
+
+
             }
+
+
+
 
 
         }
