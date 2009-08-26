@@ -62,7 +62,6 @@
     <Compile Include="EmoticonMessage.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="EventArgs.cs" />
-    <Compile Include="Core\Factory.cs" />
     <Compile Include="Core\IMessageHandler.cs" />
     <Compile Include="IO\DeltasList.cs" />
     <Compile Include="IO\IO.cs" />
