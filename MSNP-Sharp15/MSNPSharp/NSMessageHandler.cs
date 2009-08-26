@@ -710,8 +710,8 @@ namespace MSNPSharp
                     isSetDefault = true;
 
                     //don't set the same status or it will result in disconnection
-                    owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
                     owner.ClientCapacities = defaultClientCapacities;
+
                     if (BotMode)
                     {
                         owner.ClientCapacities |= ClientCapacities.IsBot;
@@ -721,7 +721,17 @@ namespace MSNPSharp
 
                     SetEndPointCapabilities();
                     SetPresenceStatusUUX(status);
+
+                    if (AutoSynchronize)
+                    {
+                        // Send BLP
+                        SetPrivacyMode(Owner.Privacy);
+                    }
+
                     SetPersonalMessage(Owner.PersonalMessage);
+
+                    // Set screen name
+                    SetScreenName(Owner.Name);
                 }
 
                 ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
@@ -736,18 +746,6 @@ namespace MSNPSharp
                 }
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
-
-                if (isSetDefault)
-                {
-                    if (AutoSynchronize)
-                    {
-                        // Send BLP
-                        SetPrivacyMode(Owner.Privacy);
-                    }
-
-                    // Set screen name
-                    SetScreenName(Owner.Name);
-                }
             }
         }
 
@@ -1129,16 +1127,12 @@ namespace MSNPSharp
         protected virtual void OnNLNReceived(NSMessage message)
         {
             PresenceStatus newstatus = ParseStatus(message.CommandValues[0].ToString());
-            ClientType type;
-            string account;
-            string newname;
+            ClientType type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
+            string account = message.CommandValues[1].ToString().Split(':')[1].ToLowerInvariant();
+            string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
             ClientCapacities newcaps = ClientCapacities.None;
             ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
-            string newdp;
 
-            type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString().Split(':')[0]);
-            account = message.CommandValues[1].ToString().Split(':')[1].ToLowerInvariant();
-            newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
             if (message.CommandValues.Count >= 4)
             {
                 if (message.CommandValues[3].ToString().Contains(":"))
@@ -1152,11 +1146,15 @@ namespace MSNPSharp
                 }
 
             }
-            newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
+
+            string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
 
 
-            if (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+            if (IsSignedIn && account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+            {
+                SetPresenceStatus(newstatus);
                 return;
+            }
 
             Contact contact = ContactList.GetContact(account, type);
             contact.SetName(HttpUtility.UrlDecode(newname));
