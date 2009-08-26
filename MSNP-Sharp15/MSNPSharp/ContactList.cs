@@ -307,8 +307,7 @@ namespace MSNPSharp
                 return this[hash];
             }
 
-            Contact tmpContact = Factory.CreateContact();
-            tmpContact.NSMessageHandler = nsMessageHandler;
+            Contact tmpContact = new Contact(nsMessageHandler);
             tmpContact.Mail = account;
             tmpContact.ClientType = type;
             tmpContact.SetName(account);

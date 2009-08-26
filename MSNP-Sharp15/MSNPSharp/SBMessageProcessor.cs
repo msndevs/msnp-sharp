@@ -45,6 +45,13 @@ namespace MSNPSharp
 
         public event EventHandler<ExceptionEventArgs> HandlerException;
 
+        protected internal SBMessageProcessor()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
+
+            MessagePool = new SBMessagePool();
+        }
+
         public int TransactionID
         {
             get
@@ -61,14 +68,7 @@ namespace MSNPSharp
         {
             transactionID++;
             return transactionID;
-        }
-
-        private SBMessageProcessor()
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
-
-            MessagePool = new SBMessagePool();
-        }
+        }        
 
         protected override void OnMessageReceived(byte[] data)
         {

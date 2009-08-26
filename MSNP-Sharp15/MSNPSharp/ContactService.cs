@@ -2089,7 +2089,7 @@ namespace MSNPSharp
                                             && contact.fDeletedSpecified
                                             && contact.fDeleted == false)
                                         {
-                                            Circle circle = Factory.CreateCircle();
+                                            Circle circle = new Circle();
                                             circle.AddressBookId = new Guid(abId);
                                             circle.CreatorEmail = NSMessageHandler.Owner.Mail;
                                             circle.CID = contact.contactInfo.CID;

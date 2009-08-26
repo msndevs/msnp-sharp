@@ -188,6 +188,11 @@ namespace MSNPSharp
         {
         }
 
+        protected internal Contact(NSMessageHandler handler)
+        {
+            NSMessageHandler = handler;
+        }
+
         #region Events
 
         public event EventHandler<EventArgs> ScreenNameChanged;

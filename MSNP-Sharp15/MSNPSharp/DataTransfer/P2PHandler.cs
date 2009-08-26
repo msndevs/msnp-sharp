@@ -79,6 +79,14 @@ namespace MSNPSharp.DataTransfer
     /// </summary>
     public class P2PHandler : IMessageHandler
     {
+
+        /// <summary>
+        /// Protected constructor.
+        /// </summary>
+        protected internal P2PHandler()
+        {
+        }
+
         /// <summary>
         /// </summary>
         private ArrayList messageSessions = new ArrayList();
@@ -349,13 +357,7 @@ namespace MSNPSharp.DataTransfer
             return null;
         }
 
-        /// <summary>
-        /// Protected constructor.
-        /// </summary>
-        protected P2PHandler()
-        {
 
-        }
 
         #region IMessageHandler Members
         private IMessageProcessor messageProcessor;
@@ -596,19 +598,15 @@ namespace MSNPSharp.DataTransfer
         /// <param name="remoteContact"></param>
         protected virtual SBMessageHandler RequestSwitchboard(Contact remoteContact)
         {
+            if (NSMessageHandler == null)
+                throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
 
-                SBMessageHandler handler = null;
+            SBMessageHandler handler = new SBMessageHandler();
+            NSMessageHandler.RequestSwitchboard(handler, this);
+            handler.NSMessageHandler = NSMessageHandler;
 
-                handler = Factory.CreateSwitchboardHandler();
-                if (NSMessageHandler == null)
-                    throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
-
-                NSMessageHandler.RequestSwitchboard(handler, this);
-                handler.NSMessageHandler = NSMessageHandler;
-
-                handler.Invite(remoteContact);
-                return handler;
-
+            handler.Invite(remoteContact);
+            return handler;
         }
 
         /// <summary>
