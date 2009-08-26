@@ -465,8 +465,13 @@ namespace MSNPSharp
                             {
                                 foreach (Contact contact in NSMessageHandler.ContactList.All)
                                 {
+                                    // Added by other place, this place hasn't synchronized this contact yet.
+                                    if (contact.OnForwardList && contact.OnPendingList)
+                                    {
+                                        contact.OnPendingList = false;
+                                    }
                                     // At this phase, we requested all memberships including pending.
-                                    if (contact.OnPendingList ||
+                                    else if (contact.OnPendingList ||
                                         (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
                                     {
                                         NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
