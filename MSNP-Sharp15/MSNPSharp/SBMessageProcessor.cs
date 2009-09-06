@@ -121,9 +121,16 @@ namespace MSNPSharp
 
             sbMessage.TransactionID = IncreaseTransactionID();
 
-            if (sbMessage.InnerMessage == null)
+            if (sbMessage.InnerMessage == null )
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+            }
+            else
+            {
+                if (!(sbMessage.InnerMessage.InnerMessage is P2PMessage))
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+                }
             }
 
             int x = 0;
