@@ -45,6 +45,13 @@ namespace MSNPSharp
 
         public event EventHandler<ExceptionEventArgs> HandlerException;
 
+        protected internal SBMessageProcessor()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
+
+            MessagePool = new SBMessagePool();
+        }
+
         public int TransactionID
         {
             get
@@ -61,14 +68,7 @@ namespace MSNPSharp
         {
             transactionID++;
             return transactionID;
-        }
-
-        private SBMessageProcessor()
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
-
-            MessagePool = new SBMessagePool();
-        }
+        }        
 
         protected override void OnMessageReceived(byte[] data)
         {
@@ -78,7 +78,17 @@ namespace MSNPSharp
             message.ParseBytes(data);
 
             if (message.InnerBody == null)
+            {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+            }
+            else
+            {
+                if (message.Acknowledgement != "D")
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+                }
+            }
+
             // send the message
             DispatchMessage(message);
         }
@@ -121,9 +131,16 @@ namespace MSNPSharp
 
             sbMessage.TransactionID = IncreaseTransactionID();
 
-            if (sbMessage.InnerMessage == null)
+            if (sbMessage.InnerMessage == null )
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+            }
+            else
+            {
+                if (!(sbMessage.InnerMessage.InnerMessage is P2PMessage))
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+                }
             }
 
             int x = 0;
