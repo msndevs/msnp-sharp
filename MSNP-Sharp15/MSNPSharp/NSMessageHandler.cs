@@ -219,6 +219,19 @@ namespace MSNPSharp
             }
         }
 
+        private CircleMemberList circleMemberList = new CircleMemberList();
+
+        /// <summary>
+        /// A collection of all circle which are defined by the user who logged into the messenger network.
+        /// </summary>
+        public CircleMemberList CircleMemberList
+        {
+            get
+            {
+                return circleMemberList;
+            }
+        }
+
         /// <summary>
         /// These credentials are used for user authentication and client identification
         /// </summary>
@@ -1131,19 +1144,27 @@ namespace MSNPSharp
             ClientType type;
             string account;
             string fullaccount = message.CommandValues[1].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
-            if (fullaccount.Contains(";"))
+            Contact contact = null;
+
+            if (fullaccount.Contains(";via=9:"))
             {
                 string[] usernameAndCircle = fullaccount.Split(';');
                 type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                Circle circle = CircleList[new Guid(circleMail.Split('@')[0])];
+
+                if (CircleMemberList[account] == null)
+                {
+                    contact = new CircleContactMember(usernameAndCircle[1], account, type);
+                    CircleMemberList.Add(contact as CircleContactMember);
+                }
             }
             else
             {
                 type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
+                contact = ContactList.GetContact(account, type);
             }
 
             string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
@@ -1173,7 +1194,6 @@ namespace MSNPSharp
                 return;
             }
 
-            Contact contact = ContactList.GetContact(account, type);
             contact.SetName(HttpUtility.UrlDecode(newname));
             contact.ClientCapacities = newcaps;
             contact.ClientCapacitiesEx = newcapsex;
@@ -1212,19 +1232,30 @@ namespace MSNPSharp
             ClientType type;
             string account;
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
-            if (fullaccount.Contains(";"))
+            Contact contact = null;
+
+            if (fullaccount.Contains(";via=9:"))
             {
                 string[] usernameAndCircle = fullaccount.Split(';');
                 type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                Circle circle = CircleList[new Guid(circleMail.Split('@')[0])];
+
+                contact = CircleMemberList[usernameAndCircle[1]];
+                if (contact == null)
+                {
+                    contact = new CircleContactMember(usernameAndCircle[1], account, type);
+                    CircleMemberList.Add(contact as CircleContactMember);
+                }
             }
             else
             {
                 type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
+
+                contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+                ? Owner : ContactList.GetContact(account, type);
             }
 
             ClientCapacities oldcaps = ClientCapacities.None;
@@ -1246,9 +1277,6 @@ namespace MSNPSharp
                 }
             }
             networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-
-            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
-                ? Owner : ContactList.GetContact(account, type);
 
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
@@ -2454,6 +2482,7 @@ namespace MSNPSharp
         {
             ContactList.Clear();
             CircleList.Clear();
+            CircleMemberList.Clear();
             ContactGroups.Clear();
             ContactService.Clear();
             StorageService.Clear();

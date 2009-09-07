@@ -758,17 +758,19 @@ namespace MSNPSharp.IO
 
         private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
         {
-            Circle circle = new Circle(
-                new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.DisplayName, NSMessageHandler);
+            Circle circle = new Circle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.DisplayName, NSMessageHandler);
+            circle.HostDomain = circleinfo.Content.Info.HostedDomain;
+
             circle.Lists = MSNLists.AllowedList | MSNLists.ForwardList;
             circle.Guid = new Guid(contact.contactId);
-            circle.HostDomain = circleinfo.Content.Info.HostedDomain;
+
 
             if (contact.contactInfo != null)
             {
 
                 circle.CID = contact.contactInfo.CID;
             }
+
             return circle;
         }
 

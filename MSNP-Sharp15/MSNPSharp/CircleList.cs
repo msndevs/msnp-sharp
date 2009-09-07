@@ -38,6 +38,85 @@ using System.Threading;
 
 namespace MSNPSharp
 {
+    public class CircleMemberList : IEnumerable
+    {
+        private List<CircleContactMember> list = new List<CircleContactMember>();
+
+        [NonSerialized]
+        private object syncRoot;
+
+        public CircleContactMember this[string via]
+        {
+            get
+            {
+                foreach (CircleContactMember member in list)
+                {
+                    if (member.Via.ToLowerInvariant() == via.ToLowerInvariant())
+                        return member;
+                }
+                return null;
+            }
+        }
+
+        public object SyncRoot
+        {
+            get
+            {
+                if (syncRoot == null)
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncRoot, newobj, null);
+                }
+                return syncRoot;
+            }
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return list.GetEnumerator();
+        }
+
+        public bool Add(CircleContactMember member)
+        {
+            lock (SyncRoot)
+            {
+                if (this[member.Via] == null)
+                {
+                    list.Add(member);
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        public bool Remove(CircleContactMember member)
+        {
+            lock (SyncRoot)
+            {
+                if (this[member.Via] == null)
+                {
+                    return false;
+                }
+
+                list.Remove(member);
+                return true;
+            }
+        }
+
+        public void Clear()
+        {
+            lock (SyncRoot)
+                list.Clear();
+        }
+
+        public int Count
+        {
+            get { return list.Count; }
+        }
+    }
+
+
     [Serializable()]
     public class CircleList : IEnumerable
     {
@@ -87,29 +166,6 @@ namespace MSNPSharp
         internal CircleList(NSMessageHandler handler)
         {
             nsMessageHandler = handler;
-        }
-
-        /// <summary>
-        /// Create a new <see cref="Circle"/> and add it into list.
-        /// </summary>
-        /// <param name="name"></param>
-        public virtual void Add(string name)
-        {
-            if (nsMessageHandler == null)
-                throw new MSNPSharpException("No nameserver handler defined");
-
-            nsMessageHandler.ContactService.CreateCircle(name);
-        }
-
-        public Circle GetByName(string name)
-        {
-            foreach (Circle circle in list)
-            {
-                if (circle.Name == name)
-                    return circle;
-            }
-
-            return null;
         }
 
         /// <summary>

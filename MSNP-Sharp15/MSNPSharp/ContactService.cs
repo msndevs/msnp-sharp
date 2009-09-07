@@ -2089,12 +2089,10 @@ namespace MSNPSharp
                                             && contact.fDeletedSpecified
                                             && contact.fDeleted == false)
                                         {
-                                            Circle circle = new Circle();
-                                            circle.AddressBookId = new Guid(abId);
+                                            Circle circle = new Circle(new Guid(abId), contact.contactInfo.displayName, NSMessageHandler);
                                             circle.CreatorEmail = NSMessageHandler.Owner.Mail;
                                             circle.CID = contact.contactInfo.CID;
                                             circle.Guid = new Guid(contact.contactId);
-                                            circle.SetName(contact.contactInfo.displayName);
                                             circle.NickName = circle.Name;
 
                                             NSMessageHandler.CircleList.AddCircle(circle);

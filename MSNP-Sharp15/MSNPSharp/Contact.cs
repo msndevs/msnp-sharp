@@ -127,6 +127,9 @@ namespace MSNPSharp
         }
     }
 
+    /// <summary>
+    /// User in roster list.
+    /// </summary>
     [Serializable()]
     public class Contact
     {
@@ -277,6 +280,7 @@ namespace MSNPSharp
             {
                 return mail;
             }
+
             internal set
             {
                 mail = value;

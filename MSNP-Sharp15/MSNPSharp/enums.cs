@@ -983,6 +983,9 @@ namespace MSNPSharp
         public const string GroupName = "GroupName";
     }
 
+    /// <summary>
+    /// Scheme string for PUT command.
+    /// </summary>
     public static class CircleString
     {
         public const string PUTCommandScheme = "{routing scheme}" +

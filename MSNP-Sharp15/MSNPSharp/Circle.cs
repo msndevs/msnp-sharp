@@ -47,7 +47,7 @@ namespace MSNPSharp
         /// <summary>
         /// The affected contact group
         /// </summary>
-        public Circle ContactGroup
+        public Circle Circle
         {
             get
             {
@@ -65,10 +65,9 @@ namespace MSNPSharp
         /// <param name="circle"></param>
         public CircleEventArgs(Circle circle)
         {
-            ContactGroup = circle;
+            Circle = circle;
         }
     }
-
 
     [Serializable()]
     public class Circle : Contact
@@ -92,28 +91,28 @@ namespace MSNPSharp
 
         public Guid AddressBookId
         {
-            get 
-            { 
-                return addressBookId; 
+            get
+            {
+                return addressBookId;
             }
 
-            internal set 
-            { 
-                addressBookId = value; 
+            internal set
+            {
+                addressBookId = value;
             }
         }
 
 
         public string CreatorEmail
         {
-            get 
-            { 
-                return creatorEmail; 
+            get
+            {
+                return creatorEmail;
             }
 
-            internal set 
-            { 
-                creatorEmail = value; 
+            internal set
+            {
+                creatorEmail = value;
             }
         }
 
@@ -141,14 +140,14 @@ namespace MSNPSharp
             }
         }
 
-        protected internal Circle()
-            :base()
+        protected Circle()
+            : base()
         {
             Initialize();
         }
 
         public Circle(Guid abId, string displayName, NSMessageHandler handler)
-            :base()
+            : base()
         {
             AddressBookId = abId;
             NSMessageHandler = handler;
@@ -160,6 +159,59 @@ namespace MSNPSharp
         public override int GetHashCode()
         {
             return Mail.GetHashCode();
+        }
+
+        #region Protected
+        protected virtual void Initialize()
+        {
+            ContactType = MessengerContactType.Circle;
+            ClientType = ClientType.CircleMember;
+        }
+
+        #endregion
+    }
+
+
+    [Serializable()]
+    public class CircleContactMember : Contact
+    {
+        private string via = string.Empty;
+        private ClientType memberType = ClientType.PassportMember;
+
+        public ClientType MemberType
+        {
+            get { return memberType; }
+        }
+
+        public string Via
+        {
+            get { return via; }
+        }
+
+        protected internal CircleContactMember()
+            :base()
+        {
+            Initialize();
+        }
+
+        public CircleContactMember(string via, string mail, ClientType type)
+            :base()
+        {
+            this.via = via;
+            this.Mail = mail;
+            memberType = type;
+
+            Initialize();
+        }
+
+        public override int GetHashCode()
+        {
+            return (Mail + Via).GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return ((int)MemberType).ToString() + ":" + Mail + ";" + Via;
         }
 
         #region Protected
