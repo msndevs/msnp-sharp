@@ -983,4 +983,30 @@ namespace MSNPSharp
         public const string GroupName = "GroupName";
     }
 
+    public static class CircleString
+    {
+        public const string PUTCommandScheme = "Routing: 1.0\r\n" +
+                                                "To: {to}\r\n" +
+                                                "From: {from}\r\n" +
+                                                "\r\n" +
+                                                "Reliability: 1.0\r\n" +
+                                                "Stream: 0\r\n" +
+                                                "Segment: 0\r\n" +
+                                                "\r\n" +
+                                                "Publication: 1.0\r\n" +
+                                                "Uri: /circle\r\n" +
+                                                "Content-Type: application/circles+xml\r\n" +
+                                                "Content-Length: {length}\r\n" +
+                                                "\r\n" +
+                                                "{xml}";
+
+        public const string PUTPayloadXMLScheme = "<circle><roster><id>IM</id><user><id>1:{ownermail}</id></user></roster></circle>";
+
+        public const string ToReplacementTag = "{to}";
+        public const string FromReplacementTag = "{from}";
+        public const string XMLReplacementTag = "{xml}";
+        public const string ContentLengthReplacementTag = "{length}";
+        public const string OwnerReplacementTag = "{ownermail}";
+    }
+
 };

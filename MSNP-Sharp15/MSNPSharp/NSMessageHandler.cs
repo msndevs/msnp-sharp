@@ -2222,6 +2222,40 @@ namespace MSNPSharp
 
         protected virtual void OnNFYReceived(NSMessage message)
         {
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (networkMessage.InnerBody != null)
+            {
+                string nfyTextString = Encoding.UTF8.GetString(networkMessage.InnerBody);
+                int lastLineBreak = nfyTextString.LastIndexOf("\r\n");
+                if (lastLineBreak != -1)
+                {
+                    string xmlString = nfyTextString.Substring(lastLineBreak + 2);
+                    string mimeString = nfyTextString.Substring(0, lastLineBreak).Replace("\r\n\r\n","\r\n");
+                    byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
+                    MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+
+                    if (mimeDic.ContainsKey("Content-Type") && mimeDic.ContainsKey("NotifType"))
+                    {
+                        if (mimeDic["Content-Type"].Value == "application/circles+xml")
+                        {
+                            if (mimeDic["NotifType"].Value == "Full")  //We get the circle roster list here, need to reply a PUT message.
+                            {
+
+                                string replyPayLoad = CircleString.PUTCommandScheme.Replace(CircleString.ToReplacementTag, mimeDic["From"].ToString());
+                                replyPayLoad = replyPayLoad.Replace(CircleString.FromReplacementTag, mimeDic["To"].ToString());
+
+                                string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, Owner.Mail);
+                                replyPayLoad = replyPayLoad.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
+                                replyPayLoad = replyPayLoad.Replace(CircleString.XMLReplacementTag, replyXML);
+
+                                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", replyPayLoad);
+                                MessageProcessor.SendMessage(nsMessage);
+                            }
+                        }
+                    }
+
+                }
+            }
         }
 
         #endregion
@@ -2289,6 +2323,14 @@ namespace MSNPSharp
                     Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
                     break;
             }
+        }
+
+        /// <summary>
+        /// Called when a PUT command message has been received.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnPUTReceived(NSMessage message)
+        {
         }
 
 
@@ -2530,6 +2572,10 @@ namespace MSNPSharp
                     case "NFY":
                         OnNFYReceived(nsMessage);
                         return;
+                    case "PUT":
+                        OnPUTReceived(nsMessage);
+                        return;
+
                     // Outdated
                     case "BPR":
                         OnBPRReceived(nsMessage);
