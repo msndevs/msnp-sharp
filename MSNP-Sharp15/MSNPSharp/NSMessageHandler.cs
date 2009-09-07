@@ -2240,15 +2240,23 @@ namespace MSNPSharp
                         {
                             if (mimeDic["NotifType"].Value == "Full")  //We get the circle roster list here, need to reply a PUT message.
                             {
+                                string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, mimeDic["From"].ToString());
+                                routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, mimeDic["To"].ToString());
 
-                                string replyPayLoad = CircleString.PUTCommandScheme.Replace(CircleString.ToReplacementTag, mimeDic["From"].ToString());
-                                replyPayLoad = replyPayLoad.Replace(CircleString.FromReplacementTag, mimeDic["To"].ToString());
+                                string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
+                                reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
 
+                                string messageInfo = CircleString.PUTCircleReplyMessageScheme;
                                 string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, Owner.Mail);
-                                replyPayLoad = replyPayLoad.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
-                                replyPayLoad = replyPayLoad.Replace(CircleString.XMLReplacementTag, replyXML);
+                                messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
+                                messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
 
-                                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", replyPayLoad);
+                                string putCommandString = CircleString.PUTCommandScheme;
+                                putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
+                                putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
+                                putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
+
+                                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
                                 MessageProcessor.SendMessage(nsMessage);
                             }
                         }
