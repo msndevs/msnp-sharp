@@ -1021,6 +1021,8 @@ namespace MSNPSharp
         public const string RoutingSchemeReplacementTag = "{routing scheme}";
         public const string ReliabilitySchemeReplacementTag = "{reliability scheme}";
         public const string MessageSchemeReplacementTag = "{message scheme}";
+
+        public const string CircleQuickName = "circle89";
     }
 
 };

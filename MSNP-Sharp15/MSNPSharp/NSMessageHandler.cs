@@ -84,6 +84,7 @@ namespace MSNPSharp
         private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
         private List<Regex> censorWords = new List<Regex>(0);
+        private List<Guid> pendingCircle = new List<Guid>(0);
 
         protected internal NSMessageHandler()
         {
@@ -366,7 +367,11 @@ namespace MSNPSharp
                 msnticket = value;
             }
         }
-        
+
+        internal List<Guid> PendingCircle
+        {
+            get { return pendingCircle; }
+        }
 
         #endregion
 
@@ -838,21 +843,6 @@ namespace MSNPSharp
             NSPayLoadMessage nsMessage = new NSPayLoadMessage("RML", payload);
             MessageProcessor.SendMessage(nsMessage);
             return nsMessage.TransactionID;
-        }
-
-        internal int SendCreateCircleADL(Guid circleId, string hostDomain)
-        {
-            int transID = SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList | MSNLists.ForwardList);
-
-            string payload = "<ml><d n=\""
-            + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
-            ((int)(MSNLists.ReverseList)).ToString() + "\" t=\"" +
-            ((int)ClientType.CircleMember).ToString() + "\" f=\"" +
-            circleId.ToString("D") + "@" + hostDomain + "\" /></d></ml>";
-
-            NSPayLoadMessage nsMessage = new NSPayLoadMessage("ADL", payload);
-            (MessageProcessor as NSMessageProcessor).SendMessage(nsMessage, 0);
-            return transID;
         }
 
         internal void SendSHAAMessage(string circleTicket)
@@ -2335,6 +2325,23 @@ namespace MSNPSharp
 
                                 NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
                                 MessageProcessor.SendMessage(nsMessage);
+
+                                string[] typeAccount = mimeDic["From"].ToString().Split(':');
+                                if (typeAccount.Length > 1)
+                                {
+                                    string[] guidDomain = typeAccount[1].Split('@');
+                                    Circle circle = new Circle(new Guid(guidDomain[0]), "", this);
+                                    CircleList.AddCircle(circle);
+
+                                    lock (PendingCircle)
+                                    {
+                                        if (PendingCircle.Contains(circle.AddressBookId))
+                                        {
+                                            ContactService.OnCircleCreated(new CircleEventArgs(circle));
+                                            PendingCircle.Remove(circle.AddressBookId);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -2532,6 +2539,13 @@ namespace MSNPSharp
             ContactList.Clear();
             CircleList.Clear();
             CircleMemberList.Clear();
+
+            lock (PendingCircle)
+            {
+                PendingCircle.Clear();
+            }
+
+
             ContactGroups.Clear();
             ContactService.Clear();
             StorageService.Clear();

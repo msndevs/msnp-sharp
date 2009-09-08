@@ -161,6 +161,11 @@ namespace MSNPSharp
             return Mail.GetHashCode();
         }
 
+        public override string ToString()
+        {
+            return Hash;
+        }
+
         #region Protected
         protected virtual void Initialize()
         {
