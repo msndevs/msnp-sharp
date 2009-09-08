@@ -779,11 +779,48 @@ namespace MSNPSharp
 
         #region Circle
 
-        internal int SendCircleNotifyADL(Guid circleId, string hostDomain)
+        internal void SendBlockCircleNSCommands(Guid circleId, string hostDomain)
+        {
+            SendCircleNotifyRML(circleId, hostDomain, MSNLists.AllowedList);
+            SendCircleNotifyADL(circleId, hostDomain, MSNLists.BlockedList);
+        }
+
+        internal void SendUnBlockCircleNSCommands(Guid circleId, string hostDomain)
+        {
+            SendCircleNotifyRML(circleId, hostDomain, MSNLists.BlockedList);
+            SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList);
+
+
+            //Send PUT
+            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Mail + ";epid=" + Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            string to = ((int)ClientType.CircleMember).ToString() + ":" + circleId.ToString("B").ToLowerInvariant() + "@" + hostDomain;
+
+            string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, from);
+            routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, to);
+
+            string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
+            reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
+
+            string messageInfo = CircleString.PUTCircleReplyMessageScheme;
+            string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, Owner.Mail);
+            messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
+            messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
+
+            string putCommandString = CircleString.PUTCommandScheme;
+            putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
+            putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
+            putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
+
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
+            MessageProcessor.SendMessage(nsMessage);
+        }
+
+
+        internal int SendCircleNotifyADL(Guid circleId, string hostDomain, MSNLists lists)
         {
             string payload = "<ml l=\"1\"><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
-            ((int)(MSNLists.AllowedList | MSNLists.ForwardList)).ToString() + "\" t=\"" +
+            ((int)lists).ToString() + "\" t=\"" +
             ((int)ClientType.CircleMember).ToString() + "\"/></d></ml>";
 
             NSPayLoadMessage nsMessage = new NSPayLoadMessage("ADL", payload);
@@ -791,9 +828,21 @@ namespace MSNPSharp
             return nsMessage.TransactionID;
         }
 
+        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, MSNLists lists)
+        {
+            string payload = "<ml l=\"1\"><d n=\""
+            + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
+            ((int)lists).ToString() + "\" t=\"" +
+            ((int)ClientType.CircleMember).ToString() + "\"/></d></ml>";
+
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("RML", payload);
+            MessageProcessor.SendMessage(nsMessage);
+            return nsMessage.TransactionID;
+        }
+
         internal int SendCreateCircleADL(Guid circleId, string hostDomain)
         {
-            int transID = SendCircleNotifyADL(circleId, hostDomain);
+            int transID = SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList | MSNLists.ForwardList);
 
             string payload = "<ml><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
