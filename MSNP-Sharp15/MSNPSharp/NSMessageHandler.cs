@@ -1104,12 +1104,24 @@ namespace MSNPSharp
             if (message.CommandValues[1].ToString() == "0")
                 return;
 
+            string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
+
             string account;
             ClientType type;
 
-            account = message.CommandValues[0].ToString().Split(':')[1];
-            type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
+            if (fullaccount.Contains(";via=9:"))
+            {
+                string[] usernameAndCircle = fullaccount.Split(';');
+                type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
+                account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
+                string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
+            }
+            else
+            {
+                type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
+                account = fullaccount.Split(':')[1].ToLowerInvariant();
+            }
 
             if (message.InnerBody != null && account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
             {
@@ -1301,8 +1313,6 @@ namespace MSNPSharp
             ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
             string networkpng;
 
-            type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
-            account = message.CommandValues[0].ToString().Split(':')[1].ToLowerInvariant();
             if (message.CommandValues.Count >= 2)
             {
                 if (message.CommandValues[1].ToString().Contains(":"))
