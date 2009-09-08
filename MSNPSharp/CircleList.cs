@@ -38,10 +38,89 @@ using System.Threading;
 
 namespace MSNPSharp
 {
+    public class CircleMemberList : IEnumerable
+    {
+        private List<CircleContactMember> list = new List<CircleContactMember>();
+
+        [NonSerialized]
+        private object syncRoot;
+
+        public CircleContactMember this[string via]
+        {
+            get
+            {
+                foreach (CircleContactMember member in list)
+                {
+                    if (member.Via.ToLowerInvariant() == via.ToLowerInvariant())
+                        return member;
+                }
+                return null;
+            }
+        }
+
+        public object SyncRoot
+        {
+            get
+            {
+                if (syncRoot == null)
+                {
+                    object newobj = new object();
+                    Interlocked.CompareExchange(ref syncRoot, newobj, null);
+                }
+                return syncRoot;
+            }
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return list.GetEnumerator();
+        }
+
+        public bool Add(CircleContactMember member)
+        {
+            lock (SyncRoot)
+            {
+                if (this[member.Via] == null)
+                {
+                    list.Add(member);
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        public bool Remove(CircleContactMember member)
+        {
+            lock (SyncRoot)
+            {
+                if (this[member.Via] == null)
+                {
+                    return false;
+                }
+
+                list.Remove(member);
+                return true;
+            }
+        }
+
+        public void Clear()
+        {
+            lock (SyncRoot)
+                list.Clear();
+        }
+
+        public int Count
+        {
+            get { return list.Count; }
+        }
+    }
+
+
     [Serializable()]
     public class CircleList : IEnumerable
     {
-        private List<Circle> list = new List<Circle>();
+        private Dictionary<Guid, Circle> list = new Dictionary<Guid, Circle>();
 
         [NonSerialized]
         private NSMessageHandler nsMessageHandler = null;
@@ -62,54 +141,42 @@ namespace MSNPSharp
             }
         }
 
-        internal void AddCircle(Circle circle)
+        internal bool AddCircle(Circle circle)
         {
             if (this[circle.AddressBookId] == null)
             {
                 lock (SyncRoot)
-                    list.Add(circle);
+                    list.Add(circle.AddressBookId, circle);
+                return true;
             }
             else
             {
                 lock (SyncRoot)
-                    list[list.IndexOf(circle)] = circle;
+                    list[circle.AddressBookId] = circle;
             }
+
+            return false;
         }
 
         internal void RemoveCircle(Circle circle)
         {
             lock (SyncRoot)
             {
-                list.Remove(circle);
+                list.Remove(circle.AddressBookId);
+            }
+        }
+
+        internal void RemoveCircle(Guid abId)
+        {
+            lock (SyncRoot)
+            {
+                list.Remove(abId);
             }
         }
 
         internal CircleList(NSMessageHandler handler)
         {
             nsMessageHandler = handler;
-        }
-
-        /// <summary>
-        /// Create a new <see cref="Circle"/> and add it into list.
-        /// </summary>
-        /// <param name="name"></param>
-        public virtual void Add(string name)
-        {
-            if (nsMessageHandler == null)
-                throw new MSNPSharpException("No nameserver handler defined");
-
-            nsMessageHandler.ContactService.CreateCircle(name);
-        }
-
-        public Circle GetByName(string name)
-        {
-            foreach (Circle circle in list)
-            {
-                if (circle.Name == name)
-                    return circle;
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -121,18 +188,16 @@ namespace MSNPSharp
         {
             get
             {
-                foreach (Circle circle in list)
-                {
-                    if (circle.AddressBookId.CompareTo(abId) == 0)
-                        return circle;
-                }
+                if (list.ContainsKey(abId))
+                    return list[abId];
+
                 return null;
             }
         }
 
         public IEnumerator GetEnumerator()
         {
-            return list.GetEnumerator();
+            return list.Values.GetEnumerator();
         }
 
         public void Clear()

@@ -84,6 +84,7 @@ namespace MSNPSharp
         private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
         private List<Regex> censorWords = new List<Regex>(0);
+        private List<Guid> pendingCircle = new List<Guid>(0);
 
         private NSMessageHandler()
         {
@@ -216,6 +217,19 @@ namespace MSNPSharp
             get
             {
                 return circleList;
+            }
+        }
+
+        private CircleMemberList circleMemberList = new CircleMemberList();
+
+        /// <summary>
+        /// A collection of all circle which are defined by the user who logged into the messenger network.
+        /// </summary>
+        public CircleMemberList CircleMemberList
+        {
+            get
+            {
+                return circleMemberList;
             }
         }
 
@@ -353,7 +367,11 @@ namespace MSNPSharp
                 msnticket = value;
             }
         }
-        
+
+        internal List<Guid> PendingCircle
+        {
+            get { return pendingCircle; }
+        }
 
         #endregion
 
@@ -766,11 +784,48 @@ namespace MSNPSharp
 
         #region Circle
 
-        internal int SendCircleNotifyADL(Guid circleId, string hostDomain)
+        internal void SendBlockCircleNSCommands(Guid circleId, string hostDomain)
+        {
+            SendCircleNotifyRML(circleId, hostDomain, MSNLists.AllowedList);
+            SendCircleNotifyADL(circleId, hostDomain, MSNLists.BlockedList);
+        }
+
+        internal void SendUnBlockCircleNSCommands(Guid circleId, string hostDomain)
+        {
+            SendCircleNotifyRML(circleId, hostDomain, MSNLists.BlockedList);
+            SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList);
+
+
+            //Send PUT
+            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Mail + ";epid=" + Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            string to = ((int)ClientType.CircleMember).ToString() + ":" + circleId.ToString("B").ToLowerInvariant() + "@" + hostDomain;
+
+            string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, from);
+            routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, to);
+
+            string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
+            reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
+
+            string messageInfo = CircleString.PUTCircleReplyMessageScheme;
+            string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, Owner.Mail);
+            messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
+            messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
+
+            string putCommandString = CircleString.PUTCommandScheme;
+            putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
+            putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
+            putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
+
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
+            MessageProcessor.SendMessage(nsMessage);
+        }
+
+
+        internal int SendCircleNotifyADL(Guid circleId, string hostDomain, MSNLists lists)
         {
             string payload = "<ml l=\"1\"><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
-            ((int)(MSNLists.AllowedList | MSNLists.ForwardList)).ToString() + "\" t=\"" +
+            ((int)lists).ToString() + "\" t=\"" +
             ((int)ClientType.CircleMember).ToString() + "\"/></d></ml>";
 
             NSPayLoadMessage nsMessage = new NSPayLoadMessage("ADL", payload);
@@ -778,19 +833,16 @@ namespace MSNPSharp
             return nsMessage.TransactionID;
         }
 
-        internal int SendCreateCircleADL(Guid circleId, string hostDomain)
+        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, MSNLists lists)
         {
-            int transID = SendCircleNotifyADL(circleId, hostDomain);
-
-            string payload = "<ml><d n=\""
+            string payload = "<ml l=\"1\"><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
-            ((int)(MSNLists.ReverseList)).ToString() + "\" t=\"" +
-            ((int)ClientType.CircleMember).ToString() + "\" f=\"" +
-            circleId.ToString("D") + "@" + hostDomain + "\" /></d></ml>";
+            ((int)lists).ToString() + "\" t=\"" +
+            ((int)ClientType.CircleMember).ToString() + "\"/></d></ml>";
 
-            NSPayLoadMessage nsMessage = new NSPayLoadMessage("ADL", payload);
-            (MessageProcessor as NSMessageProcessor).SendMessage(nsMessage, 0);
-            return transID;
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("RML", payload);
+            MessageProcessor.SendMessage(nsMessage);
+            return nsMessage.TransactionID;
         }
 
         internal void SendSHAAMessage(string circleTicket)
@@ -1052,12 +1104,24 @@ namespace MSNPSharp
             if (message.CommandValues[1].ToString() == "0")
                 return;
 
+            string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
+
             string account;
             ClientType type;
 
-            account = message.CommandValues[0].ToString().Split(':')[1];
-            type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
+            if (fullaccount.Contains(";via=9:"))
+            {
+                string[] usernameAndCircle = fullaccount.Split(';');
+                type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
+                account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
+                string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
+            }
+            else
+            {
+                type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
+                account = fullaccount.Split(':')[1].ToLowerInvariant();
+            }
 
             if (message.InnerBody != null && account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
             {
@@ -1131,19 +1195,27 @@ namespace MSNPSharp
             ClientType type;
             string account;
             string fullaccount = message.CommandValues[1].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
-            if (fullaccount.Contains(";"))
+            Contact contact = null;
+
+            if (fullaccount.Contains(";via=9:"))
             {
                 string[] usernameAndCircle = fullaccount.Split(';');
                 type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                Circle circle = CircleList[new Guid(circleMail.Split('@')[0])];
+
+                if (CircleMemberList[account] == null)
+                {
+                    contact = new CircleContactMember(usernameAndCircle[1], account, type);
+                    CircleMemberList.Add(contact as CircleContactMember);
+                }
             }
             else
             {
                 type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
+                contact = ContactList.GetContact(account, type);
             }
 
             string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
@@ -1173,7 +1245,6 @@ namespace MSNPSharp
                 return;
             }
 
-            Contact contact = ContactList.GetContact(account, type);
             contact.SetName(HttpUtility.UrlDecode(newname));
             contact.ClientCapacities = newcaps;
             contact.ClientCapacitiesEx = newcapsex;
@@ -1212,27 +1283,36 @@ namespace MSNPSharp
             ClientType type;
             string account;
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
-            if (fullaccount.Contains(";"))
+            Contact contact = null;
+
+            if (fullaccount.Contains(";via=9:"))
             {
                 string[] usernameAndCircle = fullaccount.Split(';');
                 type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                Circle circle = CircleList[new Guid(circleMail.Split('@')[0])];
+
+                contact = CircleMemberList[usernameAndCircle[1]];
+                if (contact == null)
+                {
+                    contact = new CircleContactMember(usernameAndCircle[1], account, type);
+                    CircleMemberList.Add(contact as CircleContactMember);
+                }
             }
             else
             {
                 type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
+
+                contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+                ? Owner : ContactList.GetContact(account, type);
             }
 
             ClientCapacities oldcaps = ClientCapacities.None;
             ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
             string networkpng;
 
-            type = (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[0].ToString().Split(':')[0]);
-            account = message.CommandValues[0].ToString().Split(':')[1].ToLowerInvariant();
             if (message.CommandValues.Count >= 2)
             {
                 if (message.CommandValues[1].ToString().Contains(":"))
@@ -1246,9 +1326,6 @@ namespace MSNPSharp
                 }
             }
             networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-
-            Contact contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
-                ? Owner : ContactList.GetContact(account, type);
 
             PresenceStatus oldStatus = contact.Status;
             contact.SetStatus(PresenceStatus.Offline);
@@ -2222,6 +2299,65 @@ namespace MSNPSharp
 
         protected virtual void OnNFYReceived(NSMessage message)
         {
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (networkMessage.InnerBody != null)
+            {
+                string nfyTextString = Encoding.UTF8.GetString(networkMessage.InnerBody);
+                int lastLineBreak = nfyTextString.LastIndexOf("\r\n");
+                if (lastLineBreak != -1)
+                {
+                    string xmlString = nfyTextString.Substring(lastLineBreak + 2);
+                    string mimeString = nfyTextString.Substring(0, lastLineBreak).Replace("\r\n\r\n","\r\n");
+                    byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
+                    MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+
+                    if (mimeDic.ContainsKey("Content-Type") && mimeDic.ContainsKey("NotifType"))
+                    {
+                        if (mimeDic["Content-Type"].Value == "application/circles+xml")
+                        {
+                            if (mimeDic["NotifType"].Value == "Full")  //We get the circle roster list here, need to reply a PUT message.
+                            {
+                                string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, mimeDic["From"].ToString());
+                                routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, mimeDic["To"].ToString());
+
+                                string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
+                                reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
+
+                                string messageInfo = CircleString.PUTCircleReplyMessageScheme;
+                                string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, Owner.Mail);
+                                messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
+                                messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
+
+                                string putCommandString = CircleString.PUTCommandScheme;
+                                putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
+                                putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
+                                putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
+
+                                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
+                                MessageProcessor.SendMessage(nsMessage);
+
+                                string[] typeAccount = mimeDic["From"].ToString().Split(':');
+                                if (typeAccount.Length > 1)
+                                {
+                                    string[] guidDomain = typeAccount[1].Split('@');
+                                    Circle circle = new Circle(new Guid(guidDomain[0]), "", this);
+                                    CircleList.AddCircle(circle);
+
+                                    lock (PendingCircle)
+                                    {
+                                        if (PendingCircle.Contains(circle.AddressBookId))
+                                        {
+                                            ContactService.OnCircleCreated(new CircleEventArgs(circle));
+                                            PendingCircle.Remove(circle.AddressBookId);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
         }
 
         #endregion
@@ -2289,6 +2425,14 @@ namespace MSNPSharp
                     Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
                     break;
             }
+        }
+
+        /// <summary>
+        /// Called when a PUT command message has been received.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnPUTReceived(NSMessage message)
+        {
         }
 
 
@@ -2404,6 +2548,14 @@ namespace MSNPSharp
         {
             ContactList.Clear();
             CircleList.Clear();
+            CircleMemberList.Clear();
+
+            lock (PendingCircle)
+            {
+                PendingCircle.Clear();
+            }
+
+
             ContactGroups.Clear();
             ContactService.Clear();
             StorageService.Clear();
@@ -2530,6 +2682,10 @@ namespace MSNPSharp
                     case "NFY":
                         OnNFYReceived(nsMessage);
                         return;
+                    case "PUT":
+                        OnPUTReceived(nsMessage);
+                        return;
+
                     // Outdated
                     case "BPR":
                         OnBPRReceived(nsMessage);

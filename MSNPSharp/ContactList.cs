@@ -325,7 +325,7 @@ namespace MSNPSharp
             {
                 lock (SyncRoot)
                 {
-                    foreach (Contact contact in Forward)
+                    foreach (Contact contact in Values)
                     {
                         if (contact.Guid == guid)
                             return contact;

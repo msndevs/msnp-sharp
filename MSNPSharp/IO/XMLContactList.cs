@@ -117,7 +117,14 @@ namespace MSNPSharp.IO
             // Create Circles.
             foreach (CircleInfo circle in CircleResults.Values)
             {
-                NSMessageHandler.CircleList.AddCircle(CombineCircle(circle.CircleMember, circle.CircleResultInfo));
+                if (circle.CircleResultInfo.Deleted)
+                {
+                    NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.CircleResultInfo.Content.Handle.Id));
+                }
+                else
+                {
+                    NSMessageHandler.CircleList.AddCircle(CombineCircle(circle.CircleMember, circle.CircleResultInfo));
+                }
             }
 
             // Create the Forward List and Email Contacts
@@ -662,46 +669,83 @@ namespace MSNPSharp.IO
                     }
                 }
 
+                //Circle is a contact
+                if (null != forwardList.CircleResult.Circles)
+                {
+                    List<ContactType> circleContactsAdded = new List<ContactType>(0);
+                    List<CircleInverseInfoType> circleAdded = new List<CircleInverseInfoType>(0);
+
+                    if (forwardList.Contacts != null)
+                    {
+                        foreach (ContactType contactType in forwardList.Contacts)
+                        {
+                            if (contactType.CreatedBy == "96" &&
+                                contactType.contactInfo.contactType == MessengerContactType.Circle &&
+                                contactType.fDeleted == false)
+                            {
+                                circleContactsAdded.Add(contactType);
+                            }
+                        }
+                    }
+
+                    foreach(CircleInverseInfoType circle in forwardList.CircleResult.Circles)
+                    {
+                        Guid circleId = new Guid(circle.Content.Handle.Id);
+                        if (circle.Deleted)
+                        {
+                            CircleResults.Remove(circleId);
+                            NSMessageHandler.CircleList.RemoveCircle(circleId);
+                        }
+                        else
+                        {
+                            circleAdded.Add(circle);
+                        }
+                    }
+
+                    if (circleContactsAdded.Count == circleAdded.Count)
+                    {
+                        for (int i = 0; i < circleAdded.Count; i++)
+                        {
+                            CircleInverseInfoType circleinfo = circleAdded[i];
+                            ContactType contactType = circleContactsAdded[i];
+
+                            Guid circleId = new Guid(circleinfo.Content.Handle.Id);
+
+                            bool newadded = true;
+                            if (CircleResults.ContainsKey(circleId))
+                            {
+                                newadded = false;
+                            }
+
+                            CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
+                            if (newadded)
+                            {
+                                Circle newcircle = CombineCircle(contactType, circleinfo);
+
+                                NSMessageHandler.CircleList.AddCircle(newcircle);
+                            }
+                        }
+                    }
+                }
+
                 if (null != forwardList.Contacts)
                 {
                     foreach (ContactType contactType in forwardList.Contacts)
                     {
                         if (null != contactType.contactInfo)
                         {
-                            if (contactType.contactInfo.contactType == MessengerContactType.Circle)
+                            if (contactType.CreatedBy == "96" &&
+                                contactType.LastModifiedBy == ((int)ClientType.CircleMember).ToString() &&
+                                contactType.contactInfo.contactType == MessengerContactType.Regular)
                             {
-                                //Circle is a contact
-                                if (null == forwardList.CircleResult.Circles)
-                                    continue;
+                                //A deleted or modified circle;
+                                continue;
+                            }
 
-                                foreach (CircleInverseInfoType circleinfo in forwardList.CircleResult.Circles)
-                                {
-                                    if (contactType.contactInfo.displayName == circleinfo.Content.Info.DisplayName)
-                                    {
-                                        Guid circleId = new Guid(circleinfo.Content.Handle.Id);
-                                        if (circleinfo.Deleted)
-                                        {
-                                            CircleResults.Remove(circleId);
-                                        }
-                                        else
-                                        {
-                                            bool newadded = true;
-                                            if (CircleResults.ContainsKey(circleId))
-                                            {
-                                                newadded = false;
-                                            }
-
-                                            CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
-                                            if (newadded)
-                                            {
-                                                Circle newcircle = CombineCircle(contactType, circleinfo);
-
-                                                NSMessageHandler.CircleList.AddCircle(newcircle);
-                                                NSMessageHandler.ContactService.OnCircleAdded(new CircleEventArgs(newcircle));
-                                            }
-                                        }
-                                    }
-                                }
+                            if (contactType.CreatedBy == "96" &&
+                                contactType.contactInfo.contactType == MessengerContactType.Circle)
+                            {
+                                //A new circle;
                                 continue;
                             }
 
@@ -758,17 +802,19 @@ namespace MSNPSharp.IO
 
         private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
         {
-            Circle circle = new Circle(
-                new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.DisplayName, NSMessageHandler);
+            Circle circle = new Circle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.DisplayName, NSMessageHandler);
+            circle.HostDomain = circleinfo.Content.Info.HostedDomain;
+
             circle.Lists = MSNLists.AllowedList | MSNLists.ForwardList;
             circle.Guid = new Guid(contact.contactId);
-            circle.HostDomain = circleinfo.Content.Info.HostedDomain;
+
 
             if (contact.contactInfo != null)
             {
 
                 circle.CID = contact.contactInfo.CID;
             }
+
             return circle;
         }
 

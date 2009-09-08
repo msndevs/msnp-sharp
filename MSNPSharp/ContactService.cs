@@ -105,9 +105,14 @@ namespace MSNPSharp
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
 
         /// <summary>
-        /// Occurs when a new <see cref="Circle"/> is created
+        /// Occurs when a new <see cref="Circle"/> is created.
         /// </summary>
-        public event EventHandler<CircleEventArgs> CircleAdded;
+        public event EventHandler<CircleEventArgs> CircleCreated;
+
+        /// <summary>
+        /// Occurs when a new <see cref="Circle"/> is deleted.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CircleRemoved;
 
         /// <summary>
         /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
@@ -188,14 +193,26 @@ namespace MSNPSharp
 
 
         /// <summary>
-        /// Fires the <see cref="CircleAdded"/> event.
+        /// Fires the <see cref="CircleCreated"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal void OnCircleAdded(CircleEventArgs e)
+        internal void OnCircleCreated(CircleEventArgs e)
         {
-            if (CircleAdded != null)
+            if (CircleCreated != null)
             {
-                CircleAdded(this, e);
+                CircleCreated(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="CircleRemoved"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal void OnCircleRemoved(CircleEventArgs e)
+        {
+            if (CircleRemoved != null)
+            {
+                CircleRemoved(this, e);
             }
         }
 
@@ -1963,7 +1980,7 @@ namespace MSNPSharp
 
         #region Create Circle
 
-        internal void CreateCircle(string circleName)
+        public void CreateCircle(string circleName)
         {
             MsnServiceObject createCircleObject = new MsnServiceObject(PartnerScenario.CircleSave, "CreateCircle");
             string addressBookId = string.Empty;
@@ -1971,7 +1988,7 @@ namespace MSNPSharp
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, createCircleObject);
             CreateCircleRequestType request = new CreateCircleRequestType();
             request.callerInfo = new callerInfoType();
-            request.callerInfo.PublicDisplayName = NSMessageHandler.Owner.Mail;
+            request.callerInfo.PublicDisplayName = NSMessageHandler.Owner.Name == string.Empty ? NSMessageHandler.Owner.Mail : NSMessageHandler.Owner.Name;
 
             //This is M$ style, you will never guess out the meaning of these numbers.
             ContentInfoType properties = new ContentInfoType();
@@ -1999,21 +2016,17 @@ namespace MSNPSharp
                         delegate
                         {
                             //We need USR SHA A again
-                            NSMessageHandler.SendCreateCircleADL(new Guid(e.Result.CreateCircleResult.Id), "live.com");
+                            NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), "live.com", MSNLists.AllowedList | MSNLists.ForwardList);
 
-                            msRequest(PartnerScenario.ABChangeNotifyAlert,
-                                delegate
-                                {
-                                    msRequest(PartnerScenario.ABChangeNotifyAlert,
-                                        delegate
-                                        {
-                                            abRequest(PartnerScenario.ABChangeNotifyAlert, null);
-                                        }
-                                        );
-                                }
-                                );
+                            lock (NSMessageHandler.PendingCircle)
+                            {
+                                NSMessageHandler.PendingCircle.Add(new Guid(e.Result.CreateCircleResult.Id));
+                            }
+
+
+                            msRequest(PartnerScenario.ABChangeNotifyAlert, null);
                         }
-                    );
+                                );
                 }
             };
 
@@ -2084,12 +2097,10 @@ namespace MSNPSharp
                                             && contact.fDeletedSpecified
                                             && contact.fDeleted == false)
                                         {
-                                            Circle circle = Factory.CreateCircle();
-                                            circle.AddressBookId = new Guid(abId);
+                                            Circle circle = new Circle(new Guid(abId), contact.contactInfo.displayName, NSMessageHandler);
                                             circle.CreatorEmail = NSMessageHandler.Owner.Mail;
                                             circle.CID = contact.contactInfo.CID;
                                             circle.Guid = new Guid(contact.contactId);
-                                            circle.SetName(contact.contactInfo.displayName);
                                             circle.NickName = circle.Name;
 
                                             NSMessageHandler.CircleList.AddCircle(circle);

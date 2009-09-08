@@ -66,8 +66,6 @@ namespace MSNPSharpClient
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.None;
 #elif TRACE
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.Compression | MSNPSharp.IO.MclSerialization.Cryptography;
-#else
-            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Warning;
 #endif
 
             // set the events that we will handle
@@ -165,10 +163,8 @@ namespace MSNPSharpClient
                     }
                 }
 
-                foreach (RecentActivityTemplateContainerType template in e.Response.Templates)
-                {
-                    Trace.WriteLine(template.Templates.Length);
-                }
+                if (activities.Count == 0)
+                    return;
                 
                 lblNewsLink.Text = "Get Feeds";
                 lblNewsLink.Tag = e.Response.FeedUrl;
@@ -559,10 +555,16 @@ namespace MSNPSharpClient
                         new Point(e.Bounds.X + 4, e.Bounds.Y + 12)
                    };
                 Point imageLocation = new Point(e.Bounds.X + 2, e.Bounds.Y + 2);
-                e.Graphics.FillPolygon(Brushes.Black, points);
+                if (e.Node.Tag is Circle)
+                {
+                    e.Graphics.FillEllipse(Brushes.Blue, new Rectangle(imageLocation, new Size(12, 12)));
+                    e.Graphics.FillPolygon(Brushes.Yellow, points);
+                }
+                else
+                    e.Graphics.FillPolygon(Brushes.Black, points);
 
                 PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
-                e.Graphics.DrawString(e.Node.Text, PARENT_NODE_FONT, Brushes.Black, textLocation);
+                e.Graphics.DrawString(e.Node.Text, PARENT_NODE_FONT, e.Node.Tag is Circle ? Brushes.Blue : Brushes.Black, textLocation);
 
 
             }
@@ -1023,9 +1025,9 @@ namespace MSNPSharpClient
                         e.Node.ImageIndex = 1;
                         e.Node.SelectedImageIndex = 1;
                     }
-                    if (e.Node.Tag is ContactGroup)
+                    if (e.Node.Tag is ContactGroup || e.Node.Tag is Circle)
                     {
-                        propertyGrid.SelectedObject = (ContactGroup)e.Node.Tag;
+                        propertyGrid.SelectedObject = e.Node.Tag;
                     }
                 }
                 else
@@ -1076,7 +1078,6 @@ namespace MSNPSharpClient
                 else if (e.Node.Tag is ContactGroup)
                 {
                     treeViewFavoriteList.SelectedNode = e.Node;
-                    ContactGroup contact = (ContactGroup)treeViewFavoriteList.SelectedNode.Tag;
 
                     Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
                     groupContextMenu.Show(point.X - groupContextMenu.Width, point.Y);
@@ -1209,6 +1210,13 @@ namespace MSNPSharpClient
             TreeNode offlinenode = treeViewFavoriteList.Nodes.Add("1", "Offline", 0, 0);
             offlinenode.NodeFont = PARENT_NODE_FONT;
             offlinenode.Tag = "1";
+
+            foreach (Circle circle in messenger.Nameserver.CircleList)
+            {
+                TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.AddressBookId.ToString(), circle.AddressBookId.ToString(), 0, 0);
+                circlenode.NodeFont = PARENT_NODE_FONT;
+                circlenode.Tag = circle;
+            }
 
             foreach (Contact contact in messenger.ContactList.All)
             {

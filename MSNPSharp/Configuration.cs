@@ -55,11 +55,10 @@ namespace MSNPSharp
         /// </summary>
         static Settings()
         {
-#if DEBUG
             TraceSwitch.Level = TraceLevel.Verbose;
+#if DEBUG    
             serializationType = MclSerialization.Compression | MclSerialization.Cryptography;
 #else
-            TraceSwitch.Level = TraceLevel.Info;
             serializationType = MclSerialization.Compression;
 #endif
         }
