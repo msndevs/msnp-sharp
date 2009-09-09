@@ -182,6 +182,25 @@ namespace MSNPSharp
     {
         private string via = string.Empty;
         private ClientType memberType = ClientType.PassportMember;
+        private Guid addressBookId = Guid.Empty;
+
+        public Guid AddressBookId
+        {
+            get 
+            {
+                if (addressBookId == Guid.Empty)
+                {
+                    string[] viaMail = Via.Split(':');
+                    if (viaMail.Length > 1)
+                    {
+                        string guid = viaMail[1].Split('@')[0];
+                        addressBookId = new Guid(guid);
+                    }
+                }
+
+                return addressBookId; 
+            }
+        }
 
         public ClientType MemberType
         {

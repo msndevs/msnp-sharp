@@ -166,6 +166,42 @@ namespace MSNPSharp
             }
         }
 
+        internal bool AddMemberToCorrespondingCircle(CircleContactMember member)
+        {
+            lock (SyncRoot)
+            {
+                if (list.ContainsKey(member.AddressBookId))
+                {
+                    if (list[member.AddressBookId].Members.Contains(member))
+                    {
+                        list[member.AddressBookId].Members[list[member.AddressBookId].Members.IndexOf(member)] = member;
+                    }
+                    else
+                    {
+                        list[member.AddressBookId].Members.Add(member);
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal bool RemoveMemberFromCorrespondingCircle(CircleContactMember member)
+        {
+            lock (SyncRoot)
+            {
+                if (list.ContainsKey(member.AddressBookId))
+                {
+                    list[member.AddressBookId].Members.Remove(member);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         internal void RemoveCircle(Guid abId)
         {
             lock (SyncRoot)

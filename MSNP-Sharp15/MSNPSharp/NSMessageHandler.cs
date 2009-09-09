@@ -1209,6 +1209,7 @@ namespace MSNPSharp
                 {
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
                     CircleMemberList.Add(contact as CircleContactMember);
+                    CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
                 }
             }
             else
@@ -1298,6 +1299,7 @@ namespace MSNPSharp
                 {
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
                     CircleMemberList.Add(contact as CircleContactMember);
+                    CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
                 }
             }
             else
