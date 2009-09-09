@@ -45,7 +45,7 @@ namespace MSNPSharp
     /// </summary>
     public class YIMMessageHandler :SBMessageHandler
     {
-        protected YIMMessageHandler()
+        protected internal YIMMessageHandler()
             : base()
         {
             sessionEstablished = true;

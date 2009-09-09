@@ -153,8 +153,8 @@ namespace MSNPSharp
         #region Members
 
         private Messenger _messenger = null;
-        private SBMessageHandler _switchboard = Factory.CreateSwitchboardHandler();
-        private YIMMessageHandler _yimHandler = Factory.CreateYIMMessageHandler();
+        private SBMessageHandler _switchboard = new SBMessageHandler();
+        private YIMMessageHandler _yimHandler = new YIMMessageHandler();
         private bool expired = false;
         private bool sbInitialized = false;
         private bool yimInitialized = false;

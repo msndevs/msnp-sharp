@@ -125,8 +125,8 @@ namespace MSNPSharp
         /// </summary>
         public Messenger()
         {
-            nsMessageProcessor = Factory.CreateNameserverProcessor();
-            nsMessageHandler = Factory.CreateNameserverHandler();
+            nsMessageProcessor = new NSMessageProcessor();
+            nsMessageHandler = new NSMessageHandler();
 
             #region private events
             nsMessageProcessor.ConnectionClosed += delegate

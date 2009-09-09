@@ -178,7 +178,7 @@ namespace MSNPSharp
         /// <summary>
         /// Constructor
         /// </summary>
-        protected SBMessageHandler()
+        protected internal SBMessageHandler()
         {
         }
 
