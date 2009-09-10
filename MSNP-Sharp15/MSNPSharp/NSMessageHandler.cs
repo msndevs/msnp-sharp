@@ -786,22 +786,22 @@ namespace MSNPSharp
 
         internal void SendBlockCircleNSCommands(Guid circleId, string hostDomain)
         {
-            SendCircleNotifyRML(circleId, hostDomain, MSNLists.AllowedList);
-            SendCircleNotifyADL(circleId, hostDomain, MSNLists.BlockedList);
+            SendCircleNotifyRML(circleId, hostDomain, MSNLists.AllowedList, true);
+            SendCircleNotifyADL(circleId, hostDomain, MSNLists.BlockedList, true);
         }
 
         internal void SendUnBlockCircleNSCommands(Guid circleId, string hostDomain)
         {
-            SendCircleNotifyRML(circleId, hostDomain, MSNLists.BlockedList);
-            SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList);
+            SendCircleNotifyRML(circleId, hostDomain, MSNLists.BlockedList, true);
+            SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList, true);
 
 
             //Send PUT
             string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Mail + ";epid=" + Owner.MachineGuid.ToString("B").ToLowerInvariant();
-            string to = ((int)ClientType.CircleMember).ToString() + ":" + circleId.ToString("B").ToLowerInvariant() + "@" + hostDomain;
+            string to = ((int)ClientType.CircleMember).ToString() + ":" + circleId.ToString().ToLowerInvariant() + "@" + hostDomain;
 
-            string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, from);
-            routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, to);
+            string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, to);
+            routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, from);
 
             string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
             reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
@@ -821,9 +821,9 @@ namespace MSNPSharp
         }
 
 
-        internal int SendCircleNotifyADL(Guid circleId, string hostDomain, MSNLists lists)
+        internal int SendCircleNotifyADL(Guid circleId, string hostDomain, MSNLists lists, bool blockUnBlock)
         {
-            string payload = "<ml l=\"1\"><d n=\""
+            string payload = "<ml" + (blockUnBlock == true ? "" : " l=\"1\"") + "><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
             ((int)lists).ToString() + "\" t=\"" +
             ((int)ClientType.CircleMember).ToString() + "\"/></d></ml>";
@@ -833,9 +833,9 @@ namespace MSNPSharp
             return nsMessage.TransactionID;
         }
 
-        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, MSNLists lists)
+        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, MSNLists lists, bool blockUnBlock)
         {
-            string payload = "<ml l=\"1\"><d n=\""
+            string payload = "<ml" + (blockUnBlock == true ? "" : " l=\"1\"") + "><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
             ((int)lists).ToString() + "\" t=\"" +
             ((int)ClientType.CircleMember).ToString() + "\"/></d></ml>";
@@ -2301,63 +2301,66 @@ namespace MSNPSharp
 
         protected virtual void OnNFYReceived(NSMessage message)
         {
-            NetworkMessage networkMessage = message as NetworkMessage;
-            if (networkMessage.InnerBody != null)
+            if (message.CommandValues[0].ToString() == "PUT")
             {
-                string nfyTextString = Encoding.UTF8.GetString(networkMessage.InnerBody);
-                int lastLineBreak = nfyTextString.LastIndexOf("\r\n");
-                if (lastLineBreak != -1)
+                NetworkMessage networkMessage = message as NetworkMessage;
+                if (networkMessage.InnerBody != null)
                 {
-                    string xmlString = nfyTextString.Substring(lastLineBreak + 2);
-                    string mimeString = nfyTextString.Substring(0, lastLineBreak).Replace("\r\n\r\n","\r\n");
-                    byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
-                    MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
-
-                    if (mimeDic.ContainsKey("Content-Type") && mimeDic.ContainsKey("NotifType"))
+                    string nfyTextString = Encoding.UTF8.GetString(networkMessage.InnerBody);
+                    int lastLineBreak = nfyTextString.LastIndexOf("\r\n");
+                    if (lastLineBreak != -1)
                     {
-                        if (mimeDic["Content-Type"].Value == "application/circles+xml")
+                        string xmlString = nfyTextString.Substring(lastLineBreak + 2);
+                        string mimeString = nfyTextString.Substring(0, lastLineBreak).Replace("\r\n\r\n", "\r\n");
+                        byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
+                        MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+
+                        if (mimeDic.ContainsKey("Content-Type") && mimeDic.ContainsKey("NotifType"))
                         {
-                            if (mimeDic["NotifType"].Value == "Full")  //We get the circle roster list here, need to reply a PUT message.
+                            if (mimeDic["Content-Type"].Value == "application/circles+xml")
                             {
-                                string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, mimeDic["From"].ToString());
-                                routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, mimeDic["To"].ToString());
-
-                                string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
-                                reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
-
-                                string messageInfo = CircleString.PUTCircleReplyMessageScheme;
-                                string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, Owner.Mail);
-                                messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
-                                messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
-
-                                string putCommandString = CircleString.PUTCommandScheme;
-                                putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
-                                putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
-                                putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
-
-                                NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
-                                MessageProcessor.SendMessage(nsMessage);
-
-                                string[] typeAccount = mimeDic["From"].ToString().Split(':');
-                                if (typeAccount.Length > 1)
+                                if (mimeDic["NotifType"].Value == "Full")  //We get the circle roster list here, need to reply a PUT message.
                                 {
-                                    string[] guidDomain = typeAccount[1].Split('@');
-                                    Circle circle = new Circle(new Guid(guidDomain[0]), "", this);
-                                    CircleList.AddCircle(circle);
+                                    string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, mimeDic["From"].ToString());
+                                    routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, mimeDic["To"].ToString());
 
-                                    lock (PendingCircle)
+                                    string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
+                                    reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
+
+                                    string messageInfo = CircleString.PUTCircleReplyMessageScheme;
+                                    string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, Owner.Mail);
+                                    messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
+                                    messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
+
+                                    string putCommandString = CircleString.PUTCommandScheme;
+                                    putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
+                                    putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
+                                    putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
+
+                                    NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
+                                    MessageProcessor.SendMessage(nsMessage);
+
+                                    string[] typeAccount = mimeDic["From"].ToString().Split(':');
+                                    if (typeAccount.Length > 1)
                                     {
-                                        if (PendingCircle.Contains(circle.AddressBookId))
+                                        string[] guidDomain = typeAccount[1].Split('@');
+                                        Circle circle = new Circle(new Guid(guidDomain[0]), "", this);
+                                        CircleList.AddCircle(circle);
+
+                                        lock (PendingCircle)
                                         {
-                                            ContactService.OnCircleCreated(new CircleEventArgs(circle));
-                                            PendingCircle.Remove(circle.AddressBookId);
+                                            if (PendingCircle.Contains(circle.AddressBookId))
+                                            {
+                                                ContactService.OnCircleCreated(new CircleEventArgs(circle));
+                                                PendingCircle.Remove(circle.AddressBookId);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
+                    }
                 }
             }
         }

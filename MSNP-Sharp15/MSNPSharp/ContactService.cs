@@ -1985,6 +1985,10 @@ namespace MSNPSharp
 
         #region Create Circle
 
+        /// <summary>
+        /// Use specific name to create a new <see cref="Circle"/>
+        /// </summary>
+        /// <param name="circleName">New circle name.</param>
         public void CreateCircle(string circleName)
         {
             MsnServiceObject createCircleObject = new MsnServiceObject(PartnerScenario.CircleSave, "CreateCircle");
@@ -2021,7 +2025,7 @@ namespace MSNPSharp
                         delegate
                         {
                             //We need USR SHA A again
-                            NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), "live.com", MSNLists.AllowedList | MSNLists.ForwardList);
+                            NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), "live.com", MSNLists.AllowedList | MSNLists.ForwardList, false);
 
                             lock (NSMessageHandler.PendingCircle)
                             {
@@ -2133,6 +2137,138 @@ namespace MSNPSharp
                 abService.ABFindContactsPagedAsync(request, ABFindContactsPagedObject);
             }
         }
+        #endregion
+
+
+        #region Block/UnBlock Circle
+
+        /// <summary>
+        /// Block a specific <see cref="Circle"/>
+        /// </summary>
+        /// <param name="circle">The circle to block.</param>
+        public void BlockCircle(Circle circle)
+        {
+            if (circle.OnBlockedList)
+                return;
+
+
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AddMember", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            MsnServiceObject AddMemberObject = new MsnServiceObject(PartnerScenario.BlockUnblock, "AddMember");
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
+
+            AddMemberRequestType addMemberRequest = new AddMemberRequestType();
+            addMemberRequest.serviceHandle = new HandleType();
+
+            Service messengerService = AddressBook.GetTargetService(ServiceFilterType.Messenger);
+            addMemberRequest.serviceHandle.Id = messengerService.Id.ToString();
+            addMemberRequest.serviceHandle.Type = messengerService.ServiceType;
+
+            Membership memberShip = new Membership();
+            memberShip.MemberRole = MemberRole.Block;
+
+            CircleMember member = new CircleMember();
+
+            member.Type = MessengerContactType.Circle;
+            member.State = MemberState.Accepted;
+            member.CircleId = circle.AddressBookId.ToString();
+
+            memberShip.Members = new BaseMember[] { member };
+            addMemberRequest.memberships = new Membership[] { memberShip };
+
+            sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
+            {
+                DeleteCompletedObject(sharingService);
+
+                if (!e.Cancelled)
+                {
+                    HandleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(AddMemberRequestType));
+                    if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
+                    {
+                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
+                        return;
+                    }
+
+                    NSMessageHandler.SendBlockCircleNSCommands(circle.AddressBookId, circle.HostDomain);
+
+                    circle.RemoveFromList(MSNLists.AllowedList);
+                    circle.AddToList(MSNLists.BlockedList);
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + circle.ToString(), GetType().Name);
+                }
+            };
+
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "AddMember", addMemberRequest);
+            sharingService.AddMemberAsync(addMemberRequest, AddMemberObject);
+        }
+
+        /// <summary>
+        /// Unblock a specific <see cref="Circle"/>
+        /// </summary> 
+        /// <param name="circle">The affected circle</param>
+        public void UnBlockCircle(Circle circle)
+        {
+
+            if (!circle.OnBlockedList)
+                return;
+
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("DeleteMember", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            MsnServiceObject DeleteMemberObject = new MsnServiceObject(PartnerScenario.BlockUnblock, "DeleteMember");
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, DeleteMemberObject);
+            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
+            {
+                DeleteCompletedObject(sharingService);
+
+                if (!e.Cancelled)
+                {
+                    if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
+                    {
+                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("UnBlockCircle", e.Error));
+                        return;
+                    }
+
+                    HandleServiceHeader(((SharingServiceBinding)service).ServiceHeaderValue, typeof(DeleteMemberRequestType));
+
+                    NSMessageHandler.SendUnBlockCircleNSCommands(circle.AddressBookId, circle.HostDomain);
+                    circle.RemoveFromList(MSNLists.BlockedList);
+                    circle.AddToList(MSNLists.AllowedList);
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + circle.ToString(), GetType().Name);
+                }
+            };
+
+            DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
+            deleteMemberRequest.serviceHandle = new HandleType();
+
+            Service messengerService = AddressBook.GetTargetService(ServiceFilterType.Messenger);
+            deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();   //Always set to 0 ??
+            deleteMemberRequest.serviceHandle.Type = messengerService.ServiceType;
+
+            Membership memberShip = new Membership();
+            memberShip.MemberRole = MemberRole.Block;
+
+            CircleMember clMember = new CircleMember();
+            clMember.State = MemberState.Accepted;
+            clMember.Type = MessengerContactType.Circle;
+            clMember.CircleId = circle.AddressBookId.ToString();
+
+            memberShip.Members = new CircleMember[] { clMember };
+            deleteMemberRequest.memberships = new Membership[] { memberShip };
+
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "DeleteMember", deleteMemberRequest);
+            sharingService.DeleteMemberAsync(deleteMemberRequest, DeleteMemberObject);
+        }
+
+
         #endregion
 
         #endregion

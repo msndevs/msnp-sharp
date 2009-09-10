@@ -171,6 +171,7 @@ namespace MSNPSharp
         {
             ContactType = MessengerContactType.Circle;
             ClientType = ClientType.CircleMember;
+            Lists = MSNLists.AllowedList | MSNLists.ForwardList;
         }
 
         #endregion
