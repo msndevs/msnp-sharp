@@ -120,7 +120,7 @@ namespace MSNPSharp
     [Serializable()]
     public class CircleList : IEnumerable
     {
-        private Dictionary<Guid, Circle> list = new Dictionary<Guid, Circle>();
+        private Dictionary<string, Circle> list = new Dictionary<string, Circle>();
 
         [NonSerialized]
         private NSMessageHandler nsMessageHandler = null;
@@ -143,16 +143,16 @@ namespace MSNPSharp
 
         internal bool AddCircle(Circle circle)
         {
-            if (this[circle.AddressBookId] == null)
+            if (this[circle.Mail] == null)
             {
                 lock (SyncRoot)
-                    list.Add(circle.AddressBookId, circle);
+                    list.Add(circle.Mail, circle);
                 return true;
             }
             else
             {
                 lock (SyncRoot)
-                    list[circle.AddressBookId] = circle;
+                    list[circle.Mail] = circle;
             }
 
             return false;
@@ -162,7 +162,7 @@ namespace MSNPSharp
         {
             lock (SyncRoot)
             {
-                list.Remove(circle.AddressBookId);
+                list.Remove(circle.Mail);
             }
         }
 
@@ -170,15 +170,15 @@ namespace MSNPSharp
         {
             lock (SyncRoot)
             {
-                if (list.ContainsKey(member.AddressBookId))
+                if (list.ContainsKey(member.CircleMail))
                 {
-                    if (list[member.AddressBookId].Members.Contains(member))
+                    if (list[member.CircleMail].Members.Contains(member))
                     {
-                        list[member.AddressBookId].Members[list[member.AddressBookId].Members.IndexOf(member)] = member;
+                        list[member.CircleMail].Members[list[member.CircleMail].Members.IndexOf(member)] = member;
                     }
                     else
                     {
-                        list[member.AddressBookId].Members.Add(member);
+                        list[member.CircleMail].Members.Add(member);
                     }
 
                     return true;
@@ -192,9 +192,9 @@ namespace MSNPSharp
         {
             lock (SyncRoot)
             {
-                if (list.ContainsKey(member.AddressBookId))
+                if (list.ContainsKey(member.CircleMail))
                 {
-                    list[member.AddressBookId].Members.Remove(member);
+                    list[member.CircleMail].Members.Remove(member);
                     return true;
                 }
             }
@@ -202,11 +202,12 @@ namespace MSNPSharp
             return false;
         }
 
-        internal void RemoveCircle(Guid abId)
+        internal void RemoveCircle(Guid abId, string hostDomain)
         {
             lock (SyncRoot)
             {
-                list.Remove(abId);
+                string identifier = abId.ToString().ToLowerInvariant() + "@" + hostDomain.ToLowerInvariant();
+                list.Remove(identifier);
             }
         }
 
@@ -215,17 +216,37 @@ namespace MSNPSharp
             nsMessageHandler = handler;
         }
 
+        
         /// <summary>
-        /// Find <see cref="Circle"/> by circleId, if circle not found, return null.
+        /// Find <see cref="Circle"/> by circle Id and host domain if circle not found, return null.
         /// </summary>
         /// <param name="abId">Circle id</param>
+        /// <param name="hostDomain">Circle host domain.</param>
         /// <returns></returns>
-        public Circle this[Guid abId]
+        public Circle this[Guid abId, string hostDomain]
         {
             get
             {
-                if (list.ContainsKey(abId))
-                    return list[abId];
+                string identifier = abId.ToString().ToLowerInvariant() + "@" + hostDomain.ToLowerInvariant();
+                if (list.ContainsKey(identifier))
+                    return list[identifier];
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Find <see cref="Circle"/> by circle Id and host domain if circle not found, return null.
+        /// </summary>
+        /// <param name="id">Via Id: guid@hostdomain</param>
+        /// <returns></returns>
+        public Circle this[string id]
+        {
+            get
+            {
+                string identifier = id.ToLowerInvariant();
+                if (list.ContainsKey(identifier))
+                    return list[identifier];
 
                 return null;
             }

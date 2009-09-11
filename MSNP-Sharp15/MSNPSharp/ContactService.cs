@@ -1912,7 +1912,7 @@ namespace MSNPSharp
             //This is M$ style, you will never guess out the meaning of these numbers.
             ContentInfoType properties = new ContentInfoType();
             properties.Domain = 1;
-            properties.HostedDomain = "live.com";
+            properties.HostedDomain = CircleString.DefaultHostDomain;
             properties.Type = 2;
             properties.MembershipAccess = 0;
             properties.IsPresenceEnabled = true;
@@ -1935,11 +1935,11 @@ namespace MSNPSharp
                         delegate
                         {
                             //We need USR SHA A again
-                            NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), "live.com", MSNLists.AllowedList | MSNLists.ForwardList, false);
+                            NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), CircleString.DefaultHostDomain, MSNLists.AllowedList | MSNLists.ForwardList, false);
 
                             lock (NSMessageHandler.PendingCircle)
                             {
-                                NSMessageHandler.PendingCircle.Add(new Guid(e.Result.CreateCircleResult.Id));
+                                NSMessageHandler.PendingCircle.Add(e.Result.CreateCircleResult.Id.ToLowerInvariant() + "@" + CircleString.DefaultHostDomain);
                             }
 
 
@@ -1952,95 +1952,6 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, createCircleObject, request));
         }
 
-        [Obsolete("Move to XmlContactList", true)]
-        internal void abCircleRequest(string abId)
-        {
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
-            {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", new MSNPSharpException("You don't have access right on this action anymore.")));
-            }
-            else
-            {
-                bool deltasOnly = true;
-
-                MsnServiceState ABFindContactsPagedObject = new MsnServiceState(PartnerScenario.JoinedCircleDuringPush, "ABFindContactsPaged", true);
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindContactsPagedObject);
-                ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
-                request.abView = "MessengerClient8";  //NO default!
-                request.extendedContent = "AB AllGroups CircleResult";
-
-                request.filterOptions = new filterOptionsType();
-                request.filterOptions.ContactFilter = new ContactFilterType();
-
-                request.filterOptions.LastChanged = AddressBook.AddressbookLastChange;
-                request.filterOptions.LastChangedSpecified = true;
-
-                request.filterOptions.DeltasOnly = deltasOnly;
-                request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
-
-                abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
-                {
-                    OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
-
-                    if (!e.Cancelled)
-                    {
-                        if (e.Error != null)
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
-                        }
-                        else
-                        {
-                            if (null != e.Result.ABFindContactsPagedResult)
-                            {
-                                string adlPayLoad = string.Empty;
-                                string domain = string.Empty;
-
-                                if (e.Result.ABFindContactsPagedResult.CircleResult.Circles != null)
-                                {
-                                    if (e.Result.ABFindContactsPagedResult.CircleResult.Circles.Length > 0)
-                                    {
-                                        domain = e.Result.ABFindContactsPagedResult.CircleResult.Circles[0].Content.Info.HostedDomain;
-                                    }
-                                }
-
-                                foreach (ContactType contact in e.Result.ABFindContactsPagedResult.Contacts)
-                                {
-                                    if (contact.contactInfo != null)
-                                    {
-                                        if (contact.contactInfo.contactType == MessengerContactType.Circle
-                                            && contact.fDeletedSpecified
-                                            && contact.fDeleted == false)
-                                        {
-                                            Circle circle = new Circle(new Guid(abId), contact.contactInfo.displayName, NSMessageHandler);
-                                            circle.CreatorEmail = NSMessageHandler.Owner.Mail;
-                                            circle.CID = contact.contactInfo.CID;
-                                            circle.Guid = new Guid(contact.contactId);
-                                            circle.NickName = circle.Name;
-
-                                            NSMessageHandler.CircleList.AddCircle(circle);
-
-                                            if (domain != string.Empty)
-                                            {
-                                                //TODO: combine ADL payload here.
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (adlPayLoad != string.Empty && domain != string.Empty)
-                                {
-                                    //TODO: send ADL here.
-
-                                    //The official client call abRequest and msRequest two times to refresh the contactlist here, but we needn't.
-                                }
-                            }
-                        }
-                    }
-                };
-
-                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABFindContactsPagedObject, request));
-            }
-        }
         #endregion
 
 
