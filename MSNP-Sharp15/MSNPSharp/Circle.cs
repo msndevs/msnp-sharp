@@ -85,7 +85,11 @@ namespace MSNPSharp
 
         public List<Contact> Members
         {
-            get { return members; }
+            get 
+            {
+                lock (members)
+                    return members;
+            }
         }
 
         public Guid AddressBookId
@@ -169,6 +173,35 @@ namespace MSNPSharp
         internal new void SetName(string newName)
         {
             displayName = newName;
+        }
+
+        internal void AddMember(CircleContactMember member)
+        {
+            lock (members)
+            {
+                if (members.Contains(member))
+                {
+                    members[members.IndexOf(member)] = member;
+                }
+                else
+                {
+                    members.Add(member);
+                }
+            }
+        }
+
+        internal void RemoveMember(CircleContactMember member)
+        {
+            lock (members)
+            {
+                members.Remove(member);
+            }
+        }
+
+        internal bool HasMember(CircleContactMember member)
+        {
+            lock (members)
+                return members.Contains(member);
         }
 
         #region Protected

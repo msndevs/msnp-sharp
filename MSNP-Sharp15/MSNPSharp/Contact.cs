@@ -170,6 +170,8 @@ namespace MSNPSharp
         private List<ActivityDetailsType> activities = new List<ActivityDetailsType>(0);
         private Uri userTile;
 
+        private object syncObject = new object();
+
         public Uri UserTile
         {
             get
@@ -818,21 +820,24 @@ namespace MSNPSharp
 
         internal void SetStatus(PresenceStatus newStatus)
         {
-            if (status != newStatus)
+            lock (syncObject)
             {
-                PresenceStatus oldStatus = status;
-                status = newStatus;
+                if (status != newStatus)
+                {
+                    PresenceStatus oldStatus = status;
+                    status = newStatus;
 
-                // raise an event									
-                if (StatusChanged != null)
-                    StatusChanged(this, new StatusChangeEventArgs(oldStatus));
+                    // raise an event									
+                    if (StatusChanged != null)
+                        StatusChanged(this, new StatusChangeEventArgs(oldStatus));
 
-                // raise the online/offline events
-                if (oldStatus == PresenceStatus.Offline && ContactOnline != null)
-                    ContactOnline(this, EventArgs.Empty);
+                    // raise the online/offline events
+                    if (oldStatus == PresenceStatus.Offline && ContactOnline != null)
+                        ContactOnline(this, EventArgs.Empty);
 
-                if (newStatus == PresenceStatus.Offline && ContactOffline != null)
-                    ContactOffline(this, new StatusChangeEventArgs(oldStatus));
+                    if (newStatus == PresenceStatus.Offline && ContactOffline != null)
+                        ContactOffline(this, new StatusChangeEventArgs(oldStatus));
+                }
             }
         }
 

@@ -1206,7 +1206,7 @@ namespace MSNPSharp
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
 
-                if (CircleMemberList[account] == null)
+                if (CircleMemberList[account] == null && account != Owner.Mail.ToLowerInvariant())
                 {
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
                     CircleMemberList.Add(contact as CircleContactMember);
