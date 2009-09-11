@@ -123,11 +123,11 @@ namespace MSNPSharp
 
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                MsnServiceObject getContactsRecentActivityObject = new MsnServiceObject(PartnerScenario.None, "GetContactsRecentActivity");
+                MsnServiceState getContactsRecentActivityObject = new MsnServiceState(PartnerScenario.None, "GetContactsRecentActivity", true);
                 WhatsUpServiceBinding wuService = (WhatsUpServiceBinding)CreateService(MsnServiceType.WhatsUp, getContactsRecentActivityObject);
                 wuService.GetContactsRecentActivityCompleted += delegate(object sender, GetContactsRecentActivityCompletedEventArgs e)
                 {
-                    DeleteCompletedObject(wuService);
+                    OnAfterCompleted(new ServiceOperationEventArgs(wuService, MsnServiceType.WhatsUp, e));
 
                     if (e.Cancelled)
                         return;
@@ -135,8 +135,6 @@ namespace MSNPSharp
                     if (e.Error != null)
                     {
                         OnGetWhatsUpCompleted(this, new GetWhatsUpCompletedEventArgs(e.Error, null));
-                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("GetContactsRecentActivity", e.Error));
-
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.Message, GetType().Name);
                         return;
                     }
