@@ -1411,6 +1411,37 @@ namespace MSNPSharpClient
             }
         }
 
+        private void createCircleMenuItem_Click(object sender, EventArgs e)
+        {
+            //This is a demostration to tell you how to use MSNPSharp to create, block, and unblock Circle.
+            messenger.ContactService.CreateCircle("test wp circle");
+            messenger.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_CircleAdded);
+        }
+
+        void ContactService_CircleAdded(object sender, CircleEventArgs e)
+        {
+            //Circle created, then show you how to block.
+            if (!e.Circle.OnBlockedList)
+            {
+                messenger.ContactService.BlockCircle(e.Circle);
+                e.Circle.ContactBlocked += new EventHandler<EventArgs>(Circle_ContactBlocked);
+                Trace.WriteLine("Circle blocked: " + e.Circle.ToString());
+            }
+
+            Trace.WriteLine("Circle created: " + e.Circle.ToString());
+        }
+
+        void Circle_ContactBlocked(object sender, EventArgs e)
+        {
+            //Circle blocked, show you how to unblock.
+            Circle circle = sender as Circle;
+            if (circle != null)
+            {
+                messenger.ContactService.UnBlockCircle(circle);
+                Trace.WriteLine("Circle unblocked: " + circle.ToString());
+            }
+        }
+
         private void importContactsMenuItem_Click(object sender, EventArgs e)
         {
             ImportContacts ic = new ImportContacts();

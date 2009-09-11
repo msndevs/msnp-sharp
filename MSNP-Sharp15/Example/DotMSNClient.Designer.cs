@@ -47,6 +47,7 @@ namespace MSNPSharpClient
             this.sendMIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.createCircleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unblockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -246,6 +247,7 @@ namespace MSNPSharpClient
             this.sendMIMMenuItem,
             this.toolStripMenuItem3,
             this.importContactsMenuItem,
+            this.createCircleMenuItem,
             this.toolStripMenuItem2,
             this.blockMenuItem,
             this.unblockMenuItem,
@@ -288,6 +290,13 @@ namespace MSNPSharpClient
             this.importContactsMenuItem.Size = new System.Drawing.Size(200, 22);
             this.importContactsMenuItem.Text = "Import Contacts";
             this.importContactsMenuItem.Click += new System.EventHandler(this.importContactsMenuItem_Click);
+            // 
+            // createCircleMenuItem
+            // 
+            this.createCircleMenuItem.Name = "createCircleMenuItem";
+            this.createCircleMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.createCircleMenuItem.Text = "Circle Tests";
+            this.createCircleMenuItem.Click += new System.EventHandler(this.createCircleMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
@@ -742,6 +751,7 @@ namespace MSNPSharpClient
         private ContextMenuStrip groupContextMenu;
         private Button btnAddNew;
         private ToolStripMenuItem importContactsMenuItem;
+        private ToolStripMenuItem createCircleMenuItem;
         private TreeView treeViewFilterList;
         private TextBox txtSearch;
         private ToolStripMenuItem deleteMenuItem;
