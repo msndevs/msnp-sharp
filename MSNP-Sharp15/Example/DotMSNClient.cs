@@ -1214,7 +1214,7 @@ namespace MSNPSharpClient
 
             foreach (Circle circle in messenger.Nameserver.CircleList)
             {
-                TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.AddressBookId.ToString(), circle.AddressBookId.ToString(), 0, 0);
+                TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, 0, 0);
                 circlenode.NodeFont = PARENT_NODE_FONT;
                 circlenode.Tag = circle;
             }
