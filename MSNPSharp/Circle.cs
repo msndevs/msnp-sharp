@@ -75,13 +75,12 @@ namespace MSNPSharp
         private Guid addressBookId = Guid.Empty;
         private string creatorEmail = string.Empty;
         private List<Contact> members = new List<Contact>(0);
-        private string hostDomain = "live.com";
+        private string hostDomain = CircleString.DefaultHostDomain;
         private string displayName = string.Empty;
 
         public string HostDomain
         {
             get { return hostDomain; }
-            internal set { hostDomain = value; }
         }
 
         public List<Contact> Members
@@ -121,7 +120,7 @@ namespace MSNPSharp
         /// </summary>
         public new string Mail
         {
-            get { return AddressBookId.ToString("D") + "@" + HostDomain; }
+            get { return AddressBookId.ToString().ToLowerInvariant() + "@" + HostDomain.ToLowerInvariant(); }
         }
 
         /// <summary>
@@ -146,12 +145,13 @@ namespace MSNPSharp
             Initialize();
         }
 
-        public Circle(Guid abId, string displayName, NSMessageHandler handler)
+        public Circle(Guid abId, string hostDomain, string displayName, NSMessageHandler handler)
             : base()
         {
             AddressBookId = abId;
             NSMessageHandler = handler;
             this.displayName = displayName;
+            this.hostDomain = hostDomain;
             SetNickName(displayName);
             Initialize();
         }
@@ -163,7 +163,12 @@ namespace MSNPSharp
 
         public override string ToString()
         {
-            return Hash;
+            return Hash + "Name: " + Name;
+        }
+
+        internal new void SetName(string newName)
+        {
+            displayName = newName;
         }
 
         #region Protected
@@ -171,6 +176,7 @@ namespace MSNPSharp
         {
             ContactType = MessengerContactType.Circle;
             ClientType = ClientType.CircleMember;
+            Lists = MSNLists.AllowedList | MSNLists.ForwardList;
         }
 
         #endregion
@@ -181,7 +187,27 @@ namespace MSNPSharp
     public class CircleContactMember : Contact
     {
         private string via = string.Empty;
+        private string circleMail = string.Empty;
         private ClientType memberType = ClientType.PassportMember;
+        private Guid addressBookId = Guid.Empty;
+
+        public Guid AddressBookId
+        {
+            get 
+            {
+                if (addressBookId == Guid.Empty)
+                {
+                    string[] viaMail = Via.Split(':');
+                    if (viaMail.Length > 1)
+                    {
+                        string guid = viaMail[1].Split('@')[0];
+                        addressBookId = new Guid(guid);
+                    }
+                }
+
+                return addressBookId; 
+            }
+        }
 
         public ClientType MemberType
         {
@@ -191,6 +217,14 @@ namespace MSNPSharp
         public string Via
         {
             get { return via; }
+        }
+
+        /// <summary>
+        /// The identifier of circle.
+        /// </summary>
+        public string CircleMail
+        {
+            get { return circleMail; }
         }
 
         protected internal CircleContactMember()
@@ -205,6 +239,12 @@ namespace MSNPSharp
             this.via = via;
             this.Mail = mail;
             memberType = type;
+
+            string[] viaMail = Via.Split(':');
+            if (viaMail.Length > 0)
+            {
+                circleMail = viaMail[1].ToLowerInvariant();
+            }
 
             Initialize();
         }

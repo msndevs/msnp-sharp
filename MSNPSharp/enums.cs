@@ -1022,7 +1022,10 @@ namespace MSNPSharp
         public const string ReliabilitySchemeReplacementTag = "{reliability scheme}";
         public const string MessageSchemeReplacementTag = "{message scheme}";
 
-        public const string CircleQuickName = "circle89";
+        /// <summary>
+        /// The default windows live circle host domain: live.com.
+        /// </summary>
+        public const string DefaultHostDomain = "live.com";
     }
 
 };

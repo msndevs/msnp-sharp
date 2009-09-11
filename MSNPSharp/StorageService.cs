@@ -109,7 +109,8 @@ namespace MSNPSharp
 
             try
             {
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(PartnerScenario.RoamingSeed));
+                MsnServiceState serviceState = new MsnServiceState(PartnerScenario.RoamingSeed, "CreateProfile", false);
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
                 storageService.AllowAutoRedirect = true;
 
                 //1. CreateProfile, create a new profile and return its resource id.
@@ -121,7 +122,7 @@ namespace MSNPSharp
                 string resId_Prof = "";
                 try
                 {
-                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "CreateProfile", createRequest);
+                    RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(storageService, MsnServiceType.Storage, serviceState, createRequest));
                     CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
                     resId_Prof = createResponse.CreateProfileResult;
                     NSMessageHandler.ContactService.Deltas.Profile.ResourceID = resId_Prof;
@@ -151,7 +152,8 @@ namespace MSNPSharp
                 srvHandle.Type = ServiceFilterType.Profile;
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, new MsnServiceObject(PartnerScenario.RoamingSeed));
+                    serviceState = new MsnServiceState(PartnerScenario.RoamingSeed, "AddMember", false);
+                    SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, serviceState);
                     sharingService.AllowAutoRedirect = true;
 
                     AddMemberRequestType addMemberRequest = new AddMemberRequestType();
@@ -177,7 +179,7 @@ namespace MSNPSharp
                     addMemberRequest.memberships = new Membership[] { memberShip };
                     try
                     {
-                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, "AddMember", addMemberRequest);
+                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, serviceState, addMemberRequest));
                         sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
@@ -302,7 +304,8 @@ namespace MSNPSharp
                 //8. UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingSeed));
+                    serviceState = new MsnServiceState(PartnerScenario.RoamingSeed, "UpdateDynamicItem", false);
+                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
                     abService.AllowAutoRedirect = true;
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
@@ -335,7 +338,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
+                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, serviceState, updateDyItemRequest));
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex)
@@ -362,8 +365,8 @@ namespace MSNPSharp
                     abcontactUpdateRequest.contacts = new ContactType[] { meContact };
                     try
                     {
-                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(
-                            abService, "ABContactUpdate", abcontactUpdateRequest);
+                        serviceState = new MsnServiceState(PartnerScenario.ContactSave, "ABContactUpdate", false);
+                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, serviceState, abcontactUpdateRequest));
                         abService.ABContactUpdate(abcontactUpdateRequest);
                     }
                     catch (Exception ex)
@@ -384,7 +387,8 @@ namespace MSNPSharp
         {
             try
             {
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(scenario));
+                MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
 
                 GetProfileRequestType request = new GetProfileRequestType();
                 request.profileHandle = new Handle();
@@ -395,7 +399,7 @@ namespace MSNPSharp
                 request.profileAttributes = new profileAttributes();
                 request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
 
-                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "GetProfile", request);
+                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(storageService, MsnServiceType.Storage, serviceState, request));
                 GetProfileResponse response = storageService.GetProfile(request);
 
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
@@ -494,7 +498,8 @@ namespace MSNPSharp
             NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
             {
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
+                MsnServiceState serviceState = new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateProfile", false);
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
 
                 UpdateProfileRequestType request = new UpdateProfileRequestType();
                 request.profile = new UpdateProfileRequestTypeProfile();
@@ -508,7 +513,7 @@ namespace MSNPSharp
 
                 try
                 {
-                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, "UpdateProfile", request);
+                    RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(storageService, MsnServiceType.Storage, serviceState, request));
                     storageService.UpdateProfile(request);
                 }
                 catch (Exception ex)
@@ -524,7 +529,8 @@ namespace MSNPSharp
                 // UpdateDynamicItem
                 if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
+                    serviceState = new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateDynamicItem", false);
+                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
 
                     UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
                     updateDyItemRequest.abId = Guid.Empty.ToString();
@@ -549,9 +555,8 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, "UpdateDynamicItem", updateDyItemRequest);
+                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, serviceState, updateDyItemRequest));
                         abService.UpdateDynamicItem(updateDyItemRequest);
-                        HandleServiceHeader(abService.ServiceHeaderValue, typeof(UpdateDynamicItemRequestType));
                     }
                     catch (Exception ex2)
                     {
@@ -570,15 +575,6 @@ namespace MSNPSharp
                 NSMessageHandler.ContactService.Deltas.Save();
             }
 
-        }
-
-        internal void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(StorageService storageService, string methodName, object param)
-        {
-            if (NSMessageHandler != null && NSMessageHandler.ContactService != null)
-            {
-                NSMessageHandler.ContactService.ChangeCacheKeyAndPreferredHostForSpecifiedMethod(CacheKeyType.StorageServiceCacheKey, storageService, methodName, param);
-                storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
-            }
         }
 
         #endregion
@@ -664,7 +660,8 @@ namespace MSNPSharp
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, new MsnServiceObject(PartnerScenario.RoamingIdentityChanged));
+                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage,
+                    new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateDocument", false));
 
                 // 1. Getprofile
                 NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);

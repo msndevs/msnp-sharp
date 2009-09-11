@@ -119,7 +119,7 @@ namespace MSNPSharp.IO
             {
                 if (circle.CircleResultInfo.Deleted)
                 {
-                    NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.CircleResultInfo.Content.Handle.Id));
+                    NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.CircleResultInfo.Content.Handle.Id), circle.CircleResultInfo.Content.Info.HostedDomain);
                 }
                 else
                 {
@@ -528,9 +528,9 @@ namespace MSNPSharp.IO
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
         SerializableDictionary<Guid, ContactType> abcontacts = new SerializableDictionary<Guid, ContactType>(0);
-        SerializableDictionary<Guid, CircleInfo> circleResults = new SerializableDictionary<Guid, CircleInfo>(0);
+        SerializableDictionary<string, CircleInfo> circleResults = new SerializableDictionary<string, CircleInfo>(0);
 
-        public SerializableDictionary<Guid, CircleInfo> CircleResults
+        public SerializableDictionary<string, CircleInfo> CircleResults
         {
             get
             {
@@ -690,11 +690,10 @@ namespace MSNPSharp.IO
 
                     foreach(CircleInverseInfoType circle in forwardList.CircleResult.Circles)
                     {
-                        Guid circleId = new Guid(circle.Content.Handle.Id);
                         if (circle.Deleted)
                         {
-                            CircleResults.Remove(circleId);
-                            NSMessageHandler.CircleList.RemoveCircle(circleId);
+                            CircleResults.Remove(circle.Content.Handle.Id.ToLowerInvariant() + "@" + circle.Content.Info.HostedDomain.ToLowerInvariant());
+                            NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.Content.Handle.Id), circle.Content.Info.HostedDomain.ToLowerInvariant());
                         }
                         else
                         {
@@ -709,7 +708,7 @@ namespace MSNPSharp.IO
                             CircleInverseInfoType circleinfo = circleAdded[i];
                             ContactType contactType = circleContactsAdded[i];
 
-                            Guid circleId = new Guid(circleinfo.Content.Handle.Id);
+                            string circleId = circleinfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleinfo.Content.Info.HostedDomain.ToLowerInvariant();
 
                             bool newadded = true;
                             if (CircleResults.ContainsKey(circleId))
@@ -802,8 +801,7 @@ namespace MSNPSharp.IO
 
         private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
         {
-            Circle circle = new Circle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.DisplayName, NSMessageHandler);
-            circle.HostDomain = circleinfo.Content.Info.HostedDomain;
+            Circle circle = new Circle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.HostedDomain, circleinfo.Content.Info.DisplayName, NSMessageHandler);
 
             circle.Lists = MSNLists.AllowedList | MSNLists.ForwardList;
             circle.Guid = new Guid(contact.contactId);
