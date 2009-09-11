@@ -2376,6 +2376,25 @@ namespace MSNPSharp
 
                                     CircleList.AddCircle(circle);
 
+                                    XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
+                                    if (ids.Count > 0)
+                                    {
+                                        foreach (XmlNode node in ids)
+                                        {
+                                            lock (CircleMemberList)
+                                            {
+                                                foreach (CircleContactMember member in CircleMemberList)
+                                                {
+                                                    string id = ((int)member.MemberType).ToString() + ":" + member.Mail.ToLowerInvariant();
+                                                    if (id == node.InnerText && circle.Mail == member.CircleMail)
+                                                    {
+                                                        circle.AddMember(member);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
                                 }
 
                                 if (mimeDic["NotifType"] == "Full" && xmlString == string.Empty)  //New circle added.
