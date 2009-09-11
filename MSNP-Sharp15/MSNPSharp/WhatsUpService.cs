@@ -156,7 +156,7 @@ namespace MSNPSharp
                 request.locales = new string[] { System.Globalization.CultureInfo.CurrentCulture.Name };
                 request.count = count;
 
-                wuService.GetContactsRecentActivityAsync(request, getContactsRecentActivityObject);
+                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(wuService, MsnServiceType.WhatsUp, getContactsRecentActivityObject, request));
             }
         }
 

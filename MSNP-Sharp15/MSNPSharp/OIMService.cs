@@ -300,7 +300,7 @@ namespace MSNPSharp
                     }
                 };
 
-                rsiService.GetMetadataAsync(new GetMetadataRequestType(), getMetadataObject);
+                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(rsiService, MsnServiceType.RSI, getMetadataObject, new GetMetadataRequestType()));
                 return;
             }
             processOIMS(xmlstr, initial);
@@ -456,7 +456,8 @@ namespace MSNPSharp
                 GetMessageRequestType request = new GetMessageRequestType();
                 request.messageId = guid.ToString();
                 request.alsoMarkAsRead = false;
-                rsiService.GetMessageAsync(request, getMessageObject);
+
+                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(rsiService, MsnServiceType.RSI, getMessageObject, request));
             }
         }
 
@@ -484,7 +485,7 @@ namespace MSNPSharp
 
             DeleteMessagesRequestType request = new DeleteMessagesRequestType();
             request.messageIds = guids;
-            rsiService.DeleteMessagesAsync(request, deleteMessagesObject);
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(rsiService, MsnServiceType.RSI, deleteMessagesObject, request));
         }
 
         private string _RunGuid = Guid.NewGuid().ToString();
