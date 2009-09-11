@@ -1212,6 +1212,17 @@ namespace MSNPSharp
                     CircleMemberList.Add(contact as CircleContactMember);
                     CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
                 }
+
+                if (account == Owner.Mail.ToLowerInvariant())
+                {
+                    string capabilityString = message.CommandValues[3].ToString();
+                    if (capabilityString == "0:0")  //This is a circle's presence status.
+                    {
+                        Circle circle = CircleList[circleMail];
+                        if (circle == null) return;
+                        circle.SetStatus(newstatus);
+                    }
+                }
             }
             else
             {
@@ -1301,6 +1312,17 @@ namespace MSNPSharp
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
                     CircleMemberList.Add(contact as CircleContactMember);
                     CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
+                }
+
+                if (account == Owner.Mail.ToLowerInvariant())
+                {
+                    string capabilityString = message.CommandValues[1].ToString();
+                    if (capabilityString == "0:0")  //This is a circle's presence status.
+                    {
+                        Circle circle = CircleList[circleMail];
+                        if (circle == null) return;
+                        circle.SetStatus(PresenceStatus.Offline);
+                    }
                 }
             }
             else
