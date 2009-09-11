@@ -1209,6 +1209,8 @@ namespace MSNPSharp
                 if (CircleMemberList[account] == null && account != Owner.Mail.ToLowerInvariant())
                 {
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
+                    contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
+
                     CircleMemberList.Add(contact as CircleContactMember);
                     CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
                 }
@@ -1222,6 +1224,8 @@ namespace MSNPSharp
                         if (circle == null) return;
                         circle.SetStatus(newstatus);
                     }
+
+                    return;
                 }
             }
             else
@@ -1307,7 +1311,7 @@ namespace MSNPSharp
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
 
                 contact = CircleMemberList[usernameAndCircle[1]];
-                if (contact == null)
+                if (contact == null && account != Owner.Mail.ToLowerInvariant())
                 {
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
                     CircleMemberList.Add(contact as CircleContactMember);
@@ -1323,6 +1327,8 @@ namespace MSNPSharp
                         if (circle == null) return;
                         circle.SetStatus(PresenceStatus.Offline);
                     }
+
+                    return;
                 }
             }
             else
