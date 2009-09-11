@@ -1217,6 +1217,13 @@ namespace MSNPSharpClient
                 TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, 0, 0);
                 circlenode.NodeFont = PARENT_NODE_FONT;
                 circlenode.Tag = circle;
+
+                foreach (Contact member in circle.Members)
+                {
+                    TreeNode newnode = circlenode.Nodes.Add(member.Mail, member.Name);
+                    newnode.NodeFont = member.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                    newnode.Tag = member;
+                }
             }
 
             foreach (Contact contact in messenger.ContactList.All)
