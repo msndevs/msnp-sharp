@@ -2245,7 +2245,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a contact group has been added to the contact group list.
-        /// Raises the <see cref="ContactGroupAdded"/> event.
+        /// Raises the ContactService.ContactGroupAdded event.
         /// <code>ADG [Transaction] [ListVersion] [Name] [GroupID] </code>
         /// </remarks>
         /// <param name="message"></param>
@@ -2262,7 +2262,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a contact group has been removed.
-        /// Raises the <see cref="ContactGroupRemoved"/> event.
+        /// Raises the ContactService.ContactGroupRemoved event.
         /// <code>RMG [Transaction] [ListVersion] [GroupID]</code>
         /// </remarks>
         /// <param name="message"></param>
