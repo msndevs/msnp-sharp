@@ -38,6 +38,7 @@ using System.Collections.Generic;
 namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using MSNPSharp.Core;
 
     #region Service
 
@@ -73,8 +74,8 @@ namespace MSNPSharp.IO
             }
         }
 
-        private DateTime lastChange;
-        public DateTime LastChange
+        private string lastChange;
+        public string LastChange
         {
             get
             {
@@ -185,7 +186,7 @@ namespace MSNPSharp.IO
                 return 1;
             }
 
-            return DateTime.Compare(LastChange, other.LastChange);
+            return DateTime.Compare(WebServiceDateTimeConverter.ConvertToDateTime(LastChange), WebServiceDateTimeConverter.ConvertToDateTime(other.LastChange));
         }
 
         #endregion
@@ -243,13 +244,13 @@ namespace MSNPSharp.IO
     [Serializable]
     public class ProfileResource
     {
-        private DateTime dateModified;
+        private string dateModified;
         private string resourceID;
 
         /// <summary>
         /// Last modify time of the resource
         /// </summary>
-        public DateTime DateModified
+        public string DateModified
         {
             get
             {

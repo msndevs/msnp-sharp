@@ -1399,7 +1399,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string changeTypeField;
         
-        private System.DateTime publishDateField;
+        private string publishDateField;
         
         private TemplateVariableBaseType[] templateVariablesField;
         
@@ -1444,7 +1444,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime PublishDate {
+        public string PublishDate {
             get {
                 return this.publishDateField;
             }
@@ -2026,9 +2026,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool fDeletedFieldSpecified;
         
-        private System.DateTime lastChangeField;
-        
-        private bool lastChangeFieldSpecified;
+        private string lastChangeField;
         
         /// <remarks/>
         public string groupId {
@@ -2082,23 +2080,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
             set {
                 this.lastChangeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool lastChangeSpecified {
-            get {
-                return this.lastChangeFieldSpecified;
-            }
-            set {
-                this.lastChangeFieldSpecified = value;
             }
         }
     }
@@ -2305,13 +2292,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool fDeletedFieldSpecified;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private bool lastChangeFieldSpecified;
-        
-        private System.DateTime createDateField;
-        
-        private bool createDateFieldSpecified;
+        private string createDateField;
         
         private string lastModifiedByField;
         
@@ -2369,7 +2352,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -2379,34 +2362,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool lastChangeSpecified {
-            get {
-                return this.lastChangeFieldSpecified;
-            }
-            set {
-                this.lastChangeFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime CreateDate {
+        public string CreateDate {
             get {
                 return this.createDateField;
             }
             set {
                 this.createDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CreateDateSpecified {
-            get {
-                return this.createDateFieldSpecified;
-            }
-            set {
-                this.createDateFieldSpecified = value;
             }
         }
         
@@ -2515,9 +2476,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string spotWatchStateField;
         
-        private System.DateTime birthdateField;
-        
-        private bool birthdateFieldSpecified;
+        private string birthdateField;
         
         private ContactEmailTypeType primaryEmailTypeField;
         
@@ -2940,23 +2899,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime birthdate {
+        public string birthdate {
             get {
                 return this.birthdateField;
             }
             set {
                 this.birthdateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool birthdateSpecified {
-            get {
-                return this.birthdateFieldSpecified;
-            }
-            set {
-                this.birthdateFieldSpecified = value;
             }
         }
         
@@ -3566,13 +3514,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool inviterCIDFieldSpecified;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
-        private bool createDateFieldSpecified;
-        
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         private object propertiesChangedField;
         
@@ -3753,7 +3697,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime CreateDate {
+        public string CreateDate {
             get {
                 return this.createDateField;
             }
@@ -3763,34 +3707,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CreateDateSpecified {
-            get {
-                return this.createDateFieldSpecified;
-            }
-            set {
-                this.createDateFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
         
@@ -3994,19 +3916,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string displayNameField;
         
-        private System.DateTime profileLastUpdatedField;
-        
-        private bool profileLastUpdatedFieldSpecified;
+        private string profileLastUpdatedField;
         
         private object changesField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
-        private bool createDateFieldSpecified;
-        
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         /// <remarks/>
         public int Domain {
@@ -4079,23 +3995,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime ProfileLastUpdated {
+        public string ProfileLastUpdated {
             get {
                 return this.profileLastUpdatedField;
             }
             set {
                 this.profileLastUpdatedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastUpdatedSpecified {
-            get {
-                return this.profileLastUpdatedFieldSpecified;
-            }
-            set {
-                this.profileLastUpdatedFieldSpecified = value;
             }
         }
         
@@ -4110,7 +4015,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime CreateDate {
+        public string CreateDate {
             get {
                 return this.createDateField;
             }
@@ -4120,34 +4025,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CreateDateSpecified {
-            get {
-                return this.createDateFieldSpecified;
-            }
-            set {
-                this.createDateFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
     }
@@ -4299,13 +4182,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private abInfoType abInfoField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private System.DateTime dynamicItemLastChangedField;
+        private string dynamicItemLastChangedField;
         
-        private System.DateTime recentActivityItemLastChangedField;
+        private string recentActivityItemLastChangedField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
         private string propertiesChangedField;
         
@@ -4330,7 +4213,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -4340,7 +4223,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime DynamicItemLastChanged {
+        public string DynamicItemLastChanged {
             get {
                 return this.dynamicItemLastChangedField;
             }
@@ -4350,7 +4233,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime RecentActivityItemLastChanged {
+        public string RecentActivityItemLastChanged {
             get {
                 return this.recentActivityItemLastChangedField;
             }
@@ -4360,7 +4243,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime createDate {
+        public string createDate {
             get {
                 return this.createDateField;
             }
@@ -4798,9 +4681,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deletedFieldSpecified;
         
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         private NotificationDataType[] notificationsField;
         
@@ -4838,23 +4719,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
         
@@ -4892,7 +4762,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string statusField;
         
-        private System.DateTime lastChangedField;
+        private string lastChangedField;
         
         private bool gleamField;
         
@@ -4924,7 +4794,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
@@ -4968,12 +4838,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string changesField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
         private bool deletedField;
         
         public ServiceType() {
-            this.lastChangeField = new System.DateTime(0);
+            this.lastChangeField = "0001-01-01T00:00:00";
             this.deletedField = false;
         }
         
@@ -5009,7 +4879,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChange {
+        public string LastChange {
             get {
                 return this.lastChangeField;
             }
@@ -5120,17 +4990,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deletedField;
         
-        private System.DateTime lastChangedField;
+        private string lastChangedField;
         
-        private bool lastChangedFieldSpecified;
+        private string joinedDateField;
         
-        private System.DateTime joinedDateField;
-        
-        private bool joinedDateFieldSpecified;
-        
-        private System.DateTime expirationDateField;
-        
-        private bool expirationDateFieldSpecified;
+        private string expirationDateField;
         
         private string changesField;
         
@@ -5212,7 +5076,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
@@ -5222,18 +5086,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime JoinedDate {
+        public string JoinedDate {
             get {
                 return this.joinedDateField;
             }
@@ -5243,34 +5096,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool JoinedDateSpecified {
-            get {
-                return this.joinedDateFieldSpecified;
-            }
-            set {
-                this.joinedDateFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ExpirationDate {
+        public string ExpirationDate {
             get {
                 return this.expirationDateField;
             }
             set {
                 this.expirationDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ExpirationDateSpecified {
-            get {
-                return this.expirationDateFieldSpecified;
-            }
-            set {
-                this.expirationDateFieldSpecified = value;
             }
         }
         
@@ -5878,25 +5709,17 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string spaceStatusField;
         
-        private System.DateTime spaceLastChangedField;
+        private string spaceLastChangedField;
         
-        private bool spaceLastChangedFieldSpecified;
-        
-        private System.DateTime spaceLastViewedField;
-        
-        private bool spaceLastViewedFieldSpecified;
+        private string spaceLastViewedField;
         
         private bool spaceGleamField;
         
         private bool spaceGleamFieldSpecified;
         
-        private System.DateTime profileLastChangedField;
+        private string profileLastChangedField;
         
-        private bool profileLastChangedFieldSpecified;
-        
-        private System.DateTime profileLastViewField;
-        
-        private bool profileLastViewFieldSpecified;
+        private string profileLastViewField;
         
         private string profileStatusField;
         
@@ -5906,17 +5729,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string contactProfileStatusField;
         
-        private System.DateTime contactProfileLastChangedField;
+        private string contactProfileLastChangedField;
         
-        private bool contactProfileLastChangedFieldSpecified;
+        private string contactProfileLastViewedField;
         
-        private System.DateTime contactProfileLastViewedField;
-        
-        private bool contactProfileLastViewedFieldSpecified;
-        
-        private System.DateTime liveContactLastChangedField;
-        
-        private bool liveContactLastChangedFieldSpecified;
+        private string liveContactLastChangedField;
         
         /// <remarks/>
         public string CID {
@@ -5959,7 +5776,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime SpaceLastChanged {
+        public string SpaceLastChanged {
             get {
                 return this.spaceLastChangedField;
             }
@@ -5969,34 +5786,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceLastChangedSpecified {
-            get {
-                return this.spaceLastChangedFieldSpecified;
-            }
-            set {
-                this.spaceLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime SpaceLastViewed {
+        public string SpaceLastViewed {
             get {
                 return this.spaceLastViewedField;
             }
             set {
                 this.spaceLastViewedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceLastViewedSpecified {
-            get {
-                return this.spaceLastViewedFieldSpecified;
-            }
-            set {
-                this.spaceLastViewedFieldSpecified = value;
             }
         }
         
@@ -6022,7 +5817,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime ProfileLastChanged {
+        public string ProfileLastChanged {
             get {
                 return this.profileLastChangedField;
             }
@@ -6032,34 +5827,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastChangedSpecified {
-            get {
-                return this.profileLastChangedFieldSpecified;
-            }
-            set {
-                this.profileLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ProfileLastView {
+        public string ProfileLastView {
             get {
                 return this.profileLastViewField;
             }
             set {
                 this.profileLastViewField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastViewSpecified {
-            get {
-                return this.profileLastViewFieldSpecified;
-            }
-            set {
-                this.profileLastViewFieldSpecified = value;
             }
         }
         
@@ -6105,7 +5878,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime ContactProfileLastChanged {
+        public string ContactProfileLastChanged {
             get {
                 return this.contactProfileLastChangedField;
             }
@@ -6115,18 +5888,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ContactProfileLastChangedSpecified {
-            get {
-                return this.contactProfileLastChangedFieldSpecified;
-            }
-            set {
-                this.contactProfileLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ContactProfileLastViewed {
+        public string ContactProfileLastViewed {
             get {
                 return this.contactProfileLastViewedField;
             }
@@ -6136,34 +5898,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ContactProfileLastViewedSpecified {
-            get {
-                return this.contactProfileLastViewedFieldSpecified;
-            }
-            set {
-                this.contactProfileLastViewedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LiveContactLastChanged {
+        public string LiveContactLastChanged {
             get {
                 return this.liveContactLastChangedField;
             }
             set {
                 this.liveContactLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LiveContactLastChangedSpecified {
-            get {
-                return this.liveContactLastChangedFieldSpecified;
-            }
-            set {
-                this.liveContactLastChangedFieldSpecified = value;
             }
         }
     }
@@ -6939,13 +6679,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private abInfoType abInfoField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private System.DateTime dynamicItemLastChangedField;
+        private string dynamicItemLastChangedField;
         
-        private System.DateTime recentActivityItemLastChangedField;
+        private string recentActivityItemLastChangedField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
         private string propertiesChangedField;
         
@@ -6970,7 +6710,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -6980,7 +6720,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime DynamicItemLastChanged {
+        public string DynamicItemLastChanged {
             get {
                 return this.dynamicItemLastChangedField;
             }
@@ -6990,7 +6730,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime RecentActivityItemLastChanged {
+        public string RecentActivityItemLastChanged {
             get {
                 return this.recentActivityItemLastChangedField;
             }
@@ -7000,7 +6740,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime createDate {
+        public string createDate {
             get {
                 return this.createDateField;
             }
@@ -7034,18 +6774,18 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deltasOnlyField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
         private string dynamicItemViewField;
         
-        private System.DateTime dynamicItemLastChangeField;
+        private string dynamicItemLastChangeField;
         
         public ABFindAllRequestType() {
             this.abIdField = "00000000-0000-0000-0000-000000000000";
             this.deltasOnlyField = false;
-            this.lastChangeField = new System.DateTime(576000000000);
+            this.lastChangeField = "0001-01-01T00:00:00.0000000-08:00";
             this.dynamicItemViewField = "Gleam";
-            this.dynamicItemLastChangeField = new System.DateTime(576000000000);
+            this.dynamicItemLastChangeField = "0001-01-01T00:00:00.0000000-08:00";
         }
         
         /// <remarks/>
@@ -7080,8 +6820,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "0001-01-01T16:00:00+08:00")]
-        public System.DateTime lastChange {
+        [System.ComponentModel.DefaultValueAttribute("0001-01-01T00:00:00.0000000-08:00")]
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -7101,8 +6841,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "0001-01-01T16:00:00+08:00")]
-        public System.DateTime dynamicItemLastChange {
+        [System.ComponentModel.DefaultValueAttribute("0001-01-01T00:00:00.0000000-08:00")]
+        public string dynamicItemLastChange {
             get {
                 return this.dynamicItemLastChangeField;
             }
@@ -7145,13 +6885,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private abInfoType abInfoField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private System.DateTime dynamicItemLastChangedField;
+        private string dynamicItemLastChangedField;
         
-        private System.DateTime recentActivityItemLastChangedField;
+        private string recentActivityItemLastChangedField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
         private object propertiesChangedField;
         
@@ -7176,7 +6916,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -7186,7 +6926,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime DynamicItemLastChanged {
+        public string DynamicItemLastChanged {
             get {
                 return this.dynamicItemLastChangedField;
             }
@@ -7196,7 +6936,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime RecentActivityItemLastChanged {
+        public string RecentActivityItemLastChanged {
             get {
                 return this.recentActivityItemLastChangedField;
             }
@@ -7206,7 +6946,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime createDate {
+        public string createDate {
             get {
                 return this.createDateField;
             }
@@ -7644,11 +7384,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deltasOnlyField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
         public FindMembershipRequestType() {
             this.deltasOnlyField = false;
-            this.lastChangeField = new System.DateTime(576000000000);
+            this.lastChangeField = "0001-01-01T00:00:00.0000000-08:00";
         }
         
         /// <remarks/>
@@ -7683,8 +7423,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "0001-01-01T16:00:00+08:00")]
-        public System.DateTime lastChange {
+        [System.ComponentModel.DefaultValueAttribute("0001-01-01T00:00:00.0000000-08:00")]
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }

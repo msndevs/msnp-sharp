@@ -353,7 +353,10 @@ namespace MSNPSharp.Core
     {
         public static DateTime ConvertToDateTime(string dateTime)
         {
-            return XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+            if (dateTime == null || dateTime == string.Empty)
+                dateTime = WebServiceConstants.ZeroTime;
+
+            return XmlConvert.ToDateTime(dateTime, XmlDateTimeSerializationMode.Utc);
         }
     }
 };

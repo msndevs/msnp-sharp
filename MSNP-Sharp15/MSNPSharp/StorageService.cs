@@ -46,6 +46,7 @@ namespace MSNPSharp
     using MSNPSharp.IO;
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.MSNWS.MSNStorageService;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Provide webservice operations for Storage Service
@@ -594,7 +595,8 @@ namespace MSNPSharp
 
                 if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                     NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                    NSMessageHandler.ContactService.Deltas.Profile.DateModified < Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
+                    WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.Deltas.Profile.DateModified)
+                    < WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
                 {
                     return GetProfileImpl(PartnerScenario.Initial);
                 }

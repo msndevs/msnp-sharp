@@ -499,12 +499,16 @@ namespace MSNPSharp
             else
             {
                 bool msdeltasOnly = false;
-                DateTime serviceLastChange = WebServiceDateTimeConverter.ConvertToDateTime("0001-01-01T00:00:00.0000000-08:00");
-                DateTime msLastChange = AddressBook.MembershipLastChange;
+                DateTime serviceLastChange = WebServiceDateTimeConverter.ConvertToDateTime(WebServiceConstants.ZeroTime);
+                DateTime msLastChange = WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.MembershipLastChange);
+
+                string strLastChange = WebServiceConstants.ZeroTime;
+
                 if (msLastChange != serviceLastChange)
                 {
                     msdeltasOnly = true;
-                    serviceLastChange = msLastChange;
+
+                    strLastChange = AddressBook.MembershipLastChange;
                 }
 
                 MsnServiceState FindMembershipObject = new MsnServiceState(partnerScenario, "FindMembership", true);
@@ -512,7 +516,7 @@ namespace MSNPSharp
                 FindMembershipRequestType request = new FindMembershipRequestType();
                 request.View = "Full";  // NO default!
                 request.deltasOnly = msdeltasOnly;
-                request.lastChange = serviceLastChange;
+                request.lastChange = strLastChange;
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
                 request.serviceFilter.Types = new string[]
                 {
@@ -616,11 +620,12 @@ namespace MSNPSharp
                 request.filterOptions = new filterOptionsType();
                 request.filterOptions.ContactFilter = new ContactFilterType();
 
-                if (AddressBook.AddressbookLastChange != DateTime.MinValue)
+                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) != DateTime.MinValue)
                 {
                     if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.OwnerNamespace.LastChange) != DateTime.MinValue)
                     {
                         deltasOnly = true;
+
                         request.filterOptions.LastChanged = AddressBook.OwnerNamespace.LastChange;
                     }
                 }
@@ -640,6 +645,8 @@ namespace MSNPSharp
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
                                 recursiveCall++;
+                                AddressBook.CircleResults.Clear();
+
                                 SynchronizeContactList();
                             }
                             else

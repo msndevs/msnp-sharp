@@ -167,12 +167,12 @@ namespace MSNPSharp.IO
             }
         }
 
-        public DateTime MembershipLastChange
+        public string MembershipLastChange
         {
             get
             {
                 if (MembershipList.Keys.Count == 0)
-                    return WebServiceDateTimeConverter.ConvertToDateTime("0001-01-01T00:00:00.0000000-08:00");
+                    return WebServiceConstants.ZeroTime;
 
                 List<Service> services = new List<Service>();
                 foreach (string sft in MembershipList.Keys)
@@ -260,8 +260,10 @@ namespace MSNPSharp.IO
 
                         if (mslist[svc.ServiceType].Memberships[role].ContainsKey(hash))
                         {
-                            if (mslist[svc.ServiceType].Memberships[role][hash].LastChangedSpecified
-                                && mslist[svc.ServiceType].Memberships[role][hash].LastChanged.CompareTo(range[svc][role][hash].LastChanged) <= 0)
+                            if (/* mslist[svc.ServiceType].Memberships[role][hash].LastChangedSpecified
+                                && */
+                                WebServiceDateTimeConverter.ConvertToDateTime(mslist[svc.ServiceType].Memberships[role][hash].LastChanged).CompareTo(
+                                WebServiceDateTimeConverter.ConvertToDateTime(range[svc][role][hash].LastChanged)) <= 0)
                             {
                                 mslist[svc.ServiceType].Memberships[role][hash] = range[svc][role][hash];
                             }
@@ -306,7 +308,9 @@ namespace MSNPSharp.IO
                 {
                     Service oldService = GetTargetService(serviceType.Info.Handle.Type);
 
-                    if (oldService == null || oldService.LastChange < serviceType.LastChange)
+                    if (oldService == null || 
+                        WebServiceDateTimeConverter.ConvertToDateTime(oldService.LastChange) 
+                        < WebServiceDateTimeConverter.ConvertToDateTime(serviceType.LastChange))
                     {
                         if (serviceType.Deleted)
                         {
@@ -392,7 +396,8 @@ namespace MSNPSharp.IO
                                                         if (type != ClientType.CircleMember)
                                                         {
                                                             if (HasMemberhip(updatedService.ServiceType, account, type, memberrole) &&
-                                                                MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged < bm.LastChanged)
+                                                                WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged) 
+                                                                < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
                                                             {
                                                                 RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
                                                             }
@@ -428,7 +433,8 @@ namespace MSNPSharp.IO
                                                         {
                                                             if (false == MembershipList[updatedService.ServiceType].Memberships.ContainsKey(memberrole) ||
                                                                 /*new*/ false == MembershipList[updatedService.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type)) ||
-                                                                /*probably membershipid=0*/ bm.LastChanged > MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
+                                                                /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
+                                                                > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged))
                                                             {
                                                                 AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
                                                             }
@@ -568,8 +574,7 @@ namespace MSNPSharp.IO
 
         #region Addressbook
 
-        DateTime abLastChange;
-        DateTime dynamicItemLastChange;
+        string abLastChange = WebServiceConstants.ZeroTime;
 
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
@@ -599,7 +604,7 @@ namespace MSNPSharp.IO
         }
 
         [XmlElement("AddressbookLastChange")]
-        public DateTime AddressbookLastChange
+        public string AddressbookLastChange
         {
             get
             {
@@ -611,18 +616,6 @@ namespace MSNPSharp.IO
             }
         }
 
-        [XmlElement("DynamicItemLastChange")]
-        public DateTime DynamicItemLastChange
-        {
-            get
-            {
-                return dynamicItemLastChange;
-            }
-            set
-            {
-                dynamicItemLastChange = value;
-            }
-        }
 
         public SerializableDictionary<string, string> MyProperties
         {
@@ -694,7 +687,12 @@ namespace MSNPSharp.IO
         {
             #region AddressBook changed
 
-            if (forwardList.Ab != null && AddressbookLastChange < forwardList.Ab.lastChange
+            DateTime dt1 = WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange);
+            DateTime dt2 = WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange);
+
+            if (forwardList.Ab != null && 
+                WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange) < 
+                WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange)
                 && forwardList.Ab.abId == WebServiceConstants.MessengerAddressBookId)
             {
                 if (null != forwardList.Groups)
@@ -780,15 +778,15 @@ namespace MSNPSharp.IO
                             }
                         }
                     }
-                }  
+                }
+
+                if (forwardList.Ab != null)
+                {
+                    // Update lastchange
+                    AddressbookLastChange = forwardList.Ab.lastChange;
+                }
             }
 
-            if (forwardList.Ab != null)
-            {
-                // Update lastchange
-                AddressbookLastChange = forwardList.Ab.lastChange;
-                DynamicItemLastChange = forwardList.Ab.DynamicItemLastChanged;
-            }
             #endregion
 
             #region Circle changed

@@ -43,19 +43,19 @@
   <xsd:complexType name="GetProfileResultType">
     <xsd:sequence>
       <xsd:element name="ResourceID" type="xsd:string" />
-      <xsd:element name="DateModified" type="xsd:dateTime" />
+      <xsd:element name="DateModified" type="xsd:string" />
       <xsd:element name="ExpressionProfile">
         <xsd:complexType>
           <xsd:sequence>
             <xsd:element name="ResourceID" type="xsd:string" />
-            <xsd:element name="DateModified" type="xsd:dateTime" />
+            <xsd:element name="DateModified" type="xsd:string" />
             <xsd:element name="Flags" type="xsd:int" />
             <xsd:element name="Photo">
               <xsd:complexType>
                 <xsd:sequence>
                   <xsd:element name="ItemType" type="xsd:string" />
                   <xsd:element name="ResourceID" type="xsd:string" />
-                  <xsd:element name="DateModified" type="xsd:dateTime" />
+                  <xsd:element name="DateModified" type="xsd:string" />
                   <xsd:element name="Name" type="xsd:string" />
                   <xsd:element minOccurs="0" name="DocumentStreams">
                     <xsd:complexType>
@@ -68,9 +68,9 @@
               </xsd:complexType>
             </xsd:element>
             <xsd:element name="PersonalStatus" type="xsd:string" />
-            <xsd:element name="PersonalStatusLastModified" type="xsd:dateTime" />
+            <xsd:element name="PersonalStatusLastModified" type="xsd:string" />
             <xsd:element name="DisplayName" type="xsd:string" />
-            <xsd:element name="DisplayNameLastModified" type="xsd:dateTime" />
+            <xsd:element name="DisplayNameLastModified" type="xsd:string" />
             <xsd:element name="StaticUserTilePublicURL" type="xsd:anyURI" />
           </xsd:sequence>
         </xsd:complexType>
