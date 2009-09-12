@@ -61,43 +61,7 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element name="OwnerNamespace">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element name="Info">
-              <xsd:complexType>
-                <xsd:sequence>
-                  <xsd:element name="Handle">
-                    <xsd:complexType>
-                      <xsd:sequence>
-                        <xsd:element name="Id" type="xsd:string" />
-                        <xsd:element name="IsPassportNameHidden" type="xsd:boolean" />
-                        <xsd:element name="CID" type="xsd:integer" />
-                      </xsd:sequence>
-                    </xsd:complexType>
-                  </xsd:element>
-                  <xsd:element name="CreatorPuid" type="xsd:integer" />
-                  <xsd:element name="CreatorCID" type="xsd:integer" />
-                  <xsd:element name="CreatorPassportName" type="xsd:string" />
-                  <xsd:element name="CircleAttributes">
-                    <xsd:complexType>
-                      <xsd:sequence>
-                        <xsd:element name="IsPresenceEnabled" type="xsd:boolean" />
-                        <xsd:element minOccurs="0" name="IsEvent" type="xsd:boolean" />
-                        <xsd:element name="Domain" type="xsd:string" />
-                      </xsd:sequence>
-                    </xsd:complexType>
-                  </xsd:element>
-                  <xsd:element minOccurs="0" name="MessengerApplicationServiceCreated" type="xsd:boolean" />
-                </xsd:sequence>
-              </xsd:complexType>
-            </xsd:element>
-            <xsd:element name="Changes" type="xsd:string" />
-            <xsd:element name="CreateDate" type="xsd:dateTime" />
-            <xsd:element name="LastChange" type="xsd:dateTime" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element name="OwnerNamespace" type="msnab:OwnerNamespaceType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:element name="FindMembershipResponse">

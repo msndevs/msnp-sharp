@@ -869,29 +869,23 @@ namespace MSNPSharp
 
         internal void AddToList(MSNLists list)
         {
-            if (list == MSNLists.BlockedList && !OnBlockedList)
-            {
-                lists |= MSNLists.BlockedList;
-
-                if (ContactBlocked != null)
-                    ContactBlocked(this, new EventArgs());
-            }
-            else
-            {
+            if ((lists & list) == MSNLists.None)
+            { 
                 lists |= list;
+
+                if ((list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                {
+                    if (ContactBlocked != null)
+                        ContactBlocked(this, new EventArgs());
+                }
             }
+
+            
         }
 
         internal void RemoveFromList(MSNLists list)
         {
-            if (list == MSNLists.BlockedList && OnBlockedList)
-            {
-                lists ^= MSNLists.BlockedList;
-
-                if (ContactUnBlocked != null)
-                    ContactUnBlocked(this, EventArgs.Empty);
-            }
-            else
+            if ((lists & list) != MSNLists.None)
             {
                 lists ^= list;
 
@@ -901,6 +895,12 @@ namespace MSNPSharp
                     status = PresenceStatus.Offline;
                     //also clear the groups, becase msn loose them when removed from the two lists
                     contactGroups.Clear();
+                }
+
+                if ((list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                {
+                    if (ContactUnBlocked != null)
+                        ContactUnBlocked(this, EventArgs.Empty);
                 }
             }
         }

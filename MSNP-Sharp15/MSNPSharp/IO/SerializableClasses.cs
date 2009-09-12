@@ -385,8 +385,15 @@ namespace MSNPSharp.IO
     [Serializable()]
     public class CircleInfo
     {
+        private string memberRole = MSNPSharp.MemberRole.Allow;
         private ContactType circleMember = null;
         private CircleInverseInfoType circleResultInfo = null;
+
+        public string MemberRole
+        {
+            get { return memberRole; }
+            set { memberRole = value; }
+        }
 
         public CircleInverseInfoType CircleResultInfo
         {

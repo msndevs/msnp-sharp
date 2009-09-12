@@ -4692,9 +4692,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deltasOnlyField;
         
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         private ContactFilterType contactFilterField;
         
@@ -4709,23 +4707,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
         
@@ -7358,240 +7345,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultType {
-        
-        private ServiceType[] servicesField;
-        
-        private FindMembershipResultTypeOwnerNamespace ownerNamespaceField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Service", IsNullable=false)]
-        public ServiceType[] Services {
-            get {
-                return this.servicesField;
-            }
-            set {
-                this.servicesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespace OwnerNamespace {
-            get {
-                return this.ownerNamespaceField;
-            }
-            set {
-                this.ownerNamespaceField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespace {
-        
-        private FindMembershipResultTypeOwnerNamespaceInfo infoField;
-        
-        private string changesField;
-        
-        private System.DateTime createDateField;
-        
-        private System.DateTime lastChangeField;
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespaceInfo Info {
-            get {
-                return this.infoField;
-            }
-            set {
-                this.infoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Changes {
-            get {
-                return this.changesField;
-            }
-            set {
-                this.changesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime CreateDate {
-            get {
-                return this.createDateField;
-            }
-            set {
-                this.createDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LastChange {
-            get {
-                return this.lastChangeField;
-            }
-            set {
-                this.lastChangeField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespaceInfo {
-        
-        private FindMembershipResultTypeOwnerNamespaceInfoHandle handleField;
-        
-        private string creatorPuidField;
-        
-        private string creatorCIDField;
-        
-        private string creatorPassportNameField;
-        
-        private FindMembershipResultTypeOwnerNamespaceInfoCircleAttributes circleAttributesField;
-        
-        private bool messengerApplicationServiceCreatedField;
-        
-        private bool messengerApplicationServiceCreatedFieldSpecified;
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespaceInfoHandle Handle {
-            get {
-                return this.handleField;
-            }
-            set {
-                this.handleField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CreatorPuid {
-            get {
-                return this.creatorPuidField;
-            }
-            set {
-                this.creatorPuidField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CreatorCID {
-            get {
-                return this.creatorCIDField;
-            }
-            set {
-                this.creatorCIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string CreatorPassportName {
-            get {
-                return this.creatorPassportNameField;
-            }
-            set {
-                this.creatorPassportNameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespaceInfoCircleAttributes CircleAttributes {
-            get {
-                return this.circleAttributesField;
-            }
-            set {
-                this.circleAttributesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool MessengerApplicationServiceCreated {
-            get {
-                return this.messengerApplicationServiceCreatedField;
-            }
-            set {
-                this.messengerApplicationServiceCreatedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool MessengerApplicationServiceCreatedSpecified {
-            get {
-                return this.messengerApplicationServiceCreatedFieldSpecified;
-            }
-            set {
-                this.messengerApplicationServiceCreatedFieldSpecified = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespaceInfoHandle {
-        
-        private string idField;
-        
-        private bool isPassportNameHiddenField;
-        
-        private string cIDField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool IsPassportNameHidden {
-            get {
-                return this.isPassportNameHiddenField;
-            }
-            set {
-                this.isPassportNameHiddenField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CID {
-            get {
-                return this.cIDField;
-            }
-            set {
-                this.cIDField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespaceInfoCircleAttributes {
+    public partial class CircleAttributesType {
         
         private bool isPresenceEnabledField;
         
@@ -7639,6 +7393,239 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.domainField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class OwnerNamespaceInfoType {
+        
+        private OwnerNamespaceInfoTypeHandle handleField;
+        
+        private string creatorPuidField;
+        
+        private string creatorCIDField;
+        
+        private string creatorPassportNameField;
+        
+        private CircleAttributesType circleAttributesField;
+        
+        private bool messengerApplicationServiceCreatedField;
+        
+        private bool messengerApplicationServiceCreatedFieldSpecified;
+        
+        /// <remarks/>
+        public OwnerNamespaceInfoTypeHandle Handle {
+            get {
+                return this.handleField;
+            }
+            set {
+                this.handleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string CreatorPuid {
+            get {
+                return this.creatorPuidField;
+            }
+            set {
+                this.creatorPuidField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string CreatorCID {
+            get {
+                return this.creatorCIDField;
+            }
+            set {
+                this.creatorCIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CreatorPassportName {
+            get {
+                return this.creatorPassportNameField;
+            }
+            set {
+                this.creatorPassportNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public CircleAttributesType CircleAttributes {
+            get {
+                return this.circleAttributesField;
+            }
+            set {
+                this.circleAttributesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool MessengerApplicationServiceCreated {
+            get {
+                return this.messengerApplicationServiceCreatedField;
+            }
+            set {
+                this.messengerApplicationServiceCreatedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool MessengerApplicationServiceCreatedSpecified {
+            get {
+                return this.messengerApplicationServiceCreatedFieldSpecified;
+            }
+            set {
+                this.messengerApplicationServiceCreatedFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class OwnerNamespaceInfoTypeHandle {
+        
+        private string idField;
+        
+        private bool isPassportNameHiddenField;
+        
+        private string cIDField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsPassportNameHidden {
+            get {
+                return this.isPassportNameHiddenField;
+            }
+            set {
+                this.isPassportNameHiddenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string CID {
+            get {
+                return this.cIDField;
+            }
+            set {
+                this.cIDField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class OwnerNamespaceType {
+        
+        private OwnerNamespaceInfoType infoField;
+        
+        private string changesField;
+        
+        private string createDateField;
+        
+        private string lastChangeField;
+        
+        /// <remarks/>
+        public OwnerNamespaceInfoType Info {
+            get {
+                return this.infoField;
+            }
+            set {
+                this.infoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CreateDate {
+            get {
+                return this.createDateField;
+            }
+            set {
+                this.createDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LastChange {
+            get {
+                return this.lastChangeField;
+            }
+            set {
+                this.lastChangeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class FindMembershipResultType {
+        
+        private ServiceType[] servicesField;
+        
+        private OwnerNamespaceType ownerNamespaceField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("Service", IsNullable=false)]
+        public ServiceType[] Services {
+            get {
+                return this.servicesField;
+            }
+            set {
+                this.servicesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public OwnerNamespaceType OwnerNamespace {
+            get {
+                return this.ownerNamespaceField;
+            }
+            set {
+                this.ownerNamespaceField = value;
             }
         }
     }

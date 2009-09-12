@@ -602,7 +602,7 @@
   <xsd:complexType name="filterOptionsType">
     <xsd:sequence>
       <xsd:element name="DeltasOnly" type="xsd:boolean" />
-      <xsd:element minOccurs="0" name="LastChanged" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" name="LastChanged" type="xsd:string" />
       <xsd:element name="ContactFilter" type="msnab:ContactFilterType" />
     </xsd:sequence>
   </xsd:complexType>
@@ -836,6 +836,39 @@
   <xsd:complexType name="callerInfoType">
     <xsd:sequence>
       <xsd:element name="PublicDisplayName" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="OwnerNamespaceType">
+    <xsd:sequence>
+      <xsd:element name="Info" type="msnab:OwnerNamespaceInfoType" />
+      <xsd:element name="Changes" type="xsd:string" />
+      <xsd:element name="CreateDate" type="xsd:string" />
+      <xsd:element name="LastChange" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CircleAttributesType">
+    <xsd:sequence>
+      <xsd:element name="IsPresenceEnabled" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="IsEvent" type="xsd:boolean" />
+      <xsd:element name="Domain" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="OwnerNamespaceInfoType">
+    <xsd:sequence>
+      <xsd:element name="Handle">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Id" type="xsd:string" />
+            <xsd:element name="IsPassportNameHidden" type="xsd:boolean" />
+            <xsd:element name="CID" type="xsd:integer" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="CreatorPuid" type="xsd:integer" />
+      <xsd:element name="CreatorCID" type="xsd:integer" />
+      <xsd:element name="CreatorPassportName" type="xsd:string" />
+      <xsd:element name="CircleAttributes" type="msnab:CircleAttributesType" />
+      <xsd:element minOccurs="0" name="MessengerApplicationServiceCreated" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
 </xsd:schema>

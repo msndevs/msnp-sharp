@@ -303,7 +303,8 @@ namespace MSNPSharp
             if (NSMessageHandler.AutoSynchronize)
             {
                 AddressBook.Synchronize(Deltas);
-                if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.OwnerNamespace.LastChange) == DateTime.MinValue)
+                //if (AddressBook.AddressbookLastChange == DateTime.MinValue)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                 }
@@ -311,7 +312,8 @@ namespace MSNPSharp
                     PartnerScenario.Initial,
                     delegate
                     {
-                        if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.OwnerNamespace.LastChange) == DateTime.MinValue)
+                        //if (AddressBook.AddressbookLastChange == DateTime.MinValue)
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                         }
@@ -497,7 +499,7 @@ namespace MSNPSharp
             else
             {
                 bool msdeltasOnly = false;
-                DateTime serviceLastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00.0000000-08:00", XmlDateTimeSerializationMode.RoundtripKind);
+                DateTime serviceLastChange = WebServiceDateTimeConverter.ConvertToDateTime("0001-01-01T00:00:00.0000000-08:00");
                 DateTime msLastChange = AddressBook.MembershipLastChange;
                 if (msLastChange != serviceLastChange)
                 {
@@ -616,9 +618,11 @@ namespace MSNPSharp
 
                 if (AddressBook.AddressbookLastChange != DateTime.MinValue)
                 {
-                    deltasOnly = true;
-                    request.filterOptions.LastChanged = AddressBook.AddressbookLastChange;
-                    request.filterOptions.LastChangedSpecified = true;
+                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.OwnerNamespace.LastChange) != DateTime.MinValue)
+                    {
+                        deltasOnly = true;
+                        request.filterOptions.LastChanged = AddressBook.OwnerNamespace.LastChange;
+                    }
                 }
 
                 request.filterOptions.DeltasOnly = deltasOnly;
@@ -930,7 +934,7 @@ namespace MSNPSharp
                 };
 
                 ABContactAddRequestType request = new ABContactAddRequestType();
-                request.abId = "00000000-0000-0000-0000-000000000000";
+                request.abId = WebServiceConstants.MessengerAddressBookId;
                 request.contacts = new ContactType[] { new ContactType() };
                 request.contacts[0].contactInfo = new contactInfoType();
 
@@ -1101,7 +1105,7 @@ namespace MSNPSharp
             };
 
             ABContactDeleteRequestType request = new ABContactDeleteRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.abId = WebServiceConstants.MessengerAddressBookId;
             request.contacts = new ContactIdType[] { new ContactIdType() };
             request.contacts[0].contactId = contact.Guid.ToString();
 
@@ -1130,7 +1134,7 @@ namespace MSNPSharp
 
             List<string> propertiesChanged = new List<string>();
             ABContactUpdateRequestType request = new ABContactUpdateRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.abId = WebServiceConstants.MessengerAddressBookId;
             request.contacts = new ContactType[] { new ContactType() };
             request.contacts[0].contactId = contact.Guid.ToString();
             request.contacts[0].contactInfo = new contactInfoType();
@@ -1308,7 +1312,7 @@ namespace MSNPSharp
                 };
 
                 ABContactUpdateRequestType request = new ABContactUpdateRequestType();
-                request.abId = "00000000-0000-0000-0000-000000000000";
+                request.abId = WebServiceConstants.MessengerAddressBookId;
                 request.contacts = new ContactType[] { new ContactType() };
                 request.contacts[0].contactInfo = new contactInfoType();
                 request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
@@ -1387,7 +1391,7 @@ namespace MSNPSharp
                 };
 
                 ABContactUpdateRequestType request = new ABContactUpdateRequestType();
-                request.abId = "00000000-0000-0000-0000-000000000000";
+                request.abId = WebServiceConstants.MessengerAddressBookId;
                 request.contacts = new ContactType[] { new ContactType() };
                 request.contacts[0].contactInfo = new contactInfoType();
                 request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
@@ -1429,7 +1433,7 @@ namespace MSNPSharp
             };
 
             ABGroupAddRequestType request = new ABGroupAddRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.abId = WebServiceConstants.MessengerAddressBookId;
             request.groupAddOptions = new ABGroupAddRequestTypeGroupAddOptions();
             request.groupAddOptions.fRenameOnMsgrConflict = false;
             request.groupAddOptions.fRenameOnMsgrConflictSpecified = true;
@@ -1438,7 +1442,7 @@ namespace MSNPSharp
             request.groupInfo.GroupInfo.name = groupName;
             request.groupInfo.GroupInfo.fMessenger = false;
             request.groupInfo.GroupInfo.fMessengerSpecified = true;
-            request.groupInfo.GroupInfo.groupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
+            request.groupInfo.GroupInfo.groupType = WebServiceConstants.MessengerGroupType;
             request.groupInfo.GroupInfo.annotations = new Annotation[] { new Annotation() };
             request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
@@ -1481,7 +1485,7 @@ namespace MSNPSharp
             };
 
             ABGroupDeleteRequestType request = new ABGroupDeleteRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.abId = WebServiceConstants.MessengerAddressBookId;
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { contactGroup.Guid };
 
@@ -1515,7 +1519,7 @@ namespace MSNPSharp
             };
 
             ABGroupUpdateRequestType request = new ABGroupUpdateRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.abId = WebServiceConstants.MessengerAddressBookId;
             request.groups = new GroupType[1] { new GroupType() };
             request.groups[0].groupId = group.Guid;
             request.groups[0].propertiesChanged = PropertyString.GroupName; //"GroupName";
@@ -1553,7 +1557,7 @@ namespace MSNPSharp
             };
 
             ABGroupContactAddRequestType request = new ABGroupContactAddRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.abId = WebServiceConstants.MessengerAddressBookId;
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { group.Guid };
             request.contacts = new ContactType[] { new ContactType() };
@@ -1586,7 +1590,7 @@ namespace MSNPSharp
             };
 
             ABGroupContactDeleteRequestType request = new ABGroupContactDeleteRequestType();
-            request.abId = "00000000-0000-0000-0000-000000000000";
+            request.abId = WebServiceConstants.MessengerAddressBookId;
             request.groupFilter = new groupFilterType();
             request.groupFilter.groupIds = new string[] { group.Guid };
             request.contacts = new ContactType[] { new ContactType() };

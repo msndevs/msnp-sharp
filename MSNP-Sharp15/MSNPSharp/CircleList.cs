@@ -152,7 +152,10 @@ namespace MSNPSharp
             else
             {
                 lock (SyncRoot)
+                {
+                    circle.Lists = list[circle.Mail].Lists;
                     list[circle.Mail] = circle;
+                }
             }
 
             return false;

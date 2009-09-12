@@ -70,7 +70,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 3.0.0.0 的本地化字符串。
+        ///   查找类似 3.1.0.0 的本地化字符串。
         /// </summary>
         internal static string DeltasListVersion {
             get {
@@ -104,7 +104,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 3.0.0.0 的本地化字符串。
+        ///   查找类似 3.1.0.0 的本地化字符串。
         /// </summary>
         internal static string XMLContactListVersion {
             get {

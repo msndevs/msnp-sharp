@@ -2357,7 +2357,23 @@ namespace MSNPSharp
                                 if (guidDomain.Length == 0)
                                     return;
 
-                                Circle circle = new Circle(new Guid(guidDomain[0]), guidDomain[1], typeMail[1], this);
+                                Circle circle = null;
+
+                                if (CircleList[typeMail[1]] == null && PendingCircle.Count == 0)
+                                {
+                                    return;
+                                }
+
+                                if (PendingCircle.Count == 0)
+                                {
+                                    circle = CircleList[typeMail[1]];
+                                }
+
+                                if (PendingCircle.Contains(typeMail[1]))
+                                {
+                                    circle = new Circle(new Guid(guidDomain[0]), guidDomain[1], typeMail[1], this);
+                                    CircleList.AddCircle(circle);
+                                }
 
                                 if (mimeDic["NotifType"].Value == "Full" && xmlString != string.Empty)  //We get the circle roster list here, need to reply a PUT message.
                                 {
@@ -2373,8 +2389,6 @@ namespace MSNPSharp
                                     }
 
                                     SendCirclePublishCommand(new Guid(guidDomain[0]), guidDomain[1]);
-
-                                    CircleList.AddCircle(circle);
 
                                     XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
                                     if (ids.Count > 0)
