@@ -36,7 +36,7 @@
 			</xsd:element>
 			<xsd:element name="Info" type="msnab:InfoType"/>
 			<xsd:element name="Changes" type="xsd:string"/>
-			<xsd:element name="LastChange" type="xsd:dateTime" default="0001-01-01T00:00:00"/>
+			<xsd:element name="LastChange" type="xsd:string" default="0001-01-01T00:00:00"/>
 			<xsd:element name="Deleted" type="xsd:boolean" default="false"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -76,9 +76,9 @@
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="Deleted" type="xsd:boolean" default="false" minOccurs="0"/>
-			<xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
-			<xsd:element name="JoinedDate" type="xsd:dateTime" minOccurs="0"/>
-			<xsd:element name="ExpirationDate" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="LastChanged" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="JoinedDate" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="ExpirationDate" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="Changes" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -223,8 +223,8 @@
 				</xsd:annotation>
 			</xsd:element>
 			<xsd:element name="fDeleted" type="xsd:boolean" minOccurs="0"/>
-			<xsd:element name="lastChange" type="xsd:dateTime" minOccurs="0"/>
-			<xsd:element name="CreateDate" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="lastChange" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CreateDate" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="LastModifiedBy" type="xsd:integer" minOccurs="0"/>
 			<xsd:element name="CreatedBy" type="xsd:integer" minOccurs="0"/>
 		</xsd:sequence>
@@ -313,7 +313,7 @@
 				</xsd:annotation>
 			</xsd:element>
 			<xsd:element name="spotWatchState" type="xsd:string" minOccurs="0"/>
-			<xsd:element name="birthdate" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="birthdate" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="primaryEmailType" type="msnab:ContactEmailTypeType" minOccurs="0"/>
 			<xsd:element name="PrimaryLocation" type="msnab:ContactLocationTypeType" minOccurs="0"/>
 			<xsd:element name="PrimaryPhone" type="msnab:ContactPhoneTypeType" minOccurs="0"/>
@@ -430,7 +430,7 @@
 				</xsd:annotation>
 			</xsd:element>
 			<xsd:element name="fDeleted" type="xsd:boolean" minOccurs="0"/>
-			<xsd:element name="lastChange" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="lastChange" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="groupInfoType">
@@ -502,7 +502,7 @@
 		<xsd:sequence>
 			<xsd:element name="StoreService" type="msnab:ServiceType"/>
 			<xsd:element name="Status" type="xsd:string"/>
-			<xsd:element name="LastChanged" type="xsd:dateTime"/>
+			<xsd:element name="LastChanged" type="xsd:string"/>
 			<xsd:element name="Gleam" type="xsd:boolean" default="false"/>
 			<xsd:element name="InstanceId" type="xsd:string" default="0"/>
 		</xsd:sequence>
@@ -511,7 +511,7 @@
 		<xsd:sequence>
 			<xsd:element name="Type" type="xsd:string"/>
 			<xsd:element name="Deleted" type="xsd:boolean" minOccurs="0"/>
-			<xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="LastChanged" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="Notifications" minOccurs="0">
 				<xsd:complexType>
 					<xsd:sequence>
@@ -539,17 +539,17 @@
 					<xsd:element name="PassportName" type="xsd:string"/>
 					<xsd:element name="PassportId" type="xsd:string" minOccurs="0"/>
 					<xsd:element name="SpaceStatus" type="xsd:string"/>
-					<xsd:element name="SpaceLastChanged" type="xsd:dateTime" minOccurs="0"/>
-					<xsd:element name="SpaceLastViewed" type="xsd:dateTime" minOccurs="0"/>
+					<xsd:element name="SpaceLastChanged" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="SpaceLastViewed" type="xsd:string" minOccurs="0"/>
 					<xsd:element name="SpaceGleam" type="xsd:boolean" minOccurs="0"/>
-					<xsd:element name="ProfileLastChanged" type="xsd:dateTime" minOccurs="0"/>
-					<xsd:element name="ProfileLastView" type="xsd:dateTime" minOccurs="0"/>
+					<xsd:element name="ProfileLastChanged" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="ProfileLastView" type="xsd:string" minOccurs="0"/>
 					<xsd:element name="ProfileStatus" type="xsd:string"/>
 					<xsd:element name="ProfileGleam" type="xsd:boolean" minOccurs="0"/>
 					<xsd:element name="ContactProfileStatus" type="xsd:string"/>
-					<xsd:element name="ContactProfileLastChanged" type="xsd:dateTime" minOccurs="0"/>
-					<xsd:element name="ContactProfileLastViewed" type="xsd:dateTime" minOccurs="0"/>
-					<xsd:element name="LiveContactLastChanged" type="xsd:dateTime" minOccurs="0"/>
+					<xsd:element name="ContactProfileLastChanged" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="ContactProfileLastViewed" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="LiveContactLastChanged" type="xsd:string" minOccurs="0"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
@@ -558,10 +558,10 @@
 		<xsd:sequence>
 			<xsd:element name="abId" type="msnab:Guid"/>
 			<xsd:element name="abInfo" type="msnab:abInfoType"/>
-			<xsd:element name="lastChange" type="xsd:dateTime"/>
-			<xsd:element name="DynamicItemLastChanged" type="xsd:dateTime"/>
-			<xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime"/>
-			<xsd:element name="createDate" type="xsd:dateTime"/>
+			<xsd:element name="lastChange" type="xsd:string"/>
+			<xsd:element name="DynamicItemLastChanged" type="xsd:string"/>
+			<xsd:element name="RecentActivityItemLastChanged" type="xsd:string"/>
+			<xsd:element name="createDate" type="xsd:string"/>
 			<xsd:element name="propertiesChanged" type="xsd:anyType"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -590,8 +590,8 @@
 			<xsd:element name="RelationshipRole" type="xsd:int" minOccurs="0"/>
 			<xsd:element name="NDRCount" type="xsd:int" minOccurs="0"/>
 			<xsd:element name="InviterCID" type="xsd:long" minOccurs="0"/>
-			<xsd:element name="CreateDate" type="xsd:dateTime" minOccurs="0"/>
-			<xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="CreateDate" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="LastChanged" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="PropertiesChanged" type="xsd:anyType" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -720,7 +720,7 @@
 			<xsd:element name="ObjectId" type="xsd:string"/>
 			<xsd:element name="ApplicationId" type="xsd:string"/>
 			<xsd:element name="ChangeType" type="xsd:string"/>
-			<xsd:element name="PublishDate" type="xsd:dateTime"/>
+			<xsd:element name="PublishDate" type="xsd:string"/>
 			<xsd:element name="TemplateVariables">
 				<xsd:complexType>
 					<xsd:sequence>
@@ -810,10 +810,10 @@
 			<xsd:element name="IsPresenceEnabled" type="xsd:boolean"/>
 			<xsd:element name="RequestMembershipOption" type="xsd:int"/>
 			<xsd:element name="DisplayName" type="xsd:string"/>
-			<xsd:element name="ProfileLastUpdated" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="ProfileLastUpdated" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="Changes" type="xsd:anyType" minOccurs="0"/>
-			<xsd:element name="CreateDate" type="xsd:dateTime" minOccurs="0"/>
-			<xsd:element name="LastChanged" type="xsd:dateTime" minOccurs="0"/>
+			<xsd:element name="CreateDate" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="LastChanged" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ContentHandleType">
