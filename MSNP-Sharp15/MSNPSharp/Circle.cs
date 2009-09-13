@@ -260,7 +260,7 @@ namespace MSNPSharp
             get { return circleMail; }
         }
 
-        protected internal CircleContactMember()
+        protected CircleContactMember()
             :base()
         {
             Initialize();

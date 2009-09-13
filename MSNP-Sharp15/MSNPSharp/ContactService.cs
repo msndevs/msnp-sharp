@@ -196,7 +196,7 @@ namespace MSNPSharp
         /// Fires the <see cref="CircleCreated"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal void OnCircleCreated(CircleEventArgs e)
+        private void OnCircleCreated(CircleEventArgs e)
         {
             if (CircleCreated != null)
             {
@@ -208,7 +208,7 @@ namespace MSNPSharp
         /// Fires the <see cref="CircleRemoved"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal void OnCircleRemoved(CircleEventArgs e)
+        private void OnCircleRemoved(CircleEventArgs e)
         {
             if (CircleRemoved != null)
             {
@@ -341,6 +341,8 @@ namespace MSNPSharp
 
             if (NSMessageHandler.AutoSynchronize)
             {
+                AddressBook.InitializeMyProperties();
+
                 // Set privacy settings and roam property
                 NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
                 NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
@@ -1271,6 +1273,8 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.AutoSynchronize)
             {
+                AddressBook.InitializeMyProperties();
+
                 UpdatePrivacySettings();
                 UpdateGeneralDialogSettings();
             }
@@ -1942,15 +1946,28 @@ namespace MSNPSharp
                             //We need USR SHA A again
                             NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), CircleString.DefaultHostDomain, MSNLists.AllowedList | MSNLists.ForwardList, false);
 
-                            lock (NSMessageHandler.PendingCircle)
-                            {
-                                NSMessageHandler.PendingCircle.Add(e.Result.CreateCircleResult.Id.ToLowerInvariant() + "@" + CircleString.DefaultHostDomain);
-                            }
-
-
-                            msRequest(PartnerScenario.ABChangeNotifyAlert, null);
+                            //We need to update our membership and addressbook lists.
+                            msRequest(PartnerScenario.ABChangeNotifyAlert, 
+                                delegate 
+                                {
+                                    abRequest(PartnerScenario.ABChangeNotifyAlert,
+                                        delegate
+                                        {
+                                            Circle newcircle = NSMessageHandler.CircleList[e.Result.CreateCircleResult.Id.ToLowerInvariant() + "@" + CircleString.DefaultHostDomain];
+                                            if (newcircle != null)
+                                            {
+                                                OnCircleCreated(new CircleEventArgs(newcircle));
+                                            }
+                                            else
+                                            {
+                                                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("CreateCircle", new MSNPSharpException("Create circle failed.")));
+                                            }
+                                        }
+                                    ); 
+                                }
+                            );
                         }
-                                );
+                     );
                 }
             };
 

@@ -1074,25 +1074,33 @@ namespace MSNPSharp.IO
                         }
                     }
 
-                    if (!MyProperties.ContainsKey("mbea"))
-                        MyProperties["mbea"] = "0";
-
-                    if (!MyProperties.ContainsKey("gtc"))
-                        MyProperties["gtc"] = "1";
-
-                    if (!MyProperties.ContainsKey("blp"))
-                        MyProperties["blp"] = "0";
-
-                    if (!MyProperties.ContainsKey("mpop"))
-                        MyProperties["mpop"] = "0";
-
-                    if (!MyProperties.ContainsKey("roamliveproperties"))
-                        MyProperties["roamliveproperties"] = "1";
-
-                    if (!MyProperties.ContainsKey("lastchanged"))
-                        MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                    InitializeMyProperties();
                 }
             }
+        }
+
+        /// <summary>
+        /// Set MyProperties to default value.
+        /// </summary>
+        public void InitializeMyProperties()
+        {
+            if (!MyProperties.ContainsKey("mbea"))
+                MyProperties["mbea"] = "0";
+
+            if (!MyProperties.ContainsKey("gtc"))
+                MyProperties["gtc"] = "1";
+
+            if (!MyProperties.ContainsKey("blp"))
+                MyProperties["blp"] = "0";
+
+            if (!MyProperties.ContainsKey("mpop"))
+                MyProperties["mpop"] = "0";
+
+            if (!MyProperties.ContainsKey("roamliveproperties"))
+                MyProperties["roamliveproperties"] = "1";
+
+            if (!MyProperties.ContainsKey("lastchanged"))
+                MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
         }
 
         #endregion

@@ -84,7 +84,6 @@ namespace MSNPSharp
         private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
         private List<Regex> censorWords = new List<Regex>(0);
-        private List<string> pendingCircle = new List<string>(0);
 
         protected internal NSMessageHandler()
         {
@@ -366,11 +365,6 @@ namespace MSNPSharp
             {
                 msnticket = value;
             }
-        }
-
-        internal List<string> PendingCircle
-        {
-            get { return pendingCircle; }
         }
 
         #endregion
@@ -1235,54 +1229,57 @@ namespace MSNPSharp
                 contact = ContactList.GetContact(account, type);
             }
 
-            string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-            ClientCapacities newcaps = ClientCapacities.None;
-            ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
-
-            if (message.CommandValues.Count >= 4)
+            if (contact != null)
             {
-                if (message.CommandValues[3].ToString().Contains(":"))
+                string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+                ClientCapacities newcaps = ClientCapacities.None;
+                ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
+
+                if (message.CommandValues.Count >= 4)
                 {
-                    newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
-                    newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
+                    if (message.CommandValues[3].ToString().Contains(":"))
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
+                        newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
+                    }
+                    else
+                    {
+                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString());
+                    }
+
                 }
-                else
+
+                string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
+
+
+                if (IsSignedIn && account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
                 {
-                    newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString());
+                    SetPresenceStatus(newstatus);
+                    return;
                 }
 
+                contact.SetName(HttpUtility.UrlDecode(newname));
+                contact.ClientCapacities = newcaps;
+                contact.ClientCapacitiesEx = newcapsex;
+
+                if (contact != Owner && !String.IsNullOrEmpty(newdp) && newdp != "0")
+                {
+                    DisplayImage userDisplay = new DisplayImage();
+                    userDisplay.Context = newdp;
+                    contact.DisplayImage = userDisplay;
+                }
+
+                PresenceStatus oldStatus = contact.Status;
+                contact.SetStatus(newstatus);
+
+                // The contact changed status
+                if (ContactStatusChanged != null)
+                    ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
+
+                // The contact goes online
+                if (ContactOnline != null)
+                    ContactOnline(this, new ContactEventArgs(contact));
             }
-
-            string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
-
-
-            if (IsSignedIn && account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
-            {
-                SetPresenceStatus(newstatus);
-                return;
-            }
-
-            contact.SetName(HttpUtility.UrlDecode(newname));
-            contact.ClientCapacities = newcaps;
-            contact.ClientCapacitiesEx = newcapsex;
-
-            if (contact != Owner && !String.IsNullOrEmpty(newdp) && newdp != "0")
-            {
-                DisplayImage userDisplay = new DisplayImage();
-                userDisplay.Context = newdp;
-                contact.DisplayImage = userDisplay;
-            }
-
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(newstatus);
-
-            // The contact changed status
-            if (ContactStatusChanged != null)
-                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
-
-            // The contact goes online
-            if (ContactOnline != null)
-                ContactOnline(this, new ContactEventArgs(contact));
         }
 
         /// <summary>
@@ -1311,12 +1308,6 @@ namespace MSNPSharp
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
 
                 contact = CircleMemberList[usernameAndCircle[1]];
-                if (contact == null && account != Owner.Mail.ToLowerInvariant())
-                {
-                    contact = new CircleContactMember(usernameAndCircle[1], account, type);
-                    CircleMemberList.Add(contact as CircleContactMember);
-                    CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
-                }
 
                 if (account == Owner.Mail.ToLowerInvariant())
                 {
@@ -1340,34 +1331,37 @@ namespace MSNPSharp
                 ? Owner : ContactList.GetContact(account, type);
             }
 
-            ClientCapacities oldcaps = ClientCapacities.None;
-            ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
-            string networkpng;
-
-            if (message.CommandValues.Count >= 2)
+            if (contact != null)
             {
-                if (message.CommandValues[1].ToString().Contains(":"))
+                ClientCapacities oldcaps = ClientCapacities.None;
+                ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
+                string networkpng;
+
+                if (message.CommandValues.Count >= 2)
                 {
-                    oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
-                    oldcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
+                    if (message.CommandValues[1].ToString().Contains(":"))
+                    {
+                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
+                        oldcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
+                    }
+                    else
+                    {
+                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
+                    }
                 }
-                else
-                {
-                    oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
-                }
+                networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+
+                PresenceStatus oldStatus = contact.Status;
+                contact.SetStatus(PresenceStatus.Offline);
+
+                // the contact changed status
+                if (ContactStatusChanged != null)
+                    ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
+
+                // the contact goes offline
+                if (ContactOffline != null)
+                    ContactOffline(this, new ContactEventArgs(contact));
             }
-            networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-
-            PresenceStatus oldStatus = contact.Status;
-            contact.SetStatus(PresenceStatus.Offline);
-
-            // the contact changed status
-            if (ContactStatusChanged != null)
-                ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
-
-            // the contact goes offline
-            if (ContactOffline != null)
-                ContactOffline(this, new ContactEventArgs(contact));
         }
 
         /// <summary>
@@ -2357,23 +2351,10 @@ namespace MSNPSharp
                                 if (guidDomain.Length == 0)
                                     return;
 
-                                Circle circle = null;
+                                Circle circle = CircleList[typeMail[1]];
 
-                                if (CircleList[typeMail[1]] == null && PendingCircle.Count == 0)
-                                {
-                                    return;
-                                }
-
-                                if (PendingCircle.Count == 0)
-                                {
-                                    circle = CircleList[typeMail[1]];
-                                }
-
-                                if (PendingCircle.Contains(typeMail[1]))
-                                {
-                                    circle = new Circle(new Guid(guidDomain[0]), guidDomain[1], typeMail[1], this);
-                                    CircleList.AddCircle(circle);
-                                }
+                                if (circle == null) return;  //Error.
+                                
 
                                 if (mimeDic["NotifType"].Value == "Full" && xmlString != string.Empty)  //We get the circle roster list here, need to reply a PUT message.
                                 {
@@ -2411,17 +2392,6 @@ namespace MSNPSharp
 
                                 }
 
-                                if (mimeDic["NotifType"] == "Full" && xmlString == string.Empty)  //New circle added.
-                                {
-                                    lock (PendingCircle)
-                                    {
-                                        if (PendingCircle.Contains(circle.Mail))
-                                        {
-                                            ContactService.OnCircleCreated(new CircleEventArgs(circle));
-                                            PendingCircle.Remove(circle.Mail);
-                                        }
-                                    }
-                                }
                             }
                         }
 
@@ -2619,11 +2589,6 @@ namespace MSNPSharp
             ContactList.Clear();
             CircleList.Clear();
             CircleMemberList.Clear();
-
-            lock (PendingCircle)
-            {
-                PendingCircle.Clear();
-            }
 
 
             ContactGroups.Clear();
