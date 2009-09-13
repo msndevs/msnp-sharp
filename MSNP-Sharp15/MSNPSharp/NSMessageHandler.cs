@@ -1203,6 +1203,12 @@ namespace MSNPSharp
                 if (CircleMemberList[account] == null && account != Owner.Mail.ToLowerInvariant())
                 {
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
+
+                    if (ContactList.HasContact(account, type))
+                    {
+                        (contact as CircleContactMember).SyncWithContact(ContactList.GetContact(account, type));
+                    }
+
                     contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
 
                     CircleMemberList.Add(contact as CircleContactMember);

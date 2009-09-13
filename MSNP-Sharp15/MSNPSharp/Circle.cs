@@ -282,6 +282,42 @@ namespace MSNPSharp
             Initialize();
         }
 
+        public void SyncWithContact(Contact contact)
+        {
+            if (contact == null) return;
+
+            Lists = contact.Lists;
+            SetPersonalMessage(contact.PersonalMessage);
+            DisplayImage = contact.DisplayImage;
+
+            contact.ContactBlocked += delegate
+            {
+                Lists = contact.Lists;
+                OnContactBlocked();
+            };
+
+            contact.ContactUnBlocked += delegate
+            {
+                Lists = contact.Lists;
+                OnContactUnBlocked();
+            };
+
+            contact.PersonalMessageChanged += delegate
+            {
+                SetPersonalMessage(contact.PersonalMessage);
+            };
+
+            contact.DisplayImageChanged += delegate
+            {
+                DisplayImage = contact.DisplayImage;
+            };
+
+            contact.ScreenNameChanged += delegate
+            {
+                SetName(contact.Name);
+            };
+        }
+
         public override int GetHashCode()
         {
             return (Mail + Via).GetHashCode();

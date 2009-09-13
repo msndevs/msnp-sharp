@@ -207,7 +207,7 @@ namespace MSNPSharp
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
         public event EventHandler<EventArgs> ContactBlocked;
         public event EventHandler<EventArgs> ContactUnBlocked;
-        public event EventHandler<EventArgs> ContactOnline;
+        public event EventHandler<StatusChangeEventArgs> ContactOnline;
         public event EventHandler<StatusChangeEventArgs> ContactOffline;
         public event EventHandler<StatusChangeEventArgs> StatusChanged;
 
@@ -438,10 +438,7 @@ namespace MSNPSharp
                 {
                     displayImage = value;
 
-                    if (DisplayImageChanged != null)
-                    {
-                        DisplayImageChanged(this, EventArgs.Empty);
-                    }
+                    OnDisplayImageChanged();
                 }
             }
         }
@@ -789,13 +786,11 @@ namespace MSNPSharp
         {
             if (name != newName)
             {
+                string oldName = name;
                 name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);
 
-                if (ScreenNameChanged != null)
-                {
-                    // notify the user we changed our name
-                    ScreenNameChanged(this, EventArgs.Empty);
-                }
+                // notify the user we changed our name
+                OnScreenNameChanged(oldName);
             }
         }
 
@@ -809,12 +804,8 @@ namespace MSNPSharp
             if (personalMessage != newpmessage)
             {
                 personalMessage = newpmessage;
-
-                if (PersonalMessageChanged != null)
-                {
-                    // notify the user we changed our display message
-                    PersonalMessageChanged(this, EventArgs.Empty);
-                }
+                // notify the user we changed our display message
+                OnPersonalMessageChanged(newpmessage);
             }
         }
 
@@ -828,22 +819,94 @@ namespace MSNPSharp
                     status = newStatus;
 
                     // raise an event									
-                    if (StatusChanged != null)
-                        StatusChanged(this, new StatusChangeEventArgs(oldStatus));
+                    OnStatusChanged(oldStatus);
 
                     // raise the online/offline events
-                    if (oldStatus == PresenceStatus.Offline && ContactOnline != null)
-                        ContactOnline(this, EventArgs.Empty);
+                    if (oldStatus == PresenceStatus.Offline)
+                        OnContactOnline(oldStatus);
 
-                    if (newStatus == PresenceStatus.Offline && ContactOffline != null)
-                        ContactOffline(this, new StatusChangeEventArgs(oldStatus));
+                    if (newStatus == PresenceStatus.Offline)
+                        OnContactOffline(oldStatus);
                 }
+            }
+        }
+
+        #region Protected
+
+        protected virtual void OnScreenNameChanged(string oldName)
+        {
+            if (ScreenNameChanged != null)
+            {
+                ScreenNameChanged(this, EventArgs.Empty);
+            }
+        }
+
+        protected virtual void OnPersonalMessageChanged(PersonalMessage newmessage)
+        {
+            if (PersonalMessageChanged != null)
+            {
+                PersonalMessageChanged(this, EventArgs.Empty);
+            }
+        }
+
+        protected virtual void OnStatusChanged(PresenceStatus oldStatus)
+        {
+            if (StatusChanged != null)
+                StatusChanged(this, new StatusChangeEventArgs(oldStatus));
+        }
+
+        protected virtual void OnContactOnline(PresenceStatus oldStatus)
+        {
+            if (ContactOnline != null)
+                ContactOnline(this, new StatusChangeEventArgs(oldStatus));
+        }
+
+        protected virtual void OnContactOffline(PresenceStatus oldStatus)
+        {
+            if (ContactOffline != null)
+            {
+                ContactOffline(this, new StatusChangeEventArgs(oldStatus));
+            }
+        }
+
+        protected virtual void OnDisplayImageChanged()
+        {
+            if (DisplayImageChanged != null)
+            {
+                DisplayImageChanged(this, EventArgs.Empty);
             }
         }
 
         #endregion
 
+        #endregion
+
         #region Internal contact operations
+
+        protected virtual void OnContactGroupAdded(ContactGroup group)
+        {
+            if (ContactGroupAdded != null)
+                ContactGroupAdded(this, new ContactGroupEventArgs(group));
+        }
+
+        protected virtual void OnContactGroupRemoved(ContactGroup group)
+        {
+            if (ContactGroupRemoved != null)
+                ContactGroupRemoved(this, new ContactGroupEventArgs(group));
+        }
+
+        protected virtual void OnContactBlocked()
+        {
+            if (ContactBlocked != null)
+                ContactBlocked(this, new EventArgs());
+        }
+
+        protected virtual void OnContactUnBlocked()
+        {
+            if (ContactUnBlocked != null)
+                ContactUnBlocked(this, new EventArgs());
+        }
+
 
         internal void AddContactToGroup(ContactGroup group)
         {
@@ -851,8 +914,7 @@ namespace MSNPSharp
             {
                 contactGroups.Add(group);
 
-                if (ContactGroupAdded != null)
-                    ContactGroupAdded(this, new ContactGroupEventArgs(group));
+                OnContactGroupAdded(group);
             }
         }
 
@@ -862,8 +924,7 @@ namespace MSNPSharp
             {
                 contactGroups.Remove(group);
 
-                if (ContactGroupRemoved != null)
-                    ContactGroupRemoved(this, new ContactGroupEventArgs(group));
+                OnContactGroupRemoved(group);
             }
         }
 
@@ -875,8 +936,7 @@ namespace MSNPSharp
 
                 if ((list & MSNLists.BlockedList) == MSNLists.BlockedList)
                 {
-                    if (ContactBlocked != null)
-                        ContactBlocked(this, new EventArgs());
+                    OnContactBlocked();
                 }
             }
 
@@ -899,8 +959,7 @@ namespace MSNPSharp
 
                 if ((list & MSNLists.BlockedList) == MSNLists.BlockedList)
                 {
-                    if (ContactUnBlocked != null)
-                        ContactUnBlocked(this, EventArgs.Empty);
+                    OnContactUnBlocked();
                 }
             }
         }
