@@ -303,8 +303,7 @@ namespace MSNPSharp
             if (NSMessageHandler.AutoSynchronize)
             {
                 AddressBook.Synchronize(Deltas);
-                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.OwnerNamespace.LastChange) == DateTime.MinValue)
-                //if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) == DateTime.MinValue)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                 }
@@ -312,8 +311,7 @@ namespace MSNPSharp
                     PartnerScenario.Initial,
                     delegate
                     {
-                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.OwnerNamespace.LastChange) == DateTime.MinValue)
-                        //if (AddressBook.AddressbookLastChange == DateTime.MinValue)
+                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) == DateTime.MinValue)
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                         }
@@ -622,12 +620,8 @@ namespace MSNPSharp
 
                 if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) != DateTime.MinValue)
                 {
-                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.OwnerNamespace.LastChange) != DateTime.MinValue)
-                    {
                         deltasOnly = true;
-
-                        request.filterOptions.LastChanged = AddressBook.OwnerNamespace.LastChange;
-                    }
+                        request.filterOptions.LastChanged = AddressBook.AddressbookLastChange; //AddressBook.OwnerNamespace.LastChange;
                 }
 
                 request.filterOptions.DeltasOnly = deltasOnly;

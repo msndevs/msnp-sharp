@@ -545,11 +545,6 @@ namespace MSNPSharp.IO
                 }
             }
 
-            if (findMembership.OwnerNamespace != null)
-            {
-                OwnerNamespace = findMembership.OwnerNamespace;
-            }
-
             return this;
         }
 
@@ -582,14 +577,6 @@ namespace MSNPSharp.IO
         SerializableDictionary<string, CircleInfo> circleResults = new SerializableDictionary<string, CircleInfo>(0);
 
         SerializableDictionary<string, List<CircleMember>> circlesMembership = new SerializableDictionary<string, List<CircleMember>>(0);
-        OwnerNamespaceType ownerNamespace = new OwnerNamespaceType();
-
-        [XmlElement("OwnerNamespace")]
-        public OwnerNamespaceType OwnerNamespace
-        {
-            get { return ownerNamespace; }
-            set { ownerNamespace = value; }
-        }
 
         public SerializableDictionary<string, CircleInfo> CircleResults
         {
