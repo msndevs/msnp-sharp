@@ -2135,6 +2135,7 @@ namespace MSNPSharp
         /// <param name="contact">Contact being invited.</param>
         /// <param name="message">Message send with the invitition email.</param>
         /// <exception cref="ArgumentNullException">One or more parameter(s) is/are null.</exception>
+        /// <exception cref="InvalidOperationException">The owner is not the circle admin or the circle is blocked.</exception>
         public void InviteContactToCircle(Circle circle, Contact contact, string message)
         {
             if (circle == null || contact == null || message == null)
@@ -2142,9 +2143,14 @@ namespace MSNPSharp
                 throw new ArgumentNullException();
             }
 
+            if (circle.OnBlockedList)
+            {
+                throw new InvalidOperationException("Circle is on your block list.");
+            }
+
             if (circle.Role != CirclePersonalMembershipRole.Admin)
             {
-                throw new MSNPSharpException("The owner is not the administrator of this circle.");
+                throw new InvalidOperationException("The owner is not the administrator of this circle.");
             }
 
             if (contact == NSMessageHandler.Owner) return;
