@@ -33,6 +33,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Web;
 using System.Text;
+using System.Xml;
 
 namespace MSNPSharp.Core
 {
@@ -345,6 +346,17 @@ namespace MSNPSharp.Core
         public static int IndexOf(byte[] input, string pattern)
         {
             return IndexOf(input, Encoding.UTF8.GetBytes(pattern));
+        }
+    }
+
+    public sealed class WebServiceDateTimeConverter
+    {
+        public static DateTime ConvertToDateTime(string dateTime)
+        {
+            if (dateTime == null || dateTime == string.Empty)
+                dateTime = WebServiceConstants.ZeroTime;
+
+            return XmlConvert.ToDateTime(dateTime, XmlDateTimeSerializationMode.Utc);
         }
     }
 };

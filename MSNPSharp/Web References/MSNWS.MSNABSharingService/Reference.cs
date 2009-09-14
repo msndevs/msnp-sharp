@@ -320,6 +320,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private System.Threading.SendOrPostCallback ManageWLConnectionOperationCompleted;
         
+        private System.Threading.SendOrPostCallback BreakConnectionOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -426,6 +428,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         public event ManageWLConnectionCompletedEventHandler ManageWLConnectionCompleted;
+        
+        /// <remarks/>
+        public event BreakConnectionCompletedEventHandler BreakConnectionCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
@@ -890,6 +895,39 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/BreakConnection", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("BreakConnectionResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public BreakConnectionResponseType BreakConnection([System.Xml.Serialization.XmlElementAttribute(Namespace="http://www.msn.com/webservices/AddressBook")] BreakConnectionRequestType BreakConnectionRequest) {
+            object[] results = this.Invoke("BreakConnection", new object[] {
+                        BreakConnectionRequest});
+            return ((BreakConnectionResponseType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnectionRequest) {
+            this.BreakConnectionAsync(BreakConnectionRequest, null);
+        }
+        
+        /// <remarks/>
+        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnectionRequest, object userState) {
+            if ((this.BreakConnectionOperationCompleted == null)) {
+                this.BreakConnectionOperationCompleted = new System.Threading.SendOrPostCallback(this.OnBreakConnectionOperationCompleted);
+            }
+            this.InvokeAsync("BreakConnection", new object[] {
+                        BreakConnectionRequest}, this.BreakConnectionOperationCompleted, userState);
+        }
+        
+        private void OnBreakConnectionOperationCompleted(object arg) {
+            if ((this.BreakConnectionCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.BreakConnectionCompleted(this, new BreakConnectionCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -1091,19 +1129,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class CreateCircleResponseType {
-        
-        private string idField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
+    public partial class BreakConnectionResponseType {
     }
     
     /// <remarks/>
@@ -1112,11 +1138,15 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class CreateContactType {
+    public partial class BreakConnectionRequestType {
         
         private abHandleType abHandleField;
         
-        private contactHandleType contactHandleField;
+        private string contactIdField;
+        
+        private bool deleteContactField;
+        
+        private bool blockContactField;
         
         /// <remarks/>
         public abHandleType abHandle {
@@ -1129,12 +1159,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public contactHandleType contactHandle {
+        public string contactId {
             get {
-                return this.contactHandleField;
+                return this.contactIdField;
             }
             set {
-                this.contactHandleField = value;
+                this.contactIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool deleteContact {
+            get {
+                return this.deleteContactField;
+            }
+            set {
+                this.deleteContactField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool blockContact {
+            get {
+                return this.blockContactField;
+            }
+            set {
+                this.blockContactField = value;
             }
         }
     }
@@ -1180,6 +1230,60 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.cidField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateCircleResponseType {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateContactType {
+        
+        private abHandleType abHandleField;
+        
+        private contactHandleType contactHandleField;
+        
+        /// <remarks/>
+        public abHandleType abHandle {
+            get {
+                return this.abHandleField;
+            }
+            set {
+                this.abHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public contactHandleType contactHandle {
+            get {
+                return this.contactHandleField;
+            }
+            set {
+                this.contactHandleField = value;
             }
         }
     }
@@ -1257,11 +1361,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool presenceField;
         
-        private string actionField;
+        private int actionField;
         
         private int relationshipTypeField;
         
         private int relationshipRoleField;
+        
+        private Annotation[] annotationsField;
         
         /// <remarks/>
         public abHandleType abHandle {
@@ -1304,8 +1410,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string action {
+        public int action {
             get {
                 return this.actionField;
             }
@@ -1331,6 +1436,50 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.relationshipRoleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
+        public Annotation[] annotations {
+            get {
+                return this.annotationsField;
+            }
+            set {
+                this.annotationsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class Annotation {
+        
+        private string nameField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
             }
         }
     }
@@ -1399,7 +1548,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string changeTypeField;
         
-        private System.DateTime publishDateField;
+        private string publishDateField;
         
         private TemplateVariableBaseType[] templateVariablesField;
         
@@ -1444,7 +1593,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime PublishDate {
+        public string PublishDate {
             get {
                 return this.publishDateField;
             }
@@ -2026,9 +2175,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool fDeletedFieldSpecified;
         
-        private System.DateTime lastChangeField;
-        
-        private bool lastChangeFieldSpecified;
+        private string lastChangeField;
         
         /// <remarks/>
         public string groupId {
@@ -2082,23 +2229,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
             set {
                 this.lastChangeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool lastChangeSpecified {
-            get {
-                return this.lastChangeFieldSpecified;
-            }
-            set {
-                this.lastChangeFieldSpecified = value;
             }
         }
     }
@@ -2260,39 +2396,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class Annotation {
-        
-        private string nameField;
-        
-        private string valueField;
-        
-        /// <remarks/>
-        public string Name {
-            get {
-                return this.nameField;
-            }
-            set {
-                this.nameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Value {
-            get {
-                return this.valueField;
-            }
-            set {
-                this.valueField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class ContactType {
         
         private string contactIdField;
@@ -2305,13 +2408,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool fDeletedFieldSpecified;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private bool lastChangeFieldSpecified;
-        
-        private System.DateTime createDateField;
-        
-        private bool createDateFieldSpecified;
+        private string createDateField;
         
         private string lastModifiedByField;
         
@@ -2369,7 +2468,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -2379,34 +2478,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool lastChangeSpecified {
-            get {
-                return this.lastChangeFieldSpecified;
-            }
-            set {
-                this.lastChangeFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime CreateDate {
+        public string CreateDate {
             get {
                 return this.createDateField;
             }
             set {
                 this.createDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CreateDateSpecified {
-            get {
-                return this.createDateFieldSpecified;
-            }
-            set {
-                this.createDateFieldSpecified = value;
             }
         }
         
@@ -2515,9 +2592,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string spotWatchStateField;
         
-        private System.DateTime birthdateField;
-        
-        private bool birthdateFieldSpecified;
+        private string birthdateField;
         
         private ContactEmailTypeType primaryEmailTypeField;
         
@@ -2552,6 +2627,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private MessengerMemberInfo messengerMemberInfoField;
         
         private object propertiesChangedField;
+        
+        private string clientErrorDataField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail", IsNullable=false)]
@@ -2940,23 +3017,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime birthdate {
+        public string birthdate {
             get {
                 return this.birthdateField;
             }
             set {
                 this.birthdateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool birthdateSpecified {
-            get {
-                return this.birthdateFieldSpecified;
-            }
-            set {
-                this.birthdateFieldSpecified = value;
             }
         }
         
@@ -3133,6 +3199,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.propertiesChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string clientErrorData {
+            get {
+                return this.clientErrorDataField;
+            }
+            set {
+                this.clientErrorDataField = value;
             }
         }
     }
@@ -3538,11 +3614,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string domainTagField;
         
+        private string displayNameField;
+        
         private string userTileURLField;
         
         private string profileURLField;
-        
-        private string displayNameField;
         
         private int relationshipTypeField;
         
@@ -3562,17 +3638,19 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool nDRCountFieldSpecified;
         
+        private string inviterNameField;
+        
+        private string inviterMessageField;
+        
         private long inviterCIDField;
         
         private bool inviterCIDFieldSpecified;
         
-        private System.DateTime createDateField;
+        private string inviterEmailField;
         
-        private bool createDateFieldSpecified;
+        private string createDateField;
         
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         private object propertiesChangedField;
         
@@ -3608,6 +3686,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
         public string UserTileURL {
             get {
                 return this.userTileURLField;
@@ -3624,16 +3712,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.profileURLField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string DisplayName {
-            get {
-                return this.displayNameField;
-            }
-            set {
-                this.displayNameField = value;
             }
         }
         
@@ -3732,6 +3810,26 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public string InviterName {
+            get {
+                return this.inviterNameField;
+            }
+            set {
+                this.inviterNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string InviterMessage {
+            get {
+                return this.inviterMessageField;
+            }
+            set {
+                this.inviterMessageField = value;
+            }
+        }
+        
+        /// <remarks/>
         public long InviterCID {
             get {
                 return this.inviterCIDField;
@@ -3753,7 +3851,17 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime CreateDate {
+        public string InviterEmail {
+            get {
+                return this.inviterEmailField;
+            }
+            set {
+                this.inviterEmailField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CreateDate {
             get {
                 return this.createDateField;
             }
@@ -3763,34 +3871,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CreateDateSpecified {
-            get {
-                return this.createDateFieldSpecified;
-            }
-            set {
-                this.createDateFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
         
@@ -3994,19 +4080,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string displayNameField;
         
-        private System.DateTime profileLastUpdatedField;
-        
-        private bool profileLastUpdatedFieldSpecified;
+        private string profileLastUpdatedField;
         
         private object changesField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
-        private bool createDateFieldSpecified;
-        
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         /// <remarks/>
         public int Domain {
@@ -4079,23 +4159,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime ProfileLastUpdated {
+        public string ProfileLastUpdated {
             get {
                 return this.profileLastUpdatedField;
             }
             set {
                 this.profileLastUpdatedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastUpdatedSpecified {
-            get {
-                return this.profileLastUpdatedFieldSpecified;
-            }
-            set {
-                this.profileLastUpdatedFieldSpecified = value;
             }
         }
         
@@ -4110,7 +4179,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime CreateDate {
+        public string CreateDate {
             get {
                 return this.createDateField;
             }
@@ -4120,34 +4189,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CreateDateSpecified {
-            get {
-                return this.createDateFieldSpecified;
-            }
-            set {
-                this.createDateFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
     }
@@ -4299,13 +4346,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private abInfoType abInfoField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private System.DateTime dynamicItemLastChangedField;
+        private string dynamicItemLastChangedField;
         
-        private System.DateTime recentActivityItemLastChangedField;
+        private string recentActivityItemLastChangedField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
         private string propertiesChangedField;
         
@@ -4330,7 +4377,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -4340,7 +4387,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime DynamicItemLastChanged {
+        public string DynamicItemLastChanged {
             get {
                 return this.dynamicItemLastChangedField;
             }
@@ -4350,7 +4397,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime RecentActivityItemLastChanged {
+        public string RecentActivityItemLastChanged {
             get {
                 return this.recentActivityItemLastChangedField;
             }
@@ -4360,7 +4407,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime createDate {
+        public string createDate {
             get {
                 return this.createDateField;
             }
@@ -4651,6 +4698,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string extendedContentField;
         
+        private abHandleType anHandleField;
+        
         /// <remarks/>
         public filterOptionsType filterOptions {
             get {
@@ -4680,6 +4729,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.extendedContentField = value;
             }
         }
+        
+        /// <remarks/>
+        public abHandleType anHandle {
+            get {
+                return this.anHandleField;
+            }
+            set {
+                this.anHandleField = value;
+            }
+        }
     }
     
     /// <remarks/>
@@ -4692,9 +4751,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deltasOnlyField;
         
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         private ContactFilterType contactFilterField;
         
@@ -4709,23 +4766,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
         
@@ -4811,9 +4857,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deletedFieldSpecified;
         
-        private System.DateTime lastChangedField;
-        
-        private bool lastChangedFieldSpecified;
+        private string lastChangedField;
         
         private NotificationDataType[] notificationsField;
         
@@ -4851,23 +4895,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
             set {
                 this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
             }
         }
         
@@ -4905,7 +4938,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string statusField;
         
-        private System.DateTime lastChangedField;
+        private string lastChangedField;
         
         private bool gleamField;
         
@@ -4937,7 +4970,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
@@ -4981,12 +5014,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string changesField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
         private bool deletedField;
         
         public ServiceType() {
-            this.lastChangeField = new System.DateTime(0);
+            this.lastChangeField = "0001-01-01T00:00:00";
             this.deletedField = false;
         }
         
@@ -5022,7 +5055,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChange {
+        public string LastChange {
             get {
                 return this.lastChangeField;
             }
@@ -5133,17 +5166,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deletedField;
         
-        private System.DateTime lastChangedField;
+        private string lastChangedField;
         
-        private bool lastChangedFieldSpecified;
+        private string joinedDateField;
         
-        private System.DateTime joinedDateField;
-        
-        private bool joinedDateFieldSpecified;
-        
-        private System.DateTime expirationDateField;
-        
-        private bool expirationDateFieldSpecified;
+        private string expirationDateField;
         
         private string changesField;
         
@@ -5225,7 +5252,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime LastChanged {
+        public string LastChanged {
             get {
                 return this.lastChangedField;
             }
@@ -5235,18 +5262,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LastChangedSpecified {
-            get {
-                return this.lastChangedFieldSpecified;
-            }
-            set {
-                this.lastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime JoinedDate {
+        public string JoinedDate {
             get {
                 return this.joinedDateField;
             }
@@ -5256,34 +5272,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool JoinedDateSpecified {
-            get {
-                return this.joinedDateFieldSpecified;
-            }
-            set {
-                this.joinedDateFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ExpirationDate {
+        public string ExpirationDate {
             get {
                 return this.expirationDateField;
             }
             set {
                 this.expirationDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ExpirationDateSpecified {
-            get {
-                return this.expirationDateFieldSpecified;
-            }
-            set {
-                this.expirationDateFieldSpecified = value;
             }
         }
         
@@ -5891,25 +5885,17 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string spaceStatusField;
         
-        private System.DateTime spaceLastChangedField;
+        private string spaceLastChangedField;
         
-        private bool spaceLastChangedFieldSpecified;
-        
-        private System.DateTime spaceLastViewedField;
-        
-        private bool spaceLastViewedFieldSpecified;
+        private string spaceLastViewedField;
         
         private bool spaceGleamField;
         
         private bool spaceGleamFieldSpecified;
         
-        private System.DateTime profileLastChangedField;
+        private string profileLastChangedField;
         
-        private bool profileLastChangedFieldSpecified;
-        
-        private System.DateTime profileLastViewField;
-        
-        private bool profileLastViewFieldSpecified;
+        private string profileLastViewField;
         
         private string profileStatusField;
         
@@ -5919,17 +5905,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string contactProfileStatusField;
         
-        private System.DateTime contactProfileLastChangedField;
+        private string contactProfileLastChangedField;
         
-        private bool contactProfileLastChangedFieldSpecified;
+        private string contactProfileLastViewedField;
         
-        private System.DateTime contactProfileLastViewedField;
-        
-        private bool contactProfileLastViewedFieldSpecified;
-        
-        private System.DateTime liveContactLastChangedField;
-        
-        private bool liveContactLastChangedFieldSpecified;
+        private string liveContactLastChangedField;
         
         /// <remarks/>
         public string CID {
@@ -5972,7 +5952,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime SpaceLastChanged {
+        public string SpaceLastChanged {
             get {
                 return this.spaceLastChangedField;
             }
@@ -5982,34 +5962,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceLastChangedSpecified {
-            get {
-                return this.spaceLastChangedFieldSpecified;
-            }
-            set {
-                this.spaceLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime SpaceLastViewed {
+        public string SpaceLastViewed {
             get {
                 return this.spaceLastViewedField;
             }
             set {
                 this.spaceLastViewedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceLastViewedSpecified {
-            get {
-                return this.spaceLastViewedFieldSpecified;
-            }
-            set {
-                this.spaceLastViewedFieldSpecified = value;
             }
         }
         
@@ -6035,7 +5993,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime ProfileLastChanged {
+        public string ProfileLastChanged {
             get {
                 return this.profileLastChangedField;
             }
@@ -6045,34 +6003,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastChangedSpecified {
-            get {
-                return this.profileLastChangedFieldSpecified;
-            }
-            set {
-                this.profileLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ProfileLastView {
+        public string ProfileLastView {
             get {
                 return this.profileLastViewField;
             }
             set {
                 this.profileLastViewField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileLastViewSpecified {
-            get {
-                return this.profileLastViewFieldSpecified;
-            }
-            set {
-                this.profileLastViewFieldSpecified = value;
             }
         }
         
@@ -6118,7 +6054,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime ContactProfileLastChanged {
+        public string ContactProfileLastChanged {
             get {
                 return this.contactProfileLastChangedField;
             }
@@ -6128,18 +6064,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ContactProfileLastChangedSpecified {
-            get {
-                return this.contactProfileLastChangedFieldSpecified;
-            }
-            set {
-                this.contactProfileLastChangedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime ContactProfileLastViewed {
+        public string ContactProfileLastViewed {
             get {
                 return this.contactProfileLastViewedField;
             }
@@ -6149,34 +6074,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ContactProfileLastViewedSpecified {
-            get {
-                return this.contactProfileLastViewedFieldSpecified;
-            }
-            set {
-                this.contactProfileLastViewedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LiveContactLastChanged {
+        public string LiveContactLastChanged {
             get {
                 return this.liveContactLastChangedField;
             }
             set {
                 this.liveContactLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LiveContactLastChangedSpecified {
-            get {
-                return this.liveContactLastChangedFieldSpecified;
-            }
-            set {
-                this.liveContactLastChangedFieldSpecified = value;
             }
         }
     }
@@ -6952,13 +6855,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private abInfoType abInfoField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private System.DateTime dynamicItemLastChangedField;
+        private string dynamicItemLastChangedField;
         
-        private System.DateTime recentActivityItemLastChangedField;
+        private string recentActivityItemLastChangedField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
         private string propertiesChangedField;
         
@@ -6983,7 +6886,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -6993,7 +6896,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime DynamicItemLastChanged {
+        public string DynamicItemLastChanged {
             get {
                 return this.dynamicItemLastChangedField;
             }
@@ -7003,7 +6906,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime RecentActivityItemLastChanged {
+        public string RecentActivityItemLastChanged {
             get {
                 return this.recentActivityItemLastChangedField;
             }
@@ -7013,7 +6916,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime createDate {
+        public string createDate {
             get {
                 return this.createDateField;
             }
@@ -7047,18 +6950,18 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deltasOnlyField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
         private string dynamicItemViewField;
         
-        private System.DateTime dynamicItemLastChangeField;
+        private string dynamicItemLastChangeField;
         
         public ABFindAllRequestType() {
             this.abIdField = "00000000-0000-0000-0000-000000000000";
             this.deltasOnlyField = false;
-            this.lastChangeField = new System.DateTime(576000000000);
+            this.lastChangeField = "0001-01-01T00:00:00.0000000-08:00";
             this.dynamicItemViewField = "Gleam";
-            this.dynamicItemLastChangeField = new System.DateTime(576000000000);
+            this.dynamicItemLastChangeField = "0001-01-01T00:00:00.0000000-08:00";
         }
         
         /// <remarks/>
@@ -7093,8 +6996,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "0001-01-01T16:00:00+08:00")]
-        public System.DateTime lastChange {
+        [System.ComponentModel.DefaultValueAttribute("0001-01-01T00:00:00.0000000-08:00")]
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -7114,8 +7017,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "0001-01-01T16:00:00+08:00")]
-        public System.DateTime dynamicItemLastChange {
+        [System.ComponentModel.DefaultValueAttribute("0001-01-01T00:00:00.0000000-08:00")]
+        public string dynamicItemLastChange {
             get {
                 return this.dynamicItemLastChangeField;
             }
@@ -7158,13 +7061,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private abInfoType abInfoField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
-        private System.DateTime dynamicItemLastChangedField;
+        private string dynamicItemLastChangedField;
         
-        private System.DateTime recentActivityItemLastChangedField;
+        private string recentActivityItemLastChangedField;
         
-        private System.DateTime createDateField;
+        private string createDateField;
         
         private object propertiesChangedField;
         
@@ -7189,7 +7092,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime lastChange {
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -7199,7 +7102,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime DynamicItemLastChanged {
+        public string DynamicItemLastChanged {
             get {
                 return this.dynamicItemLastChangedField;
             }
@@ -7209,7 +7112,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime RecentActivityItemLastChanged {
+        public string RecentActivityItemLastChanged {
             get {
                 return this.recentActivityItemLastChangedField;
             }
@@ -7219,7 +7122,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public System.DateTime createDate {
+        public string createDate {
             get {
                 return this.createDateField;
             }
@@ -7358,240 +7261,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultType {
-        
-        private ServiceType[] servicesField;
-        
-        private FindMembershipResultTypeOwnerNamespace ownerNamespaceField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Service", IsNullable=false)]
-        public ServiceType[] Services {
-            get {
-                return this.servicesField;
-            }
-            set {
-                this.servicesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespace OwnerNamespace {
-            get {
-                return this.ownerNamespaceField;
-            }
-            set {
-                this.ownerNamespaceField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespace {
-        
-        private FindMembershipResultTypeOwnerNamespaceInfo infoField;
-        
-        private string changesField;
-        
-        private System.DateTime createDateField;
-        
-        private System.DateTime lastChangeField;
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespaceInfo Info {
-            get {
-                return this.infoField;
-            }
-            set {
-                this.infoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Changes {
-            get {
-                return this.changesField;
-            }
-            set {
-                this.changesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime CreateDate {
-            get {
-                return this.createDateField;
-            }
-            set {
-                this.createDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public System.DateTime LastChange {
-            get {
-                return this.lastChangeField;
-            }
-            set {
-                this.lastChangeField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespaceInfo {
-        
-        private FindMembershipResultTypeOwnerNamespaceInfoHandle handleField;
-        
-        private string creatorPuidField;
-        
-        private string creatorCIDField;
-        
-        private string creatorPassportNameField;
-        
-        private FindMembershipResultTypeOwnerNamespaceInfoCircleAttributes circleAttributesField;
-        
-        private bool messengerApplicationServiceCreatedField;
-        
-        private bool messengerApplicationServiceCreatedFieldSpecified;
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespaceInfoHandle Handle {
-            get {
-                return this.handleField;
-            }
-            set {
-                this.handleField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CreatorPuid {
-            get {
-                return this.creatorPuidField;
-            }
-            set {
-                this.creatorPuidField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CreatorCID {
-            get {
-                return this.creatorCIDField;
-            }
-            set {
-                this.creatorCIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string CreatorPassportName {
-            get {
-                return this.creatorPassportNameField;
-            }
-            set {
-                this.creatorPassportNameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public FindMembershipResultTypeOwnerNamespaceInfoCircleAttributes CircleAttributes {
-            get {
-                return this.circleAttributesField;
-            }
-            set {
-                this.circleAttributesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool MessengerApplicationServiceCreated {
-            get {
-                return this.messengerApplicationServiceCreatedField;
-            }
-            set {
-                this.messengerApplicationServiceCreatedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool MessengerApplicationServiceCreatedSpecified {
-            get {
-                return this.messengerApplicationServiceCreatedFieldSpecified;
-            }
-            set {
-                this.messengerApplicationServiceCreatedFieldSpecified = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespaceInfoHandle {
-        
-        private string idField;
-        
-        private bool isPassportNameHiddenField;
-        
-        private string cIDField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool IsPassportNameHidden {
-            get {
-                return this.isPassportNameHiddenField;
-            }
-            set {
-                this.isPassportNameHiddenField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string CID {
-            get {
-                return this.cIDField;
-            }
-            set {
-                this.cIDField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultTypeOwnerNamespaceInfoCircleAttributes {
+    public partial class CircleAttributesType {
         
         private bool isPresenceEnabledField;
         
@@ -7649,6 +7319,239 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class OwnerNamespaceInfoType {
+        
+        private OwnerNamespaceInfoTypeHandle handleField;
+        
+        private string creatorPuidField;
+        
+        private string creatorCIDField;
+        
+        private string creatorPassportNameField;
+        
+        private CircleAttributesType circleAttributesField;
+        
+        private bool messengerApplicationServiceCreatedField;
+        
+        private bool messengerApplicationServiceCreatedFieldSpecified;
+        
+        /// <remarks/>
+        public OwnerNamespaceInfoTypeHandle Handle {
+            get {
+                return this.handleField;
+            }
+            set {
+                this.handleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string CreatorPuid {
+            get {
+                return this.creatorPuidField;
+            }
+            set {
+                this.creatorPuidField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string CreatorCID {
+            get {
+                return this.creatorCIDField;
+            }
+            set {
+                this.creatorCIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CreatorPassportName {
+            get {
+                return this.creatorPassportNameField;
+            }
+            set {
+                this.creatorPassportNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public CircleAttributesType CircleAttributes {
+            get {
+                return this.circleAttributesField;
+            }
+            set {
+                this.circleAttributesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool MessengerApplicationServiceCreated {
+            get {
+                return this.messengerApplicationServiceCreatedField;
+            }
+            set {
+                this.messengerApplicationServiceCreatedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool MessengerApplicationServiceCreatedSpecified {
+            get {
+                return this.messengerApplicationServiceCreatedFieldSpecified;
+            }
+            set {
+                this.messengerApplicationServiceCreatedFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class OwnerNamespaceInfoTypeHandle {
+        
+        private string idField;
+        
+        private bool isPassportNameHiddenField;
+        
+        private string cIDField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsPassportNameHidden {
+            get {
+                return this.isPassportNameHiddenField;
+            }
+            set {
+                this.isPassportNameHiddenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string CID {
+            get {
+                return this.cIDField;
+            }
+            set {
+                this.cIDField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class OwnerNamespaceType {
+        
+        private OwnerNamespaceInfoType infoField;
+        
+        private string changesField;
+        
+        private string createDateField;
+        
+        private string lastChangeField;
+        
+        /// <remarks/>
+        public OwnerNamespaceInfoType Info {
+            get {
+                return this.infoField;
+            }
+            set {
+                this.infoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CreateDate {
+            get {
+                return this.createDateField;
+            }
+            set {
+                this.createDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LastChange {
+            get {
+                return this.lastChangeField;
+            }
+            set {
+                this.lastChangeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class FindMembershipResultType {
+        
+        private ServiceType[] servicesField;
+        
+        private OwnerNamespaceType ownerNamespaceField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("Service", IsNullable=false)]
+        public ServiceType[] Services {
+            get {
+                return this.servicesField;
+            }
+            set {
+                this.servicesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public OwnerNamespaceType OwnerNamespace {
+            get {
+                return this.ownerNamespaceField;
+            }
+            set {
+                this.ownerNamespaceField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class FindMembershipRequestType {
         
         private FindMembershipRequestTypeServiceFilter serviceFilterField;
@@ -7657,11 +7560,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool deltasOnlyField;
         
-        private System.DateTime lastChangeField;
+        private string lastChangeField;
         
         public FindMembershipRequestType() {
             this.deltasOnlyField = false;
-            this.lastChangeField = new System.DateTime(576000000000);
+            this.lastChangeField = "0001-01-01T00:00:00.0000000-08:00";
         }
         
         /// <remarks/>
@@ -7696,8 +7599,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(typeof(System.DateTime), "0001-01-01T16:00:00+08:00")]
-        public System.DateTime lastChange {
+        [System.ComponentModel.DefaultValueAttribute("0001-01-01T00:00:00.0000000-08:00")]
+        public string lastChange {
             get {
                 return this.lastChangeField;
             }
@@ -8736,6 +8639,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((ManageWLConnectionResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    public delegate void BreakConnectionCompletedEventHandler(object sender, BreakConnectionCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class BreakConnectionCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal BreakConnectionCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public BreakConnectionResponseType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((BreakConnectionResponseType)(this.results[0]));
             }
         }
     }

@@ -152,7 +152,10 @@ namespace MSNPSharp
             else
             {
                 lock (SyncRoot)
+                {
+                    circle.Lists = list[circle.Mail].Lists;
                     list[circle.Mail] = circle;
+                }
             }
 
             return false;
@@ -172,14 +175,7 @@ namespace MSNPSharp
             {
                 if (list.ContainsKey(member.CircleMail))
                 {
-                    if (list[member.CircleMail].Members.Contains(member))
-                    {
-                        list[member.CircleMail].Members[list[member.CircleMail].Members.IndexOf(member)] = member;
-                    }
-                    else
-                    {
-                        list[member.CircleMail].Members.Add(member);
-                    }
+                    list[member.CircleMail].AddMember(member);
 
                     return true;
                 }
@@ -194,7 +190,7 @@ namespace MSNPSharp
             {
                 if (list.ContainsKey(member.CircleMail))
                 {
-                    list[member.CircleMail].Members.Remove(member);
+                    list[member.CircleMail].RemoveMember(member);
                     return true;
                 }
             }

@@ -88,7 +88,7 @@ namespace MSNPSharp
     public class MsnServiceState
     {
         private PartnerScenario partnerScenario;
-        private string methodName;        
+        private string methodName;
         private bool addToAsyncList;
 
         /// <summary>
@@ -180,6 +180,10 @@ namespace MSNPSharp
     #endregion
 
     #region BeforeServiceMethodEventArgs
+
+    /// <summary>
+    /// An object contains the calling information for a MSN async webservice method.
+    /// </summary>
     public class BeforeRunAsyncMethodEventArgs : EventArgs
     {
         private SoapHttpClientProtocol webService;
@@ -219,6 +223,13 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Construct a <see cref="BeforeRunAsyncMethodEventArgs"/> object.
+        /// </summary>
+        /// <param name="ws">Webservice binding to call.</param>
+        /// <param name="st">Service type.</param>
+        /// <param name="ss">Service state object.</param>
+        /// <param name="r">Webservice requst parameter.</param>
         public BeforeRunAsyncMethodEventArgs(SoapHttpClientProtocol ws, MsnServiceType st, MsnServiceState ss, object r)
         {
             webService = ws;
@@ -276,7 +287,7 @@ namespace MSNPSharp
         /// </summary>
         public const string StorageServiceRedirectionHost = @"tkrdr.storage.msn.com";
 
-        
+
         private WebProxy webProxy;
         private NSMessageHandler nsMessageHandler;
         private Dictionary<SoapHttpClientProtocol, MsnServiceState> asyncStates =
@@ -474,18 +485,22 @@ namespace MSNPSharp
 
         #endregion
 
+        /// <summary>
+        /// Call an async webservice method by using the specific info.
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void RunAsyncMethod(BeforeRunAsyncMethodEventArgs e)
         {
-            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(e);
-
-            if (BeforeRunAsyncMethod != null)
-            {
-                BeforeRunAsyncMethod(this, e);
-            }
+            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(e.WebService, e.ServiceType, e.ServiceState, e.Request);
 
             // Run async method now
             if (e.ServiceState.AddToAsyncList)
             {
+                if (BeforeRunAsyncMethod != null)
+                {
+                    BeforeRunAsyncMethod(this, e);
+                }
+
                 e.WebService.GetType().InvokeMember(
                     e.ServiceState.MethodName + "Async",
                     System.Reflection.BindingFlags.InvokeMethod,
@@ -496,15 +511,14 @@ namespace MSNPSharp
             }
         }
 
-        private void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(BeforeRunAsyncMethodEventArgs e)
+        protected void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(SoapHttpClientProtocol ws, MsnServiceType st, MsnServiceState ss, object request)
         {
-            SoapHttpClientProtocol webservice = e.WebService;
-            string methodName = e.ServiceState.MethodName;
-            string preferredHostKey = e.WebService.ToString() + "." + methodName;
+            string methodName = ss.MethodName;
+            string preferredHostKey = ws.ToString() + "." + methodName;
 
-            if (e.ServiceType == MsnServiceType.AB ||
-                e.ServiceType == MsnServiceType.Sharing ||
-                e.ServiceType == MsnServiceType.Storage)
+            if (st == MsnServiceType.AB ||
+                st == MsnServiceType.Sharing ||
+                st == MsnServiceType.Storage)
             {
                 DeltasList deltas = NSMessageHandler.ContactService.Deltas;
                 if (deltas == null)
@@ -513,12 +527,12 @@ namespace MSNPSharp
                 }
 
 
-                CacheKeyType keyType = (e.ServiceType == MsnServiceType.Storage) ?
+                CacheKeyType keyType = (st == MsnServiceType.Storage) ?
                     CacheKeyType.StorageServiceCacheKey : CacheKeyType.OmegaContactServiceCacheKey;
 
 
-                string originalUrl = webservice.Url;
-                string originalHost = webservice.Url.Substring(webservice.Url.IndexOf(@"://") + 3 /* @"://".Length */);
+                string originalUrl = ws.Url;
+                string originalHost = ws.Url.Substring(ws.Url.IndexOf(@"://") + 3 /* @"://".Length */);
                 originalHost = originalHost.Substring(0, originalHost.IndexOf(@"/"));
 
                 if (deltas.CacheKeys.ContainsKey(keyType) == false ||
@@ -530,21 +544,21 @@ namespace MSNPSharp
 
                     try
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, webservice.GetType().ToString() + " is requesting a cachekey and preferred host for calling " + methodName);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ws.GetType().ToString() + " is requesting a cachekey and preferred host for calling " + methodName);
 
                         switch (keyType)
                         {
                             case CacheKeyType.OmegaContactServiceCacheKey:
-                                webservice.Url = webservice.Url.Replace(originalHost, MSNService.ContactServiceRedirectionHost);
+                                ws.Url = ws.Url.Replace(originalHost, MSNService.ContactServiceRedirectionHost);
                                 break;
                             case CacheKeyType.StorageServiceCacheKey:
-                                webservice.Url = webservice.Url.Replace(originalHost, MSNService.StorageServiceRedirectionHost);
+                                ws.Url = ws.Url.Replace(originalHost, MSNService.StorageServiceRedirectionHost);
                                 break;
                         }
 
-                        webservice.GetType().InvokeMember(methodName, System.Reflection.BindingFlags.InvokeMethod,
-                            null, webservice,
-                            new object[] { e.Request });
+                        ws.GetType().InvokeMember(methodName, System.Reflection.BindingFlags.InvokeMethod,
+                            null, ws,
+                            new object[] { request });
                     }
                     catch (Exception ex)
                     {
@@ -581,7 +595,7 @@ namespace MSNPSharp
                             Trace.WriteLineIf(
                                 Settings.TraceSwitch.TraceError,
                                 "An error occured while getting CacheKey and Preferred host:\r\n" +
-                                "Service:    " + webservice.GetType().ToString() + "\r\n" +
+                                "Service:    " + ws.GetType().ToString() + "\r\n" +
                                 "MethodName: " + methodName + "\r\n" +
                                 "Message:    " + exc.Message);
 
@@ -593,21 +607,21 @@ namespace MSNPSharp
 
                 if (originalHost != null && originalHost != String.Empty)
                 {
-                    webservice.Url = originalUrl.Replace(originalHost, deltas.PreferredHosts[preferredHostKey]);
+                    ws.Url = originalUrl.Replace(originalHost, deltas.PreferredHosts[preferredHostKey]);
                 }
 
                 // Set cache key
-                if (e.ServiceType == MsnServiceType.AB)
+                if (st == MsnServiceType.AB)
                 {
-                    ((ABServiceBinding)webservice).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
+                    ((ABServiceBinding)ws).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
                 }
-                else if (e.ServiceType == MsnServiceType.Sharing)
+                else if (st == MsnServiceType.Sharing)
                 {
-                    ((SharingServiceBinding)webservice).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
+                    ((SharingServiceBinding)ws).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
                 }
-                else if (e.ServiceType == MsnServiceType.Storage)
+                else if (st == MsnServiceType.Storage)
                 {
-                    ((StorageService)webservice).AffinityCacheHeaderValue.CacheKey = deltas.CacheKeys[keyType];
+                    ((StorageService)ws).AffinityCacheHeaderValue.CacheKey = deltas.CacheKeys[keyType];
                 }
             }
         }
@@ -644,30 +658,36 @@ namespace MSNPSharp
                     asyncStates.Remove(e.WebService);
             }
 
-            // HandleServiceHeader
-            switch (e.ServiceType)
+            if (e.AsyncCompletedEventArgs.Cancelled)
             {
-                case MsnServiceType.AB:
-                case MsnServiceType.Sharing:
-                    {
-                        if (e.AsyncCompletedEventArgs.Cancelled == false &&
-                            e.AsyncCompletedEventArgs.Error == null)
-                        {
-                            HandleServiceHeader(e.WebService, e.ServiceType, e.MsnServiceState);
-                        }
-                        break;
-                    }
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    "Async method cancelled:\r\n" +
+                    "Service:         " + e.WebService.ToString() + "\r\n" +
+                    "MethodName:      " + e.MsnServiceState.MethodName + "\r\n" +
+                    "PartnerScenario: " + e.MsnServiceState.PartnerScenario);
             }
-
-            if (e.AsyncCompletedEventArgs.Error != null)
+            else if (e.AsyncCompletedEventArgs.Error != null)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs(e.MsnServiceState.MethodName, e.AsyncCompletedEventArgs.Error));
             }
-
-            // Fire event
-            if (AfterCompleted != null)
+            else
             {
-                AfterCompleted(this, e);
+                // HandleServiceHeader
+                switch (e.ServiceType)
+                {
+                    case MsnServiceType.AB:
+                    case MsnServiceType.Sharing:
+                        {
+                            HandleServiceHeader(e.WebService, e.ServiceType, e.MsnServiceState);
+                            break;
+                        }
+                }
+
+                // Fire event
+                if (AfterCompleted != null)
+                {
+                    AfterCompleted(this, e);
+                }
             }
         }
 

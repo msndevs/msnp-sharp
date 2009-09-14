@@ -49,7 +49,7 @@
       </xsd:element>
       <xsd:element minOccurs="0" name="View" type="xsd:string" />
       <xsd:element minOccurs="0" default="false" name="deltasOnly" type="xsd:boolean" />
-      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="FindMembershipResultType">
@@ -61,43 +61,7 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element name="OwnerNamespace">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element name="Info">
-              <xsd:complexType>
-                <xsd:sequence>
-                  <xsd:element name="Handle">
-                    <xsd:complexType>
-                      <xsd:sequence>
-                        <xsd:element name="Id" type="xsd:string" />
-                        <xsd:element name="IsPassportNameHidden" type="xsd:boolean" />
-                        <xsd:element name="CID" type="xsd:integer" />
-                      </xsd:sequence>
-                    </xsd:complexType>
-                  </xsd:element>
-                  <xsd:element name="CreatorPuid" type="xsd:integer" />
-                  <xsd:element name="CreatorCID" type="xsd:integer" />
-                  <xsd:element name="CreatorPassportName" type="xsd:string" />
-                  <xsd:element name="CircleAttributes">
-                    <xsd:complexType>
-                      <xsd:sequence>
-                        <xsd:element name="IsPresenceEnabled" type="xsd:boolean" />
-                        <xsd:element minOccurs="0" name="IsEvent" type="xsd:boolean" />
-                        <xsd:element name="Domain" type="xsd:string" />
-                      </xsd:sequence>
-                    </xsd:complexType>
-                  </xsd:element>
-                  <xsd:element minOccurs="0" name="MessengerApplicationServiceCreated" type="xsd:boolean" />
-                </xsd:sequence>
-              </xsd:complexType>
-            </xsd:element>
-            <xsd:element name="Changes" type="xsd:string" />
-            <xsd:element name="CreateDate" type="xsd:dateTime" />
-            <xsd:element name="LastChange" type="xsd:dateTime" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element name="OwnerNamespace" type="msnab:OwnerNamespaceType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:element name="FindMembershipResponse">
@@ -113,9 +77,9 @@
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
       <xsd:element minOccurs="0" name="abView" type="xsd:string" />
       <xsd:element minOccurs="0" default="false" name="deltasOnly" type="xsd:boolean" />
-      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="lastChange" type="xsd:string" />
       <xsd:element minOccurs="0" fixed="Gleam" name="dynamicItemView" type="xsd:string" />
-      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="dynamicItemLastChange" type="xsd:dateTime" />
+      <xsd:element minOccurs="0" default="0001-01-01T00:00:00.0000000-08:00" name="dynamicItemLastChange" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ABFindAllResultType">
@@ -153,10 +117,10 @@
           <xsd:sequence>
             <xsd:element name="abId" type="msnab:Guid" />
             <xsd:element name="abInfo" type="msnab:abInfoType" />
-            <xsd:element name="lastChange" type="xsd:dateTime" />
-            <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime" />
-            <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime" />
-            <xsd:element name="createDate" type="xsd:dateTime" />
+            <xsd:element name="lastChange" type="xsd:string" />
+            <xsd:element name="DynamicItemLastChanged" type="xsd:string" />
+            <xsd:element name="RecentActivityItemLastChanged" type="xsd:string" />
+            <xsd:element name="createDate" type="xsd:string" />
             <xsd:element name="propertiesChanged" type="xsd:string" />
           </xsd:sequence>
         </xsd:complexType>
@@ -406,6 +370,7 @@
       <xsd:element name="filterOptions" type="msnab:filterOptionsType" />
       <xsd:element name="abView" type="xsd:string" />
       <xsd:element name="extendedContent" type="xsd:string" />
+      <xsd:element minOccurs="0" name="anHandle" type="msnab:abHandleType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ABFindContactsPagedResultType">
@@ -430,10 +395,10 @@
           <xsd:sequence>
             <xsd:element name="abId" type="msnab:Guid" />
             <xsd:element name="abInfo" type="msnab:abInfoType" />
-            <xsd:element name="lastChange" type="xsd:dateTime" />
-            <xsd:element name="DynamicItemLastChanged" type="xsd:dateTime" />
-            <xsd:element name="RecentActivityItemLastChanged" type="xsd:dateTime" />
-            <xsd:element name="createDate" type="xsd:dateTime" />
+            <xsd:element name="lastChange" type="xsd:string" />
+            <xsd:element name="DynamicItemLastChanged" type="xsd:string" />
+            <xsd:element name="RecentActivityItemLastChanged" type="xsd:string" />
+            <xsd:element name="createDate" type="xsd:string" />
             <xsd:element name="propertiesChanged" type="xsd:string" />
           </xsd:sequence>
         </xsd:complexType>
@@ -518,9 +483,16 @@
       <xsd:element name="contactId" type="xsd:string" />
       <xsd:element name="connection" type="xsd:boolean" />
       <xsd:element name="presence" type="xsd:boolean" />
-      <xsd:element name="action" type="xsd:integer" />
+      <xsd:element name="action" type="xsd:int" />
       <xsd:element name="relationshipType" type="xsd:int" />
       <xsd:element name="relationshipRole" type="xsd:int" />
+      <xsd:element minOccurs="0" name="annotations">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" name="Annotation" type="msnab:Annotation" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
   <xsd:element name="ManageWLConnectionResponse">
@@ -563,4 +535,15 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:complexType name="BreakConnectionRequestType">
+    <xsd:sequence>
+      <xsd:element name="abHandle" type="msnab:abHandleType" />
+      <xsd:element name="contactId" type="xsd:string" />
+      <xsd:element name="deleteContact" type="xsd:boolean" />
+      <xsd:element name="blockContact" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BreakConnectionResponseType" />
+  <xsd:element name="BreakConnectionRequest" type="msnab:BreakConnectionRequestType" />
+  <xsd:element name="BreakConnectionResponse" type="msnab:BreakConnectionResponseType" />
 </xsd:schema>

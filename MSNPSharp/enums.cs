@@ -941,6 +941,23 @@ namespace MSNPSharp
         public const string ApplicationWrite = "ApplicationWrite";
     }
 
+    /// <summary>
+    /// Membership type. The values of fields in this class is just as the same as their names.
+    /// </summary>
+    public static class MembershipType
+    {
+        public const string Passport = "Passport";
+        public const string Email = "Email";
+        public const string Phone = "Phone";
+        public const string Role = "Role";
+        public const string Service = "Service";
+        public const string Everyone = "Everyone";
+        public const string Partner = "Partner";
+        public const string Domain = "Domain";
+        public const string Circle = "Circle";
+
+    }
+
     public static class MessengerContactType
     {
         public const string Me = "Me";
@@ -965,6 +982,9 @@ namespace MSNPSharp
         public const string CommunityQuestionAnswer = "CommunityQuestionAnswer";
     }
 
+    /// <summary>
+    /// Property string for <see cref="MSNPSharp.MSNWS.MSNABSharingService.ContactType"/>
+    /// </summary>
     public static class PropertyString
     {
         public const string propertySeparator = " ";
@@ -988,6 +1008,9 @@ namespace MSNPSharp
     /// </summary>
     public static class CircleString
     {
+        /// <summary>
+        /// The basic pattern of PUT command.
+        /// </summary>
         public const string PUTCommandScheme = "{routing scheme}" +
             "\r\n" +
             "{reliability scheme}" +
@@ -1026,6 +1049,100 @@ namespace MSNPSharp
         /// The default windows live circle host domain: live.com.
         /// </summary>
         public const string DefaultHostDomain = "live.com";
+    }
+
+    /// <summary>
+    /// Constants for webservice parameter.
+    /// </summary>
+    public static class WebServiceConstants
+    {
+        /// <summary>
+        /// The messenger default addressbook Id: 00000000-0000-0000-0000-000000000000.
+        /// </summary>
+        public const string MessengerAddressBookId = "00000000-0000-0000-0000-000000000000";
+
+        /// <summary>
+        /// The guid for messenger group(not circle): C8529CE2-6EAD-434d-881F-341E17DB3FF8.
+        /// </summary>
+        public const string MessengerGroupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
+
+        /// <summary>
+        /// The default time for requesting the full membership and addressbook list: 001-01-01T00:00:00.0000000.
+        /// </summary>
+        public const string ZeroTime = "0001-01-01T00:00:00.0000000";
+    }
+
+    /// <summary>
+    /// Different string for Name property of <see cref="MSNPSharp.MSNWS.MSNABSharingService.Annotation"/>
+    /// </summary>
+    public static class AnnotationNames
+    {
+        /// <summary>
+        /// The valuse is: MSN.IM.InviteMessage
+        /// </summary>
+        public const string MSN_IM_InviteMessage = "MSN.IM.InviteMessage";
+
+        /// <summary>
+        /// The valuse is: MSN.IM.MPOP
+        /// </summary>
+        public const string MSN_IM_MPOP = "MSN.IM.MPOP";
+
+        /// <summary>
+        /// The valuse is: MSN.IM.BLP
+        /// </summary>
+        public const string MSN_IM_BLP = "MSN.IM.BLP";
+
+        /// <summary>
+        /// The valuse is: MSN.IM.GTC
+        /// </summary>
+        public const string MSN_IM_GTC = "MSN.IM.GTC";
+
+        /// <summary>
+        /// The valuse is: MSN.IM.RoamLiveProperties
+        /// </summary>
+        public const string MSN_IM_RoamLiveProperties = "MSN.IM.RoamLiveProperties";
+
+        /// <summary>
+        /// The valuse is: MSN.IM.Display
+        /// </summary>
+        public const string MSN_IM_Display = "MSN.IM.Display";
+
+        /// <summary>
+        /// The valuse is: MSN.IM.BuddyType
+        /// </summary>
+        public const string MSN_IM_BuddyType = "MSN.IM.BuddyType";
+
+        /// <summary>
+        /// The valuse is: AB.NickName
+        /// </summary>
+        public const string AB_NickName = "AB.NickName";
+
+        /// <summary>
+        /// The value is: AB.Profession
+        /// </summary>
+        public const string AB_Profession = "AB.Profession";
+
+        /// <summary>
+        /// The value is: Live.Locale
+        /// </summary>
+        public const string Live_Locale = "Live.Locale";
+
+        /// <summary>
+        /// The value is: Live.Profile.Expression.LastChanged
+        /// </summary>
+        public const string Live_Profile_Expression_LastChanged = "Live.Profile.Expression.LastChanged";
+
+        /// <summary>
+        /// The value is: Live.Passport.Birthdate
+        /// </summary>
+        public const string Live_Passport_Birthdate = "Live.Passport.Birthdate";
+    }
+
+    public static class CirclePersonalMembershipRole
+    {
+        public const string Admin = "Admin";
+        public const string Member = "Member";
+        public const string StatePendingOutbound = "StatePendingOutbound";
     }
 
 };

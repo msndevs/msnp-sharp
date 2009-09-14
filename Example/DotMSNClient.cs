@@ -87,6 +87,7 @@ namespace MSNPSharpClient
 
             messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
             messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
+            messenger.Nameserver.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
@@ -116,6 +117,20 @@ namespace MSNPSharpClient
             comboStatus.SelectedIndex = 0;
             comboProtocol.SelectedIndex = 0;
 
+        }
+
+        void ContactService_CircleCreated(object sender, CircleEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<CircleEventArgs>(ContactService_CircleCreated), sender, e);
+                return;
+            }
+
+            if (toolStripSortByStatus.Checked)
+                SortByStatus();
+            else
+                SortByGroup();
         }
 
         
@@ -1271,6 +1286,20 @@ namespace MSNPSharpClient
             common.NodeFont = PARENT_NODE_FONT;
             common.Tag = String.Empty;
 
+            foreach (Circle circle in messenger.Nameserver.CircleList)
+            {
+                TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, 0, 0);
+                circlenode.NodeFont = PARENT_NODE_FONT;
+                circlenode.Tag = circle;
+
+                foreach (Contact member in circle.Members)
+                {
+                    TreeNode newnode = circlenode.Nodes.Add(member.Mail, member.Name);
+                    newnode.NodeFont = member.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                    newnode.Tag = member;
+                }
+            }
+
             foreach (Contact contact in messenger.ContactList.All)
             {
                 if (contact.ContactGroups.Count == 0)
@@ -1421,10 +1450,10 @@ namespace MSNPSharpClient
         {
             //This is a demostration to tell you how to use MSNPSharp to create, block, and unblock Circle.
             messenger.ContactService.CreateCircle("test wp circle");
-            messenger.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_CircleAdded);
+            messenger.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_TestingCircleAdded);
         }
 
-        void ContactService_CircleAdded(object sender, CircleEventArgs e)
+        void ContactService_TestingCircleAdded(object sender, CircleEventArgs e)
         {
             //Circle created, then show you how to block.
             if (!e.Circle.OnBlockedList)
@@ -1444,8 +1473,24 @@ namespace MSNPSharpClient
             if (circle != null)
             {
                 messenger.ContactService.UnBlockCircle(circle);
+                circle.ContactUnBlocked += new EventHandler<EventArgs>(circle_ContactUnBlocked);
                 Trace.WriteLine("Circle unblocked: " + circle.ToString());
             }
+        }
+
+        void circle_ContactUnBlocked(object sender, EventArgs e)
+        {
+            //This demo shows you how to invite a contact to your circle.
+            if (messenger.ContactList.HasContact("freezingsoft@hotmail.com", ClientType.PassportMember))
+            {
+                messenger.ContactService.InviteContactToCircle(sender as Circle, messenger.ContactList["freezingsoft@hotmail.com", ClientType.PassportMember], "hello");
+                messenger.ContactService.CircleMemberInvited += new EventHandler<CircleEventArgs>(ContactService_CircleMemberInvited);
+            }
+        }
+
+        void ContactService_CircleMemberInvited(object sender, CircleEventArgs e)
+        {
+            Trace.WriteLine("Invited: " + e.RemoteMember.Hash);
         }
 
         private void importContactsMenuItem_Click(object sender, EventArgs e)

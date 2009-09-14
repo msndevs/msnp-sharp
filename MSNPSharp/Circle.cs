@@ -42,7 +42,16 @@ namespace MSNPSharp
     [Serializable()]
     public class CircleEventArgs : EventArgs
     {
-        private Circle circle;
+        private Circle circle = null;
+        private Contact remoteMember = null;
+
+        /// <summary>
+        /// The affected Contact.
+        /// </summary>
+        public Contact RemoteMember
+        {
+            get { return remoteMember; }
+        }
 
         /// <summary>
         /// The affected contact group
@@ -53,22 +62,36 @@ namespace MSNPSharp
             {
                 return circle;
             }
-            set
-            {
-                circle = value;
-            }
+        }
+
+        protected CircleEventArgs()
+        {
         }
 
         /// <summary>
         /// Constructor, mostly used internal by the library.
         /// </summary>
         /// <param name="circle"></param>
-        public CircleEventArgs(Circle circle)
+        internal CircleEventArgs(Circle circle)
         {
-            Circle = circle;
+            this.circle = circle;
+        }
+
+        /// <summary>
+        /// Constructor, mostly used internal by the library.
+        /// </summary>
+        /// <param name="circle"></param>
+        /// <param name="remote">The affected Contact.</param>
+        internal CircleEventArgs(Circle circle, Contact remote)
+        {
+            this.circle = circle;
+            remoteMember = remote;
         }
     }
 
+    /// <summary>
+    /// A new type of group introduces with WLM2009.
+    /// </summary>
     [Serializable()]
     public class Circle : Contact
     {
@@ -77,6 +100,16 @@ namespace MSNPSharp
         private List<Contact> members = new List<Contact>(0);
         private string hostDomain = CircleString.DefaultHostDomain;
         private string displayName = string.Empty;
+        private string role = string.Empty;
+
+        /// <summary>
+        /// The ownership of this circle.
+        /// </summary>
+        public string Role
+        {
+            get { return role; }
+            set { role = value; }
+        }
 
         public string HostDomain
         {
@@ -85,7 +118,11 @@ namespace MSNPSharp
 
         public List<Contact> Members
         {
-            get { return members; }
+            get 
+            {
+                lock (members)
+                    return members;
+            }
         }
 
         public Guid AddressBookId
@@ -145,14 +182,16 @@ namespace MSNPSharp
             Initialize();
         }
 
-        public Circle(Guid abId, string hostDomain, string displayName, NSMessageHandler handler)
+        public Circle(Guid abId, Guid contactId, string hostDomain, string role, string displayName, NSMessageHandler handler)
             : base()
         {
             AddressBookId = abId;
             NSMessageHandler = handler;
+            this.Guid = contactId;
             this.displayName = displayName;
             this.hostDomain = hostDomain;
             SetNickName(displayName);
+            this.role = role;
             Initialize();
         }
 
@@ -169,6 +208,35 @@ namespace MSNPSharp
         internal new void SetName(string newName)
         {
             displayName = newName;
+        }
+
+        internal void AddMember(CircleContactMember member)
+        {
+            lock (members)
+            {
+                if (members.Contains(member))
+                {
+                    members[members.IndexOf(member)] = member;
+                }
+                else
+                {
+                    members.Add(member);
+                }
+            }
+        }
+
+        internal void RemoveMember(CircleContactMember member)
+        {
+            lock (members)
+            {
+                members.Remove(member);
+            }
+        }
+
+        internal bool HasMember(CircleContactMember member)
+        {
+            lock (members)
+                return members.Contains(member);
         }
 
         #region Protected
@@ -227,7 +295,7 @@ namespace MSNPSharp
             get { return circleMail; }
         }
 
-        protected internal CircleContactMember()
+        protected CircleContactMember()
             :base()
         {
             Initialize();
@@ -247,6 +315,46 @@ namespace MSNPSharp
             }
 
             Initialize();
+        }
+
+        public void SyncWithContact(Contact contact)
+        {
+            if (contact == null) return;
+
+            if (contact.Mail.ToLowerInvariant() != Mail.ToLowerInvariant()) return;
+
+            if (contact.ClientType != MemberType) return;
+
+            Lists = contact.Lists;
+            SetPersonalMessage(contact.PersonalMessage);
+            DisplayImage = contact.DisplayImage;
+
+            contact.ContactBlocked += delegate
+            {
+                Lists = contact.Lists;
+                OnContactBlocked();
+            };
+
+            contact.ContactUnBlocked += delegate
+            {
+                Lists = contact.Lists;
+                OnContactUnBlocked();
+            };
+
+            contact.PersonalMessageChanged += delegate
+            {
+                SetPersonalMessage(contact.PersonalMessage);
+            };
+
+            contact.DisplayImageChanged += delegate
+            {
+                DisplayImage = contact.DisplayImage;
+            };
+
+            contact.ScreenNameChanged += delegate
+            {
+                SetName(contact.Name);
+            };
         }
 
         public override int GetHashCode()

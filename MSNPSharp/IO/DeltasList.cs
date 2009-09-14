@@ -39,6 +39,7 @@ using System.Collections.Generic;
 namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Storage class for deltas request
@@ -164,14 +165,14 @@ namespace MSNPSharp.IO
 
             foreach (ServiceType serviceTypeX in x.Services)
             {
-                if (serviceTypeX.LastChange < serviceTypeXMinLastChange)
-                    serviceTypeXMinLastChange = serviceTypeX.LastChange;
+                if (WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeX.LastChange) < serviceTypeXMinLastChange)
+                    serviceTypeXMinLastChange = WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeX.LastChange);
             }
 
             foreach (ServiceType serviceTypeY in y.Services)
             {
-                if (serviceTypeY.LastChange < serviceTypeYMinLastChange)
-                    serviceTypeYMinLastChange = serviceTypeY.LastChange;
+                if (WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeY.LastChange) < serviceTypeYMinLastChange)
+                    serviceTypeYMinLastChange = WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeY.LastChange);
             }
 
             return serviceTypeXMinLastChange.CompareTo(serviceTypeYMinLastChange);
