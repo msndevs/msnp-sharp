@@ -483,7 +483,7 @@ namespace MSNPSharp.IO
 
                                                 switch (bm.Type)
                                                 {
-                                                    case "Passport":
+                                                    case MembershipType.Passport:
                                                         type = ClientType.PassportMember;
                                                         PassportMember pm = bm as PassportMember;
                                                         if (!pm.IsPassportNameHidden)
@@ -492,28 +492,28 @@ namespace MSNPSharp.IO
                                                         }
                                                         break;
 
-                                                    case "Email":
+                                                    case MembershipType.Email:
                                                         type = ClientType.EmailMember;
                                                         account = ((EmailMember)bm).Email;
                                                         break;
 
-                                                    case "Phone":
+                                                    case MembershipType.Phone:
                                                         type = ClientType.PhoneMember;
                                                         account = ((PhoneMember)bm).PhoneNumber;
                                                         break;
 
-                                                    case "Role":
-                                                    case "Service":
-                                                    case "Everyone":
-                                                    case "Partner":
+                                                    case MembershipType.Role:
+                                                    case MembershipType.Service:
+                                                    case MembershipType.Everyone:
+                                                    case MembershipType.Partner:
                                                         account = bm.Type + "/" + bm.MembershipId;
                                                         break;
 
-                                                    case "Domain":
+                                                    case MembershipType.Domain:
                                                         account = ((DomainMember)bm).DomainName;
                                                         break;
 
-                                                    case "Circle":
+                                                    case MembershipType.Circle:
                                                         type = ClientType.CircleMember;
                                                         account = ((CircleMember)bm).CircleId;
                                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, serviceType.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
@@ -918,9 +918,13 @@ namespace MSNPSharp.IO
 
         private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
         {
-            Circle circle = new Circle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.HostedDomain, circleinfo.Content.Info.DisplayName, NSMessageHandler);
-
-            circle.Guid = new Guid(contact.contactId);
+            Circle circle = new Circle(
+                new Guid(circleinfo.Content.Handle.Id), 
+                new Guid(contact.contactId),
+                circleinfo.Content.Info.HostedDomain, 
+                circleinfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role,
+                circleinfo.Content.Info.DisplayName, 
+                NSMessageHandler);
 
 
             if (contact.contactInfo != null)

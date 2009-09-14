@@ -119,6 +119,11 @@ namespace MSNPSharp
         /// This means all contact-updates are received from the server and processed.
         /// </summary>
         public event EventHandler<EventArgs> SynchronizationCompleted;
+
+        /// <summary>
+        /// Fired after the InviteContactToCircle succeeded.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CircleMemberInvited;
         #endregion
 
         #region Public members
@@ -225,6 +230,17 @@ namespace MSNPSharp
             if (SynchronizationCompleted != null)
                 SynchronizationCompleted(this, e);
         }
+
+        /// <summary>
+        /// Fires the <see cref="CircleMemberInvited"/>
+        /// </summary>
+        /// <param name="e"></param>
+        private void OnCircleMemberInvited(CircleEventArgs e)
+        {
+            if (CircleMemberInvited != null)
+                CircleMemberInvited(this, e);
+        }
+
         #endregion
 
         #region Properties
@@ -951,7 +967,7 @@ namespace MSNPSharp
                         if (pending == false && !String.IsNullOrEmpty(invitation))
                         {
                             request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations = new Annotation[] { new Annotation() };
-                            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = "MSN.IM.InviteMessage";
+                            request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Name = AnnotationNames.MSN_IM_InviteMessage;
                             request.contacts[0].contactInfo.MessengerMemberInfo.PendingAnnotations[0].Value = invitation;
                         }
                         request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = NSMessageHandler.Owner.Name;
@@ -1168,11 +1184,11 @@ namespace MSNPSharp
             }
 
             // Annotations: AB.NickName
-            string oldNickName = oldAnnotations.ContainsKey("AB.NickName") ? oldAnnotations["AB.NickName"] : String.Empty;
+            string oldNickName = oldAnnotations.ContainsKey(AnnotationNames.AB_NickName) ? oldAnnotations[AnnotationNames.AB_NickName] : String.Empty;
             if (oldNickName != contact.NickName)
             {
                 Annotation anno = new Annotation();
-                anno.Name = "AB.NickName";
+                anno.Name = AnnotationNames.AB_NickName;
                 anno.Value = contact.NickName;
                 annotationsChanged.Add(anno);
             }
@@ -1295,7 +1311,7 @@ namespace MSNPSharp
             if (oldMPOP != owner.MPOPMode)
             {
                 Annotation anno = new Annotation();
-                anno.Name = "MSN.IM.MPOP";
+                anno.Name = AnnotationNames.MSN_IM_MPOP;
                 anno.Value = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
                 annos.Add(anno);
             }
@@ -1344,7 +1360,7 @@ namespace MSNPSharp
             if (oldPrivacy != owner.Privacy)
             {
                 Annotation anno = new Annotation();
-                anno.Name = "MSN.IM.BLP";
+                anno.Name = AnnotationNames.MSN_IM_BLP;
                 anno.Value = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
                 annos.Add(anno);
 
@@ -1355,7 +1371,7 @@ namespace MSNPSharp
             if (oldNotify != owner.NotifyPrivacy)
             {
                 Annotation anno = new Annotation();
-                anno.Name = "MSN.IM.GTC";
+                anno.Name = AnnotationNames.MSN_IM_GTC;
                 anno.Value = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
                 annos.Add(anno);
             }
@@ -1363,7 +1379,7 @@ namespace MSNPSharp
             if (oldRoaming != owner.RoamLiveProperty)
             {
                 Annotation anno = new Annotation();
-                anno.Name = "MSN.IM.RoamLiveProperties";
+                anno.Name = AnnotationNames.MSN_IM_RoamLiveProperties;
                 anno.Value = owner.RoamLiveProperty == RoamLiveProperty.Enabled ? "1" : "2";
                 annos.Add(anno);
             }
@@ -1449,7 +1465,7 @@ namespace MSNPSharp
             request.groupInfo.GroupInfo.fMessengerSpecified = true;
             request.groupInfo.GroupInfo.groupType = WebServiceConstants.MessengerGroupType;
             request.groupInfo.GroupInfo.annotations = new Annotation[] { new Annotation() };
-            request.groupInfo.GroupInfo.annotations[0].Name = "MSN.IM.Display";
+            request.groupInfo.GroupInfo.annotations[0].Name = AnnotationNames.MSN_IM_Display;
             request.groupInfo.GroupInfo.annotations[0].Value = "1";
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABGroupAddObject, request));
@@ -1672,7 +1688,7 @@ namespace MSNPSharp
                 emailMember.State = MemberState.Accepted;
                 emailMember.Email = contact.Mail;
                 emailMember.Annotations = new Annotation[] { new Annotation() };
-                emailMember.Annotations[0].Name = "MSN.IM.BuddyType";
+                emailMember.Annotations[0].Name = AnnotationNames.MSN_IM_BuddyType;
                 emailMember.Annotations[0].Value = "32:";
             }
             else if (contact.ClientType == ClientType.PhoneMember)
@@ -1905,7 +1921,7 @@ namespace MSNPSharp
         #region Create Circle
 
         /// <summary>
-        /// Use specific name to create a new <see cref="Circle"/>
+        /// Use specific name to create a new <see cref="Circle"/>. <see cref="CircleCreated"/> event will be fired after creation succeeded.
         /// </summary>
         /// <param name="circleName">New circle name.</param>
         public void CreateCircle(string circleName)
@@ -1980,7 +1996,7 @@ namespace MSNPSharp
         #region Block/UnBlock Circle
 
         /// <summary>
-        /// Block a specific <see cref="Circle"/>
+        /// Block a specific <see cref="Circle"/>. The ContactBlocked event of corresponding <see cref="Circle"/> will be fired after block operation succeeded.
         /// </summary>
         /// <param name="circle">The circle to block.</param>
         public void BlockCircle(Circle circle)
@@ -2025,7 +2041,6 @@ namespace MSNPSharp
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
                     {
-                        OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("AddContactToList", e.Error));
                         return;
                     }
 
@@ -2042,12 +2057,11 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Unblock a specific <see cref="Circle"/>
+        /// Unblock a specific <see cref="Circle"/>. The ContactUnBlocked event of corresponding <see cref="Circle"/> will be fired after unblock operation succeeded.
         /// </summary> 
         /// <param name="circle">The affected circle</param>
         public void UnBlockCircle(Circle circle)
         {
-
             if (!circle.OnBlockedList)
                 return;
 
@@ -2099,6 +2113,163 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, DeleteMemberObject, deleteMemberRequest));
         }
 
+
+        #endregion
+
+        #region Invite/Reject/Leave circle
+
+        /// <summary>
+        /// Send and invitition to a specific contact to invite it join a <see cref="Circle"/>.
+        /// </summary>
+        /// <param name="circle">Circle to join.</param>
+        /// <param name="contact">Contact being invited.</param>
+        public void InviteContactToCircle(Circle circle, Contact contact)
+        {
+            InviteContactToCircle(circle, contact, string.Empty);
+        }
+
+        /// <summary>
+        /// Send and invitition to a specific contact to invite it join a <see cref="Circle"/>. A message will send with the invitition.
+        /// </summary>
+        /// <param name="circle">Circle to join.</param>
+        /// <param name="contact">Contact being invited.</param>
+        /// <param name="message">Message send with the invitition email.</param>
+        /// <exception cref="ArgumentNullException">One or more parameter(s) is/are null.</exception>
+        public void InviteContactToCircle(Circle circle, Contact contact, string message)
+        {
+            if (circle == null || contact == null || message == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            if (circle.Role != CirclePersonalMembershipRole.Admin)
+            {
+                throw new MSNPSharpException("The owner is not the administrator of this circle.");
+            }
+
+            if (contact == NSMessageHandler.Owner) return;
+
+            MsnServiceState createContactObject = new MsnServiceState(PartnerScenario.CircleInvite, "CreateContact", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, createContactObject);
+
+            CreateContactType request = new CreateContactType();
+
+            abHandleType handle = new abHandleType();
+            handle.ABId = circle.AddressBookId.ToString().ToLowerInvariant();
+            handle.Puid = 0;
+            handle.Cid = 0;
+
+            contactHandleType contactHandle = new contactHandleType();
+            contactHandle.Email = contact.Mail;
+            contactHandle.Cid = 0;
+            contactHandle.Puid = 0;
+            contactHandle.CircleId = WebServiceConstants.MessengerAddressBookId;
+
+            request.abHandle = handle;
+            request.contactHandle = contactHandle;
+
+            abService.CreateContactCompleted += delegate(object sender, CreateContactCompletedEventArgs createContactCompletedArg)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, createContactCompletedArg));
+
+                if (!createContactCompletedArg.Cancelled)
+                {
+                    if (createContactCompletedArg.Error != null)
+                        return;
+
+                    MsnServiceState manageWLConnectionObject = new MsnServiceState(PartnerScenario.CircleInvite, "ManageWLConnection", true);
+                    ABServiceBinding abServiceBinding = (ABServiceBinding)CreateService(MsnServiceType.AB, manageWLConnectionObject);
+
+                    ManageWLConnectionRequestType wlconnectionRequest = new ManageWLConnectionRequestType();
+
+                    if (message != string.Empty && message != "")
+                    {
+                        Annotation anno = new Annotation();
+                        anno.Name = AnnotationNames.MSN_IM_InviteMessage;
+                        anno.Value = message;
+                        Annotation[] annotations = new Annotation[] { anno };
+                        wlconnectionRequest.annotations = annotations;
+                    }
+
+                    wlconnectionRequest.action = 1;
+                    wlconnectionRequest.relationshipType = 5;
+                    wlconnectionRequest.relationshipRole = 3;
+
+                    wlconnectionRequest.connection = true;
+                    wlconnectionRequest.presence = false;
+
+                    wlconnectionRequest.contactId = createContactCompletedArg.Result.CreateContactResult.contactId;
+
+                    wlconnectionRequest.abHandle = handle;
+
+                    abServiceBinding.ManageWLConnectionCompleted += delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
+                    {
+                        OnAfterCompleted(new ServiceOperationEventArgs(abServiceBinding, MsnServiceType.AB, e));
+
+                        if (e.Cancelled || e.Error != null)
+                            return;
+
+                        if (e.Result.ManageWLConnectionResult.contactInfo.clientErrorData != null &&
+                            e.Result.ManageWLConnectionResult.contactInfo.clientErrorData != string.Empty)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Invite circle member encounted a servier side error: " +
+                                e.Result.ManageWLConnectionResult.contactInfo.clientErrorData);
+                        }
+
+                        OnCircleMemberInvited(new CircleEventArgs(circle, contact));
+                        return;
+
+                    };
+
+                    RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abServiceBinding, MsnServiceType.AB, manageWLConnectionObject, wlconnectionRequest));
+                    return;
+
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, createContactObject, request));
+
+        }
+
+        /// <summary>
+        /// Reject a join circle invitation.
+        /// </summary>
+        /// <param name="circle">Circle to  join.</param>
+        public void RejectCircleInvitation(Circle circle)
+        {
+            if (circle == null)
+                throw new ArgumentNullException();
+
+            MsnServiceState rejectInviteObject = new MsnServiceState(PartnerScenario.CircleStatus, "ManageWLConnection", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, rejectInviteObject);
+            ManageWLConnectionRequestType wlRequest = new ManageWLConnectionRequestType();
+            wlRequest.contactId = circle.Guid.ToString();
+            wlRequest.connection = true;
+            wlRequest.presence = false;
+            wlRequest.action = 2;
+            wlRequest.relationshipRole = 0;
+            wlRequest.relationshipType = 5;
+
+            abService.ManageWLConnectionCompleted += delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (!e.Cancelled)
+                {
+                    if (e.Error != null)
+                        return;
+
+                    msRequest(PartnerScenario.ABChangeNotifyAlert,
+                        delegate
+                        {
+                            abRequest(PartnerScenario.ABChangeNotifyAlert, null);
+                        }
+                    );
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, rejectInviteObject, wlRequest));
+        }
 
         #endregion
 

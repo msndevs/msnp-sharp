@@ -1474,8 +1474,24 @@ namespace MSNPSharpClient
             if (circle != null)
             {
                 messenger.ContactService.UnBlockCircle(circle);
+                circle.ContactUnBlocked += new EventHandler<EventArgs>(circle_ContactUnBlocked);
                 Trace.WriteLine("Circle unblocked: " + circle.ToString());
             }
+        }
+
+        void circle_ContactUnBlocked(object sender, EventArgs e)
+        {
+            //This demo shows you how to invite a contact to your circle.
+            if (messenger.ContactList.HasContact("freezingsoft@hotmail.com", ClientType.PassportMember))
+            {
+                messenger.ContactService.InviteContactToCircle(sender as Circle, messenger.ContactList["freezingsoft@hotmail.com", ClientType.PassportMember], "hello");
+                messenger.ContactService.CircleMemberInvited += new EventHandler<CircleEventArgs>(ContactService_CircleMemberInvited);
+            }
+        }
+
+        void ContactService_CircleMemberInvited(object sender, CircleEventArgs e)
+        {
+            Trace.WriteLine("Invited: " + e.RemoteMember.Hash);
         }
 
         private void importContactsMenuItem_Click(object sender, EventArgs e)

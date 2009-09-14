@@ -180,6 +180,10 @@ namespace MSNPSharp
     #endregion
 
     #region BeforeServiceMethodEventArgs
+
+    /// <summary>
+    /// An object contains the calling information for a MSN async webservice method.
+    /// </summary>
     public class BeforeRunAsyncMethodEventArgs : EventArgs
     {
         private SoapHttpClientProtocol webService;
@@ -219,6 +223,13 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Construct a <see cref="BeforeRunAsyncMethodEventArgs"/> object.
+        /// </summary>
+        /// <param name="ws">Webservice binding to call.</param>
+        /// <param name="st">Service type.</param>
+        /// <param name="ss">Service state object.</param>
+        /// <param name="r">Webservice requst parameter.</param>
         public BeforeRunAsyncMethodEventArgs(SoapHttpClientProtocol ws, MsnServiceType st, MsnServiceState ss, object r)
         {
             webService = ws;
@@ -474,6 +485,10 @@ namespace MSNPSharp
 
         #endregion
 
+        /// <summary>
+        /// Call an async webservice method by using the specific info.
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void RunAsyncMethod(BeforeRunAsyncMethodEventArgs e)
         {
             ChangeCacheKeyAndPreferredHostForSpecifiedMethod(e);

@@ -1257,11 +1257,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool presenceField;
         
-        private string actionField;
+        private int actionField;
         
         private int relationshipTypeField;
         
         private int relationshipRoleField;
+        
+        private Annotation[] annotationsField;
         
         /// <remarks/>
         public abHandleType abHandle {
@@ -1304,8 +1306,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string action {
+        public int action {
             get {
                 return this.actionField;
             }
@@ -1331,6 +1332,50 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.relationshipRoleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
+        public Annotation[] annotations {
+            get {
+                return this.annotationsField;
+            }
+            set {
+                this.annotationsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class Annotation {
+        
+        private string nameField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
             }
         }
     }
@@ -2247,39 +2292,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class Annotation {
-        
-        private string nameField;
-        
-        private string valueField;
-        
-        /// <remarks/>
-        public string Name {
-            get {
-                return this.nameField;
-            }
-            set {
-                this.nameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Value {
-            get {
-                return this.valueField;
-            }
-            set {
-                this.valueField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class ContactType {
         
         private string contactIdField;
@@ -2511,6 +2523,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private MessengerMemberInfo messengerMemberInfoField;
         
         private object propertiesChangedField;
+        
+        private string clientErrorDataField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail", IsNullable=false)]
@@ -3083,6 +3097,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.propertiesChangedField = value;
             }
         }
+        
+        /// <remarks/>
+        public string clientErrorData {
+            get {
+                return this.clientErrorDataField;
+            }
+            set {
+                this.clientErrorDataField = value;
+            }
+        }
     }
     
     /// <remarks/>
@@ -3486,11 +3510,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string domainTagField;
         
+        private string displayNameField;
+        
         private string userTileURLField;
         
         private string profileURLField;
-        
-        private string displayNameField;
         
         private int relationshipTypeField;
         
@@ -3510,9 +3534,15 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool nDRCountFieldSpecified;
         
+        private string inviterNameField;
+        
+        private string inviterMessageField;
+        
         private long inviterCIDField;
         
         private bool inviterCIDFieldSpecified;
+        
+        private string inviterEmailField;
         
         private string createDateField;
         
@@ -3552,6 +3582,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
         public string UserTileURL {
             get {
                 return this.userTileURLField;
@@ -3568,16 +3608,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.profileURLField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string DisplayName {
-            get {
-                return this.displayNameField;
-            }
-            set {
-                this.displayNameField = value;
             }
         }
         
@@ -3676,6 +3706,26 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public string InviterName {
+            get {
+                return this.inviterNameField;
+            }
+            set {
+                this.inviterNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string InviterMessage {
+            get {
+                return this.inviterMessageField;
+            }
+            set {
+                this.inviterMessageField = value;
+            }
+        }
+        
+        /// <remarks/>
         public long InviterCID {
             get {
                 return this.inviterCIDField;
@@ -3693,6 +3743,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.inviterCIDFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string InviterEmail {
+            get {
+                return this.inviterEmailField;
+            }
+            set {
+                this.inviterEmailField = value;
             }
         }
         
