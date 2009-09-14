@@ -378,6 +378,9 @@
     <None Include="Web References\MSNWS.MSNABSharingService\ABFindContactsPagedResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\BreakConnectionResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNABSharingService\CreateCircleResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>

@@ -89,6 +89,9 @@ namespace MSNPSharp
         }
     }
 
+    /// <summary>
+    /// A new type of group introduces with WLM2009.
+    /// </summary>
     [Serializable()]
     public class Circle : Contact
     {

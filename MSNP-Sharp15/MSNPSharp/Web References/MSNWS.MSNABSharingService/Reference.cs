@@ -320,6 +320,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private System.Threading.SendOrPostCallback ManageWLConnectionOperationCompleted;
         
+        private System.Threading.SendOrPostCallback BreakConnectionOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -426,6 +428,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         public event ManageWLConnectionCompletedEventHandler ManageWLConnectionCompleted;
+        
+        /// <remarks/>
+        public event BreakConnectionCompletedEventHandler BreakConnectionCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
@@ -890,6 +895,39 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/BreakConnection", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("BreakConnectionResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public BreakConnectionResponseType BreakConnection([System.Xml.Serialization.XmlElementAttribute(Namespace="http://www.msn.com/webservices/AddressBook")] BreakConnectionRequestType BreakConnectionRequest) {
+            object[] results = this.Invoke("BreakConnection", new object[] {
+                        BreakConnectionRequest});
+            return ((BreakConnectionResponseType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnectionRequest) {
+            this.BreakConnectionAsync(BreakConnectionRequest, null);
+        }
+        
+        /// <remarks/>
+        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnectionRequest, object userState) {
+            if ((this.BreakConnectionOperationCompleted == null)) {
+                this.BreakConnectionOperationCompleted = new System.Threading.SendOrPostCallback(this.OnBreakConnectionOperationCompleted);
+            }
+            this.InvokeAsync("BreakConnection", new object[] {
+                        BreakConnectionRequest}, this.BreakConnectionOperationCompleted, userState);
+        }
+        
+        private void OnBreakConnectionOperationCompleted(object arg) {
+            if ((this.BreakConnectionCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.BreakConnectionCompleted(this, new BreakConnectionCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -1091,19 +1129,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class CreateCircleResponseType {
-        
-        private string idField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
+    public partial class BreakConnectionResponseType {
     }
     
     /// <remarks/>
@@ -1112,11 +1138,15 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class CreateContactType {
+    public partial class BreakConnectionRequestType {
         
         private abHandleType abHandleField;
         
-        private contactHandleType contactHandleField;
+        private string contactIdField;
+        
+        private bool deleteContactField;
+        
+        private bool blockContactField;
         
         /// <remarks/>
         public abHandleType abHandle {
@@ -1129,12 +1159,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public contactHandleType contactHandle {
+        public string contactId {
             get {
-                return this.contactHandleField;
+                return this.contactIdField;
             }
             set {
-                this.contactHandleField = value;
+                this.contactIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool deleteContact {
+            get {
+                return this.deleteContactField;
+            }
+            set {
+                this.deleteContactField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool blockContact {
+            get {
+                return this.blockContactField;
+            }
+            set {
+                this.blockContactField = value;
             }
         }
     }
@@ -1180,6 +1230,60 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.cidField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateCircleResponseType {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.3053")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CreateContactType {
+        
+        private abHandleType abHandleField;
+        
+        private contactHandleType contactHandleField;
+        
+        /// <remarks/>
+        public abHandleType abHandle {
+            get {
+                return this.abHandleField;
+            }
+            set {
+                this.abHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public contactHandleType contactHandle {
+            get {
+                return this.contactHandleField;
+            }
+            set {
+                this.contactHandleField = value;
             }
         }
     }
@@ -4594,6 +4698,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string extendedContentField;
         
+        private abHandleType anHandleField;
+        
         /// <remarks/>
         public filterOptionsType filterOptions {
             get {
@@ -4621,6 +4727,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.extendedContentField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public abHandleType anHandle {
+            get {
+                return this.anHandleField;
+            }
+            set {
+                this.anHandleField = value;
             }
         }
     }
@@ -8523,6 +8639,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((ManageWLConnectionResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    public delegate void BreakConnectionCompletedEventHandler(object sender, BreakConnectionCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.3053")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class BreakConnectionCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal BreakConnectionCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public BreakConnectionResponseType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((BreakConnectionResponseType)(this.results[0]));
             }
         }
     }

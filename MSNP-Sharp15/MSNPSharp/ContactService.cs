@@ -110,9 +110,9 @@ namespace MSNPSharp
         public event EventHandler<CircleEventArgs> CircleCreated;
 
         /// <summary>
-        /// Occurs when a new <see cref="Circle"/> is deleted.
+        /// Occurs when the owner has left a specific <see cref="Circle"/>.
         /// </summary>
-        public event EventHandler<CircleEventArgs> CircleRemoved;
+        public event EventHandler<CircleEventArgs> CircleLeft;
 
         /// <summary>
         /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
@@ -213,11 +213,11 @@ namespace MSNPSharp
         /// Fires the <see cref="CircleRemoved"/> event.
         /// </summary>
         /// <param name="e"></param>
-        private void OnCircleRemoved(CircleEventArgs e)
+        private void OnCircleLeft(CircleEventArgs e)
         {
-            if (CircleRemoved != null)
+            if (CircleLeft != null)
             {
-                CircleRemoved(this, e);
+                CircleLeft(this, e);
             }
         }
 
@@ -2116,7 +2116,7 @@ namespace MSNPSharp
 
         #endregion
 
-        #region Invite/Reject/Leave circle
+        #region Invite/Reject/Accept/Leave circle
 
         /// <summary>
         /// Send and invitition to a specific contact to invite it join a <see cref="Circle"/>.
@@ -2275,6 +2275,51 @@ namespace MSNPSharp
             };
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, rejectInviteObject, wlRequest));
+        }
+
+        public void RejectCircleInvitation(Circle circle)
+        {
+
+        }
+
+        /// <summary>
+        /// Leave the specific circle.
+        /// </summary>
+        /// <param name="circle"></param>
+        public void LeaveCircle(Circle circle)
+        {
+            if (circle == null)
+                throw new ArgumentNullException();
+
+            MsnServiceState leaveCircleObject = new MsnServiceState(PartnerScenario.CircleLeave, "BreakConnection", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, leaveCircleObject);
+
+            BreakConnectionRequestType breakconnRequest = new BreakConnectionRequestType();
+
+            abHandleType handler = new abHandleType();
+            handler.ABId = circle.AddressBookId.ToString();
+            handler.Cid = 0;
+            handler.Puid = 0;
+
+            breakconnRequest.abHandle = handler;
+            breakconnRequest.blockContact = false;
+            breakconnRequest.deleteContact = true;
+            breakconnRequest.contactId = circle.Guid.ToString();
+
+            abService.BreakConnectionCompleted += delegate(object sender, BreakConnectionCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || e.Error != null)
+                {
+                    return;
+                }
+
+                NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
+                OnCircleLeft(new CircleEventArgs(circle));
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, leaveCircleObject, breakconnRequest));
         }
 
         #endregion

@@ -134,6 +134,12 @@
   <message name="ManageWLConnectionResponseMessage">
     <part name="ManageWLConnectionResponse" element="msnab:ManageWLConnectionResponse" />
   </message>
+  <message name="BreakConnectionMessage">
+    <part name="BreakConnection" element="msnab:BreakConnectionRequest" />
+  </message>
+  <message name="BreakConnectionResponseMessage">
+    <part name="BreakConnectionResponse" element="msnab:BreakConnectionResponse" />
+  </message>
   <portType name="SharingServicePortType">
     <operation name="FindMembership">
       <input message="msnab:FindMembershipMessage" />
@@ -211,6 +217,10 @@
     <operation name="ManageWLConnection">
       <input message="msnab:ManageWLConnectionMessage" />
       <output message="msnab:ManageWLConnectionResponseMessage" />
+    </operation>
+    <operation name="BreakConnection">
+      <input message="msnab:BreakConnectionMessage" />
+      <output message="msnab:BreakConnectionResponseMessage" />
     </operation>
   </portType>
   <portType name="WhatsUpServicePortType">
@@ -449,6 +459,18 @@
         <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
       </output>
     </operation>
+    <operation name="BreakConnection">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/BreakConnection" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
+        <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
+      </output>
+    </operation>
   </binding>
   <binding name="WhatsUpServiceBinding" type="msnab:WhatsUpServicePortType">
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
@@ -520,6 +542,9 @@
       <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
     </port>
     <port name="ManageWLConnectionPort" binding="msnab:ABServiceBinding">
+      <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
+    </port>
+    <port name="BreakConnectionPort" binding="msnab:ABServiceBinding">
       <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
     </port>
   </service>
