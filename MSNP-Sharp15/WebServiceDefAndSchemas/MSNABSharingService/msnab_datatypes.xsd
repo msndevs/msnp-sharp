@@ -338,6 +338,7 @@
 			<xsd:element name="IsAutoUpdateDisabled" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="MessengerMemberInfo" type="msnab:MessengerMemberInfo" minOccurs="0"/>
 			<xsd:element name="PropertiesChanged" type="xsd:anyType" minOccurs="0"/>
+			<xsd:element name="clientErrorData" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="contactEmailType">
@@ -581,15 +582,18 @@
 		<xsd:sequence>
 			<xsd:element name="DomainId" type="xsd:int" minOccurs="0"/>
 			<xsd:element name="DomainTag" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="DisplayName" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="UserTileURL" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="ProfileURL" type="xsd:string" minOccurs="0"/>
-			<xsd:element name="DisplayName" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="RelationshipType" type="xsd:int" minOccurs="0"/>
 			<xsd:element name="RelationshipState" type="xsd:int" minOccurs="0"/>
 			<xsd:element name="RelationshipStateDate" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="RelationshipRole" type="xsd:int" minOccurs="0"/>
 			<xsd:element name="NDRCount" type="xsd:int" minOccurs="0"/>
+			<xsd:element name="InviterName" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="InviterMessage" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="InviterCID" type="xsd:long" minOccurs="0"/>
+			<xsd:element name="InviterEmail" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="CreateDate" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="LastChanged" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="PropertiesChanged" type="xsd:anyType" minOccurs="0"/>

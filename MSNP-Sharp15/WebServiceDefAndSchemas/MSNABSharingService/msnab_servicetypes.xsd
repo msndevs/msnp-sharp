@@ -483,9 +483,16 @@
 			<xsd:element name="contactId" type="xsd:string"/>
 			<xsd:element name="connection" type="xsd:boolean"/>
 			<xsd:element name="presence" type="xsd:boolean"/>
-			<xsd:element name="action" type="xsd:integer"/>
+			<xsd:element name="action" type="xsd:int"/>
 			<xsd:element name="relationshipType" type="xsd:int"/>
 			<xsd:element name="relationshipRole" type="xsd:int"/>
+			<xsd:element name="annotations" minOccurs="0">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Annotation" type="msnab:Annotation" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:element name="ManageWLConnectionResponse">
