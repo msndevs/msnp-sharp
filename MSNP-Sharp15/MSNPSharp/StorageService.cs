@@ -123,7 +123,7 @@ namespace MSNPSharp
                 string resId_Prof = "";
                 try
                 {
-                    RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(storageService, MsnServiceType.Storage, serviceState, createRequest));
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, createRequest);
                     CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
                     resId_Prof = createResponse.CreateProfileResult;
                     NSMessageHandler.ContactService.Deltas.Profile.ResourceID = resId_Prof;
@@ -180,7 +180,7 @@ namespace MSNPSharp
                     addMemberRequest.memberships = new Membership[] { memberShip };
                     try
                     {
-                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, serviceState, addMemberRequest));
+                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, MsnServiceType.Sharing, serviceState, addMemberRequest);
                         sharingService.AddMember(addMemberRequest);
                     }
                     catch (Exception ex)
@@ -339,7 +339,7 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, serviceState, updateDyItemRequest));
+                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex)
@@ -367,7 +367,7 @@ namespace MSNPSharp
                     try
                     {
                         serviceState = new MsnServiceState(PartnerScenario.ContactSave, "ABContactUpdate", false);
-                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, serviceState, abcontactUpdateRequest));
+                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, abcontactUpdateRequest);
                         abService.ABContactUpdate(abcontactUpdateRequest);
                     }
                     catch (Exception ex)
@@ -400,7 +400,7 @@ namespace MSNPSharp
                 request.profileAttributes = new profileAttributes();
                 request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
 
-                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(storageService, MsnServiceType.Storage, serviceState, request));
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
                 GetProfileResponse response = storageService.GetProfile(request);
 
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
@@ -514,7 +514,7 @@ namespace MSNPSharp
 
                 try
                 {
-                    RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(storageService, MsnServiceType.Storage, serviceState, request));
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
                     storageService.UpdateProfile(request);
                 }
                 catch (Exception ex)
@@ -556,12 +556,11 @@ namespace MSNPSharp
                     updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
                     try
                     {
-                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, serviceState, updateDyItemRequest));
+                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, updateDyItemRequest);
                         abService.UpdateDynamicItem(updateDyItemRequest);
                     }
                     catch (Exception ex2)
                     {
-                        // OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex2));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "You don't receive any contact updates, vice versa! " + ex2.Message, GetType().Name);
                         return;
                     }

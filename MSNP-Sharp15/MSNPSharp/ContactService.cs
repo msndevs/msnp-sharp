@@ -2277,11 +2277,6 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, rejectInviteObject, wlRequest));
         }
 
-        public void RejectCircleInvitation(Circle circle)
-        {
-
-        }
-
         /// <summary>
         /// Leave the specific circle.
         /// </summary>
