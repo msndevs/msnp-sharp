@@ -1909,6 +1909,14 @@ namespace MSNPSharp
                     (string)msgMessage.MimeHeader["From-Addr"],
                     msgMessage.MimeHeader.ContainsKey("id") ? int.Parse((string)msgMessage.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture) : 0
                 ));
+
+                if (msgMessage.MimeHeader["From"] == CircleString.CircleInvitationEmailSender && msgMessage.MimeHeader["id"] == "3")
+                {
+                    if (msgMessage.MimeHeader["Extended-Flags"] == CircleString.InvitationEmailExtendedFlags) //Will this model overfitting?
+                    {
+                        ContactService.GetPushingAddCircles();
+                    }
+                }
             }
             else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
             {

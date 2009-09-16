@@ -900,24 +900,24 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/BreakConnection", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
         [return: System.Xml.Serialization.XmlElementAttribute("BreakConnectionResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
-        public BreakConnectionResponseType BreakConnection([System.Xml.Serialization.XmlElementAttribute(Namespace="http://www.msn.com/webservices/AddressBook")] BreakConnectionRequestType BreakConnectionRequest) {
+        public BreakConnectionResponseType BreakConnection([System.Xml.Serialization.XmlElementAttribute("BreakConnection", Namespace="http://www.msn.com/webservices/AddressBook")] BreakConnectionRequestType BreakConnection1) {
             object[] results = this.Invoke("BreakConnection", new object[] {
-                        BreakConnectionRequest});
+                        BreakConnection1});
             return ((BreakConnectionResponseType)(results[0]));
         }
         
         /// <remarks/>
-        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnectionRequest) {
-            this.BreakConnectionAsync(BreakConnectionRequest, null);
+        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnection1) {
+            this.BreakConnectionAsync(BreakConnection1, null);
         }
         
         /// <remarks/>
-        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnectionRequest, object userState) {
+        public void BreakConnectionAsync(BreakConnectionRequestType BreakConnection1, object userState) {
             if ((this.BreakConnectionOperationCompleted == null)) {
                 this.BreakConnectionOperationCompleted = new System.Threading.SendOrPostCallback(this.OnBreakConnectionOperationCompleted);
             }
             this.InvokeAsync("BreakConnection", new object[] {
-                        BreakConnectionRequest}, this.BreakConnectionOperationCompleted, userState);
+                        BreakConnection1}, this.BreakConnectionOperationCompleted, userState);
         }
         
         private void OnBreakConnectionOperationCompleted(object arg) {
@@ -4698,7 +4698,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string extendedContentField;
         
-        private abHandleType anHandleField;
+        private abHandleType abHandleField;
         
         /// <remarks/>
         public filterOptionsType filterOptions {
@@ -4731,12 +4731,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public abHandleType anHandle {
+        public abHandleType abHandle {
             get {
-                return this.anHandleField;
+                return this.abHandleField;
             }
             set {
-                this.anHandleField = value;
+                this.abHandleField = value;
             }
         }
     }

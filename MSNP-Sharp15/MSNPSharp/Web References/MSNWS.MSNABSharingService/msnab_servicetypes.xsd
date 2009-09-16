@@ -370,7 +370,7 @@
       <xsd:element name="filterOptions" type="msnab:filterOptionsType" />
       <xsd:element name="abView" type="xsd:string" />
       <xsd:element name="extendedContent" type="xsd:string" />
-      <xsd:element minOccurs="0" name="anHandle" type="msnab:abHandleType" />
+      <xsd:element minOccurs="0" name="abHandle" type="msnab:abHandleType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ABFindContactsPagedResultType">
@@ -544,6 +544,6 @@
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="BreakConnectionResponseType" />
-  <xsd:element name="BreakConnectionRequest" type="msnab:BreakConnectionRequestType" />
+  <xsd:element name="BreakConnection" type="msnab:BreakConnectionRequestType" />
   <xsd:element name="BreakConnectionResponse" type="msnab:BreakConnectionResponseType" />
 </xsd:schema>

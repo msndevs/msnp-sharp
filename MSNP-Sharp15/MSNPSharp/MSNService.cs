@@ -70,6 +70,7 @@ namespace MSNPSharp
         ContactMsgrAPI,
         MessengerPendingList,
         PrivacyApply,
+        NewCircleDuringPull,
         CircleInvite,
         CircleIdAlert,
         CircleStatus,
