@@ -136,7 +136,7 @@
 		<part name="ManageWLConnectionResponse" element="msnab:ManageWLConnectionResponse"/>
 	</message>
 	<message name="BreakConnectionMessage">
-		<part name="BreakConnection" element="msnab:BreakConnectionRequest"/>
+		<part name="BreakConnection" element="msnab:BreakConnection"/>
 	</message>
 	<message name="BreakConnectionResponseMessage">
 		<part name="BreakConnectionResponse" element="msnab:BreakConnectionResponse"/>
