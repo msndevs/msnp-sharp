@@ -2757,6 +2757,11 @@ namespace MSNPSharp
                     {
                         throw new MSNPSharpException("Exception Occurred when parsing an error code received from the server", fe);
                     }
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                        "A server error occurred\r\nError Code: " + nsMessage.Command
+                        + "\r\nError Description: " + msnError.ToString());
+
                     OnServerErrorReceived(new MSNErrorEventArgs(msnError));
                 }
                 else
