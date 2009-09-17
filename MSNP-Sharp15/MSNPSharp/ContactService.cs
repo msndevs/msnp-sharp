@@ -2423,9 +2423,6 @@ namespace MSNPSharp
                     abRequest(PartnerScenario.JoinedCircleDuringPush,
                         delegate
                         {
-                            //We need USR SHA A again
-                            NSMessageHandler.SendCircleNotifyADL(circle.AddressBookId, circle.HostDomain, circle.Lists, false);
-
                             abHandleType abHandler = new abHandleType();
                             abHandler.Puid = 0;
                             abHandler.Cid = 0;
@@ -2449,6 +2446,10 @@ namespace MSNPSharp
                                                                  {
                                                                      circle.Role = CirclePersonalMembershipRole.Member;
                                                                      NSMessageHandler.CircleList.AddCircle(circle);
+
+                                                                     //We need USR SHA A again
+                                                                     NSMessageHandler.SendCircleNotifyADL(circle.AddressBookId, circle.HostDomain, circle.Lists, false);
+
                                                                      AddressBook.Synchronize(Deltas);
                                                                      AddressBook.Save();
                                                                      Deltas.Truncate();
