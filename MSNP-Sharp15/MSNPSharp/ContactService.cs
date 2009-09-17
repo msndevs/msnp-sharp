@@ -200,6 +200,13 @@ namespace MSNPSharp
         /// <param name="e"></param>
         private void OnJoinCircleInviationReceived(JoinCircleInvitationEventArg e)
         {
+            if (e.Inviter != null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                    e.Inviter.Name + "(" + e.Inviter.Mail + ") invite you to join circle: "
+                    + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
+            }
+
             if (JoinCircleInviationReceived != null)
             {
                 JoinCircleInviationReceived(this, e);
@@ -212,6 +219,8 @@ namespace MSNPSharp
         /// <param name="e"></param>
         private void OnJoinedCircle(CircleEventArgs e)
         {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle invitation accepted: " + e.Circle.ToString());
+
             if (JoinedCircle != null)
             {
                 JoinedCircle(this, e);
@@ -249,6 +258,8 @@ namespace MSNPSharp
         /// <param name="e"></param>
         private void OnCircleLeft(CircleEventArgs e)
         {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Leave circle completed: " + e.Circle.ToString());
+
             if (CircleLeft != null)
             {
                 CircleLeft(this, e);
