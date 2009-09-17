@@ -89,6 +89,9 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
             messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
             messenger.Nameserver.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
+            messenger.Nameserver.ContactService.JoinedCircle += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
+            messenger.Nameserver.ContactService.JoinCircleInviationReceived += new EventHandler<JoinCircleInvitationEventArg>(ContactService_JoinCircleInviationReceived);
+            messenger.Nameserver.ContactService.CircleLeft += new EventHandler<CircleEventArgs>(ContactService_CircleLeft);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
@@ -120,11 +123,32 @@ namespace MSNPSharpClient
 
         }
 
+        void ContactService_CircleLeft(object sender, CircleEventArgs e)
+        {
+            RefreshCircleList(sender, e);
+        }
+
+        void ContactService_JoinedCircle(object sender, CircleEventArgs e)
+        {
+            RefreshCircleList(sender, e);
+            messenger.Nameserver.ContactService.LeaveCircle(e.Circle); //Demostrate how to leave a circle.
+        }
+
+        void ContactService_JoinCircleInviationReceived(object sender, JoinCircleInvitationEventArg e)
+        {
+            messenger.Nameserver.ContactService.AcceptCircleInvitation(e.Circle);
+        }
+
         void ContactService_CircleCreated(object sender, CircleEventArgs e)
+        {
+            RefreshCircleList(sender, e);
+        }
+
+        void RefreshCircleList(object sender, EventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<CircleEventArgs>(ContactService_CircleCreated), sender, e);
+                Invoke(new EventHandler<EventArgs>(RefreshCircleList), sender, e);
                 return;
             }
 
@@ -133,8 +157,6 @@ namespace MSNPSharpClient
             else
                 SortByGroup();
         }
-
-        
 
         void ServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {
