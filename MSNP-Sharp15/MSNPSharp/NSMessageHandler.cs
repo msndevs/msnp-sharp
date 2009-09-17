@@ -2414,6 +2414,50 @@ namespace MSNPSharp
             }
         }
 
+        protected virtual void OnSDGReceived(NSMessage message)
+        {
+            /*** typing message ***
+            SDG 0 421
+            Routing: 1.0
+            To: 9:00000000-0000-0000-0009-cdc0351b0c6d@live.com;path=IM
+            From: 1:updatedynamicitem@hotmail.com;epid={7a29dadd-503d-4c5c-8e6b-a599c15de981}
+
+            Reliability: 1.0
+            Stream: 0
+            Segment: 1
+
+            Messaging: 1.0
+            Content-Length: 2
+            Content-Type: text/x-msmsgscontrol
+            Content-Transfer-Encoding: 7bit
+            Message-Type: Control
+            Message-Subtype: Typing
+            MIME-Version: 1.0
+            TypingUser: updatedynamicitem@hotmail.com
+            ***/
+
+            /*** group text messaging ***
+            SDG 0 410
+            Routing: 1.0
+            To: 9:00000000-0000-0000-0009-cdc0351b0c6d@live.com;path=IM
+            From: 1:updatedynamicitem@hotmail.com;epid={7a29dadd-503d-4c5c-8e6b-a599c15de981}
+
+            Reliability: 1.0
+            Stream: 0
+            Segment: 2
+
+            Messaging: 1.0
+            Content-Length: 2
+            Content-Type: Text/plain; charset=UTF-8
+            Content-Transfer-Encoding: 7bit
+            Message-Type: Text
+            MIME-Version: 1.0
+            X-MMS-IM-Format: FN=Segoe%20UI; EF=; CO=0; CS=1; PF=0
+
+            hi
+            ***/
+        }
+
         #endregion
 
         #region Challenge and Ping
@@ -2733,6 +2777,9 @@ namespace MSNPSharp
                         return;
                     case "PUT":
                         OnPUTReceived(nsMessage);
+                        return;
+                    case "SDG":
+                        OnSDGReceived(nsMessage);
                         return;
 
                     // Outdated
