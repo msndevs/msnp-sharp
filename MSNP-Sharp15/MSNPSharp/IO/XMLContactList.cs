@@ -128,12 +128,13 @@ namespace MSNPSharp.IO
                 else
                 {
                     Circle newcircle = CombineCircle(circle.CircleMember, circle.CircleResultInfo);
+                    CircleInviter initator = CombineCircleInviter(circle.CircleMember);
 
                     if(NSMessageHandler.CircleList[newcircle.Mail] == null )
                     {
                         if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
                         {
-                            NSMessageHandler.ContactService.FireJoinCircleEvent(newcircle);
+                            NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArg(newcircle, initator));
                             continue;
                         }
                         else
@@ -882,9 +883,11 @@ namespace MSNPSharp.IO
                             if (newadded)
                             {
                                 Circle newcircle = CombineCircle(contactType, circleinfo);
+                                CircleInviter initator = CombineCircleInviter(contactType);
+
                                 if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
                                 {
-                                    NSMessageHandler.ContactService.FireJoinCircleEvent(newcircle);
+                                    NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArg(newcircle, initator));
                                 }
                                 else
                                 {
@@ -971,6 +974,25 @@ namespace MSNPSharp.IO
         {
             return xmlcl.Merge(forwardList);
         }
+
+        private CircleInviter CombineCircleInviter(ContactType contact)
+        {
+            CircleInviter initator = null;
+
+            if (contact.contactInfo.NetworkInfoList.Length > 0)
+            {
+                foreach (NetworkInfoType networkInfo in contact.contactInfo.NetworkInfoList)
+                {
+                    if (networkInfo.DomainId == 1)
+                    {
+                        initator = new CircleInviter(networkInfo.InviterEmail, networkInfo.InviterName, networkInfo.InviterMessage);
+                    }
+                }
+            }
+
+            return initator;
+        }
+
 
         private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
         {
