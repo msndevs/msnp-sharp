@@ -2389,6 +2389,8 @@ namespace MSNPSharp
         /// Accept the circle invitation.
         /// </summary>
         /// <param name="circle"></param>
+        /// <exception cref="ArgumentNullException">The circle parameter is null.</exception>
+        /// <exception cref="InvalidOperationException">The circle specified is not a pending circle.</exception>
         public void AcceptCircleInvitation(Circle circle)
         {
             if (circle == null)
@@ -2474,6 +2476,7 @@ namespace MSNPSharp
         /// Leave the specific circle.
         /// </summary>
         /// <param name="circle"></param>
+        /// <exception cref="ArgumentNullException">The circle parameter is null.</exception>
         public void LeaveCircle(Circle circle)
         {
             if (circle == null)
