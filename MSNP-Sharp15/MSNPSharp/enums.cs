@@ -1151,6 +1151,7 @@ namespace MSNPSharp
     public static class CirclePersonalMembershipRole
     {
         public const string Admin = "Admin";
+        public const string AssistantAdmin = "AssistantAdmin";
         public const string Member = "Member";
         public const string StatePendingOutbound = "StatePendingOutbound";
     }

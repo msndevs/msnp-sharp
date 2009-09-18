@@ -118,7 +118,7 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Event argument used for ContactService.JoinCircleInviationReceived event.
+    /// Event argument used for ContactService.JoinCircleInvitationReceived event.
     /// </summary>
     [Serializable()]
     public class JoinCircleInvitationEventArg : CircleEventArgs

@@ -128,7 +128,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired after a remote user invite us to join a circle.
         /// </summary>
-        public event EventHandler<JoinCircleInvitationEventArg> JoinCircleInviationReceived;
+        public event EventHandler<JoinCircleInvitationEventArg> JoinCircleInvitationReceived;
 
         /// <summary>
         /// Fired after the owner join a circle successfully.
@@ -195,10 +195,10 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fires the <see cref="JoinCircleInviationReceived"/> event.
+        /// Fires the <see cref="JoinCircleInvitationReceived"/> event.
         /// </summary>
         /// <param name="e"></param>
-        private void OnJoinCircleInviationReceived(JoinCircleInvitationEventArg e)
+        private void OnJoinCircleInvitationReceived(JoinCircleInvitationEventArg e)
         {
             if (e.Inviter != null)
             {
@@ -207,9 +207,9 @@ namespace MSNPSharp
                     + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
             }
 
-            if (JoinCircleInviationReceived != null)
+            if (JoinCircleInvitationReceived != null)
             {
-                JoinCircleInviationReceived(this, e);
+                JoinCircleInvitationReceived(this, e);
             }
         }
 
@@ -2364,14 +2364,14 @@ namespace MSNPSharp
                     {
                         if (circle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
                         {
-                            OnJoinCircleInviationReceived(arg);
+                            OnJoinCircleInvitationReceived(arg);
                         }
                     }
                 );
             }
             else
             {
-                OnJoinCircleInviationReceived(arg);
+                OnJoinCircleInvitationReceived(arg);
             }
         }
 
