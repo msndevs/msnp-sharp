@@ -202,7 +202,7 @@ namespace MSNPSharp
         {
             if (e.Inviter != null)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                     e.Inviter.Name + "(" + e.Inviter.Mail + ") invite you to join circle: "
                     + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
             }
@@ -2030,8 +2030,8 @@ namespace MSNPSharp
                             NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), CircleString.DefaultHostDomain, MSNLists.AllowedList | MSNLists.ForwardList, false);
 
                             //We need to update our membership and addressbook lists.
-                            msRequest(PartnerScenario.ABChangeNotifyAlert, 
-                                delegate 
+                            msRequest(PartnerScenario.ABChangeNotifyAlert,
+                                delegate
                                 {
                                     abRequest(PartnerScenario.ABChangeNotifyAlert,
                                         delegate
@@ -2046,7 +2046,7 @@ namespace MSNPSharp
                                                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("CreateCircle", new MSNPSharpException("Create circle failed.")));
                                             }
                                         }
-                                    ); 
+                                    );
                                 }
                             );
                         }
@@ -2215,12 +2215,14 @@ namespace MSNPSharp
                 throw new InvalidOperationException("Circle is on your block list.");
             }
 
-            if (circle.Role != CirclePersonalMembershipRole.Admin)
+            if (circle.Role != CirclePersonalMembershipRole.Admin &&
+                circle.Role != CirclePersonalMembershipRole.AssistantAdmin)
             {
                 throw new InvalidOperationException("The owner is not the administrator of this circle.");
             }
 
-            if (contact == NSMessageHandler.Owner) return;
+            if (contact == NSMessageHandler.Owner)
+                return;
 
             MsnServiceState createContactObject = new MsnServiceState(PartnerScenario.CircleInvite, "CreateContact", true);
             ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, createContactObject);
@@ -2311,7 +2313,7 @@ namespace MSNPSharp
         public void RejectCircleInvitation(Circle circle)
         {
             if (circle == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("circle");
 
             MsnServiceState rejectInviteObject = new MsnServiceState(PartnerScenario.CircleStatus, "ManageWLConnection", true);
             ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, rejectInviteObject);
@@ -2394,7 +2396,7 @@ namespace MSNPSharp
         public void AcceptCircleInvitation(Circle circle)
         {
             if (circle == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("circle");
 
             if (circle.Role != CirclePersonalMembershipRole.StatePendingOutbound)
                 throw new InvalidOperationException("This is not a pending circle.");
@@ -2481,10 +2483,10 @@ namespace MSNPSharp
         public void LeaveCircle(Circle circle)
         {
             if (circle == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("circle");
 
             //We need to make sure the circle's contactId is correct, so request 
-            abRequest(PartnerScenario.CircleIdAlert, 
+            abRequest(PartnerScenario.CircleIdAlert,
                 delegate
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle contactId: " + circle.Guid.ToString());
