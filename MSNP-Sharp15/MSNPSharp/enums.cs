@@ -1088,42 +1088,47 @@ namespace MSNPSharp
     public static class AnnotationNames
     {
         /// <summary>
-        /// The valuse is: MSN.IM.InviteMessage
+        /// The value is: MSN.IM.InviteMessage
         /// </summary>
         public const string MSN_IM_InviteMessage = "MSN.IM.InviteMessage";
 
         /// <summary>
-        /// The valuse is: MSN.IM.MPOP
+        /// The value is: MSN.IM.MPOP
         /// </summary>
         public const string MSN_IM_MPOP = "MSN.IM.MPOP";
 
         /// <summary>
-        /// The valuse is: MSN.IM.BLP
+        /// The value is: MSN.IM.BLP
         /// </summary>
         public const string MSN_IM_BLP = "MSN.IM.BLP";
 
         /// <summary>
-        /// The valuse is: MSN.IM.GTC
+        /// The value is: MSN.IM.GTC
         /// </summary>
         public const string MSN_IM_GTC = "MSN.IM.GTC";
 
         /// <summary>
-        /// The valuse is: MSN.IM.RoamLiveProperties
+        /// The value is: MSN.IM.RoamLiveProperties
         /// </summary>
         public const string MSN_IM_RoamLiveProperties = "MSN.IM.RoamLiveProperties";
 
         /// <summary>
-        /// The valuse is: MSN.IM.Display
+        /// The value is: MSN.IM.MBEA
+        /// </summary>
+        public const string MSN_IM_MBEA = "MSN.IM.MBEA";
+
+        /// <summary>
+        /// The value is: MSN.IM.Display
         /// </summary>
         public const string MSN_IM_Display = "MSN.IM.Display";
 
         /// <summary>
-        /// The valuse is: MSN.IM.BuddyType
+        /// The value is: MSN.IM.BuddyType
         /// </summary>
         public const string MSN_IM_BuddyType = "MSN.IM.BuddyType";
 
         /// <summary>
-        /// The valuse is: AB.NickName
+        /// The value is: AB.NickName
         /// </summary>
         public const string AB_NickName = "AB.NickName";
 

@@ -439,8 +439,8 @@ namespace MSNPSharp
                     {
                         if (NSMessageHandler.ContactService.AddressBook != null)
                         {
-                            if (NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey("mpop"))
-                                mpopMode = NSMessageHandler.ContactService.AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
+                            if (NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey(AnnotationNames.MSN_IM_MPOP))
+                                mpopMode = NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
 
                         }
                     }

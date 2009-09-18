@@ -388,7 +388,7 @@ namespace MSNPSharp
             else
             {
                 // Set lastchanged and roaming profile last change to get display picture and personal message
-                NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
                 NSMessageHandler.Owner.SetRoamLiveProperty(RoamLiveProperty.Enabled);
                 SetDefaults();
                 NSMessageHandler.OnSignedIn(EventArgs.Empty);
@@ -405,10 +405,10 @@ namespace MSNPSharp
                 AddressBook.InitializeMyProperties();
 
                 // Set privacy settings and roam property
-                NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-                NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
-                NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
-                NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
+                NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+                NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
+                NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+                NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
             }
 
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
@@ -1370,7 +1370,7 @@ namespace MSNPSharp
             if (owner == null)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            MPOP oldMPOP = AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
+            MPOP oldMPOP = AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
 
             List<Annotation> annos = new List<Annotation>();
 
@@ -1395,7 +1395,7 @@ namespace MSNPSharp
                     if (!e.Cancelled && e.Error == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateGeneralDialogSetting completed.", GetType().Name);
-                        AddressBook.MyProperties["mpop"] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
                     }
                 };
 
@@ -1418,9 +1418,9 @@ namespace MSNPSharp
             if (owner == null)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            PrivacyMode oldPrivacy = AddressBook.MyProperties["blp"] == "1" ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed;
-            NotifyPrivacy oldNotify = AddressBook.MyProperties["gtc"] == "1" ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd;
-            RoamLiveProperty oldRoaming = AddressBook.MyProperties["roamliveproperties"] == "1" ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled;
+            PrivacyMode oldPrivacy = AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] == "1" ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed;
+            NotifyPrivacy oldNotify = AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] == "1" ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd;
+            RoamLiveProperty oldRoaming = AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] == "1" ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled;
             List<Annotation> annos = new List<Annotation>();
             List<string> propertiesChanged = new List<string>();
 
@@ -1472,9 +1472,9 @@ namespace MSNPSharp
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateMe completed.", GetType().Name);
 
-                        AddressBook.MyProperties["blp"] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
-                        AddressBook.MyProperties["gtc"] = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
-                        AddressBook.MyProperties["roamliveproperties"] = owner.RoamLiveProperty == RoamLiveProperty.Enabled ? "1" : "2";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] = owner.RoamLiveProperty == RoamLiveProperty.Enabled ? "1" : "2";
                     }
                 };
 
