@@ -51,7 +51,7 @@ namespace MSNPSharp
 
     /// <summary>
     /// Handles the protocol messages from the notification server
-    /// and implements protocol version between MSNP15 and MSNP18.
+    /// and implements protocol version MSNP18.
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
