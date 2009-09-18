@@ -90,6 +90,61 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// The <see cref="Contact"/> who send a join contact invitation.
+    /// </summary>
+    [Serializable()]
+    public class CircleInviter: Contact
+    {
+        private string message = string.Empty;
+
+        /// <summary>
+        /// Invitation message send via the email.
+        /// </summary>
+        public string Message
+        {
+            get { return message; }
+        }
+
+        protected CircleInviter()
+        {
+        }
+
+        internal CircleInviter(string inviterEmail, string inviterName, string inviterMessage)
+        {
+            Mail = inviterEmail;
+            SetName(inviterName);
+            message = inviterMessage;
+        }
+    }
+
+    /// <summary>
+    /// Event argument used for ContactService.JoinCircleInvitationReceived event.
+    /// </summary>
+    [Serializable()]
+    public class JoinCircleInvitationEventArg : CircleEventArgs
+    {
+        private CircleInviter inviter = null;
+
+        /// <summary>
+        /// <see cref="Contact"/> who send this invitation.
+        /// </summary>
+        public CircleInviter Inviter
+        {
+            get { return inviter; }
+        }
+
+        protected JoinCircleInvitationEventArg()
+        {
+        }
+
+        internal JoinCircleInvitationEventArg(Circle circle, CircleInviter invitor)
+            :base(circle)
+        {
+            this.inviter = invitor;
+        }
+    }
+
+    /// <summary>
     /// A new type of group introduces with WLM2009.
     /// </summary>
     [Serializable()]

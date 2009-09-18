@@ -124,6 +124,16 @@ namespace MSNPSharp
         /// Fired after the InviteContactToCircle succeeded.
         /// </summary>
         public event EventHandler<CircleEventArgs> CircleMemberInvited;
+
+        /// <summary>
+        /// Fired after a remote user invite us to join a circle.
+        /// </summary>
+        public event EventHandler<JoinCircleInvitationEventArg> JoinCircleInvitationReceived;
+
+        /// <summary>
+        /// Fired after the owner join a circle successfully.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> JoinedCircle;
         #endregion
 
         #region Public members
@@ -185,6 +195,39 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Fires the <see cref="JoinCircleInvitationReceived"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        private void OnJoinCircleInvitationReceived(JoinCircleInvitationEventArg e)
+        {
+            if (e.Inviter != null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                    e.Inviter.Name + "(" + e.Inviter.Mail + ") invite you to join circle: "
+                    + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
+            }
+
+            if (JoinCircleInvitationReceived != null)
+            {
+                JoinCircleInvitationReceived(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fires the <see cref="JoinedCircle"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        private void OnJoinedCircle(CircleEventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle invitation accepted: " + e.Circle.ToString());
+
+            if (JoinedCircle != null)
+            {
+                JoinedCircle(this, e);
+            }
+        }
+
+        /// <summary>
         /// Fires the <see cref="ContactGroupRemoved"/> event.
         /// </summary>
         /// <param name="e"></param>
@@ -210,11 +253,13 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fires the <see cref="CircleRemoved"/> event.
+        /// Fires the <see cref="CircleLeft"/> event.
         /// </summary>
         /// <param name="e"></param>
         private void OnCircleLeft(CircleEventArgs e)
         {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Leave circle completed: " + e.Circle.ToString());
+
             if (CircleLeft != null)
             {
                 CircleLeft(this, e);
@@ -343,7 +388,7 @@ namespace MSNPSharp
             else
             {
                 // Set lastchanged and roaming profile last change to get display picture and personal message
-                NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
                 NSMessageHandler.Owner.SetRoamLiveProperty(RoamLiveProperty.Enabled);
                 SetDefaults();
                 NSMessageHandler.OnSignedIn(EventArgs.Empty);
@@ -360,10 +405,10 @@ namespace MSNPSharp
                 AddressBook.InitializeMyProperties();
 
                 // Set privacy settings and roam property
-                NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties["blp"] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-                NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties["gtc"] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
-                NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties["roamliveproperties"] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
-                NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties["mpop"] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
+                NSMessageHandler.Owner.SetPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+                NSMessageHandler.Owner.SetNotifyPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
+                NSMessageHandler.Owner.SetRoamLiveProperty((AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+                NSMessageHandler.Owner.SetMPOP((AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
             }
 
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
@@ -614,6 +659,17 @@ namespace MSNPSharp
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
         internal void abRequest(PartnerScenario partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
+            abRequest(partnerScenario, null, onSuccess);
+        }
+
+        /// <summary>
+        /// Async Address book request
+        /// </summary>
+        /// <param name="partnerScenario"></param>
+        /// <param name="abHandle">The specified addressbook to retrieve.</param>
+        /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
+        internal void abRequest(PartnerScenario partnerScenario, abHandleType abHandle, ABFindContactsPagedCompletedEventHandler onSuccess)
+        {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", new MSNPSharpException("You don't have access right on this action anymore.")));
@@ -626,19 +682,27 @@ namespace MSNPSharp
                 ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindContactsPagedObject);
                 ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
                 request.abView = "MessengerClient8";  //NO default!
-                request.extendedContent = "AB AllGroups CircleResult";
 
-                request.filterOptions = new filterOptionsType();
-                request.filterOptions.ContactFilter = new ContactFilterType();
-
-                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) != DateTime.MinValue)
+                if (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerAddressBookId)
                 {
-                        deltasOnly = true;
-                        request.filterOptions.LastChanged = AddressBook.AddressbookLastChange; //AddressBook.OwnerNamespace.LastChange;
-                }
+                    request.extendedContent = "AB AllGroups CircleResult";
+                    request.filterOptions = new filterOptionsType();
+                    request.filterOptions.ContactFilter = new ContactFilterType();
 
-                request.filterOptions.DeltasOnly = deltasOnly;
-                request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) != DateTime.MinValue)
+                    {
+                        deltasOnly = true;
+                        request.filterOptions.LastChanged = AddressBook.AddressbookLastChange;
+                    }
+
+                    request.filterOptions.DeltasOnly = deltasOnly;
+                    request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+                }
+                else
+                {
+                    request.extendedContent = "AB";
+                    request.abHandle = abHandle;
+                }
 
                 abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
                 {
@@ -648,7 +712,8 @@ namespace MSNPSharp
                     {
                         if (e.Error != null)
                         {
-                            if ((recursiveCall == 0 && ((MsnServiceState)e.UserState).PartnerScenario == PartnerScenario.Initial)
+                            if ((recursiveCall == 0 && ((MsnServiceState)e.UserState).PartnerScenario == PartnerScenario.Initial
+                                && (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerAddressBookId))
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
                                 recursiveCall++;
@@ -666,10 +731,12 @@ namespace MSNPSharp
                             if (null != e.Result.ABFindContactsPagedResult)
                             {
                                 AddressBook.Merge(e.Result.ABFindContactsPagedResult);
+
                                 Deltas.AddressBookDeltas.Add(e.Result.ABFindContactsPagedResult);
                                 Deltas.Save();
 
-                                NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
+                                if (e.Result.ABFindContactsPagedResult.CircleResult != null)
+                                    NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
                             }
                             if (onSuccess != null)
                             {
@@ -1298,7 +1365,7 @@ namespace MSNPSharp
             if (owner == null)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            MPOP oldMPOP = AddressBook.MyProperties["mpop"] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
+            MPOP oldMPOP = AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
 
             List<Annotation> annos = new List<Annotation>();
 
@@ -1323,7 +1390,7 @@ namespace MSNPSharp
                     if (!e.Cancelled && e.Error == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateGeneralDialogSetting completed.", GetType().Name);
-                        AddressBook.MyProperties["mpop"] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
                     }
                 };
 
@@ -1346,9 +1413,9 @@ namespace MSNPSharp
             if (owner == null)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            PrivacyMode oldPrivacy = AddressBook.MyProperties["blp"] == "1" ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed;
-            NotifyPrivacy oldNotify = AddressBook.MyProperties["gtc"] == "1" ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd;
-            RoamLiveProperty oldRoaming = AddressBook.MyProperties["roamliveproperties"] == "1" ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled;
+            PrivacyMode oldPrivacy = AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] == "1" ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed;
+            NotifyPrivacy oldNotify = AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] == "1" ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd;
+            RoamLiveProperty oldRoaming = AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] == "1" ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled;
             List<Annotation> annos = new List<Annotation>();
             List<string> propertiesChanged = new List<string>();
 
@@ -1400,9 +1467,9 @@ namespace MSNPSharp
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateMe completed.", GetType().Name);
 
-                        AddressBook.MyProperties["blp"] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
-                        AddressBook.MyProperties["gtc"] = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
-                        AddressBook.MyProperties["roamliveproperties"] = owner.RoamLiveProperty == RoamLiveProperty.Enabled ? "1" : "2";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] = owner.Privacy == PrivacyMode.AllExceptBlocked ? "1" : "0";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] = owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd ? "1" : "0";
+                        AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] = owner.RoamLiveProperty == RoamLiveProperty.Enabled ? "1" : "2";
                     }
                 };
 
@@ -1958,8 +2025,8 @@ namespace MSNPSharp
                             NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), CircleString.DefaultHostDomain, MSNLists.AllowedList | MSNLists.ForwardList, false);
 
                             //We need to update our membership and addressbook lists.
-                            msRequest(PartnerScenario.ABChangeNotifyAlert, 
-                                delegate 
+                            msRequest(PartnerScenario.ABChangeNotifyAlert,
+                                delegate
                                 {
                                     abRequest(PartnerScenario.ABChangeNotifyAlert,
                                         delegate
@@ -1974,7 +2041,7 @@ namespace MSNPSharp
                                                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("CreateCircle", new MSNPSharpException("Create circle failed.")));
                                             }
                                         }
-                                    ); 
+                                    );
                                 }
                             );
                         }
@@ -2143,12 +2210,14 @@ namespace MSNPSharp
                 throw new InvalidOperationException("Circle is on your block list.");
             }
 
-            if (circle.Role != CirclePersonalMembershipRole.Admin)
+            if (circle.Role != CirclePersonalMembershipRole.Admin &&
+                circle.Role != CirclePersonalMembershipRole.AssistantAdmin)
             {
                 throw new InvalidOperationException("The owner is not the administrator of this circle.");
             }
 
-            if (contact == NSMessageHandler.Owner) return;
+            if (contact == NSMessageHandler.Owner)
+                return;
 
             MsnServiceState createContactObject = new MsnServiceState(PartnerScenario.CircleInvite, "CreateContact", true);
             ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, createContactObject);
@@ -2239,7 +2308,7 @@ namespace MSNPSharp
         public void RejectCircleInvitation(Circle circle)
         {
             if (circle == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("circle");
 
             MsnServiceState rejectInviteObject = new MsnServiceState(PartnerScenario.CircleStatus, "ManageWLConnection", true);
             ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, rejectInviteObject);
@@ -2272,44 +2341,183 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, rejectInviteObject, wlRequest));
         }
 
+        internal void FireJoinCircleEvent(JoinCircleInvitationEventArg arg)
+        {
+            if (arg == null)
+                return;
+
+            Circle circle = arg.Circle;
+
+            if (NSMessageHandler.IsSignedIn)
+            {
+                abHandleType abHandle = new abHandleType();
+                abHandle.ABId = circle.AddressBookId.ToString().ToLowerInvariant();
+                abHandle.Cid = 0;
+                abHandle.Puid = 0;
+
+                abRequest(PartnerScenario.NewCircleDuringPull,
+                    abHandle,
+                    delegate
+                    {
+                        if (circle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
+                        {
+                            OnJoinCircleInvitationReceived(arg);
+                        }
+                    }
+                );
+            }
+            else
+            {
+                OnJoinCircleInvitationReceived(arg);
+            }
+        }
+
+        internal void GetPushingAddCircles()
+        {
+            msRequest(PartnerScenario.ABChangeNotifyAlert,
+                delegate
+                {
+                    abRequest(PartnerScenario.ABChangeNotifyAlert, null);
+                }
+            );
+        }
+
+        /// <summary>
+        /// Accept the circle invitation.
+        /// </summary>
+        /// <param name="circle"></param>
+        /// <exception cref="ArgumentNullException">The circle parameter is null.</exception>
+        /// <exception cref="InvalidOperationException">The circle specified is not a pending circle.</exception>
+        public void AcceptCircleInvitation(Circle circle)
+        {
+            if (circle == null)
+                throw new ArgumentNullException("circle");
+
+            if (circle.Role != CirclePersonalMembershipRole.StatePendingOutbound)
+                throw new InvalidOperationException("This is not a pending circle.");
+
+            MsnServiceState acceptInviteObject = new MsnServiceState(PartnerScenario.CircleStatus, "ManageWLConnection", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, acceptInviteObject);
+            ManageWLConnectionRequestType wlRequest = new ManageWLConnectionRequestType();
+            wlRequest.contactId = circle.Guid.ToString();
+            wlRequest.connection = true;
+            wlRequest.presence = false;
+            wlRequest.action = 1;
+            wlRequest.relationshipRole = 0;
+            wlRequest.relationshipType = 5;
+
+            abService.ManageWLConnectionCompleted += delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (!e.Cancelled)
+                {
+                    if (e.Error != null)
+                    {
+                        return;
+                    }
+
+                    abRequest(PartnerScenario.JoinedCircleDuringPush,
+                        delegate
+                        {
+                            abHandleType abHandler = new abHandleType();
+                            abHandler.Puid = 0;
+                            abHandler.Cid = 0;
+                            abHandler.ABId = circle.AddressBookId.ToString().ToLowerInvariant();
+
+                            abRequest(PartnerScenario.CircleIdAlert,
+                                abHandler,
+                                delegate
+                                {
+                                    msRequest(PartnerScenario.MessengerPendingList,
+                                        delegate
+                                        {
+                                            msRequest(PartnerScenario.ABChangeNotifyAlert,
+                                                delegate
+                                                {
+                                                    msRequest(PartnerScenario.ABChangeNotifyAlert,
+                                                         delegate
+                                                         {
+                                                             abRequest(PartnerScenario.ABChangeNotifyAlert,
+                                                                 delegate
+                                                                 {
+                                                                     circle.Role = CirclePersonalMembershipRole.Member;
+                                                                     NSMessageHandler.CircleList.AddCircle(circle);
+
+                                                                     //We need USR SHA A again
+                                                                     NSMessageHandler.SendCircleNotifyADL(circle.AddressBookId, circle.HostDomain, circle.Lists, false);
+
+                                                                     AddressBook.Synchronize(Deltas);
+                                                                     AddressBook.Save();
+                                                                     Deltas.Truncate();
+
+                                                                     OnJoinedCircle(new CircleEventArgs(circle));
+                                                                 }
+                                                             );
+                                                         }
+                                                    );
+                                                }
+                                            );
+                                        }
+                                    );
+                                }
+                            );
+                        }
+                     );
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, acceptInviteObject, wlRequest));
+        }
+
         /// <summary>
         /// Leave the specific circle.
         /// </summary>
         /// <param name="circle"></param>
+        /// <exception cref="ArgumentNullException">The circle parameter is null.</exception>
         public void LeaveCircle(Circle circle)
         {
             if (circle == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("circle");
 
-            MsnServiceState leaveCircleObject = new MsnServiceState(PartnerScenario.CircleLeave, "BreakConnection", true);
-            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, leaveCircleObject);
-
-            BreakConnectionRequestType breakconnRequest = new BreakConnectionRequestType();
-
-            abHandleType handler = new abHandleType();
-            handler.ABId = circle.AddressBookId.ToString();
-            handler.Cid = 0;
-            handler.Puid = 0;
-
-            breakconnRequest.abHandle = handler;
-            breakconnRequest.blockContact = false;
-            breakconnRequest.deleteContact = true;
-            breakconnRequest.contactId = circle.Guid.ToString();
-
-            abService.BreakConnectionCompleted += delegate(object sender, BreakConnectionCompletedEventArgs e)
-            {
-                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
-
-                if (e.Cancelled || e.Error != null)
+            //We need to make sure the circle's contactId is correct, so request 
+            abRequest(PartnerScenario.CircleIdAlert,
+                delegate
                 {
-                    return;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle contactId: " + circle.Guid.ToString());
+
+                    MsnServiceState leaveCircleObject = new MsnServiceState(PartnerScenario.CircleLeave, "BreakConnection", true);
+                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, leaveCircleObject);
+
+                    BreakConnectionRequestType breakconnRequest = new BreakConnectionRequestType();
+
+                    abHandleType handler = new abHandleType();
+                    handler.ABId = circle.AddressBookId.ToString();
+                    handler.Cid = 0;
+                    handler.Puid = 0;
+
+                    breakconnRequest.abHandle = handler;
+                    breakconnRequest.blockContact = false;
+                    breakconnRequest.deleteContact = true;
+                    breakconnRequest.contactId = circle.Guid.ToString();
+
+                    abService.BreakConnectionCompleted += delegate(object sender, BreakConnectionCompletedEventArgs e)
+                    {
+                        OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                        if (e.Cancelled || e.Error != null)
+                        {
+                            return;
+                        }
+
+                        NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
+                        NSMessageHandler.CircleList.RemoveCircle(circle);
+                        OnCircleLeft(new CircleEventArgs(circle));
+                    };
+
+                    RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, leaveCircleObject, breakconnRequest));
                 }
-
-                NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
-                OnCircleLeft(new CircleEventArgs(circle));
-            };
-
-            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, leaveCircleObject, breakconnRequest));
+            );
         }
 
         #endregion

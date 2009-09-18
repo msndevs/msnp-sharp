@@ -127,7 +127,21 @@ namespace MSNPSharp.IO
                 }
                 else
                 {
-                    NSMessageHandler.CircleList.AddCircle(CombineCircle(circle.CircleMember, circle.CircleResultInfo));
+                    Circle newcircle = CombineCircle(circle.CircleMember, circle.CircleResultInfo);
+                    CircleInviter initator = CombineCircleInviter(circle.CircleMember);
+
+                    if (NSMessageHandler.CircleList[newcircle.Mail] == null)
+                    {
+                        if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
+                        {
+                            NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArg(newcircle, initator));
+                            continue;
+                        }
+                        else
+                        {
+                            NSMessageHandler.CircleList.AddCircle(newcircle);
+                        }
+                    }
                 }
 
                 string id = circle.CircleResultInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circle.CircleResultInfo.Content.Info.HostedDomain;
@@ -139,7 +153,7 @@ namespace MSNPSharp.IO
 
                 if (list == MSNLists.AllowedList)
                     NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.BlockedList);
-            } 
+            }
 
             #endregion
 
@@ -308,8 +322,8 @@ namespace MSNPSharp.IO
                 {
                     Service oldService = GetTargetService(serviceType.Info.Handle.Type);
 
-                    if (oldService == null || 
-                        WebServiceDateTimeConverter.ConvertToDateTime(oldService.LastChange) 
+                    if (oldService == null ||
+                        WebServiceDateTimeConverter.ConvertToDateTime(oldService.LastChange)
                         < WebServiceDateTimeConverter.ConvertToDateTime(serviceType.LastChange))
                     {
                         if (serviceType.Deleted)
@@ -381,7 +395,7 @@ namespace MSNPSharp.IO
                                                         circlesMembership.Add(memberrole, new List<CircleMember>(0));
                                                     }
                                                     circlesMembership[memberrole].Add(bm as CircleMember);
-                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, serviceType.Info.Handle.Type + " Membership " + bm.GetType().ToString() +": " + memberrole + ":" + account);
+                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, serviceType.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
                                                 }
 
                                                 if (account != null && type != ClientType.None)
@@ -396,7 +410,7 @@ namespace MSNPSharp.IO
                                                         if (type != ClientType.CircleMember)
                                                         {
                                                             if (HasMemberhip(updatedService.ServiceType, account, type, memberrole) &&
-                                                                WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged) 
+                                                                WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
                                                                 < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
                                                             {
                                                                 RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
@@ -422,7 +436,7 @@ namespace MSNPSharp.IO
                                                             }
                                                         }
 
-                                                    #endregion
+                                                        #endregion
 
                                                     }
                                                     else
@@ -456,7 +470,7 @@ namespace MSNPSharp.IO
                                                                 NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
                                                             }
                                                         }
-                                                        
+
                                                         #endregion
                                                     }
                                                 }
@@ -677,8 +691,31 @@ namespace MSNPSharp.IO
             DateTime dt1 = WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange);
             DateTime dt2 = WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange);
 
-            if (forwardList.Ab != null && 
-                WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange) < 
+            if (forwardList.Ab != null && forwardList.Ab.abId != WebServiceConstants.MessengerAddressBookId)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Getting non-default addressbook: \r\nId: " +
+                    forwardList.Ab.abId + "\r\nName: " + forwardList.Ab.abInfo.name +
+                    "\r\nType: " + forwardList.Ab.abInfo.AddressBookType + "\r\nMembers:");
+
+                string id = forwardList.Ab.abId + "@" + CircleString.DefaultHostDomain;
+                foreach (ContactType contact in forwardList.Contacts)
+                {
+                    if (NSMessageHandler.Owner != null && contact.contactInfo.CID == NSMessageHandler.Owner.CID)
+                    {
+                        if (NSMessageHandler.CircleList[id] != null)
+                        {
+                            //This is the return of CircleIdAlert, correct the contactId.
+                            NSMessageHandler.CircleList[id].Guid = new Guid(contact.contactId);
+                            CircleResults[id].CircleMember.contactId = contact.contactId;
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle Id changed, new Id is: " + contact.contactId);
+                        }
+                    }
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, " DisplayName: " + contact.contactInfo.displayName + " Type: " + contact.contactInfo.contactType);
+                }
+            }
+
+            if (forwardList.Ab != null &&
+                WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange) <
                 WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange)
                 && forwardList.Ab.abId == WebServiceConstants.MessengerAddressBookId)
             {
@@ -778,63 +815,85 @@ namespace MSNPSharp.IO
 
             #region Circle changed
 
-            if (null != forwardList.CircleResult.Circles)
+            if (forwardList.CircleResult != null)
             {
-                List<ContactType> circleContactsAdded = new List<ContactType>(0);
-                List<CircleInverseInfoType> circleAdded = new List<CircleInverseInfoType>(0);
-
-                if (forwardList.Contacts != null)
+                if (null != forwardList.CircleResult.Circles)
                 {
-                    foreach (ContactType contactType in forwardList.Contacts)
+                    List<ContactType> circleContactsAdded = new List<ContactType>(0);
+                    List<CircleInverseInfoType> circleAdded = new List<CircleInverseInfoType>(0);
+
+                    if (forwardList.Contacts != null)
                     {
-                        if (contactType.CreatedBy == "96" &&
-                            contactType.contactInfo.contactType == MessengerContactType.Circle &&
-                            contactType.fDeleted == false)
+                        foreach (ContactType contactType in forwardList.Contacts)
                         {
-                            circleContactsAdded.Add(contactType);
+                            if (contactType.CreatedBy == "96" &&
+                                contactType.contactInfo.contactType == MessengerContactType.Circle &&
+                                contactType.fDeleted == false)
+                            {
+                                circleContactsAdded.Add(contactType);
+                            }
                         }
                     }
-                }
 
-                foreach (CircleInverseInfoType circle in forwardList.CircleResult.Circles)
-                {
-                    if (circle.Deleted)
+                    foreach (CircleInverseInfoType circle in forwardList.CircleResult.Circles)
                     {
-                        CircleResults.Remove(circle.Content.Handle.Id.ToLowerInvariant() + "@" + circle.Content.Info.HostedDomain.ToLowerInvariant());
-                        NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.Content.Handle.Id), circle.Content.Info.HostedDomain.ToLowerInvariant());
-                    }
-                    else
-                    {
-                        circleAdded.Add(circle);
-                    }
-                }
-
-                if (circleContactsAdded.Count == circleAdded.Count)
-                {
-                    for (int i = 0; i < circleAdded.Count; i++)
-                    {
-                        CircleInverseInfoType circleinfo = circleAdded[i];
-                        ContactType contactType = circleContactsAdded[i];
-
-                        string circleId = circleinfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleinfo.Content.Info.HostedDomain.ToLowerInvariant();
-
-                        bool newadded = true;
-                        string memberRole = MemberRole.Allow;
-
-                        if (CircleResults.ContainsKey(circleId))
+                        if (circle.Deleted)
                         {
-                            newadded = false;
-                            memberRole = CircleResults[circleId].MemberRole;
+                            CircleResults.Remove(circle.Content.Handle.Id.ToLowerInvariant() + "@" + circle.Content.Info.HostedDomain.ToLowerInvariant());
+                            NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.Content.Handle.Id), circle.Content.Info.HostedDomain.ToLowerInvariant());
                         }
-
-                        CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
-                        CircleResults[circleId].MemberRole = memberRole;
-
-                        if (newadded)
+                        else
                         {
-                            Circle newcircle = CombineCircle(contactType, circleinfo);
+                            circleAdded.Add(circle);
+                        }
+                    }
 
-                            NSMessageHandler.CircleList.AddCircle(newcircle);
+                    if (circleContactsAdded.Count == circleAdded.Count)
+                    {
+                        for (int i = 0; i < circleAdded.Count; i++)
+                        {
+                            CircleInverseInfoType circleinfo = circleAdded[i];
+                            ContactType contactType = circleContactsAdded[i];
+
+                            string circleId = circleinfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleinfo.Content.Info.HostedDomain.ToLowerInvariant();
+
+                            bool newadded = true;
+                            string memberRole = MemberRole.Allow;
+
+                            if (CircleResults.ContainsKey(circleId))
+                            {
+                                if (CircleResults[circleId].CircleResultInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role
+                                    == circleinfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role)
+                                {
+                                    newadded = false;
+                                    memberRole = CircleResults[circleId].MemberRole;
+                                }
+                                else
+                                {
+                                    //This will prevent 933 server error.
+                                    //this case means the owner left a circle using another client, then the remote client reinvit the owner.
+                                    CircleResults.Remove(circleId);
+                                    NSMessageHandler.CircleList.RemoveCircle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.HostedDomain);
+                                }
+                            }
+
+                            CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
+                            CircleResults[circleId].MemberRole = memberRole;
+
+                            if (newadded)
+                            {
+                                Circle newcircle = CombineCircle(contactType, circleinfo);
+                                CircleInviter initator = CombineCircleInviter(contactType);
+
+                                if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
+                                {
+                                    NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArg(newcircle, initator));
+                                }
+                                else
+                                {
+                                    NSMessageHandler.CircleList.AddCircle(newcircle);
+                                }
+                            }
                         }
                     }
                 }
@@ -916,14 +975,33 @@ namespace MSNPSharp.IO
             return xmlcl.Merge(forwardList);
         }
 
+        private CircleInviter CombineCircleInviter(ContactType contact)
+        {
+            CircleInviter initator = null;
+
+            if (contact.contactInfo.NetworkInfoList.Length > 0)
+            {
+                foreach (NetworkInfoType networkInfo in contact.contactInfo.NetworkInfoList)
+                {
+                    if (networkInfo.DomainId == 1)
+                    {
+                        initator = new CircleInviter(networkInfo.InviterEmail, networkInfo.InviterName, networkInfo.InviterMessage);
+                    }
+                }
+            }
+
+            return initator;
+        }
+
+
         private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
         {
             Circle circle = new Circle(
-                new Guid(circleinfo.Content.Handle.Id), 
+                new Guid(circleinfo.Content.Handle.Id),
                 new Guid(contact.contactId),
-                circleinfo.Content.Info.HostedDomain, 
+                circleinfo.Content.Info.HostedDomain,
                 circleinfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role,
-                circleinfo.Content.Info.DisplayName, 
+                circleinfo.Content.Info.DisplayName,
                 NSMessageHandler);
 
 
@@ -1071,10 +1149,7 @@ namespace MSNPSharp.IO
                     {
                         foreach (Annotation anno in cit.annotations)
                         {
-                            string name = anno.Name;
-                            string value = anno.Value;
-                            name = name.Substring(name.LastIndexOf(".") + 1).ToLower(CultureInfo.InvariantCulture);
-                            MyProperties[name] = value;
+                            MyProperties[anno.Name] = anno.Value;
                         }
                     }
 
@@ -1088,23 +1163,23 @@ namespace MSNPSharp.IO
         /// </summary>
         public void InitializeMyProperties()
         {
-            if (!MyProperties.ContainsKey("mbea"))
-                MyProperties["mbea"] = "0";
+            if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_MBEA))
+                MyProperties[AnnotationNames.MSN_IM_MBEA] = "0";
 
-            if (!MyProperties.ContainsKey("gtc"))
-                MyProperties["gtc"] = "1";
+            if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_GTC))
+                MyProperties[AnnotationNames.MSN_IM_GTC] = "1";
 
-            if (!MyProperties.ContainsKey("blp"))
-                MyProperties["blp"] = "0";
+            if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_BLP))
+                MyProperties[AnnotationNames.MSN_IM_BLP] = "0";
 
-            if (!MyProperties.ContainsKey("mpop"))
-                MyProperties["mpop"] = "0";
+            if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_MPOP))
+                MyProperties[AnnotationNames.MSN_IM_MPOP] = "0";
 
-            if (!MyProperties.ContainsKey("roamliveproperties"))
-                MyProperties["roamliveproperties"] = "1";
+            if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_RoamLiveProperties))
+                MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] = "1";
 
-            if (!MyProperties.ContainsKey("lastchanged"))
-                MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+            if (!MyProperties.ContainsKey(AnnotationNames.Live_Profile_Expression_LastChanged))
+                MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
         }
 
         #endregion

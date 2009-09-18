@@ -203,7 +203,7 @@ namespace MSNPSharp.Core
                             case "GET": // GET
                             case "PUT": // PUT
                             case "NFY": // NFY
-                            case "SDG": // SDG
+                            case "SDG": // SDG circle messaging
                             case "IPG": // IPG pager command 
                             case "UBX": // UBX personal message
                             case "UBM": // UBM Yahoo messenger message
