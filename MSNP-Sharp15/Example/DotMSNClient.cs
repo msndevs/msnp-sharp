@@ -62,6 +62,12 @@ namespace MSNPSharpClient
 
 #if DEBUG
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
+
+            //How to save your personal addressbook.
+            //If you want your addressbook have a better reading/writting performance, use MclSerialization.None
+            //In this case, your addressbook will be save as a xml file, everyone can read it.
+            //If you want your addressbook has a smaller size, use MclSerialization.Compression.
+            //In this case, your addressbook file will be save in gzip format, none can read it, but the performance is not so good.
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.None;
 #elif TRACE
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Info;
@@ -106,6 +112,7 @@ namespace MSNPSharpClient
 
 
             // Handle Service Operation Errors
+            //In most cases, these error are not so important.
             messenger.ContactService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
@@ -262,14 +269,14 @@ namespace MSNPSharpClient
 
         void Nameserver_ContactOnline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOfline), sender, e);
+            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), sender, e);
         }
         void Nameserver_ContactOffline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOfline), sender, e);
+            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), sender, e);
         }
 
-        void ContactOnlineOfline(object sender, ContactEventArgs e)
+        void ContactOnlineOffline(object sender, ContactEventArgs e)
         {
             if (toolStripSortByStatus.Checked)
                 SortByStatus();

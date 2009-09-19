@@ -137,6 +137,9 @@ namespace MSNPSharp
         private string nickName;
         private string message;
 
+        /// <summary>
+        /// The date and time you receive this message.
+        /// </summary>
         public DateTime ReceivedTime
         {
             get
