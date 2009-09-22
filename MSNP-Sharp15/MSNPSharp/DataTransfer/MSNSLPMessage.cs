@@ -60,7 +60,7 @@ namespace MSNPSharp.DataTransfer
             CallId = Guid.NewGuid();
             MaxForwards = 0;
             ContentType = "text/unknown";
-            mimeHeaders["Content-Length"] = "0";
+            mimeHeaders[MimeHeaderStrings.Content_Length] = "0";
         }
 
         protected SLPMessage(byte[] data)
@@ -93,11 +93,11 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return int.Parse(mimeHeaders["Max-Forwards"], System.Globalization.CultureInfo.InvariantCulture);
+                return int.Parse(mimeHeaders[MimeHeaderStrings.Max_Forwards], System.Globalization.CultureInfo.InvariantCulture);
             }
             set
             {
-                mimeHeaders["Max-Forwards"] = value.ToString();
+                mimeHeaders[MimeHeaderStrings.Max_Forwards] = value.ToString();
             }
         }
 
@@ -105,7 +105,7 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return mimeHeaders["To"];
+                return mimeHeaders[MimeHeaderStrings.To];
             }
         }
 
@@ -113,7 +113,7 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return mimeHeaders["From"];
+                return mimeHeaders[MimeHeaderStrings.From];
             }
         }
 
@@ -128,7 +128,7 @@ namespace MSNPSharp.DataTransfer
             }
             internal set
             {
-                mimeHeaders["From"] = String.Format("<msnmsgr:{0}>", value);
+                mimeHeaders[MimeHeaderStrings.From] = String.Format("<msnmsgr:{0}>", value);
             }
         }
 
@@ -143,7 +143,7 @@ namespace MSNPSharp.DataTransfer
             }
             internal set
             {
-                mimeHeaders["To"] = String.Format("<msnmsgr:{0}>", value);
+                mimeHeaders[MimeHeaderStrings.To] = String.Format("<msnmsgr:{0}>", value);
             }
         }
 
@@ -205,11 +205,11 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return mimeHeaders["Content-Type"];
+                return mimeHeaders[MimeHeaderStrings.Content_Type];
             }
             set
             {
-                mimeHeaders["Content-Type"] = value;
+                mimeHeaders[MimeHeaderStrings.Content_Type] = value;
             }
         }
 
@@ -235,7 +235,7 @@ namespace MSNPSharp.DataTransfer
 
             // Update the Content-Length header, +1 the additional 0x00
             // mimeBodylength + \r\n\0
-            mimeHeaders["Content-Length"] = (body.Length + 3).ToString();
+            mimeHeaders[MimeHeaderStrings.Content_Length] = (body.Length + 3).ToString();
 
             StringBuilder builder = new StringBuilder(512);
             builder.Append(StartLine.Trim());

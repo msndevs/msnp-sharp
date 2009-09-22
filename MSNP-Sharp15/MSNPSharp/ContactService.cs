@@ -128,7 +128,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired after a remote user invite us to join a circle.
         /// </summary>
-        public event EventHandler<JoinCircleInvitationEventArg> JoinCircleInvitationReceived;
+        public event EventHandler<JoinCircleInvitationEventArgs> JoinCircleInvitationReceived;
 
         /// <summary>
         /// Fired after the owner join a circle successfully.
@@ -198,7 +198,7 @@ namespace MSNPSharp
         /// Fires the <see cref="JoinCircleInvitationReceived"/> event.
         /// </summary>
         /// <param name="e"></param>
-        private void OnJoinCircleInvitationReceived(JoinCircleInvitationEventArg e)
+        private void OnJoinCircleInvitationReceived(JoinCircleInvitationEventArgs e)
         {
             if (e.Inviter != null)
             {
@@ -2346,7 +2346,7 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, rejectInviteObject, wlRequest));
         }
 
-        internal void FireJoinCircleEvent(JoinCircleInvitationEventArg arg)
+        internal void FireJoinCircleEvent(JoinCircleInvitationEventArgs arg)
         {
             if (arg == null)
                 return;

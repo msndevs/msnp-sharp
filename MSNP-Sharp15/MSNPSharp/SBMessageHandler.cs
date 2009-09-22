@@ -548,8 +548,8 @@ namespace MSNPSharp
             sbMessage.Acknowledgement = "U";
 
             MSGMessage msgMessage = new MSGMessage();
-            msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail + "\r\n";
+            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
+            msgMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.Owner.Mail + "\r\n";
 
 
             sbMessage.InnerMessage = msgMessage;
@@ -566,7 +566,7 @@ namespace MSNPSharp
             SBMessage sbMessage = new SBMessage();
 
             MSGMessage msgMessage = new MSGMessage();
-            msgMessage.MimeHeader["Content-Type"] = "text/x-msnmsgr-datacast\r\n\r\nID: 1\r\n\r\n\r\n";
+            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast\r\n\r\nID: 1\r\n\r\n\r\n";
             sbMessage.InnerMessage = msgMessage;
 
             // send it over the network
@@ -581,7 +581,7 @@ namespace MSNPSharp
             SBMessage sbMessage = new SBMessage();
 
             MSGMessage msgMessage = new MSGMessage();
-            msgMessage.MimeHeader["Content-Type"] = "text/x-keepalive\r\n";
+            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-keepalive\r\n";
 
             sbMessage.InnerMessage = msgMessage;
 
@@ -1054,8 +1054,8 @@ namespace MSNPSharp
                     throw new Exception("Multi-packetmessage with damaged headers received");
             }
 
-            if (sbMSGMessage.MimeHeader.ContainsKey("Content-Type"))
-                switch (sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture))
+            if (sbMSGMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
+                switch (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "text/x-msmsgscontrol":
                         // make sure we don't parse the rest of the message in the next loop											
@@ -1081,7 +1081,7 @@ namespace MSNPSharp
                         break;
 
                     default:
-                        if (sbMSGMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
+                        if (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                         {
                             // a normal message has been sent, notify the client programmer
                             TextMessage msg = new TextMessage();

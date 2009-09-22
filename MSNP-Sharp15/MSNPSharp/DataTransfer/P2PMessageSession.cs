@@ -383,7 +383,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            msgWrapper.MimeHeader["Content-Type"] = "application/x-msnmsgrp2p";
+            msgWrapper.MimeHeader[MimeHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
             msgWrapper.InnerMessage = networkMessage;
 
             SBMessage sbMessageWrapper = new SBMessage();

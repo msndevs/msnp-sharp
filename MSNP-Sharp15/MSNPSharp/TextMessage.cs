@@ -200,8 +200,14 @@ namespace MSNPSharp
         {
             base.CreateFromMessage(containerMessage);
 
+            if (ParentMessage == null)
+                return;
+
+            // we expect a MSGMessage object
+            MSGMessage MSGMessage = (MSGMessage)ParentMessage;
+
             // parse the header from the parent message
-            ParseHeader();
+            ParseHeader(MSGMessage.MimeHeader);
         }
 
         /// <summary>
@@ -223,11 +229,11 @@ namespace MSNPSharp
             if (ParentMessage != null)
             {
                 MSGMessage msgMessage = (MSGMessage)ParentMessage;
-                msgMessage.MimeHeader["Content-Type"] = "text/plain; charset=UTF-8";
-                msgMessage.MimeHeader["X-MMS-IM-Format"] = GetStyleString();
+                msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
+                msgMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = GetStyleString();
 
                 if (customNickname != string.Empty)
-                    msgMessage.MimeHeader["P4-Context"] = customNickname;
+                    msgMessage.MimeHeader[MimeHeaderStrings.P4_Context] = customNickname;
             }
         }
 
@@ -273,27 +279,55 @@ namespace MSNPSharp
         /// <summary>
         /// Parses the raw header to set the member variables
         /// </summary>
-        protected void ParseHeader()
+        internal void ParseHeader(StrDictionary mimeHeader)
         {
             // example header: "X-MMS-IM-Format: FN=Microsoft%20Sans%20Serif; EF=I; CO=000000; CS=0; PF=22"
-            if (ParentMessage == null)
-                return;
-
-            // we expect a MSGMessage object
-            MSGMessage MSGMessage = (MSGMessage)ParentMessage;
-
-            if (MSGMessage.MimeHeader.ContainsKey("X-MMS-IM-Format"))
+            if (mimeHeader.ContainsKey(MimeHeaderStrings.X_MMS_IM_Format))
             {
-                Match match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "FN=(?<Font>.+?);", RegexOptions.Multiline);
-                if (match.Success)
+                string[] fields = mimeHeader[MimeHeaderStrings.X_MMS_IM_Format].Split(';');
+                string FNValue = string.Empty;
+                string EFValue = string.Empty;
+                string CSValue = string.Empty;
+                string COValue = string.Empty;
+                string PFValue = string.Empty;
+
+                foreach (string field in fields)
                 {
-                    Font = HttpUtility.UrlDecode(match.Groups["Font"].ToString());
+                    if (field.Trim().IndexOf("FN=") == 0)
+                    {
+                        FNValue = field.Split('=')[1];
+                    }
+
+                    if (field.Trim().IndexOf("EF=") == 0)
+                    {
+                        EFValue = field.Split('=')[1];
+                    }
+
+                    if (field.Trim().IndexOf("CS=") == 0)
+                    {
+                        CSValue = field.Split('=')[1];
+                    }
+
+                    if (field.Trim().IndexOf("CO=") == 0)
+                    {
+                        COValue = field.Split('=')[1];
+                    }
+
+                    if (field.Trim().IndexOf("PF=") == 0)
+                    {
+                        PFValue = field.Split('=')[1];
+                    }
                 }
-                match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "EF=(?<Decoration>\\S*);", RegexOptions.Multiline);
-                if (match.Success)
+
+                if (FNValue != string.Empty)
+                {
+                    Font = HttpUtility.UrlDecode(FNValue);
+                }
+
+                if (EFValue != string.Empty)
                 {
                     Decorations = TextDecorations.None;
-                    string dec = match.Groups["Decoration"].ToString();
+                    string dec = EFValue;
                     if (dec.IndexOf('I') >= 0)
                         Decorations |= TextDecorations.Italic;
                     if (dec.IndexOf('B') >= 0)
@@ -303,14 +337,14 @@ namespace MSNPSharp
                     if (dec.IndexOf('S') >= 0)
                         Decorations |= TextDecorations.Strike;
                 }
-                match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "CO=(?<Color>\\S+);", RegexOptions.Multiline);
-                if (match.Success)
+
+                if (COValue != string.Empty)
                 {
-                    string color = match.Groups["Color"].ToString();
+                    string color = COValue;
 
                     if (color.Length < 6)
                     {
-                        for (int i = 0; i < 6 - color.Length; i++)
+                        for (int i = 0; i < 6 - COValue.Length; i++)
                         {
                             color = "0" + color;
                         }
@@ -329,20 +363,20 @@ namespace MSNPSharp
                     {
                     }
                 }
-                match = Regex.Match(MSGMessage.MimeHeader["X-MMS-IM-Format"], "CS=(?<Charset>\\d+);", RegexOptions.Multiline);
-                if (match.Success)
+
+                if (CSValue != string.Empty)
                 {
                     try
                     {
-                        CharSet = (MessageCharSet)int.Parse(match.Groups["Charset"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                        CharSet = (MessageCharSet)int.Parse(CSValue, System.Globalization.CultureInfo.InvariantCulture);
                     }
                     catch (Exception)
                     {
                     }
                 }
 
-                if (MSGMessage.MimeHeader.ContainsKey("P4-Context"))
-                    this.customNickname = MSGMessage.MimeHeader["P4-Context"];
+                if (mimeHeader.ContainsKey(MimeHeaderStrings.P4_Context))
+                    this.customNickname = mimeHeader[MimeHeaderStrings.P4_Context];
             }
         }
 

@@ -421,4 +421,108 @@ namespace MSNPSharp
             this.msnError = msnError;
         }
     }
+
+    /// <summary>
+    /// Used as event argument when a <see cref="Circle"/> is affected.
+    /// </summary>
+    [Serializable()]
+    public class CircleEventArgs : EventArgs
+    {
+        private Circle circle = null;
+        private Contact remoteMember = null;
+
+        /// <summary>
+        /// The affected Contact.
+        /// </summary>
+        public Contact RemoteMember
+        {
+            get { return remoteMember; }
+        }
+
+        /// <summary>
+        /// The affected contact group
+        /// </summary>
+        public Circle Circle
+        {
+            get
+            {
+                return circle;
+            }
+        }
+
+        protected CircleEventArgs()
+        {
+        }
+
+        /// <summary>
+        /// Constructor, mostly used internal by the library.
+        /// </summary>
+        /// <param name="circle"></param>
+        internal CircleEventArgs(Circle circle)
+        {
+            this.circle = circle;
+        }
+
+        /// <summary>
+        /// Constructor, mostly used internal by the library.
+        /// </summary>
+        /// <param name="circle"></param>
+        /// <param name="remote">The affected Contact.</param>
+        internal CircleEventArgs(Circle circle, Contact remote)
+        {
+            this.circle = circle;
+            remoteMember = remote;
+        }
+    }
+
+    /// <summary>
+    /// Event argument used for ContactService.JoinCircleInvitationReceived event.
+    /// </summary>
+    [Serializable()]
+    public class JoinCircleInvitationEventArgs : CircleEventArgs
+    {
+        private CircleInviter inviter = null;
+
+        /// <summary>
+        /// <see cref="Contact"/> who send this invitation.
+        /// </summary>
+        public CircleInviter Inviter
+        {
+            get { return inviter; }
+        }
+
+        protected JoinCircleInvitationEventArgs()
+        {
+        }
+
+        internal JoinCircleInvitationEventArgs(Circle circle, CircleInviter invitor)
+            : base(circle)
+        {
+            this.inviter = invitor;
+        }
+    }
+
+    /// <summary>
+    /// Event argument used for receiving text messages from a circle.
+    /// </summary>
+    [Serializable()]
+    public class CircleTextMessageEventArgs : TextMessageEventArgs
+    {
+        public CircleTextMessageEventArgs(TextMessage textMessage, Circle sender)
+            : base(textMessage, sender)
+        {
+
+        }
+
+        /// <summary>
+        /// The circle message send from.
+        /// </summary>
+        public new Circle Sender
+        {
+            get
+            {
+                return base.Sender as Circle;
+            }
+        }
+    }
 };

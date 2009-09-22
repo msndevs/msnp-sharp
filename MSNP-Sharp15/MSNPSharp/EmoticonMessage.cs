@@ -141,9 +141,9 @@ namespace MSNPSharp
             {
                 MSGMessage msgMessage = (MSGMessage)ParentMessage;
                 if (emoticontype == EmoticonType.StaticEmoticon)
-                    msgMessage.MimeHeader["Content-Type"] = "text/x-mms-emoticon";
+                    msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-mms-emoticon";
                 else if (emoticontype == EmoticonType.AnimEmoticon)
-                    msgMessage.MimeHeader["Content-Type"] = "text-/x-mms-animemoticon";
+                    msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text-/x-mms-animemoticon";
             }
         }
 

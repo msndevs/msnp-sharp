@@ -37,59 +37,6 @@ using System.Text;
 namespace MSNPSharp
 {
     /// <summary>
-    /// Used as event argument when a <see cref="Circle"/> is affected.
-    /// </summary>
-    [Serializable()]
-    public class CircleEventArgs : EventArgs
-    {
-        private Circle circle = null;
-        private Contact remoteMember = null;
-
-        /// <summary>
-        /// The affected Contact.
-        /// </summary>
-        public Contact RemoteMember
-        {
-            get { return remoteMember; }
-        }
-
-        /// <summary>
-        /// The affected contact group
-        /// </summary>
-        public Circle Circle
-        {
-            get
-            {
-                return circle;
-            }
-        }
-
-        protected CircleEventArgs()
-        {
-        }
-
-        /// <summary>
-        /// Constructor, mostly used internal by the library.
-        /// </summary>
-        /// <param name="circle"></param>
-        internal CircleEventArgs(Circle circle)
-        {
-            this.circle = circle;
-        }
-
-        /// <summary>
-        /// Constructor, mostly used internal by the library.
-        /// </summary>
-        /// <param name="circle"></param>
-        /// <param name="remote">The affected Contact.</param>
-        internal CircleEventArgs(Circle circle, Contact remote)
-        {
-            this.circle = circle;
-            remoteMember = remote;
-        }
-    }
-
-    /// <summary>
     /// The <see cref="Contact"/> who send a join contact invitation.
     /// </summary>
     [Serializable()]
@@ -118,33 +65,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Event argument used for ContactService.JoinCircleInvitationReceived event.
-    /// </summary>
-    [Serializable()]
-    public class JoinCircleInvitationEventArg : CircleEventArgs
-    {
-        private CircleInviter inviter = null;
-
-        /// <summary>
-        /// <see cref="Contact"/> who send this invitation.
-        /// </summary>
-        public CircleInviter Inviter
-        {
-            get { return inviter; }
-        }
-
-        protected JoinCircleInvitationEventArg()
-        {
-        }
-
-        internal JoinCircleInvitationEventArg(Circle circle, CircleInviter invitor)
-            :base(circle)
-        {
-            this.inviter = invitor;
-        }
-    }
-
-    /// <summary>
     /// A new type of group introduces with WLM2009.
     /// </summary>
     [Serializable()]
@@ -152,7 +72,7 @@ namespace MSNPSharp
     {
         private Guid addressBookId = Guid.Empty;
         private string creatorEmail = string.Empty;
-        private List<Contact> members = new List<Contact>(0);
+        private CircleMemberList members = new CircleMemberList();
         private string hostDomain = CircleString.DefaultHostDomain;
         private string displayName = string.Empty;
         private string role = string.Empty;
@@ -171,7 +91,7 @@ namespace MSNPSharp
             get { return hostDomain; }
         }
 
-        public List<Contact> Members
+        public CircleMemberList Members
         {
             get 
             {
@@ -265,13 +185,17 @@ namespace MSNPSharp
             displayName = newName;
         }
 
+        /// <summary>
+        /// Add or update member to memberlist.
+        /// </summary>
+        /// <param name="member"></param>
         internal void AddMember(CircleContactMember member)
         {
             lock (members)
             {
                 if (members.Contains(member))
                 {
-                    members[members.IndexOf(member)] = member;
+                    members[member.FullAccount] = member;
                 }
                 else
                 {
@@ -340,6 +264,17 @@ namespace MSNPSharp
         public string Via
         {
             get { return via; }
+        }
+
+        /// <summary>
+        /// The identifier of contact.
+        /// </summary>
+        public string FullAccount
+        {
+            get
+            {
+                return (((int)MemberType).ToString() + ":" + Mail + ";" + Via).ToLowerInvariant();
+            }
         }
 
         /// <summary>
@@ -414,12 +349,12 @@ namespace MSNPSharp
 
         public override int GetHashCode()
         {
-            return (Mail + Via).GetHashCode();
+            return FullAccount.GetHashCode();
         }
 
         public override string ToString()
         {
-            return ((int)MemberType).ToString() + ":" + Mail + ";" + Via;
+            return FullAccount;
         }
 
         #region Protected
