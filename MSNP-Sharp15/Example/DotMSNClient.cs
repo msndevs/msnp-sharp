@@ -96,7 +96,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
             messenger.Nameserver.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
             messenger.Nameserver.ContactService.JoinedCircle += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
-            messenger.Nameserver.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArg>(ContactService_JoinCircleInvitationReceived);
+            messenger.Nameserver.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
             messenger.Nameserver.ContactService.CircleLeft += new EventHandler<CircleEventArgs>(ContactService_CircleLeft);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
@@ -141,7 +141,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactService.LeaveCircle(e.Circle); //Demostrate how to leave a circle.
         }
 
-        void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArg e)
+        void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArgs e)
         {
             messenger.Nameserver.ContactService.AcceptCircleInvitation(e.Circle);
         }
