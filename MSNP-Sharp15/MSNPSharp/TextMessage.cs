@@ -241,7 +241,7 @@ namespace MSNPSharp
         /// Gets the style string specifying charset, font, etc. This is used in the MIME header send with a switchboard message.
         /// </summary>
         /// <returns></returns>
-        protected string GetStyleString()
+        internal string GetStyleString()
         {
             StringBuilder builder = new StringBuilder();
             builder.Append("FN=").Append(MSNHttpUtility.UrlEncode(Font.ToString()));

@@ -1006,9 +1006,9 @@ namespace MSNPSharp
     public static class CircleString
     {
         /// <summary>
-        /// The basic pattern of PUT command.
+        /// The basic pattern of messages send and receive by circles.
         /// </summary>
-        public const string PUTCommandScheme = "{routing scheme}" +
+        public const string CircleMessageScheme = "{routing scheme}" +
             "\r\n" +
             "{reliability scheme}" +
             "\r\n" +
@@ -1026,8 +1026,34 @@ namespace MSNPSharp
                                                      "Uri: /circle\r\n" +
                                                      "Content-Type: application/circles+xml\r\n" +
                                                      "Content-Length: {length}\r\n" +
-                                                "\r\n" +
-                                                "{xml}";
+                                                     "\r\n" +
+                                                     "{xml}";
+
+        public const string TypingMessageScheme = "Messaging: 1.0\r\n" +
+                                                    "Content-Length: 2\r\n" +
+                                                    "Content-Type: text/x-msmsgscontrol\r\n" +
+                                                    "Content-Transfer-Encoding: 7bit\r\n" +
+                                                    "Message-Type: Control\r\n" +
+                                                    "Message-Subtype: Typing\r\n" +
+                                                    "MIME-Version: 1.0\r\n" +
+                                                    "TypingUser: {ownermail}\r\n" +
+                                                    "\r\n\r\n";
+
+        public const string TextMessageScheme = "Messaging: 1.0\r\n" +
+                                                    "Content-Length: {length}\r\n" +
+                                                    "Content-Type: Text/plain; charset=UTF-8\r\n" +
+                                                    "Content-Transfer-Encoding: 7bit\r\n" +
+                                                    "Message-Type: Text\r\n" +
+                                                    "MIME-Version: 1.0\r\n" +
+                                                    "{text message}";
+
+        public const string NudgeMessageScheme = "Messaging: 1.0\r\n" +
+                                                    "Content-Length: 9\r\n" +
+                                                    "Content-Type: Text/plain; charset=UTF-8\r\n" +
+                                                    "Content-Transfer-Encoding: 7bit\r\n" +
+                                                    "Message-Type: Nudge\r\n" +
+                                                    "MIME-Version: 1.0\r\n" +
+                                                    "\r\nID: 1\r\n\r\n";
 
         public const string PUTPayloadXMLScheme = "<circle><roster><id>IM</id><user><id>1:{ownermail}</id></user></roster></circle>";
 
@@ -1041,6 +1067,7 @@ namespace MSNPSharp
         public const string RoutingSchemeReplacementTag = "{routing scheme}";
         public const string ReliabilitySchemeReplacementTag = "{reliability scheme}";
         public const string MessageSchemeReplacementTag = "{message scheme}";
+        public const string TextMessageContentReplacementTag = "{text message}";
 
         /// <summary>
         /// The default windows live circle host domain: live.com.
@@ -1208,6 +1235,7 @@ namespace MSNPSharp
         /// The value is: Max-Forwards
         /// </summary>
         public const string Max_Forwards = "Max-Forwards";
+        public const string Uri = "Uri";
 
     }
 

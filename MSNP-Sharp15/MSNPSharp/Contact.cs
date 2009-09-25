@@ -242,7 +242,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// MachineGuid in PersonalMessage.
+        /// EndPoint ID
         /// </summary>
         public Guid MachineGuid
         {

@@ -823,7 +823,7 @@ namespace MSNPSharp
             messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
             messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
 
-            string putCommandString = CircleString.PUTCommandScheme;
+            string putCommandString = CircleString.CircleMessageScheme;
             putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
             putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
             putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
@@ -2354,6 +2354,14 @@ namespace MSNPSharp
         }
 
 
+        /// <summary>
+        /// Called when a NFY command has been received.
+        /// <remarks>Indicates that a circle operation occured.</remarks>
+        /// <code>
+        /// NFY [TransactionID] [Operation: PUT|DEL] [Payload Length]\r\n[Payload Data]
+        /// </code>
+        /// </summary>
+        /// <param name="message"></param>
         protected virtual void OnNFYReceived(NSMessage message)
         {
             #region NFY PUT
@@ -2435,8 +2443,20 @@ namespace MSNPSharp
             }
 
             #endregion
+
+            #region NFY DEL
+
+            #endregion
         }
 
+        /// <summary>
+        /// Called when a SDG command has been received.
+        /// <remarks>Indicates that someone send us a message from a circle group.</remarks>
+        /// <code>
+        /// SDG 0 [Payload Length]\r\n[Payload Data]
+        /// </code>
+        /// </summary>
+        /// <param name="message"></param>
         protected virtual void OnSDGReceived(NSMessage message)
         {
             /*** typing message ***
@@ -2494,15 +2514,24 @@ namespace MSNPSharp
 
                     string[] typeMail = mimeDic[MimeHeaderStrings.To].Value.Split(':');
                     if (typeMail.Length == 0)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
                         return;
+                    }
 
                     string[] guidDomain = typeMail[1].Split('@');
                     if (guidDomain.Length == 0)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle guid and host domain in id: " + typeMail[1]);
                         return;
+                    }
 
                     Circle circle = CircleList[typeMail[1]];
                     if (circle == null)
-                        return;  //Error.
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle " + typeMail[1] + " in your circle list.");
+                        return;
+                    }
 
                     // 1:username@hotmail.com;via=9:guid@live.com
                     string fullAccount = mimeDic[MimeHeaderStrings.From].Value + ";via=" + mimeDic[MimeHeaderStrings.To].Value;
@@ -2510,7 +2539,10 @@ namespace MSNPSharp
 
                     CircleContactMember member = circle.Members[fullAccount];
                     if (member == null)
-                        return;  //Error.
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
+                        return;
+                    }
 
                     CircleEventArgs arg = new CircleEventArgs(circle, member);
 
