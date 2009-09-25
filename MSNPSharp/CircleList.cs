@@ -40,21 +40,34 @@ namespace MSNPSharp
 {
     public class CircleMemberList : IEnumerable
     {
-        private List<CircleContactMember> list = new List<CircleContactMember>();
+        private Dictionary<string, CircleContactMember> list = new Dictionary<string, CircleContactMember>();
 
         [NonSerialized]
         private object syncRoot;
 
-        public CircleContactMember this[string via]
+        public CircleContactMember this[string fullaccount]  //type:account;via=circletype:guid@hostdomain
         {
             get
             {
-                foreach (CircleContactMember member in list)
+                lock (SyncRoot)
                 {
-                    if (member.Via.ToLowerInvariant() == via.ToLowerInvariant())
-                        return member;
+                    if (list.ContainsKey(fullaccount))
+                        return list[fullaccount];
+                    return null;
                 }
-                return null;
+            }
+
+            set
+            {
+                if (Contains(fullaccount))
+                {
+                    lock (SyncRoot)
+                        list[fullaccount] = value;
+                }
+                else
+                {
+                    Add(value);
+                }
             }
         }
 
@@ -73,35 +86,44 @@ namespace MSNPSharp
 
         public IEnumerator GetEnumerator()
         {
-            return list.GetEnumerator();
+            return list.Values.GetEnumerator();
         }
 
         public bool Add(CircleContactMember member)
         {
+            if (Contains(member))
+                return false;
+
             lock (SyncRoot)
             {
-                if (this[member.Via] == null)
-                {
-                    list.Add(member);
-                    return true;
-                }
-
-                return false;
+                list.Add(member.FullAccount, member);
+                return true;
             }
         }
 
         public bool Remove(CircleContactMember member)
         {
+            if (!Contains(member))
+                return false;
+
             lock (SyncRoot)
             {
-                if (this[member.Via] == null)
-                {
-                    return false;
-                }
-
-                list.Remove(member);
+                list.Remove(member.FullAccount);
                 return true;
             }
+        }
+
+        public bool Contains(CircleContactMember member)
+        {
+            lock (SyncRoot)
+            {
+                return list.ContainsKey(member.FullAccount);
+            }
+        }
+
+        public bool Contains(string fullaccount)
+        {
+            return this[fullaccount] == null;
         }
 
         public void Clear()

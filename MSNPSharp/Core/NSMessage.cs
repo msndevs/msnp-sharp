@@ -37,7 +37,6 @@ using System.Collections;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     [Serializable()]
     public class NSMessage : MSNMessage, ICloneable

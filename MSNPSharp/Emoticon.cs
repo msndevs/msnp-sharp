@@ -36,7 +36,6 @@ using System.IO;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     [Serializable()]
     public class Emoticon : DisplayImage

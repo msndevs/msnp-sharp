@@ -32,15 +32,15 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Collections;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Collections;
 
     public class MSNObjectDataTransferCompletedEventArgs : EventArgs
     {

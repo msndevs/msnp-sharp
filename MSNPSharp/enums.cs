@@ -35,7 +35,6 @@ using System;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Msn protocol speaking
@@ -44,8 +43,6 @@ namespace MSNPSharp
     {
         MSNP18 = 18
     }
-
-
 
     /// <summary>
     /// Specifies the type of proxy servers that can be used
@@ -1159,6 +1156,59 @@ namespace MSNPSharp
         public const string AssistantAdmin = "AssistantAdmin";
         public const string Member = "Member";
         public const string StatePendingOutbound = "StatePendingOutbound";
+    }
+
+    /// <summary>
+    /// Mime header key constants.
+    /// </summary>
+    public static class MimeHeaderStrings
+    {
+        public const string From = "From";
+        public const string To = "To";
+        public const string Routing = "Routing";
+        public const string Reliability = "Reliability";
+        public const string Stream = "Stream";
+        public const string Segment = "Segment";
+        public const string Messaging = "Messaging";
+        /// <summary>
+        /// The value is: Content-Length
+        /// </summary>
+        public const string Content_Length = "Content-Length";
+        /// <summary>
+        /// The value is: Content-Type
+        /// </summary>
+        public const string Content_Type = "Content-Type";
+        /// <summary>
+        /// The value is: Content-Transfer-Encoding
+        /// </summary>
+        public const string Content_Transfer_Encoding = "Content-Transfer-Encoding";
+        /// <summary>
+        /// The value is: Message-Type
+        /// </summary>
+        public const string Message_Type = "Message-Type";
+        /// <summary>
+        /// The value is: Message-Subtype
+        /// </summary>
+        public const string Message_Subtype = "Message-Subtype";
+        /// <summary>
+        /// The value is: MIME-Version
+        /// </summary>
+        public const string MIME_Version = "MIME-Version";
+        public const string TypingUser = "TypingUser";
+        /// <summary>
+        /// The value is: X-MMS-IM-Format
+        /// </summary>
+        public const string X_MMS_IM_Format = "X-MMS-IM-Format";
+        public const string NotifType = "NotifType";
+        /// <summary>
+        /// The value is: P4-Context
+        /// </summary>
+        public const string P4_Context = "P4-Context";
+        /// <summary>
+        /// The value is: Max-Forwards
+        /// </summary>
+        public const string Max_Forwards = "Max-Forwards";
+
     }
 
 };

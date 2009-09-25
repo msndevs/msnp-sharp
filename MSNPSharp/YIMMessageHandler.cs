@@ -76,7 +76,7 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
 
-            msgMessage.MimeHeader["Content-Type"] = "text/x-msnmsgr-datacast\r\n\r\nID: 1\r\n\r\n\r\n";
+            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast\r\n\r\nID: 1\r\n\r\n\r\n";
 
             nsMessage.InnerMessage = msgMessage;
             // send it over the network
@@ -115,8 +115,8 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
 
-            msgMessage.MimeHeader["Content-Type"] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader["TypingUser"] = NSMessageHandler.Owner.Mail;
+            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
+            msgMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.Owner.Mail;
 
             nsMessage.InnerMessage = msgMessage;
             // send it over the network
@@ -203,13 +203,13 @@ namespace MSNPSharp
                 return;
             }
             Contact contact = NSMessageHandler.ContactList.GetContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember);
-            if (yimMessage.InnerMessage.MimeHeader.ContainsKey("Content-Type"))
+            if (yimMessage.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
             {
-                switch (yimMessage.InnerMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture))
+                switch (yimMessage.InnerMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "text/x-msmsgscontrol":
                         // make sure we don't parse the rest of the message in the next loop											
-                        OnUserTyping(NSMessageHandler.ContactList.GetContact(yimMessage.InnerMessage.MimeHeader["TypingUser"], ClientType.EmailMember));
+                        OnUserTyping(NSMessageHandler.ContactList.GetContact(yimMessage.InnerMessage.MimeHeader[MimeHeaderStrings.TypingUser], ClientType.EmailMember));
                         break;
 
                     case "text/x-msnmsgr-datacast":
@@ -217,7 +217,7 @@ namespace MSNPSharp
                         break;
 
                     default:
-                        if (yimMessage.InnerMessage.MimeHeader["Content-Type"].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
+                        if (yimMessage.InnerMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                         {
                             TextMessage msg = new TextMessage();
                             msg.CreateFromMessage(yimMessage.InnerMessage);

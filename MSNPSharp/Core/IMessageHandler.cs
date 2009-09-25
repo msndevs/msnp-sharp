@@ -30,12 +30,10 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
-
     /// <summary>
     /// IMessageHandler defines the methods required to handle incoming network messages.
     /// </summary>

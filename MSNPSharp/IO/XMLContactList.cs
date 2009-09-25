@@ -134,7 +134,7 @@ namespace MSNPSharp.IO
                     {
                         if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
                         {
-                            NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArg(newcircle, initator));
+                            NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArgs(newcircle, initator));
                             continue;
                         }
                         else
@@ -887,7 +887,7 @@ namespace MSNPSharp.IO
 
                                 if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
                                 {
-                                    NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArg(newcircle, initator));
+                                    NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArgs(newcircle, initator));
                                 }
                                 else
                                 {

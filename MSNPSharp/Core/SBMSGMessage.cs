@@ -30,15 +30,15 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.IO;
+using System.Text;
+using System.Collections;
+using System.Collections.Generic;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.IO;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Text;
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     [Serializable()]
     public class MSGMessage : NetworkMessage

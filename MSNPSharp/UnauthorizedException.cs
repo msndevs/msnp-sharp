@@ -36,7 +36,6 @@ using System.Runtime.Serialization;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Indicates an authentication error with the Nexus service.

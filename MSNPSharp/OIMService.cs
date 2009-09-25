@@ -137,6 +137,9 @@ namespace MSNPSharp
         private string nickName;
         private string message;
 
+        /// <summary>
+        /// The date and time you receive this message.
+        /// </summary>
         public DateTime ReceivedTime
         {
             get
@@ -396,7 +399,7 @@ namespace MSNPSharp
                             Encoding encoding = Encoding.UTF8;
                             try
                             {
-                                encoding = headers["Content-Type"].HasAttribute("charset") ? Encoding.GetEncoding(headers["Content-Type"]["charset"]) : Encoding.UTF8;
+                                encoding = headers[MimeHeaderStrings.Content_Type].HasAttribute("charset") ? Encoding.GetEncoding(headers[MimeHeaderStrings.Content_Type]["charset"]) : Encoding.UTF8;
                             }
                             catch (Exception)
                             {

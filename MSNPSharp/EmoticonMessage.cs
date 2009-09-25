@@ -38,7 +38,6 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// A message that defines a list of emoticons used in the next textmessage.
@@ -141,9 +140,9 @@ namespace MSNPSharp
             {
                 MSGMessage msgMessage = (MSGMessage)ParentMessage;
                 if (emoticontype == EmoticonType.StaticEmoticon)
-                    msgMessage.MimeHeader["Content-Type"] = "text/x-mms-emoticon";
+                    msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-mms-emoticon";
                 else if (emoticontype == EmoticonType.AnimEmoticon)
-                    msgMessage.MimeHeader["Content-Type"] = "text-/x-mms-animemoticon";
+                    msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text-/x-mms-animemoticon";
             }
         }
 

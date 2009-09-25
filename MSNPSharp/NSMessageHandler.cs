@@ -30,8 +30,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-#define TRACE
-
 using System;
 using System.IO;
 using System.Net;
@@ -46,8 +44,8 @@ using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
-    using MSNPSharp.DataTransfer;
     using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Handles the protocol messages from the notification server
@@ -110,9 +108,12 @@ namespace MSNPSharp
         /// </summary>
         public bool BotMode
         {
-            get { return botMode; }
-            set 
-            { 
+            get
+            {
+                return botMode;
+            }
+            set
+            {
                 botMode = value;
                 AutoSynchronize = !value;
             }
@@ -441,6 +442,21 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<TextMessageEventArgs> MobileMessageReceived;
 
+        /// <summary>
+        /// Occurs when a circle member is typing.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CircleTypingMessageReceived;
+
+        /// <summary>
+        /// Occurs when we receive a nudge message sent by a circle member.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CircleNudgeReceived;
+
+        /// <summary>
+        /// Occurs when we receive a text message sent from a circle.
+        /// </summary>
+        public event EventHandler<CircleTextMessageEventArgs> CircleTextMessageReceived;
+
         #endregion
 
         #region Public Methods
@@ -656,7 +672,7 @@ namespace MSNPSharp
 
             string xmlstr = "<EndpointData><Capabilities>" +
                 ((long)Owner.ClientCapacities).ToString() + ":" + ((long)Owner.ClientCapacitiesEx).ToString()
-            +"</Capabilities></EndpointData>";
+            + "</Capabilities></EndpointData>";
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", xmlstr));
         }
@@ -1131,7 +1147,7 @@ namespace MSNPSharp
                     foreach (XmlNode pepdNode in privateendpoints)
                     {
                         Guid id = new Guid(pepdNode.Attributes["id"].Value);
-                        string epname = pepdNode["EpName"].InnerText;
+                        String epname = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
 
                         newPlaces[id] = epname;
                         lastSignedInPlace = id;
@@ -1200,7 +1216,7 @@ namespace MSNPSharp
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
 
-                if (CircleMemberList[account] == null && account != Owner.Mail.ToLowerInvariant())
+                if (CircleMemberList[fullaccount] == null && account != Owner.Mail.ToLowerInvariant())
                 {
                     contact = new CircleContactMember(usernameAndCircle[1], account, type);
 
@@ -1221,7 +1237,8 @@ namespace MSNPSharp
                     if (capabilityString == "0:0")  //This is a circle's presence status.
                     {
                         Circle circle = CircleList[circleMail];
-                        if (circle == null) return;
+                        if (circle == null)
+                            return;
                         circle.SetStatus(newstatus);
                     }
 
@@ -1313,7 +1330,7 @@ namespace MSNPSharp
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
 
-                contact = CircleMemberList[usernameAndCircle[1]];
+                contact = CircleMemberList[fullaccount];
 
                 if (account == Owner.Mail.ToLowerInvariant())
                 {
@@ -1321,7 +1338,8 @@ namespace MSNPSharp
                     if (capabilityString == "0:0")  //This is a circle's presence status.
                     {
                         Circle circle = CircleList[circleMail];
-                        if (circle == null) return;
+                        if (circle == null)
+                            return;
                         circle.SetStatus(PresenceStatus.Offline);
                     }
 
@@ -1448,7 +1466,7 @@ namespace MSNPSharp
                                 byte[] slpTextBytes = new byte[slpBytes.Length - 1];
                                 Array.Copy(slpBytes, slpTextBytes, slpTextBytes.Length);
 
-                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" }, 
+                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
                                     System.Text.Encoding.UTF8.GetString(slpTextBytes));
 
                                 MessageProcessor.SendMessage(uunResponse);
@@ -1754,7 +1772,7 @@ namespace MSNPSharp
                         }
                     }
 
-                    if ((!msg.InnerMessage.MimeHeader.ContainsKey("TypingUser"))   //filter the typing message
+                    if ((!msg.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.TypingUser))   //filter the typing message
                         && ContactList.HasContact(sender, ClientType.EmailMember))
                     {
                         lock (P2PHandler.SwitchboardSessions)
@@ -1848,7 +1866,7 @@ namespace MSNPSharp
         protected virtual void OnMSGReceived(MSNMessage message)
         {
             MSGMessage msgMessage = new MSGMessage(message);
-            string mime = msgMessage.MimeHeader["Content-Type"].ToString();
+            string mime = msgMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToString();
 
             if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
             {
@@ -1901,7 +1919,7 @@ namespace MSNPSharp
                 msgMessage = new MSGMessage(message);
 
                 OnMailNotificationReceived(new NewMailEventArgs(
-                    (string)msgMessage.MimeHeader["From"],
+                    (string)msgMessage.MimeHeader[MimeHeaderStrings.From],
                     (string)msgMessage.MimeHeader["Message-URL"],
                     (string)msgMessage.MimeHeader["Post-URL"],
                     (string)msgMessage.MimeHeader["Subject"],
@@ -1910,7 +1928,7 @@ namespace MSNPSharp
                     msgMessage.MimeHeader.ContainsKey("id") ? int.Parse((string)msgMessage.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture) : 0
                 ));
 
-                if (msgMessage.MimeHeader["From"] == CircleString.CircleInvitationEmailSender && msgMessage.MimeHeader["id"] == "3")
+                if (msgMessage.MimeHeader[MimeHeaderStrings.From] == CircleString.CircleInvitationEmailSender && msgMessage.MimeHeader["id"] == "3")
                 {
                     if (msgMessage.MimeHeader["Extended-Flags"] == CircleString.InvitationEmailExtendedFlags) //Will this model overfitting?
                     {
@@ -2338,6 +2356,8 @@ namespace MSNPSharp
 
         protected virtual void OnNFYReceived(NSMessage message)
         {
+            #region NFY PUT
+
             if (message.CommandValues[0].ToString() == "PUT")
             {
                 NetworkMessage networkMessage = message as NetworkMessage;
@@ -2352,11 +2372,11 @@ namespace MSNPSharp
                         byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
                         MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
 
-                        if (mimeDic.ContainsKey("Content-Type") && mimeDic.ContainsKey("NotifType"))
+                        if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.NotifType))
                         {
-                            if (mimeDic["Content-Type"].Value == "application/circles+xml")
+                            if (mimeDic[MimeHeaderStrings.Content_Type].Value == "application/circles+xml")
                             {
-                                string[] typeMail = mimeDic["From"].ToString().Split(':');
+                                string[] typeMail = mimeDic[MimeHeaderStrings.From].ToString().Split(':');
 
                                 if (typeMail.Length == 0)
                                     return;
@@ -2367,10 +2387,11 @@ namespace MSNPSharp
 
                                 Circle circle = CircleList[typeMail[1]];
 
-                                if (circle == null) return;  //Error.
-                                
+                                if (circle == null)
+                                    return;  //Error.
 
-                                if (mimeDic["NotifType"].Value == "Full" && xmlString != string.Empty)  //We get the circle roster list here, need to reply a PUT message.
+
+                                if (mimeDic[MimeHeaderStrings.NotifType].Value == "Full" && xmlString != string.Empty)  //We get the circle roster list here, need to reply a PUT message.
                                 {
                                     XmlDocument xmlDoc = new XmlDocument();
                                     xmlDoc.LoadXml(xmlString);
@@ -2412,6 +2433,8 @@ namespace MSNPSharp
                     }
                 }
             }
+
+            #endregion
         }
 
         protected virtual void OnSDGReceived(NSMessage message)
@@ -2456,6 +2479,103 @@ namespace MSNPSharp
 
             hi
             ***/
+
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (networkMessage.InnerBody != null)
+            {
+                string payloadString = Encoding.UTF8.GetString(networkMessage.InnerBody);
+                int lastLineBreak = payloadString.LastIndexOf("\r\n");
+                if (lastLineBreak != -1)
+                {
+                    string contentString = payloadString.Substring(lastLineBreak + 2);
+                    string mimeString = payloadString.Substring(0, lastLineBreak).Replace("\r\n\r\n", "\r\n");
+                    byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
+                    MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+
+                    string[] typeMail = mimeDic[MimeHeaderStrings.To].Value.Split(':');
+                    if (typeMail.Length == 0)
+                        return;
+
+                    string[] guidDomain = typeMail[1].Split('@');
+                    if (guidDomain.Length == 0)
+                        return;
+
+                    Circle circle = CircleList[typeMail[1]];
+                    if (circle == null)
+                        return;  //Error.
+
+                    // 1:username@hotmail.com;via=9:guid@live.com
+                    string fullAccount = mimeDic[MimeHeaderStrings.From].Value + ";via=" + mimeDic[MimeHeaderStrings.To].Value;
+                    fullAccount = fullAccount.ToLowerInvariant();
+
+                    CircleContactMember member = circle.Members[fullAccount];
+                    if (member == null)
+                        return;  //Error.
+
+                    CircleEventArgs arg = new CircleEventArgs(circle, member);
+
+                    if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.Message_Subtype))
+                    {
+                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString() == "text/x-msmsgscontrol" &&
+                            mimeDic[MimeHeaderStrings.Message_Subtype].ToString() == "Typing")
+                        {
+                            //Typing
+                            OnCircleTypingMessageReceived(arg);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nIs typing....");
+                        }
+                    }
+
+                    if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.Message_Type))
+                    {
+                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().IndexOf("Text/plain;") > -1 &&
+                            mimeDic[MimeHeaderStrings.Message_Type].ToString() == "Text")
+                        {
+                            //Text message.
+                            TextMessage txtMessage = new TextMessage(contentString);
+                            StrDictionary strDic = new StrDictionary();
+                            foreach (string key in mimeDic.Keys)
+                            {
+                                strDic.Add(key, mimeDic[key].ToString());
+                            }
+
+                            txtMessage.ParseHeader(strDic);
+                            CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle);
+                            OnCircleTextMessageReceived(textMessageArg);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a text message:\r\n" + txtMessage.ToDebugString());
+
+                        }
+
+                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().IndexOf("Text/plain;") > -1 &&
+                            mimeDic[MimeHeaderStrings.Message_Type].ToString() == "Nudge")
+                        {
+                            //Nudge
+                            OnCircleNudgeReceived(arg);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a nudge.");
+                        }
+                    }
+                }
+            }
+        }
+
+        protected virtual void OnCircleTypingMessageReceived(CircleEventArgs e)
+        {
+            if (CircleTypingMessageReceived != null)
+                CircleTypingMessageReceived(this, e);
+        }
+
+        protected virtual void OnCircleNudgeReceived(CircleEventArgs e)
+        {
+            if (CircleNudgeReceived != null)
+                CircleNudgeReceived(this, e);
+        }
+
+        protected virtual void OnCircleTextMessageReceived(CircleTextMessageEventArgs e)
+        {
+            if (CircleTextMessageReceived != null)
+                CircleTextMessageReceived(this, e);
         }
 
         #endregion

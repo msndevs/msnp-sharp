@@ -34,9 +34,8 @@ using System;
 using System.IO;
 using System.Security.Permissions;
 
-namespace MSNPSharp.DataTransfer
+namespace MSNPSharp.Core
 {
-    using MSNPSharp.Core;
     using MSNPSharp;
 
     /// <summary>

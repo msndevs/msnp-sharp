@@ -32,12 +32,12 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections;
+using System.Diagnostics;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
-    using System.Diagnostics;
+    using MSNPSharp.DataTransfer;    
 
     #region ConversationCreatedEvent
 

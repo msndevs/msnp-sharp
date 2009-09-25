@@ -37,7 +37,6 @@ using System.Diagnostics;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Buffers and releases the messages for a switchboard

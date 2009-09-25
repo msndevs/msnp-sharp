@@ -63,6 +63,12 @@ namespace MSNPSharpClient
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
 
 #if DEBUG
+
+            //How to save your personal addressbook.
+            //If you want your addressbook have a better reading/writting performance, use MclSerialization.None
+            //In this case, your addressbook will be save as a xml file, everyone can read it.
+            //If you want your addressbook has a smaller size, use MclSerialization.Compression.
+            //In this case, your addressbook file will be save in gzip format, none can read it, but the performance is not so good.
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.None;
 #elif TRACE
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.Compression | MSNPSharp.IO.MclSerialization.Cryptography;
@@ -89,7 +95,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
             messenger.Nameserver.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
             messenger.Nameserver.ContactService.JoinedCircle += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
-            messenger.Nameserver.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArg>(ContactService_JoinCircleInvitationReceived);
+            messenger.Nameserver.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
             messenger.Nameserver.ContactService.CircleLeft += new EventHandler<CircleEventArgs>(ContactService_CircleLeft);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
@@ -105,6 +111,7 @@ namespace MSNPSharpClient
 
 
             // Handle Service Operation Errors
+            //In most cases, these error are not so important.
             messenger.ContactService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
@@ -133,7 +140,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactService.LeaveCircle(e.Circle); //Demostrate how to leave a circle.
         }
 
-        void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArg e)
+        void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArgs e)
         {
             messenger.Nameserver.ContactService.AcceptCircleInvitation(e.Circle);
         }
@@ -261,14 +268,14 @@ namespace MSNPSharpClient
 
         void Nameserver_ContactOnline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOfline), sender, e);
+            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), sender, e);
         }
         void Nameserver_ContactOffline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOfline), sender, e);
+            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), sender, e);
         }
 
-        void ContactOnlineOfline(object sender, ContactEventArgs e)
+        void ContactOnlineOffline(object sender, ContactEventArgs e)
         {
             if (toolStripSortByStatus.Checked)
                 SortByStatus();

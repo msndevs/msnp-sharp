@@ -429,8 +429,8 @@ namespace MSNPSharp.DataTransfer
             }
 
             // check if it's a valid p2p message (chunk messages has no content type)
-            if (!msgMessage.MimeHeader.ContainsKey("Content-Type") ||
-                msgMessage.MimeHeader["Content-Type"].ToString() != "application/x-msnmsgrp2p")
+            if (!msgMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type) ||
+                msgMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToString() != "application/x-msnmsgrp2p")
             {
                 return;
             }

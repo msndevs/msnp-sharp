@@ -41,7 +41,6 @@ namespace MSNPSharp
 {
     using MSNPSharp.IO;
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     [Serializable]
     public class Owner : Contact
