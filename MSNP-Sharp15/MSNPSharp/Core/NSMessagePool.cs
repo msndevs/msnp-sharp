@@ -38,7 +38,6 @@ using System.Collections.Generic;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Buffers the incoming data from the notification server (NS).

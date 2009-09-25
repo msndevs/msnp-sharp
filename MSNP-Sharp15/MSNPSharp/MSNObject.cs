@@ -32,6 +32,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
+using System.Web;
 using System.Text;
 using System.Collections;
 using System.Globalization;
@@ -40,9 +41,7 @@ using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
-    using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
-    using System.Web; 
+    using MSNPSharp.Core;     
 
     /// <summary>
     /// Defines the type of MSNObject.

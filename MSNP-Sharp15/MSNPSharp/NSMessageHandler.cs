@@ -30,8 +30,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-#define TRACE
-
 using System;
 using System.IO;
 using System.Net;
@@ -46,8 +44,8 @@ using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
-    using MSNPSharp.DataTransfer;
     using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Handles the protocol messages from the notification server
@@ -110,9 +108,12 @@ namespace MSNPSharp
         /// </summary>
         public bool BotMode
         {
-            get { return botMode; }
-            set 
-            { 
+            get
+            {
+                return botMode;
+            }
+            set
+            {
                 botMode = value;
                 AutoSynchronize = !value;
             }
@@ -671,7 +672,7 @@ namespace MSNPSharp
 
             string xmlstr = "<EndpointData><Capabilities>" +
                 ((long)Owner.ClientCapacities).ToString() + ":" + ((long)Owner.ClientCapacitiesEx).ToString()
-            +"</Capabilities></EndpointData>";
+            + "</Capabilities></EndpointData>";
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", xmlstr));
         }
@@ -1146,7 +1147,7 @@ namespace MSNPSharp
                     foreach (XmlNode pepdNode in privateendpoints)
                     {
                         Guid id = new Guid(pepdNode.Attributes["id"].Value);
-                        string epname = pepdNode["EpName"].InnerText;
+                        String epname = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
 
                         newPlaces[id] = epname;
                         lastSignedInPlace = id;
@@ -1236,7 +1237,8 @@ namespace MSNPSharp
                     if (capabilityString == "0:0")  //This is a circle's presence status.
                     {
                         Circle circle = CircleList[circleMail];
-                        if (circle == null) return;
+                        if (circle == null)
+                            return;
                         circle.SetStatus(newstatus);
                     }
 
@@ -1336,7 +1338,8 @@ namespace MSNPSharp
                     if (capabilityString == "0:0")  //This is a circle's presence status.
                     {
                         Circle circle = CircleList[circleMail];
-                        if (circle == null) return;
+                        if (circle == null)
+                            return;
                         circle.SetStatus(PresenceStatus.Offline);
                     }
 
@@ -1463,7 +1466,7 @@ namespace MSNPSharp
                                 byte[] slpTextBytes = new byte[slpBytes.Length - 1];
                                 Array.Copy(slpBytes, slpTextBytes, slpTextBytes.Length);
 
-                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" }, 
+                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
                                     System.Text.Encoding.UTF8.GetString(slpTextBytes));
 
                                 MessageProcessor.SendMessage(uunResponse);
@@ -2384,7 +2387,8 @@ namespace MSNPSharp
 
                                 Circle circle = CircleList[typeMail[1]];
 
-                                if (circle == null) return;  //Error.
+                                if (circle == null)
+                                    return;  //Error.
 
 
                                 if (mimeDic[MimeHeaderStrings.NotifType].Value == "Full" && xmlString != string.Empty)  //We get the circle roster list here, need to reply a PUT message.
@@ -2428,7 +2432,7 @@ namespace MSNPSharp
 
                     }
                 }
-            } 
+            }
 
             #endregion
         }

@@ -30,16 +30,16 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.IO;
+using System.Text;
+using System.Collections;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.IO;
-    using System.Text;
-    using System.Collections;
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
-    [Serializable()]
+    [Serializable]
     public class SBMessage : MSNMessage
     {
         public SBMessage()

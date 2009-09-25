@@ -35,7 +35,6 @@ using System;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Used in events where a exception is raised. Via these events the client programmer

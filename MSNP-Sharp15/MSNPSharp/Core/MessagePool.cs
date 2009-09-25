@@ -30,12 +30,12 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.IO;
+
 namespace MSNPSharp.Core
-{
-    using System;
-    using System.IO;
+{    
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Stores incoming messages in a buffer and releases them only when all contents are received.

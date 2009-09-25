@@ -37,7 +37,6 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     public class NSMessageProcessor : SocketMessageProcessor
     {

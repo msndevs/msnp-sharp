@@ -38,7 +38,6 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// A message that defines a list of emoticons used in the next textmessage.

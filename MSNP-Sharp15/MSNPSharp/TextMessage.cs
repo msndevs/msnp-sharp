@@ -40,7 +40,6 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Represents a single plain textual message send over a switchboard (conversation).

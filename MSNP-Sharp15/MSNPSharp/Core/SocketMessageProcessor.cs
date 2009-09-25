@@ -43,7 +43,6 @@ using Org.Mentalis.Network.ProxySocket;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     public class SocketMessageProcessor : IMessageProcessor
     {

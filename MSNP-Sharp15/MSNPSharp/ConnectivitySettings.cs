@@ -32,14 +32,13 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Net;
+using System.Web;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.Web;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     public class MSNServiceCertificatePolicy : ICertificatePolicy
     {

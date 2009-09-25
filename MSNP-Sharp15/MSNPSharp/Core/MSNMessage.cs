@@ -30,14 +30,14 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.Text;
+using System.Collections;
+using System.Globalization;
+
 namespace MSNPSharp.Core
 {
-    using System;
-    using System.Collections;
-    using System.Text;
-    using System.Globalization;
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     [Serializable()]
     public class MSNMessage : NetworkMessage, ICloneable

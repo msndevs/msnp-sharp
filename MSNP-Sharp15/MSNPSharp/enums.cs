@@ -35,7 +35,6 @@ using System;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Msn protocol speaking
@@ -44,8 +43,6 @@ namespace MSNPSharp
     {
         MSNP18 = 18
     }
-
-
 
     /// <summary>
     /// Specifies the type of proxy servers that can be used

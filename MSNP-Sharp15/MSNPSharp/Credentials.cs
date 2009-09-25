@@ -36,7 +36,6 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Specifies the user credentials. These settings are used when authentication

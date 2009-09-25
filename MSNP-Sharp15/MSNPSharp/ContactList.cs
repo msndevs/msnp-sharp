@@ -39,7 +39,6 @@ using System.Globalization;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     [Serializable()]
     public class ContactList : Dictionary<int, Contact>

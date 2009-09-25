@@ -30,11 +30,11 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+
 namespace MSNPSharp.Core
-{
-    using System;
+{    
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Defines methods to send network messages.

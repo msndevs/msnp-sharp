@@ -54,6 +54,7 @@
     <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />
+    <Compile Include="Core\PersistentStream.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DataTransfer\P2PHeader.cs" />
@@ -101,7 +102,6 @@
       <DependentUpon>P2PMessageSession.cs</DependentUpon>
     </Compile>
     <Compile Include="DataTransfer\P2PTransferSession.cs" />
-    <Compile Include="DataTransfer\PersistentStream.cs" />
     <Compile Include="PersonalMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

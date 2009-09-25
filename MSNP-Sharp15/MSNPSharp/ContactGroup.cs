@@ -35,7 +35,6 @@ using System;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Used as event argument when a contactgroup is affected.

@@ -39,7 +39,6 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Send as event argument when the server has send a (initial) mailbox status.

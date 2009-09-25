@@ -39,7 +39,6 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
     using MSNPSharp.MSNWS.MSNABSharingService;
 
     [Serializable()]
