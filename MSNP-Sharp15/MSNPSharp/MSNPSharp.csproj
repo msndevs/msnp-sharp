@@ -57,7 +57,6 @@
     <Compile Include="Core\PersistentStream.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
-    <Compile Include="DataTransfer\P2PHeader.cs" />
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
@@ -79,8 +78,6 @@
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
     <Compile Include="MSNService.cs" />
-    <Compile Include="DataTransfer\MSNSLPHandler.cs" />
-    <Compile Include="DataTransfer\MSNSLPMessage.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />
     <Compile Include="NSMessageHandler.cs" />
@@ -92,16 +89,12 @@
     <Compile Include="NSMessageProcessor.cs" />
     <Compile Include="OIMService.cs" />
     <Compile Include="Owner.cs" />
-    <Compile Include="DataTransfer\P2PDCPool.cs" />
-    <Compile Include="DataTransfer\P2PDirectProcessor.cs" />
-    <Compile Include="DataTransfer\P2PHandler.cs" />
-    <Compile Include="DataTransfer\P2PMessage.cs" />
-    <Compile Include="DataTransfer\P2PMessagePool.cs" />
-    <Compile Include="DataTransfer\P2PMessageSession.cs" />
-    <Compile Include="DataTransfer\P2PMessageSession.DC.cs">
-      <DependentUpon>P2PMessageSession.cs</DependentUpon>
-    </Compile>
-    <Compile Include="DataTransfer\P2PTransferSession.cs" />
+    <Compile Include="P2P\P2PDCPool.cs" />
+    <Compile Include="P2P\P2PDirectProcessor.cs" />
+    <Compile Include="P2P\P2PHeader.cs" />
+    <Compile Include="P2P\P2PMessage.cs" />
+    <Compile Include="P2P\P2PMessagePool.cs" />
+    <Compile Include="P2P\SLPMessage.cs" />
     <Compile Include="PersonalMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

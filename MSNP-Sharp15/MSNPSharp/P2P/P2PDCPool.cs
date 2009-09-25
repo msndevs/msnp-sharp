@@ -30,12 +30,15 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-namespace MSNPSharp.DataTransfer
+using System;
+using System.Collections;
+
+namespace MSNPSharp.P2P
 {
-    using System;
-    using System.Collections;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
+
+    #region P2PDCPool
 
     /// <summary>
     /// A pool for P2P Direct-connection messages.
@@ -126,6 +129,7 @@ namespace MSNPSharp.DataTransfer
                 return messages.Count > 0;
             }
         }
-
     }
+
+    #endregion
 };

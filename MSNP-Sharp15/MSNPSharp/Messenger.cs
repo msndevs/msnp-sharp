@@ -37,7 +37,7 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;    
+    using MSNPSharp.P2P;
 
     #region ConversationCreatedEvent
 
@@ -115,7 +115,7 @@ namespace MSNPSharp
 
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
-        private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
+        /*NEWP2P,TODO,XXX:private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());*/
 
         #endregion
 
@@ -136,11 +136,12 @@ namespace MSNPSharp
 
             nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
             {
+                /*NEWP2P,TODO,XXX:
                 //Register the p2phandler to handle all incoming p2p message through this switchboard.
                 ce.Switchboard.MessageProcessor.RegisterHandler(nsMessageHandler.P2PHandler);
-
+                */
                 // check if the request is remote or on our initiative
-                if (ce.Initiator != null && (ce.Initiator == this || ce.Initiator == nsMessageHandler.P2PHandler))
+                if (ce.Initiator != null && (ce.Initiator == this/*NEWP2P,TODO,XXX: || ce.Initiator == nsMessageHandler.P2PHandler*/))
                 {
                     return;
                 }
@@ -160,6 +161,7 @@ namespace MSNPSharp
                 return;
             };
 
+            /*NEWP2P,TODO,XXX:
             nsMessageHandler.P2PHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
             {
                 MSNSLPHandler msnslpHandler = CreateMSNSLPHandler(see.Session.Version);
@@ -234,6 +236,7 @@ namespace MSNPSharp
                 }
                 return;
             };
+            */
 
             #endregion
         }
@@ -252,11 +255,12 @@ namespace MSNPSharp
         /// always a valid messageprocessor.
         /// </remarks>
         public event EventHandler<ConversationCreatedEventArgs> ConversationCreated;
-
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// Occurs when a remote client has send an invitation for a filetransfer session.
         /// </summary>
         public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
+         */
 
         #endregion
 
@@ -429,7 +433,7 @@ namespace MSNPSharp
                 return nsMessageHandler.Owner;
             }
         }
-
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// The handler that handles all incoming P2P framework messages.
         /// </summary>
@@ -443,7 +447,7 @@ namespace MSNPSharp
                 return nsMessageHandler.P2PHandler;
             }
         }
-
+        */
         #endregion
 
         #region Methods
@@ -511,7 +515,7 @@ namespace MSNPSharp
             return conversation;
         }
 
-
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send or receive invitations from the remote contact.
         /// </summary>
@@ -533,7 +537,7 @@ namespace MSNPSharp
             }
             return msnslpHandler;
         }
-
+        */
         #endregion
 
         #endregion
@@ -557,18 +561,20 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void CleanUp()
         {
+            /*NEWP2P,TODO,XXX:
             tsMsnslpHandlers.Clear();
 
             if (null != nsMessageHandler.P2PHandler)
             {
                 nsMessageHandler.P2PHandler.ClearMessageSessions();
             }
+            */
         }
 
         #endregion
 
         #region Private
-
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// Creates the object and sets the external end point.
         /// </summary>
@@ -578,8 +584,8 @@ namespace MSNPSharp
             MSNSLPHandler msnslpHandler = new MSNSLPHandler(ver);
             msnslpHandler.ExternalEndPoint = Nameserver.ExternalEndPoint;
             return msnslpHandler;
-        }
-
+        }*/
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// </summary>
         /// <param name="session"></param>
@@ -596,7 +602,7 @@ namespace MSNPSharp
             }
             return null;
         }
-
+        */
         #endregion
 
     }

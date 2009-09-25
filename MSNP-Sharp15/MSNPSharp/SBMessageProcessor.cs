@@ -37,7 +37,7 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     public class SBMessageProcessor : SocketMessageProcessor
     {

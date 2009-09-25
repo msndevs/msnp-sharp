@@ -45,7 +45,7 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     /// <summary>
     /// Handles the protocol messages from the notification server
@@ -61,7 +61,7 @@ namespace MSNPSharp
         private SocketMessageProcessor messageProcessor;
         private ConnectivitySettings connectivitySettings;
         private IPEndPoint externalEndPoint;
-        private P2PHandler p2pHandler;
+        /*NEWP2P,TODO,XXX: private P2PHandler p2pHandler;*/
 
         private CircleList circleList;
         private ContactGroupList contactGroups;
@@ -86,10 +86,10 @@ namespace MSNPSharp
         protected internal NSMessageHandler()
         {
             owner.NSMessageHandler = this;
-
+            /*NEWP2P,TODO,XXX:
             p2pHandler = new P2PHandler();
             p2pHandler.NSMessageHandler = this;
-
+            */
             circleList = new CircleList(this);
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
@@ -334,7 +334,7 @@ namespace MSNPSharp
                 }
             }
         }
-
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// The handler that handles all incoming P2P framework messages.
         /// </summary>
@@ -355,7 +355,7 @@ namespace MSNPSharp
                 p2pHandler = value;
             }
         }
-
+        */
         internal MSNTicket MSNTicket
         {
             get
@@ -1775,6 +1775,7 @@ namespace MSNPSharp
                     if ((!msg.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.TypingUser))   //filter the typing message
                         && ContactList.HasContact(sender, ClientType.EmailMember))
                     {
+                        /*NEWP2P,TODO,XXX:
                         lock (P2PHandler.SwitchboardSessions)
                         {
                             foreach (YIMMessageHandler YimHandler in P2PHandler.SwitchboardSessions)
@@ -1785,17 +1786,18 @@ namespace MSNPSharp
                                 }
                             }
                         }
-
+                        */
                         //YIMMessageHandler not found, we create a new one and register it.
                         YIMMessageHandler switchboard = new YIMMessageHandler();
                         switchboard.NSMessageHandler = this;
 
                         switchboard.MessageProcessor = MessageProcessor;
+                        /*NEWP2P,TODO,XXX:
                         lock (P2PHandler.SwitchboardSessions)
                         {
                             P2PHandler.SwitchboardSessions.Add(switchboard);
                         }
-
+                        */
                         messageProcessor.RegisterHandler(switchboard);
                         OnSBCreated(switchboard, null, sender, sender, false);
 
@@ -2932,14 +2934,6 @@ namespace MSNPSharp
                         return;
                     case "SDG":
                         OnSDGReceived(nsMessage);
-                        return;
-
-                    // Outdated
-                    case "BPR":
-                        OnBPRReceived(nsMessage);
-                        return;
-                    case "ILN":
-                        OnILNReceived(nsMessage);
                         return;
                 }
 

@@ -40,7 +40,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     #region Event argument classes
     /// <summary>
@@ -339,7 +339,7 @@ namespace MSNPSharp
                 sessionHash = value;
             }
         }
-
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// Implements the P2P framework. This object is automatically created when a succesfull connection was made to the switchboard.
         /// </summary>
@@ -355,7 +355,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Please use Messenger.P2PHandler.");
             }
         }
-
+        */
         #endregion
 
         #region Invitation

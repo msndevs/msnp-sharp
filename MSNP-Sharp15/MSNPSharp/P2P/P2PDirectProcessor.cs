@@ -37,10 +37,9 @@ using System.Diagnostics;
 using System.Timers;
 using Org.Mentalis.Network.ProxySocket;
 
-namespace MSNPSharp.DataTransfer
+namespace MSNPSharp.P2P
 {
     using MSNPSharp.Core;
-
 
     /// <summary>
     /// Handles the direct connections in P2P sessions.

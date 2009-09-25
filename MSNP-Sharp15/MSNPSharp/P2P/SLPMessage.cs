@@ -36,10 +36,12 @@ using System.IO;
 using System.Collections;
 using System.Globalization;
 
-namespace MSNPSharp.DataTransfer
+namespace MSNPSharp.P2P
 {
     using MSNPSharp;
     using MSNPSharp.Core;
+
+    #region SLPMessage
 
     /// <summary>
     /// Base SLP message for SLPStatusMessage and SLPRequestMessage.
@@ -317,6 +319,10 @@ namespace MSNPSharp.DataTransfer
         }
     }
 
+    #endregion
+
+    #region SLPRequestMessage
+
     public class SLPRequestMessage : SLPMessage
     {
         string method = "UNKNOWN";
@@ -373,6 +379,10 @@ namespace MSNPSharp.DataTransfer
         {
         }
     }
+
+    #endregion
+
+    #region SLPStatusMessage
 
     public class SLPStatusMessage : SLPMessage
     {
@@ -450,4 +460,6 @@ namespace MSNPSharp.DataTransfer
         {
         }
     }
+
+    #endregion
 };

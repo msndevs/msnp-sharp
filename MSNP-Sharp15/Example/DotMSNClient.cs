@@ -14,7 +14,7 @@ namespace MSNPSharpClient
 {
     using MSNPSharp;
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
     using MSNPSharp.MSNWS.MSNABSharingService;
 
     /// <summary>
@@ -86,7 +86,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
             messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
-            messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
+            /*NEWP2P,TODO,XXX:messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);*/
             messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
 
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
@@ -889,6 +889,7 @@ namespace MSNPSharpClient
             return dialog.ShowDialog();
         }
 
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// Asks the user to accept or deny the incoming filetransfer invitation.
         /// </summary>
@@ -931,7 +932,7 @@ namespace MSNPSharpClient
                 }
             }
         }
-
+        */
         private int nextPing = 50;
         private void tmrKeepOnLine_Tick(object sender, EventArgs e)
         {

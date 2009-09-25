@@ -40,7 +40,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     public class MSNObjectDataTransferCompletedEventArgs : EventArgs
     {
@@ -177,16 +177,19 @@ namespace MSNPSharp
         private void transferSession_TransferAborted(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
+            /*NEWP2P,TODO,XXX:
             OnMSNObjectDataTransferCompleted(sender,
                 new MSNObjectDataTransferCompletedEventArgs((sender as P2PTransferSession).ClientData as MSNObject, true));
+             */
         }
 
         private void transferSession_TransferFinished(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
+            /*NEWP2P,TODO,XXX:
             OnMSNObjectDataTransferCompleted(sender,
                 new MSNObjectDataTransferCompletedEventArgs((sender as P2PTransferSession).ClientData as MSNObject, false));
-
+            */
         }
 
         private void AddContact(Contact contact)
@@ -430,7 +433,7 @@ namespace MSNPSharp
             if (existing == null)
             {
                 e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
-
+                /*NEWP2P,TODO,XXX:
                 // create a session and send the invitation
                 P2PMessageSession session = Messenger.Nameserver.P2PHandler.GetSession(Messenger.Nameserver.Owner, e.Sender);
 
@@ -450,6 +453,7 @@ namespace MSNPSharp
                 }
                 else
                     throw new MSNPSharpException("No MSNSLPHandler was attached to the p2p message session. An emoticon invitation message could not be send.");
+                */
             }
             else
             {
@@ -916,7 +920,7 @@ namespace MSNPSharp
             {
                 _yimHandler.NSMessageHandler = Messenger.Nameserver;
                 _yimHandler.MessageProcessor = Messenger.Nameserver.MessageProcessor;
-
+                /*NEWP2P,TODO,XXX:
                 lock (Messenger.Nameserver.P2PHandler.SwitchboardSessions)
                 {
                     if (!Messenger.Nameserver.P2PHandler.SwitchboardSessions.Contains(_yimHandler))
@@ -924,7 +928,7 @@ namespace MSNPSharp
                         Messenger.Nameserver.P2PHandler.SwitchboardSessions.Add(_yimHandler);
                     }
                 }
-
+                */
                 Messenger.Nameserver.MessageProcessor.RegisterHandler(_yimHandler);
                 yimInitialized = true;
                 if (!_yimHandler.Contacts.ContainsKey(contact))
@@ -948,7 +952,7 @@ namespace MSNPSharp
                         break;
                     }
                 }
-
+                /*NEWP2P,TODO,XXX:
                 lock (Messenger.Nameserver.P2PHandler.SwitchboardSessions)
                 {
                     if (!Messenger.Nameserver.P2PHandler.SwitchboardSessions.Contains(_switchboard))
@@ -956,7 +960,7 @@ namespace MSNPSharp
                         Messenger.Nameserver.P2PHandler.SwitchboardSessions.Add(_switchboard);
                     }
                 }
-
+                */
                 if (sbInitialized == false)
                 {
                     LeftContactEnqueue(contact);  //Enqueue the contact if user send message before it join.

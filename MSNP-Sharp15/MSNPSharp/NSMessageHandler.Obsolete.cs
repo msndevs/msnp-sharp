@@ -40,72 +40,14 @@ namespace MSNPSharp
 
     partial class NSMessageHandler
     {
-        /// <summary>
-        /// Called when a ILN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// ILN indicates the initial status of a contact. Used for MSNP15 and MSNP16, not MSNP18.
-        /// It is send after initial log on or after adding/removing contact from the contactlist.
-        /// Fires the <see cref="ContactOnline"/> and/or the <see cref="ContactStatusChanged"/> events.
-        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities:0] [displayimage] (MSNP16)</code>
-        /// <code>ILN 0 [status] [account] [clienttype] [name] [clientcapacities] [displayimage] (MSNP15)</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        [Obsolete("MSNP18 no more supported")]
+        [Obsolete("MSNP18 no more supported", true)]
         protected virtual void OnILNReceived(NSMessage message)
         {
         }
 
-        /// <summary>
-        /// Called when a BPR command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send a phone number for a contact. Usually send after a synchronization command.
-        /// <code>BPR [Type] [Number]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        [Obsolete("Echo")]
+        [Obsolete("MSNP18 no more supported", true)]
         protected virtual void OnBPRReceived(NSMessage message)
         {
-            string commandone = (string)message.CommandValues[0];
-
-            Contact contact = null;
-            int index = 2;
-
-            if (commandone.IndexOf('@') != -1)
-            {
-                contact = ContactList.GetContact(commandone, ClientType.PassportMember);
-                index = 2;
-            }
-
-            string number = HttpUtility.UrlDecode((string)message.CommandValues[index]);
-
-            if (contact.Lists != MSNLists.None)
-            {
-                switch ((string)message.CommandValues[index - 1])
-                {
-                    case "PHH":
-                        contact.SetHomePhone(number);
-                        break;
-                    case "PHW":
-                        contact.SetWorkPhone(number);
-                        break;
-                    case "PHM":
-                        contact.SetMobilePhone(number);
-                        break;
-                    case "MOB":
-                        contact.SetMobileAccess((number == "Y"));
-                        break;
-                    case "MBE":
-                        contact.SetMobileDevice((number == "Y"));
-                        break;
-                    case "HSB":
-                        contact.HasBlog = (number == "1");
-                        break;
-                }
-            }
-            else
-                throw new MSNPSharpException("Phone numbers are sent but lastContact == null");
         }
     }
 };

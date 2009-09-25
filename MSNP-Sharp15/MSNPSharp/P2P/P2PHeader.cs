@@ -35,9 +35,12 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MSNPSharp.DataTransfer
+namespace MSNPSharp.P2P
 {
+    using MSNPSharp;
     using MSNPSharp.Core;
+
+    #region TFCombination
 
     [Flags]
     public enum TFCombination : byte
@@ -48,6 +51,10 @@ namespace MSNPSharp.DataTransfer
         MsnObject = 4,
         FileTransfer = 6,
     }
+
+    #endregion
+
+    #region P2PHeader
 
     [Serializable]
     public abstract class P2PHeader
@@ -147,6 +154,10 @@ namespace MSNPSharp.DataTransfer
         private UInt32 _messageSize;
         private UInt32 _sessionId;
     };
+
+    #endregion
+
+    #region P2Pv1Header
 
     [Serializable]
     public class P2Pv1Header : P2PHeader
@@ -377,6 +388,10 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckTotalSize  : {1:x} ({0})\r\n", AckTotalSize.ToString(System.Globalization.CultureInfo.InvariantCulture), AckTotalSize);
         }
     };
+
+    #endregion
+
+    #region P2Pv2Header
 
     [Serializable]
     public class P2Pv2Header : P2PHeader
@@ -831,4 +846,6 @@ namespace MSNPSharp.DataTransfer
                 bodyTLVBuilder.ToString();
         }
     }
+
+    #endregion
 };

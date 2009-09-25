@@ -30,15 +30,16 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-namespace MSNPSharp.DataTransfer
+using System;
+using System.IO;
+using System.Diagnostics;
+using System.Collections;
+using System.Collections.Generic;
+
+namespace MSNPSharp.P2P
 {
-    using System;
-    using System.Collections;
-    using System.IO;
-    using MSNPSharp.Core;
     using MSNPSharp;
-    using System.Collections.Generic;
-    using System.Diagnostics;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Buffers incomplete P2PMessage and releases them when the message is fully received.
@@ -48,7 +49,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// </summary>
         private Hashtable messageStreamsV1 = new Hashtable();
-        private Dictionary<uint, P2PMessage> messageStreamsV2 = new Dictionary<uint, P2PMessage>(); 
+        private Dictionary<uint, P2PMessage> messageStreamsV2 = new Dictionary<uint, P2PMessage>();
 
         /// <summary>
         /// </summary>
@@ -119,7 +120,7 @@ namespace MSNPSharp.DataTransfer
                         }
                     }
                 }
-            } 
+            }
             #endregion
 
             #region P2P Version 2 message pooling
@@ -213,7 +214,7 @@ namespace MSNPSharp.DataTransfer
                         }
                     }
 
-                } 
+                }
             #endregion
 
             }
