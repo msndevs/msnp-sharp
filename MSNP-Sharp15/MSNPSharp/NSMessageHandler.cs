@@ -667,7 +667,7 @@ namespace MSNPSharp
 
         internal void SetEndPointCapabilities()
         {
-            if (owner == null)
+            if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
             string xmlstr = "<EndpointData><Capabilities>" +
@@ -722,30 +722,30 @@ namespace MSNPSharp
             string context = String.Empty;
             bool isSetDefault = false;
 
-            if (owner.DisplayImage != null)
-                context = owner.DisplayImage.Context;
+            if (Owner.DisplayImage != null)
+                context = Owner.DisplayImage.Context;
 
             if (status == PresenceStatus.Offline)
             {
                 messageProcessor.Disconnect();
             }
-            else if (status != owner.Status)
+            else if (status != Owner.Status)
             {
                 string capacities = String.Empty;
 
-                if (owner.ClientCapacities == ClientCapacities.None)
+                if (Owner.ClientCapacities == ClientCapacities.None)
                 {
                     isSetDefault = true;
 
                     //don't set the same status or it will result in disconnection
-                    owner.ClientCapacities = defaultClientCapacities;
+                    Owner.ClientCapacities = defaultClientCapacities;
 
                     if (BotMode)
                     {
-                        owner.ClientCapacities |= ClientCapacities.IsBot;
+                        Owner.ClientCapacities |= ClientCapacities.IsBot;
                     }
 
-                    owner.ClientCapacitiesEx = defaultClientCapacitiesEx;
+                    Owner.ClientCapacitiesEx = defaultClientCapacitiesEx;
 
                     SetEndPointCapabilities();
                     SetPresenceStatusUUX(status);
@@ -762,8 +762,8 @@ namespace MSNPSharp
                     SetScreenName(Owner.Name);
                 }
 
-                ClientCapacitiesEx capsext = owner.ClientCapacitiesEx;
-                capacities = ((long)owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
+                ClientCapacitiesEx capsext = Owner.ClientCapacitiesEx;
+                capacities = ((long)Owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
 
                 if (!isSetDefault)
                 {
@@ -779,6 +779,9 @@ namespace MSNPSharp
 
         internal void SetPresenceStatusUUX(PresenceStatus status)
         {
+            if (Owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
                 "<PrivateEndpointData>" +
                 "<EpName>" + MSNHttpUtility.XmlEncode(Owner.EpName) + "</EpName>" +
@@ -787,6 +790,23 @@ namespace MSNPSharp
                 "<State>" + ParseStatus(status) + "</State>" +
                 "</PrivateEndpointData>")
             );
+        }
+
+        internal void BroadCastStatus()
+        {
+            // check whether we are allowed to send a CHG command
+            if (IsSignedIn == false)
+                throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
+
+            string context = String.Empty;
+
+            if (Owner.DisplayImage != null)
+                context = Owner.DisplayImage.Context;
+
+            ClientCapacitiesEx capsext = Owner.ClientCapacitiesEx;
+            string capacities = ((long)Owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
+
+            MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(Owner.Status), capacities, context }));
         }
 
 
@@ -1185,6 +1205,16 @@ namespace MSNPSharp
             else
             {
                 Contact contact = ContactList.GetContact(account, type);
+
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(new MemoryStream(message.InnerBody));
+
+                XmlNode friendlyNameNode = xmlDoc.SelectSingleNode(@"//Data/FriendlyName");
+                if (friendlyNameNode != null)
+                {
+                    contact.SetName(friendlyNameNode.InnerXml == "" ? contact.Mail : friendlyNameNode.InnerXml);
+                }
+
                 contact.SetPersonalMessage(new PersonalMessage(message));
             }
         }
