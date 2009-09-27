@@ -466,7 +466,7 @@ namespace MSNPSharp
         /// <summary>
         /// Sets the telephonenumber for the contact list owner's homephone.
         /// </summary>
-        public virtual void SetPhoneNumberHome(string number)
+        internal void SetPhoneNumberHome(string number)
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -480,7 +480,7 @@ namespace MSNPSharp
         /// <summary>
         /// Sets the telephonenumber for the contact list owner's workphone.
         /// </summary>
-        public virtual void SetPhoneNumberWork(string number)
+        internal void SetPhoneNumberWork(string number)
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -494,7 +494,7 @@ namespace MSNPSharp
         /// <summary>
         /// Sets the telephonenumber for the contact list owner's mobile phone.
         /// </summary>
-        public virtual void SetPhoneNumberMobile(string number)
+        internal void SetPhoneNumberMobile(string number)
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -508,7 +508,7 @@ namespace MSNPSharp
         /// <summary>
         /// Sets whether the contact list owner allows remote contacts to send messages to it's mobile device.
         /// </summary>
-        public virtual void SetMobileAccess(bool enabled)
+        internal void SetMobileAccess(bool enabled)
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -519,7 +519,7 @@ namespace MSNPSharp
         /// <summary>
         /// Sets whether the contact list owner has a mobile device enabled.
         /// </summary>
-        public virtual void SetMobileDevice(bool enabled)
+        internal void SetMobileDevice(bool enabled)
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -621,7 +621,7 @@ namespace MSNPSharp
         /// be updated.
         /// </remarks>
         /// <param name="contact"></param>
-        public virtual void RequestScreenName(Contact contact)
+        internal void RequestScreenName(Contact contact)
         {
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
@@ -633,7 +633,7 @@ namespace MSNPSharp
         /// Sets the contactlist owner's screenname. After receiving confirmation from the server
         /// this will set the Owner object's name which will in turn raise the NameChange event.
         /// </summary>
-        public virtual void SetScreenName(string newName)
+        internal void SetScreenName(string newName)
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -652,7 +652,7 @@ namespace MSNPSharp
         /// Sets personal message.
         /// </summary>
         /// <param name="pmsg"></param>
-        public virtual void SetPersonalMessage(PersonalMessage pmsg)
+        internal void SetPersonalMessage(PersonalMessage pmsg)
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -665,7 +665,7 @@ namespace MSNPSharp
             }
         }
 
-        public virtual void SetEndPointCapabilities()
+        internal void SetEndPointCapabilities()
         {
             if (owner == null)
                 throw new MSNPSharpException("Not a valid owner");
@@ -685,7 +685,7 @@ namespace MSNPSharp
         /// Set the contactlist owner's privacy mode.
         /// </summary>
         /// <param name="privacy">New privacy setting</param>
-        public virtual void SetPrivacyMode(PrivacyMode privacy)
+        internal void SetPrivacyMode(PrivacyMode privacy)
         {
             if (privacy == PrivacyMode.AllExceptBlocked)
                 MessageProcessor.SendMessage(new NSMessage("BLP", new string[] { "AL" }));
@@ -699,7 +699,7 @@ namespace MSNPSharp
         /// Set the contactlist owner's notification mode on contact service.
         /// </summary>
         /// <param name="privacy">New notify privacy setting</param>
-        public virtual void SetNotifyPrivacyMode(NotifyPrivacy privacy)
+        internal void SetNotifyPrivacyMode(NotifyPrivacy privacy)
         {
             Owner.SetNotifyPrivacy(privacy);
             if (AutoSynchronize)
@@ -713,7 +713,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
         /// <param name="status"></param>
-        public virtual void SetPresenceStatus(PresenceStatus status)
+        internal void SetPresenceStatus(PresenceStatus status)
         {
             // check whether we are allowed to send a CHG command
             if (IsSignedIn == false)
