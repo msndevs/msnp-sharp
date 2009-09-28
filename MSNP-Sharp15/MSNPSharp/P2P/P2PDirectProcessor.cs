@@ -41,6 +41,7 @@ namespace MSNPSharp.P2P
 {
     using MSNPSharp.Core;
 
+
     /// <summary>
     /// Handles the direct connections in P2P sessions.
     /// </summary>
@@ -152,12 +153,19 @@ namespace MSNPSharp.P2P
         protected virtual void EndAcceptCallback(IAsyncResult ar)
         {
             ProxySocket listenSocket = (ProxySocket)ar.AsyncState;
-            dcSocket = listenSocket.EndAccept(ar);
+            try
+            {
+                dcSocket = listenSocket.EndAccept(ar);
 
-            // begin accepting messages
-            BeginDataReceive(dcSocket);
+                // begin accepting messages
+                BeginDataReceive(dcSocket);
 
-            OnConnected();
+                OnConnected();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().ToString() + " Error: " + ex.Message);
+            }
         }
 
         private Socket dcSocket;
