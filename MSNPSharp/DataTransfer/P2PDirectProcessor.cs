@@ -153,12 +153,19 @@ namespace MSNPSharp.DataTransfer
         protected virtual void EndAcceptCallback(IAsyncResult ar)
         {
             ProxySocket listenSocket = (ProxySocket)ar.AsyncState;
-            dcSocket = listenSocket.EndAccept(ar);
+            try
+            {
+                dcSocket = listenSocket.EndAccept(ar);
 
-            // begin accepting messages
-            BeginDataReceive(dcSocket);
+                // begin accepting messages
+                BeginDataReceive(dcSocket);
 
-            OnConnected();
+                OnConnected();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().ToString() + " Error: " + ex.Message);
+            }
         }
 
         private Socket dcSocket;
