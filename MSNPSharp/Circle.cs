@@ -33,6 +33,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics;
+using MSNPSharp.Core;
 
 namespace MSNPSharp
 {
@@ -76,6 +78,7 @@ namespace MSNPSharp
         private string hostDomain = CircleString.DefaultHostDomain;
         private string displayName = string.Empty;
         private string role = string.Empty;
+        private long segmentCounter = 0;
 
         /// <summary>
         /// The ownership of this circle.
@@ -91,6 +94,9 @@ namespace MSNPSharp
             get { return hostDomain; }
         }
 
+        /// <summary>
+        /// Circle member list.
+        /// </summary>
         public CircleMemberList Members
         {
             get 
@@ -170,6 +176,94 @@ namespace MSNPSharp
             Initialize();
         }
 
+        private void CheckValidation()
+        {
+            if (NSMessageHandler == null)
+                throw new MSNPSharpException("NSMessagehandler is null");
+            if (!NSMessageHandler.IsSignedIn)
+                throw new InvalidOperationException("Cannot send a message without signning in to the server. Please sign in first.");
+        }
+
+        private string ConstructSDGScheme()
+        {
+            string from = ((int)NSMessageHandler.Owner.ClientType).ToString() + ":" +
+                NSMessageHandler.Owner.Mail +
+                ";epid=" + NSMessageHandler.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+                
+
+            string to = ((int)ClientType).ToString() + ":" + Mail + ";path=IM";;
+
+            string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, to);
+            routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, from);
+
+            string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
+            reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, IncreaseSegmentCounter().ToString());
+
+            string putCommandString = CircleString.CircleMessageScheme;
+            putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
+            putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
+
+            return putCommandString;
+        }
+
+        /// <summary>
+        /// Send nudge to all members in this circle.
+        /// </summary>
+        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server.</exception>
+        public void SendNudge()
+        {
+            CheckValidation();
+            string scheme = ConstructSDGScheme();
+
+            scheme = scheme.Replace(CircleString.MessageSchemeReplacementTag, CircleString.NudgeMessageScheme);
+
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", scheme);
+            NSMessageHandler.MessageProcessor.SendMessage(nspayload);
+        }
+
+        /// <summary>
+        /// Send a text message to all members in this circle.
+        /// </summary>
+        /// <param name="textMessage"></param>
+        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server.</exception>
+        public void SendMessage(TextMessage textMessage)
+        {
+            CheckValidation();
+
+            string scheme = ConstructSDGScheme();
+
+            textMessage.PrepareMessage();
+
+            string content = MimeHeaderStrings.X_MMS_IM_Format + ": " + textMessage.GetStyleString() + "\r\n\r\n" + textMessage.Text;
+            string textMessageScheme = CircleString.TextMessageScheme.Replace(CircleString.TextMessageContentReplacementTag, content);
+            textMessageScheme = textMessageScheme.Replace(CircleString.ContentLengthReplacementTag, textMessage.Text.Length.ToString());
+
+            scheme = scheme.Replace(CircleString.MessageSchemeReplacementTag, textMessageScheme);
+
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", scheme);
+            NSMessageHandler.MessageProcessor.SendMessage(nspayload);
+
+        }
+
+        /// <summary>
+        /// Send a typing message indicates that you are typing to all members in this circle.
+        /// </summary>
+        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server.</exception>
+        public void SendTypingMessage()
+        {
+            CheckValidation();
+            string scheme = ConstructSDGScheme();
+
+            string typingScheme = CircleString.TypingMessageScheme.Replace(CircleString.OwnerReplacementTag, NSMessageHandler.Owner.Mail);
+            scheme = scheme.Replace(CircleString.MessageSchemeReplacementTag, typingScheme);
+
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", scheme);
+            NSMessageHandler.MessageProcessor.SendMessage(nspayload);
+        }
+
         public override int GetHashCode()
         {
             return Mail.GetHashCode();
@@ -183,6 +277,11 @@ namespace MSNPSharp
         internal new void SetName(string newName)
         {
             displayName = newName;
+        }
+
+        internal long IncreaseSegmentCounter()
+        {
+            return segmentCounter++;
         }
 
         /// <summary>
@@ -256,6 +355,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The <see cref="ClientType"/> of this <see cref="Contact"/>.
+        /// </summary>
         public ClientType MemberType
         {
             get { return memberType; }
