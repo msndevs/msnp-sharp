@@ -1143,7 +1143,11 @@ namespace MSNPSharp.IO
                     NSMessageHandler.Owner.ContactType = cit.contactType;
                     NSMessageHandler.Owner.SetName(displayname);
 
-                    //NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayname;
+                    if (cit.NetworkInfoList != null &&
+                        !String.IsNullOrEmpty(cit.NetworkInfoList[0].UserTileURL))
+                    {
+                        NSMessageHandler.Owner.UserTile = new Uri(cit.NetworkInfoList[0].UserTileURL);
+                    }
 
                     if (null != cit.annotations)
                     {

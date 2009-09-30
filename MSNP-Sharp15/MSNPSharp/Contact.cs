@@ -171,6 +171,9 @@ namespace MSNPSharp
 
         private object syncObject = new object();
 
+        /// <summary>
+        /// The display image url from the webside.
+        /// </summary>
         public Uri UserTile
         {
             get
