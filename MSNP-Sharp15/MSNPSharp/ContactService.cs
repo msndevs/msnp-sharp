@@ -107,12 +107,12 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when a new <see cref="Circle"/> is created.
         /// </summary>
-        public event EventHandler<CircleEventArgs> CircleCreated;
+        public event EventHandler<CircleEventArgs> CreateCircleCompleted;
 
         /// <summary>
         /// Occurs when the owner has left a specific <see cref="Circle"/>.
         /// </summary>
-        public event EventHandler<CircleEventArgs> CircleLeft;
+        public event EventHandler<CircleEventArgs> ExitCircleCompleted;
 
         /// <summary>
         /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
@@ -123,7 +123,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired after the InviteContactToCircle succeeded.
         /// </summary>
-        public event EventHandler<CircleEventArgs> CircleMemberInvited;
+        public event EventHandler<CircleMemberEventArgs> InviteCircleMemberCompleted;
 
         /// <summary>
         /// Fired after a remote user invite us to join a circle.
@@ -133,7 +133,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired after the owner join a circle successfully.
         /// </summary>
-        public event EventHandler<CircleEventArgs> JoinedCircle;
+        public event EventHandler<CircleEventArgs> JoinedCircleCompleted;
         #endregion
 
         #region Public members
@@ -214,16 +214,16 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fires the <see cref="JoinedCircle"/> event.
+        /// Fires the <see cref="JoinedCircleCompleted"/> event.
         /// </summary>
         /// <param name="e"></param>
-        private void OnJoinedCircle(CircleEventArgs e)
+        private void OnJoinedCircleCompleted(CircleEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle invitation accepted: " + e.Circle.ToString());
 
-            if (JoinedCircle != null)
+            if (JoinedCircleCompleted != null)
             {
-                JoinedCircle(this, e);
+                JoinedCircleCompleted(this, e);
             }
         }
 
@@ -241,28 +241,28 @@ namespace MSNPSharp
 
 
         /// <summary>
-        /// Fires the <see cref="CircleCreated"/> event.
+        /// Fires the <see cref="CreateCircleCompleted"/> event.
         /// </summary>
         /// <param name="e"></param>
-        private void OnCircleCreated(CircleEventArgs e)
+        private void OnCreateCircleCompleted(CircleEventArgs e)
         {
-            if (CircleCreated != null)
+            if (CreateCircleCompleted != null)
             {
-                CircleCreated(this, e);
+                CreateCircleCompleted(this, e);
             }
         }
 
         /// <summary>
-        /// Fires the <see cref="CircleLeft"/> event.
+        /// Fires the <see cref="ExitCircleCompleted"/> event.
         /// </summary>
         /// <param name="e"></param>
-        private void OnCircleLeft(CircleEventArgs e)
+        private void OnExitCircleCompleted(CircleEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Leave circle completed: " + e.Circle.ToString());
 
-            if (CircleLeft != null)
+            if (ExitCircleCompleted != null)
             {
-                CircleLeft(this, e);
+                ExitCircleCompleted(this, e);
             }
         }
 
@@ -277,13 +277,13 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fires the <see cref="CircleMemberInvited"/>
+        /// Fires the <see cref="InviteCircleMemberCompleted"/>
         /// </summary>
         /// <param name="e"></param>
-        private void OnCircleMemberInvited(CircleEventArgs e)
+        private void OnInviteCircleMemberCompleted(CircleMemberEventArgs e)
         {
-            if (CircleMemberInvited != null)
-                CircleMemberInvited(this, e);
+            if (InviteCircleMemberCompleted != null)
+                InviteCircleMemberCompleted(this, e);
         }
 
         #endregion
@@ -1988,7 +1988,7 @@ namespace MSNPSharp
         #region Create Circle
 
         /// <summary>
-        /// Use specific name to create a new <see cref="Circle"/>. <see cref="CircleCreated"/> event will be fired after creation succeeded.
+        /// Use specific name to create a new <see cref="Circle"/>. <see cref="CreateCircleCompleted"/> event will be fired after creation succeeded.
         /// </summary>
         /// <param name="circleName">New circle name.</param>
         public void CreateCircle(string circleName)
@@ -2039,7 +2039,7 @@ namespace MSNPSharp
                                             Circle newcircle = NSMessageHandler.CircleList[e.Result.CreateCircleResult.Id.ToLowerInvariant() + "@" + CircleString.DefaultHostDomain];
                                             if (newcircle != null)
                                             {
-                                                OnCircleCreated(new CircleEventArgs(newcircle));
+                                                OnCreateCircleCompleted(new CircleEventArgs(newcircle));
                                             }
                                             else
                                             {
@@ -2190,9 +2190,9 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="circle">Circle to join.</param>
         /// <param name="contact">Contact being invited.</param>
-        public void InviteContactToCircle(Circle circle, Contact contact)
+        public void InviteCircleMember(Circle circle, Contact contact)
         {
-            InviteContactToCircle(circle, contact, string.Empty);
+            InviteCircleMember(circle, contact, string.Empty);
         }
 
         /// <summary>
@@ -2203,7 +2203,7 @@ namespace MSNPSharp
         /// <param name="message">Message send with the invitition email.</param>
         /// <exception cref="ArgumentNullException">One or more parameter(s) is/are null.</exception>
         /// <exception cref="InvalidOperationException">The owner is not the circle admin or the circle is blocked.</exception>
-        public void InviteContactToCircle(Circle circle, Contact contact, string message)
+        public void InviteCircleMember(Circle circle, Contact contact, string message)
         {
             if (circle == null || contact == null || message == null)
             {
@@ -2291,7 +2291,7 @@ namespace MSNPSharp
                                 e.Result.ManageWLConnectionResult.contactInfo.clientErrorData);
                         }
 
-                        OnCircleMemberInvited(new CircleEventArgs(circle, contact));
+                        OnInviteCircleMemberCompleted(new CircleMemberEventArgs(circle, contact));
                         return;
 
                     };
@@ -2456,7 +2456,7 @@ namespace MSNPSharp
                                                                      AddressBook.Save();
                                                                      Deltas.Truncate();
 
-                                                                     OnJoinedCircle(new CircleEventArgs(circle));
+                                                                     OnJoinedCircleCompleted(new CircleEventArgs(circle));
                                                                  }
                                                              );
                                                          }
@@ -2480,7 +2480,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="circle"></param>
         /// <exception cref="ArgumentNullException">The circle parameter is null.</exception>
-        public void LeaveCircle(Circle circle)
+        public void ExitCircle(Circle circle)
         {
             if (circle == null)
                 throw new ArgumentNullException("circle");
@@ -2517,7 +2517,7 @@ namespace MSNPSharp
 
                         NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
                         NSMessageHandler.CircleList.RemoveCircle(circle);
-                        OnCircleLeft(new CircleEventArgs(circle));
+                        OnExitCircleCompleted(new CircleEventArgs(circle));
                     };
 
                     RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, leaveCircleObject, breakconnRequest));

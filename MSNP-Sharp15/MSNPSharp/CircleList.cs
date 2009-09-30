@@ -45,6 +45,11 @@ namespace MSNPSharp
         [NonSerialized]
         private object syncRoot;
 
+        /// <summary>
+        /// Get a member by providing an full account which format is: [type:account;via=circletype:guid@hostdomain]
+        /// </summary>
+        /// <param name="fullaccount"></param>
+        /// <returns></returns>
         public CircleContactMember this[string fullaccount]  //type:account;via=circletype:guid@hostdomain
         {
             get
@@ -89,6 +94,11 @@ namespace MSNPSharp
             return list.Values.GetEnumerator();
         }
 
+        /// <summary>
+        /// Add a new member to the list.
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
         public bool Add(CircleContactMember member)
         {
             if (Contains(member))
@@ -121,6 +131,11 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Check whether a specified member is in the circle.
+        /// </summary>
+        /// <param name="fullaccount">The format is [type:account;via=circletype:guid@hostdomain]</param>
+        /// <returns></returns>
         public bool Contains(string fullaccount)
         {
             return this[fullaccount] == null;
@@ -254,7 +269,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Find <see cref="Circle"/> by circle Id and host domain if circle not found, return null.
+        /// Find <see cref="Circle"/> by circle Id and host domain, if circle not found, return null.
         /// </summary>
         /// <param name="id">Via Id: guid@hostdomain</param>
         /// <returns></returns>

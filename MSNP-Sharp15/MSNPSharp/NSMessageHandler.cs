@@ -390,7 +390,7 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when any contact changes status
         /// </summary>
-        public event EventHandler<ContactStatusChangeEventArgs> ContactStatusChanged;
+        public event EventHandler<ContactStatusChangedEventArgs> ContactStatusChanged;
 
         /// <summary>
         /// Occurs when any contact goes from offline status to another status
@@ -401,6 +401,26 @@ namespace MSNPSharp
         /// Occurs when any contact goed from any status to offline status
         /// </summary>
         public event EventHandler<ContactEventArgs> ContactOffline;
+
+        /// <summary>
+        /// Occurs when any circle changes status
+        /// </summary>
+        public event EventHandler<CircleStatusChangedEventArgs> CircleStatusChanged;
+
+        /// <summary>
+        /// Occurs when any circle goes from offline status to another status
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CircleOnline;
+
+        /// <summary>
+        /// Occurs when any circle goes from any status to offline status
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CircleOffline;
+
+        /// <summary>
+        /// Occurs when a member left the circle.
+        /// </summary>
+        public event EventHandler<CircleMemberEventArgs> CircleMemberLeft;
 
         /// <summary>
         /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
@@ -1243,6 +1263,8 @@ namespace MSNPSharp
 
             if (fullaccount.Contains(";via=9:"))
             {
+                #region Circle Status
+
                 string[] usernameAndCircle = fullaccount.Split(';');
                 type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
@@ -1272,11 +1294,21 @@ namespace MSNPSharp
                         Circle circle = CircleList[circleMail];
                         if (circle == null)
                             return;
+
+                        PresenceStatus oldCircleStatus = circle.Status;
                         circle.SetStatus(newstatus);
+
+                        if (CircleStatusChanged != null)
+                            CircleStatusChanged(this, new CircleStatusChangedEventArgs(circle, oldCircleStatus));
+
+                        if (CircleOnline != null)
+                            CircleOnline(this, new CircleEventArgs(circle));
                     }
 
                     return;
-                }
+                } 
+
+                #endregion
             }
             else
             {
@@ -1284,6 +1316,8 @@ namespace MSNPSharp
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
                 contact = ContactList.GetContact(account, type);
             }
+
+            #region Contact Status, or Circle Member Status
 
             if (contact != null)
             {
@@ -1330,12 +1364,13 @@ namespace MSNPSharp
 
                 // The contact changed status
                 if (ContactStatusChanged != null)
-                    ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
+                    ContactStatusChanged(this, new ContactStatusChangedEventArgs(contact, oldStatus));
 
                 // The contact goes online
                 if (ContactOnline != null)
                     ContactOnline(this, new ContactEventArgs(contact));
-            }
+            } 
+            #endregion
         }
 
         /// <summary>
@@ -1365,7 +1400,7 @@ namespace MSNPSharp
 
                 contact = CircleMemberList[fullaccount];
 
-                if (account == Owner.Mail.ToLowerInvariant())
+                if (account == Owner.Mail.ToLowerInvariant())  //Circle status
                 {
                     string capabilityString = message.CommandValues[1].ToString();
                     if (capabilityString == "0:0")  //This is a circle's presence status.
@@ -1373,7 +1408,15 @@ namespace MSNPSharp
                         Circle circle = CircleList[circleMail];
                         if (circle == null)
                             return;
+
+                        PresenceStatus oldCircleStatus = circle.Status;
                         circle.SetStatus(PresenceStatus.Offline);
+
+                        if (CircleStatusChanged != null)
+                            CircleStatusChanged(this, new CircleStatusChangedEventArgs(circle, oldCircleStatus));
+
+                        if (CircleOffline != null)
+                            CircleOffline(this, new CircleEventArgs(circle));
                     }
 
                     return;
@@ -1413,7 +1456,7 @@ namespace MSNPSharp
 
                 // the contact changed status
                 if (ContactStatusChanged != null)
-                    ContactStatusChanged(this, new ContactStatusChangeEventArgs(contact, oldStatus));
+                    ContactStatusChanged(this, new ContactStatusChangedEventArgs(contact, oldStatus));
 
                 // the contact goes offline
                 if (ContactOffline != null)
@@ -2480,6 +2523,53 @@ namespace MSNPSharp
             #endregion
 
             #region NFY DEL
+            if (message.CommandValues[0].ToString() == "DEL")
+            {
+                NetworkMessage networkMessage = message as NetworkMessage;
+                if (networkMessage.InnerBody == null)
+                {
+                    return;
+                }
+
+                string mimeString = Encoding.UTF8.GetString(networkMessage.InnerBody);
+                mimeString = mimeString.Replace("\r\n\r\n", "\r\n");
+                byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
+                MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+
+                if (!mimeDic.ContainsKey(MimeHeaderStrings.Uri))
+                    return;
+                string xpathUri = mimeDic[MimeHeaderStrings.Uri].ToString();
+                if (xpathUri.IndexOf("/circle/roster(IM)/user") == -1)
+                    return;
+
+                string typeAccount = xpathUri.Substring("/circle/roster(IM)/user".Length);
+                typeAccount = typeAccount.Substring(typeAccount.IndexOf("("));
+                typeAccount = typeAccount.Substring(0, typeAccount.IndexOf(")"));
+
+                if (!mimeDic.ContainsKey(MimeHeaderStrings.From))
+                    return;
+
+                string circleID = mimeDic[MimeHeaderStrings.From].ToString();
+                string[] typeCircleID = circleID.Split(':');
+                if (typeCircleID.Length < 2)
+                    return;
+
+                if (CircleList[typeCircleID[1]] == null)
+                    return;
+
+                Circle circle = CircleList[typeCircleID[1]];
+
+                string fullAccount = typeAccount + ";via=" + circleID;
+                if (!circle.Members.Contains(fullAccount))
+                    return;
+
+                CircleContactMember member = circle.Members[fullAccount];
+
+                OnCircleMemberLeft(new CircleMemberEventArgs(circle, member));
+
+
+
+            }
 
             #endregion
         }
@@ -2643,6 +2733,12 @@ namespace MSNPSharp
         {
             if (CircleTextMessageReceived != null)
                 CircleTextMessageReceived(this, e);
+        }
+
+        protected virtual void OnCircleMemberLeft(CircleMemberEventArgs e)
+        {
+            if (CircleMemberLeft != null)
+                CircleMemberLeft(this, e);
         }
 
         #endregion
