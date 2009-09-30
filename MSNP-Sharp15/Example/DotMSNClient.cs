@@ -92,18 +92,21 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
 
+            messenger.Nameserver.CircleOnline += new EventHandler<CircleEventArgs>(Nameserver_CircleOnline);
+            messenger.Nameserver.CircleOffline += new EventHandler<CircleEventArgs>(Nameserver_CircleOffline);
+
             messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
             messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
-            messenger.Nameserver.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
-            messenger.Nameserver.ContactService.JoinedCircle += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
+            messenger.Nameserver.ContactService.CreateCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
+            messenger.Nameserver.ContactService.JoinedCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
             messenger.Nameserver.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
-            messenger.Nameserver.ContactService.CircleLeft += new EventHandler<CircleEventArgs>(ContactService_CircleLeft);
+            messenger.Nameserver.ContactService.ExitCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_ExitCircle);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             messenger.Nameserver.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
-            messenger.Nameserver.Owner.StatusChanged += new EventHandler<StatusChangeEventArgs>(Owner_StatusChanged);
+            messenger.Nameserver.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
             messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
             
@@ -130,7 +133,17 @@ namespace MSNPSharpClient
 
         }
 
-        void ContactService_CircleLeft(object sender, CircleEventArgs e)
+        void Nameserver_CircleOnline(object sender, CircleEventArgs e)
+        {
+            Trace.WriteLine("Circle go online: " + e.Circle.ToString());
+        }
+
+        void Nameserver_CircleOffline(object sender, CircleEventArgs e)
+        {
+            Trace.WriteLine("Circle go offline: " + e.Circle.ToString());
+        }
+
+        void ContactService_ExitCircle(object sender, CircleEventArgs e)
         {
             RefreshCircleList(sender, e);
         }
@@ -138,7 +151,7 @@ namespace MSNPSharpClient
         void ContactService_JoinedCircle(object sender, CircleEventArgs e)
         {
             RefreshCircleList(sender, e);
-            messenger.Nameserver.ContactService.LeaveCircle(e.Circle); //Demostrate how to leave a circle.
+            messenger.Nameserver.ContactService.ExitCircle(e.Circle); //Demostrate how to leave a circle.
         }
 
         void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArgs e)
@@ -479,11 +492,11 @@ namespace MSNPSharpClient
             }
         }
 
-        void Owner_StatusChanged(object sender, StatusChangeEventArgs e)
+        void Owner_StatusChanged(object sender, StatusChangedEventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<StatusChangeEventArgs>(Owner_StatusChanged), sender, e);
+                Invoke(new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged), sender, e);
                 return;
             }
 
@@ -1481,7 +1494,7 @@ namespace MSNPSharpClient
         {
             //This is a demostration to tell you how to use MSNPSharp to create, block, and unblock Circle.
             messenger.ContactService.CreateCircle("test wp circle");
-            messenger.ContactService.CircleCreated += new EventHandler<CircleEventArgs>(ContactService_TestingCircleAdded);
+            messenger.ContactService.CreateCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_TestingCircleAdded);
         }
 
         void ContactService_TestingCircleAdded(object sender, CircleEventArgs e)
@@ -1514,14 +1527,14 @@ namespace MSNPSharpClient
             //This demo shows you how to invite a contact to your circle.
             if (messenger.ContactList.HasContact("freezingsoft@hotmail.com", ClientType.PassportMember))
             {
-                messenger.ContactService.InviteContactToCircle(sender as Circle, messenger.ContactList["freezingsoft@hotmail.com", ClientType.PassportMember], "hello");
-                messenger.ContactService.CircleMemberInvited += new EventHandler<CircleEventArgs>(ContactService_CircleMemberInvited);
+                messenger.ContactService.InviteCircleMember(sender as Circle, messenger.ContactList["freezingsoft@hotmail.com", ClientType.PassportMember], "hello");
+                messenger.ContactService.InviteCircleMemberCompleted += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberInvited);
             }
         }
 
-        void ContactService_CircleMemberInvited(object sender, CircleEventArgs e)
+        void ContactService_CircleMemberInvited(object sender, CircleMemberEventArgs e)
         {
-            Trace.WriteLine("Invited: " + e.RemoteMember.Hash);
+            Trace.WriteLine("Invited: " + e.Member.Hash);
         }
 
         private void importContactsMenuItem_Click(object sender, EventArgs e)
