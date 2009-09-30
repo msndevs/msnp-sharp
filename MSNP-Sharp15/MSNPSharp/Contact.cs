@@ -275,6 +275,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The email account of contact.
+        /// </summary>
         public string Mail
         {
             get
@@ -288,6 +291,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The display name of contact.
+        /// </summary>
         public string Name
         {
             get
@@ -558,6 +564,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The name provide by the owner.
+        /// </summary>
         public string NickName
         {
             get

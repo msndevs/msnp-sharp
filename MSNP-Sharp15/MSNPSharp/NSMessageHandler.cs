@@ -926,6 +926,9 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             // VER: MSN Protocol used
+
+            (MessageProcessor as NSMessageProcessor).ResetTransactionID();
+
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18", "CVR0" }));
         }
 
