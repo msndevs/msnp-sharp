@@ -40,7 +40,7 @@ namespace MSNPSharp
 
     public class NSMessageProcessor : SocketMessageProcessor
     {
-        int transactionID = 1;
+        int transactionID = 0;
 
         public event EventHandler<ExceptionEventArgs> HandlerException;
 
@@ -55,10 +55,19 @@ namespace MSNPSharp
             {
                 return transactionID;
             }
-            set
+
+            private set
             {
                 transactionID = value;
             }
+        }
+
+        /// <summary>
+        /// Reset the transactionID to zero.
+        /// </summary>
+        internal void ResetTransactionID()
+        {
+            TransactionID = 0;
         }
 
         protected internal int IncreaseTransactionID()

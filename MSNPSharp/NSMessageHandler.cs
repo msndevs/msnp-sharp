@@ -210,7 +210,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// A collection of all circle which are defined by the user who logged into the messenger network.
+        /// A collection of all circles which are defined by the user who logged into the messenger network.
         /// </summary>
         public CircleList CircleList
         {
@@ -926,6 +926,9 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             // VER: MSN Protocol used
+
+            (MessageProcessor as NSMessageProcessor).ResetTransactionID();
+
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18", "CVR0" }));
         }
 
