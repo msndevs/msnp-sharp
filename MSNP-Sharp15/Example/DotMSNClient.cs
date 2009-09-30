@@ -101,6 +101,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactService.JoinedCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
             messenger.Nameserver.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
             messenger.Nameserver.ContactService.ExitCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_ExitCircle);
+            messenger.Nameserver.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberLeft);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
@@ -131,6 +132,12 @@ namespace MSNPSharpClient
             comboStatus.SelectedIndex = 0;
             comboProtocol.SelectedIndex = 0;
 
+        }
+
+        void Nameserver_CircleMemberLeft(object sender, CircleMemberEventArgs e)
+        {
+            Trace.WriteLine("Circle member " + e.Member.ToString() + " has left the circle: " + e.Circle.ToString());
+            RefreshCircleList(sender, e);
         }
 
         void Nameserver_CircleOnline(object sender, CircleEventArgs e)
