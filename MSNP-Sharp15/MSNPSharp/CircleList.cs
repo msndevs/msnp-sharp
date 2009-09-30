@@ -138,7 +138,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool Contains(string fullaccount)
         {
-            return this[fullaccount] == null;
+            return this[fullaccount] != null;
         }
 
         public void Clear()

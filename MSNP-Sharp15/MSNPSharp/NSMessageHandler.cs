@@ -2543,7 +2543,7 @@ namespace MSNPSharp
                     return;
 
                 string typeAccount = xpathUri.Substring("/circle/roster(IM)/user".Length);
-                typeAccount = typeAccount.Substring(typeAccount.IndexOf("("));
+                typeAccount = typeAccount.Substring(typeAccount.IndexOf("(") + 1);
                 typeAccount = typeAccount.Substring(0, typeAccount.IndexOf(")"));
 
                 if (!mimeDic.ContainsKey(MimeHeaderStrings.From))
@@ -2565,6 +2565,7 @@ namespace MSNPSharp
 
                 CircleContactMember member = circle.Members[fullAccount];
 
+                circle.RemoveMember(member);
                 OnCircleMemberLeft(new CircleMemberEventArgs(circle, member));
 
 
