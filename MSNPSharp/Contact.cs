@@ -41,91 +41,6 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
 
-    [Serializable()]
-    public class ContactStatusChangeEventArgs : EventArgs
-    {
-        Contact contact;
-        PresenceStatus oldStatus;
-
-        public Contact Contact
-        {
-            get
-            {
-                return contact;
-            }
-            set
-            {
-                contact = value;
-            }
-        }
-
-        public PresenceStatus OldStatus
-        {
-            get
-            {
-                return oldStatus;
-            }
-            set
-            {
-                oldStatus = value;
-            }
-        }
-
-        public ContactStatusChangeEventArgs(Contact contact,
-                                            PresenceStatus oldStatus)
-        {
-            Contact = contact;
-            OldStatus = oldStatus;
-        }
-    }
-
-
-    [Serializable()]
-    public class ContactEventArgs : System.EventArgs
-    {
-        Contact contact;
-
-        public Contact Contact
-        {
-            get
-            {
-                return contact;
-            }
-            set
-            {
-                contact = value;
-            }
-        }
-
-        public ContactEventArgs(Contact contact)
-        {
-            Contact = contact;
-        }
-    }
-
-    [Serializable()]
-    public class StatusChangeEventArgs : EventArgs
-    {
-        private PresenceStatus oldStatus;
-
-        public PresenceStatus OldStatus
-        {
-            get
-            {
-                return oldStatus;
-            }
-            set
-            {
-                oldStatus = value;
-            }
-        }
-
-        public StatusChangeEventArgs(PresenceStatus oldStatus)
-        {
-            OldStatus = oldStatus;
-        }
-    }
-
     /// <summary>
     /// User in roster list.
     /// </summary>
@@ -206,9 +121,9 @@ namespace MSNPSharp
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
         public event EventHandler<EventArgs> ContactBlocked;
         public event EventHandler<EventArgs> ContactUnBlocked;
-        public event EventHandler<StatusChangeEventArgs> ContactOnline;
-        public event EventHandler<StatusChangeEventArgs> ContactOffline;
-        public event EventHandler<StatusChangeEventArgs> StatusChanged;
+        public event EventHandler<StatusChangedEventArgs> ContactOnline;
+        public event EventHandler<StatusChangedEventArgs> ContactOffline;
+        public event EventHandler<StatusChangedEventArgs> StatusChanged;
 
         #endregion
 
@@ -860,20 +775,20 @@ namespace MSNPSharp
         protected virtual void OnStatusChanged(PresenceStatus oldStatus)
         {
             if (StatusChanged != null)
-                StatusChanged(this, new StatusChangeEventArgs(oldStatus));
+                StatusChanged(this, new StatusChangedEventArgs(oldStatus));
         }
 
         protected virtual void OnContactOnline(PresenceStatus oldStatus)
         {
             if (ContactOnline != null)
-                ContactOnline(this, new StatusChangeEventArgs(oldStatus));
+                ContactOnline(this, new StatusChangedEventArgs(oldStatus));
         }
 
         protected virtual void OnContactOffline(PresenceStatus oldStatus)
         {
             if (ContactOffline != null)
             {
-                ContactOffline(this, new StatusChangeEventArgs(oldStatus));
+                ContactOffline(this, new StatusChangedEventArgs(oldStatus));
             }
         }
 

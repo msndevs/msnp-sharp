@@ -362,7 +362,8 @@ namespace MSNPSharp
     {
         None = 0x00,
         RTCVideoEnabled = 0x10,
-        CanP2PV2 = 0x20
+        CanP2PV2 = 0x20,
+        CanHandleMSNCExMask = 0x20000
     }
 
     /// <summary>
@@ -488,7 +489,7 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Client Type
+    /// Email account type.
     /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string)"/> method.</remarks>
     /// </summary>
     public enum ClientType

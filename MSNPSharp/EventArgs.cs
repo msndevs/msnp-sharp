@@ -37,6 +37,101 @@ namespace MSNPSharp
     using MSNPSharp.Core;
 
     /// <summary>
+    /// Used when contact changed its status.
+    /// </summary>
+    [Serializable()]
+    public class ContactStatusChangedEventArgs : StatusChangedEventArgs
+    {
+        Contact contact;
+
+        /// <summary>
+        /// The contact who changed its status.
+        /// </summary>
+        public Contact Contact
+        {
+            get
+            {
+                return contact;
+            }
+            set
+            {
+                contact = value;
+            }
+        }
+
+        public ContactStatusChangedEventArgs(Contact contact,
+                                            PresenceStatus oldStatus)
+            : base(oldStatus)
+        {
+            Contact = contact;
+        }
+    }
+
+    /// <summary>
+    /// Used when any contect event occured.
+    /// </summary>
+    [Serializable()]
+    public class BaseContactEventArgs : EventArgs
+    {
+        protected Contact contact = null;
+
+        public BaseContactEventArgs(Contact contact)
+        {
+            this.contact = contact;
+        }
+    }
+
+    [Serializable()]
+    public class ContactEventArgs : BaseContactEventArgs
+    {
+        /// <summary>
+        /// The contact raise the event.
+        /// </summary>
+        public Contact Contact
+        {
+            get
+            {
+                return contact;
+            }
+            set
+            {
+                contact = value;
+            }
+        }
+
+        public ContactEventArgs(Contact contact)
+            : base(contact)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Used when a contact changed its status.
+    /// </summary>
+    [Serializable()]
+    public class StatusChangedEventArgs : EventArgs
+    {
+        private PresenceStatus oldStatus;
+
+        public PresenceStatus OldStatus
+        {
+            get
+            {
+                return oldStatus;
+            }
+            set
+            {
+                oldStatus = value;
+            }
+        }
+
+        public StatusChangedEventArgs(PresenceStatus oldStatus)
+        {
+            OldStatus = oldStatus;
+        }
+    }
+
+    /// <summary>
     /// Used in events where a exception is raised. Via these events the client programmer
     /// can react on these exceptions.
     /// </summary>
@@ -73,10 +168,34 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Base class for all message received event args.
+    /// </summary>
+    [Serializable()]
+    public class BaseMessageReceivedEventArgs : BaseContactEventArgs
+    {
+        /// <summary>
+        /// The sender.
+        /// </summary>
+        public Contact Sender
+        {
+            get
+            {
+                return contact;
+            }
+        }
+
+        internal BaseMessageReceivedEventArgs(Contact sender)
+            : base(sender)
+        {
+        }
+    }
+
+
+    /// <summary>
     /// Used as event argument when a textual message is send.
     /// </summary>
     [Serializable()]
-    public class TextMessageEventArgs : EventArgs
+    public class TextMessageEventArgs : BaseMessageReceivedEventArgs
     {
         /// <summary>
         /// </summary>
@@ -97,55 +216,21 @@ namespace MSNPSharp
             }
         }
 
-        private Contact sender;
-
-        /// <summary>
-        /// The sender of the message.
-        /// </summary>
-        public Contact Sender
-        {
-            get
-            {
-                return sender;
-            }
-            set
-            {
-                sender = value;
-            }
-        }
-
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="sender"></param>
         public TextMessageEventArgs(TextMessage message, Contact sender)
+            : base(sender)
         {
             Message = message;
-            Sender = sender;
         }
     }
 
     [Serializable()]
-    public class WinkEventArgs : EventArgs
+    public class WinkEventArgs : BaseMessageReceivedEventArgs
     {
-        private Contact sender;
-
-        /// <summary>
-        /// The sender of the message.
-        /// </summary>
-        public Contact Sender
-        {
-            get
-            {
-                return sender;
-            }
-            set
-            {
-                sender = value;
-            }
-        }
-
         private Wink wink;
 
         public Wink Wink
@@ -161,8 +246,8 @@ namespace MSNPSharp
         }
 
         public WinkEventArgs(Contact contact, Wink wink)
+            : base(contact)
         {
-            this.sender = contact;
             this.wink = wink;
         }
     }
@@ -171,24 +256,8 @@ namespace MSNPSharp
     /// Used as event argument when a emoticon definition is send.
     /// </summary>
     [Serializable()]
-    public class EmoticonDefinitionEventArgs : EventArgs
+    public class EmoticonDefinitionEventArgs : BaseMessageReceivedEventArgs
     {
-        private Contact sender;
-
-        /// <summary>
-        /// The sender of the message.
-        /// </summary>
-        public Contact Sender
-        {
-            get
-            {
-                return sender;
-            }
-            set
-            {
-                sender = value;
-            }
-        }
 
         /// <summary>
         /// </summary>
@@ -215,8 +284,8 @@ namespace MSNPSharp
         /// <param name="sender"></param>
         /// <param name="emoticon"></param>
         public EmoticonDefinitionEventArgs(Contact sender, Emoticon emoticon)
+            : base(sender)
         {
-            this.sender = sender;
             this.emoticon = emoticon;
         }
     }
@@ -334,27 +403,8 @@ namespace MSNPSharp
     /// Used as event argument when any contact list mutates.
     /// </summary>
     [Serializable()]
-    public class ListMutateEventArgs : EventArgs
+    public class ListMutateEventArgs : ContactEventArgs
     {
-        /// <summary>
-        /// </summary>
-        private Contact contact;
-
-        /// <summary>
-        /// The affected contact.
-        /// </summary>
-        public Contact Contact
-        {
-            get
-            {
-                return contact;
-            }
-            set
-            {
-                contact = value;
-            }
-        }
-
         /// <summary>
         /// </summary>
         private MSNLists affectedList = MSNLists.None;
@@ -380,8 +430,8 @@ namespace MSNPSharp
         /// <param name="contact"></param>
         /// <param name="affectedList"></param>
         public ListMutateEventArgs(Contact contact, MSNLists affectedList)
+            : base(contact)
         {
-            Contact = contact;
             AffectedList = affectedList;
         }
     }
@@ -422,21 +472,24 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Base class for circle event arg.
+    /// </summary>
+    public class BaseCircleEventArgs : EventArgs
+    {
+        protected Circle circle = null;
+        internal BaseCircleEventArgs(Circle circle)
+        {
+            this.circle = circle;
+        }
+    }
+
+    /// <summary>
     /// Used as event argument when a <see cref="Circle"/> is affected.
     /// </summary>
     [Serializable()]
-    public class CircleEventArgs : EventArgs
+    public class CircleEventArgs : BaseCircleEventArgs
     {
-        private Circle circle = null;
-        private Contact remoteMember = null;
-
-        /// <summary>
-        /// The affected Contact.
-        /// </summary>
-        public Contact RemoteMember
-        {
-            get { return remoteMember; }
-        }
+        protected Contact remoteMember = null;
 
         /// <summary>
         /// The affected contact group
@@ -449,17 +502,13 @@ namespace MSNPSharp
             }
         }
 
-        protected CircleEventArgs()
-        {
-        }
-
         /// <summary>
         /// Constructor, mostly used internal by the library.
         /// </summary>
         /// <param name="circle"></param>
         internal CircleEventArgs(Circle circle)
+            : base(circle)
         {
-            this.circle = circle;
         }
 
         /// <summary>
@@ -468,9 +517,49 @@ namespace MSNPSharp
         /// <param name="circle"></param>
         /// <param name="remote">The affected Contact.</param>
         internal CircleEventArgs(Circle circle, Contact remote)
+            : base(circle)
+        {
+            remoteMember = remote;
+        }
+    }
+
+    /// <summary>
+    /// Used when a event related to circle member operaion fired.
+    /// </summary>
+    [Serializable()]
+    public class CircleMemberEventArgs : CircleEventArgs
+    {
+        /// <summary>
+        /// The contact member raise the event.
+        /// </summary>
+        public Contact Member
+        {
+            get
+            {
+                return remoteMember;
+            }
+        }
+
+        internal CircleMemberEventArgs(Circle circle, Contact member)
+            : base(circle, member)
+        {
+        }
+    }
+
+    [Serializable()]
+    public class CircleStatusChangedEventArgs : StatusChangedEventArgs
+    {
+        protected Circle circle = null;
+
+        public Circle Circle
+        {
+            get { return circle; }
+        }
+
+        internal CircleStatusChangedEventArgs(Circle circle, PresenceStatus oldStatus)
+            : base(oldStatus)
         {
             this.circle = circle;
-            remoteMember = remote;
         }
     }
 
@@ -480,24 +569,18 @@ namespace MSNPSharp
     [Serializable()]
     public class JoinCircleInvitationEventArgs : CircleEventArgs
     {
-        private CircleInviter inviter = null;
 
         /// <summary>
         /// <see cref="Contact"/> who send this invitation.
         /// </summary>
         public CircleInviter Inviter
         {
-            get { return inviter; }
-        }
-
-        protected JoinCircleInvitationEventArgs()
-        {
+            get { return remoteMember as CircleInviter; }
         }
 
         internal JoinCircleInvitationEventArgs(Circle circle, CircleInviter invitor)
             : base(circle)
         {
-            this.inviter = invitor;
         }
     }
 

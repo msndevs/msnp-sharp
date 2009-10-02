@@ -157,7 +157,7 @@ namespace MSNPSharp
             }
         }
 
-        protected internal Circle()
+        protected Circle()
             : base()
         {
             Initialize();
