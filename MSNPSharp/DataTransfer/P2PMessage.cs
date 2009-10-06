@@ -37,8 +37,10 @@ using System.Collections.Generic;
 
 namespace MSNPSharp.DataTransfer
 {
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
+
+    #region P2PFlag
 
     /// <summary>
     /// Defines the type of P2P message.
@@ -100,6 +102,10 @@ namespace MSNPSharp.DataTransfer
         MSNObjectData = MSNSLPInfo | P2PFlag.Data
     }
 
+    #endregion
+
+    #region P2PConst
+
     internal static class P2PConst
     {
         /// <summary>
@@ -148,6 +154,9 @@ namespace MSNPSharp.DataTransfer
         public const uint CustomEmoticonFooter1 = 1;
     }
 
+    #endregion
+
+    #region OperationCode
 
     public enum OperationCode : byte
     {
@@ -156,13 +165,17 @@ namespace MSNPSharp.DataTransfer
         InitSession = 0x3
     }
 
+    #endregion
+
+    #region P2PMessage
+
     /// <summary>
     /// Represents a single P2P framework message.
     /// </summary>
     [Serializable]
     public class P2PMessage : NetworkMessage
     {
-        protected P2PVersion version;
+        private P2PVersion version;
         private P2PHeader header;
         private uint footer = 0;
 
@@ -300,6 +313,7 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 base.InnerBody = value;
+                base.InnerMessage = null; // Data changed, re-parse SLP message
 
                 if (version == P2PVersion.P2PV1)
                 {
@@ -338,7 +352,26 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 this.InnerBody = value.GetBytes();
-                base.InnerMessage = value;
+                base.InnerMessage = null; // Data changed, re-parse SLP message
+            }
+        }
+
+
+        public bool IsSLPData
+        {
+            get
+            {
+                if (Header.MessageSize > 0 && Header.SessionId == 0)
+                {
+                    if ((Version == P2PVersion.P2PV1 && (V1Header.Flags == P2PFlag.Normal || V1Header.Flags == P2PFlag.MSNSLPInfo))
+                        ||
+                        (Version == P2PVersion.P2PV2 && (V2Header.TFCombination == TFCombination.None || V2Header.TFCombination == TFCombination.First)))
+                    {
+                        return true;
+                    }
+
+                }
+                return false;
             }
         }
 
@@ -442,7 +475,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            
+
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
@@ -624,6 +657,9 @@ namespace MSNPSharp.DataTransfer
         }
     };
 
+    #endregion
+
+    #region P2PDataMessage
 
     /// <summary>
     /// Represents a single P2PDataMessage which is used for the actual data transfer. No negotiation handling.
@@ -675,6 +711,9 @@ namespace MSNPSharp.DataTransfer
         }
     };
 
+    #endregion
+
+    #region P2PDCMessage
 
     /// <summary>
     /// A P2P Message which is send in a direct-connection.
@@ -732,6 +771,10 @@ namespace MSNPSharp.DataTransfer
             return "[P2PDCMessage]\r\n" + base.ToString();
         }
     };
+
+    #endregion
+
+    #region P2PDCHandshakeMessage
 
     /// <summary>
     /// A P2P Message which is send in a direct-connection. (P2Pv1?)
@@ -846,4 +889,7 @@ namespace MSNPSharp.DataTransfer
                 base.ToString();
         }
     }
+
+    #endregion
+
 };
