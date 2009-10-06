@@ -363,6 +363,8 @@ namespace MSNPSharp
         None = 0x00,
         RTCVideoEnabled = 0x10,
         CanP2PV2 = 0x20,
+        CanP2PV1 = 0x400,   //I guess.
+        UNKnownEx1000 = 0x1000,
         CanHandleMSNCExMask = 0x20000
     }
 

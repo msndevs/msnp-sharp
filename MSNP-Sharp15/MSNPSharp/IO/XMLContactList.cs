@@ -787,6 +787,11 @@ namespace MSNPSharp.IO
                                     contact.Guid = Guid.Empty;
                                     contact.SetIsMessengerUser(false);
 
+                                    PresenceStatus oldStatus = contact.Status;
+                                    contact.SetStatus(PresenceStatus.Offline);  //Force the contact offline.
+                                    NSMessageHandler.OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+                                    NSMessageHandler.OnContactOffline(new ContactEventArgs(contact));
+
                                     if (MSNLists.None == contact.Lists)
                                     {
                                         NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);

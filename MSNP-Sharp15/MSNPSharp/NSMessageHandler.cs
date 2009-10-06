@@ -1067,6 +1067,25 @@ namespace MSNPSharp
                 messageProcessor.Disconnect();
         }
 
+        /// <summary>
+        /// Fires the <see cref="ContactStatusChanged"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactStatusChanged(ContactStatusChangedEventArgs e)
+        {
+            if (ContactStatusChanged != null)
+                ContactStatusChanged(this, e);
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactOffline"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactOffline(ContactEventArgs e)
+        {
+            if (ContactOffline != null)
+                ContactOffline(this, e);
+        }
 
         #endregion
 
