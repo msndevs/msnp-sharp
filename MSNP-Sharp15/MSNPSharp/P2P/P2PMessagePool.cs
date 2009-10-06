@@ -191,7 +191,11 @@ namespace MSNPSharp.P2P
                     }
 
                     P2PMessage totalMessage = splittedP2PV1Messages[p2pMessage.Header.Identifier];
-                    Debug.Assert(totalMessage.V1Header.TotalSize == p2pMessage.V1Header.TotalSize);
+                    if ((totalMessage.V1Header.TotalSize != p2pMessage.V1Header.TotalSize) ||
+                        (p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize) > totalMessage.Header.TotalSize)
+                    {
+                        return; // Invalid packet, don't kill me.
+                    }
 
                     Array.Copy(p2pMessage.InnerBody, 0, totalMessage.InnerBody, (long)p2pMessage.V1Header.Offset, (long)p2pMessage.V1Header.MessageSize);
                     totalMessage.V1Header.Offset = p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize;

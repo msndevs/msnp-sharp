@@ -175,7 +175,7 @@ namespace MSNPSharp.P2P
     [Serializable]
     public class P2PMessage : NetworkMessage
     {
-        protected P2PVersion version;
+        private P2PVersion version;
         private P2PHeader header;
         private uint footer = 0;
 
@@ -313,6 +313,7 @@ namespace MSNPSharp.P2P
             set
             {
                 base.InnerBody = value;
+                base.InnerMessage = null; // Data changed, re-parse SLP message
 
                 if (version == P2PVersion.P2PV1)
                 {
@@ -351,7 +352,26 @@ namespace MSNPSharp.P2P
             set
             {
                 this.InnerBody = value.GetBytes();
-                base.InnerMessage = value;
+                base.InnerMessage = null; // Data changed, re-parse SLP message
+            }
+        }
+
+
+        public bool IsSLPData
+        {
+            get
+            {
+                if (Header.MessageSize > 0 && Header.SessionId == 0)
+                {
+                    if ((Version == P2PVersion.P2PV1 && (V1Header.Flags == P2PFlag.Normal || V1Header.Flags == P2PFlag.MSNSLPInfo))
+                        ||
+                        (Version == P2PVersion.P2PV2 && (V2Header.TFCombination == TFCombination.None || V2Header.TFCombination == TFCombination.First)))
+                    {
+                        return true;
+                    }
+
+                }
+                return false;
             }
         }
 
