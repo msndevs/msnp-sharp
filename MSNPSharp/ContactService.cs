@@ -1186,7 +1186,12 @@ namespace MSNPSharp
 
                 if (!e.Cancelled && e.Error == null)
                 {
-                    abRequest(PartnerScenario.ContactSave, null);
+                    abRequest(PartnerScenario.ContactSave,
+                        delegate
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Delete contact :" + contact.Hash + " completed.");
+                        }
+                        );
                 }
             };
 

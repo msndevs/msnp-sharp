@@ -1067,6 +1067,25 @@ namespace MSNPSharp
                 messageProcessor.Disconnect();
         }
 
+        /// <summary>
+        /// Fires the <see cref="ContactStatusChanged"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactStatusChanged(ContactStatusChangedEventArgs e)
+        {
+            if (ContactStatusChanged != null)
+                    ContactStatusChanged(this, e);
+        }
+
+        /// <summary>
+        /// Fires the <see cref="ContactOffline"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnContactOffline(ContactEventArgs e)
+        {
+            if (ContactOffline != null)
+                ContactOffline(this, e);
+        }
 
         #endregion
 
@@ -1363,8 +1382,7 @@ namespace MSNPSharp
                 contact.SetStatus(newstatus);
 
                 // The contact changed status
-                if (ContactStatusChanged != null)
-                    ContactStatusChanged(this, new ContactStatusChangedEventArgs(contact, oldStatus));
+                OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
 
                 // The contact goes online
                 if (ContactOnline != null)
@@ -1455,12 +1473,10 @@ namespace MSNPSharp
                 contact.SetStatus(PresenceStatus.Offline);
 
                 // the contact changed status
-                if (ContactStatusChanged != null)
-                    ContactStatusChanged(this, new ContactStatusChangedEventArgs(contact, oldStatus));
+                OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
 
                 // the contact goes offline
-                if (ContactOffline != null)
-                    ContactOffline(this, new ContactEventArgs(contact));
+                OnContactOffline(new ContactEventArgs(contact));
             }
         }
 
