@@ -86,6 +86,9 @@ namespace MSNPSharp
 
         private object syncObject = new object();
 
+        /// <summary>
+        /// The display image url from the webside.
+        /// </summary>
         public Uri UserTile
         {
             get
@@ -191,7 +194,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The email account of the contact.
+        /// The email account of contact.
         /// </summary>
         public string Mail
         {
@@ -207,7 +210,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The nickname privide by the contact.
+        /// The display name of contact.
         /// </summary>
         public string Name
         {
@@ -257,6 +260,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Indicates whether this contact has MSN Space.
+        /// </summary>
         public bool HasBlog
         {
             get
@@ -298,6 +304,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The online status of contact.
+        /// </summary>
         public PresenceStatus Status
         {
             get
@@ -306,6 +315,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Indicates whether the contact is online.
+        /// </summary>
         public bool Online
         {
             get
@@ -314,6 +326,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The type of contact's email account.
+        /// </summary>
         public ClientType ClientType
         {
             get
@@ -326,6 +341,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The role of contact in the addressbook.
+        /// </summary>
         public string ContactType
         {
             get
@@ -480,7 +498,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The nickname provide by the owner.
+        /// The name provide by the owner.
         /// </summary>
         public string NickName
         {

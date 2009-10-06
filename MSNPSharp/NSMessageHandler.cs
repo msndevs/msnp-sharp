@@ -1074,7 +1074,7 @@ namespace MSNPSharp
         protected internal virtual void OnContactStatusChanged(ContactStatusChangedEventArgs e)
         {
             if (ContactStatusChanged != null)
-                    ContactStatusChanged(this, e);
+                ContactStatusChanged(this, e);
         }
 
         /// <summary>
@@ -3078,14 +3078,6 @@ namespace MSNPSharp
                         return;
                     case "SDG":
                         OnSDGReceived(nsMessage);
-                        return;
-
-                    // Outdated
-                    case "BPR":
-                        OnBPRReceived(nsMessage);
-                        return;
-                    case "ILN":
-                        OnILNReceived(nsMessage);
                         return;
                 }
 

@@ -61,7 +61,7 @@ namespace MSNPSharp
 
         public ContactStatusChangedEventArgs(Contact contact,
                                             PresenceStatus oldStatus)
-            : base(oldStatus)
+            :base(oldStatus)
         {
             Contact = contact;
         }
@@ -246,7 +246,7 @@ namespace MSNPSharp
         }
 
         public WinkEventArgs(Contact contact, Wink wink)
-            : base(contact)
+            :base(contact)
         {
             this.wink = wink;
         }
@@ -284,7 +284,7 @@ namespace MSNPSharp
         /// <param name="sender"></param>
         /// <param name="emoticon"></param>
         public EmoticonDefinitionEventArgs(Contact sender, Emoticon emoticon)
-            : base(sender)
+            :base(sender)
         {
             this.emoticon = emoticon;
         }
@@ -507,7 +507,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="circle"></param>
         internal CircleEventArgs(Circle circle)
-            : base(circle)
+            :base(circle)
         {
         }
 
@@ -517,7 +517,7 @@ namespace MSNPSharp
         /// <param name="circle"></param>
         /// <param name="remote">The affected Contact.</param>
         internal CircleEventArgs(Circle circle, Contact remote)
-            : base(circle)
+            :base(circle)
         {
             remoteMember = remote;
         }
@@ -547,7 +547,7 @@ namespace MSNPSharp
     }
 
     [Serializable()]
-    public class CircleStatusChangedEventArgs : StatusChangedEventArgs
+    public class CircleStatusChangedEventArgs: StatusChangedEventArgs
     {
         protected Circle circle = null;
 
