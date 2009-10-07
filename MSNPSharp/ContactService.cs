@@ -1101,7 +1101,17 @@ namespace MSNPSharp
                 if (!e.Cancelled && e.Error == null)
                 {
                     HandleServiceHeader(((ABServiceBinding)service).ServiceHeaderValue, typeof(ABContactDeleteRequestType));
-                    abRequest(PartnerScenario.ContactSave, null);
+
+                    abRequest(PartnerScenario.ContactSave,
+                        delegate
+                        {
+                            PresenceStatus oldStatus = contact.Status;
+                            contact.SetStatus(PresenceStatus.Offline);  //Force the contact offline.
+
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Delete contact :" + contact.Hash + " completed.");
+
+                        }
+                    );
                 }
                 else if (e.Error != null)
                 {
