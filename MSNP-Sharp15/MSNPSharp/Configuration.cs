@@ -55,13 +55,15 @@ namespace MSNPSharp
         /// </summary>
         static Settings()
         {
-#if DEBUG
+            isMono = (null != Type.GetType("Mono.Runtime")); // http://www.mono-project.com/FAQ:_Technical
+
             TraceSwitch.Level = TraceLevel.Verbose;
+#if DEBUG
             serializationType = MclSerialization.Compression | MclSerialization.Cryptography;
 #else
-            TraceSwitch.Level = TraceLevel.Info;
             serializationType = MclSerialization.Compression;
 #endif
+            enableGzipCompressionForWebServices = (isMono == false);
         }
 
         private static string savepath = Path.GetFullPath(".");
@@ -70,6 +72,18 @@ namespace MSNPSharp
         private static int msnTicketsCleanupInterval = 5;
         private static int msnTicketLifeTime = 20;
         private static bool noSave;
+        private static bool isMono;
+
+        /// <summary>
+        /// Indicates whether the runtime framework is currently mono or not.
+        /// </summary>
+        public static bool IsMono
+        {
+            get
+            {
+                return isMono;
+            }
+        }
 
         /// <summary>
         /// File serialization type when saving.
