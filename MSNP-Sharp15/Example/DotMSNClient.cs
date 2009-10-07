@@ -60,8 +60,18 @@ namespace MSNPSharpClient
             TraceForm traceform = new TraceForm();
             traceform.Show();
 
-#if DEBUG
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
+
+
+            Type monoRuntimeType = Type.GetType("Mono.Runtime"); // http://www.mono-project.com/FAQ:_Technical
+            if (null == monoRuntimeType) // OK, I am NOT running on Mono.
+            {
+                // Saves bandwidth and contact list is loaded faster for the first time (90%).
+                // Don't enable this on mono, because mono raises NotImplementedException.
+                Settings.EnableGzipCompressionForWebServices = true;
+            }
+
+#if DEBUG
 
             //How to save your personal addressbook.
             //If you want your addressbook have a better reading/writting performance, use MclSerialization.None
@@ -70,9 +80,7 @@ namespace MSNPSharpClient
             //In this case, your addressbook file will be save in gzip format, none can read it, but the performance is not so good.
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.None;
 #elif TRACE
-            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Info;
-#else
-            Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Warning;
+            Settings.SerializationType = MSNPSharp.IO.MclSerialization.Compression | MSNPSharp.IO.MclSerialization.Cryptography;
 #endif
 
             // set the events that we will handle

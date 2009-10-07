@@ -65,6 +65,7 @@ namespace MSNPSharp
         }
 
         private static string savepath = Path.GetFullPath(".");
+        private static bool enableGzipCompressionForWebServices;
         private static MclSerialization serializationType;
         private static int msnTicketsCleanupInterval = 5;
         private static int msnTicketLifeTime = 20;
@@ -148,6 +149,22 @@ namespace MSNPSharp
                     value = 5;
 
                 msnTicketsCleanupInterval = value;
+            }
+        }
+
+        /// <summary>
+        /// Use Gzip compression for web services to save bandwidth.
+        /// </summary>
+        /// <remarks>Don't use this if you run .net framework on mono</remarks>
+        public static bool EnableGzipCompressionForWebServices
+        {
+            get
+            {
+                return enableGzipCompressionForWebServices;
+            }
+            set
+            {
+                enableGzipCompressionForWebServices = value;
             }
         }
 
