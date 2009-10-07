@@ -73,7 +73,7 @@ namespace MSNPSharp
                         return true;
                     };
             }
-            catch (NotImplementedException)
+            catch (Exception)
             {
 #pragma warning disable 0618
                 ServicePointManager.CertificatePolicy = new MSNServiceCertificatePolicy();
