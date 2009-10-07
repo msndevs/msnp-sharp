@@ -62,6 +62,15 @@ namespace MSNPSharpClient
 
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
 
+
+            Type monoRuntimeType = Type.GetType("Mono.Runtime"); // http://www.mono-project.com/FAQ:_Technical
+            if (null == monoRuntimeType) // OK, I am NOT running on Mono.
+            {
+                // Saves bandwidth and contact list is loaded faster for the first time (90%).
+                // Don't enable this on mono, because mono raises NotImplementedException.
+                Settings.EnableGzipCompressionForWebServices = true;
+            }
+
 #if DEBUG
 
             //How to save your personal addressbook.

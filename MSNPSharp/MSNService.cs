@@ -466,13 +466,7 @@ namespace MSNPSharp
 
             if (service != null)
             {
-                try
-                {
-                    service.EnableDecompression = true;
-                }
-                catch (NotImplementedException)
-                {
-                }
+                service.EnableDecompression = Settings.EnableGzipCompressionForWebServices;
 
                 if (asyncObject != null && asyncObject.AddToAsyncList)
                 {
@@ -492,9 +486,6 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void RunAsyncMethod(BeforeRunAsyncMethodEventArgs e)
         {
-            ChangeCacheKeyAndPreferredHostForSpecifiedMethod(e.WebService, e.ServiceType, e.ServiceState, e.Request);
-
-            // Run async method now
             if (e.ServiceState.AddToAsyncList)
             {
                 if (BeforeRunAsyncMethod != null)
@@ -502,6 +493,9 @@ namespace MSNPSharp
                     BeforeRunAsyncMethod(this, e);
                 }
 
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(e.WebService, e.ServiceType, e.ServiceState, e.Request);
+
+                // Run async method now
                 e.WebService.GetType().InvokeMember(
                     e.ServiceState.MethodName + "Async",
                     System.Reflection.BindingFlags.InvokeMethod,
@@ -514,9 +508,6 @@ namespace MSNPSharp
 
         protected void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(SoapHttpClientProtocol ws, MsnServiceType st, MsnServiceState ss, object request)
         {
-            string methodName = ss.MethodName;
-            string preferredHostKey = ws.ToString() + "." + methodName;
-
             if (st == MsnServiceType.AB ||
                 st == MsnServiceType.Sharing ||
                 st == MsnServiceType.Storage)
@@ -527,10 +518,9 @@ namespace MSNPSharp
                     throw new MSNPSharpException("Deltas is null.");
                 }
 
-
-                CacheKeyType keyType = (st == MsnServiceType.Storage) ?
-                    CacheKeyType.StorageServiceCacheKey : CacheKeyType.OmegaContactServiceCacheKey;
-
+                string methodName = ss.MethodName;
+                string preferredHostKey = ws.ToString() + "." + methodName;
+                CacheKeyType keyType = (st == MsnServiceType.Storage) ? CacheKeyType.StorageServiceCacheKey : CacheKeyType.OmegaContactServiceCacheKey;
 
                 string originalUrl = ws.Url;
                 string originalHost = ws.Url.Substring(ws.Url.IndexOf(@"://") + 3 /* @"://".Length */);
