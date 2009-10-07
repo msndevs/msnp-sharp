@@ -565,13 +565,19 @@ namespace MSNPSharp.DataTransfer
 
             while (p2pMessagePool.MessageAvailable(Version))
             {
+                p2pMessage = p2pMessagePool.GetNextMessage(Version);
+
                 if (Version == P2PVersion.P2PV1)
                 {
                     // keep track of the remote identifier
                     MessageSession.IncreaseRemoteIdentifier();
                 }
+                else if (Version == P2PVersion.P2PV2)
+                {
+                    MessageSession.RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
+                }
 
-                p2pMessage = p2pMessagePool.GetNextMessage(Version);
+               
 
                 // the message is not a datamessage, send it to the handlers
                 object[] cpHandlers = handlers.ToArray();
@@ -678,7 +684,7 @@ namespace MSNPSharp.DataTransfer
                     foreach (P2PMessage chunkMessage in P2PMessage.SplitMessage(p2pMessage, 1202))
                     {
 
-                        MessageSession.LocalIdentifier = chunkMessage.V2Header.Identifier;
+                        MessageSession.LocalIdentifier = chunkMessage.V2Header.Identifier + chunkMessage.V2Header.MessageSize;
 
                         //SBMessage sbMessage = WrapMessage(chunkMessage);
 
@@ -1054,6 +1060,7 @@ namespace MSNPSharp.DataTransfer
                             }
                         }
 
+                        Thread.Sleep(300);                        
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }
                 }

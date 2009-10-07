@@ -494,13 +494,18 @@ namespace MSNPSharp.DataTransfer
 
             while (p2pMessagePool.MessageAvailable(Version))
             {
+                p2pMessage = p2pMessagePool.GetNextMessage(Version);
                 if (Version == P2PVersion.P2PV1)
                 {
                     // keep track of the remote identifier
                     IncreaseRemoteIdentifier();
                 }
+                else if (Version == P2PVersion.P2PV2)
+                {
+                    RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
+                }
 
-                p2pMessage = p2pMessagePool.GetNextMessage(Version);
+                
 
                 object[] cpHandlers = handlers.ToArray();
 

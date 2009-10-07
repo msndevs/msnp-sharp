@@ -524,7 +524,8 @@ namespace MSNPSharp.DataTransfer
                     {
                         // there is no session available at all. the remote client sends the first message
                         // in the session. So create a new session to handle following messages.
-                        if (p2pMessage.V2Header.OperationCode == (byte)OperationCode.InitSession)
+                        if (p2pMessage.V2Header.TFCombination == TFCombination.First &&
+                            (p2pMessage.V2Header.OperationCode == (byte)OperationCode.None || p2pMessage.V2Header.OperationCode == (byte)OperationCode.InitSession))
                         {
                             session = CreateSessionFromRemote(p2pMessage);
                         }

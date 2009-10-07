@@ -1115,11 +1115,11 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
             }
 
-            if (Version == P2PVersion.P2PV1)
-            {
-                transferSession.MessageFlag = (uint)P2PFlag.FileData;
-                transferSession.MessageFooter = P2PConst.FileTransFooter2;
-            }
+            
+            
+            transferSession.MessageFlag = (uint)P2PFlag.FileData;
+            transferSession.MessageFooter = P2PConst.FileTransFooter2;
+            
 
             MessageSession.AddTransferSession(transferSession);
 
@@ -1837,9 +1837,13 @@ namespace MSNPSharp.DataTransfer
                             // ok we can receive the OK message. we can now send the invitation to setup a transfer connection
                             if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
                                 SendDCInvitation(properties);
-                        }
 
-                        session.StartDataTransfer(true);
+                            session.StartDataTransfer(true);
+                        }
+                        else
+                        {
+                            session.StartDataTransfer(false);
+                        }          
                     }
 
                 }
