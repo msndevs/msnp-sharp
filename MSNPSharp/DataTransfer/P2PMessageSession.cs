@@ -678,8 +678,9 @@ namespace MSNPSharp.DataTransfer
 
                     foreach (P2PMessage chunkMessage in messages)
                     {
-                        chunkMessage.V2Header.Identifier = LocalIdentifier;
-                        CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
+                        //chunkMessage.V2Header.Identifier = LocalIdentifier;
+                        LocalIdentifier = chunkMessage.V2Header.Identifier + chunkMessage.V2Header.MessageSize;
+                        // CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
 
                         // now send it to propbably a SB processor
                         try

@@ -677,10 +677,13 @@ namespace MSNPSharp.DataTransfer
 
                     foreach (P2PMessage chunkMessage in P2PMessage.SplitMessage(p2pMessage, 1202))
                     {
+
+                        MessageSession.LocalIdentifier = chunkMessage.V2Header.Identifier;
+
                         //SBMessage sbMessage = WrapMessage(chunkMessage);
 
-                        chunkMessage.V2Header.Identifier = MessageSession.LocalIdentifier;
-                        MessageSession.CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
+                        //chunkMessage.V2Header.Identifier = MessageSession.LocalIdentifier;
+                        //MessageSession.CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
 
                         // now send it to propbably a SB processor
                         if (MessageProcessor != null)

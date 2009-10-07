@@ -1101,7 +1101,7 @@ namespace MSNPSharp.DataTransfer
 
             if (Version == P2PVersion.P2PV2)
             {
-                p2pMessage.V2Header.OperationCode = (byte)OperationCode.InitSession;
+                p2pMessage.V2Header.OperationCode = (byte)OperationCode.None;
                 if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
                 {
                     p2pMessage.V2Header.PackageNumber = (ushort)((p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength) / 1202 + 1);

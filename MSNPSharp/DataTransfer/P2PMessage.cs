@@ -479,6 +479,7 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
+                uint nextId = p2pMessage.Header.Identifier;
                 long dataRemain = (long)p2pMessage.V2Header.DataRemaining;
                 while (offset < totalMessage.LongLength)
                 {
@@ -510,6 +511,8 @@ namespace MSNPSharp.DataTransfer
                     }
 
                     chunkMessage.InnerBody = chunk;
+                    chunkMessage.Header.Identifier = nextId;
+                    nextId += chunkMessage.Header.MessageSize;
 
                     chunkMessage.PrepareMessage();
                     chunks.Add(chunkMessage);
@@ -651,9 +654,10 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual byte[] GetInnerBytes()
         {
-            return (InnerMessage != null)
-                ? InnerMessage.GetBytes()
-                : (InnerBody != null ? InnerBody : new byte[0]);
+
+            return (InnerBody != null)
+                ? InnerBody
+                : (InnerMessage != null ? InnerMessage.GetBytes() : new byte[0]);
         }
     };
 
