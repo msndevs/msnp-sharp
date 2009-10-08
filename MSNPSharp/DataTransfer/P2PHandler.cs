@@ -87,14 +87,12 @@ namespace MSNPSharp.DataTransfer
         {
         }
 
-        /// <summary>
-        /// </summary>
-        private ArrayList messageSessions = new ArrayList();
+        private List<P2PMessageSession> messageSessions = new List<P2PMessageSession>();
 
         /// <summary>
         /// A list of all current p2p message sessions. Multiple threads can access this resource so make sure to lock this.
         /// </summary>
-        public ArrayList MessageSessions
+        public List<P2PMessageSession> MessageSessions
         {
             get
             {
@@ -108,16 +106,16 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void ClearMessageSessions()
         {
-            lock (MessageSessions)
+            lock (messageSessions)
             {
-                foreach (P2PMessageSession session in MessageSessions)
+                foreach (P2PMessageSession session in messageSessions)
                 {
                     session.AbortAllTransfers();
                 }
             }
 
-            lock (MessageSessions)
-                MessageSessions.Clear();
+            lock (messageSessions)
+                messageSessions.Clear();
         }
 
         /// <summary>
@@ -208,9 +206,9 @@ namespace MSNPSharp.DataTransfer
                     }
                     else
                     {
-                        lock (MessageSessions)
+                        lock (messageSessions)
                         {
-                            MessageSessions.Remove(existingSession);
+                            messageSessions.Remove(existingSession);
                         }
                     }
                 }
@@ -218,8 +216,8 @@ namespace MSNPSharp.DataTransfer
 
             // no session available, create a new session
             P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
-            lock (MessageSessions)
-                MessageSessions.Add(newSession);
+            lock (messageSessions)
+                messageSessions.Add(newSession);
 
             // fire event
             OnSessionCreated(newSession);
@@ -396,13 +394,14 @@ namespace MSNPSharp.DataTransfer
                 string account = sbMessage.CommandValues[0].ToString();
                 lock (messageSessions)
                 {
-                    ArrayList list = new ArrayList(messageSessions);
+                    List<P2PMessageSession> list = new List<P2PMessageSession>(messageSessions);
                     foreach (P2PMessageSession p2psession in list)
                     {
                         if (p2psession.RemoteContact.ToLowerInvariant() == account.ToLowerInvariant())
                         {
                             messageSessions.Remove(p2psession);
                             p2psession.CleanUp();
+
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed : " + p2psession.RemoteContact + ", remain session count: " + messageSessions.Count.ToString());
                         }
                     }
@@ -496,11 +495,6 @@ namespace MSNPSharp.DataTransfer
             {
                 P2PMessageSession session = GetSessionFromRemote(remoteContact);
 
-                if (session == null)
-                {
-                    session = GetSessionFromRemote(remoteContact);
-                }
-
                 // check for validity
                 if (session == null)
                 {
@@ -524,10 +518,17 @@ namespace MSNPSharp.DataTransfer
                     {
                         // there is no session available at all. the remote client sends the first message
                         // in the session. So create a new session to handle following messages.
-                        if (p2pMessage.V2Header.TFCombination == TFCombination.First &&
-                            (p2pMessage.V2Header.OperationCode == (byte)OperationCode.None || p2pMessage.V2Header.OperationCode == (byte)OperationCode.InitSession))
+
+                        if (p2pMessage.IsSLPData)
                         {
-                            session = CreateSessionFromRemote(p2pMessage);
+                            SLPRequestMessage req = p2pMessage.InnerMessage as SLPRequestMessage;
+
+                            if (req != null &&
+                                req.Method == "INVITE" &&
+                                req.ContentType == "application/x-msnmsgr-sessionreqbody")
+                            {
+                                session = CreateSessionFromRemote(p2pMessage);
+                            }
                         }
                     }
 

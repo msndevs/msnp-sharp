@@ -38,6 +38,7 @@ using System.Threading;
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace MSNPSharp.DataTransfer
 {
@@ -105,7 +106,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// A collection of all transfersessions
         /// </summary>
-        private Hashtable transferSessions = new Hashtable();
+        private Dictionary<uint, P2PTransferSession> transferSessions = new Dictionary<uint, P2PTransferSession>();
         
         /// <summary>
         /// The base identifier of the local client
@@ -228,7 +229,9 @@ namespace MSNPSharp.DataTransfer
                 handlers.Clear();
 
             MessageProcessor = null;
-            transferSessions.Clear();
+
+            lock (transferSessions)
+                transferSessions.Clear();
         }
 
         /// <summary>
@@ -236,8 +239,8 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public virtual void AbortAllTransfers()
         {
-            Hashtable transferSessions_copy = new Hashtable(transferSessions);
-            foreach (P2PTransferSession session in transferSessions_copy.Values)
+            List<P2PTransferSession> transferSessions_copy = new List<P2PTransferSession>(transferSessions.Values);
+            foreach (P2PTransferSession session in transferSessions_copy)
             {
                 session.AbortTransfer();
             }
@@ -301,7 +304,10 @@ namespace MSNPSharp.DataTransfer
         public void RemoveTransferSession(P2PTransferSession session)
         {
             if (session != null)
-                transferSessions.Remove(session.TransferProperties.SessionId);
+            {
+                lock (transferSessions)
+                    transferSessions.Remove(session.TransferProperties.SessionId);
+            }
         }
 
         /// <summary>
@@ -311,7 +317,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public P2PTransferSession GetTransferSession(uint sessionId)
         {
-            return (P2PTransferSession)transferSessions[sessionId];
+            return transferSessions.ContainsKey(sessionId) ? transferSessions[sessionId] : null;
         }
 
         /// <summary>
@@ -454,7 +460,7 @@ namespace MSNPSharp.DataTransfer
 
                 if (p2pMessage.V1Header.Flags == P2PFlag.Error)
                 {
-                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.Header.SessionId];
+                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
                     if (session != null)
                     {
                         session.AbortTransfer();
@@ -467,9 +473,11 @@ namespace MSNPSharp.DataTransfer
                 if (p2pMessage.Header.SessionId > 0)
                 {
                     // get the session to handle this message
-                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.Header.SessionId];
+                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
+
                     if (session != null)
                         session.HandleMessage(this, p2pMessage);
+
                     return;
                 }
             }
@@ -477,12 +485,14 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 // check if it is a content message
-                if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0)              //Data messages.
+                if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0) //Data messages.
                 {
                     // get the session to handle this message
-                    P2PTransferSession session = (P2PTransferSession)transferSessions[p2pMessage.Header.SessionId];
+                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
+
                     if (session != null)
                         session.HandleMessage(this, p2pMessage);
+
                     return;
                 }
             }
@@ -505,9 +515,7 @@ namespace MSNPSharp.DataTransfer
                     RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
                 }
 
-                
-
-                object[] cpHandlers = handlers.ToArray();
+                IMessageHandler[] cpHandlers = handlers.ToArray();
 
                 // the message is not a datamessage, send it to the handlers
                 foreach (IMessageHandler handler in cpHandlers)
@@ -520,7 +528,7 @@ namespace MSNPSharp.DataTransfer
 
         #region IMessageProcessor Members
 
-        private ArrayList handlers = new ArrayList();
+        private List<IMessageHandler> handlers = new List<IMessageHandler>();
 
         /// <summary>
         /// Registers a message handler. After registering the handler will receive incoming messages.
@@ -530,9 +538,10 @@ namespace MSNPSharp.DataTransfer
         {
             lock (handlers)
             {
-                if (handlers.Contains(handler) == true)
-                    return;
-                handlers.Add(handler);
+                if (false == handlers.Contains(handler))
+                {
+                    handlers.Add(handler);
+                }
             }
         }
 

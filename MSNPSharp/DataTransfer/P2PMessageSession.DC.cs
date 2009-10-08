@@ -38,6 +38,7 @@ using System.Threading;
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace MSNPSharp.DataTransfer
 {
@@ -131,7 +132,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// A list of all direct processors trying to establish a connection.
         /// </summary>
-        private ArrayList pendingProcessors = new ArrayList();
+        private List<P2PDirectProcessor> pendingProcessors = new List<P2PDirectProcessor>();
 
         /// <summary>
         /// Disconnect all processors that are trying to establish a connection.

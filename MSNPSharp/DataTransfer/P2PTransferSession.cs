@@ -36,6 +36,7 @@ using System.IO;
 using System.Threading;
 using System.Collections;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace MSNPSharp.DataTransfer
 {
@@ -580,7 +581,7 @@ namespace MSNPSharp.DataTransfer
                
 
                 // the message is not a datamessage, send it to the handlers
-                object[] cpHandlers = handlers.ToArray();
+                IMessageHandler[] cpHandlers = handlers.ToArray();
 
                 foreach (IMessageHandler handler in cpHandlers)
                     handler.HandleMessage(this, p2pMessage);
@@ -728,7 +729,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         ///  Collection of handlers
         /// </summary>
-        private ArrayList handlers = new ArrayList();
+        private List<IMessageHandler> handlers = new List<IMessageHandler>();
 
         /// <summary>
         /// Registers handlers for incoming p2p messages.
@@ -737,6 +738,7 @@ namespace MSNPSharp.DataTransfer
         public void RegisterHandler(IMessageHandler handler)
         {
             UnregisterHandler(handler);
+
             lock (handlers)
             {
                 handlers.Add(handler);

@@ -33,18 +33,19 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Collections;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Globalization;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
-    using System.Text;
 
     /// <summary>
     /// Defines the type of datatransfer for a MSNSLPHandler
@@ -888,7 +889,8 @@ namespace MSNPSharp.DataTransfer
 
 
             // store the transferproperties
-            TransferProperties[properties.CallId] = properties;
+            lock (transferProperties)
+                transferProperties[properties.CallId] = properties;
 
             // create a transfer session to handle the actual data transfer
             transferSession.MessageSession = (P2PMessageSession)MessageProcessor;
@@ -972,10 +974,8 @@ namespace MSNPSharp.DataTransfer
             P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
 
-            // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
-            //p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-            // store the transferproperties
-            TransferProperties[properties.CallId] = properties;
+            lock (transferProperties)
+                transferProperties[properties.CallId] = properties;
 
             // create a transfer session to handle the actual data transfer
             P2PTransferSession transferSession = new P2PTransferSession(Version, properties);
@@ -1068,7 +1068,8 @@ namespace MSNPSharp.DataTransfer
             properties.Context = base64Context;
 
             // store the transferproperties
-            TransferProperties[properties.CallId] = properties;
+            lock (transferProperties)
+                transferProperties[properties.CallId] = properties;
 
             // create the message
             SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactIDString, "INVITE");
@@ -1190,7 +1191,8 @@ namespace MSNPSharp.DataTransfer
                 throw new MSNPSharpException("The invitation was accepted, but no datastream to read to/write from has been specified.");
 
             // the client programmer has accepted, continue !
-            TransferProperties.Add(properties.CallId, properties);
+            lock (transferProperties)
+                transferProperties[properties.CallId] = properties;
 
             ((P2PMessageSession)MessageProcessor).AddTransferSession(transferSession);
 
@@ -1266,11 +1268,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void CloseAllSessions()
         {
-            foreach (MSNSLPTransferProperties properties in TransferProperties.Values)
+            foreach (MSNSLPTransferProperties properties in transferProperties.Values)
             {
                 P2PMessageSession session = (P2PMessageSession)MessageProcessor;
                 P2PTransferSession transferSession = session.GetTransferSession(properties.SessionId);
-                Contact remote = session.RemoteUser;
 
                 P2PMessage closeMessage = new P2PMessage(session.Version);
                 if (closeMessage.Version == P2PVersion.P2PV1)
@@ -1285,6 +1286,7 @@ namespace MSNPSharp.DataTransfer
                 }
 
                 MessageProcessor.SendMessage(closeMessage);
+
                 if (transferSession != null)
                 {
                     transferSession.AbortTransfer();
@@ -1366,7 +1368,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected MSNSLPTransferProperties GetTransferProperties(Guid callId)
         {
-            return (MSNSLPTransferProperties)TransferProperties[callId];
+            return transferProperties.ContainsKey(callId) ? transferProperties[callId] : null;
         }
 
         /// <summary>
@@ -1617,15 +1619,11 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region Private
-        /// <summary>
-        /// A collection of all transfer. This collection holds MSNSLPTransferProperties objects. Indexed by call-id.
-        /// </summary>
-        private Hashtable transfers = new Hashtable();
 
         /// <summary>
-        /// A hashtable containing MSNSLPTransferProperties objects. Indexed by session id;
+        /// A dictionary containing MSNSLPTransferProperties objects. Indexed by CallId;
         /// </summary>
-        private Hashtable TransferProperties = new Hashtable();
+        private Dictionary<Guid, MSNSLPTransferProperties> transferProperties = new Dictionary<Guid, MSNSLPTransferProperties>();
 
         /// <summary>
         /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
@@ -1780,7 +1778,7 @@ namespace MSNPSharp.DataTransfer
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
 
             Guid callGuid = message.CallId;
-            MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);
+            MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
             if (properties != null) // Closed before or never accepted?
             {
                 P2PMessageSession msgSession = MessageProcessor as P2PMessageSession;
@@ -1810,13 +1808,6 @@ namespace MSNPSharp.DataTransfer
         protected virtual void OnSessionRequest(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-
-            if (transfers.ContainsKey(message.CallId))
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Warning: a session with the call-id " + message.CallId.ToString() + " already exists.", GetType().Name);
-                return;
-            }
-
             SLPStatusMessage slpStatus = message as SLPStatusMessage;
 
             if (slpStatus != null)
@@ -1828,7 +1819,7 @@ namespace MSNPSharp.DataTransfer
                 else if (slpStatus.CSeq == 1 && slpStatus.Code == 200)
                 {
                     Guid callGuid = message.CallId;
-                    MSNSLPTransferProperties properties = this.GetTransferProperties(callGuid);
+                    MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
                     P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
                     if (properties.DataType == DataTransferType.File)
                     {
