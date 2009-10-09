@@ -1104,9 +1104,18 @@ namespace MSNPSharp
         public const string MessengerGroupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
 
         /// <summary>
-        /// The default time for requesting the full membership and addressbook list: 001-01-01T00:00:00.0000000.
+        /// The default time for requesting the full membership and addressbook list: 0001-01-01T00:00:00.0000000.
         /// </summary>
         public const string ZeroTime = "0001-01-01T00:00:00.0000000";
+
+        public static string[] XmlDateTimeFormats = new string[]{
+            "yyyy-MM-ddTHH:mm:ss.FFFFFFF",
+            "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzz",
+            "yyyy-MM-ddTHH:mm:ss.FFFFFFFK",
+            "yyyy-MM-ddTHH:mm:ss",
+            "yyyy-MM-ddTHH:mm:ssK",
+            "yyyy-MM-ddTHH:mm:sszzz"
+        };
     }
 
     /// <summary>
