@@ -273,11 +273,11 @@ namespace MSNPSharp
             string xmlstr = message.MimeHeader["Mail-Data"];
             if ("too-large" == xmlstr && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                MsnServiceObject getMetadataObject = new MsnServiceObject(PartnerScenario.None, "GetMetadata");
+                MsnServiceState getMetadataObject = new MsnServiceState(PartnerScenario.None, "GetMetadata", true);
                 RSIService rsiService = (RSIService)CreateService(MsnServiceType.RSI, getMetadataObject);
                 rsiService.GetMetadataCompleted += delegate(object sender, GetMetadataCompletedEventArgs e)
                 {
-                    DeleteCompletedObject(rsiService);
+                    OnAfterCompleted(new ServiceOperationEventArgs(rsiService, MsnServiceType.RSI, e));
 
                     if (e.Cancelled)
                         return;
@@ -298,13 +298,9 @@ namespace MSNPSharp
                             }
                         }
                     }
-                    else
-                    {
-                        OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
-                    }
                 };
 
-                rsiService.GetMetadataAsync(new GetMetadataRequestType(), getMetadataObject);
+                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(rsiService, MsnServiceType.RSI, getMetadataObject, new GetMetadataRequestType()));
                 return;
             }
             processOIMS(xmlstr, initial);
@@ -360,11 +356,11 @@ namespace MSNPSharp
                     }
                 }
 
-                MsnServiceObject getMessageObject = new MsnServiceObject(PartnerScenario.None, "GetMessage");
+                MsnServiceState getMessageObject = new MsnServiceState(PartnerScenario.None, "GetMessage", true);
                 RSIService rsiService = (RSIService)CreateService(MsnServiceType.RSI, getMessageObject);
                 rsiService.GetMessageCompleted += delegate(object service, GetMessageCompletedEventArgs e)
                 {
-                    DeleteCompletedObject(rsiService);
+                    OnAfterCompleted(new ServiceOperationEventArgs(rsiService, MsnServiceType.RSI, e));
 
                     if (!e.Cancelled && e.Error == null)
                     {
@@ -454,17 +450,14 @@ namespace MSNPSharp
                             }
                         }
                     }
-                    else if (e.Error != null)
-                    {
-                        OnServiceOperationFailed(rsiService, new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
-                    }
                     return;
                 };
 
                 GetMessageRequestType request = new GetMessageRequestType();
                 request.messageId = guid.ToString();
                 request.alsoMarkAsRead = false;
-                rsiService.GetMessageAsync(request, getMessageObject);
+
+                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(rsiService, MsnServiceType.RSI, getMessageObject, request));
             }
         }
 
@@ -478,25 +471,21 @@ namespace MSNPSharp
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                 return;
 
-            MsnServiceObject deleteMessagesObject = new MsnServiceObject(PartnerScenario.None, "DeleteMessages");
+            MsnServiceState deleteMessagesObject = new MsnServiceState(PartnerScenario.None, "DeleteMessages", true);
             RSIService rsiService = (RSIService)CreateService(MsnServiceType.RSI, deleteMessagesObject);
             rsiService.DeleteMessagesCompleted += delegate(object service, DeleteMessagesCompletedEventArgs e)
             {
-                DeleteCompletedObject(rsiService);
+                OnAfterCompleted(new ServiceOperationEventArgs(rsiService, MsnServiceType.RSI, e));
 
                 if (!e.Cancelled && e.Error == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMessages completed.", GetType().Name);
                 }
-                else if (e.Error != null)
-                {
-                    OnServiceOperationFailed(rsiService, new ServiceOperationFailedEventArgs("ProcessOIM", e.Error));
-                }
             };
 
             DeleteMessagesRequestType request = new DeleteMessagesRequestType();
             request.messageIds = guids;
-            rsiService.DeleteMessagesAsync(request, deleteMessagesObject);
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(rsiService, MsnServiceType.RSI, deleteMessagesObject, request));
         }
 
         private string _RunGuid = Guid.NewGuid().ToString();
@@ -530,7 +519,7 @@ namespace MSNPSharp
                 if (name48.Length > 48)
                     name48 = name48.Substring(47);
 
-                MsnServiceObject storeObject = new MsnServiceObject(PartnerScenario.None, "Store");
+                MsnServiceState storeObject = new MsnServiceState(PartnerScenario.None, "Store", true);
                 OIMStoreService oimService = (OIMStoreService)CreateService(MsnServiceType.OIMStore, storeObject);
                 oimService.FromValue = new From();
                 oimService.FromValue.memberName = NSMessageHandler.Owner.Mail;
@@ -550,7 +539,7 @@ namespace MSNPSharp
 
                 oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
-                    DeleteCompletedObject(oimService);
+                    OnAfterCompleted(new ServiceOperationEventArgs(oimService, MsnServiceType.OIMStore, e));
 
                     if (e.Cancelled == false && e.Error == null)
                     {
@@ -599,8 +588,6 @@ namespace MSNPSharp
                                 msg,
                                 exp)
                         );
-
-                        OnServiceOperationFailed(oimService, new ServiceOperationFailedEventArgs("SendOIMMessage", e.Error));
                     }
                 };
                 oimService.StoreAsync(MessageType.text, message, storeObject);
