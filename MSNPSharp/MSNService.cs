@@ -322,7 +322,7 @@ namespace MSNPSharp
 
             if (service != null)
             {
-                // service.EnableDecompression = true; // Fails on Mono
+                service.EnableDecompression = Settings.EnableGzipCompressionForWebServices;
 
                 if (asyncObject != null && asyncObject.IsAsync)
                 {

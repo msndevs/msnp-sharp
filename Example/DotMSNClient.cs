@@ -669,6 +669,11 @@ namespace MSNPSharpClient
             // You can set proxy settings here
             // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
 
+            if (Settings.IsMono) //I am running on Mono.
+            {
+                // Don't enable this on mono, because mono raises NotImplementedException.
+                Settings.EnableGzipCompressionForWebServices = false;
+            }
 
             // ******* Listen traces *****
             TraceForm traceform = new TraceForm();

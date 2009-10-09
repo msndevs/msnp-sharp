@@ -55,19 +55,53 @@ namespace MSNPSharp
         /// </summary>
         static Settings()
         {
+            isMono = (null != Type.GetType("Mono.Runtime")); // http://www.mono-project.com/FAQ:_Technical
+
             TraceSwitch.Level = TraceLevel.Verbose;
 #if DEBUG    
             serializationType = MclSerialization.Compression | MclSerialization.Cryptography;
 #else
             serializationType = MclSerialization.Compression;
 #endif
+            enableGzipCompressionForWebServices = (isMono == false);
+
         }
 
         private static string savepath = Path.GetFullPath(".");
+        private static bool enableGzipCompressionForWebServices;
         private static MclSerialization serializationType;
         private static int msnTicketsCleanupInterval = 5;
         private static int msnTicketLifeTime = 20;
         private static bool noSave;
+        private static bool isMono;
+
+        /// <summary>
+        /// Indicates whether the runtime framework is currently mono or not.
+        /// </summary>
+        public static bool IsMono
+        {
+            get
+            {
+                return isMono;
+            }
+        }
+
+        /// <summary>
+        /// Use Gzip compression for web services to save bandwidth.
+        /// </summary>
+        /// <remarks>Don't use this if you run .net framework on mono</remarks>
+        public static bool EnableGzipCompressionForWebServices
+        {
+            get
+            {
+                return enableGzipCompressionForWebServices;
+            }
+            set
+            {
+                enableGzipCompressionForWebServices = value;
+            }
+        }
+
 
         /// <summary>
         /// File serialization type when saving.
