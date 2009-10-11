@@ -269,16 +269,6 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// The identifier of the remote client, increases with each message received
-        /// </summary>
-        public void IncreaseRemoteIdentifier()
-        {
-            remoteIdentifier++;
-            if (remoteIdentifier == remoteBaseIdentifier)
-                remoteIdentifier++;
-        }
-
-        /// <summary>
         /// Adds the specified transfer session to the collection and sets the transfer session's message processor to be the
         /// message processor of the p2p message session. This is usally a SB message processor. 
         /// </summary>
@@ -338,23 +328,6 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region Protected
-
-        /// <summary>
-        /// Keeps track of clustered p2p messages
-        /// </summary>
-        protected P2PMessagePool P2PMessagePool
-        {
-            get
-            {
-                return p2pMessagePool;
-            }
-            set
-            {
-                p2pMessagePool = value;
-            }
-        }
-
-        private P2PMessagePool p2pMessagePool = new P2PMessagePool();
 
         /// <summary>
         /// Wraps a P2PMessage in a MSGMessage and SBMessage.
@@ -431,17 +404,21 @@ namespace MSNPSharp.DataTransfer
 
 
         /// <summary>
-        /// Handles P2PMessages. Other messages are ignored. All incoming messages are supposed to belong to this session.
+        /// Handles P2PMessages. Other messages are ignored.
+        /// All incoming messages are supposed to belong to this session.
         /// </summary>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
             P2PMessage p2pMessage = message as P2PMessage;
 
-            System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
+            Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
             if (p2pMessage.Version == P2PVersion.P2PV1)
             {
-                // check whether it is an acknowledgement to data preparation message
+                // Keep track of the remote identifier
+                RemoteIdentifier = p2pMessage.Header.Identifier;
+
+                // Check whether it is an acknowledgement to data preparation message
                 if (p2pMessage.V1Header.Flags == P2PFlag.DirectHandshake && DCHandshakeAck != 0)
                 {
                     OnHandshakeCompleted((P2PDirectProcessor)sender);
@@ -484,7 +461,10 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
-                // check if it is a content message
+                // Keep track of the remote identifier
+                RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
+
+                // Check if it is a content message
                 if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0) //Data messages.
                 {
                     // get the session to handle this message
@@ -497,31 +477,11 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            // it is not a datamessage.
-            // fill up the buffer with this message and extract the messages one-by-one and dispatch
+            // It is not a datamessage. Extract the messages one-by-one and dispatch
             // it to all handlers. Usually the MSNSLP handler.
-            p2pMessagePool.BufferMessage(p2pMessage);
-
-            while (p2pMessagePool.MessageAvailable(Version))
-            {
-                p2pMessage = p2pMessagePool.GetNextMessage(Version);
-                if (Version == P2PVersion.P2PV1)
-                {
-                    // keep track of the remote identifier
-                    IncreaseRemoteIdentifier();
-                }
-                else if (Version == P2PVersion.P2PV2)
-                {
-                    RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
-                }
-
-                IMessageHandler[] cpHandlers = handlers.ToArray();
-
-                // the message is not a datamessage, send it to the handlers
-                foreach (IMessageHandler handler in cpHandlers)
-                    handler.HandleMessage(this, p2pMessage);
-
-            }
+            IMessageHandler[] cpHandlers = handlers.ToArray();
+            foreach (IMessageHandler handler in cpHandlers)
+                handler.HandleMessage(this, p2pMessage);
         }
 
         #endregion

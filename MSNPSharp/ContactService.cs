@@ -2534,7 +2534,7 @@ namespace MSNPSharp
 
         #endregion
 
-        #region DeleteRecordFile & handleServiceHeader
+        #region DeleteRecordFile
 
         /// <summary>
         /// Delete the record file that contains the contactlist of owner.

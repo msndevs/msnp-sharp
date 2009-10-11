@@ -79,6 +79,15 @@ namespace MSNPSharp.DataTransfer
     /// </summary>
     public class P2PHandler : IMessageHandler
     {
+        #region Members
+
+        private NSMessageHandler nsMessageHandler;
+        private IMessageProcessor messageProcessor;
+        private P2PMessagePool p2pMessagePool = new P2PMessagePool();
+        private List<P2PMessageSession> messageSessions = new List<P2PMessageSession>();
+        private List<SBMessageHandler> switchboardSessions = new List<SBMessageHandler>(0);
+
+        #endregion
 
         /// <summary>
         /// Protected constructor.
@@ -87,40 +96,7 @@ namespace MSNPSharp.DataTransfer
         {
         }
 
-        private List<P2PMessageSession> messageSessions = new List<P2PMessageSession>();
-
-        /// <summary>
-        /// A list of all current p2p message sessions. Multiple threads can access this resource so make sure to lock this.
-        /// </summary>
-        public List<P2PMessageSession> MessageSessions
-        {
-            get
-            {
-                return messageSessions;
-            }
-        }
-
-
-        /// <summary>
-        /// Aborts and cleans up all running messagesessions and their transfersessions.
-        /// </summary>
-        public void ClearMessageSessions()
-        {
-            lock (messageSessions)
-            {
-                foreach (P2PMessageSession session in messageSessions)
-                {
-                    session.AbortAllTransfers();
-                }
-            }
-
-            lock (messageSessions)
-                messageSessions.Clear();
-        }
-
-        /// <summary>
-        /// </summary>
-        private NSMessageHandler nsMessageHandler;
+        #region Properties
 
         /// <summary>
         /// The nameserver handler. This object is used to request new switchboard sessions.
@@ -140,8 +116,31 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// The message processor that will send the created P2P messages to the remote contact.
         /// </summary>
-        private List<SBMessageHandler> switchboardSessions = new List<SBMessageHandler>(0);
+        [Obsolete("This is always null. Don't use!", true)]
+        public IMessageProcessor MessageProcessor
+        {
+            get
+            {
+                return messageProcessor;
+            }
+            set
+            {
+                messageProcessor = value;
+            }
+        }
+
+        /// <summary>
+        /// A list of all current p2p message sessions. Multiple threads can access this resource so make sure to lock this.
+        /// </summary>
+        public List<P2PMessageSession> MessageSessions
+        {
+            get
+            {
+                return messageSessions;
+            }
+        }
 
         /// <summary>
         /// A collection of all available switchboard sessions
@@ -153,6 +152,29 @@ namespace MSNPSharp.DataTransfer
                 return switchboardSessions;
             }
         }
+
+        #endregion
+
+        /// <summary>
+        /// Aborts and cleans up all running messagesessions and their transfersessions.
+        /// </summary>
+        public void ClearMessageSessions()
+        {
+            lock (messageSessions)
+            {
+                foreach (P2PMessageSession session in messageSessions)
+                {
+                    session.AbortAllTransfers();
+                }
+            }
+
+            lock (messageSessions)
+                messageSessions.Clear();
+
+            p2pMessagePool = new P2PMessagePool();
+        }
+
+        #region Events
 
         /// <summary>
         /// Occurs when a P2P session is created.
@@ -183,6 +205,8 @@ namespace MSNPSharp.DataTransfer
             if (SessionClosed != null)
                 SessionClosed(this, new P2PSessionAffectedEventArgs(session));
         }
+
+        #endregion
 
         /// <summary>
         /// Gets a reference to a p2p message session with the specified remote contact.
@@ -234,20 +258,18 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual P2PMessageSession CreateSessionFromLocal(Contact localContact, Contact remoteContact)
         {
-            P2PMessageSession session =  
-                ((localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 && (remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)  
-                ? new P2PMessageSession(P2PVersion.P2PV2) : new P2PMessageSession(P2PVersion.P2PV1); 
+            P2PMessageSession session =
+                ((localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 && (remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
+                ? new P2PMessageSession(P2PVersion.P2PV2) : new P2PMessageSession(P2PVersion.P2PV1);
 
 
             // set the parameters
             session.RemoteUser = remoteContact;
             session.LocalUser = localContact;
-            session.RemoteContact = (session.Version == P2PVersion.P2PV1) ? remoteContact.Mail : remoteContact.Mail + ";" + remoteContact.MachineGuid.ToString("B"); 
-            session.LocalContact = (session.Version == P2PVersion.P2PV1) ? localContact.Mail : localContact.Mail + ";" + localContact.MachineGuid.ToString("B"); 
+            session.RemoteContact = (session.Version == P2PVersion.P2PV1) ? remoteContact.Mail : remoteContact.Mail + ";" + remoteContact.MachineGuid.ToString("B");
+            session.LocalContact = (session.Version == P2PVersion.P2PV1) ? localContact.Mail : localContact.Mail + ";" + localContact.MachineGuid.ToString("B");
 
-            session.MessageProcessor = MessageProcessor;
-
-            session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
+            session.ProcessorInvalid += session_ProcessorInvalid;
 
             // generate a local base identifier.
             session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
@@ -313,6 +335,11 @@ namespace MSNPSharp.DataTransfer
             session.RemoteBaseIdentifier = receivedMessage.Header.Identifier;
             session.RemoteIdentifier = receivedMessage.Header.Identifier;
 
+            if (receivedMessage.Version == P2PVersion.P2PV2)
+            {
+                session.RemoteIdentifier += receivedMessage.V2Header.MessageSize;
+            }
+
             return session;
         }
 
@@ -357,22 +384,7 @@ namespace MSNPSharp.DataTransfer
 
 
 
-        #region IMessageHandler Members
-        private IMessageProcessor messageProcessor;
-        /// <summary>
-        /// The message processor that will send the created P2P messages to the remote contact.
-        /// </summary>
-        public IMessageProcessor MessageProcessor
-        {
-            get
-            {
-                return messageProcessor;
-            }
-            set
-            {
-                messageProcessor = value;
-            }
-        }
+        #region HandleMessage
 
         /// <summary>
         /// Handles incoming sb messages. Other messages are ignored.
@@ -384,11 +396,11 @@ namespace MSNPSharp.DataTransfer
             SBMessage sbMessage = message as SBMessage;
 
             if (sbMessage == null)
-                return;            
+                return;
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message " + NSMessageHandler.Owner.Mail, GetType().Name);
-            
-            //Clean the MessageSessions, or it will lead to memory leak.
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message", GetType().Name);
+
+            // Clean the MessageSessions, or it will lead to memory leak.
             if (sbMessage.Command == "BYE")
             {
                 string account = sbMessage.CommandValues[0].ToString();
@@ -402,7 +414,7 @@ namespace MSNPSharp.DataTransfer
                             messageSessions.Remove(p2psession);
                             p2psession.CleanUp();
 
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed : " + p2psession.RemoteContact + ", remain session count: " + messageSessions.Count.ToString());
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed: " + p2psession.RemoteContact + ", remain session count: " + messageSessions.Count.ToString());
                         }
                     }
                 }
@@ -412,7 +424,7 @@ namespace MSNPSharp.DataTransfer
 
             if (sbMessage.Command != "MSG")
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "No MSG : " + sbMessage.Command + " instead " + NSMessageHandler.Owner.Mail, GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "No MSG: " + sbMessage.Command + " instead", GetType().Name);
                 return;
             }
 
@@ -434,68 +446,95 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming p2p message " + NSMessageHandler.Owner.Mail, GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming p2p message", GetType().Name);
 
             P2PVersion version = P2PVersion.P2PV1;
+            string remoteAccount = (sbMessage.CommandValues.Count > 0) ? sbMessage.CommandValues[0].ToString() : String.Empty;
+            string localAccount = nsMessageHandler.Owner.Mail;
+            Guid remoteMachineGuid = Guid.Empty;
+            Guid localMachineGuid = Guid.Empty;
+
             if (msgMessage.MimeHeader.ContainsKey("P2P-Dest"))
             {
                 if (msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries).Length > 1)
                 {
                     version = P2PVersion.P2PV2;
-                    Trace.WriteLine("P2P v2 incoming message found. dst: " + msgMessage.MimeHeader["P2P-Dest"].ToString());
-                }
-                else
-                {
-                    Trace.WriteLine("P2P v1 incoming message found. dst: " + msgMessage.MimeHeader["P2P-Dest"].ToString());
-                }
-            }
-
-            // create a P2P Message from the msg message
-            P2PMessage p2pMessage = new P2PMessage(version);
-            p2pMessage.CreateFromMessage(msgMessage);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Incoming p2p message " + NSMessageHandler.Owner.Mail + "\r\n" + ((P2PMessage)p2pMessage).ToDebugString(), GetType().Name);
-
-            // get the associated message session
-            string remoteAccount = string.Empty;
-            string localAccount = string.Empty;
-
-            Guid remoteMachineGuid = Guid.Empty;
-            Guid localMachineGuid = Guid.Empty;
-
-            if (version == P2PVersion.P2PV1)
-            {
-                remoteAccount = sbMessage.CommandValues[0].ToString(); // CommandValues.Count=0, Clone issue????????????????????
-                localAccount = msgMessage.MimeHeader["P2P-Dest"].ToString();
-            }
-
-            if (version == P2PVersion.P2PV2)
-            {
-                if (msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries).Length > 1)
-                {
                     remoteAccount = msgMessage.MimeHeader["P2P-Src"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
                     remoteMachineGuid = new Guid(msgMessage.MimeHeader["P2P-Src"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
-
                     localAccount = msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
                     localMachineGuid = new Guid(msgMessage.MimeHeader["P2P-Dest"].ToString().Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+
+                    Trace.WriteLine("P2Pv2 incoming message found. P2P-Dest: " + msgMessage.MimeHeader["P2P-Dest"].ToString());
                 }
                 else
                 {
-                    remoteAccount = msgMessage.MimeHeader["P2P-Src"].ToString();
                     localAccount = msgMessage.MimeHeader["P2P-Dest"].ToString();
+                    remoteAccount = msgMessage.MimeHeader.ContainsKey("P2P-Src")
+                        ? msgMessage.MimeHeader["P2P-Src"].ToString()
+                        : sbMessage.CommandValues[0].ToString(); // CommandValues.Count=0, Clone issue????
+
+                    Trace.WriteLine("P2Pv1 incoming message found. P2P-Dest: " + msgMessage.MimeHeader["P2P-Dest"].ToString());
                 }
             }
 
-            Contact remoteContact =
-                NSMessageHandler.ContactList.HasContact(remoteAccount, ClientType.PassportMember) ?
-                NSMessageHandler.ContactList.GetContact(remoteAccount, ClientType.PassportMember): null;
-            Contact localContact = NSMessageHandler.Owner;
-
-            if (remoteContact != null)
+            // Check destination
+            if (version == P2PVersion.P2PV2 &&
+                localMachineGuid != Guid.Empty &&
+                localMachineGuid != NSMessageHandler.MachineGuid)
             {
-                P2PMessageSession session = GetSessionFromRemote(remoteContact);
+                return; // This message is not for me
+            }
 
-                // check for validity
+            // Create a temp P2P Message from the msg message
+            P2PMessage p2pTempMessage = new P2PMessage(version);
+            p2pTempMessage.CreateFromMessage(msgMessage);
+
+            if (Settings.TraceSwitch.TraceVerbose)
+            {
+                ulong dataRemaining = 0;
+
+                if (version == P2PVersion.P2PV1)
+                {
+                    dataRemaining = p2pTempMessage.V1Header.TotalSize - (p2pTempMessage.V1Header.Offset + p2pTempMessage.V1Header.MessageSize);
+                }
+                else if (version == P2PVersion.P2PV2)
+                {
+                    dataRemaining = p2pTempMessage.V2Header.DataRemaining;
+                }
+
+                Trace.WriteLine("Incoming p2p message: DataRemaining: " + dataRemaining + "\r\n" +
+                    p2pTempMessage.ToDebugString(), GetType().Name);
+            }
+
+            // Buffer splitted P2P SLP messages.
+            p2pMessagePool.BufferMessage(p2pTempMessage);
+
+            while (p2pMessagePool.MessageAvailable(version))
+            {
+                P2PMessage p2pMessage = p2pMessagePool.GetNextMessage(version);
+                SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
+                if (slp != null)
+                {
+                    if (p2pMessage.Version == P2PVersion.P2PV1)
+                    {
+                        remoteAccount = slp.FromMail;
+                        localAccount = slp.ToMail;
+                    }
+                    else
+                    {
+                        remoteAccount = slp.FromMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
+                        remoteMachineGuid = new Guid(slp.FromMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                        localAccount = slp.ToMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
+                        localMachineGuid = new Guid(slp.ToMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                    }
+                }
+
+                if (false == NSMessageHandler.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
+                    return;
+
+                // Find P2P SESSION
+                P2PMessageSession session = GetSessionFromRemote(NSMessageHandler.ContactList.GetContact(remoteAccount, ClientType.PassportMember));
+
                 if (session == null)
                 {
                     if (version == P2PVersion.P2PV1)
@@ -519,9 +558,9 @@ namespace MSNPSharp.DataTransfer
                         // there is no session available at all. the remote client sends the first message
                         // in the session. So create a new session to handle following messages.
 
-                        if (p2pMessage.IsSLPData)
+                        if (slp != null)
                         {
-                            SLPRequestMessage req = p2pMessage.InnerMessage as SLPRequestMessage;
+                            SLPRequestMessage req = slp as SLPRequestMessage;
 
                             if (req != null &&
                                 req.Method == "INVITE" &&
@@ -557,11 +596,9 @@ namespace MSNPSharp.DataTransfer
 
                 }
 
-                // diagnostic check
-                System.Diagnostics.Debug.Assert(session != null, "Session is null", "P2P Message session");
+                Debug.Assert(session != null, "Session is null", "P2PHandler");
 
-                // send an acknowledgement after the last message
-
+                // Send an acknowledgement after the last message
                 if (version == P2PVersion.P2PV1)
                 {
                     if (p2pMessage.Header.IsAcknowledgement == false &&
@@ -571,11 +608,11 @@ namespace MSNPSharp.DataTransfer
                         session.SendMessage(ack);
                     }
                 }
-
                 if (version == P2PVersion.P2PV2)
                 {
                     //Case 1: 0x18 0x03 Invite
-                    if (p2pMessage.V2Header.OperationCode > 0)
+                    if (p2pMessage.Header.IsAcknowledgement == false &&
+                        p2pMessage.V2Header.OperationCode > 0)
                     {
                         P2PMessage ack = p2pMessage.CreateAcknowledgement();
                         session.SendMessage(ack);
@@ -585,11 +622,10 @@ namespace MSNPSharp.DataTransfer
                 // now handle the message
                 session.HandleMessage(sender, p2pMessage);
             }
-
-            return;
         }
 
         #endregion
+
 
         /// <summary>
         /// Requests a new switchboard processor.

@@ -413,11 +413,13 @@ namespace MSNPSharp.DataTransfer
         {
             P2PMessage p2pMessage = message as P2PMessage;
 
-            System.Diagnostics.Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
-
+            Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
 
             if (p2pMessage.Version == P2PVersion.P2PV1)
             {
+                // Keep track of the remote identifier
+                MessageSession.RemoteIdentifier = p2pMessage.Header.Identifier;
+
                 #region P2P Version 1
                 if (p2pMessage.V1Header.Flags == P2PFlag.TlpError)
                 {
@@ -479,10 +481,6 @@ namespace MSNPSharp.DataTransfer
                             // check for end of file transfer
                             if (p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
                             {
-
-
-                                // keep track of the remote identifier									
-                                MessageSession.IncreaseRemoteIdentifier();
                                 P2PMessage ack = p2pMessage.CreateAcknowledgement();
                                 ack.Header.SessionId = p2pMessage.Header.SessionId;
 
@@ -506,6 +504,9 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
+                // Keep track of the remote identifier
+                MessageSession.RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
+
                 #region P2P Version 2
 
                 if (p2pMessage.InnerBody.Length == 4 &&
@@ -557,35 +558,14 @@ namespace MSNPSharp.DataTransfer
                 #endregion
             }
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2P Info message received", GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "P2P Info message received", GetType().Name);
 
-            // it is not a datamessage.
-            // fill up the buffer with this message and extract the messages one-by-one and dispatch
-            // it to all handlers.
-            p2pMessagePool.BufferMessage(p2pMessage);
+            // It is not a datamessage. Extract the messages one-by-one and dispatch it to all handlers.
+            IMessageHandler[] cpHandlers = handlers.ToArray();
+            foreach (IMessageHandler handler in cpHandlers)
+                handler.HandleMessage(this, p2pMessage);
 
-            while (p2pMessagePool.MessageAvailable(Version))
-            {
-                p2pMessage = p2pMessagePool.GetNextMessage(Version);
-
-                if (Version == P2PVersion.P2PV1)
-                {
-                    // keep track of the remote identifier
-                    MessageSession.IncreaseRemoteIdentifier();
-                }
-                else if (Version == P2PVersion.P2PV2)
-                {
-                    MessageSession.RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
-                }
-
-               
-
-                // the message is not a datamessage, send it to the handlers
-                IMessageHandler[] cpHandlers = handlers.ToArray();
-
-                foreach (IMessageHandler handler in cpHandlers)
-                    handler.HandleMessage(this, p2pMessage);
-            }
         }
 
 
@@ -814,21 +794,6 @@ namespace MSNPSharp.DataTransfer
                 disconnectMessage.V1Header.SessionId = TransferProperties.SessionId;
                 disconnectMessage.V1Header.AckSessionId = dataMessageIdentifier;
                 MessageProcessor.SendMessage(disconnectMessage);
-            }
-        }
-
-        /// <summary>
-        /// Keeps track of clustered p2p messages
-        /// </summary>
-        protected P2PMessagePool P2PMessagePool
-        {
-            get
-            {
-                return p2pMessagePool;
-            }
-            set
-            {
-                p2pMessagePool = value;
             }
         }
 
@@ -1149,10 +1114,6 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region Private
-
-        /// <summary>
-        /// </summary>
-        private P2PMessagePool p2pMessagePool = new P2PMessagePool();
 
 
         /// <summary>
