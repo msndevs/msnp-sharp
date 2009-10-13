@@ -55,9 +55,9 @@ namespace MSNPSharpClient
             this.ContactPanel = new System.Windows.Forms.Panel();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.cbRobotMode = new System.Windows.Forms.CheckBox();
             this.comboProtocol = new System.Windows.Forms.ComboBox();
-            this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.accountTextBox = new System.Windows.Forms.TextBox();
             this.loginButton = new System.Windows.Forms.Button();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
@@ -253,7 +253,7 @@ namespace MSNPSharpClient
             this.unblockMenuItem,
             this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 170);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 192);
             // 
             // sendIMMenuItem
             // 
@@ -362,6 +362,21 @@ namespace MSNPSharpClient
             this.panel1.Size = new System.Drawing.Size(290, 77);
             this.panel1.TabIndex = 5;
             // 
+            // displayImageBox
+            // 
+            this.displayImageBox.BackColor = System.Drawing.Color.White;
+            this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.displayImageBox.Dock = System.Windows.Forms.DockStyle.Right;
+            this.displayImageBox.Location = new System.Drawing.Point(213, 0);
+            this.displayImageBox.Name = "displayImageBox";
+            this.displayImageBox.Size = new System.Drawing.Size(77, 77);
+            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.displayImageBox.TabIndex = 2;
+            this.displayImageBox.TabStop = false;
+            this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Click to change the photo");
+            this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
+            // 
             // cbRobotMode
             // 
             this.cbRobotMode.AutoSize = true;
@@ -388,21 +403,6 @@ namespace MSNPSharpClient
             this.comboProtocol.Size = new System.Drawing.Size(70, 21);
             this.comboProtocol.TabIndex = 6;
             this.toolTipChangePhoto.SetToolTip(this.comboProtocol, "Msn protocol used");
-            // 
-            // displayImageBox
-            // 
-            this.displayImageBox.BackColor = System.Drawing.Color.White;
-            this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.displayImageBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.displayImageBox.Location = new System.Drawing.Point(213, 0);
-            this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(77, 77);
-            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.displayImageBox.TabIndex = 2;
-            this.displayImageBox.TabStop = false;
-            this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Click to change the photo");
-            this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
             // 
             // accountTextBox
             // 
@@ -431,7 +431,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(121, 20);
             this.passwordTextBox.TabIndex = 2;
-            this.passwordTextBox.Text = "123456";
+            this.passwordTextBox.Text = "tstmsnpshrp@123";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // comboStatus
