@@ -42,14 +42,11 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp.Core;
 
     /// <summary>
-    /// Buffers incomplete P2PMessage and releases them when the message is fully received.
+    /// Buffers incompleted P2PMessage SLP messages. Data and control messages are ignored.
     /// </summary>
     public class P2PMessagePool
     {
-        private Queue<P2PMessage> availableMessagesV1 = new Queue<P2PMessage>();
         private Dictionary<uint, P2PMessage> splittedP2PV1Messages = new Dictionary<uint, P2PMessage>();
-
-        private Queue<P2PMessage> availableMessagesV2 = new Queue<P2PMessage>();
         private Dictionary<uint, P2PMessage> splittedP2PV2Messages = new Dictionary<uint, P2PMessage>();
 
         public P2PMessagePool()
@@ -57,23 +54,28 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Buffers the incoming raw data internal. This method is often used
-        /// after receiving incoming data from a socket or another source.
+        /// Buffers incompleted P2PMessage SLP messages. Ignores data and control messages. 
         /// </summary>
-        /// <param name="p2pMessage">The message to buffer.</param>
-        public void BufferMessage(P2PMessage p2pMessage)
+        /// <param name="p2pMessage"></param>
+        /// <returns>true if the P2PMessage is buffering; false if the p2p message buffered or no need to buffer.</returns>
+        public bool BufferMessage(P2PMessage p2pMessage)
         {
-            // P2P Version 2 message pooling
+            // P2PV1 and P2PV2 check
+            if (p2pMessage.Header.MessageSize == 0 || // Ack message or Unsplitted
+                p2pMessage.Header.SessionId > 0) // Data message
+            {
+
+                return false; // No need to buffer
+            }
+
+            // P2PV2 pooling
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
-                if ((p2pMessage.V2Header.MessageSize == 0) || // Ack or Unsplitted
-                    (p2pMessage.V2Header.TFCombination == TFCombination.First && p2pMessage.V2Header.DataRemaining == 0) || // Unsplitted SLP message or data preparation message
+                if ((p2pMessage.V2Header.TFCombination == TFCombination.First && p2pMessage.V2Header.DataRemaining == 0) || // Unsplitted SLP message or data preparation message
                     (p2pMessage.V2Header.TFCombination > TFCombination.First)) // Data message
                 {
-                    lock (availableMessagesV2)
-                        availableMessagesV2.Enqueue(p2pMessage);
 
-                    return; // Buffered
+                    return false; // No need to buffer
                 }
 
                 // First splitted SLP message.
@@ -83,7 +85,7 @@ namespace MSNPSharp.DataTransfer
                     lock (splittedP2PV2Messages)
                         splittedP2PV2Messages[p2pMessage.V2Header.Identifier + p2pMessage.V2Header.MessageSize] = p2pMessage;
 
-                    return; // Buffering
+                    return true; // Buffering
                 }
 
                 // Other splitted SLP messages
@@ -128,51 +130,44 @@ namespace MSNPSharp.DataTransfer
                                 if (newMessage.V2Header.DataRemaining > 0)
                                 {
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Buffering splitted messages :\r\n" + newMessage.ToDebugString());
-                                    return; // Buffering
+                                    return true; // Buffering
                                 }
                                 else // Last part
                                 {
                                     newMessage.V2Header.Identifier -= newMessage.V2Header.MessageSize;
                                     splittedP2PV2Messages.Remove(newIdentifier);
 
-                                    lock (availableMessagesV2)
-                                        availableMessagesV2.Enqueue(newMessage);
+                                    p2pMessage.V2Header.TFCombination = TFCombination.First;
+                                    p2pMessage.V2Header.Identifier = newMessage.V2Header.Identifier;
+                                    p2pMessage.V2Header.DataRemaining = 0; // Remove data packet TLVs
+                                    p2pMessage.InnerBody = newMessage.InnerBody;
 
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A splitted message was combined :\r\n" + newMessage.ToDebugString());
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                                        "A splitted message was combined :\r\n" +
+                                        p2pMessage.ToDebugString());
 
-                                    return; // We have the whole message
+                                    return false; // We have the whole message
                                 }
                             }
-                            else
-                            {
-                                // Maybe there are errors, pass the message to the upper layer.
-                                lock (availableMessagesV2)
-                                    availableMessagesV2.Enqueue(p2pMessage);
 
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            // Maybe there are errors, pass the message to the upper layer.
-                            lock (availableMessagesV2)
-                                availableMessagesV2.Enqueue(p2pMessage);
+                            // Invalid packet received!!! Ignore and delete it...
+                            splittedP2PV2Messages.Remove(p2pMessage.V2Header.Identifier);
 
-                            return;
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                                "INVALID P2PV2 PACKET received!!! Ignored and deleted:\r\n" +
+                                p2pMessage.ToDebugString());
+
+                            return false; // Invalid packet, don't kill me.
                         }
                     }
                 }
             }
-            else // P2P Version 1 message pooling
+            else // P2PV1 pooling
             {
-                if ((p2pMessage.Header.MessageSize == 0) || // Ack or Unsplitted
-                    (p2pMessage.V1Header.MessageSize == p2pMessage.V1Header.TotalSize) || // Whole data
+                if ((p2pMessage.V1Header.MessageSize == p2pMessage.V1Header.TotalSize) || // Whole data
                     ((p2pMessage.V1Header.Flags & P2PFlag.Data) == P2PFlag.Data)) // Data message
                 {
-                    lock (availableMessagesV1)
-                        availableMessagesV1.Enqueue(p2pMessage);
-
-                    return; // Buffered
+                    return false; // No need to buffer
                 }
 
                 lock (splittedP2PV1Messages)
@@ -187,14 +182,21 @@ namespace MSNPSharp.DataTransfer
                         copyMessage.V1Header.Offset = p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize;
 
                         splittedP2PV1Messages[p2pMessage.Header.Identifier] = copyMessage;
-                        return; // Buffering
+                        return true; // Buffering
                     }
 
                     P2PMessage totalMessage = splittedP2PV1Messages[p2pMessage.Header.Identifier];
                     if ((totalMessage.V1Header.TotalSize != p2pMessage.V1Header.TotalSize) ||
                         (p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize) > totalMessage.Header.TotalSize)
                     {
-                        return; // Invalid packet, don't kill me.
+                        // Invalid packet received!!! Ignore and delete it...
+                        splittedP2PV1Messages.Remove(p2pMessage.Header.Identifier);
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            "INVALID P2PV1 PACKET received!!! Ignored and deleted:\r\n" +
+                            p2pMessage.ToDebugString());
+
+                        return false; // Invalid packet, don't kill me.
                     }
 
                     Array.Copy(p2pMessage.InnerBody, 0, totalMessage.InnerBody, (long)p2pMessage.V1Header.Offset, (long)p2pMessage.V1Header.MessageSize);
@@ -208,50 +210,12 @@ namespace MSNPSharp.DataTransfer
 
                         splittedP2PV1Messages.Remove(p2pMessage.Header.Identifier);
 
-                        lock (availableMessagesV1)
-                            availableMessagesV1.Enqueue(p2pMessage);
-
-                        return; // We have the whole message
+                        return false; // We have the whole message
                     }
                 }
             }
-        }
 
-        /// <summary>
-        /// Defines whether there is a message available to retrieve
-        /// </summary>
-        public bool MessageAvailable(P2PVersion version)
-        {
-            if (version == P2PVersion.P2PV2)
-            {
-                lock (availableMessagesV2)
-                    return availableMessagesV2.Count > 0;
-            }
-
-            lock (availableMessagesV1)
-                return availableMessagesV1.Count > 0;
-        }
-
-        /// <summary>
-        /// Retrieves the next p2p message from the buffer.
-        /// </summary>
-        /// <returns></returns>
-        public P2PMessage GetNextMessage(P2PVersion msgVersion)
-        {
-            if (msgVersion == P2PVersion.P2PV2)
-            {
-                lock (availableMessagesV2)
-                {
-                    Debug.Assert(availableMessagesV2.Count > 0, "No p2pv2 messages available in queue");
-                    return availableMessagesV2.Dequeue();
-                }
-            }
-
-            lock (availableMessagesV1)
-            {
-                Debug.Assert(availableMessagesV1.Count > 0, "No p2pv1 messages available in queue");
-                return availableMessagesV1.Dequeue();
-            }
+            return false; // Invalid packet...
         }
     }
 };

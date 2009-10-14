@@ -485,9 +485,9 @@ namespace MSNPSharp.DataTransfer
                 return; // This message is not for me
             }
 
-            // Create a temp P2P Message from the msg message
-            P2PMessage p2pTempMessage = new P2PMessage(version);
-            p2pTempMessage.CreateFromMessage(msgMessage);
+            // Create a P2P Message from the msg message
+            P2PMessage p2pMessage = new P2PMessage(version);
+            p2pMessage.CreateFromMessage(msgMessage);
 
             if (Settings.TraceSwitch.TraceVerbose)
             {
@@ -495,133 +495,135 @@ namespace MSNPSharp.DataTransfer
 
                 if (version == P2PVersion.P2PV1)
                 {
-                    dataRemaining = p2pTempMessage.V1Header.TotalSize - (p2pTempMessage.V1Header.Offset + p2pTempMessage.V1Header.MessageSize);
+                    dataRemaining = p2pMessage.V1Header.TotalSize - (p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize);
                 }
                 else if (version == P2PVersion.P2PV2)
                 {
-                    dataRemaining = p2pTempMessage.V2Header.DataRemaining;
+                    dataRemaining = p2pMessage.V2Header.DataRemaining;
                 }
 
                 Trace.WriteLine("Incoming p2p message: DataRemaining: " + dataRemaining + "\r\n" +
-                    p2pTempMessage.ToDebugString(), GetType().Name);
+                    p2pMessage.ToDebugString(), GetType().Name);
             }
 
             // Buffer splitted P2P SLP messages.
-            p2pMessagePool.BufferMessage(p2pTempMessage);
-
-            while (p2pMessagePool.MessageAvailable(version))
+            if (true == p2pMessagePool.BufferMessage(p2pMessage))
             {
-                P2PMessage p2pMessage = p2pMessagePool.GetNextMessage(version);
-                SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
-                if (slp != null)
+                // Buffering... Nothing to to
+                return;
+            }
+
+            SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
+            if (slp != null)
+            {
+                if (p2pMessage.Version == P2PVersion.P2PV1)
                 {
-                    if (p2pMessage.Version == P2PVersion.P2PV1)
+                    remoteAccount = slp.FromMail;
+                    localAccount = slp.ToMail;
+                }
+                else
+                {
+                    remoteAccount = slp.FromMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
+                    remoteMachineGuid = new Guid(slp.FromMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                    localAccount = slp.ToMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
+                    localMachineGuid = new Guid(slp.ToMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                }
+            }
+
+            if (false == NSMessageHandler.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
+                return;
+
+            // Find P2P SESSION
+            Contact remoteContact = NSMessageHandler.ContactList.GetContact(remoteAccount, ClientType.PassportMember);
+            P2PMessageSession session = GetSessionFromRemote(remoteContact);
+
+            if (session == null)
+            {
+                if (version == P2PVersion.P2PV1)
+                {
+                    if (p2pMessage.V1Header.IsAcknowledgement)
                     {
-                        remoteAccount = slp.FromMail;
-                        localAccount = slp.ToMail;
+                        // if it is an acknowledgement then the local client initiated the session.
+                        // this means the session alread exists, but the remote identifier are not yet set.
+                        session = SetSessionIdentifiersAfterAck(p2pMessage);
                     }
                     else
                     {
-                        remoteAccount = slp.FromMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
-                        remoteMachineGuid = new Guid(slp.FromMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
-                        localAccount = slp.ToMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[0];
-                        localMachineGuid = new Guid(slp.ToMail.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                        // there is no session available at all. the remote client sends the first message
+                        // in the session. So create a new session to handle following messages.
+                        session = CreateSessionFromRemote(p2pMessage);
                     }
                 }
 
-                if (false == NSMessageHandler.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
-                    return;
-
-                // Find P2P SESSION
-                P2PMessageSession session = GetSessionFromRemote(NSMessageHandler.ContactList.GetContact(remoteAccount, ClientType.PassportMember));
-
-                if (session == null)
+                if (version == P2PVersion.P2PV2)
                 {
-                    if (version == P2PVersion.P2PV1)
+                    // there is no session available at all. the remote client sends the first message
+                    // in the session. So create a new session to handle following messages.
+
+                    if (slp != null)
                     {
-                        if (p2pMessage.V1Header.IsAcknowledgement)
+                        SLPRequestMessage req = slp as SLPRequestMessage;
+
+                        if (req != null &&
+                            req.Method == "INVITE" &&
+                            req.ContentType == "application/x-msnmsgr-sessionreqbody")
                         {
-                            // if it is an acknowledgement then the local client initiated the session.
-                            // this means the session alread exists, but the remote identifier are not yet set.
-                            session = SetSessionIdentifiersAfterAck(p2pMessage);
-                        }
-                        else
-                        {
-                            // there is no session available at all. the remote client sends the first message
-                            // in the session. So create a new session to handle following messages.
                             session = CreateSessionFromRemote(p2pMessage);
                         }
                     }
-
-                    if (version == P2PVersion.P2PV2)
-                    {
-                        // there is no session available at all. the remote client sends the first message
-                        // in the session. So create a new session to handle following messages.
-
-                        if (slp != null)
-                        {
-                            SLPRequestMessage req = slp as SLPRequestMessage;
-
-                            if (req != null &&
-                                req.Method == "INVITE" &&
-                                req.ContentType == "application/x-msnmsgr-sessionreqbody")
-                            {
-                                session = CreateSessionFromRemote(p2pMessage);
-                            }
-                        }
-                    }
-
-                    if (session == null)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "P2PHandler get session failed.");
-                        return;
-                    }
-
-                    session.LocalUser = NSMessageHandler.Owner;
-                    session.RemoteUser = NSMessageHandler.ContactList.GetContact(remoteAccount, ClientType.PassportMember);
-                    session.RemoteContact = remoteMachineGuid == Guid.Empty ? remoteAccount : (remoteAccount + ";" + remoteMachineGuid.ToString("B"));
-                    session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));
-
-                    // add the session to the session list
-                    lock (messageSessions)
-                    {
-                        messageSessions.Add(session);
-                    }
-
-                    // set the default message processor
-                    session.MessageProcessor = sender;
-
-                    // notify the client programmer
-                    OnSessionCreated(session);
-
                 }
 
-                Debug.Assert(session != null, "Session is null", "P2PHandler");
-
-                // Send an acknowledgement after the last message
-                if (version == P2PVersion.P2PV1)
+                if (session == null)
                 {
-                    if (p2pMessage.Header.IsAcknowledgement == false &&
-                        p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
-                    {
-                        P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                        session.SendMessage(ack);
-                    }
-                }
-                if (version == P2PVersion.P2PV2)
-                {
-                    //Case 1: 0x18 0x03 Invite
-                    if (p2pMessage.Header.IsAcknowledgement == false &&
-                        p2pMessage.V2Header.OperationCode > 0)
-                    {
-                        P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                        session.SendMessage(ack);
-                    }
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "P2PHandler get session failed.");
+                    return;
                 }
 
-                // now handle the message
-                session.HandleMessage(sender, p2pMessage);
+                session.LocalUser = NSMessageHandler.Owner;
+                session.RemoteUser = remoteContact;
+                session.RemoteContact = remoteMachineGuid == Guid.Empty ? remoteAccount : (remoteAccount + ";" + remoteMachineGuid.ToString("B"));
+                session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));
+
+                // add the session to the session list
+                lock (messageSessions)
+                {
+                    messageSessions.Add(session);
+                }
+
+                // set the default message processor
+                session.MessageProcessor = sender;
+
+                // notify the client programmer
+                OnSessionCreated(session);
+
             }
+
+            Debug.Assert(session != null, "Session is null", "P2PHandler");
+
+            // Send an acknowledgement after the last message
+            if (version == P2PVersion.P2PV1)
+            {
+                if (p2pMessage.Header.IsAcknowledgement == false &&
+                    p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
+                {
+                    P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                    session.SendMessage(ack);
+                }
+            }
+            if (version == P2PVersion.P2PV2)
+            {
+                //Case 1: 0x18 0x03 Invite
+                if (p2pMessage.Header.IsAcknowledgement == false &&
+                    p2pMessage.V2Header.OperationCode > 0)
+                {
+                    P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                    session.SendMessage(ack);
+                }
+            }
+
+            // now handle the message
+            session.HandleMessage(sender, p2pMessage);
+
         }
 
         #endregion
