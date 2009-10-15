@@ -1222,6 +1222,7 @@ namespace MSNPSharpClient
 
             Conversation convers = messenger.CreateConversation();
             ConversationForm form = CreateConversationForm(convers, contact);
+
             form.Show();
         }
 
