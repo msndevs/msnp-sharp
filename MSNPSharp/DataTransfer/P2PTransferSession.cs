@@ -755,7 +755,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.ToMail = transferProperties.RemoteContactIDString;
             slpMessage.FromMail = transferProperties.LocalContactIDString;
 
-            slpMessage.Branch = TransferProperties.LastBranch.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.Branch = TransferProperties.LastBranch;
             slpMessage.CSeq = 0;
             slpMessage.CallId = TransferProperties.CallId;
             slpMessage.MaxForwards = 0;

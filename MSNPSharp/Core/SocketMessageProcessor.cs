@@ -158,7 +158,7 @@ namespace MSNPSharp.Core
 
         protected void SendSocketData(byte[] data)
         {
-            if (socket == null || !socket.Connected)
+            if (socket == null || !Connected)
             {
                 // the connection is closed
                 OnDisconnected();
@@ -172,7 +172,7 @@ namespace MSNPSharp.Core
         {
             try
             {
-                if (psocket != null && psocket.Connected)
+                if (psocket != null && IsSocketConnected(psocket))
                 {
                     lock (psocket)
                     {
@@ -242,7 +242,7 @@ namespace MSNPSharp.Core
             catch (SocketException e)
             {
                 // close the socket upon a exception
-                if (socket != null && socket.Connected)
+                if (socket != null && Connected)
                     socket.Close();
 
                 OnDisconnected();
@@ -259,7 +259,7 @@ namespace MSNPSharp.Core
             catch (Exception e)
             {
                 // close the socket upon a exception
-                if (socket != null && socket.Connected)
+                if (socket != null && Connected)
                     socket.Close();
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString() + "\r\n" + e.StackTrace + "\r\n", GetType().Name);
@@ -340,45 +340,57 @@ namespace MSNPSharp.Core
         {
             get
             {
-                if (socket != null)
-                {
-                    lock (socket)
-                    {
-                        // Socket.Connected doesn't tell us if the socket is actually connected...
-                        // http://msdn2.microsoft.com/en-us/library/system.net.sockets.socket.connected.aspx
+                if (socket == null) return false;
 
-                        bool disposed = false;
-                        bool blocking = socket.Blocking;
-                        try
-                        {
-                            socket.Blocking = false;
-                            socket.Send(new byte[0], 0, 0);
-                            return true;
-                        }
-                        catch (SocketException ex)
-                        {
-                            // 10035 == WSAEWOULDBLOCK
-                            if (ex.NativeErrorCode.Equals(10035))
-                                return true;
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                            disposed = true;
-                            return false;
-                        }
-                        finally
-                        {
-                            if (!disposed)
-                            {
-                                socket.Blocking = blocking;
-                            }
-                        }
-                    }
+                lock (socket)
+                {
+                    return IsSocketConnected(socket);
                 }
-                return false;
             }
         }
 
+        /// <summary>
+        /// Show whether the socket is connected at a certain moment.
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <returns>true if socket is connected, false if socket is disconnected.</returns>
+        public static bool IsSocketConnected(Socket socket)
+        {
+            if (socket != null)
+            {
+                // Socket.Connected doesn't tell us if the socket is actually connected...
+                // http://msdn2.microsoft.com/en-us/library/system.net.sockets.socket.connected.aspx
+
+                bool disposed = false;
+                bool blocking = socket.Blocking;
+                try
+                {
+                    socket.Blocking = false;
+                    socket.Send(new byte[0], 0, 0);
+                    return true;
+                }
+                catch (SocketException ex)
+                {
+                    // 10035 == WSAEWOULDBLOCK
+                    if (ex.NativeErrorCode.Equals(10035))
+                        return true;
+                }
+                catch (ObjectDisposedException)
+                {
+                    disposed = true;
+                    return false;
+                }
+                finally
+                {
+                    if (!disposed)
+                    {
+                        socket.Blocking = blocking;
+                    }
+                }
+            }
+
+            return false;
+        }
 
         public EndPoint LocalEndPoint
         {
@@ -419,7 +431,7 @@ namespace MSNPSharp.Core
 
         public virtual void Connect()
         {
-            if (socket != null && socket.Connected)
+            if (socket != null && Connected)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Connect() called, but already a socket available.", GetType().Name);
                 return;
@@ -457,7 +469,7 @@ namespace MSNPSharp.Core
         public virtual void Disconnect()
         {
             // clean up the socket properly
-            if (socket != null && socket.Connected)
+            if (socket != null && Connected)
             {
                 socket.Shutdown(SocketShutdown.Both);
                 socket.Close();

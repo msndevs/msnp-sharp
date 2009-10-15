@@ -68,7 +68,7 @@ namespace MSNPSharp.DataTransfer
                 }
 
                 // clean up the socket properly
-                if (dcSocket == null || !dcSocket.Connected)
+                if (dcSocket == null || !IsSocketConnected(dcSocket))
                 {
                     base.Disconnect();
 
@@ -178,7 +178,7 @@ namespace MSNPSharp.DataTransfer
             base.Disconnect();
 
             // clean up the socket properly
-            if (dcSocket != null && dcSocket.Connected)
+            if (dcSocket != null && IsSocketConnected(dcSocket))
             {
                 dcSocket.Shutdown(SocketShutdown.Both);
                 dcSocket.Close();
