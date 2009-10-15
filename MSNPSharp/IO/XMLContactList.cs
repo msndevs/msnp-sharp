@@ -1189,7 +1189,7 @@ namespace MSNPSharp.IO
                 MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] = "1";
 
             if (!MyProperties.ContainsKey(AnnotationNames.Live_Profile_Expression_LastChanged))
-                MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
         }
 
         #endregion
