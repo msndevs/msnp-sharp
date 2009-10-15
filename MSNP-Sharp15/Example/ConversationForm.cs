@@ -112,13 +112,16 @@ namespace MSNPSharpClient
             _conversation.End();
             _conversation = convers;   //Use the latest conversation, WLM just do the same.
             AddEvent();
+            DisplaySystemMessage("A new conversation has been attached to this form.");
+            DisplaySystemMessage("The old session will be closed.");
         }
 
         public bool CanAttach(Conversation newconvers)
         {
-            if ((_conversation.Type & ConversationType.Chat) == ConversationType.Chat)
+            if (((_conversation.Type & ConversationType.Chat) == ConversationType.Chat) ||
+               (Visible == true && _conversation.Type == ConversationType.SwitchBoard))
             {
-                if ((newconvers.Type | ConversationType.Chat) == _conversation.Type)
+                if ((newconvers.Type | ConversationType.Chat) == (_conversation.Type | ConversationType.Chat))
                 {
                     if (Conversation.Contacts.Count == newconvers.Contacts.Count)
                     {
