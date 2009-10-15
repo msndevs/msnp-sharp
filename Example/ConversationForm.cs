@@ -14,6 +14,7 @@ namespace MSNPSharpClient
 {
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
+    using System.Threading;
 
     /// <summary>
     /// Summary description for ConversationForm.
@@ -113,6 +114,7 @@ namespace MSNPSharpClient
             _conversation = convers;   //Use the latest conversation, WLM just do the same.
             AddEvent();
             DisplaySystemMessage("A new conversation has been attached to this form.");
+            DisplaySystemMessage("The old session will be closed.");
         }
 
         public bool CanAttach(Conversation newconvers)
