@@ -356,6 +356,8 @@ namespace MSNPSharp.Core
         /// <returns>true if socket is connected, false if socket is disconnected.</returns>
         public static bool IsSocketConnected(Socket socket)
         {
+            bool returnValue = false;
+
             if (socket != null)
             {
                 // Socket.Connected doesn't tell us if the socket is actually connected...
@@ -363,22 +365,33 @@ namespace MSNPSharp.Core
 
                 bool disposed = false;
                 bool blocking = socket.Blocking;
+                
                 try
                 {
                     socket.Blocking = false;
-                    socket.Send(new byte[0], 0, 0);
-                    return true;
+
+                    ///This is our old code, can not work under Mono
+                    //socket.Send(new byte[0], 0, 0);
+                    //returnValue = true;
+
+                    int pollWait = 1;
+
+                    if (socket.Poll(pollWait, SelectMode.SelectWrite))
+                    {
+                        returnValue = true;
+                    }
+
                 }
                 catch (SocketException ex)
                 {
                     // 10035 == WSAEWOULDBLOCK
                     if (ex.NativeErrorCode.Equals(10035))
-                        return true;
+                        returnValue = true;
                 }
                 catch (ObjectDisposedException)
                 {
                     disposed = true;
-                    return false;
+                    returnValue = false;
                 }
                 finally
                 {
@@ -389,7 +402,7 @@ namespace MSNPSharp.Core
                 }
             }
 
-            return false;
+            return returnValue;
         }
 
         public EndPoint LocalEndPoint
