@@ -370,7 +370,7 @@ namespace MSNPSharp.Core
                 {
                     socket.Blocking = false;
 
-                    ///This is our old code, can not work under Mono
+                    //This is our old code, can not work under Mono
                     //socket.Send(new byte[0], 0, 0);
                     //returnValue = true;
 
