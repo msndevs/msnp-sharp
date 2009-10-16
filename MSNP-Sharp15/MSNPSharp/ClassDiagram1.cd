@@ -22,7 +22,7 @@
       <HashCode>AAQAAACEAAAAoAAEACAAAgAACAIACAwCAAgEAgAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
-  <Class Name="MSNPSharp.ContactStatusChangeEventArgs" Collapsed="true">
+  <Class Name="MSNPSharp.ContactStatusChangedEventArgs" Collapsed="true">
     <Position X="23.25" Y="1.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Contact.cs</FileName>
@@ -36,7 +36,7 @@
       <HashCode>AAAAAAAAAAAAAAAACAAAAAgAAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
-  <Class Name="MSNPSharp.StatusChangeEventArgs" Collapsed="true">
+  <Class Name="MSNPSharp.StatusChangedEventArgs" Collapsed="true">
     <Position X="23.25" Y="6.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Contact.cs</FileName>

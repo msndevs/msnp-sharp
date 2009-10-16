@@ -627,12 +627,16 @@ namespace MSNPSharp
                     return null;
                 }
 
-                if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                    NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                    WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.Deltas.Profile.DateModified)
-                    < WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged]))
+                if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled && NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    return GetProfileImpl(PartnerScenario.Initial);
+                    DateTime deltasProfileDateModified = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.Deltas.Profile.DateModified);
+                    DateTime annotationLiveProfileExpressionLastChanged = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged]);
+
+                    if ((annotationLiveProfileExpressionLastChanged == DateTime.MinValue) ||
+                        (deltasProfileDateModified < annotationLiveProfileExpressionLastChanged))
+                    {
+                        return GetProfileImpl(PartnerScenario.Initial);
+                    }
                 }
             }
             else

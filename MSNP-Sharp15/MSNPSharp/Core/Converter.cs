@@ -356,7 +356,7 @@ namespace MSNPSharp.Core
             if (dateTime == null || dateTime == string.Empty)
                 dateTime = WebServiceConstants.ZeroTime;
 
-            return XmlConvert.ToDateTime(dateTime, XmlDateTimeSerializationMode.Utc);
+            return XmlConvert.ToDateTime(dateTime, WebServiceConstants.XmlDateTimeFormats);
         }
     }
 };

@@ -210,7 +210,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// A collection of all circle which are defined by the user who logged into the messenger network.
+        /// A collection of all circles which are defined by the user who logged into the messenger network.
         /// </summary>
         public CircleList CircleList
         {
@@ -1325,7 +1325,7 @@ namespace MSNPSharp
                     }
 
                     return;
-                } 
+                }
 
                 #endregion
             }
@@ -1382,13 +1382,12 @@ namespace MSNPSharp
                 contact.SetStatus(newstatus);
 
                 // The contact changed status
-                if (ContactStatusChanged != null)
-                    ContactStatusChanged(this, new ContactStatusChangedEventArgs(contact, oldStatus));
+                OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
 
                 // The contact goes online
                 if (ContactOnline != null)
                     ContactOnline(this, new ContactEventArgs(contact));
-            } 
+            }
             #endregion
         }
 
@@ -1474,12 +1473,10 @@ namespace MSNPSharp
                 contact.SetStatus(PresenceStatus.Offline);
 
                 // the contact changed status
-                if (ContactStatusChanged != null)
-                    ContactStatusChanged(this, new ContactStatusChangedEventArgs(contact, oldStatus));
+                OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
 
                 // the contact goes offline
-                if (ContactOffline != null)
-                    ContactOffline(this, new ContactEventArgs(contact));
+                OnContactOffline(new ContactEventArgs(contact));
             }
         }
 

@@ -68,7 +68,7 @@ namespace MSNPSharp.P2P
                 }
 
                 // clean up the socket properly
-                if (dcSocket == null || !dcSocket.Connected)
+                if (dcSocket == null || !IsSocketConnected(dcSocket))
                 {
                     base.Disconnect();
 
@@ -178,7 +178,7 @@ namespace MSNPSharp.P2P
             base.Disconnect();
 
             // clean up the socket properly
-            if (dcSocket != null && dcSocket.Connected)
+            if (dcSocket != null && IsSocketConnected(dcSocket))
             {
                 dcSocket.Shutdown(SocketShutdown.Both);
                 dcSocket.Close();
