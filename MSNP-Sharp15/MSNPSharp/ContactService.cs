@@ -347,6 +347,12 @@ namespace MSNPSharp
                     recursiveCall == 0 &&
                     (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
                 {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "AddressBook Version not match:\r\nMCL AddressBook Version: " +
+                        AddressBook.Version.ToString() + "\r\nAddressBook Version Required:\r\nContactListVersion " +
+                        Properties.Resources.XMLContactListVersion + ", DeltasList Version " +
+                        Properties.Resources.DeltasListVersion +
+                        "\r\nThe old mcl files for this account will be deleted and a new request for getting addressbook list will be post.");
+
                     recursiveCall++;
                     SynchronizeContactList();
                     return;
@@ -354,7 +360,8 @@ namespace MSNPSharp
             }
             catch (Exception ex)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
+                    "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
 
                 recursiveCall++;
                 SynchronizeContactList();
@@ -613,6 +620,7 @@ namespace MSNPSharp
 
                                         if (abadd_e.Error == null)
                                         {
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A new addressbook has been added, addressbook list will be request again.");
                                             recursiveCall++;
                                             SynchronizeContactList();
                                         }
@@ -629,6 +637,9 @@ namespace MSNPSharp
                             else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                    "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
+
                                 recursiveCall++;
                                 SynchronizeContactList();
                             }
@@ -721,6 +732,9 @@ namespace MSNPSharp
                                 && (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerAddressBookId))
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                                  "Need to do full sync of current addressbook list, addressbook list will be request again. Method: ABFindContactsPaged");
+
                                 recursiveCall++;
                                 AddressBook.CircleResults.Clear();
 
