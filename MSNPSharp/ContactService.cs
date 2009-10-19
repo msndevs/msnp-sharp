@@ -588,17 +588,20 @@ namespace MSNPSharp
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
                 request.serviceFilter.Types = new string[]
                 {
-                    ServiceFilterType.Messenger,
+                    ServiceFilterType.Messenger/*,
                     ServiceFilterType.Invitation,
                     ServiceFilterType.SocialNetwork,
                     ServiceFilterType.Profile,
                     ServiceFilterType.Folder,
-                    ServiceFilterType.OfficeLiveWebNotification
+                    ServiceFilterType.OfficeLiveWebNotification*/
                 };
 
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
+
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
 
                     if (!e.Cancelled)
                     {
@@ -617,6 +620,9 @@ namespace MSNPSharp
                                     abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
                                     {
                                         OnAfterCompleted(new ServiceOperationEventArgs(abservice, MsnServiceType.AB, abadd_e));
+
+                                        if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                                            return;
 
                                         if (abadd_e.Error == null)
                                         {
@@ -722,6 +728,9 @@ namespace MSNPSharp
                 abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
 
                     if (!e.Cancelled)
                     {
@@ -1023,6 +1032,9 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
+
                     if (!e.Cancelled && e.Error == null)
                     {
                         if (onSuccess != null)
@@ -1197,6 +1209,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!e.Cancelled && e.Error == null)
                 {
                     abRequest(PartnerScenario.ContactSave,
@@ -1359,6 +1374,9 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
+
                     if (!e.Cancelled && e.Error == null)
                     {
                         abRequest(PartnerScenario.ContactSave, null);
@@ -1409,6 +1427,9 @@ namespace MSNPSharp
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
 
                     if (!e.Cancelled && e.Error == null)
                     {
@@ -1486,6 +1507,9 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
+
                     if (!e.Cancelled && e.Error == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateMe completed.", GetType().Name);
@@ -1530,6 +1554,9 @@ namespace MSNPSharp
             abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
 
                 if (!e.Cancelled && e.Error == null)
                 {
@@ -1582,6 +1609,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!e.Cancelled && e.Error == null)
                 {
                     NSMessageHandler.ContactGroups.RemoveGroup(contactGroup);
@@ -1617,6 +1647,9 @@ namespace MSNPSharp
             abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
 
                 if (!e.Cancelled && e.Error == null)
                 {
@@ -1656,6 +1689,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!e.Cancelled && e.Error == null)
                 {
                     contact.AddContactToGroup(group);
@@ -1688,6 +1724,9 @@ namespace MSNPSharp
             abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
 
                 if (!e.Cancelled && e.Error == null)
                 {
@@ -1791,6 +1830,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!e.Cancelled)
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
@@ -1865,6 +1907,9 @@ namespace MSNPSharp
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
 
                 if (!e.Cancelled)
                 {
@@ -2034,6 +2079,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!e.Cancelled)
                 {
                     if (e.Error != null)
@@ -2122,6 +2170,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!e.Cancelled)
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
@@ -2161,6 +2212,9 @@ namespace MSNPSharp
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
 
                 if (!e.Cancelled)
                 {
@@ -2265,6 +2319,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, createContactCompletedArg));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!createContactCompletedArg.Cancelled)
                 {
                     if (createContactCompletedArg.Error != null)
@@ -2298,6 +2355,9 @@ namespace MSNPSharp
                     abServiceBinding.ManageWLConnectionCompleted += delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
                     {
                         OnAfterCompleted(new ServiceOperationEventArgs(abServiceBinding, MsnServiceType.AB, e));
+
+                        if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                            return;
 
                         if (e.Cancelled || e.Error != null)
                             return;
@@ -2346,6 +2406,9 @@ namespace MSNPSharp
             abService.ManageWLConnectionCompleted += delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
 
                 if (!e.Cancelled)
                 {
@@ -2432,6 +2495,9 @@ namespace MSNPSharp
             abService.ManageWLConnectionCompleted += delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
 
                 if (!e.Cancelled)
                 {
@@ -2527,6 +2593,9 @@ namespace MSNPSharp
                     abService.BreakConnectionCompleted += delegate(object sender, BreakConnectionCompletedEventArgs e)
                     {
                         OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                        if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                            return;
 
                         if (e.Cancelled || e.Error != null)
                         {

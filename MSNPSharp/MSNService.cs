@@ -664,14 +664,10 @@ namespace MSNPSharp
             else
             {
                 // HandleServiceHeader
-                switch (e.ServiceType)
+                if (NSMessageHandler.MSNTicket != MSNTicket.Empty &&
+                    (e.ServiceType == MsnServiceType.AB || e.ServiceType == MsnServiceType.Sharing))
                 {
-                    case MsnServiceType.AB:
-                    case MsnServiceType.Sharing:
-                        {
-                            HandleServiceHeader(e.WebService, e.ServiceType, e.MsnServiceState);
-                            break;
-                        }
+                    HandleServiceHeader(e.WebService, e.ServiceType, e.MsnServiceState);
                 }
 
                 // Fire event

@@ -82,7 +82,6 @@ namespace MSNPSharp.DataTransfer
         #region Members
 
         private NSMessageHandler nsMessageHandler;
-        private IMessageProcessor messageProcessor;
         private P2PMessagePool p2pMessagePool = new P2PMessagePool();
         private List<P2PMessageSession> messageSessions = new List<P2PMessageSession>();
         private List<SBMessageHandler> switchboardSessions = new List<SBMessageHandler>(0);
@@ -92,8 +91,9 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Protected constructor.
         /// </summary>
-        protected internal P2PHandler()
+        protected internal P2PHandler(NSMessageHandler nsHandler)
         {
+            NSMessageHandler = nsHandler;
         }
 
         #region Properties
@@ -109,9 +109,21 @@ namespace MSNPSharp.DataTransfer
             }
             set
             {
+                // de-register from the previous ns handler
+                if (nsMessageHandler != null)
+                {
+                    nsMessageHandler.SBCreated -= (nsMessageHandler_SBCreated);
+                    nsMessageHandler.ContactOffline -= (nsMessageHandler_ContactOffline);
+                }
+
                 nsMessageHandler = value;
-                nsMessageHandler.SBCreated += new EventHandler<SBCreatedEventArgs>(nsMessageHandler_SBCreated);
-                nsMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(nsMessageHandler_ContactOffline);
+
+                // register new ns handler
+                if (nsMessageHandler != null)
+                {
+                    nsMessageHandler.SBCreated += (nsMessageHandler_SBCreated);
+                    nsMessageHandler.ContactOffline += (nsMessageHandler_ContactOffline);
+                }
             }
         }
 
@@ -123,11 +135,10 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return messageProcessor;
+                return null;
             }
             set
             {
-                messageProcessor = value;
             }
         }
 
@@ -158,7 +169,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Aborts and cleans up all running messagesessions and their transfersessions.
         /// </summary>
-        public void ClearMessageSessions()
+        public void Clear()
         {
             lock (messageSessions)
             {

@@ -110,9 +110,8 @@ namespace MSNPSharp
     {
         #region Members
 
-        private NSMessageProcessor nsMessageProcessor;
-        private NSMessageHandler nsMessageHandler;
-
+        private NSMessageProcessor nsMessageProcessor = new NSMessageProcessor();
+        private NSMessageHandler nsMessageHandler = new NSMessageHandler();
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
@@ -125,13 +124,10 @@ namespace MSNPSharp
         /// </summary>
         public Messenger()
         {
-            nsMessageProcessor = new NSMessageProcessor();
-            nsMessageHandler = new NSMessageHandler();
-
             #region private events
             nsMessageProcessor.ConnectionClosed += delegate
             {
-                CleanUp();
+                tsMsnslpHandlers.Clear();
             };
 
             nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
@@ -549,20 +545,6 @@ namespace MSNPSharp
         {
             if (ConversationCreated != null)
                 ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
-        }
-
-
-        /// <summary>
-        /// Cleans up resources.
-        /// </summary>
-        protected virtual void CleanUp()
-        {
-            tsMsnslpHandlers.Clear();
-
-            if (null != nsMessageHandler.P2PHandler)
-            {
-                nsMessageHandler.P2PHandler.ClearMessageSessions();
-            }
         }
 
         #endregion

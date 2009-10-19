@@ -70,7 +70,7 @@ namespace MSNPSharp
         private bool botMode = false;
 
         private bool isSignedIn;
-        private Owner owner = new Owner();
+        private Owner owner;
         private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
 
@@ -85,18 +85,18 @@ namespace MSNPSharp
 
         protected internal NSMessageHandler()
         {
-            owner.NSMessageHandler = this;
-
-            p2pHandler = new P2PHandler();
-            p2pHandler.NSMessageHandler = this;
+            owner = new Owner(this);
 
             circleList = new CircleList(this);
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
+
             contactService = new ContactService(this);
             oimService = new OIMService(this);
             storageService = new MSNStorageService(this);
             whatsUpService = new WhatsUpService(this);
+
+            p2pHandler = new P2PHandler(this);
         }
 
         #endregion
@@ -1017,6 +1017,9 @@ namespace MSNPSharp
                 }
                 catch (Exception exception)
                 {
+                    if (messageProcessor != null)
+                        messageProcessor.Disconnect();
+
                     OnAuthenticationErrorOccurred(new ExceptionEventArgs(exception));
                     return;
                 }
@@ -1595,8 +1598,8 @@ namespace MSNPSharp
                             string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
                             if (logoutMsg.StartsWith("goawyplzthxbye") || logoutMsg == "gtfo")
                             {
-                                // Logout here...
-                                OnSignedOff(new SignedOffEventArgs(SignedOffReason.OtherClient));
+                                if (messageProcessor != null)
+                                    messageProcessor.Disconnect();
                             }
                             return;
                         }
@@ -2942,25 +2945,33 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void Clear()
         {
-            ContactList.Clear();
-            CircleList.Clear();
-            CircleMemberList.Clear();
+            // 1. Cancel transfers
+            p2pHandler.Clear();
 
-
-            ContactGroups.Clear();
+            // 2. Cancel web services. MSNTicket must be here.
+            msnticket = MSNTicket.Empty;
             ContactService.Clear();
             StorageService.Clear();
             OIMService.Clear();
             WhatsUpService.Clear();
-            // SwitchBoards.Clear();
+
+            // 3. isSignedIn must be here... 
+            // a) ContactService.Clear() merges and saves addressbook if isSignedIn=true.
+            // b) Owner.ClientCapacities = ClientCapacities.None doesn't send CHG command if isSignedIn=false.
+            isSignedIn = false;
+            externalEndPoint = null;
+
+            // 4. Clear owner
             Owner.Emoticons.Clear();
             Owner.Places.Clear();
             Owner.ClientCapacities = ClientCapacities.None;
             Owner.ClientCapacitiesEx = ClientCapacitiesEx.None;
 
-            externalEndPoint = null;
-            isSignedIn = false;
-            msnticket = MSNTicket.Empty;
+            // 5. Clear contact lists
+            ContactList.Clear();
+            CircleList.Clear();
+            CircleMemberList.Clear();
+            ContactGroups.Clear();
         }
 
         /// <summary>
