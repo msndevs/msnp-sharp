@@ -53,6 +53,15 @@ namespace MSNPSharp
         private NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
         private RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
 
+        private Owner()
+        {
+        }
+
+        public Owner(NSMessageHandler handler)
+            : base(handler)
+        {
+        }
+
         /// <summary>
         /// Fired when owner profile received.
         /// </summary>

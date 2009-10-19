@@ -110,9 +110,8 @@ namespace MSNPSharp
     {
         #region Members
 
-        private NSMessageProcessor nsMessageProcessor;
-        private NSMessageHandler nsMessageHandler;
-
+        private NSMessageProcessor nsMessageProcessor = new NSMessageProcessor();
+        private NSMessageHandler nsMessageHandler = new NSMessageHandler();
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         /*NEWP2P,TODO,XXX:private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());*/
@@ -125,21 +124,18 @@ namespace MSNPSharp
         /// </summary>
         public Messenger()
         {
-            nsMessageProcessor = new NSMessageProcessor();
-            nsMessageHandler = new NSMessageHandler();
-
             #region private events
             nsMessageProcessor.ConnectionClosed += delegate
             {
-                CleanUp();
+                /*NEWP2P,TODO,XXX: tsMsnslpHandlers.Clear();*/
             };
 
-            nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
-            {
-                /*NEWP2P,TODO,XXX:
-                //Register the p2phandler to handle all incoming p2p message through this switchboard.
-                ce.Switchboard.MessageProcessor.RegisterHandler(nsMessageHandler.P2PHandler);
-                */
+             nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
+             {
+                 /*NEWP2P,TODO,XXX:
+                 //Register the p2phandler to handle all incoming p2p message through this switchboard.
+                 ce.Switchboard.MessageProcessor.RegisterHandler(nsMessageHandler.P2PHandler);
+                 */
                 // check if the request is remote or on our initiative
                 if (ce.Initiator != null && (ce.Initiator == this/*NEWP2P,TODO,XXX: || ce.Initiator == nsMessageHandler.P2PHandler*/))
                 {
@@ -553,22 +549,6 @@ namespace MSNPSharp
         {
             if (ConversationCreated != null)
                 ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
-        }
-
-
-        /// <summary>
-        /// Cleans up resources.
-        /// </summary>
-        protected virtual void CleanUp()
-        {
-            /*NEWP2P,TODO,XXX:
-            tsMsnslpHandlers.Clear();
-
-            if (null != nsMessageHandler.P2PHandler)
-            {
-                nsMessageHandler.P2PHandler.ClearMessageSessions();
-            }
-            */
         }
 
         #endregion

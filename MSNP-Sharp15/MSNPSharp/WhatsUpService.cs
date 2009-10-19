@@ -129,6 +129,9 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(wuService, MsnServiceType.WhatsUp, e));
 
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
+
                     if (e.Cancelled)
                         return;
 
