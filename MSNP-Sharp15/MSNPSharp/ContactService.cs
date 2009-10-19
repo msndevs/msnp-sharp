@@ -56,10 +56,9 @@ namespace MSNPSharp
 
         private int recursiveCall;
         private string applicationId = String.Empty;
-        private List<int> initialADLs = new List<int>();
+        private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
         private bool abSynchronized;
 
-        internal int initialADLcount;
         internal XMLContactList AddressBook;
         internal DeltasList Deltas;
         internal List<int> pendingFQYs = new List<int>();
@@ -432,7 +431,6 @@ namespace MSNPSharp
             {
                 #region Initial ADL
 
-                List<NSPayLoadMessage> adlpayloads = new List<NSPayLoadMessage>();
                 NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
 
                 // Combine initial ADL for Contacts
@@ -455,13 +453,18 @@ namespace MSNPSharp
                     }
                 }
                 string[] adls = ConstructLists(hashlist, true);
-                Interlocked.Exchange(ref initialADLcount, adls.Length);
+                int firstADLKey = 0;
+
                 foreach (string payload in adls)
                 {
                     NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                     message.TransactionID = nsmp.IncreaseTransactionID();
-                    adlpayloads.Add(message);
-                    initialADLs.Add(message.TransactionID);
+                    initialADLs.Add(message.TransactionID, message);
+
+                    if (firstADLKey == 0)
+                    {
+                        firstADLKey = message.TransactionID;
+                    }
                 }
 
                 // Combine initial ADL for Circles
@@ -477,22 +480,20 @@ namespace MSNPSharp
                             hashlist.Add(ch, l);
                         }
                     }
+
                     string[] circleadls = ConstructLists(hashlist, true);
-                    Interlocked.Exchange(ref initialADLcount, adls.Length + circleadls.Length);
                     foreach (string payload in circleadls)
                     {
                         NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                         message.TransactionID = nsmp.IncreaseTransactionID();
-                        adlpayloads.Add(message);
-                        initialADLs.Add(message.TransactionID);
+                        initialADLs.Add(message.TransactionID, message);
                     }
                 }
 
-                // Send Initial ADLs
-                foreach (NSPayLoadMessage payload in adlpayloads)
-                {
-                    nsmp.SendMessage(payload, payload.TransactionID);
-                }
+                // Send First Initial ADL,.
+                // NSHandler doesn't accept more than 3 ADLs at the same time... So we must wait OK response.
+                NSPayLoadMessage firstADL = initialADLs[firstADLKey];
+                nsmp.SendMessage(firstADL, firstADL.TransactionID);
 
                 #endregion
             }
@@ -504,16 +505,16 @@ namespace MSNPSharp
 
         internal bool ProcessADL(int transid)
         {
-            if (initialADLs.Contains(transid))
+            if (initialADLs.ContainsKey(transid))
             {
                 lock (this)
                 {
                     initialADLs.Remove(transid);
                 }
 
-                if (Interlocked.Decrement(ref initialADLcount) <= 0)
+                if (initialADLs.Count <= 0)
                 {
-                    initialADLcount = 0;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
 
                     if (NSMessageHandler.AutoSynchronize)
                     {
@@ -546,6 +547,15 @@ namespace MSNPSharp
 
                             }
                         }
+                    }
+                }
+                else
+                {
+                    // Send next ADL...
+                    foreach (NSPayLoadMessage nsPayload in initialADLs.Values)
+                    {
+                        ((NSMessageProcessor)NSMessageHandler.MessageProcessor).SendMessage(nsPayload, nsPayload.TransactionID);
+                        break;
                     }
                 }
                 return true;
@@ -2695,7 +2705,6 @@ namespace MSNPSharp
             {
                 recursiveCall = 0;
                 initialADLs.Clear();
-                initialADLcount = 0;
                 pendingFQYs.Clear();
 
                 // Last save for contact list files
