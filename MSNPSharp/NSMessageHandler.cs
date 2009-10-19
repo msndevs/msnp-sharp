@@ -2223,11 +2223,6 @@ namespace MSNPSharp
                 message.CommandValues[1].ToString() == "OK" &&
                 ContactService.ProcessADL(message.TransactionID))
             {
-                // All initial ADLs have processed.
-                if (0 == ContactService.initialADLcount)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
-                }
             }
             else
             {

@@ -433,7 +433,7 @@ namespace MSNPSharp
                         
                         // Don't urlencode t= :))
                         string usertitleURL = requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2));
-                        SyncUserTitle(usertitleURL,
+                        SyncUserTile(usertitleURL,
                             delegate(object nullParam)
                             {
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = response.GetProfileResult.ExpressionProfile.Photo.Name;
@@ -451,7 +451,10 @@ namespace MSNPSharp
                             {
                                 Exception ex = param as Exception;
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
-                                SyncUserTitle(NSMessageHandler.Owner.UserTile.AbsoluteUri, null, null, null);
+                                if (NSMessageHandler.Owner.UserTile != null)
+                                {
+                                    SyncUserTile(NSMessageHandler.Owner.UserTile.AbsoluteUri, null, null, null);
+                                }
                             });
                         
                     }
@@ -472,7 +475,7 @@ namespace MSNPSharp
 
         internal delegate void GetUsertitleByURLhandler(object param);
 
-        internal void SyncUserTitle(string usertitleURL, GetUsertitleByURLhandler callBackHandler, object param, GetUsertitleByURLhandler errorHandler)
+        internal void SyncUserTile(string usertitleURL, GetUsertitleByURLhandler callBackHandler, object param, GetUsertitleByURLhandler errorHandler)
         {
             try
             {
