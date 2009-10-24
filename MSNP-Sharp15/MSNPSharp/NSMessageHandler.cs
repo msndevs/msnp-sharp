@@ -465,12 +465,12 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when a circle member is typing.
         /// </summary>
-        public event EventHandler<CircleEventArgs> CircleTypingMessageReceived;
+        public event EventHandler<CircleMemberEventArgs> CircleTypingMessageReceived;
 
         /// <summary>
         /// Occurs when we receive a nudge message sent by a circle member.
         /// </summary>
-        public event EventHandler<CircleEventArgs> CircleNudgeReceived;
+        public event EventHandler<CircleMemberEventArgs> CircleNudgeReceived;
 
         /// <summary>
         /// Occurs when we receive a text message sent from a circle.
@@ -2684,7 +2684,7 @@ namespace MSNPSharp
                         return;
                     }
 
-                    CircleEventArgs arg = new CircleEventArgs(circle, member);
+                    CircleMemberEventArgs arg = new CircleMemberEventArgs(circle, member);
 
                     if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.Message_Subtype))
                     {
@@ -2712,7 +2712,7 @@ namespace MSNPSharp
                             }
 
                             txtMessage.ParseHeader(strDic);
-                            CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle);
+                            CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle, member);
                             OnCircleTextMessageReceived(textMessageArg);
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                                 "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a text message:\r\n" + txtMessage.ToDebugString());
@@ -2732,13 +2732,13 @@ namespace MSNPSharp
             }
         }
 
-        protected virtual void OnCircleTypingMessageReceived(CircleEventArgs e)
+        protected virtual void OnCircleTypingMessageReceived(CircleMemberEventArgs e)
         {
             if (CircleTypingMessageReceived != null)
                 CircleTypingMessageReceived(this, e);
         }
 
-        protected virtual void OnCircleNudgeReceived(CircleEventArgs e)
+        protected virtual void OnCircleNudgeReceived(CircleMemberEventArgs e)
         {
             if (CircleNudgeReceived != null)
                 CircleNudgeReceived(this, e);
