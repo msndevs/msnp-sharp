@@ -590,10 +590,12 @@ namespace MSNPSharp
     [Serializable()]
     public class CircleTextMessageEventArgs : TextMessageEventArgs
     {
-        public CircleTextMessageEventArgs(TextMessage textMessage, Circle sender)
+        protected Contact triggerMember = null;
+
+        public CircleTextMessageEventArgs(TextMessage textMessage, Circle sender, Contact triggerMember)
             : base(textMessage, sender)
         {
-
+            this.triggerMember = triggerMember;
         }
 
         /// <summary>
@@ -604,6 +606,17 @@ namespace MSNPSharp
             get
             {
                 return base.Sender as Circle;
+            }
+        }
+
+        /// <summary>
+        /// The circle member who send this message.
+        /// </summary>
+        public Contact TriggerMember
+        {
+            get
+            {
+                return triggerMember;
             }
         }
     }

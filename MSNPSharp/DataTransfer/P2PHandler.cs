@@ -493,6 +493,9 @@ namespace MSNPSharp.DataTransfer
                 localMachineGuid != Guid.Empty &&
                 localMachineGuid != NSMessageHandler.MachineGuid)
             {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "The destination of p2pv2 message received is not owner.\r\n" +
+                    "Destination GUID: " + localMachineGuid.ToString("B") + "\r\n" +
+                    "Owner GUID: " + NSMessageHandler.MachineGuid.ToString("B"));
                 return; // This message is not for me
             }
 
@@ -542,7 +545,10 @@ namespace MSNPSharp.DataTransfer
             }
 
             if (false == NSMessageHandler.ContactList.HasContact(remoteAccount, ClientType.PassportMember))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2P remote contact not in contact list: " + remoteAccount + " Type: " + ClientType.PassportMember.ToString());
                 return;
+            }
 
             // Find P2P SESSION
             Contact remoteContact = NSMessageHandler.ContactList.GetContact(remoteAccount, ClientType.PassportMember);
