@@ -728,7 +728,7 @@ namespace MSNPSharp
             if (name != newName)
             {
                 string oldName = name;
-                name = System.Web.HttpUtility.UrlDecode(newName, System.Text.Encoding.UTF8);
+                name = newName;
 
                 // notify the user we changed our name
                 OnScreenNameChanged(oldName);
