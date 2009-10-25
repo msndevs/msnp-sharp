@@ -423,6 +423,11 @@ namespace MSNPSharp
         public event EventHandler<CircleMemberEventArgs> CircleMemberLeft;
 
         /// <summary>
+        /// Occurs when a member joined the circle conversation.
+        /// </summary>
+        public event EventHandler<CircleMemberEventArgs> CircleMemberJoined;
+
+        /// <summary>
         /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
         /// </summary>
         public event EventHandler<EventArgs> SignedIn;
@@ -1090,6 +1095,16 @@ namespace MSNPSharp
                 ContactOffline(this, e);
         }
 
+        /// <summary>
+        /// Fires the <see cref="ContactOnline"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void OnContactOnline(ContactEventArgs e)
+        {
+            if (ContactOnline != null)
+                ContactOnline(this, e);
+        }
+
         #endregion
 
         #region Status
@@ -1285,27 +1300,31 @@ namespace MSNPSharp
 
             if (fullaccount.Contains(";via=9:"))
             {
-                #region Circle Status
+                #region Circle Status, or Circle Member status
 
                 string[] usernameAndCircle = fullaccount.Split(';');
                 type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
+                contact = CircleMemberList[fullaccount];
 
-                if (CircleMemberList[fullaccount] == null && account != Owner.Mail.ToLowerInvariant())
+                if (contact != null && contact is CircleContactMember)
                 {
-                    contact = new CircleContactMember(usernameAndCircle[1], account, type);
-
-                    if (ContactList.HasContact(account, type))
-                    {
-                        (contact as CircleContactMember).SyncWithContact(ContactList.GetContact(account, type));
-                    }
-
                     contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
 
-                    CircleMemberList.Add(contact as CircleContactMember);
-                    CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
+                    PresenceStatus oldStatus = contact.Status;
+
+                    if (oldStatus != newstatus)
+                    {
+                        contact.SetStatus(newstatus);
+
+                        // The contact changed status
+                        OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+
+                        // The contact goes online
+                        OnContactOnline(new ContactEventArgs(contact));
+                    }
                 }
 
                 if (account == Owner.Mail.ToLowerInvariant())
@@ -1320,11 +1339,9 @@ namespace MSNPSharp
                         PresenceStatus oldCircleStatus = circle.Status;
                         circle.SetStatus(newstatus);
 
-                        if (CircleStatusChanged != null)
-                            CircleStatusChanged(this, new CircleStatusChangedEventArgs(circle, oldCircleStatus));
+                        OnCircleStatusChanged(new CircleStatusChangedEventArgs(circle, oldCircleStatus));
 
-                        if (CircleOnline != null)
-                            CircleOnline(this, new CircleEventArgs(circle));
+                        OnCircleOnline(new CircleEventArgs(circle));
                     }
 
                     return;
@@ -1337,61 +1354,60 @@ namespace MSNPSharp
                 type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
                 contact = ContactList.GetContact(account, type);
-            }
 
-            #region Contact Status, or Circle Member Status
+                #region Contact Status
 
-            if (contact != null)
-            {
-                string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-                ClientCapacities newcaps = ClientCapacities.None;
-                ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
-
-                if (message.CommandValues.Count >= 4)
+                if (contact != null)
                 {
-                    if (message.CommandValues[3].ToString().Contains(":"))
+                    string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+                    ClientCapacities newcaps = ClientCapacities.None;
+                    ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
+
+                    if (message.CommandValues.Count >= 4)
                     {
-                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
-                        newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
+                        if (message.CommandValues[3].ToString().Contains(":"))
+                        {
+                            newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
+                            newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
+                        }
+                        else
+                        {
+                            newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString());
+                        }
+
                     }
-                    else
+
+                    string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
+
+
+                    if (IsSignedIn && account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
                     {
-                        newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString());
+                        SetPresenceStatus(newstatus);
+                        return;
                     }
 
+                    contact.SetName(HttpUtility.UrlDecode(newname));
+                    contact.ClientCapacities = newcaps;
+                    contact.ClientCapacitiesEx = newcapsex;
+
+                    if (contact != Owner && !String.IsNullOrEmpty(newdp) && newdp != "0")
+                    {
+                        DisplayImage userDisplay = new DisplayImage();
+                        userDisplay.Context = newdp;
+                        contact.DisplayImage = userDisplay;
+                    }
+
+                    PresenceStatus oldStatus = contact.Status;
+                    contact.SetStatus(newstatus);
+
+                    // The contact changed status
+                    OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+
+                    // The contact goes online
+                    OnContactOnline(new ContactEventArgs(contact));
                 }
-
-                string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
-
-
-                if (IsSignedIn && account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
-                {
-                    SetPresenceStatus(newstatus);
-                    return;
-                }
-
-                contact.SetName(HttpUtility.UrlDecode(newname));
-                contact.ClientCapacities = newcaps;
-                contact.ClientCapacitiesEx = newcapsex;
-
-                if (contact != Owner && !String.IsNullOrEmpty(newdp) && newdp != "0")
-                {
-                    DisplayImage userDisplay = new DisplayImage();
-                    userDisplay.Context = newdp;
-                    contact.DisplayImage = userDisplay;
-                }
-
-                PresenceStatus oldStatus = contact.Status;
-                contact.SetStatus(newstatus);
-
-                // The contact changed status
-                OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
-
-                // The contact goes online
-                if (ContactOnline != null)
-                    ContactOnline(this, new ContactEventArgs(contact));
+                #endregion
             }
-            #endregion
         }
 
         /// <summary>
@@ -2459,77 +2475,107 @@ namespace MSNPSharp
             if (message.CommandValues[0].ToString() == "PUT")
             {
                 NetworkMessage networkMessage = message as NetworkMessage;
-                if (networkMessage.InnerBody != null)
+                if (networkMessage.InnerBody == null)
+                    return;
+
+                string nfyTextString = Encoding.UTF8.GetString(networkMessage.InnerBody);
+                int lastLineBreak = nfyTextString.LastIndexOf("\r\n");
+                if (lastLineBreak == -1)
+                    return;
+
+                string xmlString = nfyTextString.Substring(lastLineBreak + 2);
+                string mimeString = nfyTextString.Substring(0, lastLineBreak).Replace("\r\n\r\n", "\r\n");
+                byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
+                MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+
+                if (!(mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.NotifType)))
+                    return;
+
+                if (mimeDic[MimeHeaderStrings.Content_Type].Value != "application/circles+xml")
+                    return;
+
+                string[] typeMail = mimeDic[MimeHeaderStrings.From].ToString().Split(':');
+
+                if (typeMail.Length == 0)
+                    return;
+
+                string[] guidDomain = typeMail[1].Split('@');
+                if (guidDomain.Length == 0)
+                    return;
+
+                Circle circle = CircleList[typeMail[1]];
+
+                if (circle == null)
+                    return;  //Error.
+
+                if (xmlString == string.Empty)
+                    return;  //No xml content.
+
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(xmlString);
+
+                XmlNode mfnNode = xmlDoc.SelectSingleNode("//circle/props/presence/Data/MFN");
+                string circleName = string.Empty;
+                if (mfnNode != null)
                 {
-                    string nfyTextString = Encoding.UTF8.GetString(networkMessage.InnerBody);
-                    int lastLineBreak = nfyTextString.LastIndexOf("\r\n");
-                    if (lastLineBreak != -1)
+                    circle.SetName(mfnNode.InnerText);
+                    circle.SetNickName(mfnNode.InnerText);
+                }
+
+                bool initial = false;
+                if (mimeDic[MimeHeaderStrings.NotifType].Value == "Full")
+                {
+                    initial = true;
+                    //This is a NFY PUT command send from server when we login.
+                    SendCirclePublishCommand(new Guid(guidDomain[0]), guidDomain[1]);
+                }
+
+                XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
+                if (ids.Count == 0)
+                {
+                    return;  //I hate indent!!!
+                }
+
+                foreach (XmlNode node in ids)
+                {
+                    if (initial)
                     {
-                        string xmlString = nfyTextString.Substring(lastLineBreak + 2);
-                        string mimeString = nfyTextString.Substring(0, lastLineBreak).Replace("\r\n\r\n", "\r\n");
-                        byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
-                        MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+                        if (node.InnerText.Split(':').Length == 0)
+                            return;
 
-                        if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.NotifType))
+                        string memberAccount = node.InnerText.Split(':')[1];
+                        if (memberAccount == Owner.Mail.ToLowerInvariant())
+                            continue;
+
+                        ClientType memberType = (ClientType)int.Parse(node.InnerText.Split(':')[0]);
+
+                        CircleContactMember initialMember = new CircleContactMember("via=" + mimeDic[MimeHeaderStrings.From].ToString(), memberAccount, memberType);
+                        if (ContactList.HasContact(memberAccount, memberType))
                         {
-                            if (mimeDic[MimeHeaderStrings.Content_Type].Value == "application/circles+xml")
-                            {
-                                string[] typeMail = mimeDic[MimeHeaderStrings.From].ToString().Split(':');
-
-                                if (typeMail.Length == 0)
-                                    return;
-
-                                string[] guidDomain = typeMail[1].Split('@');
-                                if (guidDomain.Length == 0)
-                                    return;
-
-                                Circle circle = CircleList[typeMail[1]];
-
-                                if (circle == null)
-                                    return;  //Error.
-
-
-                                if (mimeDic[MimeHeaderStrings.NotifType].Value == "Full" && xmlString != string.Empty)  //We get the circle roster list here, need to reply a PUT message.
-                                {
-                                    XmlDocument xmlDoc = new XmlDocument();
-                                    xmlDoc.LoadXml(xmlString);
-
-                                    XmlNode mfnNode = xmlDoc.SelectSingleNode("//circle/props/presence/Data/MFN");
-                                    string circleName = string.Empty;
-                                    if (mfnNode != null)
-                                    {
-                                        circle.SetName(mfnNode.InnerText);
-                                        circle.SetNickName(mfnNode.InnerText);
-                                    }
-
-                                    SendCirclePublishCommand(new Guid(guidDomain[0]), guidDomain[1]);
-
-                                    XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
-                                    if (ids.Count > 0)
-                                    {
-                                        foreach (XmlNode node in ids)
-                                        {
-                                            lock (CircleMemberList)
-                                            {
-                                                foreach (CircleContactMember member in CircleMemberList)
-                                                {
-                                                    string id = ((int)member.MemberType).ToString() + ":" + member.Mail.ToLowerInvariant();
-                                                    if (id == node.InnerText && circle.Mail == member.CircleMail)
-                                                    {
-                                                        circle.AddMember(member);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                }
-
-                            }
+                            initialMember.SyncWithContact(ContactList.GetContact(memberAccount, memberType));
                         }
 
+                        CircleMemberList.Add(initialMember);
+                        circle.AddMember(initialMember);
+                    }
+                    else
+                    {
+
+                        lock (CircleMemberList)
+                        {
+                            foreach (CircleContactMember member in CircleMemberList)
+                            {
+                                string id = ((int)member.MemberType).ToString() + ":" + member.Mail.ToLowerInvariant();
+                                if (id == node.InnerText && circle.Mail == member.CircleMail)
+                                {
+                                    circle.AddMember(member);
+                                    OnCircleMemberJoined(new CircleMemberEventArgs(circle, member));
+                                }
+                            }
+                        }
                     }
                 }
+
             }
 
             #endregion
@@ -2752,6 +2798,24 @@ namespace MSNPSharp
         {
             if (CircleMemberLeft != null)
                 CircleMemberLeft(this, e);
+        }
+
+        protected virtual void OnCircleMemberJoined(CircleMemberEventArgs e)
+        {
+            if (CircleMemberJoined != null)
+                CircleMemberJoined(this, e);
+        }
+
+        protected virtual void OnCircleStatusChanged(CircleStatusChangedEventArgs e)
+        {
+            if (CircleStatusChanged != null)
+                CircleStatusChanged(this, e);
+        }
+
+        protected virtual void OnCircleOnline(CircleEventArgs e)
+        {
+            if (CircleOnline != null)
+                CircleOnline(this, e);
         }
 
         #endregion
