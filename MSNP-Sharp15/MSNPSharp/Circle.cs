@@ -182,6 +182,9 @@ namespace MSNPSharp
                 throw new MSNPSharpException("NSMessagehandler is null");
             if (!NSMessageHandler.IsSignedIn)
                 throw new InvalidOperationException("Cannot send a message without signning in to the server. Please sign in first.");
+
+            if (NSMessageHandler.Owner.Status == PresenceStatus.Hidden)
+                throw new InvalidOperationException("Cannot send a message when you are in 'Hidden' status.");
         }
 
         private string ConstructSDGScheme()
@@ -210,7 +213,7 @@ namespace MSNPSharp
         /// Send nudge to all members in this circle.
         /// </summary>
         /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
-        /// <exception cref="InvalidOperationException">Not sign in to the server.</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server, or in <see cref="PresenceStatus.Hidden"/> status.</exception>
         public void SendNudge()
         {
             CheckValidation();
@@ -227,7 +230,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="textMessage"></param>
         /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
-        /// <exception cref="InvalidOperationException">Not sign in to the server.</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server, or in <see cref="PresenceStatus.Hidden"/> status.</exception>
         public void SendMessage(TextMessage textMessage)
         {
             CheckValidation();
@@ -251,7 +254,7 @@ namespace MSNPSharp
         /// Send a typing message indicates that you are typing to all members in this circle.
         /// </summary>
         /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
-        /// <exception cref="InvalidOperationException">Not sign in to the server.</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server, or in <see cref="PresenceStatus.Hidden"/> status.</exception>
         public void SendTypingMessage()
         {
             CheckValidation();

@@ -851,7 +851,7 @@ namespace MSNPSharp
             SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList, true);
         }
 
-        internal void SendCirclePublishCommand(Guid circleId, string hostDomain)
+        internal void JoinCircleConversation(Guid circleId, string hostDomain)
         {
             //Send PUT
             string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Mail + ";epid=" + Owner.MachineGuid.ToString("B").ToLowerInvariant();
@@ -1309,19 +1309,20 @@ namespace MSNPSharp
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
                 contact = CircleMemberList[fullaccount];
 
-                ////New circle member added
-                //if (contact == null && account != Owner.Mail.ToLowerInvariant())
-                //{
-                //    contact = new CircleContactMember(usernameAndCircle[1], account, type);
+                if (account == Owner.Mail.ToLowerInvariant())
+                {
+                    string[] guidDomain = circleMail.Split('@');
+                    PresenceStatus oldStatus = Owner.Status;
 
-                //    if (ContactList.HasContact(account, type))
-                //    {
-                //        (contact as CircleContactMember).SyncWithContact(ContactList.GetContact(account, type));
-                //    }
-
-                //    CircleMemberList.Add(contact as CircleContactMember);
-                //    CircleList.AddMemberToCorrespondingCircle(contact as CircleContactMember);
-                //}
+                    if (oldStatus != newstatus)
+                    {
+                        if (guidDomain.Length != 0 && (oldStatus == PresenceStatus.Offline || oldStatus == PresenceStatus.Hidden))
+                        {
+                            //This is a PUT command send from server when we login.
+                            JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
+                        }
+                    }
+                }
 
                 if (contact != null && contact is CircleContactMember)
                 {
@@ -2541,7 +2542,7 @@ namespace MSNPSharp
                 {
                     initial = true;
                     //This is a NFY PUT command send from server when we login.
-                    SendCirclePublishCommand(new Guid(guidDomain[0]), guidDomain[1]);
+                    JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
                 }
 
                 XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
