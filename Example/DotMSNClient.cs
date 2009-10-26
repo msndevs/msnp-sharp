@@ -107,6 +107,8 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactService.ExitCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_ExitCircle);
             messenger.Nameserver.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberLeft);
             messenger.Nameserver.CircleMemberJoined += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberJoined);
+            messenger.Nameserver.CircleTextMessageReceived += new EventHandler<CircleTextMessageEventArgs>(Nameserver_CircleTextMessageReceived);
+            messenger.Nameserver.CircleNudgeReceived += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleNudgeReceived);
 
             messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
@@ -137,6 +139,24 @@ namespace MSNPSharpClient
             comboStatus.SelectedIndex = 0;
             comboProtocol.SelectedIndex = 0;
 
+        }
+
+        void Nameserver_CircleNudgeReceived(object sender, CircleMemberEventArgs e)
+        {
+            Trace.WriteLine("Circle " + e.Circle.ToString() + ": Member: " + e.Member.ToString() + " send you a nudge.");
+            AutoGroupMessageReply(e.Circle);
+        }
+
+        private void AutoGroupMessageReply(Circle circle)
+        {
+            if (messenger.Owner.Status != PresenceStatus.Hidden || messenger.Owner.Status != PresenceStatus.Offline)
+                circle.SendMessage(new TextMessage("MSNPSharp example client auto reply."));
+        }
+
+        void Nameserver_CircleTextMessageReceived(object sender, CircleTextMessageEventArgs e)
+        {
+            Trace.WriteLine("Circle " + e.Sender.ToString() + ": Member: " + e.TriggerMember.ToString() + " send you a message :" + e.Message.ToString());
+            AutoGroupMessageReply(e.Sender);
         }
 
         void Nameserver_CircleMemberJoined(object sender, CircleMemberEventArgs e)

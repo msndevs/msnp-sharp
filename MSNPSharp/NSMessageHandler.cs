@@ -851,7 +851,12 @@ namespace MSNPSharp
             SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList, true);
         }
 
-        internal void SendCirclePublishCommand(Guid circleId, string hostDomain)
+        /// <summary>
+        /// Send a PUT command notifying the server we join to a circle(gruop) conversation.
+        /// </summary>
+        /// <param name="circleId"></param>
+        /// <param name="hostDomain"></param>
+        internal void JoinCircleConversation(Guid circleId, string hostDomain)
         {
             //Send PUT
             string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Mail + ";epid=" + Owner.MachineGuid.ToString("B").ToLowerInvariant();
@@ -1308,6 +1313,21 @@ namespace MSNPSharp
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
                 contact = CircleMemberList[fullaccount];
+
+                if (account == Owner.Mail.ToLowerInvariant())
+                {
+                    string[] guidDomain = circleMail.Split('@');
+                    PresenceStatus oldStatus = Owner.Status;
+
+                    if (oldStatus != newstatus)
+                    {
+                        if (guidDomain.Length != 0 && (oldStatus == PresenceStatus.Offline || oldStatus == PresenceStatus.Hidden))
+                        {
+                            //This is a PUT command send from server when we login.
+                            JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
+                        }
+                    }
+                }
 
                 if (contact != null && contact is CircleContactMember)
                 {
@@ -2526,8 +2546,7 @@ namespace MSNPSharp
                 if (mimeDic[MimeHeaderStrings.NotifType].Value == "Full")
                 {
                     initial = true;
-                    //This is a NFY PUT command send from server when we login.
-                    SendCirclePublishCommand(new Guid(guidDomain[0]), guidDomain[1]);
+                    JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
                 }
 
                 XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
