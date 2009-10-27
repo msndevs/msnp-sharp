@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ns2="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wst="http://schemas.xmlsoap.org/ws/2005/02/trust" xmlns="http://www.w3.org/2003/05/soap-envelope" xmlns:ps="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" xmlns:enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:psf="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns1="http://www.w3.org/2003/05/soap-envelope" targetNamespace="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema>
+      <xs:import schemaLocation="ps.xsd" namespace="http://schemas.microsoft.com/Passport/SoapServices/PPCRL" />
+      <xs:import schemaLocation="ps-fault.xsd" namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault" />
+      <xs:import schemaLocation="ws-secext.xsd" namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" />
+      <xs:import schemaLocation="soap-env.xsd" namespace="http://schemas.xmlsoap.org/soap/envelope/" />
+      <xs:import schemaLocation="ws-trust.xsd" namespace="http://schemas.xmlsoap.org/ws/2005/02/trust" />
+      <xs:import schemaLocation="addressing.xsd" namespace="http://www.w3.org/2005/08/addressing" />
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="RequestMultipleSecurityTokensMsg">
+    <wsdl:part name="request" element="ps:RequestMultipleSecurityTokens" />
+  </wsdl:message>
+  <wsdl:message name="RequestSecurityTokenResponseCollectionMsg">
+    <wsdl:part name="responseCollection" element="wst:RequestSecurityTokenResponseCollection" />
+  </wsdl:message>
+  <wsdl:message name="AuthInfoHeader">
+    <wsdl:part name="AuthInfo" element="ps:AuthInfo" />
+  </wsdl:message>
+  <wsdl:message name="SecurityHeader">
+    <wsdl:part name="Security" element="wsse:Security" />
+  </wsdl:message>
+  <wsdl:message name="ppResponseHeader">
+    <wsdl:part name="pp" element="psf:pp" />
+  </wsdl:message>
+  <wsdl:message name="FaultMessage">
+    <wsdl:part name="fault" element="ns2:Fault" />
+  </wsdl:message>
+  <wsdl:message name="MessageIDHeader">
+    <wsdl:part name="MessageID" element="wsa:MessageID" />
+  </wsdl:message>
+  <wsdl:message name="ActionHeader">
+    <wsdl:part name="Action" element="wsa:Action" />
+  </wsdl:message>
+  <wsdl:message name="ToHeader">
+    <wsdl:part name="To" element="wsa:To" />
+  </wsdl:message>
+  <wsdl:portType name="SecurityTokenServicePortType">
+    <wsdl:operation name="RequestMultipleSecurityTokens">
+      <wsdl:input message="ps:RequestMultipleSecurityTokensMsg" />
+      <wsdl:output message="ps:RequestSecurityTokenResponseCollectionMsg" />
+      <wsdl:fault name="FailedAuthentication" message="ps:FaultMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="SecurityTokenServicePortBinding" type="ps:SecurityTokenServicePortType">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="RequestMultipleSecurityTokens">
+      <soap12:operation soapAction="" />
+      <wsdl:input>
+        <soap12:header message="ps:SecurityHeader" part="Security" use="literal" />
+        <soap12:header message="ps:AuthInfoHeader" part="AuthInfo" use="literal" />
+        <soap12:body use="literal" />
+        <soap12:header message="ps:ActionHeader" part="Action" use="literal" />
+        <soap12:header message="ps:ToHeader" part="To" use="literal" />
+        <soap12:header message="ps:MessageIDHeader" part="MessageID" use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+        <soap12:header message="ps:ppResponseHeader" part="pp" use="literal" />
+        <soap12:header message="ps:ActionHeader" part="Action" use="literal" />
+        <soap12:header message="ps:ToHeader" part="To" use="literal" />
+        <soap12:header message="ps:SecurityHeader" part="Security" use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="FailedAuthentication">
+        <soap12:fault use="literal" name="wsse:FailedAuthentication" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="SecurityTokenService">
+    <wsdl:port name="LiveSecurityTokenServicePort" binding="ps:SecurityTokenServicePortBinding">
+      <soap12:address location="https://login.live.com/RST2.srf" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
