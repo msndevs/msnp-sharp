@@ -862,7 +862,7 @@ namespace MSNPSharp.IO
                         MyProperties["roamliveproperties"] = "1";
 
                     if (!MyProperties.ContainsKey("lastchanged"))
-                        MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                        MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
                 }
             }
         }

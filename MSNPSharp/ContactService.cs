@@ -290,7 +290,7 @@ namespace MSNPSharp
             else
             {
                 // Set lastchanged and roaming profile last change to get display picture and personal message
-                NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MaxValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
                 NSMessageHandler.Owner.SetRoamLiveProperty(RoamLiveProperty.Enabled);
                 SetDefaults();
                 NSMessageHandler.OnSignedIn(EventArgs.Empty);

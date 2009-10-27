@@ -581,11 +581,15 @@ namespace MSNPSharp
                     return null;
                 }
 
-                if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                    NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                    NSMessageHandler.ContactService.Deltas.Profile.DateModified < Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]))
+                if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled && NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
-                    return GetProfileImpl(PartnerScenario.Initial);
+                    DateTime annotationLiveProfileExpressionLastChanged = Convert.ToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties["lastchanged"]);
+
+                    if ((annotationLiveProfileExpressionLastChanged == DateTime.MinValue) ||
+                        (NSMessageHandler.ContactService.Deltas.Profile.DateModified < annotationLiveProfileExpressionLastChanged))
+                    {
+                        return GetProfileImpl(PartnerScenario.Initial);
+                    }
                 }
             }
             else
