@@ -279,6 +279,9 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(rsiService, MsnServiceType.RSI, e));
 
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
+
                     if (e.Cancelled)
                         return;
 
@@ -361,6 +364,9 @@ namespace MSNPSharp
                 rsiService.GetMessageCompleted += delegate(object service, GetMessageCompletedEventArgs e)
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(rsiService, MsnServiceType.RSI, e));
+
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
 
                     if (!e.Cancelled && e.Error == null)
                     {
@@ -477,6 +483,9 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(rsiService, MsnServiceType.RSI, e));
 
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
                 if (!e.Cancelled && e.Error == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMessages completed.", GetType().Name);
@@ -540,6 +549,9 @@ namespace MSNPSharp
                 oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(oimService, MsnServiceType.OIMStore, e));
+
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
 
                     if (e.Cancelled == false && e.Error == null)
                     {

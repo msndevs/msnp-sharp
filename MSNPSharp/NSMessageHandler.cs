@@ -69,7 +69,7 @@ namespace MSNPSharp
         private bool botMode = false;
 
         private bool isSignedIn;
-        private Owner owner = new Owner();
+        private Owner owner;
         private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
 
@@ -81,12 +81,12 @@ namespace MSNPSharp
 
         private NSMessageHandler()
         {
-            owner.NSMessageHandler = this;
+            owner = new Owner(this);
             owner.ClientCapacities = ClientCapacities.None;
-
 
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
+
             contactService = new ContactService(this);
             oimService = new OIMService(this);
             storageService = new MSNStorageService(this);
@@ -783,6 +783,9 @@ namespace MSNPSharp
                 }
                 catch (Exception exception)
                 {
+                    if (messageProcessor != null)
+                        messageProcessor.Disconnect();
+
                     OnAuthenticationErrorOccurred(new ExceptionEventArgs(exception));
                     return;
                 }
@@ -1142,8 +1145,8 @@ namespace MSNPSharp
                             string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
                             if (logoutMsg.StartsWith("goawyplzthxbye") || logoutMsg == "gtfo")
                             {
-                                // Logout here...
-                                OnSignedOff(new SignedOffEventArgs(SignedOffReason.OtherClient));
+                                if (messageProcessor != null)
+                                    messageProcessor.Disconnect();
                             }
                             return;
                         }
@@ -2093,18 +2096,28 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void Clear()
         {
-            ContactList.Clear();
-            ContactGroups.Clear();
+            // Cancel web services. MSNTicket must be here.
+            msnticket = MSNTicket.Empty;
             ContactService.Clear();
-            SwitchBoards.Clear();
             StorageService.Clear();
             OIMService.Clear();
+
+            // isSignedIn must be here... 
+            // a) ContactService.Clear() merges and saves addressbook if isSignedIn=true.
+            // b) Owner.ClientCapacities = ClientCapacities.None doesn't send CHG command if isSignedIn=false.
+            isSignedIn = false;
+            externalEndPoint = null;
+
+            // Clear owner
             Owner.Emoticons.Clear();
             Owner.ClientCapacities = ClientCapacities.None;
 
-            externalEndPoint = null;
-            isSignedIn = false;
-            msnticket = MSNTicket.Empty;
+            // Clear contact lists
+            ContactList.Clear();
+            ContactGroups.Clear();
+
+            // ClearSwitchBoards
+            SwitchBoards.Clear();
         }
 
         /// <summary>
