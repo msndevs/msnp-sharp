@@ -63,7 +63,7 @@ namespace MSNPSharp
             return transactionID;
         }
 
-        private SBMessageProcessor()
+        public SBMessageProcessor()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
 

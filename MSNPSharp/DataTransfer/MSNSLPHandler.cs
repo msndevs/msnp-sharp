@@ -702,7 +702,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        protected MSNSLPHandler()
+        public MSNSLPHandler()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
         }
@@ -753,7 +753,7 @@ namespace MSNPSharp.DataTransfer
             properties.RemoteContact = remoteContact;
             string AppID = string.Empty;
             P2PMessage p2pMessage = new P2PMessage();
-            P2PTransferSession session = Factory.CreateP2PTransferSession();
+            P2PTransferSession session = new P2PTransferSession();
 
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
             {
@@ -894,7 +894,7 @@ namespace MSNPSharp.DataTransfer
             TransferProperties[properties.CallId] = properties;
 
             // create a transfer session to handle the actual data transfer
-            P2PTransferSession session = Factory.CreateP2PTransferSession();
+            P2PTransferSession session = new P2PTransferSession();
             session.MessageSession = (P2PMessageSession)MessageProcessor;
             session.SessionId = properties.SessionId;
 
@@ -998,7 +998,7 @@ namespace MSNPSharp.DataTransfer
             p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
 
             // create a transfer session to handle the actual data transfer
-            P2PTransferSession session = Factory.CreateP2PTransferSession();
+            P2PTransferSession session = new P2PTransferSession();
             session.MessageSession = (P2PMessageSession)MessageProcessor;
             session.SessionId = properties.SessionId;
 
@@ -1672,7 +1672,7 @@ namespace MSNPSharp.DataTransfer
                 MSNSLPTransferProperties properties = ParseInvitationMessage(message);
 
                 // create a p2p transfer
-                P2PTransferSession p2pTransfer = Factory.CreateP2PTransferSession();
+                P2PTransferSession p2pTransfer = new P2PTransferSession();
                 p2pTransfer.MessageSession = (P2PMessageSession)MessageProcessor;
                 p2pTransfer.SessionId = properties.SessionId;
 

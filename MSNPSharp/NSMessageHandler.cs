@@ -79,7 +79,7 @@ namespace MSNPSharp
 
         private List<Regex> censorWords = new List<Regex>(0);
 
-        private NSMessageHandler()
+        protected internal NSMessageHandler()
         {
             owner = new Owner(this);
             owner.ClientCapacities = ClientCapacities.None;
@@ -499,7 +499,7 @@ namespace MSNPSharp
         public virtual SBMessageHandler RequestSwitchboard(object initiator)
         {
             // create a switchboard object
-            SBMessageHandler handler = Factory.CreateSwitchboardHandler();
+            SBMessageHandler handler = new SBMessageHandler();
 
             RequestSwitchboard(handler, initiator);
 
@@ -1223,7 +1223,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual IMessageHandler CreateSBHandler(IMessageProcessor processor, string sessionHash, int sessionId)
         {
-            SBMessageHandler handler = Factory.CreateSwitchboardHandler();
+            SBMessageHandler handler = new SBMessageHandler();
             handler.MessageProcessor = processor;
             handler.NSMessageHandler = this;
             handler.SetInvitation(sessionHash, sessionId);
@@ -1256,7 +1256,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnRNGReceived(NSMessage message)
         {
-            SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
+            SBMessageProcessor processor = new SBMessageProcessor();
 
             // set new connectivity settings
             ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
@@ -1335,7 +1335,7 @@ namespace MSNPSharp
                     if (Owner.Status == PresenceStatus.Offline)
                         System.Diagnostics.Trace.WriteLine("Owner not yet online!", "NS15MessageHandler");
 
-                    SBMessageProcessor processor = Factory.CreateSwitchboardProcessor();
+                    SBMessageProcessor processor = new SBMessageProcessor();
                     SwitchboardQueueItem queueItem = (SwitchboardQueueItem)pendingSwitchboards.Dequeue();
 
                     // set new connectivity settings
@@ -1409,7 +1409,7 @@ namespace MSNPSharp
                     }
                 }
 
-                YIMMessageHandler switchboard = Factory.CreateYIMMessageHandler();
+                YIMMessageHandler switchboard = new YIMMessageHandler();
                 switchboard.NSMessageHandler = this;
                 switchboard.Contacts[sender] = ContactConversationState.Invited;
 

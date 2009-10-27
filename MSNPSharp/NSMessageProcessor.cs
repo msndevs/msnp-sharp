@@ -45,7 +45,7 @@ namespace MSNPSharp
 
         public event EventHandler<ExceptionEventArgs> HandlerException;
 
-        private NSMessageProcessor()
+        protected internal NSMessageProcessor()
         {
             MessagePool = new NSMessagePool();
         }

@@ -38,9 +38,10 @@ namespace MSNPSharp.Core
     using MSNPSharp.DataTransfer;
 
     /// <summary>
-    /// Defines the way in which dotMSN core objects are created. Used by MSNPSharp core classes.
+    /// Defines the way in which dotMSN core objects are created. No more Used by MSNPSharp core classes.
     /// Override these types to use custom-made handlers or processor.
     /// </summary>
+    [Obsolete("No more used by MSNPSharp core classes.")]
     public sealed class Factory
     {
         private static Type nameserverHandler = typeof(NSMessageHandler);

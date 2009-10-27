@@ -168,9 +168,13 @@ namespace MSNPSharp
 
         #endregion
 
-        protected Contact(NSMessageHandler handler)
+        protected internal Contact(NSMessageHandler handler)
         {
             NSMessageHandler = handler;
+        }
+
+        protected Contact()
+        {
         }
 
         #region Events

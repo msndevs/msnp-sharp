@@ -252,7 +252,7 @@ namespace MSNPSharp
                 {
                     Switchboard.SessionClosed -= Messenger.Switchboard_SessionClosed;
                     SBMessageHandler tmpsb = Switchboard;
-                    Switchboard = Factory.CreateYIMMessageHandler();
+                    Switchboard = new YIMMessageHandler();
                     Switchboard.NSMessageHandler = Messenger.Nameserver;
                     Switchboard.MessageProcessor = Messenger.Nameserver.MessageProcessor;
                     tmpsb.CopyAndClearEventHandler(Switchboard);

@@ -126,11 +126,9 @@ namespace MSNPSharp
         /// </summary>
         public Messenger()
         {
-            nsMessageProcessor = Factory.CreateNameserverProcessor();
-            nsMessageHandler = Factory.CreateNameserverHandler();
-
-            p2pHandler = Factory.CreateP2PHandler();
-            p2pHandler.NSMessageHandler = nsMessageHandler;
+            nsMessageProcessor = new NSMessageProcessor();
+            nsMessageHandler = new NSMessageHandler();
+            p2pHandler = new P2PHandler(nsMessageHandler);
 
             #region private events
             nsMessageProcessor.ConnectionClosed += delegate
@@ -581,7 +579,7 @@ namespace MSNPSharp
         /// <returns></returns>
         private MSNSLPHandler CreateMSNSLPHandler()
         {
-            MSNSLPHandler msnslpHandler = Factory.CreateMSNSLPHandler();
+            MSNSLPHandler msnslpHandler = new MSNSLPHandler();
             msnslpHandler.ExternalEndPoint = Nameserver.ExternalEndPoint;
             return msnslpHandler;
         }

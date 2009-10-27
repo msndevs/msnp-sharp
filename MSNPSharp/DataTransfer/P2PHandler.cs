@@ -79,6 +79,7 @@ namespace MSNPSharp.DataTransfer
     /// </summary>
     public class P2PHandler : IMessageHandler
     {
+
         /// <summary>
         /// </summary>
         private ArrayList messageSessions = new ArrayList();
@@ -111,6 +112,21 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Protected constructor.
+        /// </summary>
+        protected P2PHandler()
+        {
+        }
+
+        /// <summary>
+        /// Protected constructor.
+        /// </summary>
+        protected internal P2PHandler(NSMessageHandler nsHandler)
+        {
+            this.NSMessageHandler = nsHandler;
+        }
+
+        /// <summary>
         /// </summary>
         private NSMessageHandler nsMessageHandler;
 
@@ -125,9 +141,19 @@ namespace MSNPSharp.DataTransfer
             }
             set
             {
+                if (nsMessageHandler != null)
+                {
+                    nsMessageHandler.SBCreated -= (nsMessageHandler_SBCreated);
+                    nsMessageHandler.ContactOffline -= (nsMessageHandler_ContactOffline);
+                }
+
                 nsMessageHandler = value;
-                nsMessageHandler.SBCreated += new EventHandler<SBCreatedEventArgs>(nsMessageHandler_SBCreated);
-                nsMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(nsMessageHandler_ContactOffline);
+
+                if (nsMessageHandler != null)
+                {
+                    nsMessageHandler.SBCreated += (nsMessageHandler_SBCreated);
+                    nsMessageHandler.ContactOffline += (nsMessageHandler_ContactOffline);
+                }
             }
         }
 
@@ -224,7 +250,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual P2PMessageSession CreateSessionFromLocal(string localContact, string remoteContact)
         {
-            P2PMessageSession session = Factory.CreateP2PMessageSession();
+            P2PMessageSession session = new P2PMessageSession();
 
             // set the parameters
             session.RemoteContact = remoteContact;
@@ -285,7 +311,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected P2PMessageSession CreateSessionFromRemote(P2PMessage receivedMessage)
         {
-            P2PMessageSession session = Factory.CreateP2PMessageSession();
+            P2PMessageSession session = new P2PMessageSession();
 
             // generate a local base identifier. After the acknowledgement the locals client begins at
             // identifier - 4 as identifiers in the following messages. (Weird)
@@ -336,14 +362,6 @@ namespace MSNPSharp.DataTransfer
                 }
             }
             return null;
-        }
-
-        /// <summary>
-        /// Protected constructor.
-        /// </summary>
-        protected P2PHandler()
-        {
-
         }
 
         #region IMessageHandler Members
@@ -488,15 +506,12 @@ namespace MSNPSharp.DataTransfer
         /// <param name="remoteContact"></param>
         protected virtual SBMessageHandler RequestSwitchboard(string remoteContact)
         {
+            if (NSMessageHandler == null)
+                throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
 
             if (nsMessageHandler.ContactList.HasContact(remoteContact, ClientType.PassportMember))
-            {
-                SBMessageHandler handler = null;
-
-                handler = Factory.CreateSwitchboardHandler();
-                if (NSMessageHandler == null)
-                    throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
-
+            {               
+                SBMessageHandler handler = new SBMessageHandler();
                 NSMessageHandler.RequestSwitchboard(handler, this);
                 handler.NSMessageHandler = NSMessageHandler;
 
