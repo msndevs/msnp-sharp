@@ -121,7 +121,7 @@
     <value>Messenger Client 9.0</value>
   </data>
   <data name="DeltasListVersion" xml:space="preserve">
-    <value>3.0.0.1331</value>
+    <value>3.0.0.1370</value>
   </data>
   <data name="WebServiceUserAgent" xml:space="preserve">
     <value>MSN Explorer/9.0 (MSN 8.0; TmstmpExt)</value>
@@ -134,6 +134,6 @@
     <value>..\Resources\WLXLarge_default.gif;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="XMLContactListVersion" xml:space="preserve">
-    <value>3.0.0.1331</value>
+    <value>3.0.0.1370</value>
   </data>
 </root>
