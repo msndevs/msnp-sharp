@@ -56,10 +56,9 @@ namespace MSNPSharp
 
         private int recursiveCall;
         private string applicationId = String.Empty;
-        private List<int> initialADLs = new List<int>();
+        private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
         private bool abSynchronized;
 
-        internal int initialADLcount;
         internal XMLContactList AddressBook;
         internal DeltasList Deltas;
         internal List<int> pendingFQYs = new List<int>();
@@ -323,12 +322,9 @@ namespace MSNPSharp
 
             if (NSMessageHandler.AutoSynchronize)
             {
-                // Send BLP
-                NSMessageHandler.SetPrivacyMode(NSMessageHandler.Owner.Privacy);
 
                 #region Initial ADL
 
-                List<NSPayLoadMessage> adlpayloads = new List<NSPayLoadMessage>();
                 NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
 
                 // Combine initial ADL for Contacts
@@ -351,56 +347,27 @@ namespace MSNPSharp
                     }
                 }
                 string[] adls = ConstructLists(hashlist, true);
-                Interlocked.Exchange(ref initialADLcount, adls.Length);
+                int firstADLKey = 0;
+
                 foreach (string payload in adls)
                 {
                     NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                     message.TransactionID = nsmp.IncreaseTransactionID();
-                    adlpayloads.Add(message);
-                    initialADLs.Add(message.TransactionID);
-                }
+                    initialADLs.Add(message.TransactionID, message);
 
-                //////////////////////////////////////////////////////////////////////
-                // We must send a USR SHA A command first, or we will get a 933 error.
-                //////////////////////////////////////////////////////////////////////
-
-                // Combine initial ADL for Circles
-                /*
-                if (NSMessageHandler.CircleList.Count > 0)
-                {
-                    hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
-                    lock (NSMessageHandler.CircleList.SyncRoot)
+                    if (firstADLKey == 0)
                     {
-                        foreach (Circle circle in NSMessageHandler.CircleList)
-                        {
-                            string ch = circle.Hash;
-                            MSNLists l = circle.Lists;
-                            hashlist.Add(ch, l);
-                        }
-                    }
-                    string[] circleadls = ConstructLists(hashlist, true);
-                    Interlocked.Exchange(ref initialADLcount, adls.Length + circleadls.Length);
-                    foreach (string payload in circleadls)
-                    {
-                        NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                        message.TransactionID = nsmp.IncreaseTransactionID();
-                        adlpayloads.Add(message);
-                        initialADLs.Add(message.TransactionID);
+                        firstADLKey = message.TransactionID;
                     }
                 }
-                */
 
-                // Send Initial ADLs
-                foreach (NSPayLoadMessage payload in adlpayloads)
-                {
-                    nsmp.SendMessage(payload, payload.TransactionID);
-                }
+                // Send Initial ADLs step by step.
+                // NSHandler doesn't accept more than 3 ADLs at the same time... So we must wait OK response.
+                NSPayLoadMessage firstADL = initialADLs[firstADLKey];
+                nsmp.SendMessage(firstADL, firstADL.TransactionID);
 
                 #endregion
             }
-
-            // Set screen name
-            NSMessageHandler.SetScreenName(NSMessageHandler.Owner.Name);
 
             // Save addressbook and then truncate deltas file.
             AddressBook.Save();
@@ -409,16 +376,16 @@ namespace MSNPSharp
 
         internal bool ProcessADL(int transid)
         {
-            if (initialADLs.Contains(transid))
+            if (initialADLs.ContainsKey(transid))
             {
-                lock (this)
+                lock (initialADLs)
                 {
                     initialADLs.Remove(transid);
                 }
 
-                if (Interlocked.Decrement(ref initialADLcount) <= 0)
+                if (initialADLs.Count <= 0)
                 {
-                    initialADLcount = 0;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
 
                     if (NSMessageHandler.AutoSynchronize)
                     {
@@ -452,6 +419,15 @@ namespace MSNPSharp
 
                             }
                         }
+                    }
+                }
+                else
+                {
+                    // Send next ADL...
+                    foreach (NSPayLoadMessage nsPayload in initialADLs.Values)
+                    {
+                        ((NSMessageProcessor)NSMessageHandler.MessageProcessor).SendMessage(nsPayload, nsPayload.TransactionID);
+                        break;
                     }
                 }
                 return true;
@@ -1896,7 +1872,6 @@ namespace MSNPSharp
             {
                 recursiveCall = 0;
                 initialADLs.Clear();
-                initialADLcount = 0;
                 pendingFQYs.Clear();
 
                 // Last save for contact list files

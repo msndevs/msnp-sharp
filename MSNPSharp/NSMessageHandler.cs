@@ -615,6 +615,8 @@ namespace MSNPSharp
             }
         }
 
+        private const ClientCapacities defaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC7;
+
         /// <summary>
         /// Set the status of the contact list owner (the client).
         /// </summary>
@@ -638,20 +640,29 @@ namespace MSNPSharp
             else if (status != owner.Status)
             {
                 string capacities = String.Empty;
+
                 if (owner.ClientCapacities == ClientCapacities.None)
                 {
-                    owner.ClientCapacities &= ~ClientCapacities.CanHandleMSNCMask;
-                    owner.ClientCapacities |= ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC7;
+
+                    owner.ClientCapacities = defaultClientCapacities;
+
                     if (BotMode)
                     {
                         owner.ClientCapacities |= ClientCapacities.IsBot;
                     }
 
+                    if (AutoSynchronize)
+                    {
+                        SetPrivacyMode(Owner.Privacy);
+                    }
+
+                    SetPersonalMessage(Owner.PersonalMessage);
+
+                    // Set screen name
+                    SetScreenName(Owner.Name);
                 }
 
-
                 capacities = ((long)owner.ClientCapacities).ToString();
-
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
             }
@@ -701,6 +712,9 @@ namespace MSNPSharp
         protected virtual void SendInitialMessage()
         {
             // VER: MSN Protocol used
+
+            (MessageProcessor as NSMessageProcessor).ResetTransactionID();
+
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP15", "CVR0" }));
         }
 
@@ -1680,11 +1694,6 @@ namespace MSNPSharp
                 message.CommandValues[1].ToString() == "OK" &&
                 ContactService.ProcessADL(message.TransactionID))
             {
-                // All initial ADLs have processed.
-                if (0 == ContactService.initialADLcount)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
-                }
             }
             else
             {
@@ -2207,10 +2216,6 @@ namespace MSNPSharp
                         return;
                     case "SBS":
                         OnSBSReceived(nsMessage);
-                        return;
-                    // Outdated
-                    case "BPR":
-                        OnBPRReceived(nsMessage);
                         return;
                 }
 

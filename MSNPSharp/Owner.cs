@@ -613,8 +613,6 @@ namespace MSNPSharp
         /// <param name="clientIP"></param>
         /// <param name="clientPort"></param>
         /// <param name="nick"></param>
-        /// <param name="mpop"></param>
-        /// <param name="routeInfo"></param>
         internal void UpdateProfile(
             string loginTime, bool emailEnabled, string memberIdHigh,
             string memberIdLowd, string preferredLanguage, string preferredMail,
