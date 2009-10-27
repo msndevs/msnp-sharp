@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DiscoveryClientResultsFile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Results>
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/addressing.xsd" filename="addressing.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/wss-utility.xsd" filename="wss-utility.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/soap-env.xsd" filename="soap-env.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps-fault.xsd" filename="ps-fault.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.xsd" filename="ps.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ws-secext.xsd" filename="ws-secext.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/xmldsig-core-schema.xsd" filename="xmldsig-core-schema.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ws-policy.xsd" filename="ws-policy.xsd" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl" filename="ps.wsdl" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.SchemaReference" url="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ws-trust.xsd" filename="ws-trust.xsd" />
+  </Results>
+</DiscoveryClientResultsFile>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import schemaLocation="xmldsig-core-schema.xsd" namespace="http://www.w3.org/2000/09/xmldsig#" />
+  <xs:import schemaLocation="wss-utility.xsd" namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" />
+  <xs:attribute name="Usage" type="xs:string" />
+  <xs:element name="SecurityTokenReference" type="wsse:SecurityTokenReferenceType" />
+  <xs:complexType name="SecurityTokenReferenceType">
+    <xs:sequence minOccurs="0" maxOccurs="unbounded">
+      <xs:any minOccurs="0" namespace="##other" processContents="lax" />
+      <xs:element minOccurs="0" ref="wsse:Reference" />
+    </xs:sequence>
+    <xs:attribute ref="wsse:Id" />
+    <xs:attribute ref="wsse:Usage" />
+  </xs:complexType>
+  <xs:element name="Security" type="wsse:SecurityHeaderType" />
+  <xs:complexType name="SecurityHeaderType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="UsernameToken" type="wsse:UsernameTokenType" />
+      <xs:element minOccurs="0" ref="wsu:Timestamp" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="UsernameTokenType">
+    <xs:sequence>
+      <xs:element name="Username" type="wsse:AttributedString" />
+      <xs:element name="Password" type="wsse:PasswordString" />
+    </xs:sequence>
+    <xs:attribute ref="wsu:Id" />
+  </xs:complexType>
+  <xs:complexType name="AttributedString">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute ref="wsse:Id" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="PasswordString">
+    <xs:simpleContent>
+      <xs:extension base="wsse:AttributedString" />
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="EncodedString">
+    <xs:simpleContent>
+      <xs:extension base="wsse:AttributedString" />
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="KeyIdentifier" type="wsse:KeyIdentifierType" />
+  <xs:element name="Reference" type="wsse:ReferenceType">
+    <xs:annotation>
+      <xs:documentation>This element defines a security token reference</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:complexType name="ReferenceType">
+    <xs:annotation>
+      <xs:documentation>This type represents a reference to an external security token.</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="URI" type="xs:anyURI" />
+    <xs:attribute name="ValueType" type="xs:QName" />
+    <xs:anyAttribute namespace="##other" processContents="lax" />
+  </xs:complexType>
+  <xs:complexType name="KeyIdentifierType">
+    <xs:simpleContent>
+      <xs:extension base="wsse:EncodedString" />
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="BinarySecurityToken" type="wsse:BinarySecurityTokenType" />
+  <xs:complexType name="BinarySecurityTokenType">
+    <xs:simpleContent>
+      <xs:extension base="wsse:EncodedString" />
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="PolicyReference">
+    <xs:complexType>
+      <xs:attribute name="URI" type="xs:anyURI" use="required" />
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="FaultcodeEnum">
+    <xs:restriction base="xs:QName">
+      <xs:enumeration value="wsse:UnsupportedSecurityToken" />
+      <xs:enumeration value="wsse:UnsupportedAlgorithm" />
+      <xs:enumeration value="wsse:InvalidSecurity" />
+      <xs:enumeration value="wsse:InvalidSecurityToken" />
+      <xs:enumeration value="wsse:FailedAuthentication" />
+      <xs:enumeration value="wsse:FailedCheck" />
+      <xs:enumeration value="wsse:SecurityTokenUnavailable" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:attribute name="Id" type="xs:string" />
+</xs:schema>

@@ -1,0 +1,21 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MSNPSharp.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://ows.messenger.msn.com/OimWS/oim.asmx</Value>
+    </Setting>
+    <Setting Name="MSNPSharp_MSNWS_MSNRSIService_RSIService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://rsi.hotmail.com/rsi/rsi.asmx</Value>
+    </Setting>
+    <Setting Name="MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://login.live.com/RST2.srf</Value>
+    </Setting>
+    <Setting Name="MSNPSharp_MSNWS_MSNStorageService_StorageService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://storage.msn.com/storageservice/SchematizedStore.asmx</Value>
+    </Setting>
+    <Setting Name="MSNPSharp_MSNWS_MSNABSharingService_SharingService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://contacts.msn.com/abservice/SharingService.asmx</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

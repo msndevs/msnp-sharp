@@ -1,0 +1,162 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EB773C85-DDF7-4031-A993-102B9C8ED02C}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>
+    </ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>ProxyServer</AssemblyName>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ProxyServer</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>none</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Name>System.XML</Name>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AuthBase.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AuthenticationList.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AuthNone.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AuthUserPass.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Client.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ConsoleAttributes.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FtpClient.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FtpDataConnection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FtpListener.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="HttpClient.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="HttpListener.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Listener.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PortMapClient.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PortMapListener.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Proxy.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ProxyConfig.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Socks4Handler.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Socks5Handler.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SocksClient.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SocksHandler.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SocksListener.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>
