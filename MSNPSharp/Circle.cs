@@ -274,7 +274,7 @@ namespace MSNPSharp
 
         public override string ToString()
         {
-            return Hash + "Name: " + Name;
+            return Hash + " Name: " + Name;
         }
 
         internal new void SetName(string newName)
@@ -402,6 +402,7 @@ namespace MSNPSharp
             this.via = via;
             this.Mail = mail;
             memberType = type;
+            SetName(mail);
 
             string[] viaMail = Via.Split(':');
             if (viaMail.Length > 0)
@@ -444,11 +445,6 @@ namespace MSNPSharp
             contact.DisplayImageChanged += delegate
             {
                 DisplayImage = contact.DisplayImage;
-            };
-
-            contact.ScreenNameChanged += delegate
-            {
-                SetName(contact.Name);
             };
         }
 
