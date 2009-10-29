@@ -1202,8 +1202,9 @@ namespace MSNPSharp
 
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
 
-            string account;
-            ClientType type;
+            string account = string.Empty;
+            ClientType type = ClientType.PassportMember;
+            bool isCircleMember = false;
 
             if (fullaccount.Contains(";via=9:"))
             {
@@ -1212,6 +1213,7 @@ namespace MSNPSharp
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
+                isCircleMember = true;
             }
             else
             {
@@ -1219,7 +1221,10 @@ namespace MSNPSharp
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
             }
 
-            if (message.InnerBody != null && account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
+            if (message.InnerBody != null && 
+                account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && 
+                type == ClientType.PassportMember &&
+                (!isCircleMember))
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(new MemoryStream(message.InnerBody));
@@ -1269,7 +1274,25 @@ namespace MSNPSharp
             }
             else
             {
-                Contact contact = ContactList.GetContact(account, type);
+                
+                Contact contact = null;
+
+                if (!isCircleMember)
+                {
+                    contact = ContactList.GetContact(account, type);
+                }
+                else
+                {
+                    contact = CircleMemberList[fullaccount];
+                }
+
+                if (contact == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                        "Set contact info failed by UBX command: Cannot get contact: " + fullaccount);
+
+                    return;
+                }
 
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(new MemoryStream(message.InnerBody));
@@ -1302,6 +1325,7 @@ namespace MSNPSharp
             string account;
             string fullaccount = message.CommandValues[1].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
             Contact contact = null;
+            Circle circle = null;
 
             if (fullaccount.Contains(";via=9:"))
             {
@@ -1312,59 +1336,76 @@ namespace MSNPSharp
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                contact = CircleMemberList[fullaccount];
+                circle = CircleList[circleMail];
 
-                if (account == Owner.Mail.ToLowerInvariant())
+                string capabilityString = message.CommandValues[3].ToString();
+
+                if (capabilityString != "0:0")  //This is NOT a circle's presence status.
                 {
-                    string[] guidDomain = circleMail.Split('@');
-                    PresenceStatus oldStatus = Owner.Status;
+                    contact = CircleMemberList[fullaccount];
 
-                    if (oldStatus != newstatus)
+                    if (contact != null)
                     {
-                        if (guidDomain.Length != 0 && (oldStatus == PresenceStatus.Offline || oldStatus == PresenceStatus.Hidden))
+                        contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
+
+                        PresenceStatus oldStatus = contact.Status;
+
+                        if (oldStatus != newstatus)
                         {
-                            //This is a PUT command send from server when we login.
-                            JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
+                            contact.SetStatus(newstatus);
+
+                            // The contact changed status
+                            OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+
+                            // The contact goes online
+                            OnContactOnline(new ContactEventArgs(contact));
                         }
                     }
-                }
-
-                if (contact != null && contact is CircleContactMember)
-                {
-                    contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
-
-                    PresenceStatus oldStatus = contact.Status;
-
-                    if (oldStatus != newstatus)
+                    else
                     {
-                        contact.SetStatus(newstatus);
+                        contact = new CircleContactMember(usernameAndCircle[1], account, type);
+                        CircleContactMember circleMember = contact as CircleContactMember;
+                        circleMember.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
+                        circleMember.SetStatus(newstatus);
 
-                        // The contact changed status
-                        OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+                        if (ContactList.HasContact(account, type))
+                        {
+                            circleMember.SyncWithContact(ContactList.GetContact(account, type));
+                        }
+
+                        CircleMemberList.Add(circleMember);
+
+                        if (circle != null)
+                            circle.AddMember(circleMember);
 
                         // The contact goes online
                         OnContactOnline(new ContactEventArgs(contact));
                     }
                 }
-
-                if (account == Owner.Mail.ToLowerInvariant())
+                else
                 {
-                    string capabilityString = message.CommandValues[3].ToString();
-                    if (capabilityString == "0:0")  //This is a circle's presence status.
+                    if (account == Owner.Mail.ToLowerInvariant())
                     {
-                        Circle circle = CircleList[circleMail];
                         if (circle == null)
                             return;
 
                         PresenceStatus oldCircleStatus = circle.Status;
+                        string[] guidDomain = circleMail.Split('@');
+
+                        if (guidDomain.Length != 0 && (oldCircleStatus == PresenceStatus.Offline || oldCircleStatus == PresenceStatus.Hidden))
+                        {
+                            //This is a PUT command send from server when we login.
+                            JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
+                        }
+
                         circle.SetStatus(newstatus);
 
                         OnCircleStatusChanged(new CircleStatusChangedEventArgs(circle, oldCircleStatus));
 
                         OnCircleOnline(new CircleEventArgs(circle));
-                    }
 
-                    return;
+                        return;
+                    }
                 }
 
                 #endregion
@@ -2542,11 +2583,9 @@ namespace MSNPSharp
                     circle.SetNickName(mfnNode.InnerText);
                 }
 
-                bool initial = false;
                 if (mimeDic[MimeHeaderStrings.NotifType].Value == "Full")
                 {
-                    initial = true;
-                    JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
+                    //This is an initial NFY
                 }
 
                 XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
@@ -2557,41 +2596,19 @@ namespace MSNPSharp
 
                 foreach (XmlNode node in ids)
                 {
-                    if (initial)
+                    if (node.InnerText.Split(':').Length == 0)
+                        return;
+
+                    string memberAccount = node.InnerText.Split(':')[1];
+                    if (memberAccount == Owner.Mail.ToLowerInvariant())
+                        continue;
+
+                    ClientType memberType = (ClientType)int.Parse(node.InnerText.Split(':')[0]);
+                    string id = node.InnerText + ";via=" + mimeDic[MimeHeaderStrings.From].ToString();
+                    CircleContactMember member = CircleMemberList[id];
+                    if (member != null)
                     {
-                        if (node.InnerText.Split(':').Length == 0)
-                            return;
-
-                        string memberAccount = node.InnerText.Split(':')[1];
-                        if (memberAccount == Owner.Mail.ToLowerInvariant())
-                            continue;
-
-                        ClientType memberType = (ClientType)int.Parse(node.InnerText.Split(':')[0]);
-
-                        CircleContactMember initialMember = new CircleContactMember("via=" + mimeDic[MimeHeaderStrings.From].ToString(), memberAccount, memberType);
-                        if (ContactList.HasContact(memberAccount, memberType))
-                        {
-                            initialMember.SyncWithContact(ContactList.GetContact(memberAccount, memberType));
-                        }
-
-                        CircleMemberList.Add(initialMember);
-                        circle.AddMember(initialMember);
-                    }
-                    else
-                    {
-
-                        lock (CircleMemberList)
-                        {
-                            foreach (CircleContactMember member in CircleMemberList)
-                            {
-                                string id = ((int)member.MemberType).ToString() + ":" + member.Mail.ToLowerInvariant();
-                                if (id == node.InnerText && circle.Mail == member.CircleMail)
-                                {
-                                    circle.AddMember(member);
-                                    OnCircleMemberJoined(new CircleMemberEventArgs(circle, member));
-                                }
-                            }
-                        }
+                        circle.AddMember(member);
                     }
                 }
 

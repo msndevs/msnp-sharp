@@ -2194,6 +2194,7 @@ namespace MSNPSharp
 
                     circle.RemoveFromList(MSNLists.AllowedList);
                     circle.AddToList(MSNLists.BlockedList);
+                    circle.SetStatus(PresenceStatus.Offline);
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + circle.ToString(), GetType().Name);
                 }
