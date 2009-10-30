@@ -632,10 +632,8 @@ namespace MSNPSharpClient
             this.lblNewsLink.AutoSize = true;
             this.lblNewsLink.Location = new System.Drawing.Point(81, 25);
             this.lblNewsLink.Name = "lblNewsLink";
-            this.lblNewsLink.Size = new System.Drawing.Size(28, 13);
+            this.lblNewsLink.Size = new System.Drawing.Size(0, 13);
             this.lblNewsLink.TabIndex = 5;
-            this.lblNewsLink.TabStop = true;
-            this.lblNewsLink.Text = "LNK";
             this.lblNewsLink.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblNewsLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lblNewsLink_LinkClicked);
             // 
@@ -659,6 +657,7 @@ namespace MSNPSharpClient
             this.cmdNext.TabIndex = 2;
             this.cmdNext.Text = ">";
             this.cmdNext.UseVisualStyleBackColor = true;
+            this.cmdNext.Click += new System.EventHandler(this.cmdNext_Click);
             // 
             // cmdPrev
             // 
@@ -668,6 +667,7 @@ namespace MSNPSharpClient
             this.cmdPrev.TabIndex = 1;
             this.cmdPrev.Text = "<";
             this.cmdPrev.UseVisualStyleBackColor = true;
+            this.cmdPrev.Click += new System.EventHandler(this.cmdPrev_Click);
             // 
             // lblWhatsup
             // 
@@ -691,7 +691,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.OwnerPanel);
             this.Controls.Add(this.pictureBox);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client for MSNP18 (3.0 RC2, r1370)";
+            this.Text = "MSNPSharp Example Client (v3.0.0 - r1375)";
             this.ListPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
             this.SortPanel.PerformLayout();

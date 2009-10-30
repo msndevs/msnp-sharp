@@ -266,9 +266,89 @@ namespace MSNPSharpClient
                 lblNewsLink.Tag = e.Response.FeedUrl;
                 tmrNews.Enabled = true;
             }
+        }
 
-            
+        private int currentActivity = 0;
+        private bool activityForward = true;
+        private void tmrNews_Tick(object sender, EventArgs e)
+        {
+            if (currentActivity >= activities.Count || currentActivity < 0)
+            {
+                currentActivity = 0;
+            }
 
+            ActivityDetailsType activitiy = activities[currentActivity];
+            if (activitiy.ApplicationId == "6262816084389410")
+            {
+                string name = string.Empty;
+                string status = string.Empty;
+
+                foreach (TemplateVariableBaseType t in activitiy.TemplateVariables)
+                {
+                    if (t is PublisherIdTemplateVariable)
+                    {
+                        name = ((PublisherIdTemplateVariable)t).NameHint;
+                    }
+                    else if (t is TextTemplateVariable)
+                    {
+                        status = ((TextTemplateVariable)t).Value;
+                    }
+                }
+
+                lblNews.Text = name + ": " + status;
+
+                Contact c = messenger.ContactList.GetContactByCID(long.Parse(activitiy.OwnerCID));
+
+                if (c != null)
+                {
+                    if (c.DisplayImage != null && c.DisplayImage.Image != null)
+                    {
+                        pbNewsPicture.Image = c.DisplayImage.Image;
+                    }
+                    else if (c.UserTile != null)
+                    {
+                        pbNewsPicture.LoadAsync(c.UserTile.AbsoluteUri);
+                    }
+                    else
+                    {
+                        pbNewsPicture.Image = null;
+                    }
+                }
+            }
+            if (activityForward)
+                currentActivity++;
+            else
+                currentActivity--;
+        }
+
+        private void cmdPrev_Click(object sender, EventArgs e)
+        {
+            if (activities.Count > 0)
+            {
+                activityForward = false;
+
+                if (currentActivity > 0)
+                    currentActivity--;
+                else
+                    currentActivity = activities.Count - 1;
+
+                if (tmrNews.Enabled)
+                    tmrNews_Tick(this, EventArgs.Empty);
+            }
+        }
+
+        private void cmdNext_Click(object sender, EventArgs e)
+        {
+            if (activities.Count > 0)
+            {
+                activityForward = true;
+
+                if (currentActivity < activities.Count)
+                    currentActivity++;
+
+                if (tmrNews.Enabled)
+                    tmrNews_Tick(this, EventArgs.Empty);
+            }
         }
 
         private void lblNewsLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -992,65 +1072,7 @@ namespace MSNPSharpClient
                 messenger.Nameserver.SendPing();
         }
 
-        private int currentActivity = 0;
-        private void tmrNews_Tick(object sender, EventArgs e)
-        {
-            if (currentActivity >= activities.Count)
-            {
-                currentActivity = 0;
-            }
 
-            ActivityDetailsType activitiy = activities[currentActivity];
-            if (activitiy.ApplicationId == "6262816084389410")
-            {
-                string name = string.Empty;
-                string status = string.Empty;
-
-                foreach (TemplateVariableBaseType t in activitiy.TemplateVariables)
-                {
-                    if (t is PublisherIdTemplateVariable)
-                    {
-                        name = ((PublisherIdTemplateVariable)t).NameHint;
-                    }
-                    else if (t is TextTemplateVariable)
-                    {
-                        status = ((TextTemplateVariable)t).Value;
-                    }
-                }
-
-                lblNews.Text = name + ": " + status;
-
-                Contact c = messenger.ContactList.GetContactByCID(long.Parse(activitiy.OwnerCID));
-
-                if (c != null)
-                {
-                    if (c.DisplayImage != null && c.DisplayImage.Image != null)
-                    {
-                        pbNewsPicture.Image = c.DisplayImage.Image;
-                    }
-                    else if (c.UserTile != null)
-                    {
-                        pbNewsPicture.LoadAsync(c.UserTile.AbsoluteUri);
-                    }
-                    else
-                    {
-                        pbNewsPicture.Image = null;
-                    }
-                }
-
-
-
-            }
-
-
-
-
-
-
-
-
-            currentActivity++;
-        }
 
         private static Font PARENT_NODE_FONT = new Font("Tahoma", 8f, FontStyle.Bold);
         private static Font USER_NODE_FONT = new Font("Tahoma", 8f);
@@ -1717,13 +1739,6 @@ namespace MSNPSharpClient
                     new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" },
                     NSMessageHandler.MachineGuid);
             }
-        }
-
-        
-
-       
-
-
-        
+        }       
     }
 }
