@@ -48,17 +48,10 @@ namespace MSNPSharpClient
             // Required for Windows Form Designer support
             //
             InitializeComponent();
-            // Move PM panel to SignIn window...
-            pnlNameAndPM.Location = panel1.Location;
-
 
             // You can set proxy settings here
             // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
 
-
-            // ******* Listen traces *****
-            TraceForm traceform = new TraceForm();
-            traceform.Show();
 
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
 
@@ -128,6 +121,16 @@ namespace MSNPSharpClient
             messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed;
+        }
+
+        int originalHeight;
+        private void ClientForm_Load(object sender, EventArgs e)
+        {
+            Left = 4;
+            Top = 4;
+
+            // Move PM panel to SignIn window...
+            pnlNameAndPM.Location = panel1.Location;
 
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
@@ -139,7 +142,17 @@ namespace MSNPSharpClient
             comboStatus.SelectedIndex = 0;
             comboProtocol.SelectedIndex = 0;
 
-        }
+            originalHeight = Height;
+
+            Height = 152;
+
+            WhatsUpPanel.Visible = ListPanel.Visible = ContactPanel.Visible = false;
+
+            // ******* Listen traces *****
+            TraceForm traceform = new TraceForm();
+            traceform.Show();
+        } 
+
 
         void Nameserver_CircleNudgeReceived(object sender, CircleMemberEventArgs e)
         {
@@ -223,6 +236,14 @@ namespace MSNPSharpClient
 
         void ContactService_SynchronizationCompleted(object sender, EventArgs e)
         {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<EventArgs>(ContactService_SynchronizationCompleted), sender, e);
+                return;
+            }
+
+            WhatsUpPanel.Visible = true;
+            lblNews.Text = "Getting your friends' news...";
             messenger.Nameserver.WhatsUpService.GetWhatsUp(200);
         }
 
@@ -237,7 +258,7 @@ namespace MSNPSharpClient
 
             if (e.Error != null)
             {
-                MessageBox.Show(e.Error.ToString());
+                lblNews.Text = "ERROR: " + e.Error.ToString();
             }
             else
             {
@@ -260,8 +281,11 @@ namespace MSNPSharpClient
                 }
 
                 if (activities.Count == 0)
+                {
+                    lblNews.Text = "No news";
                     return;
-                
+                }
+
                 lblNewsLink.Text = "Get Feeds";
                 lblNewsLink.Tag = e.Response.FeedUrl;
                 tmrNews.Enabled = true;
@@ -529,6 +553,42 @@ namespace MSNPSharpClient
             }
         }
 
+        private void ExpandCollapseMe(bool expand)
+        {
+            if (expand)
+            {
+                while (Height < originalHeight)
+                {
+                    Height += 40;
+
+                    System.Threading.Thread.CurrentThread.Join(5);
+                    Application.DoEvents();
+                }
+
+                Height = originalHeight;
+
+                ContactPanel.Visible = true;
+                ListPanel.Visible = true;
+                WhatsUpPanel.Visible = true;
+            }
+            else
+            {
+                Height = originalHeight;
+
+                WhatsUpPanel.Visible = ListPanel.Visible = ContactPanel.Visible = false;
+
+                while (Height >= 152)
+                {
+                    Height -= 80;
+
+                    System.Threading.Thread.CurrentThread.Join(5);
+                    Application.DoEvents();
+                }
+
+                Height = 152;
+            }
+        }
+
         /// <summary>
         /// Sign into the messenger network. Disconnect first if a connection has already been established.
         /// </summary>
@@ -561,6 +621,8 @@ namespace MSNPSharpClient
                         // note that Messenger.Connect() will run in a seperate thread and return immediately.
                         // it will fire events that informs you about the status of the connection attempt. 
                         // these events are registered in the constructor.
+
+                        // ExpandCollapseMe(true);
                     }
                     break;
 
@@ -579,6 +641,8 @@ namespace MSNPSharpClient
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = false;
                         comboPlaces.Visible = false;
+
+                        ExpandCollapseMe(false);
                     }
                     break;
 
@@ -597,6 +661,8 @@ namespace MSNPSharpClient
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = true;
                         comboPlaces.Visible = true;
+
+                        ExpandCollapseMe(false);
                     }
                     break;
             }
@@ -892,6 +958,8 @@ namespace MSNPSharpClient
 
             propertyGrid.SelectedObject = messenger.Owner;
 
+            ExpandCollapseMe(true);
+
             Invoke(new EventHandler<EventArgs>(UpdateContactlist), sender, e);
         }
 
@@ -913,6 +981,8 @@ namespace MSNPSharpClient
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
             comboPlaces.Visible = false;
+
+            ExpandCollapseMe(false);
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
@@ -1319,6 +1389,7 @@ namespace MSNPSharpClient
 
         private void SortByStatus()
         {
+            this.treeViewFavoriteList.Invalidate();
             this.treeViewFavoriteList.BeginUpdate();
             this.toolStripSortBygroup.Checked = false;
             this.treeViewFavoriteList.Nodes.Clear();
@@ -1739,6 +1810,8 @@ namespace MSNPSharpClient
                     new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" },
                     NSMessageHandler.MachineGuid);
             }
-        }       
+        }
+
+      
     }
 }
