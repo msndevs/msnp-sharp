@@ -1316,6 +1316,10 @@ namespace MSNPSharpClient
         {
 
             Contact contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+
+            if (contact is CircleContactMember)
+                return;  //Don't pass contactmember to conversation.
+
             bool activate = false;
             ConversationForm activeForm = null;
             foreach (ConversationForm conv in ConversationForms)
