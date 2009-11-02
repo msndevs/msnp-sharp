@@ -106,12 +106,12 @@ namespace MSNPSharp
             }
             set
             {
+                epName = value;
+
                 if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline)
                 {
                     NSMessageHandler.SetPresenceStatusUUX(Status);
                 }
-
-                epName = value;
             }
         }
 
