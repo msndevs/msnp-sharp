@@ -40,8 +40,6 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp.Core;
     using System.Collections.Generic;
 
-    public delegate void P2PAckHandler(P2PMessage ackMsg);
-
     /// <summary>
     /// Used in events where a P2PMessageSession object is created, or in another way affected.
     /// </summary>
@@ -87,11 +85,6 @@ namespace MSNPSharp.DataTransfer
         private P2PMessagePool p2pMessagePool = new P2PMessagePool();
         private List<P2PMessageSession> messageSessions = new List<P2PMessageSession>();
         private List<SBMessageHandler> switchboardSessions = new List<SBMessageHandler>(0);
-
-        internal Dictionary<uint, KeyValuePair<P2PMessage, P2PAckHandler>> p2pV1AckHandlers =
-            new Dictionary<uint, KeyValuePair<P2PMessage, P2PAckHandler>>();
-        internal Dictionary<uint, KeyValuePair<P2PMessage, P2PAckHandler>> p2pV2AckHandlers =
-            new Dictionary<uint, KeyValuePair<P2PMessage, P2PAckHandler>>();
 
         #endregion
 
@@ -190,8 +183,6 @@ namespace MSNPSharp.DataTransfer
                 messageSessions.Clear();
 
             p2pMessagePool = new P2PMessagePool();
-            p2pV1AckHandlers.Clear();
-            p2pV2AckHandlers.Clear();
         }
 
         #region Events
@@ -362,85 +353,6 @@ namespace MSNPSharp.DataTransfer
 
             return session;
         }
-
-        public void RegisterAckHandler(P2PMessage msg, P2PAckHandler handler)
-        {
-            if (msg.Header.IsAcknowledgement)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    String.Format("***You shouldn't register ack for ack. AckHandler registered on {0} is invalid." +
-                    (handler == null ? msg.Header.AckIdentifier : handler.Target)), GetType().Name);
-            }
-            else
-            {
-                if (msg.Version == P2PVersion.P2PV1)
-                {
-                    p2pV1AckHandlers[msg.V1Header.AckSessionId] = new KeyValuePair<P2PMessage, P2PAckHandler>(msg, handler);
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                          String.Format("***AckHandler {0} registered successfuly." +
-                          msg.V1Header.AckSessionId), GetType().Name);
-                }
-                else
-                {
-
-                    p2pV2AckHandlers[msg.Header.Identifier] = new KeyValuePair<P2PMessage, P2PAckHandler>(msg, handler);
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                        String.Format("***AckHandler {0} registered successfuly.", msg.Header.Identifier), GetType().Name);
-
-                }
-            }
-        }
-
-        private void HandleAck(P2PMessage ack)
-        {
-            if (ack.Header.IsAcknowledgement)
-            {
-                P2PVersion ver = ack.Version;
-                uint ackid = ack.Header.AckIdentifier;
-                bool hasRegistered = (ver == P2PVersion.P2PV1) ? p2pV1AckHandlers.ContainsKey(ackid) : p2pV2AckHandlers.ContainsKey(ackid);
-
-                if (hasRegistered)
-                {
-                    KeyValuePair<P2PMessage, P2PAckHandler> pair;
-                    if (ver == P2PVersion.P2PV1)
-                    {
-                        pair = p2pV1AckHandlers[ackid];
-                        lock (p2pV1AckHandlers)
-                            p2pV1AckHandlers.Remove(ackid);
-                    }
-                    else
-                    {
-                        pair = p2pV2AckHandlers[ackid];
-                        lock (p2pV2AckHandlers)
-                            p2pV2AckHandlers.Remove(ackid);
-                    }
-
-                    if (pair.Value != null)
-                    {
-                        pair.Value(ack);
-
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                           String.Format("***AckHandler {0} run successfuly on: {1}",
-                           ack.Header.AckIdentifier, pair.Value.Target), GetType().Name);
-                    }
-                    else
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            "***No AckHandler registered for ack: " + ack.Header.AckIdentifier, GetType().Name);
-                    }
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                        "***No AckHandler pair for ack: " + ack.Header.AckIdentifier, GetType().Name);
-                }
-            }
-        }
-
-
-
 
         /// <summary>
         /// After the first acknowledgement we must set the identifier of the remote client.
@@ -613,11 +525,6 @@ namespace MSNPSharp.DataTransfer
             {
                 // Buffering... Nothing to to
                 return;
-            }
-
-            if (p2pMessage.Header.IsAcknowledgement)
-            {
-                HandleAck(p2pMessage);
             }
 
             SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
