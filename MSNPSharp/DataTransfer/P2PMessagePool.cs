@@ -128,6 +128,7 @@ namespace MSNPSharp.DataTransfer
                                     }
                                     else // Last part
                                     {
+                                        p2pMessage.V2Header.OperationCode = totalMessage.V2Header.OperationCode;
                                         p2pMessage.V2Header.TFCombination = totalMessage.V2Header.TFCombination; // 1. Set original TFCombination
                                         p2pMessage.V2Header.DataRemaining = 0; // 2. Remove data packet TLVs
                                         p2pMessage.InnerBody = totalMessage.InnerBody; // 3. Set new InnerBody and Calculate MessageSize again
