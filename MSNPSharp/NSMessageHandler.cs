@@ -1028,12 +1028,15 @@ namespace MSNPSharp
                         policy,
                         delegate(object sender, EventArgs e)
                         {
-                            MBI mbi = new MBI();
-                            string response =
-                                MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
-                                mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
+                            if (messageProcessor != null && messageProcessor.Connected)
+                            {
+                                MBI mbi = new MBI();
+                                string response =
+                                    MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
+                                    mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
 
-                            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
+                                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
+                            }
                         },
                         delegate(object sender, ExceptionEventArgs e)
                         {
