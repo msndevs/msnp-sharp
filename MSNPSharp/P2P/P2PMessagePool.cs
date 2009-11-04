@@ -53,8 +53,11 @@ namespace MSNPSharp.P2P
         /// Buffers incompleted P2PMessage SLP messages. Ignores data and control messages. 
         /// </summary>
         /// <param name="p2pMessage"></param>
-        /// <returns>true if the P2PMessage is buffering; false if the p2p message fully buffered or no need to buffer.</returns>
-        public bool BufferMessage(P2PMessage p2pMessage)
+        /// <returns>
+        /// true if the P2PMessage is buffering (not completed) or invalid packet received;
+        /// false if the p2p message fully buffered or no need to buffer.
+        /// </returns>
+        public bool BufferMessage(ref P2PMessage p2pMessage)
         {
             // P2PV1 and P2PV2 check
             if (p2pMessage.Header.MessageSize == 0 || // Ack message or Unsplitted
@@ -121,22 +124,21 @@ namespace MSNPSharp.P2P
                                     if (p2pMessage.V2Header.DataRemaining > 0)
                                     {
                                         incompletedP2PV2Messages[newIdentifier] = totalMessage;
-                                        totalMessage.InnerBody = totalMessage.InnerBody; // Refresh
 
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Buffering splitted messages :\r\n" + totalMessage.ToDebugString());
+                                        // Don't debug p2p packet here. Because it hasn't completed yet and SLPMessage.Parse() fails...
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Buffering splitted messages and hasn't completed yet! DataRemaining:" + totalMessage.V2Header.DataRemaining);
                                         return true; // Buffering
                                     }
                                     else // Last part
                                     {
-                                        p2pMessage.V2Header.TFCombination = totalMessage.V2Header.TFCombination; // 1. Set original TFCombination
-                                        p2pMessage.V2Header.DataRemaining = 0; // 2. Remove data packet TLVs
-                                        p2pMessage.InnerBody = totalMessage.InnerBody; // 3. Set new InnerBody and Calculate MessageSize again
-                                        p2pMessage.V2Header.Identifier = newIdentifier - p2pMessage.Header.MessageSize; // 4 Set Identifier
+                                        totalMessage.InnerBody = totalMessage.InnerBody; // Refresh... DataRemaining=0 deletes data headers.
+                                        totalMessage.V2Header.Identifier = newIdentifier - totalMessage.Header.MessageSize;
 
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                                             "A splitted message was combined :\r\n" +
-                                            p2pMessage.ToDebugString());
+                                            totalMessage.ToDebugString());
 
+                                        p2pMessage = totalMessage;
                                         return false; // We have the whole message
                                     }
                                 }
@@ -148,8 +150,6 @@ namespace MSNPSharp.P2P
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                                 "INVALID P2PV2 PACKET received!!! Ignored and deleted:\r\n" +
                                 p2pMessage.ToDebugString());
-
-                            return false; // Invalid packet, don't kill me.
                         }
                     }
                 }
@@ -178,36 +178,35 @@ namespace MSNPSharp.P2P
                     }
 
                     P2PMessage totalMessage = incompletedP2PV1Messages[p2pMessage.Header.Identifier];
-                    if ((totalMessage.V1Header.TotalSize != p2pMessage.V1Header.TotalSize) ||
-                        (p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize) > totalMessage.Header.TotalSize)
+                    if ((p2pMessage.V1Header.TotalSize == totalMessage.V1Header.TotalSize) &&
+                        (p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize) == totalMessage.Header.TotalSize)
                     {
-                        // Invalid packet received!!! Ignore and delete it...
-                        incompletedP2PV1Messages.Remove(p2pMessage.Header.Identifier);
+                        Array.Copy(p2pMessage.InnerBody, 0, totalMessage.InnerBody, (long)p2pMessage.V1Header.Offset, (long)p2pMessage.V1Header.MessageSize);
+                        totalMessage.V1Header.Offset = p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize;
 
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                            "INVALID P2PV1 PACKET received!!! Ignored and deleted:\r\n" +
-                            p2pMessage.ToDebugString());
+                        // Last packet
+                        if (totalMessage.V1Header.Offset == p2pMessage.V1Header.TotalSize)
+                        {
+                            totalMessage.V1Header.Offset = 0;
+                            incompletedP2PV1Messages.Remove(p2pMessage.Header.Identifier);
 
-                        return false; // Invalid packet, don't kill me.
+                            p2pMessage = totalMessage;
+                            return false; // We have the whole message
+                        }
+
+                        return true; // Buffering
                     }
 
-                    Array.Copy(p2pMessage.InnerBody, 0, totalMessage.InnerBody, (long)p2pMessage.V1Header.Offset, (long)p2pMessage.V1Header.MessageSize);
-                    totalMessage.V1Header.Offset = p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize;
+                    // Invalid packet received!!! Ignore and delete it...
+                    incompletedP2PV1Messages.Remove(p2pMessage.Header.Identifier);
 
-                    if (totalMessage.V1Header.Offset == p2pMessage.V1Header.TotalSize)
-                    {
-                        p2pMessage.V1Header.Offset = 0;
-                        p2pMessage.V1Header.MessageSize = (uint)p2pMessage.V1Header.TotalSize;
-                        p2pMessage.InnerBody = totalMessage.InnerBody;
-
-                        incompletedP2PV1Messages.Remove(p2pMessage.Header.Identifier);
-
-                        return false; // We have the whole message
-                    }
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                        "INVALID P2PV1 PACKET received!!! Ignored and deleted:\r\n" +
+                        p2pMessage.ToDebugString());
                 }
             }
 
-            return false; // Invalid packet...
+            return true; // Invalid packet, don't kill me.
         }
     }
 };

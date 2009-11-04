@@ -37,7 +37,6 @@ using System.Text;
 
 namespace MSNPSharp.P2P
 {
-    using MSNPSharp;
     using MSNPSharp.Core;
 
     #region TFCombination
@@ -530,6 +529,10 @@ namespace MSNPSharp.P2P
         {
             get
             {
+                if (ackIdentifier == 0 && headerTLVs.ContainsKey(0x2))
+                {
+                    ackIdentifier = BitUtility.ToUInt32(headerTLVs[0x2], 0, false);
+                }
                 return ackIdentifier;
             }
             set
@@ -578,6 +581,10 @@ namespace MSNPSharp.P2P
         {
             get
             {
+                if (dataRemaining == 0 && dataPacketTLVs.ContainsKey(0x1))
+                {
+                    dataRemaining = BitUtility.ToUInt64(dataPacketTLVs[0x1], 0, false);
+                }
                 return dataRemaining;
             }
             set
@@ -618,10 +625,9 @@ namespace MSNPSharp.P2P
                 //Message begins with 0x18, 0x03 or 0x08, 0x03
                 ack.OperationCode = OperationCode;
 
-
                 foreach (byte bytKey in HeaderTLVs.Keys)
                 {
-                    if (HeaderTLVs[bytKey].Length != 4)  //Ignore the ackIdentifier field.
+                    if (bytKey != 0x2)  //Ignore the ackIdentifier field.
                     {
                         ack.HeaderTLVs.Add(bytKey, HeaderTLVs[bytKey]);
                     }
