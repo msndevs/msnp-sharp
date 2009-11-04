@@ -556,7 +556,7 @@ namespace MSNPSharpClient
 
         private void ExpandCollapseMe(bool expand)
         {
-            if (expand)
+            if (expand && Height < originalHeight)
             {
                 while (Height < originalHeight)
                 {
@@ -572,9 +572,9 @@ namespace MSNPSharpClient
                 ListPanel.Visible = true;
                 WhatsUpPanel.Visible = true;
             }
-            else
+            else if (Height > 152)
             {
-                Height = originalHeight;
+                //Height = originalHeight;
 
                 WhatsUpPanel.Visible = ListPanel.Visible = ContactPanel.Visible = false;
 

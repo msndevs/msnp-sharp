@@ -371,7 +371,11 @@ namespace MSNPSharp
             }
         }
 
-        internal static void Authenticate(NSMessageHandler nsMessageHandler, string policy)
+        internal static void Authenticate(
+            NSMessageHandler nsMessageHandler,
+            string policy,
+            EventHandler onSuccess,
+            EventHandler<ExceptionEventArgs> onError)
         {
             CheckCleanup();
 
@@ -391,6 +395,11 @@ namespace MSNPSharp
                 if (expiredtickets == SSOTicketType.None)
                 {
                     nsMessageHandler.MSNTicket = ticket;
+
+                    if (onSuccess != null)
+                    {
+                        onSuccess(nsMessageHandler, EventArgs.Empty);
+                    }
                 }
                 else
                 {
@@ -401,10 +410,44 @@ namespace MSNPSharp
                         sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
 
                     sso.AddAuths(expiredtickets);
-                    sso.Authenticate(ticket, false);
 
-                    cache[hashcode] = ticket;
-                    nsMessageHandler.MSNTicket = ticket;
+                    if (onSuccess == null && onError == null)
+                    {
+                        sso.Authenticate(ticket, false);
+                        cache[hashcode] = ticket;
+                        nsMessageHandler.MSNTicket = ticket;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            sso.Authenticate(ticket, true,
+                                delegate(object sender, EventArgs e)
+                                {
+                                    cache[hashcode] = ticket;
+                                    nsMessageHandler.MSNTicket = ticket;
+
+                                    if (onSuccess != null)
+                                    {
+                                        onSuccess(nsMessageHandler, e);
+                                    }
+                                },
+                                delegate(object sender, ExceptionEventArgs e)
+                                {
+                                    if (onError != null)
+                                    {
+                                        onError(nsMessageHandler, e);
+                                    }
+                                });
+                        }
+                        catch (Exception error)
+                        {
+                            if (onError != null)
+                            {
+                                onError(nsMessageHandler, new ExceptionEventArgs(error));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -543,6 +586,11 @@ namespace MSNPSharp
 
         public void Authenticate(MSNTicket msnticket, bool async)
         {
+            Authenticate(msnticket, async, null, null);
+        }
+
+        public void Authenticate(MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
+        {
             SecurityTokenService securService = new SecurityTokenService();
             // securService.EnableDecompression = true; // Fails on Mono.
             securService.Timeout = 60000;
@@ -607,17 +655,30 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled)
                     {
-                        securService = sender as SecurityTokenService;
                         if (e.Error != null)
                         {
                             MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);
                             if (securService.pp != null)
                                 sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
 
-                            throw sexp;
+                            if (onError == null)
+                            {
+                                throw sexp;
+                            }
+                            else
+                            {
+                                onError(this, new ExceptionEventArgs(sexp));
+                            }
+
+                            return;
                         }
 
                         GetTickets(e.Result, securService, msnticket);
+
+                        if (onSuccess != null)
+                        {
+                            onSuccess(this, EventArgs.Empty);
+                        }
                     }
                 };
                 securService.RequestMultipleSecurityTokensAsync(mulToken, new object());
