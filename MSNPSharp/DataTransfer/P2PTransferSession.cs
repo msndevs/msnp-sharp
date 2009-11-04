@@ -614,7 +614,7 @@ namespace MSNPSharp.DataTransfer
                 if (MessageSession.DirectConnected == false &&
                     p2pMessage.Header.MessageSize > 1202)
                 {
-                    foreach (P2PMessage chunkMessage in P2PMessage.SplitMessage(p2pMessage, 1202))
+                    foreach (P2PMessage chunkMessage in p2pMessage.SplitMessage(1202))
                     {
                         //SBMessage sbMessage = WrapMessage(chunkMessage);
 
@@ -662,9 +662,8 @@ namespace MSNPSharp.DataTransfer
                 {
                     MessageSession.CorrectLocalIdentifier(-(int)p2pMessage.V2Header.MessageSize);
 
-                    foreach (P2PMessage chunkMessage in P2PMessage.SplitMessage(p2pMessage, 1202))
+                    foreach (P2PMessage chunkMessage in p2pMessage.SplitMessage(1202))
                     {
-
                         MessageSession.LocalIdentifier = chunkMessage.V2Header.Identifier + chunkMessage.V2Header.MessageSize;
 
                         //SBMessage sbMessage = WrapMessage(chunkMessage);

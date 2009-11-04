@@ -570,7 +570,7 @@ namespace MSNPSharp.DataTransfer
                 if (p2pMessage.Header.MessageSize > maxSize)
                 {
 
-                    P2PMessage[] messages = P2PMessage.SplitMessage(p2pMessage, maxSize);
+                    P2PMessage[] messages = p2pMessage.SplitMessage(maxSize);
 
                     foreach (P2PMessage chunkMessage in messages)
                     {
@@ -648,7 +648,7 @@ namespace MSNPSharp.DataTransfer
                 {
                     CorrectLocalIdentifier(-(int)p2pMessage.V2Header.MessageSize);
 
-                    P2PMessage[] messages = P2PMessage.SplitMessage(p2pMessage, maxSize);
+                    P2PMessage[] messages = p2pMessage.SplitMessage(maxSize);
 
                     foreach (P2PMessage chunkMessage in messages)
                     {

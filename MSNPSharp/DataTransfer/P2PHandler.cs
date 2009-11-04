@@ -521,9 +521,10 @@ namespace MSNPSharp.DataTransfer
             }
 
             // Buffer splitted P2P SLP messages.
-            if (true == p2pMessagePool.BufferMessage(p2pMessage))
+            if (p2pMessagePool.BufferMessage(ref p2pMessage))
             {
-                // Buffering... Nothing to to
+                // - Buffering: Not completed yet, wait next packets...
+                // - Invalid packet: Just ignore it...
                 return;
             }
 
