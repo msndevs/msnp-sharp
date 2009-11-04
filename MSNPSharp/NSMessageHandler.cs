@@ -1023,7 +1023,26 @@ namespace MSNPSharp
 
                 try
                 {
-                    SingleSignOnManager.Authenticate(this, policy);
+                    SingleSignOnManager.Authenticate(
+                        this,
+                        policy,
+                        delegate(object sender, EventArgs e)
+                        {
+                            MBI mbi = new MBI();
+                            string response =
+                                MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
+                                mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
+
+                            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
+                        },
+                        delegate(object sender, ExceptionEventArgs e)
+                        {
+                            if (messageProcessor != null)
+                                messageProcessor.Disconnect();
+
+                            OnAuthenticationErrorOccurred(e);
+                        }
+                    );
                 }
                 catch (Exception exception)
                 {
@@ -1033,14 +1052,6 @@ namespace MSNPSharp
                     OnAuthenticationErrorOccurred(new ExceptionEventArgs(exception));
                     return;
                 }
-
-                MBI mbi = new MBI();
-                string response =
-                    MSNTicket.SSOTickets[SSOTicketType.Clear].Ticket + " " +
-                    mbi.Encrypt(MSNTicket.SSOTickets[SSOTicketType.Clear].BinarySecret, nonce);
-
-                MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "S", response, MachineGuid.ToString("B") }));
-
             }
             else if ((string)message.CommandValues[1] == "OK")
             {
