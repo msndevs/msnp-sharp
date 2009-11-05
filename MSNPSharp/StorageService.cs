@@ -403,6 +403,13 @@ namespace MSNPSharp
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
                 GetProfileResponse response = storageService.GetProfile(request);
 
+                if (response.GetProfileResult.ExpressionProfile == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Get profile cannot get expression profile of this owner.");
+                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.Owner.Name;
+                    return NSMessageHandler.ContactService.Deltas.Profile;
+                }
+
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
                 NSMessageHandler.ContactService.Deltas.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
 
