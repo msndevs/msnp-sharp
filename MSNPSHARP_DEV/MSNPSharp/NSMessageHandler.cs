@@ -667,10 +667,8 @@ namespace MSNPSharp
             {
                 MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.UrlEncode(newName) }));
             }
-            if (AutoSynchronize)
-            {
-                StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
-            }
+
+            StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
 
         /// <summary>
@@ -1826,7 +1824,8 @@ namespace MSNPSharp
                 name = message.CommandValues[5].ToString();
             }
 
-            if (ContactList.GetContact(account, ClientType.PassportMember).Lists == MSNLists.None)
+            Contact callingContact = ContactList.GetContact(account, ClientType.PassportMember);
+            if (callingContact.Lists == MSNLists.None)
             {
                 anonymous = true;
             }

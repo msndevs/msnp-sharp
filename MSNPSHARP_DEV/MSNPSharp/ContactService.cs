@@ -326,7 +326,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (recursiveCall != 0 || NSMessageHandler.AutoSynchronize == false)
+            if (recursiveCall != 0)
             {
                 DeleteRecordFile();
             }

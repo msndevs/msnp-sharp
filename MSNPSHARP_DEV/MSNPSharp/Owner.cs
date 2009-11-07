@@ -336,6 +336,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Whether this account is verified by email. If an account is not verified, "(email not verified)" will be displayed after a contact's displayname.
+        /// </summary>
         public bool PassportVerified
         {
             get
