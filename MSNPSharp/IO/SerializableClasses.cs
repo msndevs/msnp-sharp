@@ -334,7 +334,23 @@ namespace MSNPSharp.IO
         private string displayName = string.Empty;
         private string personalMessage = string.Empty;
         private ProfilePhoto photo = new ProfilePhoto();
+        private bool hasExpressionProfile = true;
 
+        /// <summary>
+        /// Whether the profile owner is using hotmail or live account for msn login.
+        /// </summary>
+        public bool HasExpressionProfile
+        {
+            get
+            {
+                return hasExpressionProfile;
+            }
+
+            set
+            {
+                hasExpressionProfile = value;
+            }
+        }
         /// <summary>
         /// DisplayImage of owner.
         /// </summary>
