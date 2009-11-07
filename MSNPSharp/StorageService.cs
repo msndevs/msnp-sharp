@@ -742,8 +742,7 @@ namespace MSNPSharp
             }
 
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                NSMessageHandler.MSNTicket != MSNTicket.Empty &&
-                NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile)
+                NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage,
                     new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateDocument", false));
