@@ -687,10 +687,33 @@ namespace MSNPSharpClient
 
             if (messenger.Nameserver.IsSignedIn)
             {
-                comboStatus.SelectedIndex = comboStatus.FindString(messenger.Owner.Status.ToString());
+                comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(messenger.Owner.Status));
             }
         }
 
+        private string GetStatusString(PresenceStatus status)
+        {
+            switch (status)
+            {
+                case PresenceStatus.Away:
+                case PresenceStatus.BRB:
+                case PresenceStatus.Lunch:
+                case PresenceStatus.Idle:
+                    return "Away";
+                case PresenceStatus.Online:
+                    return "Online";
+                case PresenceStatus.Offline:
+                    return "Offline";
+                case PresenceStatus.Hidden:
+                    return "Hidden";
+                case PresenceStatus.Busy:
+                case PresenceStatus.Phone:
+                    return "Busy";
+
+            }
+
+            return "Offline";
+        }
 
         private void comboStatus_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -726,7 +749,7 @@ namespace MSNPSharpClient
                         comboPlaces.Visible = false;
 
                     }
-                    comboStatus.SelectedIndex = comboStatus.FindString(old.ToString());
+                    comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(old));
                 }
                 else
                 {
