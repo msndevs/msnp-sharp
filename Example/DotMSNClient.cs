@@ -571,13 +571,13 @@ namespace MSNPSharpClient
                 ListPanel.Visible = true;
                 WhatsUpPanel.Visible = true;
             }
-            else if (Height > 152)
+            else if (Height > 452)
             {
                 //Height = originalHeight;
 
                 WhatsUpPanel.Visible = ListPanel.Visible = ContactPanel.Visible = false;
 
-                while (Height >= 152)
+                while (Height >= 452)
                 {
                     Height -= 80;
 
@@ -585,7 +585,7 @@ namespace MSNPSharpClient
                     Application.DoEvents();
                 }
 
-                Height = 152;
+                Height = 452;
             }
         }
 

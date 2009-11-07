@@ -684,10 +684,7 @@ namespace MSNPSharp
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
 
-            if (AutoSynchronize)
-            {
-                StorageService.UpdateProfile(Owner.Name, pmsg.Message);
-            }
+            StorageService.UpdateProfile(Owner.Name, pmsg.Message);
         }
 
         internal void SetEndPointCapabilities()
