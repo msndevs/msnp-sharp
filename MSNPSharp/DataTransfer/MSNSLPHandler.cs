@@ -1820,7 +1820,22 @@ namespace MSNPSharp.DataTransfer
                 {
                     Guid callGuid = message.CallId;
                     MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
+
+                    if (properties == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Cannot find request transfer property, Guid: " + callGuid.ToString("B"));
+                        return;
+                    }
+
                     P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+
+                    if (session == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Cannot find request transfer session, SessionId: " + properties.SessionId.ToString());
+                        return;
+                    }
+
+
                     if (properties.DataType == DataTransferType.File)
                     {
                         if (Version == P2PVersion.P2PV1)
@@ -2100,8 +2115,6 @@ namespace MSNPSharp.DataTransfer
 
                     // let the message session connect
                     MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
-
-                    P2PTransferSession transferSession = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
 
                     properties.Nonce = new Guid(bodyValues["Nonce"].ToString());
 

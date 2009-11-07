@@ -864,10 +864,14 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnIROReceived(SBMessage message)
         {
-            string account = message.CommandValues[3].ToString().ToLowerInvariant();
-            if (account.Contains(";"))
+            string fullaccount = message.CommandValues[3].ToString().ToLowerInvariant();
+            string account = fullaccount;
+            string endpointGuid = string.Empty;
+
+            if (fullaccount.Contains(";"))
             {
-                account = account.Split(';')[0];
+                account = fullaccount.Split(';')[0];
+                endpointGuid = fullaccount.Split(';')[1];
             }
 
             if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
@@ -877,25 +881,41 @@ namespace MSNPSharp
             Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
             // Not in contact list (anonymous). Update it's name and caps.
-            //if (contact.Lists == MSNLists.None)
+            if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
             {
-                if (message.CommandValues.Count >= 5)
-                    contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
-
-                if (message.CommandValues.Count >= 6)
+                if (endpointGuid != string.Empty)
                 {
-                    string caps = message.CommandValues[5].ToString();
-                    if (caps.Contains(":"))
+                    if (contact.PersonalMessage == null)
                     {
-                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                        contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                        PersonalMessage personalMessage = new PersonalMessage("", MediaType.None, new string[] { }, new Guid(endpointGuid));
+                        contact.SetPersonalMessage(personalMessage);
                     }
                     else
                     {
-                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                        PersonalMessage personalMessage = new PersonalMessage(contact.PersonalMessage.Message,
+                            contact.PersonalMessage.MediaType, contact.PersonalMessage.CurrentMediaContent, new Guid(endpointGuid));
+                        contact.SetPersonalMessage(personalMessage);
                     }
                 }
             }
+
+            if (message.CommandValues.Count >= 5)
+                contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
+
+            if (message.CommandValues.Count >= 6)
+            {
+                string caps = message.CommandValues[5].ToString();
+                if (caps.Contains(":"))
+                {
+                    contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
+                    contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                }
+                else
+                {
+                    contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                }
+            }
+
 
             // Notify the client programmer.
             if (!Contacts.ContainsKey(contact) || Contacts[contact] != ContactConversationState.Joined)
@@ -915,10 +935,14 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnJOIReceived(SBMessage message)
         {
-            string account = message.CommandValues[0].ToString().ToLowerInvariant();
-            if (account.Contains(";"))
+            string fullaccount = message.CommandValues[0].ToString().ToLowerInvariant();
+            string account = fullaccount;
+            string endpointGuid = string.Empty;
+
+            if (fullaccount.Contains(";"))
             {
-                account = account.Split(';')[0];
+                account = fullaccount.Split(';')[0];
+                endpointGuid = fullaccount.Split(';')[1];
             }
 
             if (NSMessageHandler.Owner.Mail.ToLowerInvariant() != account)
@@ -927,25 +951,41 @@ namespace MSNPSharp
                 Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
                 // Not in contact list (anonymous). Update it's name and caps.
-                //if (contact.Lists == MSNLists.None)
+                if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
                 {
-                    if (message.CommandValues.Count >= 2)
-                        contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[1].ToString()));
-
-                    if (message.CommandValues.Count >= 3)
+                    if (endpointGuid != string.Empty)
                     {
-                        string caps = message.CommandValues[2].ToString();
-                        if (caps.Contains(":"))
+                        if (contact.PersonalMessage == null)
                         {
-                            contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                            contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                            PersonalMessage personalMessage = new PersonalMessage("", MediaType.None, new string[] { }, new Guid(endpointGuid));
+                            contact.SetPersonalMessage(personalMessage);
                         }
                         else
                         {
-                            contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                            PersonalMessage personalMessage = new PersonalMessage(contact.PersonalMessage.Message,
+                                contact.PersonalMessage.MediaType, contact.PersonalMessage.CurrentMediaContent, new Guid(endpointGuid));
+                            contact.SetPersonalMessage(personalMessage);
                         }
                     }
                 }
+
+                if (message.CommandValues.Count >= 2)
+                    contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[1].ToString()));
+
+                if (message.CommandValues.Count >= 3)
+                {
+                    string caps = message.CommandValues[2].ToString();
+                    if (caps.Contains(":"))
+                    {
+                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
+                        contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                    }
+                    else
+                    {
+                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                    }
+                }
+
 
                 // Notify the client programmer.
                 if (!Contacts.ContainsKey(contact) || Contacts[contact] != ContactConversationState.Joined)

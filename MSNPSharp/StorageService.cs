@@ -551,21 +551,19 @@ namespace MSNPSharp
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags)
         {
-            OwnerProfile profile = NSMessageHandler.ContactService.Deltas.Profile;
-
-
             NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
             NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
 
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile)
+                NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
+                NSMessageHandler.BotMode == false)
             {
                 MsnServiceState serviceState = new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateProfile", false);
                 StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
 
                 UpdateProfileRequestType request = new UpdateProfileRequestType();
                 request.profile = new UpdateProfileRequestTypeProfile();
-                request.profile.ResourceID = profile.ResourceID;
+                request.profile.ResourceID = NSMessageHandler.ContactService.Deltas.Profile.ResourceID;
                 request.profile.ExpressionProfile = new ExpressionProfile();
                 request.profile.ExpressionProfile.FreeText = freeText;  //DONOT set any default value of this field in the xsd file, default value will make this field missing.
                 request.profile.ExpressionProfile.DisplayName = displayName;
@@ -668,13 +666,15 @@ namespace MSNPSharp
             }
             else
             {
-                SerializableMemoryStream serStream = new SerializableMemoryStream();
-                Properties.Resources.WLXLarge_default.Save(serStream, System.Drawing.Imaging.ImageFormat.Png);
+                if (NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage == null)
+                {
+                    SerializableMemoryStream serStream = new SerializableMemoryStream();
+                    Properties.Resources.WLXLarge_default.Save(serStream, Properties.Resources.WLXLarge_default.RawFormat);
 
-                ProfilePhoto profPhoto = new ProfilePhoto();
-                profPhoto.DisplayImage = serStream;
-
-                NSMessageHandler.ContactService.Deltas.Profile.Photo = profPhoto;
+                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = serStream;
+                    NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
+                    NSMessageHandler.ContactService.Deltas.Save();
+                }
             }
 
             return NSMessageHandler.ContactService.Deltas.Profile;
