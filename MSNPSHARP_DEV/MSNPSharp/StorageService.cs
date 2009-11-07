@@ -108,6 +108,16 @@ namespace MSNPSharp
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || NSMessageHandler.ContactService.Deltas == null)
                 return;
 
+            if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile == false)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, create profile skipped.");
+                DisplayImage displayImage = new DisplayImage();
+                displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
+                NSMessageHandler.Owner.DisplayImage = displayImage;
+
+                return;
+            }
+
             try
             {
                 MsnServiceState serviceState = new MsnServiceState(PartnerScenario.RoamingSeed, "CreateProfile", false);
@@ -406,8 +416,13 @@ namespace MSNPSharp
                 if (response.GetProfileResult.ExpressionProfile == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Get profile cannot get expression profile of this owner.");
+                    NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
                     NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.Owner.Name;
                     return NSMessageHandler.ContactService.Deltas.Profile;
+                }
+                else
+                {
+                    NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = true;
                 }
 
                 NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
@@ -449,7 +464,7 @@ namespace MSNPSharp
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
                                 
                                 SerializableMemoryStream ms = new SerializableMemoryStream();
-                                NSMessageHandler.Owner.DisplayImage.Image.Save(ms,NSMessageHandler.Owner.DisplayImage.Image.RawFormat);
+                                NSMessageHandler.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.Owner.DisplayImage.Image.RawFormat);
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
                                 NSMessageHandler.ContactService.Deltas.Save(true);
                             },
@@ -542,7 +557,8 @@ namespace MSNPSharp
 
             NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
             NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
-            if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled)
+            if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
+                NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile)
             {
                 MsnServiceState serviceState = new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateProfile", false);
                 StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
@@ -617,6 +633,7 @@ namespace MSNPSharp
             }
             else
             {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Roaming disabled or invalid expression profile. Update skipped.");
                 NSMessageHandler.ContactService.Deltas.Save();
             }
 
@@ -705,6 +722,23 @@ namespace MSNPSharp
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("UpdateProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
                 return false;
+            }
+
+            if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile == false)  //Non-expression id or provisioned account.
+            {
+                NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
+                NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
+                photo.Save(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage, photo.RawFormat);
+                NSMessageHandler.ContactService.Deltas.Save();
+
+                Image fileImage = Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);  //Make a copy.
+                DisplayImage newDisplayImage = new DisplayImage();
+                newDisplayImage.Image = fileImage;
+
+                NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, new profile is saved locally.");
+                return true;
             }
             
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
