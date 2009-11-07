@@ -144,7 +144,7 @@ namespace MSNPSharpClient
 
             originalHeight = Height;
 
-            Height = 152;
+            Height = 452;
 
             WhatsUpPanel.Visible = ListPanel.Visible = ContactPanel.Visible = false;
 
