@@ -10,9 +10,15 @@ namespace MSNPSharpClient
 {
     public partial class AddContactForm : Form
     {
-        public AddContactForm()
+        public AddContactForm(string account)
         {
             InitializeComponent();
+
+            if (!String.IsNullOrEmpty(account))
+            {
+                this.account = account;
+                txtAccount.Text = account;
+            }
         }
 
         private string account;

@@ -39,6 +39,7 @@ namespace MSNPSharpClient
             this.btnSortBy = new System.Windows.Forms.Button();
             this.treeViewPanel = new System.Windows.Forms.Panel();
             this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
+            this.ImageList1 = new System.Windows.Forms.ImageList(this.components);
             this.treeViewFilterList = new System.Windows.Forms.TreeView();
             this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -71,7 +72,6 @@ namespace MSNPSharpClient
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
             this.tmrNews = new System.Windows.Forms.Timer(this.components);
-            this.ImageList1 = new System.Windows.Forms.ImageList(this.components);
             this.statusBar = new System.Windows.Forms.StatusBar();
             this.OwnerPanel = new System.Windows.Forms.Panel();
             this.sortContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -184,26 +184,33 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
             this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewFavoriteList.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawText;
             this.treeViewFavoriteList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.treeViewFavoriteList.FullRowSelect = true;
             this.treeViewFavoriteList.HideSelection = false;
-            this.treeViewFavoriteList.Indent = 20;
+            this.treeViewFavoriteList.ImageIndex = 0;
+            this.treeViewFavoriteList.ImageList = this.ImageList1;
+            this.treeViewFavoriteList.Indent = 15;
             this.treeViewFavoriteList.ItemHeight = 20;
             this.treeViewFavoriteList.Location = new System.Drawing.Point(0, 0);
             this.treeViewFavoriteList.Name = "treeViewFavoriteList";
+            this.treeViewFavoriteList.SelectedImageIndex = 0;
             this.treeViewFavoriteList.ShowLines = false;
             this.treeViewFavoriteList.ShowPlusMinus = false;
             this.treeViewFavoriteList.ShowRootLines = false;
             this.treeViewFavoriteList.Size = new System.Drawing.Size(300, 400);
             this.treeViewFavoriteList.TabIndex = 0;
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
-            this.treeViewFavoriteList.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeViewFavoriteList_DrawNode);
             this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
             this.treeViewFavoriteList.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragEnter);
             this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
             this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
             this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
+            // 
+            // ImageList1
+            // 
+            this.ImageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+            this.ImageList1.ImageSize = new System.Drawing.Size(10, 10);
+            this.ImageList1.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // treeViewFilterList
             // 
@@ -515,12 +522,6 @@ namespace MSNPSharpClient
             // 
             this.tmrNews.Interval = 5000;
             this.tmrNews.Tick += new System.EventHandler(this.tmrNews_Tick);
-            // 
-            // ImageList1
-            // 
-            this.ImageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-            this.ImageList1.ImageSize = new System.Drawing.Size(16, 16);
-            this.ImageList1.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // statusBar
             // 

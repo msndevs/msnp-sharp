@@ -92,6 +92,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
+    <None Include="Resource\status\open.png" />
+    <None Include="Resource\status\online.png" />
+    <None Include="Resource\status\offline.png" />
+    <None Include="Resource\status\idle.png" />
+    <None Include="Resource\status\hidden.png" />
+    <None Include="Resource\status\closed.png" />
+    <None Include="Resource\status\circle.png" />
+    <None Include="Resource\status\busy.png" />
+    <None Include="Resource\status\away.png" />
     <None Include="Resource\file.png" />
     <None Include="Resource\nudge.png" />
     <None Include="Resource\yahoo_ico.ico" />

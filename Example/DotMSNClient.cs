@@ -123,11 +123,68 @@ namespace MSNPSharpClient
             messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed;
         }
 
-        int originalHeight;
+
+        public static class ImageIndexes
+        {
+            public const int Closed = 0;
+            public const int Open = 1;
+            public const int Circle = 2;
+
+            public const int Online = 3;
+            public const int Busy = 4;
+            public const int Away = 5;
+            public const int Idle = 6;
+            public const int Hidden = 7;
+            public const int Offline = 8;
+
+            public const string OnlineNodeKey = "0";
+            public const string OfflineNodeKey = "1";
+            public const string CircleNodeKey = "2";
+
+
+
+            public static int GetStatusIndex(PresenceStatus status)
+            {
+                switch (status)
+                {
+                    case PresenceStatus.Online:
+                        return Online;
+
+                    case PresenceStatus.Busy:
+                    case PresenceStatus.Phone:
+                        return Busy;
+
+                    case PresenceStatus.BRB:
+                    case PresenceStatus.Away:
+                    case PresenceStatus.Lunch:
+                        return Away;
+
+                    case PresenceStatus.Idle:
+                        return Idle;
+                    case PresenceStatus.Hidden:
+                        return Hidden;
+
+                    case PresenceStatus.Offline:
+                        return Offline;
+
+                    default:
+                        return Offline;
+                }
+            }
+        }
+
         private void ClientForm_Load(object sender, EventArgs e)
         {
-            Left = 4;
-            Top = 4;
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.closed);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.open);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.circle);
+
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.online);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.busy);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.away);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.idle);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.hidden);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.offline);
 
             // Move PM panel to SignIn window...
             pnlNameAndPM.Location = panel1.Location;
@@ -135,18 +192,12 @@ namespace MSNPSharpClient
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             if (toolStripSortByStatus.Checked)
-                SortByStatus();
+                SortByStatus(null);
             else
                 SortByGroup();
 
             comboStatus.SelectedIndex = 0;
             comboProtocol.SelectedIndex = 0;
-
-            originalHeight = Height;
-
-            Height = 452;
-
-            WhatsUpPanel.Visible = ListPanel.Visible = ContactPanel.Visible = false;
 
             // ******* Listen traces *****
             TraceForm traceform = new TraceForm();
@@ -224,7 +275,7 @@ namespace MSNPSharpClient
             }
 
             if (toolStripSortByStatus.Checked)
-                SortByStatus();
+                SortByStatus(null);
             else
                 SortByGroup();
         }
@@ -242,7 +293,6 @@ namespace MSNPSharpClient
                 return;
             }
 
-            WhatsUpPanel.Visible = true;
             lblNews.Text = "Getting your friends' news...";
             messenger.Nameserver.WhatsUpService.GetWhatsUp(200);
         }
@@ -434,7 +484,7 @@ namespace MSNPSharpClient
         void ContactOnlineOffline(object sender, ContactEventArgs e)
         {
             if (toolStripSortByStatus.Checked)
-                SortByStatus();
+                SortByStatus(e.Contact);
             else
                 SortByGroup();
         }
@@ -553,42 +603,6 @@ namespace MSNPSharpClient
             }
         }
 
-        private void ExpandCollapseMe(bool expand)
-        {
-            if (expand && Height < originalHeight)
-            {
-                while (Height < originalHeight)
-                {
-                    Height += 40;
-
-                    System.Threading.Thread.CurrentThread.Join(5);
-                    Application.DoEvents();
-                }
-
-                Height = originalHeight;
-
-                ContactPanel.Visible = true;
-                ListPanel.Visible = true;
-                WhatsUpPanel.Visible = true;
-            }
-            else if (Height > 452)
-            {
-                //Height = originalHeight;
-
-                WhatsUpPanel.Visible = ListPanel.Visible = ContactPanel.Visible = false;
-
-                while (Height >= 452)
-                {
-                    Height -= 80;
-
-                    System.Threading.Thread.CurrentThread.Join(5);
-                    Application.DoEvents();
-                }
-
-                Height = 452;
-            }
-        }
-
         /// <summary>
         /// Sign into the messenger network. Disconnect first if a connection has already been established.
         /// </summary>
@@ -617,12 +631,12 @@ namespace MSNPSharpClient
 
                         loginButton.Tag = 1;
                         loginButton.Text = "Cancel";
+                        initialExpand = true;
 
                         // note that Messenger.Connect() will run in a seperate thread and return immediately.
                         // it will fire events that informs you about the status of the connection attempt. 
                         // these events are registered in the constructor.
 
-                        // ExpandCollapseMe(true);
                     }
                     break;
 
@@ -632,7 +646,7 @@ namespace MSNPSharpClient
                             messenger.Disconnect();
 
                         if (toolStripSortByStatus.Checked)
-                            SortByStatus();
+                            SortByStatus(null);
                         else
                             SortByGroup();
 
@@ -641,8 +655,8 @@ namespace MSNPSharpClient
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = false;
                         comboPlaces.Visible = false;
+                        initialExpand = true;
 
-                        ExpandCollapseMe(false);
                     }
                     break;
 
@@ -652,7 +666,7 @@ namespace MSNPSharpClient
                             messenger.Disconnect();
 
                         if (toolStripSortByStatus.Checked)
-                            SortByStatus();
+                            SortByStatus(null);
                         else
                             SortByGroup();
 
@@ -661,8 +675,8 @@ namespace MSNPSharpClient
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = true;
                         comboPlaces.Visible = true;
+                        initialExpand = true;
 
-                        ExpandCollapseMe(false);
                     }
                     break;
             }
@@ -804,85 +818,6 @@ namespace MSNPSharpClient
             e.Graphics.DrawString(newstatus.ToString(), PARENT_NODE_FONT, Brushes.Black, textLocation);
         }
 
-        private void treeViewFavoriteList_DrawNode(object sender, DrawTreeNodeEventArgs e)
-        {
-            if (e.Node.Level == 0)
-            {
-
-                Point[] points = !e.Node.IsExpanded
-                    ? new Point[] {
-                        new Point(e.Bounds.X+4, e.Bounds.Y +4),
-                        new Point(e.Bounds.X+4, e.Bounds.Y +12),
-                        new Point(e.Bounds.X+12, e.Bounds.Y + 8) }
-                    : new Point[] {
-                        new Point(e.Bounds.X + 12, e.Bounds.Y + 12),
-                        new Point(e.Bounds.X + 12, e.Bounds.Y + 4),
-                        new Point(e.Bounds.X + 4, e.Bounds.Y + 12)
-                   };
-                Point imageLocation = new Point(e.Bounds.X + 2, e.Bounds.Y + 2);
-                if (e.Node.Tag is Circle)
-                {
-                    e.Graphics.FillEllipse(Brushes.Blue, new Rectangle(imageLocation, new Size(12, 12)));
-                    e.Graphics.FillPolygon(Brushes.Yellow, points);
-                }
-                else
-                    e.Graphics.FillPolygon(Brushes.Black, points);
-
-                PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
-                e.Graphics.DrawString(e.Node.Text, PARENT_NODE_FONT, e.Node.Tag is Circle ? Brushes.Blue : Brushes.Black, textLocation);
-
-
-            }
-            else if (e.Node.Level == 1 && e.Node.Tag is Contact)
-            {
-
-
-                Contact contact = e.Node.Tag as Contact;
-                Brush brush = Brushes.Green;
-
-                switch (contact.Status)
-                {
-                    case PresenceStatus.Online:
-                        brush = Brushes.Green;
-                        break;
-
-                    case PresenceStatus.Busy:
-                        brush = Brushes.Red;
-                        break;
-
-                    case PresenceStatus.Away:
-                    case PresenceStatus.Idle:
-                        brush = Brushes.Orange;
-                        break;
-
-                    default:
-                        brush = Brushes.Gray;
-                        break;
-                }
-
-                Point imageLocation = new Point(e.Bounds.X + 2, e.Bounds.Y + 2);
-                //e.Graphics.DrawImage((Image)MSNPSharpClient.Properties.Resources.smiley, imageLocation.X, imageLocation.Y, 14, 14);
-                e.Graphics.FillEllipse(brush, new Rectangle(imageLocation, new Size(12, 12)));
-
-                string text = contact.Name;
-                if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
-                {
-                    text += " - " + contact.PersonalMessage.Message;
-                }
-
-                PointF textLocation = new PointF(imageLocation.X + 16, imageLocation.Y);
-                e.Graphics.DrawString(text, contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT, Brushes.Black, textLocation);
-
-
-
-            }
-
-
-
-
-
-        }
-
         private void comboPlaces_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (comboPlaces.SelectedIndex > 0)
@@ -981,8 +916,6 @@ namespace MSNPSharpClient
 
             propertyGrid.SelectedObject = messenger.Owner;
 
-            ExpandCollapseMe(true);
-
             Invoke(new EventHandler<EventArgs>(UpdateContactlist), sender, e);
         }
 
@@ -1004,8 +937,6 @@ namespace MSNPSharpClient
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
             comboPlaces.Visible = false;
-
-            ExpandCollapseMe(false);
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
@@ -1038,7 +969,7 @@ namespace MSNPSharpClient
                 return;
 
             if (toolStripSortByStatus.Checked)
-                SortByStatus();
+                SortByStatus(null);
             else
                 SortByGroup();
 
@@ -1186,9 +1117,15 @@ namespace MSNPSharpClient
                     // Online (0), Offline (1)
                     return Convert.ToInt32(node.Tag) - Convert.ToInt32(node2.Tag);
                 }
+                else if (node.Tag is Circle && node2.Tag is Circle)
+                {
+
+                    return ((Circle)node.Tag).AddressBookId.CompareTo(((Circle)node2.Tag).AddressBookId);
+
+                }
                 else if (node.Tag is Contact && node2.Tag is Contact)
                 {
-                    if (((Contact)node.Tag).Status == ((Contact)node2.Tag).Status)
+                    if (((Contact)node.Tag).Online == ((Contact)node2.Tag).Online)
                     {
                         return string.Compare(((Contact)node.Tag).Name, ((Contact)node2.Tag).Name, StringComparison.CurrentCultureIgnoreCase);
                     }
@@ -1211,6 +1148,7 @@ namespace MSNPSharpClient
             {
                 Contact selectedContact = (Contact)e.Node.Tag;
                 propertyGrid.SelectedObject = selectedContact;
+
                 if (selectedContact.Online)
                 {
                     sendIMMenuItem.PerformClick();
@@ -1224,17 +1162,15 @@ namespace MSNPSharpClient
             {
                 if (e.Node.Level == 0)
                 {
-                    if (e.Node.IsExpanded || (e.Node.ImageIndex == 1))
+                    if (e.Node.IsExpanded || (e.Node.ImageIndex == ImageIndexes.Open))
                     {
                         e.Node.Collapse();
-                        e.Node.ImageIndex = 0;
-                        e.Node.SelectedImageIndex = 0;
+                        e.Node.ImageIndex = e.Node.SelectedImageIndex = (e.Node.Tag is Circle) ? ImageIndexes.Circle : ImageIndexes.Closed;
                     }
                     else
                     {
                         e.Node.Expand();
-                        e.Node.ImageIndex = 1;
-                        e.Node.SelectedImageIndex = 1;
+                        e.Node.ImageIndex = e.Node.SelectedImageIndex = (e.Node.Tag is Circle) ? ImageIndexes.Circle : ImageIndexes.Open;
                     }
                     if (e.Node.Tag is ContactGroup || e.Node.Tag is Circle)
                     {
@@ -1337,11 +1273,20 @@ namespace MSNPSharpClient
 
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             Contact contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
 
-            if (contact is CircleContactMember)
-                return;  //Don't pass contactmember to conversation.
+            if (!contact.OnForwardList)
+            {
+                AddContactForm acf = new AddContactForm(contact.Mail);
+
+                if (DialogResult.OK == acf.ShowDialog(this) &&
+                    acf.Account != String.Empty)
+                {
+                    messenger.Nameserver.ContactService.AddNewContact(acf.Account, acf.InvitationMessage);
+                }
+
+                return;
+            }
 
             bool activate = false;
             ConversationForm activeForm = null;
@@ -1406,7 +1351,7 @@ namespace MSNPSharpClient
         {
             if (this.toolStripSortByStatus.Checked)
             {
-                SortByStatus();
+                SortByStatus(null);
             }
             else
             {
@@ -1414,45 +1359,185 @@ namespace MSNPSharpClient
             }
         }
 
-        private void SortByStatus()
+        private bool initialExpand = true;
+        private void SortByStatus(Contact contactToUpdate)
         {
-            this.treeViewFavoriteList.Invalidate();
-            this.treeViewFavoriteList.BeginUpdate();
-            this.toolStripSortBygroup.Checked = false;
-            this.treeViewFavoriteList.Nodes.Clear();
+            TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
+            bool isExpanded = (selectedNode != null) ? selectedNode.IsExpanded : false;
 
-            TreeNode onlinenode = treeViewFavoriteList.Nodes.Add("0", "Online", 0, 0);
-            onlinenode.NodeFont = PARENT_NODE_FONT;
-            onlinenode.Tag = "0";
-            TreeNode offlinenode = treeViewFavoriteList.Nodes.Add("1", "Offline", 0, 0);
-            offlinenode.NodeFont = PARENT_NODE_FONT;
-            offlinenode.Tag = "1";
+            treeViewFavoriteList.BeginUpdate();
+            toolStripSortBygroup.Checked = false;
 
-            foreach (Circle circle in messenger.Nameserver.CircleList)
+            TreeNode onlinenode;
+            TreeNode offlinenode;
+
+            // Re-sort all
+            if (contactToUpdate == null)
             {
-                TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, 0, 0);
-                circlenode.NodeFont = PARENT_NODE_FONT;
-                circlenode.Tag = circle;
+                treeViewFavoriteList.Nodes.Clear();
 
-                foreach (Contact member in circle.Members)
+                onlinenode = treeViewFavoriteList.Nodes.Add(ImageIndexes.OnlineNodeKey, "Online", ImageIndexes.Closed, ImageIndexes.Closed);
+                onlinenode.NodeFont = PARENT_NODE_FONT;
+                onlinenode.Tag = ImageIndexes.OnlineNodeKey;
+
+                offlinenode = treeViewFavoriteList.Nodes.Add(ImageIndexes.OfflineNodeKey, "Offline", ImageIndexes.Closed, ImageIndexes.Closed);
+                offlinenode.NodeFont = PARENT_NODE_FONT;
+                offlinenode.Tag = ImageIndexes.OfflineNodeKey;
+
+                foreach (Contact contact in messenger.ContactList.All)
                 {
-                    TreeNode newnode = circlenode.Nodes.Add(member.Mail, member.Name);
-                    newnode.NodeFont = member.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                    newnode.Tag = member;
-                }
-            }
+                    string text = contact.Name;
+                    if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                    {
+                        text += " - " + contact.PersonalMessage.Message;
+                    }
+                    if (contact.Name != contact.Mail)
+                    {
+                        text += " (" + contact.Mail + ")";
+                    }
 
-            foreach (Contact contact in messenger.ContactList.All)
+                    TreeNode newnode = contact.Online ? onlinenode.Nodes.Add(contact.Hash, text) : offlinenode.Nodes.Add(contact.Hash, text);
+                    newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                    newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                    newnode.Tag = contact;
+                }
+
+                foreach (Circle circle in messenger.Nameserver.CircleList)
+                {
+                    TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
+                    circlenode.NodeFont = PARENT_NODE_FONT;
+                    circlenode.Tag = circle;
+
+                    foreach (Contact member in circle.Members)
+                    {
+                        // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
+                        Contact contact = messenger.ContactList[member.Mail, ClientType.PassportMember];
+                        string text = contact.Name;
+                        if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                        {
+                            text += " - " + contact.PersonalMessage.Message;
+                        }
+                        if (contact.Name != contact.Mail)
+                        {
+                            text += " (" + contact.Mail + ")";
+                        }
+
+                        TreeNode newnode = circlenode.Nodes.Add(contact.Hash, text);
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                        newnode.Tag = contact;
+                    }
+                }
+
+
+
+            }
+            else
             {
-                TreeNode newnode = contact.Online ? onlinenode.Nodes.Add(contact.Mail, contact.Name) : offlinenode.Nodes.Add(contact.Mail, contact.Name);
-                newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                newnode.Tag = contact;
+                onlinenode = treeViewFavoriteList.Nodes.Find(ImageIndexes.OnlineNodeKey, false)[0];
+                offlinenode = treeViewFavoriteList.Nodes.Find(ImageIndexes.OfflineNodeKey, false)[0];
+                TreeNode contactNode = null;
+
+                string text = contactToUpdate.Name;
+                if (contactToUpdate.PersonalMessage != null && !String.IsNullOrEmpty(contactToUpdate.PersonalMessage.Message))
+                {
+                    text += " - " + contactToUpdate.PersonalMessage.Message;
+                }
+                if (contactToUpdate.Name != contactToUpdate.Mail)
+                {
+                    text += " (" + contactToUpdate.Mail + ")";
+                }
+
+
+                if (contactToUpdate.Online)
+                {
+                    if (offlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                    {
+                        offlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
+                        contactNode = onlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                    }
+                }
+                else
+                {
+                    if (onlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                    {
+                        onlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
+                        contactNode = offlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                    }
+                }
+
+                
+
+                if (contactNode == null)
+                {
+                    contactNode = contactToUpdate.Online ? onlinenode.Nodes.Add(contactToUpdate.Hash, text) : offlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                }
+
+                contactNode.Text = text;
+                contactNode.ImageIndex = contactNode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contactToUpdate.Status);
+                contactNode.NodeFont = contactToUpdate.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                contactNode.Tag = contactToUpdate;
+
+                foreach (Circle circle in messenger.Nameserver.CircleList)
+                {
+                    TreeNode circlenode = treeViewFavoriteList.Nodes.ContainsKey(circle.Mail) ?
+                        treeViewFavoriteList.Nodes[circle.Mail] : treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
+
+                    circlenode.NodeFont = PARENT_NODE_FONT;
+                    circlenode.Tag = circle;
+
+                    foreach (Contact member in circle.Members)
+                    {
+                        // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
+                        Contact contact = messenger.ContactList[member.Mail, ClientType.PassportMember];
+                        string text2 = contact.Name;
+                        if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                        {
+                            text2 += " - " + contact.PersonalMessage.Message;
+                        }
+                        if (contact.Name != contact.Mail)
+                        {
+                            text2 += " (" + contact.Mail + ")";
+                        }
+
+                        TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
+                            circlenode.Nodes[contact.Hash] : circlenode.Nodes.Add(contact.Hash, text2);
+
+                        newnode.Text = text2;
+                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.Tag = contact;
+                    }
+
+                    circlenode.Text = circle.Name + " (" + circlenode.Nodes.Count.ToString() + " members)";
+                }
             }
 
             onlinenode.Text = "Online (" + onlinenode.Nodes.Count.ToString() + ")";
             offlinenode.Text = "Offline (" + offlinenode.Nodes.Count.ToString() + ")";
 
             treeViewFavoriteList.Sort();
+            if (selectedNode != null)
+            {
+                treeViewFavoriteList.SelectedNode = selectedNode;
+                if (isExpanded && treeViewFavoriteList.SelectedNode != null)
+                {
+                    treeViewFavoriteList.SelectedNode.Expand();
+                }
+            }
+            else
+            {
+                if (initialExpand)
+                {
+                    if (onlinenode.Nodes.Count > 0)
+                    {
+                        onlinenode.Expand();
+                        onlinenode.ImageIndex = ImageIndexes.Open;
+                    }
+                    initialExpand = false;
+                }
+            }
+            
             treeViewFavoriteList.EndUpdate();
             treeViewFavoriteList.AllowDrop = false;
         }
@@ -1478,37 +1563,43 @@ namespace MSNPSharpClient
             foreach (ContactGroup group in this.messenger.ContactGroups)
             {
                 TreeNode node = treeViewFavoriteList.Nodes.Add(group.Guid, "0", 0, 0);
-                node.ImageIndex = 0;
+                node.ImageIndex = ImageIndexes.Closed;
                 node.NodeFont = PARENT_NODE_FONT;
                 node.Tag = group;
             }
 
             TreeNode common = treeViewFavoriteList.Nodes.Add("0", "0", 0, 0);
-            common.ImageIndex = 0;
+            common.ImageIndex = ImageIndexes.Closed;
             common.NodeFont = PARENT_NODE_FONT;
             common.Tag = String.Empty;
 
             foreach (Circle circle in messenger.Nameserver.CircleList)
             {
                 TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, 0, 0);
+                circlenode.ImageIndex = circlenode.SelectedImageIndex = ImageIndexes.Circle;
                 circlenode.NodeFont = PARENT_NODE_FONT;
                 circlenode.Tag = circle;
 
                 foreach (Contact member in circle.Members)
                 {
                     TreeNode newnode = circlenode.Nodes.Add(member.Mail, member.Name);
+                    newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(member.Status);
                     newnode.NodeFont = member.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                     newnode.Tag = member;
                 }
             }
+
+            
 
             foreach (Contact contact in messenger.ContactList.All)
             {
                 if (contact.ContactGroups.Count == 0)
                 {
                     TreeNode newnode = common.Nodes.Add(contact.Mail, contact.Name);
+                    newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
                     newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                     newnode.Tag = contact;
+
                     if (contact.Online)
                         common.Text = (Convert.ToInt32(common.Text) + 1).ToString();
                 }
@@ -1518,8 +1609,10 @@ namespace MSNPSharpClient
                     {
                         TreeNode found = treeViewFavoriteList.Nodes.Find(group.Guid, false)[0];
                         TreeNode newnode = found.Nodes.Add(contact.Mail, contact.Name);
+                        newnode.ImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
                         newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                         newnode.Tag = contact;
+
                         if (contact.Online)
                             found.Text = (Convert.ToInt32(found.Text) + 1).ToString();
                     }
@@ -1641,10 +1734,11 @@ namespace MSNPSharpClient
                 MessageBox.Show("Please sign in first.");
                 return;
             }
-            AddContactForm acf = new AddContactForm();
+
+            AddContactForm acf = new AddContactForm(String.Empty);
             if (DialogResult.OK == acf.ShowDialog(this) && acf.Account != String.Empty)
             {
-                messenger.Nameserver.ContactService.AddNewContact(acf.Account);
+                messenger.Nameserver.ContactService.AddNewContact(acf.Account, acf.InvitationMessage);
             }
         }
 
