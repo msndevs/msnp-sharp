@@ -113,7 +113,7 @@ namespace MSNPSharp
         private NSMessageProcessor nsMessageProcessor = new NSMessageProcessor();
         private NSMessageHandler nsMessageHandler = new NSMessageHandler();
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
-        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP19);
         /*NEWP2P,TODO,XXX:private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());*/
 
         #endregion

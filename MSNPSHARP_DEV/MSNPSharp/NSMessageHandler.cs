@@ -49,7 +49,7 @@ namespace MSNPSharp
 
     /// <summary>
     /// Handles the protocol messages from the notification server
-    /// and implements protocol version MSNP18.
+    /// and implements protocol version between MSNP18 and MSNP19.
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
@@ -57,7 +57,7 @@ namespace MSNPSharp
 
         #region Members
 
-        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP19);
         private SocketMessageProcessor messageProcessor;
         private ConnectivitySettings connectivitySettings;
         private IPEndPoint externalEndPoint;
@@ -949,7 +949,7 @@ namespace MSNPSharp
 
             (MessageProcessor as NSMessageProcessor).ResetTransactionID();
 
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18", "CVR0" }));
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP19 MSNP18", "CVR0" }));
         }
 
         /// <summary>

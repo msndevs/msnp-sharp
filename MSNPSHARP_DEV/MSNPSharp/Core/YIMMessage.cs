@@ -48,7 +48,7 @@ namespace MSNPSharp.Core
         string _msgtype = ((uint)TextMessageType.Text).ToString();
         string _clienttype = ((int)ClientType.EmailMember).ToString();
 
-        MsnProtocol _protocol = MsnProtocol.MSNP18;
+        MsnProtocol _protocol = MsnProtocol.MSNP19;
 
         string _dstuser = "";
         string _dstclienttype = ((int)ClientType.PassportMember).ToString();
