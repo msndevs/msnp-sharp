@@ -1434,7 +1434,7 @@ namespace MSNPSharpClient
             }
             else
             {
-                if (contactToUpdate is Circle)
+                if (contactToUpdate is CircleContactMember)
                 {
                     foreach (Circle circle in messenger.Nameserver.CircleList)
                     {
@@ -1476,26 +1476,15 @@ namespace MSNPSharpClient
                     offlinenode = treeViewFavoriteList.Nodes.Find(ImageIndexes.OfflineNodeKey, false)[0];
                     TreeNode contactNode = null;
 
-                    string text = contactToUpdate.Name;
-                    if (contactToUpdate.PersonalMessage != null && !String.IsNullOrEmpty(contactToUpdate.PersonalMessage.Message))
-                    {
-                        text += " - " + contactToUpdate.PersonalMessage.Message;
-                    }
-                    if (contactToUpdate.Name != contactToUpdate.Mail)
-                    {
-                        text += " (" + contactToUpdate.Mail + ")";
-                    }
-
-
                     if (contactToUpdate.Online)
                     {
                         if (offlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
                         {
                             offlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
                         }
-                        if (!onlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                        if (onlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
                         {
-                            contactNode = onlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                            contactNode = onlinenode.Nodes[contactToUpdate.Hash];
                         }
                     }
                     else
@@ -1504,10 +1493,20 @@ namespace MSNPSharpClient
                         {
                             onlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
                         }
-                        if (!offlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                        if (offlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
                         {
-                            contactNode = offlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                            contactNode = offlinenode.Nodes[contactToUpdate.Hash];
                         }
+                    }
+
+                    string text = contactToUpdate.Name;
+                    if (contactToUpdate.PersonalMessage != null && !String.IsNullOrEmpty(contactToUpdate.PersonalMessage.Message))
+                    {
+                        text += " - " + contactToUpdate.PersonalMessage.Message;
+                    }
+                    if (contactToUpdate.Name != contactToUpdate.Mail)
+                    {
+                        text += " (" + contactToUpdate.Mail + ")";
                     }
 
                     if (contactNode == null)
