@@ -1368,7 +1368,7 @@ namespace MSNPSharpClient
             treeViewFavoriteList.BeginUpdate();
             toolStripSortBygroup.Checked = false;
 
-            TreeNode onlinenode;
+            TreeNode onlinenode = null;
             TreeNode offlinenode;
 
             // Re-sort all
@@ -1434,87 +1434,98 @@ namespace MSNPSharpClient
             }
             else
             {
-                onlinenode = treeViewFavoriteList.Nodes.Find(ImageIndexes.OnlineNodeKey, false)[0];
-                offlinenode = treeViewFavoriteList.Nodes.Find(ImageIndexes.OfflineNodeKey, false)[0];
-                TreeNode contactNode = null;
-
-                string text = contactToUpdate.Name;
-                if (contactToUpdate.PersonalMessage != null && !String.IsNullOrEmpty(contactToUpdate.PersonalMessage.Message))
+                if (contactToUpdate is Circle)
                 {
-                    text += " - " + contactToUpdate.PersonalMessage.Message;
-                }
-                if (contactToUpdate.Name != contactToUpdate.Mail)
-                {
-                    text += " (" + contactToUpdate.Mail + ")";
-                }
-
-
-                if (contactToUpdate.Online)
-                {
-                    if (offlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                    foreach (Circle circle in messenger.Nameserver.CircleList)
                     {
-                        offlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
-                        contactNode = onlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                        TreeNode circlenode = treeViewFavoriteList.Nodes.ContainsKey(circle.Mail) ?
+                            treeViewFavoriteList.Nodes[circle.Mail] : treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
+
+                        circlenode.NodeFont = PARENT_NODE_FONT;
+                        circlenode.Tag = circle;
+
+                        foreach (Contact member in circle.Members)
+                        {
+                            // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
+                            Contact contact = messenger.ContactList[member.Mail, ClientType.PassportMember];
+                            string text2 = contact.Name;
+                            if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                            {
+                                text2 += " - " + contact.PersonalMessage.Message;
+                            }
+                            if (contact.Name != contact.Mail)
+                            {
+                                text2 += " (" + contact.Mail + ")";
+                            }
+
+                            TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
+                                circlenode.Nodes[contact.Hash] : circlenode.Nodes.Add(contact.Hash, text2);
+
+                            newnode.Text = text2;
+                            newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                            newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                            newnode.Tag = contact;
+                        }
+
+                        circlenode.Text = circle.Name + " (" + circlenode.Nodes.Count.ToString() + " members)";
                     }
                 }
                 else
                 {
-                    if (onlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                    onlinenode = treeViewFavoriteList.Nodes.Find(ImageIndexes.OnlineNodeKey, false)[0];
+                    offlinenode = treeViewFavoriteList.Nodes.Find(ImageIndexes.OfflineNodeKey, false)[0];
+                    TreeNode contactNode = null;
+
+                    string text = contactToUpdate.Name;
+                    if (contactToUpdate.PersonalMessage != null && !String.IsNullOrEmpty(contactToUpdate.PersonalMessage.Message))
                     {
-                        onlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
-                        contactNode = offlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                        text += " - " + contactToUpdate.PersonalMessage.Message;
                     }
-                }
-
-                
-
-                if (contactNode == null)
-                {
-                    contactNode = contactToUpdate.Online ? onlinenode.Nodes.Add(contactToUpdate.Hash, text) : offlinenode.Nodes.Add(contactToUpdate.Hash, text);
-                }
-
-                contactNode.Text = text;
-                contactNode.ImageIndex = contactNode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contactToUpdate.Status);
-                contactNode.NodeFont = contactToUpdate.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                contactNode.Tag = contactToUpdate;
-
-                foreach (Circle circle in messenger.Nameserver.CircleList)
-                {
-                    TreeNode circlenode = treeViewFavoriteList.Nodes.ContainsKey(circle.Mail) ?
-                        treeViewFavoriteList.Nodes[circle.Mail] : treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
-
-                    circlenode.NodeFont = PARENT_NODE_FONT;
-                    circlenode.Tag = circle;
-
-                    foreach (Contact member in circle.Members)
+                    if (contactToUpdate.Name != contactToUpdate.Mail)
                     {
-                        // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
-                        Contact contact = messenger.ContactList[member.Mail, ClientType.PassportMember];
-                        string text2 = contact.Name;
-                        if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
-                        {
-                            text2 += " - " + contact.PersonalMessage.Message;
-                        }
-                        if (contact.Name != contact.Mail)
-                        {
-                            text2 += " (" + contact.Mail + ")";
-                        }
-
-                        TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
-                            circlenode.Nodes[contact.Hash] : circlenode.Nodes.Add(contact.Hash, text2);
-
-                        newnode.Text = text2;
-                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
-                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                        newnode.Tag = contact;
+                        text += " (" + contactToUpdate.Mail + ")";
                     }
 
-                    circlenode.Text = circle.Name + " (" + circlenode.Nodes.Count.ToString() + " members)";
+
+                    if (contactToUpdate.Online)
+                    {
+                        if (offlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                        {
+                            offlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
+                        }
+                        if (!onlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                        {
+                            contactNode = onlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                        }
+                    }
+                    else
+                    {
+                        if (onlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                        {
+                            onlinenode.Nodes.RemoveByKey(contactToUpdate.Hash);
+                        }
+                        if (!offlinenode.Nodes.ContainsKey(contactToUpdate.Hash))
+                        {
+                            contactNode = offlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                        }
+                    }
+
+                    if (contactNode == null)
+                    {
+                        contactNode = contactToUpdate.Online ? onlinenode.Nodes.Add(contactToUpdate.Hash, text) : offlinenode.Nodes.Add(contactToUpdate.Hash, text);
+                    }
+
+                    contactNode.Text = text;
+                    contactNode.ImageIndex = contactNode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contactToUpdate.Status);
+                    contactNode.NodeFont = contactToUpdate.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                    contactNode.Tag = contactToUpdate;
+
+                    onlinenode.Text = "Online (" + onlinenode.Nodes.Count.ToString() + ")";
+                    offlinenode.Text = "Offline (" + offlinenode.Nodes.Count.ToString() + ")";
                 }
             }
 
-            onlinenode.Text = "Online (" + onlinenode.Nodes.Count.ToString() + ")";
-            offlinenode.Text = "Offline (" + offlinenode.Nodes.Count.ToString() + ")";
+           
 
             treeViewFavoriteList.Sort();
             if (selectedNode != null)
@@ -1527,7 +1538,7 @@ namespace MSNPSharpClient
             }
             else
             {
-                if (initialExpand)
+                if (initialExpand && onlinenode != null)
                 {
                     if (onlinenode.Nodes.Count > 0)
                     {
