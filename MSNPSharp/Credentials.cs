@@ -154,7 +154,7 @@ namespace MSNPSharp
         }
 
         public Credentials(string account, string password)
-            : this(account, password, MsnProtocol.MSNP18)
+            : this(account, password, MsnProtocol.MSNP19)
         {
         }
 
@@ -169,7 +169,7 @@ namespace MSNPSharp
         /// Constructor to instantiate a Credentials object with the specified values.
         /// </summary>
         public Credentials(string account, string password, string clientID, string clientCode)
-            : this(account, password, clientID, clientCode, MsnProtocol.MSNP18)
+            : this(account, password, clientID, clientCode, MsnProtocol.MSNP19)
         {
         }
 
@@ -195,8 +195,17 @@ namespace MSNPSharp
             msnp18.MessengerClientBuildVer = "14.0.8064.0206";
             msnp18.ApplicationId = "AAD9B99B-58E6-4F23-B975-D9EC1F9EC24A";
             msnp18.MessengerClientBrand = "msmsgs";
-            DefaultCredentials[msnp18.MsnProtocol] = msnp18;
+            DefaultCredentials[MsnProtocol.MSNP18] = msnp18;
 
+            ClientInfo msnp19 = new ClientInfo();
+            msnp19.MsnProtocol = MsnProtocol.MSNP19;
+            msnp19.ProductID = "PROD0120PW!CCV9@";
+            msnp19.ProductKey = "C1BX{V4W}Q3*10SM";
+            msnp19.MessengerClientName = "MSNMSGR";
+            msnp19.MessengerClientBuildVer = "14.0.8064.0206";
+            msnp19.ApplicationId = "AAD9B99B-58E6-4F23-B975-D9EC1F9EC24A";
+            msnp19.MessengerClientBrand = "msmsgs";
+            DefaultCredentials[MsnProtocol.MSNP19] = msnp19;
         }
     }
 

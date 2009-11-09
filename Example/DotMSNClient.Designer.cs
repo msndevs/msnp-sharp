@@ -404,6 +404,7 @@ namespace MSNPSharpClient
             this.comboProtocol.DropDownWidth = 75;
             this.comboProtocol.FormattingEnabled = true;
             this.comboProtocol.Items.AddRange(new object[] {
+            "MSNP19",
             "MSNP18"});
             this.comboProtocol.Location = new System.Drawing.Point(134, 53);
             this.comboProtocol.Name = "comboProtocol";
@@ -692,7 +693,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.OwnerPanel);
             this.Controls.Add(this.pictureBox);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client for MSNP18 (3.5 DEV)";
+            this.Text = "MSNPSharp Example Client for MSNP19 (3.5 DEV)";
             this.Load += new System.EventHandler(this.ClientForm_Load);
             this.ListPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
