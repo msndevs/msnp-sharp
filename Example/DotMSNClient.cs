@@ -91,6 +91,8 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
             messenger.Nameserver.CircleOnline += new EventHandler<CircleEventArgs>(Nameserver_CircleOnline);
             messenger.Nameserver.CircleOffline += new EventHandler<CircleEventArgs>(Nameserver_CircleOffline);
+            messenger.Nameserver.CircleMemberOnline += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberOnline);
+            messenger.Nameserver.CircleMemberOffline += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberOffline);
 
             messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
             messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
@@ -122,7 +124,6 @@ namespace MSNPSharpClient
             messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed;
         }
-
 
         public static class ImageIndexes
         {
@@ -202,8 +203,18 @@ namespace MSNPSharpClient
             // ******* Listen traces *****
             TraceForm traceform = new TraceForm();
             traceform.Show();
-        } 
+        }
 
+
+        void Nameserver_CircleMemberOffline(object sender, CircleMemberEventArgs e)
+        {
+            RefreshCircleList(sender, e);
+        }
+
+        void Nameserver_CircleMemberOnline(object sender, CircleMemberEventArgs e)
+        {
+            RefreshCircleList(sender, e);
+        }
 
         void Nameserver_CircleNudgeReceived(object sender, CircleMemberEventArgs e)
         {
@@ -275,7 +286,12 @@ namespace MSNPSharpClient
             }
 
             if (toolStripSortByStatus.Checked)
-                SortByStatus(null);
+            {
+                if (e is CircleMemberEventArgs)
+                    SortByStatus((e as CircleMemberEventArgs).Member);
+                else
+                    SortByStatus(null);
+            }
             else
                 SortByGroup();
         }
