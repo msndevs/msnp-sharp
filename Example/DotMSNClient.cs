@@ -249,11 +249,13 @@ namespace MSNPSharpClient
         void Nameserver_CircleOnline(object sender, CircleEventArgs e)
         {
             Trace.WriteLine("Circle go online: " + e.Circle.ToString());
+            RefreshCircleList(sender, e);
         }
 
         void Nameserver_CircleOffline(object sender, CircleEventArgs e)
         {
             Trace.WriteLine("Circle go offline: " + e.Circle.ToString());
+            RefreshCircleList(sender, e);
         }
 
         void ContactService_ExitCircle(object sender, CircleEventArgs e)
@@ -288,9 +290,9 @@ namespace MSNPSharpClient
             if (toolStripSortByStatus.Checked)
             {
                 if (e is CircleMemberEventArgs)
-                    SortByStatus((e as CircleMemberEventArgs).Member);
-                else
-                    SortByStatus(null);
+                    SortByStatus((e as CircleMemberEventArgs).Circle);
+                else if(e is CircleEventArgs)
+                    SortByStatus((e as CircleEventArgs).Circle);
             }
             else
                 SortByGroup();
@@ -1450,41 +1452,38 @@ namespace MSNPSharpClient
             }
             else
             {
-                if (contactToUpdate is CircleContactMember)
+                if (contactToUpdate is Circle)
                 {
-                    foreach (Circle circle in messenger.Nameserver.CircleList)
+                    Circle circle = contactToUpdate as Circle;
+                    TreeNode circlenode = treeViewFavoriteList.Nodes.ContainsKey(circle.Mail) ?
+                        treeViewFavoriteList.Nodes[circle.Mail] : treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
+
+                    circlenode.NodeFont = PARENT_NODE_FONT;
+                    circlenode.Tag = circle;
+
+                    foreach (Contact contact in circle.Members)
                     {
-                        TreeNode circlenode = treeViewFavoriteList.Nodes.ContainsKey(circle.Mail) ?
-                            treeViewFavoriteList.Nodes[circle.Mail] : treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
-
-                        circlenode.NodeFont = PARENT_NODE_FONT;
-                        circlenode.Tag = circle;
-
-                        foreach (Contact member in circle.Members)
+                        // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
+                        string text2 = contact.Name;
+                        if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
                         {
-                            // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
-                            Contact contact = messenger.ContactList[member.Mail, ClientType.PassportMember];
-                            string text2 = contact.Name;
-                            if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
-                            {
-                                text2 += " - " + contact.PersonalMessage.Message;
-                            }
-                            if (contact.Name != contact.Mail)
-                            {
-                                text2 += " (" + contact.Mail + ")";
-                            }
-
-                            TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
-                                circlenode.Nodes[contact.Hash] : circlenode.Nodes.Add(contact.Hash, text2);
-
-                            newnode.Text = text2;
-                            newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
-                            newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                            newnode.Tag = contact;
+                            text2 += " - " + contact.PersonalMessage.Message;
+                        }
+                        if (contact.Name != contact.Mail)
+                        {
+                            text2 += " (" + contact.Mail + ")";
                         }
 
-                        circlenode.Text = circle.Name + " (" + circlenode.Nodes.Count.ToString() + " members)";
+                        TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
+                            circlenode.Nodes[contact.Hash] : circlenode.Nodes.Add(contact.Hash, text2);
+
+                        newnode.Text = text2;
+                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.Tag = contact;
                     }
+
+                    circlenode.Text = circle.Name + " (" + circle.Members.Count.ToString() + " members)";
                 }
                 else
                 {
