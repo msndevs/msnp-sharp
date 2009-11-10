@@ -1378,6 +1378,14 @@ namespace MSNPSharpClient
         }
 
         private bool initialExpand = true;
+
+        private string GetCircleDisplayName(Circle circle)
+        {
+            if (circle == null)
+                return string.Empty;
+            return circle.Name + " (" + circle.Members.Count.ToString() + " members)";
+        }
+
         private void SortByStatus(Contact contactToUpdate)
         {
             TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
@@ -1422,7 +1430,7 @@ namespace MSNPSharpClient
 
                 foreach (Circle circle in messenger.Nameserver.CircleList)
                 {
-                    TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
+                    TreeNode circlenode = treeViewFavoriteList.Nodes.Add(circle.Mail, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
                     circlenode.NodeFont = PARENT_NODE_FONT;
                     circlenode.Tag = circle;
 
@@ -1456,7 +1464,7 @@ namespace MSNPSharpClient
                 {
                     Circle circle = contactToUpdate as Circle;
                     TreeNode circlenode = treeViewFavoriteList.Nodes.ContainsKey(circle.Mail) ?
-                        treeViewFavoriteList.Nodes[circle.Mail] : treeViewFavoriteList.Nodes.Add(circle.Mail, circle.Name, ImageIndexes.Circle, ImageIndexes.Circle);
+                        treeViewFavoriteList.Nodes[circle.Mail] : treeViewFavoriteList.Nodes.Add(circle.Mail, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
 
                     circlenode.NodeFont = PARENT_NODE_FONT;
                     circlenode.Tag = circle;
@@ -1483,7 +1491,7 @@ namespace MSNPSharpClient
                         newnode.Tag = contact;
                     }
 
-                    circlenode.Text = circle.Name + " (" + circle.Members.Count.ToString() + " members)";
+                    circlenode.Text = GetCircleDisplayName(circle);
                 }
                 else
                 {
