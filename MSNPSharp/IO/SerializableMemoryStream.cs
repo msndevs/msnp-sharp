@@ -85,7 +85,7 @@ namespace MSNPSharp.IO
         public static SerializableMemoryStream FromImage(Image image)
         {
             SerializableMemoryStream ret = new SerializableMemoryStream();
-            image.Save(ret, System.Drawing.Imaging.ImageFormat.Png);
+            image.Save(ret, image.RawFormat);
             return ret;
         }
 

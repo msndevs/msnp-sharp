@@ -509,7 +509,7 @@ namespace MSNPSharpClient
             // 
             // openImageDialog
             // 
-            this.openImageDialog.Filter = "Supported Images|*.png;*.jpg;*.jpeg";
+            this.openImageDialog.Filter = "Supported Images|*.png;*.jpg;*.jpeg;*.gif";
             this.openImageDialog.Multiselect = true;
             this.openImageDialog.Title = "Select display image";
             // 
