@@ -34,6 +34,7 @@ using System;
 using System.Web;
 using System.Text;
 using System.Xml;
+using System.Security.Cryptography;
 
 namespace MSNPSharp.Core
 {
@@ -46,7 +47,7 @@ namespace MSNPSharp.Core
     /// <summary>
     /// Provides methods for encoding and decoding URLs when processing Web requests. This class cannot be inherited. 
     /// </summary>
-    public sealed class MSNHttpUtility
+    public static class MSNHttpUtility
     {
         private enum UnSafe
         {
@@ -349,7 +350,7 @@ namespace MSNPSharp.Core
         }
     }
 
-    public sealed class WebServiceDateTimeConverter
+    public static class WebServiceDateTimeConverter
     {
         public static DateTime ConvertToDateTime(string dateTime)
         {
@@ -357,6 +358,53 @@ namespace MSNPSharp.Core
                 dateTime = WebServiceConstants.ZeroTime;
 
             return XmlConvert.ToDateTime(dateTime, WebServiceConstants.XmlDateTimeFormats);
+        }
+    }
+
+
+    public static class HashedNonceGenerator
+    {
+        /// <summary>
+        /// Creates handshake guid using SHA1 hash algorithm. 
+        /// </summary>
+        /// <param name="nonce"></param>
+        /// <returns>The output packed to handshake for direct connect</returns>
+        public static Guid HashNonce(Guid nonce)
+        {
+            // http://forums.fanatic.net.nz/index.php?showtopic=19372&view=findpost&p=108868
+            // {2B95F56D-9CA0-9A64-82CE-ADC1F3C55845} <-> [0x37,0x29,0x2d,0x12,0x86,0x5c,0x7b,0x4c,0x81,0xf5,0xe,0x5,0x1,0x78,0x80,0xc2]
+            // OUTPUT: 2b95f56d-9ca0-9a64-82ce-adc1f3c55845
+            // INPUT: 122d2937-5c86-4c7b-81f5-0e05017880c2
+
+            Guid handshakeNonce = Guid.Empty;
+
+            using (SHA1Managed sha1 = new SHA1Managed())
+            {
+                // Returns 20 bytes
+                byte[] hash = sha1.ComputeHash(nonce.ToByteArray());
+
+                // Generate the hash from the first 16 bytes
+                UInt32 a = (UInt32)
+                    (((UInt32)(hash[3]) << 24) +
+                    ((UInt32)(hash[2]) << 16) +
+                    ((UInt32)(hash[1]) << 8) +
+                    (UInt32)(hash[0]));
+
+                UInt16 b = (UInt16)
+                    (((UInt16)(hash[5]) << 8) +
+                    ((UInt16)(hash[4])));
+
+                UInt16 c = (UInt16)
+                    (((UInt16)(hash[7]) << 8) +
+                    ((UInt16)(hash[6])));
+
+                byte d = hash[8], e = hash[9], f = hash[10], g = hash[11];
+                byte h = hash[12], i = hash[13], j = hash[14], k = hash[15];
+
+                handshakeNonce = new Guid(a, b, c, d, e, f, g, h, i, j, k);
+            }
+
+            return handshakeNonce;
         }
     }
 };
