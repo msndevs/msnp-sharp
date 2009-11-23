@@ -1456,6 +1456,33 @@ namespace MSNPSharpClient
                         newnode.Tag = contact;
                     }
                 }
+
+                ContactGroup favGroup = messenger.ContactGroups.FavoriteGroup;
+                if (favGroup != null)
+                {
+                    foreach (Contact c in messenger.ContactList.Forward)
+                    {
+                        if (c.HasGroup(favGroup))
+                        {
+                            string text = c.Name;
+                            if (c.PersonalMessage != null && !String.IsNullOrEmpty(c.PersonalMessage.Message))
+                            {
+                                text += " - " + c.PersonalMessage.Message;
+                            }
+                            if (c.Name != c.Mail)
+                            {
+                                text += " (" + c.Mail + ")";
+                            }
+
+                            TreeNode newnode = favoritesNode.Nodes.ContainsKey(c.Hash) ?
+                                favoritesNode.Nodes[c.Hash] : favoritesNode.Nodes.Add(c.Hash, text);
+
+                            newnode.NodeFont = c.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                            newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(c.Status);
+                            newnode.Tag = c;
+                        }
+                    }
+                }
             }
             else if (contactToUpdate is Circle)
             {
@@ -1707,7 +1734,7 @@ namespace MSNPSharpClient
                 if (group.IsFavorite == false)
                 {
                     TreeNode node = treeViewFavoriteList.Nodes.ContainsKey(group.Guid) ?
-                        treeViewFavoriteList.Nodes[group.Guid] : treeViewFavoriteList.Nodes.Add(group.Guid, "0", 0, 0);
+                        treeViewFavoriteList.Nodes[group.Guid] : treeViewFavoriteList.Nodes.Add(group.Guid, "Favorites", 0, 0);
 
                     node.ImageIndex = ImageIndexes.Closed;
                     node.NodeFont = PARENT_NODE_FONT;
@@ -1738,14 +1765,17 @@ namespace MSNPSharpClient
                 {
                     foreach (ContactGroup group in contact.ContactGroups)
                     {
-                        TreeNode found = treeViewFavoriteList.Nodes.Find(group.IsFavorite ? ImageIndexes.FavoritesNodeKey : group.Guid, false)[0];
-                        TreeNode newnode = found.Nodes.Add(contact.Hash, contact.Name);
-                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
-                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                        newnode.Tag = contact;
+                        if (group.IsFavorite == false)
+                        {
+                            TreeNode found = treeViewFavoriteList.Nodes.Find(group.Guid, false)[0];
+                            TreeNode newnode = found.Nodes.Add(contact.Hash, contact.Name);
+                            newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                            newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                            newnode.Tag = contact;
 
-                        if (contact.Online)
-                            found.Text = (Convert.ToInt32(found.Text) + 1).ToString();
+                            if (contact.Online)
+                                found.Text = (Convert.ToInt32(found.Text) + 1).ToString();
+                        }
                     }
                 }
             }
