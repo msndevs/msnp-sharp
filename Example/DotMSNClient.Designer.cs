@@ -181,6 +181,7 @@ namespace MSNPSharpClient
             // 
             // treeViewFavoriteList
             // 
+            this.treeViewFavoriteList.AllowDrop = true;
             this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
             this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -510,7 +511,7 @@ namespace MSNPSharpClient
             // 
             // openImageDialog
             // 
-            this.openImageDialog.Filter = "Supported Images|*.png;*.jpg;*.jpeg";
+            this.openImageDialog.Filter = "Supported Images|*.png;*.jpg;*.jpeg;*.gif";
             this.openImageDialog.Multiselect = true;
             this.openImageDialog.Title = "Select display image";
             // 

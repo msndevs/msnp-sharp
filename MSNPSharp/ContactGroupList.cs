@@ -105,6 +105,19 @@ namespace MSNPSharp
             }
         }
 
+        public ContactGroup FavoriteGroup
+        {
+            get
+            {
+                foreach (ContactGroup group in list)
+                {
+                    if (group.IsFavorite)
+                        return group;
+                }
+                return null;
+            }
+        }
+
         public IEnumerator GetEnumerator()
         {
             return list.GetEnumerator();

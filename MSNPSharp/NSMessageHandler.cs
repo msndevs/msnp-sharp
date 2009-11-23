@@ -388,34 +388,49 @@ namespace MSNPSharp
         public event EventHandler<PingAnswerEventArgs> PingAnswer;
 
         /// <summary>
-        /// Occurs when any contact changes status
+        /// Occurs when any contact changes status.
         /// </summary>
         public event EventHandler<ContactStatusChangedEventArgs> ContactStatusChanged;
 
         /// <summary>
-        /// Occurs when any contact goes from offline status to another status
+        /// Occurs when any contact goes from offline status to another status.
         /// </summary>
         public event EventHandler<ContactEventArgs> ContactOnline;
 
         /// <summary>
-        /// Occurs when any contact goed from any status to offline status
+        /// Occurs when any contact goed from any status to offline status.
         /// </summary>
         public event EventHandler<ContactEventArgs> ContactOffline;
 
         /// <summary>
-        /// Occurs when any circle changes status
+        /// Occurs when any circle changes status.
         /// </summary>
         public event EventHandler<CircleStatusChangedEventArgs> CircleStatusChanged;
 
         /// <summary>
-        /// Occurs when any circle goes from offline status to another status
+        /// Occurs when any circle goes from offline status to another status.
         /// </summary>
         public event EventHandler<CircleEventArgs> CircleOnline;
 
         /// <summary>
-        /// Occurs when any circle goes from any status to offline status
+        /// Occurs when any circle goes from any status to offline status.
         /// </summary>
         public event EventHandler<CircleEventArgs> CircleOffline;
+
+        /// <summary>
+        /// Occurs when any circle member goes from offline status to another status.
+        /// </summary>
+        public event EventHandler<CircleMemberEventArgs> CircleMemberOnline;
+
+        /// <summary>
+        ///  Occurs when any circle member goes from any status to offline status.
+        /// </summary>
+        public event EventHandler<CircleMemberEventArgs> CircleMemberOffline;
+
+        /// <summary>
+        /// Occurs when any circle member changes status.
+        /// </summary>
+        public event EventHandler<CircleMemberStatusChanged> CircleMemberStatusChanged;
 
         /// <summary>
         /// Occurs when a member left the circle.
@@ -1359,10 +1374,10 @@ namespace MSNPSharp
                             contact.SetStatus(newstatus);
 
                             // The contact changed status
-                            OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+                            OnCircleMemberStatusChanged(new CircleMemberStatusChanged(circle, contact as CircleContactMember, oldStatus));
 
                             // The contact goes online
-                            OnContactOnline(new ContactEventArgs(contact));
+                            OnCircleMemberOnline(new CircleMemberEventArgs(circle, contact));
                         }
                     }
                     else
@@ -1383,7 +1398,7 @@ namespace MSNPSharp
                             circle.AddMember(circleMember);
 
                         // The contact goes online
-                        OnContactOnline(new ContactEventArgs(contact));
+                        OnCircleMemberOnline(new CircleMemberEventArgs(circle, circleMember));
                     }
                 }
                 else
@@ -1491,14 +1506,18 @@ namespace MSNPSharp
             string account;
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
             Contact contact = null;
+            Circle circle = null;
 
             if (fullaccount.Contains(";via=9:"))
             {
+                #region Circle and CircleMemberStatus
+
                 string[] usernameAndCircle = fullaccount.Split(';');
                 type = (ClientType)int.Parse(usernameAndCircle[0].Split(':')[0]);
                 account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
 
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
+                circle = CircleList[circleMail];
 
                 contact = CircleMemberList[fullaccount];
 
@@ -1507,7 +1526,6 @@ namespace MSNPSharp
                     string capabilityString = message.CommandValues[1].ToString();
                     if (capabilityString == "0:0")  //This is a circle's presence status.
                     {
-                        Circle circle = CircleList[circleMail];
                         if (circle == null)
                             return;
 
@@ -1521,6 +1539,28 @@ namespace MSNPSharp
 
                     return;
                 }
+                else
+                {
+                    if (circle == null || contact == null)
+                        return;
+
+                    PresenceStatus oldStatus = contact.Status;
+
+                    if (oldStatus != PresenceStatus.Offline)
+                    {
+                        contact.SetStatus(PresenceStatus.Offline);
+
+                        // The contact changed status
+                        OnCircleMemberStatusChanged(new CircleMemberStatusChanged(circle, contact as CircleContactMember, oldStatus));
+
+                        // The contact goes online
+                        OnCircleMemberOffline(new CircleMemberEventArgs(circle, contact));
+                    }
+
+                    return;
+                } 
+
+                #endregion
             }
             else
             {
@@ -1529,36 +1569,40 @@ namespace MSNPSharp
 
                 contact = (account == Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
                 ? Owner : ContactList.GetContact(account, type);
-            }
 
-            if (contact != null)
-            {
-                ClientCapacities oldcaps = ClientCapacities.None;
-                ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
-                string networkpng;
+                #region Contact Staus
 
-                if (message.CommandValues.Count >= 2)
+                if (contact != null)
                 {
-                    if (message.CommandValues[1].ToString().Contains(":"))
+                    ClientCapacities oldcaps = ClientCapacities.None;
+                    ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
+                    string networkpng;
+
+                    if (message.CommandValues.Count >= 2)
                     {
-                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
-                        oldcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
+                        if (message.CommandValues[1].ToString().Contains(":"))
+                        {
+                            oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
+                            oldcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
+                        }
+                        else
+                        {
+                            oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
+                        }
                     }
-                    else
-                    {
-                        oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
-                    }
+                    networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+
+                    PresenceStatus oldStatus = contact.Status;
+                    contact.SetStatus(PresenceStatus.Offline);
+
+                    // the contact changed status
+                    OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+
+                    // the contact goes offline
+                    OnContactOffline(new ContactEventArgs(contact));
                 }
-                networkpng = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
 
-                PresenceStatus oldStatus = contact.Status;
-                contact.SetStatus(PresenceStatus.Offline);
-
-                // the contact changed status
-                OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
-
-                // the contact goes offline
-                OnContactOffline(new ContactEventArgs(contact));
+                #endregion
             }
         }
 
@@ -2851,6 +2895,24 @@ namespace MSNPSharp
         {
             if (CircleStatusChanged != null)
                 CircleStatusChanged(this, e);
+        }
+
+        protected virtual void OnCircleMemberOnline(CircleMemberEventArgs e)
+        {
+            if (CircleMemberOnline != null)
+                CircleMemberOnline(this, e);
+        }
+
+        protected virtual void OnCircleMemberOffline(CircleMemberEventArgs e)
+        {
+            if (CircleMemberOffline != null)
+                CircleMemberOffline(this, e);
+        }
+
+        protected virtual void OnCircleMemberStatusChanged(CircleMemberStatusChanged e)
+        {
+            if (CircleMemberStatusChanged != null)
+                CircleMemberStatusChanged(this, e);
         }
 
         protected virtual void OnCircleOnline(CircleEventArgs e)

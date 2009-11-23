@@ -551,6 +551,9 @@ namespace MSNPSharp
     {
         protected Circle circle = null;
 
+        /// <summary>
+        /// The circle which changed its status.
+        /// </summary>
         public Circle Circle
         {
             get { return circle; }
@@ -561,6 +564,24 @@ namespace MSNPSharp
         {
             this.circle = circle;
         }
+    }
+
+    [Serializable()]
+    public class CircleMemberStatusChanged : CircleStatusChangedEventArgs
+    {
+        private CircleContactMember circleMember = null;
+
+        protected CircleContactMember CircleMember
+        {
+            get { return circleMember; }
+        }
+
+        internal CircleMemberStatusChanged(Circle circle, CircleContactMember member, PresenceStatus oldStatus)
+            : base(circle, oldStatus)
+        {
+            circleMember = member;
+        }
+
     }
 
     /// <summary>
