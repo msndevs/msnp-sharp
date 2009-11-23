@@ -80,6 +80,7 @@ namespace MSNPSharp
         private string name;
         private string guid;
         private object clientData;
+        private bool isFavorite;
 
         [NonSerialized]
         private NSMessageHandler nsMessageHandler = null;
@@ -93,16 +94,18 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="name"></param>
         /// <param name="guid"></param>
+        /// <param name="isFavorite"></param>
         /// <param name="nsMessageHandler"></param>
-        internal ContactGroup(string name, string guid, NSMessageHandler nsMessageHandler)
+        internal ContactGroup(string name, string guid, NSMessageHandler nsMessageHandler, bool isFavorite)
         {
             this.name = name;
             this.guid = guid;
+            this.isFavorite = isFavorite;
             this.nsMessageHandler = nsMessageHandler;
         }
 
         private ContactGroup()
-            : this(String.Empty, System.Guid.NewGuid().ToString(), null)
+            : this(String.Empty, System.Guid.NewGuid().ToString(), null, false)
         {
         }
 
@@ -171,6 +174,14 @@ namespace MSNPSharp
             get
             {
                 return guid;
+            }
+        }
+
+        public bool IsFavorite
+        {
+            get
+            {
+                return isFavorite;
             }
         }
 

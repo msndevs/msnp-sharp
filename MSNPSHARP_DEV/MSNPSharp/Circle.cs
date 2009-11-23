@@ -331,7 +331,9 @@ namespace MSNPSharp
         #endregion
     }
 
-
+    /// <summary>
+    /// The member of a circle.
+    /// </summary>
     [Serializable()]
     public class CircleContactMember : Contact
     {

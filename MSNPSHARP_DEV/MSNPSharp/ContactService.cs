@@ -1571,7 +1571,7 @@ namespace MSNPSharp
 
                 if (!e.Cancelled && e.Error == null)
                 {
-                    NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, NSMessageHandler));
+                    NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(groupName, e.Result.ABGroupAddResult.guid, NSMessageHandler, false));
                     NSMessageHandler.ContactService.OnContactGroupAdded(new ContactGroupEventArgs((ContactGroup)NSMessageHandler.ContactGroups[e.Result.ABGroupAddResult.guid]));
                 }
             };
@@ -1683,6 +1683,19 @@ namespace MSNPSharp
 
         #region AddContactToGroup & RemoveContactFromGroup
 
+        public void AddContactToFavoriteGroup(Contact contact)
+        {
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
+            ContactGroup favGroup = NSMessageHandler.ContactGroups.FavoriteGroup;
+
+            if (favGroup != null && contact.HasGroup(favGroup) == false)
+                AddContactToGroup(contact, favGroup);
+            else
+                throw new InvalidOperationException("No favorite group");
+        }
+
         public void AddContactToGroup(Contact contact, ContactGroup group)
         {
             if (contact.Guid == null || contact.Guid == Guid.Empty)
@@ -1717,6 +1730,19 @@ namespace MSNPSharp
             request.contacts[0].contactId = contact.Guid.ToString();
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABGroupContactAddObject, request));
+        }
+
+        public void RemoveContactFromFavoriteGroup(Contact contact)
+        {
+            if (contact.Guid == null || contact.Guid == Guid.Empty)
+                throw new InvalidOperationException("This is not a valid Messenger contact.");
+
+            ContactGroup favGroup = NSMessageHandler.ContactGroups.FavoriteGroup;
+
+            if (favGroup != null && contact.HasGroup(favGroup))
+                RemoveContactFromGroup(contact, favGroup);
+            else
+                throw new InvalidOperationException("No favorite group");
         }
 
         public void RemoveContactFromGroup(Contact contact, ContactGroup group)
