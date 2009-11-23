@@ -181,6 +181,7 @@ namespace MSNPSharpClient
             // 
             // treeViewFavoriteList
             // 
+            this.treeViewFavoriteList.AllowDrop = true;
             this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
             this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;

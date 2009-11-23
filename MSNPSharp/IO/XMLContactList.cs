@@ -112,7 +112,7 @@ namespace MSNPSharp.IO
 
             foreach (GroupType group in Groups.Values)
             {
-                NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, NSMessageHandler));
+                NSMessageHandler.ContactGroups.AddGroup(new ContactGroup(group.groupInfo.name, group.groupId, NSMessageHandler, group.groupInfo.IsFavorite));
             }
 
             #endregion
@@ -741,7 +741,7 @@ namespace MSNPSharp.IO
 
                             // Add a new group									
                             NSMessageHandler.ContactGroups.AddGroup(
-                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, NSMessageHandler));
+                                new ContactGroup(System.Web.HttpUtility.UrlDecode(groupType.groupInfo.name), groupType.groupId, NSMessageHandler, groupType.groupInfo.IsFavorite));
 
                             // Fire the event
                             NSMessageHandler.ContactService.OnContactGroupAdded(
