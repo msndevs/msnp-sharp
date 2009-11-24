@@ -50,17 +50,26 @@ namespace MSNPSharp.IO
     [XmlRoot("ContactList")]
     public class XMLContactList : MCLSerializer
     {
+        [NonSerialized]
+        private bool initialized = false;
+
         public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
             return (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), handler, useCache);
         }
 
         /// <summary>
-        /// Loads contacts from saved mcl file, merges the deltas list saved into current AddressBook and MemberShipList.
+        /// Initialize contacts from mcl file. Creates contacts based on MemberShipList, Groups, CircleResults and AddressbookContacts.
+        /// MemberShipList, Groups, CircleResults and AddressbookContacts is pure clean and no contains DELTAS...
+        /// So, member.Deleted is not valid here...
         /// </summary>
-        /// <param name="deltas"></param>
-        internal void Synchronize(DeltasList deltas)
+        private void Initialize()
         {
+            if (initialized)
+                return;
+
+            initialized = true;
+
             // Create Memberships
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms =
                 GetTargetMemberships(ServiceFilterType.Messenger);
@@ -121,11 +130,13 @@ namespace MSNPSharp.IO
 
             foreach (CircleInfo circle in CircleResults.Values)
             {
+                /* .Deleted is not valid here... Move it to Merge(FindMembershipResultType)
                 if (circle.CircleResultInfo.Deleted)
                 {
                     NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.CircleResultInfo.Content.Handle.Id), circle.CircleResultInfo.Content.Info.HostedDomain);
                 }
                 else
+                 * */
                 {
                     Circle newcircle = CombineCircle(circle.CircleMember, circle.CircleResultInfo);
                     CircleInviter initator = CombineCircleInviter(circle.CircleMember);
@@ -148,6 +159,7 @@ namespace MSNPSharp.IO
                 MSNLists list = NSMessageHandler.ContactService.GetMSNList(circle.MemberRole);
 
                 NSMessageHandler.CircleList[id].AddToList(list);
+
                 if (list == MSNLists.BlockedList)
                     NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.AllowedList);
 
@@ -163,7 +175,6 @@ namespace MSNPSharp.IO
                 UpdateContact(contactType);
             }
 
-            Merge(deltas);
         }
 
         #region New MembershipList
@@ -293,6 +304,8 @@ namespace MSNPSharp.IO
 
         public XMLContactList Merge(DeltasList deltas)
         {
+            Initialize();
+
             if (deltas.MembershipDeltas.Count > 0)
             {
                 foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
@@ -315,6 +328,8 @@ namespace MSNPSharp.IO
 
         public XMLContactList Merge(FindMembershipResultType findMembership)
         {
+            Initialize();
+
             // Process new FindMemberships (deltas)
             if (null != findMembership && null != findMembership.Services)
             {
@@ -686,6 +701,8 @@ namespace MSNPSharp.IO
 
         public XMLContactList Merge(ABFindContactsPagedResultType forwardList)
         {
+            Initialize();
+
             #region AddressBook changed
 
             DateTime dt1 = WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange);
@@ -821,84 +838,82 @@ namespace MSNPSharp.IO
 
             #region Circle changed
 
-            if (forwardList.CircleResult != null)
+            if (forwardList.CircleResult != null &&
+                null != forwardList.CircleResult.Circles)
             {
-                if (null != forwardList.CircleResult.Circles)
+                List<ContactType> circleContactsAdded = new List<ContactType>(0);
+                List<CircleInverseInfoType> circleAdded = new List<CircleInverseInfoType>(0);
+
+                if (forwardList.Contacts != null)
                 {
-                    List<ContactType> circleContactsAdded = new List<ContactType>(0);
-                    List<CircleInverseInfoType> circleAdded = new List<CircleInverseInfoType>(0);
-
-                    if (forwardList.Contacts != null)
+                    foreach (ContactType contactType in forwardList.Contacts)
                     {
-                        foreach (ContactType contactType in forwardList.Contacts)
+                        if (contactType.CreatedBy == "96" &&
+                            contactType.contactInfo.contactType == MessengerContactType.Circle &&
+                            contactType.fDeleted == false)
                         {
-                            if (contactType.CreatedBy == "96" &&
-                                contactType.contactInfo.contactType == MessengerContactType.Circle &&
-                                contactType.fDeleted == false)
-                            {
-                                circleContactsAdded.Add(contactType);
-                            }
+                            circleContactsAdded.Add(contactType);
                         }
                     }
+                }
 
-                    foreach (CircleInverseInfoType circle in forwardList.CircleResult.Circles)
+                foreach (CircleInverseInfoType circle in forwardList.CircleResult.Circles)
+                {
+                    if (circle.Deleted)
                     {
-                        if (circle.Deleted)
-                        {
-                            CircleResults.Remove(circle.Content.Handle.Id.ToLowerInvariant() + "@" + circle.Content.Info.HostedDomain.ToLowerInvariant());
-                            NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.Content.Handle.Id), circle.Content.Info.HostedDomain.ToLowerInvariant());
-                        }
-                        else
-                        {
-                            circleAdded.Add(circle);
-                        }
+                        CircleResults.Remove(circle.Content.Handle.Id.ToLowerInvariant() + "@" + circle.Content.Info.HostedDomain.ToLowerInvariant());
+                        NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.Content.Handle.Id), circle.Content.Info.HostedDomain.ToLowerInvariant());
                     }
-
-                    if (circleContactsAdded.Count == circleAdded.Count)
+                    else
                     {
-                        for (int i = 0; i < circleAdded.Count; i++)
+                        circleAdded.Add(circle);
+                    }
+                }
+
+                if (circleContactsAdded.Count == circleAdded.Count)
+                {
+                    for (int i = 0; i < circleAdded.Count; i++)
+                    {
+                        CircleInverseInfoType circleinfo = circleAdded[i];
+                        ContactType contactType = circleContactsAdded[i];
+
+                        string circleId = circleinfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleinfo.Content.Info.HostedDomain.ToLowerInvariant();
+
+                        bool newadded = true;
+                        string memberRole = MemberRole.Allow;
+
+                        if (CircleResults.ContainsKey(circleId))
                         {
-                            CircleInverseInfoType circleinfo = circleAdded[i];
-                            ContactType contactType = circleContactsAdded[i];
-
-                            string circleId = circleinfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleinfo.Content.Info.HostedDomain.ToLowerInvariant();
-
-                            bool newadded = true;
-                            string memberRole = MemberRole.Allow;
-
-                            if (CircleResults.ContainsKey(circleId))
+                            if (CircleResults[circleId].CircleResultInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role
+                                == circleinfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role)
                             {
-                                if (CircleResults[circleId].CircleResultInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role
-                                    == circleinfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role)
-                                {
-                                    newadded = false;
-                                    memberRole = CircleResults[circleId].MemberRole;
-                                }
-                                else
-                                {
-                                    //This will prevent 933 server error.
-                                    //this case means the owner left a circle using another client, then the remote client reinvit the owner.
-                                    CircleResults.Remove(circleId);
-                                    NSMessageHandler.CircleList.RemoveCircle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.HostedDomain);
-                                }
+                                newadded = false;
+                                memberRole = CircleResults[circleId].MemberRole;
                             }
-
-                            CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
-                            CircleResults[circleId].MemberRole = memberRole;
-
-                            if (newadded)
+                            else
                             {
-                                Circle newcircle = CombineCircle(contactType, circleinfo);
-                                CircleInviter initator = CombineCircleInviter(contactType);
+                                //This will prevent 933 server error.
+                                //this case means the owner left a circle using another client, then the remote client reinvit the owner.
+                                CircleResults.Remove(circleId);
+                                NSMessageHandler.CircleList.RemoveCircle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.HostedDomain);
+                            }
+                        }
 
-                                if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
-                                {
-                                    NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArgs(newcircle, initator));
-                                }
-                                else
-                                {
-                                    NSMessageHandler.CircleList.AddCircle(newcircle);
-                                }
+                        CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
+                        CircleResults[circleId].MemberRole = memberRole;
+
+                        if (newadded)
+                        {
+                            Circle newcircle = CombineCircle(contactType, circleinfo);
+                            CircleInviter initator = CombineCircleInviter(contactType);
+
+                            if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
+                            {
+                                NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArgs(newcircle, initator));
+                            }
+                            else
+                            {
+                                NSMessageHandler.CircleList.AddCircle(newcircle);
                             }
                         }
                     }

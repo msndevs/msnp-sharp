@@ -369,7 +369,8 @@ namespace MSNPSharp
 
             if (NSMessageHandler.AutoSynchronize)
             {
-                AddressBook.Synchronize(Deltas);
+                AddressBook.Merge(Deltas);
+
                 if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) == DateTime.MinValue)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
@@ -2573,7 +2574,7 @@ namespace MSNPSharp
                                                                      //We need USR SHA A again
                                                                      NSMessageHandler.SendCircleNotifyADL(circle.AddressBookId, circle.HostDomain, circle.Lists, false);
 
-                                                                     AddressBook.Synchronize(Deltas);
+                                                                     AddressBook.Merge(Deltas);
                                                                      AddressBook.Save();
                                                                      Deltas.Truncate();
 
