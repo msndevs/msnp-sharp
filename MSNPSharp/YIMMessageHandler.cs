@@ -69,7 +69,7 @@ namespace MSNPSharp
             iemu.MoveNext();
 
             YIMMessage nsMessage = new YIMMessage("UUM",
-                new string[] { (string)(iemu.Current), 
+                new string[] { ((Contact)(iemu.Current)).Mail, 
                 ((int)ClientType.EmailMember).ToString(), 
                  ((uint)TextMessageType.Nudge).ToString() },
                  NSMessageHandler.Credentials.MsnProtocol);
@@ -89,7 +89,7 @@ namespace MSNPSharp
             iemu.MoveNext();
 
             YIMMessage nsMessage = new YIMMessage("UUM",
-                new string[] { (string)(iemu.Current), 
+                new string[] { ((Contact)(iemu.Current)).Mail, 
                 ((int)ClientType.EmailMember).ToString(), 
                 ((uint)TextMessageType.Text).ToString()},
                 NSMessageHandler.Credentials.MsnProtocol);
@@ -108,7 +108,7 @@ namespace MSNPSharp
             iemu.MoveNext();
 
             YIMMessage nsMessage = new YIMMessage("UUM",
-                new string[] { (string)(iemu.Current), 
+                new string[] { ((Contact)(iemu.Current)).Mail, 
                 ((int)ClientType.EmailMember).ToString(), 
                 ((uint)TextMessageType.Typing).ToString()},
                 NSMessageHandler.Credentials.MsnProtocol);
@@ -134,7 +134,7 @@ namespace MSNPSharp
         {
             IEnumerator ienum = Contacts.Keys.GetEnumerator();
             ienum.MoveNext();
-            OnContactLeft(NSMessageHandler.ContactList[(string)(ienum.Current), ClientType.EmailMember]);
+            OnContactLeft(NSMessageHandler.ContactList[((Contact)(ienum.Current)).Mail, ClientType.EmailMember]);
             Close();
         }
 

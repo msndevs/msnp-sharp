@@ -2005,11 +2005,15 @@ namespace MSNPSharp
                     {
                         lock (P2PHandler.SwitchboardSessions)
                         {
-                            foreach (YIMMessageHandler YimHandler in P2PHandler.SwitchboardSessions)
+                            foreach (SBMessageHandler sbMessageHandler in P2PHandler.SwitchboardSessions)
                             {
-                                if (YimHandler.Contacts.ContainsKey(ContactList.GetContact(sender, ClientType.EmailMember)))
+                                if (sbMessageHandler is YIMMessageHandler)
                                 {
-                                    return;  //The handler have been registered, return.
+                                    YIMMessageHandler YimHandler = sbMessageHandler as YIMMessageHandler;
+                                    if (YimHandler.Contacts.ContainsKey(ContactList.GetContact(sender, ClientType.EmailMember)))
+                                    {
+                                        return;  //The handler have been registered, return.
+                                    }
                                 }
                             }
                         }
