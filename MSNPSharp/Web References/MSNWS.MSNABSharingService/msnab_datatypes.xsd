@@ -199,6 +199,7 @@
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="Accepted" />
       <xsd:enumeration value="Pending" />
+      <xsd:enumeration value="Removed" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:complexType name="Annotation">
