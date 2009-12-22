@@ -13,7 +13,8 @@ using System.Diagnostics;
 namespace MSNPSharpClient
 {
     using MSNPSharp;
-    using MSNPSharp.P2P;
+    using MSNPSharp.DataTransfer;
+    using System.Threading;
 
     /// <summary>
     /// Summary description for ConversationForm.
@@ -118,8 +119,8 @@ namespace MSNPSharpClient
 
         public bool CanAttach(Conversation newconvers)
         {
-            if (((_conversation.Type & ConversationType.Chat) == ConversationType.Chat) ||
-               (Visible == true && _conversation.Type == ConversationType.SwitchBoard))
+            if (((_conversation.Type & ConversationType.Chat) == ConversationType.Chat) || 
+                (Visible == true && _conversation.Type == ConversationType.SwitchBoard))
             {
                 if ((newconvers.Type | ConversationType.Chat) == (_conversation.Type | ConversationType.Chat))
                 {
@@ -817,7 +818,6 @@ namespace MSNPSharpClient
                     {
                         if (_firstInvitedContact.ClientType == ClientType.PassportMember)
                         {
-                            /*NEWP2P,TODO,XXX:
                             // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
                             // The MSNSLPHandler makes use of the underlying P2P framework.
                             MSNSLPHandler msnslpHandler = _conversation.Messenger.GetMSNSLPHandler(_firstInvitedContact);
@@ -842,7 +842,6 @@ namespace MSNPSharpClient
                             };
 
                             _firstInvitedContact.ClientData = _firstInvitedContact.DisplayImage;
-                            */
                         }
                     }
                     catch (Exception)
@@ -977,11 +976,9 @@ namespace MSNPSharpClient
                     {
                         foreach (string filename in openFileDialog.FileNames)
                         {
-                            /*NEWP2P,TODO,XXX:
                             MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact);
                             FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
                             P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner, contact, Path.GetFileName(filename), fileStream);
-                            */
                         }
                     }
                 }
@@ -1080,7 +1077,7 @@ namespace MSNPSharpClient
                 cbMessageFontSize.Text = cbMessageFontSize.Tag.ToString();
             }
         }
-        /*NEWP2P,TODO,XXX:
+
         private void MSNSLPHandler_TransferSessionClosed(object sender, P2PTransferSessionEventArgs e)
         {
             if (!richTextHistory.InvokeRequired)
@@ -1092,12 +1089,11 @@ namespace MSNPSharpClient
                 richTextHistory.Invoke(new EventHandler<P2PTransferSessionEventArgs>(MSNSLPHandler_TransferSessionClosed), new object[] { sender,e });
             }
         }
-        */
+
         private void btnActivityTest_Click(object sender, EventArgs e)
         {
             String activityID = "20521364";        //The activityID of Music Mix activity.
             String activityName = "Music Mix";     //Th name of acticvity
-            /*NEWP2P,TODO,XXX:
             MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(_firstInvitedContact);
             P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner, _firstInvitedContact, activityID, activityName);
             session.DataStream = new MemoryStream();
@@ -1107,7 +1103,6 @@ namespace MSNPSharpClient
                 if (ea.TransferSession == session)
                     MSNSLPHandler_TransferSessionClosed(s, ea);
             };
-            */
         }
     }
 };

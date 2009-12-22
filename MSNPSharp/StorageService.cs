@@ -107,7 +107,6 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || NSMessageHandler.ContactService.Deltas == null)
                 return;
-
             if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile == false)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, create profile skipped.");
@@ -452,7 +451,7 @@ namespace MSNPSharp
                         {
                             requesturi = "http://blufiles.storage.msn.com" + requesturi;  //I found it http://byfiles.storage.msn.com is also ok
                         }
-                        
+
                         // Don't urlencode t= :))
                         string usertitleURL = requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2));
                         SyncUserTile(usertitleURL,
@@ -462,7 +461,7 @@ namespace MSNPSharp
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                                
+
                                 SerializableMemoryStream ms = new SerializableMemoryStream();
                                 NSMessageHandler.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.Owner.DisplayImage.Image.RawFormat);
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
@@ -478,7 +477,7 @@ namespace MSNPSharp
                                     SyncUserTile(NSMessageHandler.Owner.UserTile.AbsoluteUri, null, null, null);
                                 }
                             });
-                        
+
                     }
                 }
             }
@@ -552,9 +551,9 @@ namespace MSNPSharp
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags)
         {
-
             NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
             NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
+
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
                 NSMessageHandler.BotMode == false)
@@ -741,7 +740,7 @@ namespace MSNPSharp
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, new profile is saved locally.");
                 return true;
             }
-            
+
             if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {

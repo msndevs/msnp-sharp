@@ -341,16 +341,17 @@ namespace MSNPSharp.IO
         /// </summary>
         public bool HasExpressionProfile
         {
-            get
-            {
-                return hasExpressionProfile;
+            get 
+            { 
+                return hasExpressionProfile; 
             }
 
-            set
-            {
-                hasExpressionProfile = value;
+            set 
+            { 
+                hasExpressionProfile = value; 
             }
         }
+
         /// <summary>
         /// DisplayImage of owner.
         /// </summary>

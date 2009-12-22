@@ -45,11 +45,11 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.P2P;
+    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Handles the protocol messages from the notification server
-    /// and implements protocol version between MSNP18 and MSNP19.
+    /// and implements protocol version MSNP18.
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
@@ -57,11 +57,11 @@ namespace MSNPSharp
 
         #region Members
 
-        private Credentials credentials = new Credentials(MsnProtocol.MSNP19);
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private SocketMessageProcessor messageProcessor;
         private ConnectivitySettings connectivitySettings;
         private IPEndPoint externalEndPoint;
-        /*NEWP2P,TODO,XXX: private P2PHandler p2pHandler;*/
+        private P2PHandler p2pHandler;
 
         private CircleList circleList;
         private ContactGroupList contactGroups;
@@ -96,7 +96,7 @@ namespace MSNPSharp
             storageService = new MSNStorageService(this);
             whatsUpService = new WhatsUpService(this);
 
-            /*NEWP2P,TODO,XXX: p2pHandler = new P2PHandler(this);*/
+            p2pHandler = new P2PHandler(this);
         }
 
         #endregion
@@ -334,7 +334,7 @@ namespace MSNPSharp
                 }
             }
         }
-        /*NEWP2P,TODO,XXX:
+
         /// <summary>
         /// The handler that handles all incoming P2P framework messages.
         /// </summary>
@@ -355,7 +355,7 @@ namespace MSNPSharp
                 p2pHandler = value;
             }
         }
-        */
+
         internal MSNTicket MSNTicket
         {
             get
@@ -683,7 +683,9 @@ namespace MSNPSharp
                 MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.UrlEncode(newName) }));
             }
 
+
             StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
+
         }
 
         /// <summary>
@@ -861,6 +863,11 @@ namespace MSNPSharp
             SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList, true);
         }
 
+        /// <summary>
+        /// Send a PUT command notifying the server we join to a circle(gruop) conversation.
+        /// </summary>
+        /// <param name="circleId"></param>
+        /// <param name="hostDomain"></param>
         internal void JoinCircleConversation(Guid circleId, string hostDomain)
         {
             //Send PUT
@@ -964,7 +971,7 @@ namespace MSNPSharp
 
             (MessageProcessor as NSMessageProcessor).ResetTransactionID();
 
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP19 MSNP18", "CVR0" }));
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18", "CVR0" }));
         }
 
         /// <summary>
@@ -1240,8 +1247,8 @@ namespace MSNPSharp
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
             }
 
-            if (message.InnerBody != null &&
-                account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() &&
+            if (message.InnerBody != null && 
+                account.ToLowerInvariant() == Owner.Mail.ToLowerInvariant() && 
                 type == ClientType.PassportMember &&
                 (!isCircleMember))
             {
@@ -1293,7 +1300,7 @@ namespace MSNPSharp
             }
             else
             {
-
+                
                 Contact contact = null;
 
                 if (!isCircleMember)
@@ -1532,9 +1539,11 @@ namespace MSNPSharp
                         PresenceStatus oldCircleStatus = circle.Status;
                         circle.SetStatus(PresenceStatus.Offline);
 
-                        OnCircleStatusChanged(new CircleStatusChangedEventArgs(circle, oldCircleStatus));
+                        if (CircleStatusChanged != null)
+                            CircleStatusChanged(this, new CircleStatusChangedEventArgs(circle, oldCircleStatus));
 
-                        OnCircleOnline(new CircleEventArgs(circle));
+                        if (CircleOffline != null)
+                            CircleOffline(this, new CircleEventArgs(circle));
                     }
 
                     return;
@@ -1994,7 +2003,6 @@ namespace MSNPSharp
                     if ((!msg.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.TypingUser))   //filter the typing message
                         && ContactList.HasContact(sender, ClientType.EmailMember))
                     {
-                        /*//NEWP2P,TODO,XXX:
                         lock (P2PHandler.SwitchboardSessions)
                         {
                             foreach (SBMessageHandler sbMessageHandler in P2PHandler.SwitchboardSessions)
@@ -2009,18 +2017,17 @@ namespace MSNPSharp
                                 }
                             }
                         }
-                        */
+
                         //YIMMessageHandler not found, we create a new one and register it.
                         YIMMessageHandler switchboard = new YIMMessageHandler();
                         switchboard.NSMessageHandler = this;
 
                         switchboard.MessageProcessor = MessageProcessor;
-                        /*NEWP2P,TODO,XXX:
                         lock (P2PHandler.SwitchboardSessions)
                         {
                             P2PHandler.SwitchboardSessions.Add(switchboard);
                         }
-                        */
+
                         messageProcessor.RegisterHandler(switchboard);
                         OnSBCreated(switchboard, null, sender, sender, false);
 
@@ -3112,7 +3119,7 @@ namespace MSNPSharp
         protected virtual void Clear()
         {
             // 1. Cancel transfers
-            /*NEWP2P,TODO,XXX:p2pHandler.Clear();*/
+            p2pHandler.Clear();
 
             // 2. Cancel web services. MSNTicket must be here.
             msnticket = MSNTicket.Empty;
