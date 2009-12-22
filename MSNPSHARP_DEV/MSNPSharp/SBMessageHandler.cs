@@ -40,7 +40,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.P2P;
+    using MSNPSharp.DataTransfer;
 
     #region Event argument classes
     /// <summary>
@@ -339,7 +339,7 @@ namespace MSNPSharp
                 sessionHash = value;
             }
         }
-        /*NEWP2P,TODO,XXX:
+
         /// <summary>
         /// Implements the P2P framework. This object is automatically created when a succesfull connection was made to the switchboard.
         /// </summary>
@@ -355,7 +355,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Please use Messenger.P2PHandler.");
             }
         }
-        */
+
         #endregion
 
         #region Invitation
@@ -899,7 +899,6 @@ namespace MSNPSharp
                 }
             }
 
-            // Not in contact list (anonymous). Update it's name and caps.
             if (message.CommandValues.Count >= 5)
                 contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
 
@@ -916,6 +915,7 @@ namespace MSNPSharp
                     contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
                 }
             }
+
 
             // Notify the client programmer.
             if (!Contacts.ContainsKey(contact) || Contacts[contact] != ContactConversationState.Joined)
@@ -968,8 +968,6 @@ namespace MSNPSharp
                         }
                     }
                 }
-
-                // Not in contact list (anonymous). Update it's name and caps.
 
                 if (message.CommandValues.Count >= 2)
                     contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[1].ToString()));

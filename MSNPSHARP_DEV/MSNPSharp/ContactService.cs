@@ -369,7 +369,8 @@ namespace MSNPSharp
 
             if (NSMessageHandler.AutoSynchronize)
             {
-                AddressBook.Synchronize(Deltas);
+                AddressBook.Merge(Deltas);
+
                 if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.AddressbookLastChange) == DateTime.MinValue)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
@@ -598,12 +599,12 @@ namespace MSNPSharp
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
                 request.serviceFilter.Types = new string[]
                 {
-                    ServiceFilterType.Messenger,
+                    ServiceFilterType.Messenger/*,
                     ServiceFilterType.Invitation,
                     ServiceFilterType.SocialNetwork,
                     ServiceFilterType.Profile,
                     ServiceFilterType.Folder,
-                    ServiceFilterType.OfficeLiveWebNotification
+                    ServiceFilterType.OfficeLiveWebNotification*/
                 };
 
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
@@ -653,9 +654,8 @@ namespace MSNPSharp
                             else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
                                     "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
-
                                 recursiveCall++;
                                 SynchronizeContactList();
                             }
@@ -752,7 +752,7 @@ namespace MSNPSharp
                                 || (e.Error.Message.Contains("Need to do full sync")))
                             {
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                                  "Need to do full sync of current addressbook list, addressbook list will be request again. Method: ABFindContactsPaged");
+                                    "Need to do full sync of current addressbook list, addressbook list will be request again. Method: ABFindContactsPaged");
 
                                 recursiveCall++;
                                 AddressBook.CircleResults.Clear();
@@ -2574,7 +2574,7 @@ namespace MSNPSharp
                                                                      //We need USR SHA A again
                                                                      NSMessageHandler.SendCircleNotifyADL(circle.AddressBookId, circle.HostDomain, circle.Lists, false);
 
-                                                                     AddressBook.Synchronize(Deltas);
+                                                                     AddressBook.Merge(Deltas);
                                                                      AddressBook.Save();
                                                                      Deltas.Truncate();
 

@@ -301,10 +301,6 @@ namespace MSNPSharp
         protected MSNService(NSMessageHandler nsHandler)
         {
             nsMessageHandler = nsHandler;
-            if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-            {
-                webProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-            }
         }
 
         #region Properties
@@ -321,6 +317,11 @@ namespace MSNPSharp
         {
             get
             {
+                if (NSMessageHandler.ConnectivitySettings != null && NSMessageHandler.ConnectivitySettings.WebProxy != null)
+                {
+                    webProxy = NSMessageHandler.ConnectivitySettings.WebProxy;
+                }
+
                 return webProxy;
             }
         }
