@@ -527,14 +527,14 @@ namespace MSNPSharp
                 if (userstate == null)
                     userstate = new OIMUserState(contact.OIMCount, account);
 
-                string name48 = NSMessageHandler.Owner.Name;
+                string name48 = NSMessageHandler.ContactList.Owner.Name;
                 if (name48.Length > 48)
                     name48 = name48.Substring(47);
 
                 MsnServiceState storeObject = new MsnServiceState(PartnerScenario.None, "Store", true);
                 OIMStoreService oimService = (OIMStoreService)CreateService(MsnServiceType.OIMStore, storeObject);
                 oimService.FromValue = new From();
-                oimService.FromValue.memberName = NSMessageHandler.Owner.Mail;
+                oimService.FromValue.memberName = NSMessageHandler.ContactList.Owner.Mail;
                 oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
                 oimService.FromValue.buildVer = "8.5.1302";
                 oimService.FromValue.msnpVer = "MSNP15";
@@ -564,7 +564,7 @@ namespace MSNPSharp
                             contact.OIMCount++; // Sent successfully.
                             OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
-                                NSMessageHandler.Owner.Mail,
+                                NSMessageHandler.ContactList.Owner.Mail,
                                 userstate.account,
                                 userstate.oimcount,
                                 msg,
@@ -597,7 +597,7 @@ namespace MSNPSharp
 
                         OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
-                                NSMessageHandler.Owner.Mail,
+                                NSMessageHandler.ContactList.Owner.Mail,
                                 userstate.account,
                                 userstate.oimcount,
                                 msg,
@@ -651,7 +651,7 @@ namespace MSNPSharp
 
             OnOIMSendCompleted(this,
                             new OIMSendCompletedEventArgs(
-                            NSMessageHandler.Owner.Mail,
+                            NSMessageHandler.ContactList.Owner.Mail,
                             receiver.Mail,
                             0,
                             msg.Text,

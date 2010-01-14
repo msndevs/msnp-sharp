@@ -1086,6 +1086,13 @@ namespace MSNPSharp
         /// The extended-flags property of join circle invation email notification message.
         /// </summary>
         public const string InvitationEmailExtendedFlags = "ab=0|i=0|e=0";
+
+        public const string InvitationEmailExtendedFlagsByWeb = "ab=0|i=51|e=0";
+
+        /// <summary>
+        /// The "via" property string of a circle group member. The value of this constant is ";via=9:".
+        /// </summary>
+        public const string ViaCircleGroupSplitter = @";via=9:";
     }
 
     /// <summary>
@@ -1094,9 +1101,9 @@ namespace MSNPSharp
     public static class WebServiceConstants
     {
         /// <summary>
-        /// The messenger default addressbook Id: 00000000-0000-0000-0000-000000000000.
+        /// The messenger's default addressbook Id: 00000000-0000-0000-0000-000000000000.
         /// </summary>
-        public const string MessengerAddressBookId = "00000000-0000-0000-0000-000000000000";
+        public const string MessengerIndividualAddressBookId = "00000000-0000-0000-0000-000000000000";
 
         /// <summary>
         /// The guid for messenger group(not circle): C8529CE2-6EAD-434d-881F-341E17DB3FF8.
@@ -1189,12 +1196,32 @@ namespace MSNPSharp
         public const string Live_Passport_Birthdate = "Live.Passport.Birthdate";
     }
 
-    public static class CirclePersonalMembershipRole
+    /// <summary>
+    /// The relationship between a contact and circle.
+    /// </summary>
+    public enum CirclePersonalMembershipRole: int
     {
-        public const string Admin = "Admin";
-        public const string AssistantAdmin = "AssistantAdmin";
-        public const string Member = "Member";
-        public const string StatePendingOutbound = "StatePendingOutbound";
+        None = 0,
+
+        /// <summary>
+        /// The contact is the circle admin, the value of RelationshipRole field in NetworkInfoType is 1.
+        /// </summary>
+        Admin = 1,
+
+        /// <summary>
+        /// The contact is a circle co-admin, the value of RelationshipRole field in NetworkInfoType is 2.
+        /// </summary>
+        AssistantAdmin = 2,
+
+        /// <summary>
+        /// The contact is a circle member, the value of RelationshipRole field in NetworkInfoType is 3.
+        /// </summary>
+        Member = 3,
+
+        /// <summary>
+        /// The contact is pending to the circle, the value of RelationshipRole field in NetworkInfoType is 4.
+        /// </summary>
+        StatePendingOutbound = 4
     }
 
     /// <summary>
@@ -1250,5 +1277,180 @@ namespace MSNPSharp
         public const string Uri = "Uri";
 
     }
+
+    /// <summary>
+    /// The type of addressbook.
+    /// </summary>
+    public static class AddressBookType
+    {
+        /// <summary>
+        /// Circle.
+        /// </summary>
+        public const string Group = "Group";
+
+        /// <summary>
+        /// Default addressbook.
+        /// </summary>
+        public const string Individual = "Individual";
+    }
+
+    /// <summary>
+    /// The parse option for full account identifier.
+    /// </summary>
+    internal enum AccountParseOption
+    {
+        None = 0,
+
+        /// <summary>
+        /// Tell the parser this is a full circle account. For example: 1:user@hotmail.com;via=9:guid@live.com
+        /// </summary>
+        ParseAsFullCircleAccount = 1,
+
+        /// <summary>
+        /// Tell the parser this is a client type and account combination. For example: 1:user@hotmail.com
+        /// </summary>
+        ParseAsClientTypeAndAccount = 2
+    }
+
+    internal enum ReturnState: uint
+    {
+        None = 0,
+        ProcessNextContact = 1,
+        RequestCircleAddressBook = 2,
+
+        /// <summary>
+        /// Tell the caller initialize the circle first, then recall the UpdateContact with Recall scenario.
+        /// </summary>
+        LoadAddressBookFromFile = 4,
+
+        UpdateError = 5
+    }
+
+    public enum Scenario: uint
+    {
+        None = 0,
+
+        /// <summary>
+        /// Restoring contacts from mcl file.
+        /// </summary>
+        Restore = 1,
+        Initial = 2,
+        DeltaRequest = 4,
+
+        /// <summary>
+        /// Processing the new added circles.
+        /// </summary>
+        NewCircles = 8,
+
+        /// <summary>
+        /// Processing the modified circles.
+        /// </summary>
+        ModifiedCircles = 16,
+
+        /// <summary>
+        /// Send the initial ADL command for contacts.
+        /// </summary>
+        SendInitialContactsADL = 32,
+
+        /// <summary>
+        /// Send the initial ADL command for circles.
+        /// </summary>
+        SendInitialCirclesADL = 64
+    }
+
+    internal static class DomainIds
+    {
+        /// <summary>
+        /// Domain id for Windows Live addressbook
+        /// </summary>
+        public const int WLDomain = 1;
+
+        /// <summary>
+        /// Domain ID for FaceBook.
+        /// </summary>
+        public const int FBDomain = 7;
+        public const int ZUNEDomain = 3;
+    }
+
+    /// <summary>
+    /// The addressbook relationship types.
+    /// </summary>
+    internal static class RelationshipTypes
+    {
+        /// <summary>
+        /// The network info relationship is for individual addressbook (default addressbook).
+        /// </summary>
+        public const int IndividualAddressBook = 3;
+
+        /// <summary>
+        /// The network info relationship is for group addressbook (circle addressbook).
+        /// </summary>
+        public const int CircleGroup = 5;
+    }
+
+    /// <summary>
+    /// Indicates the status of  contact in an addressbook.
+    /// </summary>
+    internal enum RelationshipState : uint
+    {
+        None = 0,
+
+        /// <summary>
+        /// The remote circle owner invite you to join,, pending your response.
+        /// </summary>
+        WaitingResponse = 1,
+
+        /// <summary>
+        /// The contact is deleted by one of the domain owners.
+        /// </summary>
+        Left = 2,
+
+        /// <summary>
+        /// The contact is in the circle's addressbook list.
+        /// </summary>
+        Accepted = 3,
+
+        /// <summary>
+        /// The contact already left the circle.
+        /// </summary>
+        Rejected = 4
+    }
+
+    #region Enums: MsnServiceType and PartnerScenario
+
+    public enum MsnServiceType
+    {
+        AB,
+        Sharing,
+        Storage,
+        RSI,
+        OIMStore,
+        WhatsUp
+    }
+
+    public enum PartnerScenario
+    {
+        None,
+        Initial,
+        Timer,
+        BlockUnblock,
+        GroupSave,
+        ContactSave,
+        ContactMsgrAPI,
+        MessengerPendingList,
+        PrivacyApply,
+        NewCircleDuringPull,
+        CircleInvite,
+        CircleIdAlert,
+        CircleStatus,
+        CircleSave,
+        CircleLeave,
+        JoinedCircleDuringPush,
+        ABChangeNotifyAlert,
+        RoamingSeed,
+        RoamingIdentityChanged
+    }
+
+    #endregion
 
 };

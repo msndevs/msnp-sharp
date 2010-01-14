@@ -50,13 +50,35 @@ namespace MSNPSharp
         [NonSerialized]
         private object syncRoot;
 
+        private Guid addressBookId = Guid.Empty;
+        private Owner owner = null;
+
         private ContactList()
         {
         }
 
-        public ContactList(NSMessageHandler handler)
+        private void Initialize(NSMessageHandler handler, Owner owner)
         {
             nsMessageHandler = handler;
+            this.owner = owner;
+        }
+
+        public ContactList(NSMessageHandler handler)
+        {
+            addressBookId = new Guid(WebServiceConstants.MessengerIndividualAddressBookId);
+            nsMessageHandler = handler;
+        }
+
+        public ContactList(string abId, Owner owner, NSMessageHandler handler)
+        {
+            addressBookId = new Guid(abId);
+            Initialize(handler, owner);
+        }
+
+        public ContactList(Guid abId, Owner owner, NSMessageHandler handler)
+        {
+            addressBookId = abId;
+            Initialize(handler, owner);
         }
 
         #region ListEnumerators
@@ -214,6 +236,28 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// The addressbook identifier of this addressbook.
+        /// </summary>
+        public Guid AddressBookId
+        {
+            get
+            {
+                return addressBookId;
+            }
+        }
+
+        /// <summary>
+        /// The owner of the contactlist. This is the identity that logged into the messenger network.
+        /// </summary>
+        public Owner Owner
+        {
+            get
+            {
+                return owner;
+            }
+        }
+
+        /// <summary>
         /// Get the specified contact.
         /// <remarks>If the contact does not exist, return null</remarks>
         /// </summary>
@@ -300,16 +344,13 @@ namespace MSNPSharp
         /// </returns>
         internal Contact GetContact(string account, ClientType type)
         {
-            int hash = Contact.MakeHash(account, type).GetHashCode();
+            int hash = Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode();
             if (ContainsKey(hash))
             {
                 return this[hash];
             }
 
-            Contact tmpContact = new Contact(nsMessageHandler);
-            tmpContact.Mail = account;
-            tmpContact.ClientType = type;
-            tmpContact.SetName(account);
+            Contact tmpContact = new Contact(AddressBookId, account, type, nsMessageHandler);
 
             lock (SyncRoot)
                 Add(hash, tmpContact);
@@ -396,13 +437,27 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool HasContact(string account, ClientType type)
         {
-            return ContainsKey(Contact.MakeHash(account, type).GetHashCode());
+            return ContainsKey(Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode());
         }
 
         public void CopyTo(Contact[] array, int index)
         {
             lock (SyncRoot)
                 Values.CopyTo(array, index);
+        }
+
+        /// <summary>
+        /// Copy the whole contact list out.
+        /// </summary>
+        /// <returns></returns>
+        public Contact[] ToArray()
+        {
+            lock (SyncRoot)
+            {
+                Contact[] array = new Contact[Values.Count];
+                CopyTo(array, 0);
+                return array;
+            }
         }
 
         /// <summary>
@@ -427,8 +482,32 @@ namespace MSNPSharp
         {
             lock (SyncRoot)
             {
-                Remove(Contact.MakeHash(account, type).GetHashCode());
+                Remove(Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode());
             }
+        }
+
+        /// <summary>
+        /// Set the owner for default addressbook. This funcation can be only called once.
+        /// </summary>
+        /// <param name="owner"></param>
+        internal void SetOwner(Owner owner)
+        {
+            if (AddressBookId != new Guid(WebServiceConstants.MessengerIndividualAddressBookId))
+            {
+                throw new InvalidOperationException("Only default addressbook can call this function.");
+            }
+
+            if (Owner != null)
+            {
+                throw new InvalidOperationException("Owner already set.");
+            }
+
+            if (owner.AddressBookId != new Guid(WebServiceConstants.MessengerIndividualAddressBookId))
+            {
+                throw new InvalidOperationException("Invalid owner: This is not the owner for default addressbook.");
+            }
+
+            this.owner = owner;
         }
 
         public bool HasMultiType(string account)
@@ -440,6 +519,23 @@ namespace MSNPSharp
                     return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// Reset the contact list and clear the owner.
+        /// </summary>
+        public void Reset()
+        {
+            if (Owner != null)
+            {
+                Owner.Emoticons.Clear();
+                Owner.Places.Clear();
+                Owner.ClientCapacities = ClientCapacities.None;
+                Owner.ClientCapacitiesEx = ClientCapacitiesEx.None;
+            }
+
+            Clear();
+            owner = null;
         }
     }
 };

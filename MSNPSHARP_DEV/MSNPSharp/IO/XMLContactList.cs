@@ -53,6 +53,9 @@ namespace MSNPSharp.IO
         [NonSerialized]
         private bool initialized = false;
 
+        [NonSerialized]
+        private int requestCircleCount = 0;
+
         public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
             return (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), handler, useCache);
@@ -72,7 +75,7 @@ namespace MSNPSharp.IO
 
             // Create Memberships
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms =
-                GetTargetMemberships(ServiceFilterType.Messenger);
+                SelectTargetMemberships(ServiceFilterType.Messenger);
 
             if (ms != null)
             {
@@ -81,7 +84,7 @@ namespace MSNPSharp.IO
                     MSNLists msnlist = NSMessageHandler.ContactService.GetMSNList(role);
                     foreach (BaseMember bm in ms[role].Values)
                     {
-                        long? cid = null;
+                        long cid = 0;
                         string account = null;
                         ClientType type = ClientType.None;
 
@@ -117,6 +120,7 @@ namespace MSNPSharp.IO
                 }
             }
 
+
             #region Create Groups
 
             foreach (GroupType group in Groups.Values)
@@ -126,55 +130,53 @@ namespace MSNPSharp.IO
 
             #endregion
 
-            #region Create Circles
+            #region Restore CID contact table
 
-            foreach (CircleInfo circle in CircleResults.Values)
+            foreach (string abId in AddressbookContacts.Keys)
             {
-                /* .Deleted is not valid here... Move it to Merge(FindMembershipResultType)
-                if (circle.CircleResultInfo.Deleted)
-                {
-                    NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.CircleResultInfo.Content.Handle.Id), circle.CircleResultInfo.Content.Info.HostedDomain);
-                }
-                else
-                 * */
-                {
-                    Circle newcircle = CombineCircle(circle.CircleMember, circle.CircleResultInfo);
-                    CircleInviter initator = CombineCircleInviter(circle.CircleMember);
+                ContactType[] contactList = new ContactType[AddressbookContacts[abId].Count];
 
-                    if (NSMessageHandler.CircleList[newcircle.Mail] == null)
-                    {
-                        if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
-                        {
-                            NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArgs(newcircle, initator));
-                            continue;
-                        }
-                        else
-                        {
-                            NSMessageHandler.CircleList.AddCircle(newcircle);
-                        }
-                    }
-                }
-
-                string id = circle.CircleResultInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circle.CircleResultInfo.Content.Info.HostedDomain;
-                MSNLists list = NSMessageHandler.ContactService.GetMSNList(circle.MemberRole);
-
-                NSMessageHandler.CircleList[id].AddToList(list);
-
-                if (list == MSNLists.BlockedList)
-                    NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.AllowedList);
-
-                if (list == MSNLists.AllowedList)
-                    NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.BlockedList);
+                AddressbookContacts[abId].Values.CopyTo(contactList, 0);
+                SaveContactTable(contactList);
             }
 
             #endregion
 
-            // Create the Forward List and Email Contacts
-            foreach (ContactType contactType in AddressbookContacts.Values)
+            #region Restore Circles
+
+            RestoreWLConnections();
+            long[] CIDs = FilterWLConnections(new List<long>(WLConnections.Keys), RelationshipState.Accepted);
+            RestoreCircles(CIDs, RelationshipState.Accepted);
+            CIDs = FilterWLConnections(new List<long>(WLConnections.Keys), RelationshipState.WaitingResponse);
+            RestoreCircles(CIDs, RelationshipState.WaitingResponse);
+
+            #endregion
+
+            #region Restore default addressbook
+            if (AddressbookContacts.ContainsKey(WebServiceConstants.MessengerIndividualAddressBookId))
             {
-                UpdateContact(contactType);
+                SerializableDictionary<Guid, ContactType> defaultPage = AddressbookContacts[WebServiceConstants.MessengerIndividualAddressBookId];
+                foreach (ContactType contactType in defaultPage.Values)
+                {
+                    ReturnState updateResult = UpdateContact(contactType); //Restore contatcs.
+                    switch (updateResult)
+                    {
+                        case ReturnState.UpdateError:
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[Initialize Error]: update contact error.");
+                            break;
+
+                    }
+                }
             }
 
+            #endregion
+
+        }
+
+        private bool IsContactTableEmpty()
+        {
+            lock (contactTable)
+                return contactTable.Count == 0;
         }
 
         #region New MembershipList
@@ -208,7 +210,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        internal Service GetTargetService(string type)
+        internal Service SelectTargetService(string type)
         {
             if (MembershipList.ContainsKey(type))
                 return MembershipList[type].Service;
@@ -216,7 +218,7 @@ namespace MSNPSharp.IO
             return null;
         }
 
-        internal SerializableDictionary<string, SerializableDictionary<string, BaseMember>> GetTargetMemberships(string serviceFilterType)
+        internal SerializableDictionary<string, SerializableDictionary<string, BaseMember>> SelectTargetMemberships(string serviceFilterType)
         {
             if (MembershipList.ContainsKey(serviceFilterType))
                 return MembershipList[serviceFilterType].Memberships;
@@ -226,22 +228,22 @@ namespace MSNPSharp.IO
 
         public void AddMemberhip(string servicetype, string account, ClientType type, string memberrole, BaseMember member)
         {
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             if (ms != null)
             {
                 if (!ms.ContainsKey(memberrole))
                     ms.Add(memberrole, new SerializableDictionary<string, BaseMember>(0));
 
-                ms[memberrole][Contact.MakeHash(account, type)] = member;
+                ms[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)] = member;
             }
         }
 
         public void RemoveMemberhip(string servicetype, string account, ClientType type, string memberrole)
         {
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             if (ms != null)
             {
-                string hash = Contact.MakeHash(account, type);
+                string hash = Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId);
                 if (ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
                 {
                     ms[memberrole].Remove(hash);
@@ -249,21 +251,220 @@ namespace MSNPSharp.IO
             }
         }
 
-        public bool HasMemberhip(string servicetype, string account, ClientType type, string memberrole)
+        /// <summary>
+        /// Try to remove a contact from a specific addressbook.
+        /// </summary>
+        /// <param name="abId">The specific addressbook identifier.</param>
+        /// <param name="contactId">The contact identifier.</param>
+        /// <returns>If the contact exists and removed successfully, return true, else return false.</returns>
+        internal bool RemoveContactFromAddressBook(Guid abId, Guid contactId)
         {
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
-            return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
+            return RemoveContactFromAddressBook(abId.ToString("D"), contactId);
         }
 
-        public BaseMember GetBaseMember(string servicetype, string account, ClientType type, string memberrole)
+        /// <summary>
+        /// Try to remove a contact from a specific addressbook.
+        /// </summary>
+        /// <param name="abId">The specific addressbook identifier.</param>
+        /// <param name="contactId">The contact identifier.</param>
+        /// <returns>If the contact exists and removed successfully, return true, else return false.</returns>
+        internal bool RemoveContactFromAddressBook(string abId, Guid contactId)
         {
-            string hash = Contact.MakeHash(account, type);
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = GetTargetMemberships(servicetype);
+            string lowerId = abId.ToLowerInvariant();
+            lock (AddressbookContacts)
+            {
+                if (AddressbookContacts.ContainsKey(lowerId))
+                {
+                    if (AddressbookContacts[lowerId].ContainsKey(contactId))
+                    {
+                        return AddressbookContacts[lowerId].Remove(contactId);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+
+        private bool RemoveContactFromContactTable(long CID)
+        {
+            lock (contactTable)
+                return contactTable.Remove(CID);
+        }
+
+        /// <summary>
+        /// Remove an item in AddressBooksInfo property by giving an addressbook Id.
+        /// </summary>
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        private bool RemoveAddressBookInfo(string abId)
+        {
+
+            lock (AddressBooksInfo)
+                return AddressBooksInfo.Remove(abId.ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// Remove an item from AddressbookContacts property.
+        /// </summary>
+        /// <param name="abId">The addressbook page of a specified contact page.</param>
+        /// <returns></returns>
+        private bool RemoveAddressBookContatPage(string abId)
+        {
+            lock (AddressbookContacts)
+            {
+                return AddressbookContacts.Remove(abId.ToLowerInvariant());
+            }
+        }
+
+        /// <summary>
+        /// Add or update a contact in the specific address book.
+        /// </summary>
+        /// <param name="abId">The identifier of addressbook.</param>
+        /// <param name="contact">The contact to be added/updated.</param>
+        /// <returns>If the contact added to the addressbook, returen true, if the contact is updated (not add), return false.</returns>
+        internal bool SetContactToAddressBookContactPage(string abId, ContactType contact)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            bool returnval = false;
+
+            lock (AddressbookContacts)
+            {
+                if (!AddressbookContacts.ContainsKey(lowerId))
+                {
+                    AddressbookContacts.Add(lowerId, new SerializableDictionary<Guid, ContactType>());
+                    returnval = true;
+                }
+
+                AddressbookContacts[lowerId][new Guid(contact.contactId)] = contact;
+            }
+
+            return returnval;
+        }
+
+        private bool SetAddressBookInfoToABInfoList(string abId, ABFindContactsPagedResultTypeAB abInfo)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            if (AddressBooksInfo == null)
+                return false;
+
+            lock (AddressBooksInfo)
+                AddressBooksInfo[lowerId] = abInfo;
+            return true;
+        }
+
+
+        private bool HasContact(long CID)
+        {
+            lock (contactTable)
+                return contactTable.ContainsKey(CID);
+        }
+
+        private bool HasWLConnection(long CID)
+        {
+            lock (WLConnections)
+                return WLConnections.ContainsKey(CID);
+        }
+
+        private bool HasWLConnection(string abId)
+        {
+            lock (WLInverseConnections)
+            {
+                return WLInverseConnections.ContainsKey(abId);
+            }
+        }
+
+        /// <summary>
+        /// Check whether we've saved the specified addressbook.
+        /// </summary>
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        private bool HasAddressBook(string abId)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            if (AddressBooksInfo == null)
+                return false;
+
+            lock (AddressBooksInfo)
+                return AddressBooksInfo.ContainsKey(lowerId);
+        }
+
+        /// <summary>
+        /// Check whether the specific contact page exist.
+        /// </summary>
+        /// <param name="abId">The addressbook identifier of a specific contact page.</param>
+        /// <returns></returns>
+        private bool HasAddressBookContactPage(string abId)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            if (AddressbookContacts == null)
+                return false;
+
+            bool returnValue = false;
+
+            lock (AddressbookContacts)
+            {
+                if (AddressbookContacts.ContainsKey(lowerId))
+                {
+                    if (AddressbookContacts[lowerId] != null)
+                    {
+                        returnValue = true;
+                    }
+                }
+            }
+
+            return returnValue;
+        }
+
+        internal bool HasContact(string abId, Guid contactId)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            lock (AddressbookContacts)
+            {
+                if (!AddressbookContacts.ContainsKey(lowerId))
+                    return false;
+
+                return AddressbookContacts[lowerId].ContainsKey(contactId);
+            }
+        }
+
+        private bool HasMemberhip(string servicetype, string account, ClientType type, string memberrole)
+        {
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
+            return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId));
+        }
+
+        /// <summary>
+        /// Get a basemember from membership list.
+        /// </summary>
+        /// <param name="servicetype"></param>
+        /// <param name="account"></param>
+        /// <param name="type"></param>
+        /// <param name="memberrole"></param>
+        /// <returns>If the member not exist, return null.</returns>
+        public BaseMember SelectBaseMember(string servicetype, string account, ClientType type, string memberrole)
+        {
+            string hash = Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId);
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             if ((ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
             {
                 return ms[memberrole][hash];
             }
             return null;
+        }
+
+        /// <summary>
+        /// Get a contact from a specific addressbook by providing the addressbook identifier and contact identifier.
+        /// </summary>
+        /// <param name="abId">The addressbook identifier.</param>
+        /// <param name="contactId">The contactidentifier.</param>
+        /// <returns>If the contact exist, return the contact object, else return null.</returns>
+        internal ContactType SelectContactFromAddressBook(string abId, Guid contactId)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            if (!HasContact(abId, contactId))
+                return null;
+            return AddressbookContacts[lowerId][contactId];
         }
 
         public virtual void Add(
@@ -302,6 +503,125 @@ namespace MSNPSharp.IO
             }
         }
 
+        /// <summary>
+        /// Get the hidden representative's CID by providing addressbook Id from the inverse connection list.
+        /// </summary>
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        private long SelectWLConnection(string abId)
+        {
+            if (string.IsNullOrEmpty(abId))
+                return long.MinValue;
+
+            string lowerId = abId.ToLowerInvariant();
+            if (!HasWLConnection(lowerId))
+                return long.MinValue;
+
+            lock (WLInverseConnections)
+                return WLInverseConnections[lowerId];
+
+        }
+
+        private string SelectWLConnection(long CID)
+        {
+            if (HasWLConnection(CID))
+            {
+                lock (WLConnections)
+                    return WLConnections[CID];
+            }
+
+            return string.Empty;
+        }
+
+        private string[] SelectWLConnection(List<long> CIDs, RelationshipState state)
+        {
+            List<string> abIds = new List<string>(0);
+
+            lock (WLConnections)
+            {
+                foreach (long CID in CIDs)
+                {
+                    if (HasWLConnection(CID) && HasContact(CID))
+                    {
+                        string abId = WLConnections[CID];
+                        ContactType contact = SelecteContact(CID);
+
+                        if (state == RelationshipState.None)
+                        {
+                            abIds.Add(abId);
+                        }
+                        else
+                        {
+                            if (GetCircleMemberRelationshipStateFromNetworkInfo(contact.contactInfo.NetworkInfoList) == state)
+                                abIds.Add(abId);
+                        }
+                        
+                    }
+                }
+            }
+
+            return abIds.ToArray();
+        }
+
+        private long[] FilterWLConnections(List<long> CIDs, RelationshipState state)
+        {
+            List<long> returnValues = new List<long>(0);
+
+
+            foreach (long CID in CIDs)
+            {
+                if (HasWLConnection(CID) && HasContact(CID))
+                {
+                    ContactType contact = SelecteContact(CID);
+
+                    if (state == RelationshipState.None)
+                    {
+                        returnValues.Add(CID);
+                    }
+                    else
+                    {
+                        RelationshipState representativeRelationshipState = GetCircleMemberRelationshipStateFromNetworkInfo(contact.contactInfo.NetworkInfoList);
+                        if (representativeRelationshipState == state)
+                            returnValues.Add(CID);
+                    }
+
+                }
+            }
+
+            return returnValues.ToArray();
+        }
+
+        private CircleInverseInfoType SelectCircleInverseInfo(string abId)
+        {
+            if (string.IsNullOrEmpty(abId))
+                return null;
+
+            abId = abId.ToLowerInvariant();
+
+            lock (CircleResults)
+            {
+                if (!CircleResults.ContainsKey(abId))
+                    return null;
+                return CircleResults[abId];
+            }
+        }
+
+        /// <summary>
+        /// Get a hidden representative for a addressbook by CID.
+        /// </summary>
+        /// <param name="CID"></param>
+        /// <returns></returns>
+        private ContactType SelecteContact(long CID)
+        {
+            if (!HasContact(CID))
+            {
+                return null;
+            }
+
+            lock (contactTable)
+                return contactTable[CID];
+        }
+
         public XMLContactList Merge(DeltasList deltas)
         {
             Initialize();
@@ -335,7 +655,7 @@ namespace MSNPSharp.IO
             {
                 foreach (ServiceType serviceType in findMembership.Services)
                 {
-                    Service oldService = GetTargetService(serviceType.Info.Handle.Type);
+                    Service oldService = SelectTargetService(serviceType.Info.Handle.Type);
 
                     if (oldService == null ||
                         WebServiceDateTimeConverter.ConvertToDateTime(oldService.LastChange)
@@ -377,7 +697,7 @@ namespace MSNPSharp.IO
 
                                             foreach (BaseMember bm in members)
                                             {
-                                                long? cid = null;
+                                                long cid = 0;
                                                 string account = null;
                                                 ClientType type = ClientType.None;
 
@@ -425,7 +745,7 @@ namespace MSNPSharp.IO
                                                         if (type != ClientType.CircleMember)
                                                         {
                                                             if (HasMemberhip(updatedService.ServiceType, account, type, memberrole) &&
-                                                                WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
+                                                                WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged)
                                                                 < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
                                                             {
                                                                 RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
@@ -461,9 +781,9 @@ namespace MSNPSharp.IO
                                                         if (type != ClientType.CircleMember)
                                                         {
                                                             if (false == MembershipList[updatedService.ServiceType].Memberships.ContainsKey(memberrole) ||
-                                                                /*new*/ false == MembershipList[updatedService.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type)) ||
+                                                                /*new*/ false == MembershipList[updatedService.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)) ||
                                                                 /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
-                                                                > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged))
+                                                                > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged))
                                                             {
                                                                 AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
                                                             }
@@ -577,17 +897,6 @@ namespace MSNPSharp.IO
             return this;
         }
 
-        /// <summary>
-        /// Merge changes into membership list and add membership contacts
-        /// </summary>
-        /// <param name="xmlcl"></param>
-        /// <param name="findMembership"></param>
-        /// <returns></returns>
-        public static XMLContactList operator +(XMLContactList xmlcl, FindMembershipResultType findMembership)
-        {
-            return xmlcl.Merge(findMembership);
-        }
-
         private static int CompareBaseMembers(BaseMember x, BaseMember y)
         {
             return x.LastChanged.CompareTo(y.LastChanged);
@@ -598,16 +907,57 @@ namespace MSNPSharp.IO
 
         #region Addressbook
 
-        string abLastChange = WebServiceConstants.ZeroTime;
-
+        SerializableDictionary<string, ABFindContactsPagedResultTypeAB> abInfos = new SerializableDictionary<string, ABFindContactsPagedResultTypeAB>();
         SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
-        SerializableDictionary<Guid, ContactType> abcontacts = new SerializableDictionary<Guid, ContactType>(0);
-        SerializableDictionary<string, CircleInfo> circleResults = new SerializableDictionary<string, CircleInfo>(0);
+        SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> abcontacts = new SerializableDictionary<string, SerializableDictionary<Guid, ContactType>>(0);
 
+        SerializableDictionary<string, CircleInverseInfoType> circleResults = new SerializableDictionary<string, CircleInverseInfoType>(0);
+        SerializableDictionary<long, string> wlConnections = new SerializableDictionary<long, string>(0);
+
+        SerializableDictionary<string, ContactType> hiddenRepresentatives = new SerializableDictionary<string, ContactType>(0);
         SerializableDictionary<string, List<CircleMember>> circlesMembership = new SerializableDictionary<string, List<CircleMember>>(0);
 
-        public SerializableDictionary<string, CircleInfo> CircleResults
+        [NonSerialized]
+        Dictionary<long, ContactType> contactTable = new Dictionary<long, ContactType>();
+
+        [NonSerialized]
+        Dictionary<string, long> wlInverseConnections = new Dictionary<string, long>();
+
+        /// <summary>
+        /// The relationship mapping from addressbook Ids to hidden represtative's CIDs.
+        /// </summary>
+        internal Dictionary<string, long> WLInverseConnections
+        {
+            get 
+            { 
+                return wlInverseConnections; 
+            }
+        }
+
+        public SerializableDictionary<string, ContactType> HiddenRepresentatives
+        {
+            get { return hiddenRepresentatives; }
+            set { hiddenRepresentatives = value; }
+        }
+
+        /// <summary>
+        /// The relationship mapping from hidden represtative's CIDs to addressbook Ids.
+        /// </summary>
+        public SerializableDictionary<long, string> WLConnections
+        {
+            get 
+            { 
+                return wlConnections; 
+            }
+
+            set 
+            { 
+                wlConnections = value; 
+            }
+        }
+
+        public SerializableDictionary<string, CircleInverseInfoType> CircleResults
         {
             get
             {
@@ -619,17 +969,93 @@ namespace MSNPSharp.IO
             }
         }
 
-        [XmlElement("AddressbookLastChange")]
-        public string AddressbookLastChange
+        [XmlElement("AddressBooksInfo")]
+        public SerializableDictionary<string, ABFindContactsPagedResultTypeAB> AddressBooksInfo
         {
             get
             {
-                return abLastChange;
+                return abInfos;
             }
+
             set
             {
-                abLastChange = value;
+                abInfos = value;
             }
+        }
+
+        /// <summary>
+        /// Get the last changed date of a specific addressbook.
+        /// </summary>
+        /// <param name="abId">The Guid of AddreessBook.</param>
+        /// <returns></returns>
+        internal string GetAddressBookLastChange(Guid abId)
+        {
+            return GetAddressBookLastChange(abId.ToString("D"));
+
+        }
+
+        /// <summary>
+        /// Get the last changed date of a specific addressbook.
+        /// </summary>
+        /// <param name="abId">The Guid of AddreessBook.</param>
+        /// <returns></returns>
+        internal string GetAddressBookLastChange(string abId)
+        {
+            string lowerId = abId.ToLowerInvariant();
+
+            if (HasAddressBook(lowerId))
+            {
+                lock (AddressBooksInfo)
+                    return AddressBooksInfo[lowerId].lastChange;
+            }
+
+            return WebServiceConstants.ZeroTime;
+        }
+
+        /// <summary>
+        /// Set information for a specific addressbook.
+        /// </summary>
+        /// <param name="abId">AddressBook guid.</param>
+        /// <param name="abHeader">The addressbook info.</param>
+        internal void SetAddressBookInfo(Guid abId, ABFindContactsPagedResultTypeAB abHeader)
+        {
+            SetAddressBookInfo(abId.ToString("D"), abHeader);
+        }
+
+        /// <summary>
+        /// Set information for a specific addressbook.
+        /// </summary>
+        /// <param name="abId">AddressBook guid.</param>
+        /// <param name="abHeader">The addressbook info.</param>
+        internal void SetAddressBookInfo(string abId, ABFindContactsPagedResultTypeAB abHeader)
+        {
+            string lowerId = abId.ToLowerInvariant();
+
+            string compareTime = GetAddressBookLastChange(lowerId);
+
+            try
+            {
+                
+                DateTime oldTime = WebServiceDateTimeConverter.ConvertToDateTime(compareTime);
+                DateTime newTime = WebServiceDateTimeConverter.ConvertToDateTime(abHeader.lastChange);
+                if (oldTime >= newTime)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Update addressbook information skipped, abId: " +
+                    abId + ", LastChange: " + abHeader.lastChange + ", compared with: " + compareTime);
+                    return;  //Not necessary to update.
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while setting AddressBook LastChange property, abId: " +
+                    abId + ", LastChange: " + abHeader.lastChange + "\r\nError message: " + ex.Message);
+                return;
+            }
+
+            SetAddressBookInfoToABInfoList(lowerId, abHeader);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Update addressbook information succeed, abId: " +
+                    abId + ", LastChange: " + abHeader.lastChange + ", compared with: " + compareTime);
         }
 
 
@@ -658,7 +1084,11 @@ namespace MSNPSharp.IO
             }
         }
 
-        public SerializableDictionary<Guid, ContactType> AddressbookContacts
+        /// <summary>
+        /// The contact list for different address book pages.<br></br>
+        /// The circle recreate procedure is based on this property.
+        /// </summary>
+        public SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> AddressbookContacts
         {
             get
             {
@@ -691,11 +1121,18 @@ namespace MSNPSharp.IO
             }
         }
 
-        public virtual void Add(Dictionary<Guid, ContactType> range)
+        public virtual void Add(string abId, Dictionary<Guid, ContactType> range)
         {
+            string lowerId = abId.ToLowerInvariant();
+
+            if (!abcontacts.ContainsKey(lowerId))
+            {
+                abcontacts.Add(lowerId, new SerializableDictionary<Guid, ContactType>(0));
+            }
+
             foreach (Guid guid in range.Keys)
             {
-                abcontacts[guid] = range[guid];
+                abcontacts[lowerId][guid] = range[guid];
             }
         }
 
@@ -705,37 +1142,341 @@ namespace MSNPSharp.IO
 
             #region AddressBook changed
 
-            DateTime dt1 = WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange);
+            DateTime dt1 = WebServiceDateTimeConverter.ConvertToDateTime(GetAddressBookLastChange(forwardList.Ab.abId));
             DateTime dt2 = WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange);
 
-            if (forwardList.Ab != null && forwardList.Ab.abId != WebServiceConstants.MessengerAddressBookId)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Getting non-default addressbook: \r\nId: " +
-                    forwardList.Ab.abId + "\r\nName: " + forwardList.Ab.abInfo.name +
-                    "\r\nType: " + forwardList.Ab.abInfo.AddressBookType + "\r\nMembers:");
+            MergeIndividualAddressBook(forwardList);
+            MergeGroupAddressBook(forwardList);
+            #endregion
 
-                string id = forwardList.Ab.abId + "@" + CircleString.DefaultHostDomain;
-                foreach (ContactType contact in forwardList.Contacts)
+            //NO DynamicItems any more
+
+            return this;
+        }
+
+        /// <summary>
+        /// Update members for circles.
+        /// </summary>
+        /// <param name="forwardList"></param>
+        internal void MergeGroupAddressBook(ABFindContactsPagedResultType forwardList)
+        {
+            #region Get Individual AddressBook Information (Circle information)
+
+            if (forwardList.Ab != null && forwardList.Ab.abId != WebServiceConstants.MessengerIndividualAddressBookId && 
+                forwardList.Ab.abInfo.AddressBookType == AddressBookType.Group &&
+                WebServiceDateTimeConverter.ConvertToDateTime(GetAddressBookLastChange(forwardList.Ab.abId)) <
+                WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange))
+            {
+                SetAddressBookInfo(forwardList.Ab.abId, forwardList.Ab);
+                SaveAddressBookContactPage(forwardList.Ab.abId, forwardList.Contacts);
+
+                //Create or update circle.
+                Circle targetCircle = UpdateCircleFromAddressBook(forwardList.Ab.abId);
+
+                if (targetCircle != null)
                 {
-                    if (NSMessageHandler.Owner != null && contact.contactInfo.CID == NSMessageHandler.Owner.CID)
+                    //Update circle mebers.
+                    UpdateCircleMembersFromAddressBookContactPage(targetCircle, Scenario.Initial);
+                    switch (targetCircle.CircleRole)
                     {
-                        if (NSMessageHandler.CircleList[id] != null)
+                        case CirclePersonalMembershipRole.Admin:
+                        case CirclePersonalMembershipRole.AssistantAdmin:
+                        case CirclePersonalMembershipRole.Member:
+                            AddCircleToCircleList(targetCircle);
+                            break;
+
+                        case CirclePersonalMembershipRole.StatePendingOutbound:
+                            FireJoinCircleInvitationReceivedEvents(targetCircle);
+
+                            break;
+                    }
+
+                    #region Print Info
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Getting non-default addressbook: \r\nId: " +
+                                forwardList.Ab.abId + "\r\nName: " + forwardList.Ab.abInfo.name +
+                                "\r\nType: " + forwardList.Ab.abInfo.AddressBookType + "\r\nMembers:");
+
+                    string id = forwardList.Ab.abId + "@" + CircleString.DefaultHostDomain;
+                    foreach (ContactType contact in forwardList.Contacts)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "PassportName: " + contact.contactInfo.passportName + ", DisplayName: " + contact.contactInfo.displayName + ", Type: " + contact.contactInfo.contactType);
+                    }
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\r\n");
+
+                    #endregion
+
+                    SaveContactTable(forwardList.Contacts);
+
+                    if (requestCircleCount > 0)
+                    {
+                        //Only the individual addressbook merge which contains new circles will cause this action.
+                        requestCircleCount--;
+                        if (requestCircleCount == 0)
                         {
-                            //This is the return of CircleIdAlert, correct the contactId.
-                            NSMessageHandler.CircleList[id].Guid = new Guid(contact.contactId);
-                            CircleResults[id].CircleMember.contactId = contact.contactId;
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle Id changed, new Id is: " + contact.contactId);
+                            Save();
+                            NSMessageHandler.ContactService.SendInitialADL(Scenario.SendInitialCirclesADL);
                         }
                     }
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, " DisplayName: " + contact.contactInfo.displayName + " Type: " + contact.contactInfo.contactType);
+                }
+                else
+                {
+                    RemoveCircleInverseInfo(forwardList.Ab.abId);
+                    RemoveAddressBookContatPage(forwardList.Ab.abId);
+                    RemoveAddressBookInfo(forwardList.Ab.abId);
+
+                    //Error? Save!
+                    Save();
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                        "An error occured while merging the GroupAddressBook, addressbook info removed: " + 
+                        forwardList.Ab.abId);
                 }
             }
 
-            if (forwardList.Ab != null &&
-                WebServiceDateTimeConverter.ConvertToDateTime(AddressbookLastChange) <
-                WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange)
-                && forwardList.Ab.abId == WebServiceConstants.MessengerAddressBookId)
+            #endregion
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="circle"></param>
+        /// <returns></returns>
+        /// <remarks>This function must be called after the ContactTable and WLConnections are created.</remarks>
+        private bool FireJoinCircleInvitationReceivedEvents(Circle circle)
+        {
+            CircleInviter invitor = GetCircleInviterFromNetworkInfo(SelecteContact(SelectWLConnection(circle.AddressBookId.ToString("D"))));
+            if (invitor == null)
             {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[MergeGroupAddressBook error] Cannot get the circle invitor, abId: " +
+                    circle.AddressBookId.ToString("D") + ", an invitation may miss.");
+                return false;
+            }
+
+            lock (NSMessageHandler.PendingCircleList)
+            {
+                NSMessageHandler.PendingCircleList.AddCircle(circle);
+            }
+
+            JoinCircleInvitationEventArgs joinArgs = new JoinCircleInvitationEventArgs(circle, invitor);
+            NSMessageHandler.ContactService.OnJoinCircleInvitationReceived(joinArgs);
+            return true;
+        }
+
+        private ContactType SelectMeContactFromAddressBookContactPage(string abId)
+        {
+            if (!HasAddressBookContactPage(abId))
+                return null;
+            lock (AddressbookContacts)
+                return SelectMeContactFromContactList((new List<ContactType>(AddressbookContacts[abId.ToLowerInvariant()].Values)).ToArray());
+        }
+
+        /// <summary>
+        /// Get the addressbook's owner contact.
+        /// </summary>
+        /// <param name="contactList"></param>
+        /// <returns></returns>
+        private ContactType SelectMeContactFromContactList(ContactType[] contactList)
+        {
+            if (contactList == null)
+                return null;
+
+            foreach (ContactType contact in contactList)
+            {
+                if (contact.contactInfo != null)
+                {
+                    if (contact.contactInfo.contactType == MessengerContactType.Me)
+                        return contact;
+                }
+            }
+
+            return null;
+        }
+
+        internal Guid SelectSelfContactGuid(string abId)
+        {
+            ContactType self = SelectSelfContactFromAddressBookContactPage(abId);
+            if (self == null)
+                return Guid.Empty;
+
+            return new Guid(self.contactId);
+        }
+
+        private ContactType SelectSelfContactFromAddressBookContactPage(string abId)
+        {
+            if (!HasAddressBookContactPage(abId))
+                return null;
+
+            if (NSMessageHandler.ContactList.Owner == null)
+                return null;
+
+            lock (AddressbookContacts)
+                return SelectSelfContactFromContactList((new List<ContactType>(AddressbookContacts[abId.ToLowerInvariant()].Values)).ToArray(), NSMessageHandler.ContactList.Owner.Mail);
+        }
+
+        /// <summary>
+        /// Get the owner of default addressbook in a certain addressbook page. This contact will used for exiting circle.
+        /// </summary>
+        /// <param name="contactList"></param>
+        /// <param name="currentUserAccount"></param>
+        /// <returns></returns>
+        private ContactType SelectSelfContactFromContactList(ContactType[] contactList, string currentUserAccount)
+        {
+            if (contactList == null)
+                return null;
+
+            string lowerAccount = currentUserAccount.ToLowerInvariant();
+
+            foreach (ContactType contact in contactList)
+            {
+                if (contact.contactInfo != null)
+                {
+                    if (contact.contactInfo.passportName.ToLowerInvariant() == lowerAccount)
+                        return contact;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Update the circle members and other information from a newly receive addressbook.
+        /// This function can only be called after the contact page and WL connections were saved.
+        /// </summary>
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        private Circle UpdateCircleFromAddressBook(string abId)
+        {
+            if (abId != WebServiceConstants.MessengerIndividualAddressBookId)
+            {
+                string lowerId = abId.ToLowerInvariant();
+                
+
+                ContactType meContact = SelectMeContactFromAddressBookContactPage(lowerId);
+                long hiddenCID = SelectWLConnection(lowerId);
+                ContactType hidden = SelecteContact(hiddenCID);
+                CircleInverseInfoType inverseInfo = SelectCircleInverseInfo(lowerId);
+
+                if (hidden == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                       "[UpdateCircleFromAddressBook] Cannot create circle since hidden representative not found in addressbook. ABId: "
+                       + abId);
+                    return null;
+                }
+
+                if (meContact == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                       "[UpdateCircleFromAddressBook] Cannot create circle since Me not found in addressbook. ABId: "
+                       + abId);
+                    return null;
+                }
+
+                if (inverseInfo == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                       "[UpdateCircleFromAddressBook] Cannot create circle since inverse info not found in circle result list. ABId: "
+                       + abId);
+                    return null;
+                }
+
+                Circle circle = NSMessageHandler.CircleList[new Guid(abId), inverseInfo.Content.Info.HostedDomain];
+
+                if (circle == null)
+                    circle = CreateCircle(meContact, hidden, inverseInfo);
+
+                return circle;
+            }
+
+            return null;
+        }
+
+        private bool UpdateCircleMembersFromAddressBookContactPage(Circle circle, Scenario scene)
+        {
+            string lowerId = circle.AddressBookId.ToString("D").ToLowerInvariant();
+            if (!HasAddressBookContactPage(lowerId))
+                return false;
+
+            Dictionary<long, ContactType> newContactList = null;
+            Dictionary<long, Contact> oldContactInverseList = null;
+            Contact[] oldContactList = null;
+
+            bool isRestore = ((scene & Scenario.Restore) != Scenario.None);
+
+            if (!isRestore)
+            {
+                newContactList = new Dictionary<long, ContactType>();
+                oldContactInverseList = new Dictionary<long, Contact>();
+                oldContactList = circle.ContactList.ToArray();
+                foreach(Contact contact in oldContactList)
+                {
+                    oldContactInverseList[contact.CID] = contact;
+                }
+            }
+
+            lock (AddressbookContacts)
+            {
+                SerializableDictionary<Guid, ContactType> page = AddressbookContacts[lowerId];
+
+                foreach (ContactType contactType in page.Values)
+                {
+                    if (!isRestore)
+                        newContactList[contactType.contactInfo.CID] = contactType;
+
+                    if (UpdateContact(contactType, lowerId, circle) != ReturnState.ProcessNextContact)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "[UpdateCircleMembersFromAddressBookContactPage] Create circle member failed: " +
+                            contactType.contactInfo.passportName + ", UpdateContact returns false.");
+                    }
+                }
+            }
+
+            if (isRestore) return true;
+
+            foreach (ContactType contactType in newContactList.Values)
+            {
+                if(contactType.contactInfo == null )continue;
+
+                if (!oldContactInverseList.ContainsKey(contactType.contactInfo.CID) && 
+                    circle.ContactList.HasContact(contactType.contactInfo.passportName, ClientType.PassportMember))
+                {
+                    circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle, circle.ContactList[contactType.contactInfo.passportName, ClientType.PassportMember]));
+                }
+            }
+
+            foreach (Contact contact in oldContactList)
+            {
+                if (!newContactList.ContainsKey(contact.CID))
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Member " + contact.ToString() + " has left circle " + circle.ToString());
+                    circle.ContactList.Remove(contact.Mail, contact.ClientType);
+                    circle.NSMessageHandler.ContactService.OnCircleMemberLeft(new CircleMemberEventArgs(circle, contact));
+                }
+            }
+
+            return true;
+        }
+
+        internal void MergeIndividualAddressBook(ABFindContactsPagedResultType forwardList)
+        {
+            #region Get Default AddressBook Information
+
+            if (forwardList.Ab != null &&
+                    WebServiceDateTimeConverter.ConvertToDateTime(GetAddressBookLastChange(forwardList.Ab.abId)) <
+                    WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange)
+                    && forwardList.Ab.abId == WebServiceConstants.MessengerIndividualAddressBookId)
+            {
+                Scenario scene = Scenario.None;
+
+                if (IsContactTableEmpty())
+                    scene = Scenario.Initial;
+                else
+                    scene = Scenario.DeltaRequest;
+
+                #region Get groups
+
                 if (null != forwardList.Groups)
                 {
                     foreach (GroupType groupType in forwardList.Groups)
@@ -767,7 +1508,34 @@ namespace MSNPSharp.IO
                     }
                 }
 
+                #endregion
 
+                #region Process Contacts
+
+                SortedDictionary<long, long> newCIDList = new SortedDictionary<long, long>();
+                Dictionary<string, CircleInverseInfoType> newInverseInfos = new Dictionary<string, CircleInverseInfoType>();
+
+                SortedDictionary<long, CircleInverseInfoType> modifiedConnections = new SortedDictionary<long, CircleInverseInfoType>();
+
+                if (forwardList.CircleResult != null && forwardList.CircleResult.Circles != null)
+                {
+                    foreach (CircleInverseInfoType info in forwardList.CircleResult.Circles)
+                    {
+                        string abId = info.Content.Handle.Id.ToLowerInvariant();
+                        long CID = SelectWLConnection(abId);
+                        if (HasWLConnection(abId))
+                        {
+                            if (!modifiedConnections.ContainsKey(CID))
+                            {
+                                modifiedConnections[CID] = info;
+                            }
+                        }
+                        else
+                        {
+                            newInverseInfos[info.Content.Handle.Id.ToLowerInvariant()] = info;
+                        }
+                    }
+                }
 
                 if (null != forwardList.Contacts)
                 {
@@ -775,26 +1543,93 @@ namespace MSNPSharp.IO
                     {
                         if (null != contactType.contactInfo)
                         {
-                            if (contactType.CreatedBy == "96" &&
-                                contactType.LastModifiedBy == ((int)ClientType.CircleMember).ToString() &&
-                                contactType.contactInfo.contactType == MessengerContactType.Regular)
-                            {
-                                //A deleted or modified circle;
-                                continue;
-                            }
+                            SetContactToAddressBookContactPage(forwardList.Ab.abId, contactType);
 
-                            if (contactType.CreatedBy == "96" &&
-                                contactType.contactInfo.contactType == MessengerContactType.Circle)
+                            /*
+                             * Circle update rules:
+                             * 1. If your own circle has any update (i.e. adding or deleting members), no hidden representative will be changed, only circle inverse info will be provided.
+                             * 2. If a remote owner removes you from his circle, the hidden representative of that circle will change its RelationshipState to 2, circle inverse info will not provided.
+                             * 3. If a remote owner re-adds you into a circle which you've left before, the hidden representative will be created, its relationshipState is 3, and the circle inverse info will be provided.
+                             * 4. If you are already in a circle, the circle's owner removed you, then add you back, the hidden representative's RelationshipState property in NetworkInfo will change from 2 to 3.
+                             * 5. If a remote contact has left your own circle, hidden representative will not change but circle inverse info will be provided.
+                             * 6. If you delete your own circle, the hidden representative's contactType will change, and circle reverse info will be provided.
+                             * 7. If you create a circle, the hidden representative will also create and circle inverse info will be provided.
+                             * 8. If a remote owner invites you to join a circle, the hidden representative will be created, its relationshipState is 1 and circle inverse info will be provided, Role = StatePendingOutbound.
+                             */
+                            long CID = contactType.contactInfo.CID;
+
+                            if (HasWLConnection(CID))
                             {
-                                //A new circle;
-                                continue;
+                                modifiedConnections[CID] = SelectCircleInverseInfo(SelectWLConnection(CID));
+
+                                ContactType savedContact = SelecteContact(contactType.contactInfo.CID);
+                                //A deleted or modified circle; We are NOT in initial scene.
+
+                                if (savedContact.contactInfo.contactType == MessengerContactType.Circle)
+                                {
+                                    if (savedContact.contactInfo.contactType != contactType.contactInfo.contactType)
+                                    {
+                                        //Owner deleted circles found.
+                                        //The members in the circle which this contact represents are all livepending contacts.
+                                        //Or, the circle this contact represents has no member.
+                                        //ModifyCircles(contactType, forwardList.CircleResult);
+
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A deleted circle found: contactType: " + contactType.contactInfo.contactType + "\r\n " +
+                                            "CID: " + contactType.contactInfo.CID.ToString() + "\r\n " +
+                                            "PassportName: " + contactType.contactInfo.passportName + "\r\n " +
+                                            "DomainTag: " + GetHiddenRepresentativeDomainTag(contactType) + "\r\n " +
+                                            "RelationshipState: " + GetCircleMemberRelationshipStateFromNetworkInfo(contactType.contactInfo.NetworkInfoList).ToString()
+                                            + "\r\n");
+                                    }
+                                    else
+                                    {
+                                        //We may remove by the circle owner, so a circle is deleted.
+                                        //ModifyCircles(contactType, forwardList.CircleResult);
+
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A modified circle found: contactType: " + contactType.contactInfo.contactType + "\r\n " +
+                                            "CID: " + contactType.contactInfo.CID.ToString() + "\r\n " +
+                                            "PassportName: " + contactType.contactInfo.passportName + "\r\n " +
+                                            "DomainTag: " + GetHiddenRepresentativeDomainTag(contactType) + "\r\n " +
+                                            "RelationshipState: " + GetCircleMemberRelationshipStateFromNetworkInfo(contactType.contactInfo.NetworkInfoList).ToString()
+                                            + "\r\n");
+                                    }
+
+                                    continue;
+                                }
+                            }
+                            else
+                            {
+
+                                if (contactType.contactInfo.contactType == MessengerContactType.Circle)
+                                {
+                                    RelationshipState state = GetCircleMemberRelationshipStateFromNetworkInfo(contactType.contactInfo.NetworkInfoList);
+
+                                    switch (state)
+                                    {
+                                        case RelationshipState.Accepted:
+                                        case RelationshipState.WaitingResponse:
+                                            newCIDList[CID] = CID;
+                                            break;
+                                    }
+
+                                    //We get the hidden representative of a new circle.
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A circle contact found: contactType: " + contactType.contactInfo.contactType + "\r\n " +
+                                        "CID: " + contactType.contactInfo.CID.ToString() + "\r\n " +
+                                        "PassportName: " + contactType.contactInfo.passportName + "\r\n " +
+                                        "DomainTag: " + GetHiddenRepresentativeDomainTag(contactType) + "\r\n " +
+                                        "RelationshipState: " + GetCircleMemberRelationshipStateFromNetworkInfo(contactType.contactInfo.NetworkInfoList).ToString()
+                                        + "\r\n");
+                                    continue;
+                                }
                             }
 
                             Contact contact = NSMessageHandler.ContactList.GetContactByGuid(new Guid(contactType.contactId));
 
                             if (contactType.fDeleted)
                             {
-                                AddressbookContacts.Remove(new Guid(contactType.contactId));
+                                //The contact was deleted.
+
+                                RemoveContactFromAddressBook(forwardList.Ab.abId, new Guid(contactType.contactId));
 
                                 if (contact != null)
                                 {
@@ -808,7 +1643,7 @@ namespace MSNPSharp.IO
                                     contact.SetStatus(PresenceStatus.Offline);  //Force the contact offline.
                                     NSMessageHandler.OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
                                     NSMessageHandler.OnContactOffline(new ContactEventArgs(contact));
-                                    
+
 
                                     if (MSNLists.None == contact.Lists)
                                     {
@@ -819,7 +1654,6 @@ namespace MSNPSharp.IO
                             }
                             else
                             {
-                                AddressbookContacts[new Guid(contactType.contactId)] = contactType;
                                 UpdateContact(contactType);
                                 NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
                             }
@@ -830,173 +1664,434 @@ namespace MSNPSharp.IO
                 if (forwardList.Ab != null)
                 {
                     // Update lastchange
-                    AddressbookLastChange = forwardList.Ab.lastChange;
+                    SetAddressBookInfo(forwardList.Ab.abId, forwardList.Ab);
                 }
+
+                SaveContactTable(forwardList.Contacts);
+                if (forwardList.CircleResult != null)
+                    SaveCircleInverseInfo(forwardList.CircleResult.Circles);
+
+
+                ProcessCircles(modifiedConnections, newCIDList, newInverseInfos, scene);
             }
 
             #endregion
 
-            #region Circle changed
-
-            if (forwardList.CircleResult != null &&
-                null != forwardList.CircleResult.Circles)
-            {
-                List<ContactType> circleContactsAdded = new List<ContactType>(0);
-                List<CircleInverseInfoType> circleAdded = new List<CircleInverseInfoType>(0);
-
-                if (forwardList.Contacts != null)
-                {
-                    foreach (ContactType contactType in forwardList.Contacts)
-                    {
-                        if (contactType.CreatedBy == "96" &&
-                            contactType.contactInfo.contactType == MessengerContactType.Circle &&
-                            contactType.fDeleted == false)
-                        {
-                            circleContactsAdded.Add(contactType);
-                        }
-                    }
-                }
-
-                foreach (CircleInverseInfoType circle in forwardList.CircleResult.Circles)
-                {
-                    if (circle.Deleted)
-                    {
-                        CircleResults.Remove(circle.Content.Handle.Id.ToLowerInvariant() + "@" + circle.Content.Info.HostedDomain.ToLowerInvariant());
-                        NSMessageHandler.CircleList.RemoveCircle(new Guid(circle.Content.Handle.Id), circle.Content.Info.HostedDomain.ToLowerInvariant());
-                    }
-                    else
-                    {
-                        circleAdded.Add(circle);
-                    }
-                }
-
-                if (circleContactsAdded.Count == circleAdded.Count)
-                {
-                    for (int i = 0; i < circleAdded.Count; i++)
-                    {
-                        CircleInverseInfoType circleinfo = circleAdded[i];
-                        ContactType contactType = circleContactsAdded[i];
-
-                        string circleId = circleinfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleinfo.Content.Info.HostedDomain.ToLowerInvariant();
-
-                        bool newadded = true;
-                        string memberRole = MemberRole.Allow;
-
-                        if (CircleResults.ContainsKey(circleId))
-                        {
-                            if (CircleResults[circleId].CircleResultInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role
-                                == circleinfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role)
-                            {
-                                newadded = false;
-                                memberRole = CircleResults[circleId].MemberRole;
-                            }
-                            else
-                            {
-                                //This will prevent 933 server error.
-                                //this case means the owner left a circle using another client, then the remote client reinvit the owner.
-                                CircleResults.Remove(circleId);
-                                NSMessageHandler.CircleList.RemoveCircle(new Guid(circleinfo.Content.Handle.Id), circleinfo.Content.Info.HostedDomain);
-                            }
-                        }
-
-                        CircleResults[circleId] = new CircleInfo(contactType, circleinfo);  //Refresh the info.
-                        CircleResults[circleId].MemberRole = memberRole;
-
-                        if (newadded)
-                        {
-                            Circle newcircle = CombineCircle(contactType, circleinfo);
-                            CircleInviter initator = CombineCircleInviter(contactType);
-
-                            if (newcircle.Role == CirclePersonalMembershipRole.StatePendingOutbound)
-                            {
-                                NSMessageHandler.ContactService.FireJoinCircleEvent(new JoinCircleInvitationEventArgs(newcircle, initator));
-                            }
-                            else
-                            {
-                                NSMessageHandler.CircleList.AddCircle(newcircle);
-                            }
-                        }
-                    }
-                }
-            }
-
-            foreach (string memberRole in circlesMembership.Keys)
-            {
-                foreach (CircleMember member in circlesMembership[memberRole])
-                {
-                    string id = member.CircleId.ToLowerInvariant() + "@" + CircleString.DefaultHostDomain;
-
-                    if (memberRole == MemberRole.Block)
-                    {
-                        if (member.Deleted)
-                        {
-                            //Deleted from block list.
-                            if (CircleResults.ContainsKey(id))
-                            {
-                                CircleResults[id].MemberRole = MemberRole.Allow;
-                                NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.BlockedList);
-                                NSMessageHandler.CircleList[id].AddToList(MSNLists.AllowedList);
-                            }
-                        }
-                        else
-                        {
-                            //Added to block list.
-                            if (CircleResults.ContainsKey(id))
-                            {
-                                CircleResults[id].MemberRole = MemberRole.Block;
-                                NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.AllowedList);
-                                NSMessageHandler.CircleList[id].AddToList(MSNLists.BlockedList);
-                            }
-                        }
-                    }
-
-                    if (memberRole == MemberRole.Allow)
-                    {
-                        if (member.Deleted)
-                        {
-                            //Deleted from allow list.
-                            if (CircleResults.ContainsKey(id))
-                            {
-                                CircleResults[id].MemberRole = MemberRole.Block;
-                                NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.AllowedList);
-                                NSMessageHandler.CircleList[id].AddToList(MSNLists.BlockedList);
-                            }
-                        }
-                        else
-                        {
-                            //Added to allow list.
-                            if (CircleResults.ContainsKey(id))
-                            {
-                                CircleResults[id].MemberRole = MemberRole.Allow;
-                                NSMessageHandler.CircleList[id].RemoveFromList(MSNLists.BlockedList);
-                                NSMessageHandler.CircleList[id].AddToList(MSNLists.AllowedList);
-                            }
-                        }
-                    }
-                }
-            }
-
-            circlesMembership.Clear();
-
             #endregion
+        }
 
-            //NO DynamicItems any more
+        private void ProcessCircles(SortedDictionary<long, CircleInverseInfoType> modifiedConnections, SortedDictionary<long, long> newCIDList, Dictionary<string, CircleInverseInfoType> newInverseInfos, Scenario scene)
+        {
+            int[] result = new int[] { 0, 0 };
+            //We must process modified circles first.
+            result = ProcessModifiedCircles(modifiedConnections, scene | Scenario.ModifiedCircles);
+            result = ProcessNewConnections(new List<long>(newCIDList.Keys), new List<CircleInverseInfoType>(newInverseInfos.Values), scene | Scenario.NewCircles);
+        }
 
-            return this;
+        private int[] ProcessNewConnections(List<long> sortedCIDs, List<CircleInverseInfoType> sortedInfos, Scenario scene)
+        {
+            int added = 0;
+            int pending = 0;
+
+            SaveWLConnection(sortedCIDs, sortedInfos.ToArray());
+
+            string[] abIds = SelectWLConnection(sortedCIDs, RelationshipState.Accepted);
+            RequestCircles(abIds, RelationshipState.Accepted, scene);
+            added = abIds.Length;
+
+            abIds = SelectWLConnection(sortedCIDs, RelationshipState.WaitingResponse);
+            RequestCircles(abIds, RelationshipState.WaitingResponse, scene);
+            pending = abIds.Length;
+
+            return new int[] { added, pending };
+        }
+
+        private int[] ProcessModifiedCircles(SortedDictionary<long, CircleInverseInfoType> modifiedConnections, Scenario scene)
+        {
+            int deleted = 0;
+            int reAdded = 0;
+
+            SortedDictionary<long, CircleInverseInfoType> connectionClone = new SortedDictionary<long, CircleInverseInfoType>(modifiedConnections);
+            foreach (long CID in modifiedConnections.Keys)
+            {
+                ContactType hidden = SelecteContact(CID);
+                if (
+                    modifiedConnections[CID].Deleted ||   //Local owner delete circle.
+                    hidden.contactInfo.contactType != MessengerContactType.Circle ||  //Remote owner delete circle
+                    GetCircleMemberRelationshipStateFromNetworkInfo(hidden.contactInfo.NetworkInfoList) == RelationshipState.Left //Remote owner delete local user from circle.
+                    )
+                {
+                    RemoveCircle(CID, modifiedConnections[CID].Content.Handle.Id);
+                    connectionClone.Remove(CID);
+                    deleted++;
+                }
+            }
+
+            List<long> sortedCIDs = new List<long>(connectionClone.Keys);
+            List<CircleInverseInfoType> sortedInfos = new List<CircleInverseInfoType>(connectionClone.Values);
+            SaveWLConnection(sortedCIDs, sortedInfos.ToArray());
+
+            string[] abIds = SelectWLConnection(sortedCIDs, RelationshipState.Accepted);  //Select the re-added circles.
+            RequestCircles(abIds, RelationshipState.Accepted, scene);
+            reAdded = abIds.Length;
+
+            return new int[] { deleted, reAdded };
+        }
+
+        private bool SaveWLConnection(List<long> sortedCIDList, CircleInverseInfoType[] inverseList)
+        {
+            if (inverseList == null)
+                return false;
+
+            if (sortedCIDList.Count != inverseList.Length)
+                return false;
+
+            lock (WLConnections)
+            {
+                lock (WLInverseConnections)
+                {
+                    for (int cnt = 0; cnt < sortedCIDList.Count; cnt++)
+                    {
+                        CircleInverseInfoType inverseInfo = inverseList[cnt];
+                        long CID = sortedCIDList[cnt];
+                        WLConnections[CID] = inverseInfo.Content.Handle.Id.ToLowerInvariant();
+                        WLInverseConnections[inverseInfo.Content.Handle.Id.ToLowerInvariant()] = CID;
+                    }
+                }
+            }
+
+            return true;
+
+        }
+
+        private bool SaveAddressBookContactPage(string abId, ContactType[] contacts)
+        {
+            if (contacts == null)
+                return false;
+
+            lock (AddressbookContacts)
+            {
+                SerializableDictionary<Guid, ContactType> page = new SerializableDictionary<Guid, ContactType>(0);
+                AddressbookContacts[abId.ToLowerInvariant()] = page;
+                foreach (ContactType contact in contacts)
+                {
+                    page[new Guid(contact.contactId)] = contact;
+                }
+            }
+
+            return true;
+        }
+
+        private void SaveCircleInverseInfo(CircleInverseInfoType[] inverseInfoList)
+        {
+            List<string> modifiedCircles = new List<string>(0);
+            if (inverseInfoList != null)
+            {
+                foreach (CircleInverseInfoType circle in inverseInfoList)
+                {
+                    string lowerId = circle.Content.Handle.Id.ToLowerInvariant();
+
+                    lock (CircleResults)
+                    {
+
+                        CircleResults[lowerId] = circle;
+                    }
+                }
+            }
+
+        }
+
+        private void SaveContactTable(ContactType[] contacts)
+        {
+            if (contacts == null)
+                return;
+
+            lock (contactTable)
+            {
+                foreach (ContactType contact in contacts)
+                {
+                    if (contact.contactInfo != null)
+                    {
+                        contactTable[contact.contactInfo.CID] = contact;
+                    }
+                }
+            }
         }
 
         /// <summary>
-        /// Merge changes to addressbook and add address book contacts
+        /// Clean up the saved circle addressbook information.
         /// </summary>
-        /// <param name="xmlcl">Addressbook</param>
-        /// <param name="forwardList"></param>
-        /// <returns></returns>
-        public static XMLContactList operator +(XMLContactList xmlcl, ABFindContactsPagedResultType forwardList)
+        internal void ClearCircleInfos()
         {
-            return xmlcl.Merge(forwardList);
+            lock (CircleResults)
+                CircleResults.Clear();
+
+            lock (AddressBooksInfo)
+                AddressBooksInfo.Clear();
+
+            lock (AddressbookContacts)
+                AddressbookContacts.Clear();
+
+            lock (contactTable)
+                contactTable.Clear();
+
+            lock (WLConnections)
+                WLConnections.Clear();
+
+            lock (WLInverseConnections)
+                WLInverseConnections.Clear();
+
         }
 
-        private CircleInviter CombineCircleInviter(ContactType contact)
+        /// <summary>
+        /// 1. RemoveAddressBookContatPage
+        /// 2. RemoveAddressBookInfo
+        /// 3. RemoveCircleInverseInfo
+        /// 4. BreakWLConnection
+        /// 5. RemoveCircle
+        /// </summary>
+        /// <param name="initiatorCID"></param>
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        internal bool RemoveCircle(long initiatorCID, string abId)
+        {
+            if (HasWLConnection(initiatorCID) && !string.IsNullOrEmpty(abId))
+            {
+                CircleInverseInfoType inversoeInfo = SelectCircleInverseInfo(abId);
+                Circle tempCircle = null;
+                if (inversoeInfo != null)
+                {
+                    tempCircle = NSMessageHandler.CircleList[new Guid(abId), inversoeInfo.Content.Info.HostedDomain];
+                }
+
+                //1. Remove corresponding addressbook page.
+                RemoveAddressBookContatPage(abId);
+
+                //2. Remove addressbook info.
+                RemoveAddressBookInfo(abId);
+
+                //3. Remove circle inverse info.
+                RemoveCircleInverseInfo(abId);
+
+                //4. Break the connection between hidden representative and addressbook.
+                BreakWLConnection(initiatorCID);
+
+                //5. Remove the presentation data structure for a circle.
+                NSMessageHandler.CircleList.RemoveCircle(new Guid(abId), CircleString.DefaultHostDomain);
+
+                if (tempCircle != null)
+                {
+                    NSMessageHandler.ContactService.OnExitCircleCompleted(new CircleEventArgs(tempCircle));
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        internal bool RemoveCircleInverseInfo(string abId)
+        {
+            lock (CircleResults)
+                return CircleResults.Remove(abId.ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// Break the CID-AbID relationship of hidden representative to addressbook.
+        /// </summary>
+        /// <param name="CID"></param>
+        /// <returns></returns>
+        private bool BreakWLConnection(long CID)
+        {
+            if (!HasWLConnection(CID))
+                return false;
+
+            string abId = SelectWLConnection(CID);
+
+            lock (WLInverseConnections)
+            {
+                lock (WLConnections)
+                {
+                    return (WLConnections.Remove(CID) && WLInverseConnections.Remove(abId));
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Get a circle addressbook by addressbook identifier.
+        /// </summary>
+        /// <param name="abId"></param>
+        /// <param name="state"></param>
+        /// <param name="scene"></param>
+        /// <returns></returns>
+        private bool RequestAddressBookByABId(string abId, RelationshipState state, Scenario scene)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Requesting AddressBook by ABId: " + abId + ", Scenario: " + scene.ToString());
+
+            abId = abId.ToLowerInvariant();
+
+            abHandleType individualAB = new abHandleType();
+            individualAB.ABId = abId;
+            individualAB.Cid = 0;
+            individualAB.Puid = 0;
+
+            switch (state)
+            {
+                case RelationshipState.Accepted:
+                    requestCircleCount++;
+                    NSMessageHandler.ContactService.abRequest(PartnerScenario.Initial, individualAB, null);
+                    break;
+                case RelationshipState.WaitingResponse:
+                    NSMessageHandler.ContactService.abRequest(PartnerScenario.Initial, individualAB, null);
+                    break;
+            }
+
+            return true;
+        }
+
+
+        /// <summary>
+        /// Create a circle.
+        /// </summary>
+        /// <param name="hiddenRepresentative"></param>
+        /// <param name="me"></param>
+        /// <param name="inverseInfo"></param>
+        /// <returns></returns>
+        private Circle CreateCircle(ContactType me, ContactType hiddenRepresentative, CircleInverseInfoType inverseInfo)
+        {
+            if (hiddenRepresentative.contactInfo == null)
+            {
+                return null;
+            }
+
+            if (hiddenRepresentative.contactInfo.NetworkInfoList.Length == 0)
+            {
+                return null;
+            }
+
+            if (hiddenRepresentative.contactInfo.contactType != MessengerContactType.Circle)
+            {
+                return null;
+            }
+            
+
+            return new Circle(me,hiddenRepresentative, inverseInfo, NSMessageHandler);
+        }
+
+        private bool AddCircleToCircleList(Circle circle)
+        {
+            bool result = NSMessageHandler.CircleList.AddCircle(circle);
+
+            lock (NSMessageHandler.PendingCircleList)
+            {
+                if (NSMessageHandler.PendingCircleList[circle.AddressBookId, circle.HostDomain] != null)
+                {
+                    NSMessageHandler.ContactService.OnJoinedCircleCompleted(new CircleEventArgs(NSMessageHandler.CircleList[circle.AddressBookId, circle.HostDomain]));
+                }
+
+                NSMessageHandler.PendingCircleList.RemoveCircle(circle.AddressBookId, circle.HostDomain);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Restore the inverse list of WLConnections.
+        /// </summary>
+        private void RestoreWLConnections()
+        {
+            if (WLInverseConnections == null)
+                wlInverseConnections = new Dictionary<string, long>();
+
+            //Restore, lock is not needed.
+            foreach (long CID in WLConnections.Keys)
+            {
+                WLInverseConnections[WLConnections[CID]] = CID;
+            }
+        }
+
+        private bool RestoreCircles(long[] CIDs, RelationshipState state)
+        {
+            if ( CIDs == null)
+                return false;
+
+            foreach (long CID in CIDs)
+            {
+                RestoreCircleFromAddressBook(SelectWLConnection(CID), SelecteContact(CID), state);
+            }
+
+            return true;
+        }
+
+        private bool RestoreCircleFromAddressBook(string abId, ContactType hidden, RelationshipState state)
+        {
+            string lowerId = abId.ToLowerInvariant();
+
+            if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
+                return true;
+
+            if (!HasAddressBook(lowerId))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] failed, cannot find specific addressbook :" + lowerId);
+                return false;
+            }
+
+            if (!AddressbookContacts.ContainsKey(lowerId))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] failed, cannot find specific addressbook contact group:" + lowerId);
+                return false;
+            }
+
+            //We use addressbook list to boot the restore procedure.
+            ContactType me = SelectMeContactFromContactList(new List<ContactType>(AddressbookContacts[lowerId].Values).ToArray());
+            CircleInverseInfoType inverseInfo = SelectCircleInverseInfo(lowerId);
+
+            if (me == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] Me Contact not found, restore circle failed:" + lowerId);
+                return false;
+            }
+
+            if (hidden == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] Hidden Representative not found, restore circle failed:" + lowerId);
+                return false;
+            }
+
+            if (inverseInfo == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] Circle inverse info not found, restore circle failed:" + lowerId);
+                return false;
+            }
+
+            if (NSMessageHandler.CircleList[new Guid(lowerId), CircleString.DefaultHostDomain] != null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] circle already exists, restore skipped:" + lowerId);
+                return false;
+            }
+
+            Circle circle = CreateCircle(me, hidden, inverseInfo);
+            UpdateCircleMembersFromAddressBookContactPage(circle, Scenario.Restore);
+
+            switch (circle.CircleRole)
+            {
+                case CirclePersonalMembershipRole.Admin:
+                case CirclePersonalMembershipRole.AssistantAdmin:
+                case CirclePersonalMembershipRole.Member:
+                    AddCircleToCircleList(circle);
+                    break;
+                case CirclePersonalMembershipRole.StatePendingOutbound:
+                    FireJoinCircleInvitationReceivedEvents(circle);
+                    break;
+            }
+
+            return true;
+
+        }
+
+
+        private CircleInviter GetCircleInviterFromNetworkInfo(ContactType contact)
         {
             CircleInviter initator = null;
 
@@ -1006,7 +2101,21 @@ namespace MSNPSharp.IO
                 {
                     if (networkInfo.DomainId == 1)
                     {
-                        initator = new CircleInviter(networkInfo.InviterEmail, networkInfo.InviterName, networkInfo.InviterMessage);
+                        if (networkInfo.InviterCIDSpecified)
+                        {
+                            ContactType inviter = SelecteContact(networkInfo.InviterCID);
+                            if (inviter == null)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[GetCircleInviterFromNetworkInfo] Cannot create circle inviter from CID: " + networkInfo.InviterCID + ", contact not found.");
+                                return null;
+                            }
+
+                            initator = new CircleInviter(inviter, networkInfo.InviterMessage);
+                        }
+                        else
+                        {
+                            initator = new CircleInviter(networkInfo.InviterEmail, networkInfo.InviterName, networkInfo.InviterMessage);
+                        }
                     }
                 }
             }
@@ -1014,61 +2123,72 @@ namespace MSNPSharp.IO
             return initator;
         }
 
-
-        private Circle CombineCircle(ContactType contact, CircleInverseInfoType circleinfo)
+        /// <summary>
+        /// Use msn webservices to get addressbooks.
+        /// </summary>
+        /// <param name="abIds"></param>
+        /// <param name="state"></param>
+        /// <param name="scene"></param>
+        private void RequestCircles(string[] abIds, RelationshipState state, Scenario scene)
         {
-            Circle circle = new Circle(
-                new Guid(circleinfo.Content.Handle.Id),
-                new Guid(contact.contactId),
-                circleinfo.Content.Info.HostedDomain,
-                circleinfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role,
-                circleinfo.Content.Info.DisplayName,
-                NSMessageHandler);
+            if (abIds == null)
+                return;
 
-
-            if (contact.contactInfo != null)
+            foreach (string abId in abIds)
             {
-
-                circle.CID = contact.contactInfo.CID;
+                RequestAddressBookByABId(abId, state, scene);
             }
 
-            return circle;
         }
 
-
-        private void UpdateContact(ContactType contactType)
+        private ReturnState UpdateContact(ContactType contactType)
         {
-            contactInfoType cit = contactType.contactInfo;
-            ClientType type = ClientType.PassportMember;
-            string account = cit.passportName;
-            string displayname = cit.displayName;
-            bool ismessengeruser = cit.isMessengerUser;
+            return UpdateContact(contactType, WebServiceConstants.MessengerIndividualAddressBookId, null);
+        }
 
-            if (cit.emails != null && account == null)
+        private ReturnState UpdateContact(ContactType contactType, string abId, Circle circle)
+        {
+            if (contactType.contactInfo == null)
             {
-                foreach (contactEmailType cet in cit.emails)
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Cannot update contact, contact info is null.");
+                return ReturnState.UpdateError;
+            }
+
+            contactInfoType cinfo = contactType.contactInfo;
+            ClientType type = ClientType.PassportMember;
+            string account = cinfo.passportName;
+            string displayName = cinfo.displayName;
+            bool isMessengeruser = cinfo.isMessengerUser;
+            string lowerId = abId.ToLowerInvariant();
+            ReturnState returnValue = ReturnState.ProcessNextContact;
+            ContactList contactList = null;
+            bool isDefaultAddressBook = (lowerId == WebServiceConstants.MessengerIndividualAddressBookId);
+
+            if (cinfo.emails != null && account == null && cinfo != null)
+            {
+                foreach (contactEmailType cet in cinfo.emails)
                 {
                     if (cet.isMessengerEnabled)
                     {
                         type = (ClientType)Enum.Parse(typeof(ClientType), cet.Capability);
                         account = cet.email;
-                        ismessengeruser |= cet.isMessengerEnabled;
-                        displayname = account;
+                        isMessengeruser |= cet.isMessengerEnabled;
+                        displayName = account;
                         break;
                     }
                 }
             }
 
-            if (cit.phones != null && account == null)
+            if (cinfo.phones != null && account == null)
             {
-                foreach (contactPhoneType cpt in cit.phones)
+                foreach (contactPhoneType cpt in cinfo.phones)
                 {
                     if (cpt.isMessengerEnabled)
                     {
                         type = ClientType.PhoneMember;
                         account = cpt.number;
-                        ismessengeruser |= cpt.isMessengerEnabled;
-                        displayname = account;
+                        isMessengeruser |= cpt.isMessengerEnabled;
+                        displayName = account;
                         break;
                     }
                 }
@@ -1076,103 +2196,163 @@ namespace MSNPSharp.IO
 
             if (account != null)
             {
-                if (cit.contactType != MessengerContactType.Me)
+                account = account.ToLowerInvariant();
+                if (cinfo.contactType != MessengerContactType.Me)
                 {
-                    Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
+                    #region Contacts other than owner
+
+                    Contact contact = null;
+
+                    if (isDefaultAddressBook)
+                    {
+                        contact = NSMessageHandler.ContactList.GetContact(account, type);
+                        contactList = NSMessageHandler.ContactList;
+                    }
+                    else
+                    {
+                        if ( circle == null)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Cannot update contact: " + account + " in addressbook: " + abId);
+
+                            //This means we are restoring contacts from mcl file.
+                            //We need to retore the circle first, then initialize this contact again.
+                            return ReturnState.UpdateError;
+                        }
+
+                        CirclePersonalMembershipRole membershipRole = GetCircleMemberRoleFromNetworkInfo(cinfo.NetworkInfoList);
+                        contact = circle.ContactList.GetContact(account, type);
+                        contactList = circle.ContactList;
+                        contact.CircleRole = membershipRole;
+                        string tempName = GetCircleMemberDisplayNameFromNetworkInfo(cinfo.NetworkInfoList);
+                        if (!string.IsNullOrEmpty(tempName))
+                            displayName = tempName;
+                    }
+
                     contact.Guid = new Guid(contactType.contactId);
-                    contact.CID = Convert.ToInt64(cit.CID);
-                    contact.ContactType = cit.contactType;
+                    contact.CID = Convert.ToInt64(cinfo.CID);
+                    contact.ContactType = cinfo.contactType;
                     //contact.SetHasBlog(cit.hasSpace);   //DONOT trust this
-                    contact.SetComment(cit.comment);
-                    contact.SetIsMessengerUser(ismessengeruser);
-                    contact.SetMobileAccess(cit.isMobileIMEnabled);
+                    contact.SetComment(cinfo.comment);
+                    contact.SetIsMessengerUser(isMessengeruser);
+                    contact.SetMobileAccess(cinfo.isMobileIMEnabled);
+                    contact.UserTile = GetUserTitleURLFromWindowsLiveNetworkInfo(contactType);
+                    SetContactPhones(contact, cinfo);
+                    contact.SetNickName(GetContactNickName(contactType));
+
+
                     if (contact.IsMessengerUser)
+                    {
                         contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
-
-                    if (!String.IsNullOrEmpty(displayname))
-                    {
-                        if (contact.Name == contact.Mail && displayname != contact.Mail)
-                            contact.SetName(displayname);
                     }
 
-                    if (cit.contactType == MessengerContactType.Live &&
-                        cit.NetworkInfoList != null &&
-                        !String.IsNullOrEmpty(cit.NetworkInfoList[0].UserTileURL))
+                    if (!String.IsNullOrEmpty(displayName))
                     {
-                        contact.UserTile = new Uri(cit.NetworkInfoList[0].UserTileURL);
+                        if (contact.Name == contact.Mail && displayName != contact.Mail)
+                            contact.SetName(displayName);
                     }
 
-                    if (cit.phones != null)
+
+                    if (cinfo.groupIds != null)
                     {
-                        foreach (contactPhoneType cp in cit.phones)
-                        {
-                            switch (cp.contactPhoneType1)
-                            {
-                                case ContactPhoneTypeType.ContactPhoneMobile:
-                                    contact.SetMobilePhone(cp.number);
-                                    break;
-
-                                case ContactPhoneTypeType.ContactPhonePersonal:
-                                    contact.SetHomePhone(cp.number);
-                                    break;
-
-                                case ContactPhoneTypeType.ContactPhoneBusiness:
-                                    contact.SetWorkPhone(cp.number);
-                                    break;
-                            }
-                        }
-                    }
-
-                    if (null != cit.annotations)
-                    {
-                        foreach (Annotation anno in cit.annotations)
-                        {
-                            switch (anno.Name)
-                            {
-                                case "AB.NickName":
-                                    contact.SetNickName(anno.Value);
-                                    break;
-                            }
-                        }
-                    }
-
-                    if (cit.groupIds != null)
-                    {
-                        foreach (string groupId in cit.groupIds)
+                        foreach (string groupId in cinfo.groupIds)
                         {
                             contact.ContactGroups.Add(NSMessageHandler.ContactGroups[groupId]);
                         }
                     }
 
-                    if (cit.groupIdsDeleted != null)
+                    if (cinfo.groupIdsDeleted != null)
                     {
-                        foreach (string groupId in cit.groupIdsDeleted)
+                        foreach (string groupId in cinfo.groupIdsDeleted)
                         {
                             contact.ContactGroups.Remove(NSMessageHandler.ContactGroups[groupId]);
                         }
+                    } 
+
+                    #endregion
+
+                    #region Filter yourself and members who alrealy left this circle.
+                    bool needsDelete = false;
+
+                    RelationshipState relationshipState = GetCircleMemberRelationshipStateFromNetworkInfo(cinfo.NetworkInfoList);
+                    if (((relationshipState & RelationshipState.Rejected) != RelationshipState.None|| 
+                        relationshipState == RelationshipState.None) &&
+                        isDefaultAddressBook == false)
+                    {
+                        //Members who already left.
+                        needsDelete |= true;
                     }
+
+                    if (cinfo.IsHiddenSpecified && cinfo.IsHidden)
+                    {
+                        needsDelete |= true;
+                    }
+
+                    if (account == NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() && 
+                        cinfo.NetworkInfoList != null && 
+                        type == NSMessageHandler.ContactList.Owner.ClientType &&
+                        isDefaultAddressBook == false)
+                    {
+                        //This is a self contact. If we need to left a circle, we need its contactId.
+                        //The exit circle operation just delete this contact from addressbook.
+                        needsDelete |= true;
+                    }
+
+                    if (contactType.fDeleted)
+                    {
+                        needsDelete |= true;
+                    }
+
+                    if (needsDelete)
+                    {
+                        contactList.Remove(account, type);
+                    }
+
+                    #endregion
                 }
                 else
                 {
-                    if (displayname == NSMessageHandler.Owner.Mail && !String.IsNullOrEmpty(NSMessageHandler.Owner.Name))
+                    #region Update owner and Me contact
+		
+                    Owner owner = null;
+
+                    if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
                     {
-                        displayname = NSMessageHandler.Owner.Name;
+                        owner = NSMessageHandler.ContactList.Owner;
+                        if (owner == null)
+                        {
+                            owner = new Owner(abId, cinfo.passportName, NSMessageHandler);
+                            NSMessageHandler.ContactList.SetOwner(owner);
+                        }
+                    }
+                    else
+                    {
+                        if (circle == null)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Cannot update owner: " + account + " in addressbook: " + abId);
+
+                            return ReturnState.UpdateError;
+                        }
+
+                        owner = circle.ContactList.Owner;
                     }
 
-                    NSMessageHandler.Owner.Guid = new Guid(contactType.contactId);
-                    NSMessageHandler.Owner.CID = Convert.ToInt64(cit.CID);
-                    NSMessageHandler.Owner.ContactType = cit.contactType;
-                    NSMessageHandler.Owner.SetName(displayname);
-
-                    if (cit.NetworkInfoList != null &&
-                        !String.IsNullOrEmpty(cit.NetworkInfoList[0].UserTileURL))
+                    if (displayName == owner.Mail && !String.IsNullOrEmpty(owner.Name))
                     {
-                        NSMessageHandler.Owner.UserTile = new Uri(cit.NetworkInfoList[0].UserTileURL);
+                        displayName = owner.Name;
                     }
 
-                    if (null != cit.annotations)
+                    owner.Guid = new Guid(contactType.contactId);
+                    owner.CID = Convert.ToInt64(cinfo.CID);
+                    owner.ContactType = cinfo.contactType;
+                    owner.SetName(displayName);
+                    owner.SetNickName(GetContactNickName(contactType));
+                    owner.UserTile = GetUserTitleURLFromWindowsLiveNetworkInfo(contactType);
+                    SetContactPhones(owner, cinfo);
+	#endregion
+
+                    if (null != cinfo.annotations && lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
                     {
-                        foreach (Annotation anno in cit.annotations)
+                        foreach (Annotation anno in cinfo.annotations)
                         {
                             MyProperties[anno.Name] = anno.Value;
                         }
@@ -1181,6 +2361,266 @@ namespace MSNPSharp.IO
                     InitializeMyProperties();
                 }
             }
+
+            return returnValue;
+        }
+
+        private bool SetContactPhones(Contact contact, contactInfoType cinfo)
+        {
+            if (cinfo == null)
+                return false;
+
+            if (cinfo.phones == null)
+                return false;
+
+
+            foreach (contactPhoneType cp in cinfo.phones)
+            {
+                switch (cp.contactPhoneType1)
+                {
+                    case ContactPhoneTypeType.ContactPhoneMobile:
+                        contact.SetMobilePhone(cp.number);
+                        break;
+
+                    case ContactPhoneTypeType.ContactPhonePersonal:
+                        contact.SetHomePhone(cp.number);
+                        break;
+
+                    case ContactPhoneTypeType.ContactPhoneBusiness:
+                        contact.SetWorkPhone(cp.number);
+                        break;
+                }
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Get a contact's nick name from it's Annotations.
+        /// </summary>
+        /// <param name="contact"></param>
+        /// <returns></returns>
+        private string GetContactNickName(ContactType contact)
+        {
+            if (contact.contactInfo == null)
+                return string.Empty;
+
+            if (contact.contactInfo.annotations == null)
+                return string.Empty;
+
+            foreach(Annotation anno in contact.contactInfo.annotations)
+            {
+                if(anno.Name == AnnotationNames.AB_NickName)
+                {
+                    return anno.Value;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Get windows live user title url.
+        /// </summary>
+        /// <param name="contact"></param>
+        /// <returns></returns>
+        private Uri GetUserTitleURLFromWindowsLiveNetworkInfo(ContactType contact)
+        {
+            string returnURL = GetUserTitleURLByDomainIdFromNetworkInfo(contact, DomainIds.WLDomain);
+            try
+            {
+                Uri urlResult = null;
+                if (Uri.TryCreate(returnURL, UriKind.Absolute, out urlResult))
+                    return urlResult;
+            }
+            catch (Exception)
+            {
+                
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Get user title url.
+        /// </summary>
+        /// <param name="contact"></param>
+        /// <param name="domainId"></param>
+        /// <returns></returns>
+        private string GetUserTitleURLByDomainIdFromNetworkInfo(ContactType contact, int domainId)
+        {
+            if (contact.contactInfo == null)
+                return string.Empty;
+            if (contact.contactInfo.NetworkInfoList == null)
+                return string.Empty;
+
+            foreach (NetworkInfoType info in contact.contactInfo.NetworkInfoList)
+            {
+                if (info.DomainIdSpecified && info.DomainId == domainId)
+                {
+                    if (!string.IsNullOrEmpty(info.UserTileURL))
+                    {
+                        return info.UserTileURL;
+                    }
+                }
+            }
+
+            return string.Empty;
+
+        }
+
+        /// <summary>
+        /// Get a contact's RelationshipState property by providing DomainId = 1 and RelationshipType = 5.
+        /// </summary>
+        /// <param name="infoList"></param>
+        /// <returns></returns>
+        private RelationshipState GetCircleMemberRelationshipStateFromNetworkInfo(NetworkInfoType[] infoList)
+        {
+            return (RelationshipState)GetContactRelationshipStateFromNetworkInfo(infoList, DomainIds.WLDomain, RelationshipTypes.CircleGroup);
+        }
+
+        /// <summary>
+        /// Get a contact's RelationshipState property by providing DomainId and RelationshipType
+        /// </summary>
+        /// <param name="infoList"></param>
+        /// <param name="domainId"></param>
+        /// <param name="relationshipType"></param>
+        /// <returns></returns>
+        private int GetContactRelationshipStateFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
+        {
+            if (infoList == null)
+                return 0;
+
+            foreach (NetworkInfoType info in infoList)
+            {
+                if (info.RelationshipTypeSpecified && info.DomainIdSpecified && info.RelationshipStateSpecified)
+                {
+                    if (info.DomainId == domainId && info.RelationshipType == relationshipType)
+                    {
+                        return info.RelationshipState;
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        private string GetCircleMemberDisplayNameFromNetworkInfo(NetworkInfoType[] infoList)
+        {
+            return GetContactDisplayNameFromNetworkInfo(infoList, DomainIds.WLDomain, RelationshipTypes.CircleGroup);
+        }
+
+        private string GetContactDisplayNameFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
+        {
+            if (infoList == null)
+                return string.Empty;
+
+            foreach (NetworkInfoType info in infoList)
+            {
+                if (info.RelationshipTypeSpecified && info.DomainIdSpecified && !string.IsNullOrEmpty(info.DisplayName))
+                {
+                    if (info.DomainId == domainId && info.RelationshipType == relationshipType)
+                    {
+                        return info.DisplayName;
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+
+        private CirclePersonalMembershipRole GetCircleMemberRoleFromNetworkInfo(NetworkInfoType[] infoList)
+        {
+            return (CirclePersonalMembershipRole)GetContactRelationshipRoleFromNetworkInfo(infoList, DomainIds.WLDomain, RelationshipTypes.CircleGroup);
+        }
+
+        private int GetContactRelationshipRoleFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
+        {
+            if (infoList == null)
+                return 0;
+
+            foreach (NetworkInfoType info in infoList)
+            {
+                if (info.RelationshipTypeSpecified && info.DomainIdSpecified && info.RelationshipRoleSpecified)
+                {
+                    if (info.DomainId == domainId && info.RelationshipType == relationshipType)
+                    {
+                        return info.RelationshipRole;
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Get the domain tage of circle's hidden repersentative.
+        /// </summary>
+        /// <param name="contact"></param>
+        /// <returns></returns>
+        private string GetHiddenRepresentativeDomainTag(ContactType contact)
+        {
+            if (contact.contactInfo == null)
+                return string.Empty;
+
+            if (contact.contactInfo.contactType != MessengerContactType.Circle)
+                return string.Empty;
+
+            return GetDomainTagFromNetworkInfo(contact.contactInfo.NetworkInfoList, DomainIds.WLDomain);
+        }
+
+        private string GetDomainTagFromNetworkInfo(NetworkInfoType[] infoList, int domainId)
+        {
+            if (infoList == null)
+                return string.Empty;
+
+            foreach (NetworkInfoType info in infoList)
+            {
+                if (info.DomainIdSpecified && !string.IsNullOrEmpty(info.DomainTag))
+                {
+                    if (info.DomainId == domainId)
+                        return info.DomainTag;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private bool AddToContactTable(long CID, ContactType contact)
+        {
+            if (contact.contactInfo == null)
+                return false;
+
+            lock (contactTable)
+                contactTable[CID] = contact;
+            return true;
+        }
+
+        private bool AddHiddenRepresentative(string domainTag, ContactType contact)
+        {
+            if (string.IsNullOrEmpty(domainTag) || contact == null)
+            {
+                return false;
+            }
+
+            if (contact.contactInfo == null)
+            {
+                return false;
+            }
+
+            if (contact.fDeleted == true)
+            {
+                lock (HiddenRepresentatives)
+                    HiddenRepresentatives.Remove(domainTag.ToLowerInvariant());
+                return false;
+            }
+
+            lock (HiddenRepresentatives)
+                HiddenRepresentatives[domainTag.ToLowerInvariant()] = contact;
+
+            return true;
         }
 
         /// <summary>

@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Xml.Serialization;
+using System.Diagnostics;
 
 namespace MSNPSharp.IO
 {
@@ -158,6 +159,7 @@ namespace MSNPSharp.IO
         /// </summary>
         public virtual void Save()
         {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Underlying data saved.", "< " + GetType() + " >");
             Save(FileName);
         }
 

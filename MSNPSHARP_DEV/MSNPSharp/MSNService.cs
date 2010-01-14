@@ -47,43 +47,6 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
 
-    #region Enums: MsnServiceType and PartnerScenario
-
-    public enum MsnServiceType
-    {
-        AB,
-        Sharing,
-        Storage,
-        RSI,
-        OIMStore,
-        WhatsUp
-    }
-
-    public enum PartnerScenario
-    {
-        None,
-        Initial,
-        Timer,
-        BlockUnblock,
-        GroupSave,
-        ContactSave,
-        ContactMsgrAPI,
-        MessengerPendingList,
-        PrivacyApply,
-        NewCircleDuringPull,
-        CircleInvite,
-        CircleIdAlert,
-        CircleStatus,
-        CircleSave,
-        CircleLeave,
-        JoinedCircleDuringPush,
-        ABChangeNotifyAlert,
-        RoamingSeed,
-        RoamingIdentityChanged
-    }
-
-    #endregion
-
     #region MsnServiceState
 
     public class MsnServiceState

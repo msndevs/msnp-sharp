@@ -89,40 +89,52 @@ namespace MSNPSharpClient
 
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
-            messenger.Nameserver.CircleOnline += new EventHandler<CircleEventArgs>(Nameserver_CircleOnline);
-            messenger.Nameserver.CircleOffline += new EventHandler<CircleEventArgs>(Nameserver_CircleOffline);
-            messenger.Nameserver.CircleMemberOnline += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberOnline);
-            messenger.Nameserver.CircleMemberOffline += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberOffline);
+
 
             messenger.Nameserver.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
             messenger.Nameserver.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
+
+
+            #region Circle events
+
             messenger.Nameserver.ContactService.CreateCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
             messenger.Nameserver.ContactService.JoinedCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
             messenger.Nameserver.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
             messenger.Nameserver.ContactService.ExitCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_ExitCircle);
-            messenger.Nameserver.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberLeft);
-            messenger.Nameserver.CircleMemberJoined += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberJoined);
+            messenger.Nameserver.ContactService.CircleMemberJoined += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberJoined);
+            messenger.Nameserver.ContactService.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberLeft);
+            messenger.Nameserver.CircleOnline += new EventHandler<CircleEventArgs>(Nameserver_CircleOnline);
+            messenger.Nameserver.CircleOffline += new EventHandler<CircleEventArgs>(Nameserver_CircleOffline);
+            messenger.Nameserver.CircleMemberOnline += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberOnline);
+            messenger.Nameserver.CircleMemberOffline += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberOffline);
+            messenger.Nameserver.LeftCircleConversation += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberLeftConversation);
+            messenger.Nameserver.JoinedCircleConversation += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberJoinedConversation);
             messenger.Nameserver.CircleTextMessageReceived += new EventHandler<CircleTextMessageEventArgs>(Nameserver_CircleTextMessageReceived);
-            messenger.Nameserver.CircleNudgeReceived += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleNudgeReceived);
+            messenger.Nameserver.CircleNudgeReceived += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleNudgeReceived); 
 
-            messenger.Nameserver.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
-            messenger.Nameserver.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            messenger.Nameserver.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            messenger.Nameserver.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
-            messenger.Nameserver.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
+            #endregion
+
+
+            #region Offline Message Operation events
+
             messenger.Nameserver.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
-            messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
+            messenger.Nameserver.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted); 
+
+            #endregion
             
 
             messenger.Nameserver.WhatsUpService.GetWhatsUpCompleted += WhatsUpService_GetWhatsUpCompleted;
 
+            #region Webservice Error handler
 
             // Handle Service Operation Errors
             //In most cases, these error are not so important.
             messenger.ContactService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
             messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
-            messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed;
+            messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed; 
+
+            #endregion
         }
 
         public static class ImageIndexes
@@ -193,7 +205,8 @@ namespace MSNPSharpClient
 
             // Move PM panel to SignIn window...
             pnlNameAndPM.Location = panel1.Location;
-
+            Version dllVersion = messenger.GetType().Assembly.GetName().Version;
+            Text += "(v" + dllVersion.Major + "." + dllVersion.Minor + "." + dllVersion.Build + " r" + dllVersion.Revision + ")";
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             comboStatus.SelectedIndex = 0;
@@ -228,7 +241,7 @@ namespace MSNPSharpClient
 
         private void AutoGroupMessageReply(Circle circle)
         {
-            if (messenger.Owner.Status != PresenceStatus.Hidden || messenger.Owner.Status != PresenceStatus.Offline)
+            if (Messenger.Nameserver.ContactList.Owner.Status != PresenceStatus.Hidden || Messenger.Nameserver.ContactList.Owner.Status != PresenceStatus.Offline)
                 circle.SendMessage(new TextMessage("MSNPSharp example client auto reply."));
         }
 
@@ -238,16 +251,14 @@ namespace MSNPSharpClient
             AutoGroupMessageReply(e.Sender);
         }
 
-        void Nameserver_CircleMemberJoined(object sender, CircleMemberEventArgs e)
+        void Nameserver_CircleMemberJoinedConversation(object sender, CircleMemberEventArgs e)
         {
             Trace.WriteLine("Circle member " + e.Member.ToString() + " joined the circle conversation: " + e.Circle.ToString());
-            RefreshCircleList(sender, e);
         }
 
-        void Nameserver_CircleMemberLeft(object sender, CircleMemberEventArgs e)
+        void Nameserver_CircleMemberLeftConversation(object sender, CircleMemberEventArgs e)
         {
             Trace.WriteLine("Circle member " + e.Member.ToString() + " has left the circle: " + e.Circle.ToString());
-            RefreshCircleList(sender, e);
         }
 
         void Nameserver_CircleOnline(object sender, CircleEventArgs e)
@@ -270,7 +281,18 @@ namespace MSNPSharpClient
         void ContactService_JoinedCircle(object sender, CircleEventArgs e)
         {
             RefreshCircleList(sender, e);
-            messenger.Nameserver.ContactService.ExitCircle(e.Circle); //Demostrate how to leave a circle.
+            //messenger.Nameserver.ContactService.ExitCircle(e.Circle); //Demostrate how to leave a circle.
+        }
+
+
+        void ContactService_CircleMemberLeft(object sender, CircleMemberEventArgs e)
+        {
+            RefreshCircleList(sender, null);
+        }
+
+        void ContactService_CircleMemberJoined(object sender, CircleMemberEventArgs e)
+        {
+            RefreshCircleList(sender, null);
         }
 
         void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArgs e)
@@ -469,11 +491,11 @@ namespace MSNPSharpClient
                 return;
             }
 
-            lblName.Text = messenger.Owner.Name;
+            lblName.Text = Messenger.Nameserver.ContactList.Owner.Name;
 
-            if (messenger.Owner.PersonalMessage != null && messenger.Owner.PersonalMessage.Message != null)
+            if (Messenger.Nameserver.ContactList.Owner.PersonalMessage != null && Messenger.Nameserver.ContactList.Owner.PersonalMessage.Message != null)
             {
-                lblPM.Text = System.Web.HttpUtility.HtmlDecode(messenger.Owner.PersonalMessage.Message);
+                lblPM.Text = System.Web.HttpUtility.HtmlDecode(Messenger.Nameserver.ContactList.Owner.PersonalMessage.Message);
             }
         }
 
@@ -485,7 +507,7 @@ namespace MSNPSharpClient
                 return;
             }
 
-            displayImageBox.Image = messenger.Owner.DisplayImage.Image;
+            displayImageBox.Image = Messenger.Nameserver.ContactList.Owner.DisplayImage.Image;
         }
         
 
@@ -562,7 +584,7 @@ namespace MSNPSharpClient
             }
 
             Contact contact = e.Contact;
-            if (messenger.Nameserver.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd
+            if (messenger.Nameserver.ContactList.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd
                 /* || messenger.Nameserver.BotMode */)  //If you want your provisioned account in botmode to fire ReverseAdded event, uncomment this.
             {
                 // Show pending window if it is necessary.
@@ -728,7 +750,7 @@ namespace MSNPSharpClient
 
             if (messenger.Nameserver.IsSignedIn)
             {
-                comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(messenger.Owner.Status));
+                comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(Messenger.Nameserver.ContactList.Owner.Status));
             }
         }
 
@@ -770,7 +792,7 @@ namespace MSNPSharpClient
             {
                 if (newstatus == PresenceStatus.Offline)
                 {
-                    PresenceStatus old = messenger.Owner.Status;
+                    PresenceStatus old = Messenger.Nameserver.ContactList.Owner.Status;
                     //close all ConversationForms
                     if (ConversationForms.Count == 0 ||
                         MessageBox.Show("You are signing out from example client. All windows will be closed.", "Sign out",
@@ -794,7 +816,7 @@ namespace MSNPSharpClient
                 }
                 else
                 {
-                    messenger.Owner.Status = newstatus;
+                    Messenger.Nameserver.ContactList.Owner.Status = newstatus;
                 }
             }
             else if (newstatus == PresenceStatus.Offline)
@@ -853,21 +875,21 @@ namespace MSNPSharpClient
                 string place = comboPlaces.Text.Split(' ')[comboPlaces.Text.Split(' ').Length - 1];
                 if (comboPlaces.SelectedIndex == 1)
                 {
-                    messenger.Owner.Status = PresenceStatus.Offline;
+                    Messenger.Nameserver.ContactList.Owner.Status = PresenceStatus.Offline;
                     comboPlaces.Visible = false;
                 }
                 else if (comboPlaces.SelectedIndex == comboPlaces.Items.Count - 1)
                 {
-                    messenger.Owner.SignoutFromEverywhere();
+                    Messenger.Nameserver.ContactList.Owner.SignoutFromEverywhere();
                     comboPlaces.Visible = false;
                 }
                 else
                 {
-                    foreach (KeyValuePair<Guid, string> keyvalue in messenger.Owner.Places)
+                    foreach (KeyValuePair<Guid, string> keyvalue in Messenger.Nameserver.ContactList.Owner.Places)
                     {
                         if (keyvalue.Value == place)
                         {
-                            messenger.Owner.SignoutFrom(keyvalue.Key);
+                            Messenger.Nameserver.ContactList.Owner.SignoutFrom(keyvalue.Key);
                             break;
                         }
                     }
@@ -889,14 +911,14 @@ namespace MSNPSharpClient
                 return;
             }
 
-            // if (messenger.Owner.Places.Count > 1)
+            // if (Messenger.Nameserver.ContactList.Owner.Places.Count > 1)
             {
                 comboPlaces.BeginUpdate();
                 comboPlaces.Items.Clear();
-                comboPlaces.Items.Add("(" + messenger.Owner.Places.Count + ") Places");
-                comboPlaces.Items.Add("Signout from here (" + messenger.Owner.EpName + ")");
+                comboPlaces.Items.Add("(" + Messenger.Nameserver.ContactList.Owner.Places.Count + ") Places");
+                comboPlaces.Items.Add("Signout from here (" + Messenger.Nameserver.ContactList.Owner.EpName + ")");
 
-                foreach (KeyValuePair<Guid, string> keyvalue in messenger.Owner.Places)
+                foreach (KeyValuePair<Guid, string> keyvalue in Messenger.Nameserver.ContactList.Owner.Places)
                 {
                     if (keyvalue.Key != NSMessageHandler.MachineGuid)
                     {
@@ -926,7 +948,7 @@ namespace MSNPSharpClient
 
         private void Nameserver_SignedIn(object sender, EventArgs e)
         {
-            SetStatus("Signed into the messenger network as " + messenger.Owner.Name);
+            SetStatus("Signed into the messenger network as " + Messenger.Nameserver.ContactList.Owner.Name);
 
             if (InvokeRequired)
             {
@@ -940,9 +962,15 @@ namespace MSNPSharpClient
             pnlNameAndPM.Visible = true;
             comboPlaces.Visible = true;
 
-            messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
+            Messenger.Nameserver.ContactList.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
+            Messenger.Nameserver.ContactList.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            Messenger.Nameserver.ContactList.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            Messenger.Nameserver.ContactList.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);
+            Messenger.Nameserver.ContactList.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
+            Messenger.Nameserver.ContactList.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
-            propertyGrid.SelectedObject = messenger.Owner;
+            propertyGrid.SelectedObject = Messenger.Nameserver.ContactList.Owner;
+            displayImageBox.Image = Messenger.Nameserver.ContactList.Owner.DisplayImage.Image;
 
             Invoke(new EventHandler<EventArgs>(UpdateContactlist), sender, e);
         }
@@ -1158,9 +1186,9 @@ namespace MSNPSharpClient
                         return string.Compare(((Contact)node.Tag).Name, ((Contact)node2.Tag).Name, StringComparison.CurrentCultureIgnoreCase);
                     }
                     if (((Contact)node.Tag).Online)
-                        return 1;
-                    else if (((Contact)node2.Tag).Online)
                         return -1;
+                    else if (((Contact)node2.Tag).Online)
+                        return 1;
                 }
                 else if (node.Tag is ContactGroup && node2.Tag is ContactGroup)
                 {
@@ -1174,12 +1202,16 @@ namespace MSNPSharpClient
         {
             if ((e.Button == MouseButtons.Left) && (e.Node.Level != 0))
             {
-                Contact selectedContact = (Contact)e.Node.Tag;
-                propertyGrid.SelectedObject = selectedContact;
+                Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
 
-                if (selectedContact.Online)
+                if (selectedContact != null)
                 {
-                    sendIMMenuItem.PerformClick();
+                    propertyGrid.SelectedObject = selectedContact;
+
+                    if (selectedContact.Online && (!(selectedContact is Circle)))
+                    {
+                        sendIMMenuItem.PerformClick();
+                    }
                 }
             }
         }
@@ -1208,6 +1240,18 @@ namespace MSNPSharpClient
                 else
                 {
                     Contact selectedContact = (Contact)e.Node.Tag;
+
+                    if (selectedContact is Circle)
+                    {
+                        if (e.Node.IsExpanded)
+                        {
+                            e.Node.Collapse();
+                        }
+                        else
+                        {
+                            e.Node.Expand();
+                        }
+                    }
 
                     propertyGrid.SelectedObject = selectedContact;
                 }
@@ -1400,7 +1444,7 @@ namespace MSNPSharpClient
             if (circle == null)
                 return string.Empty;
 
-            return circle.Name + " (" + circle.Members.Count.ToString() + " members)";
+            return circle.Name + " (" + circle.ContactList.Values.Count.ToString() + " members)";
         }
 
 
@@ -1439,14 +1483,13 @@ namespace MSNPSharpClient
 
                 foreach (Circle circle in messenger.Nameserver.CircleList)
                 {
-                    TreeNode circleNode = circlesNode.Nodes.Add(circle.Mail, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
+                    TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
                     circleNode.NodeFont = PARENT_NODE_FONT;
                     circleNode.Tag = circle;
 
-                    foreach (Contact member in circle.Members)
+                    foreach (Contact contact in circle.ContactList.All)
                     {
                         // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
-                        Contact contact = messenger.ContactList[member.Mail, ClientType.PassportMember];
                         string text = contact.Name;
                         if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
                         {
@@ -1495,35 +1538,44 @@ namespace MSNPSharpClient
             {
                 // Circle event
                 Circle circle = contactToUpdate as Circle;
-                TreeNode circlenode = circlesNode.Nodes.ContainsKey(circle.Mail) ?
-                    circlesNode.Nodes[circle.Mail] : circlesNode.Nodes.Add(circle.Mail, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
+                bool isDeleted = (Messenger.Nameserver.CircleList[circle.AddressBookId, circle.HostDomain] == null);
 
-                circlenode.NodeFont = PARENT_NODE_FONT;
-                circlenode.Tag = circle;
-
-                foreach (Contact contact in circle.Members)
+                if (!isDeleted)
                 {
-                    // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
-                    string text2 = contact.Name;
-                    if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                    TreeNode circlenode = circlesNode.Nodes.ContainsKey(circle.Hash) ?
+                        circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
+
+                    circlenode.NodeFont = PARENT_NODE_FONT;
+                    circlenode.Tag = circle;
+
+                    foreach (Contact contact in circle.ContactList.All)
                     {
-                        text2 += " - " + contact.PersonalMessage.Message;
-                    }
-                    if (contact.Name != contact.Mail)
-                    {
-                        text2 += " (" + contact.Mail + ")";
+                        // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
+                        string text2 = contact.Name;
+                        if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                        {
+                            text2 += " - " + contact.PersonalMessage.Message;
+                        }
+                        if (contact.Name != contact.Mail)
+                        {
+                            text2 += " (" + contact.Mail + ")";
+                        }
+
+                        TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
+                            circlenode.Nodes[contact.Hash] : circlenode.Nodes.Add(contact.Hash, text2);
+
+                        newnode.Text = text2;
+                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                        newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.Tag = contact;
                     }
 
-                    TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
-                        circlenode.Nodes[contact.Hash] : circlenode.Nodes.Add(contact.Hash, text2);
-
-                    newnode.Text = text2;
-                    newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
-                    newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                    newnode.Tag = contact;
+                    circlenode.Text = GetCircleDisplayName(circle);
                 }
-
-                circlenode.Text = GetCircleDisplayName(circle);
+                else
+                {
+                    circlesNode.Nodes.RemoveByKey(circle.Hash);
+                }
             }
             else
             {
@@ -1961,14 +2013,14 @@ namespace MSNPSharpClient
         void ContactService_TestingCircleAdded(object sender, CircleEventArgs e)
         {
             //Circle created, then show you how to block.
-            if (!e.Circle.OnBlockedList)
-            {
-                messenger.ContactService.BlockCircle(e.Circle);
-                e.Circle.ContactBlocked += new EventHandler<EventArgs>(Circle_ContactBlocked);
-                Trace.WriteLine("Circle blocked: " + e.Circle.ToString());
-            }
+            ////if (!e.Circle.OnBlockedList)
+            ////{
+            ////    messenger.ContactService.BlockCircle(e.Circle);
+            ////    e.Circle.ContactBlocked += new EventHandler<EventArgs>(Circle_ContactBlocked);
+            ////    Trace.WriteLine("Circle blocked: " + e.Circle.ToString());
+            ////}
 
-            Trace.WriteLine("Circle created: " + e.Circle.ToString());
+            ////Trace.WriteLine("Circle created: " + e.Circle.ToString());
         }
 
         void Circle_ContactBlocked(object sender, EventArgs e)
@@ -2032,7 +2084,7 @@ namespace MSNPSharpClient
                         ||
                         contact.Name.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1)
                     {
-                        TreeNode newnode = foundnode.Nodes.Add(contact.Mail, contact.Name);
+                        TreeNode newnode = foundnode.Nodes.Add(contact.Hash, contact.Name);
                         newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                         newnode.Tag = contact;
                     }
@@ -2065,13 +2117,13 @@ namespace MSNPSharpClient
 
             List<string> lstPersonalMessage = new List<string>(new string[] { "", "" });
 
-            if (dn != messenger.Nameserver.Owner.Name)
+            if (dn != messenger.Nameserver.ContactList.Owner.Name)
             {
 
                 lstPersonalMessage[0] = dn;
             }
 
-            if (messenger.Nameserver.Owner.PersonalMessage == null || pm != messenger.Nameserver.Owner.PersonalMessage.Message)
+            if (messenger.Nameserver.ContactList.Owner.PersonalMessage == null || pm != messenger.Nameserver.ContactList.Owner.PersonalMessage.Message)
             {
                 lstPersonalMessage[1] = pm;
 
@@ -2117,12 +2169,12 @@ namespace MSNPSharpClient
                 List<string> lstPersonalMessage = profileObject as List<string>;
                 if (lstPersonalMessage[0] != "")
                 {
-                    messenger.Nameserver.Owner.Name = lstPersonalMessage[0];
+                    messenger.Nameserver.ContactList.Owner.Name = lstPersonalMessage[0];
                 }
 
                 if (lstPersonalMessage[1] != "")
                 {
-                    messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1], MediaType.None, null, NSMessageHandler.MachineGuid);
+                    messenger.Nameserver.ContactList.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1], MediaType.None, null, NSMessageHandler.MachineGuid);
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update personal message completed.");
@@ -2134,8 +2186,8 @@ namespace MSNPSharpClient
             MusicForm musicForm = new MusicForm();
             if (musicForm.ShowDialog() == DialogResult.OK)
             {
-                messenger.Owner.PersonalMessage = new PersonalMessage(
-                    messenger.Owner.PersonalMessage.Message,
+                Messenger.Nameserver.ContactList.Owner.PersonalMessage = new PersonalMessage(
+                    Messenger.Nameserver.ContactList.Owner.PersonalMessage.Message,
                     MediaType.Music,
                     new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" },
                     NSMessageHandler.MachineGuid);

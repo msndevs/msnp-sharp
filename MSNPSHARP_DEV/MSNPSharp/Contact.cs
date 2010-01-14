@@ -49,8 +49,9 @@ namespace MSNPSharp
     {
         #region Fields
 
-        private Guid guid;
-        private long? cid;
+        protected Guid guid;
+        protected Guid addressBookId;
+        private long cid;
         private string mail;
         private string name;
         private string nickName;
@@ -58,6 +59,8 @@ namespace MSNPSharp
         private string homePhone;
         private string workPhone;
         private string mobilePhone;
+        private string contactType;
+        private string comment = string.Empty;
 
         private bool hasBlog;
         private bool mobileDevice;
@@ -68,17 +71,20 @@ namespace MSNPSharp
         private ClientCapacitiesEx clientCapacitiesEx = ClientCapacitiesEx.None;
         private PresenceStatus status = PresenceStatus.Offline;
         private ClientType clientType = ClientType.PassportMember;
-        private string contactType;
+        private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
 
         private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
         private MSNLists lists = MSNLists.None;
 
         private DisplayImage displayImage;
         private PersonalMessage personalMessage;
-        private string comment = string.Empty;
+
 
         private Dictionary<string, Emoticon> emoticons = new Dictionary<string, Emoticon>(0);
+        private Dictionary<string, Contact> siblings = new Dictionary<string, Contact>(0);
+
         private ulong oimCount = 1;
+        private int adlCount = 1;
         private object clientData;
 
         private List<ActivityDetailsType> activities = new List<ActivityDetailsType>(0);
@@ -86,33 +92,41 @@ namespace MSNPSharp
 
         private object syncObject = new object();
 
-        /// <summary>
-        /// The display image url from the webside.
-        /// </summary>
-        public Uri UserTile
-        {
-            get
-            {
-                return userTile;
-            }
-            set
-            {
-                userTile = value;
-            }
-        }
-
         [NonSerialized]
         private NSMessageHandler nsMessageHandler;
 
         #endregion
 
-        protected Contact()
+        private Contact()
         {
         }
 
-        protected internal Contact(NSMessageHandler handler)
+        protected internal Contact(string abId, string account, ClientType cliType, NSMessageHandler handler)
         {
             NSMessageHandler = handler;
+            addressBookId = new Guid(abId);
+            mail = account.ToLowerInvariant();
+            clientType = cliType;
+            SetName(account);
+
+            if (NSMessageHandler != null)
+            {
+                NSMessageHandler.Manager.Add(this);
+            }
+        }
+
+        protected internal Contact(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
+        {
+            NSMessageHandler = handler;
+            addressBookId = abId;
+            mail = account.ToLowerInvariant();
+            clientType = cliType;
+            SetName(account);
+
+            if (NSMessageHandler != null)
+            {
+                NSMessageHandler.Manager.Add(this);
+            }
         }
 
         #region Events
@@ -132,12 +146,22 @@ namespace MSNPSharp
 
         #region Contact Properties
 
+        internal object SyncObject
+        {
+            get 
+            { 
+                return syncObject; 
+            }
+        }
+
+
         public NSMessageHandler NSMessageHandler
         {
             get
             {
                 return nsMessageHandler;
             }
+
             internal protected set
             {
                 nsMessageHandler = value;
@@ -145,7 +169,22 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The Guid of contact, NOT CID.
+        /// The display image url from the webside.
+        /// </summary>
+        public Uri UserTile
+        {
+            get
+            {
+                return userTile;
+            }
+            set
+            {
+                userTile = value;
+            }
+        }
+
+        /// <summary>
+        /// Get the Guid of contact, NOT CID.
         /// </summary>
         public Guid Guid
         {
@@ -153,9 +192,21 @@ namespace MSNPSharp
             {
                 return guid;
             }
+
             internal set
             {
                 guid = value;
+            }
+        }
+
+        /// <summary>
+        /// The identifier of addressbook this contact belongs to.
+        /// </summary>
+        public Guid AddressBookId
+        {
+            get
+            {
+                return addressBookId;
             }
         }
 
@@ -179,15 +230,16 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The contact id of contact, PassportMembers have CID only.
+        /// The contact id of contact, only PassportMembers have CID.
         /// </summary>
-        public long? CID
+        public long CID
         {
             get
             {
                 return cid;
             }
-            set
+
+            internal set
             {
                 cid = value;
             }
@@ -201,11 +253,6 @@ namespace MSNPSharp
             get
             {
                 return mail;
-            }
-
-            internal set
-            {
-                mail = value;
             }
         }
 
@@ -335,10 +382,6 @@ namespace MSNPSharp
             {
                 return clientType;
             }
-            internal set
-            {
-                clientType = value;
-            }
         }
 
         /// <summary>
@@ -364,12 +407,21 @@ namespace MSNPSharp
             }
         }
 
+        public Dictionary<string, Contact> Siblings
+        {
+            get 
+            { 
+                return siblings; 
+            }
+        }
+
         public DisplayImage DisplayImage
         {
             get
             {
                 return displayImage;
             }
+
             set
             {
                 if (displayImage != value)
@@ -408,11 +460,14 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The string representation info of contact.
+        /// </summary>
         public virtual string Hash
         {
             get
             {
-                return MakeHash(Mail, ClientType);
+                return MakeHash(Mail, ClientType, AddressBookId);
             }
         }
 
@@ -447,7 +502,7 @@ namespace MSNPSharp
                         if (!AutoSubscribeToUpdates)
                         {
                             contactType = MessengerContactType.LivePending;
-                            NSMessageHandler.ContactService.UpdateContact(this);
+                            NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
                         }
                     }
                     else
@@ -455,7 +510,7 @@ namespace MSNPSharp
                         if (contactType != MessengerContactType.Regular)
                         {
                             contactType = MessengerContactType.Regular;
-                            NSMessageHandler.ContactService.UpdateContact(this);
+                            NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
                         }
                     }
                 }
@@ -471,15 +526,20 @@ namespace MSNPSharp
             {
                 return isMessengerUser;
             }
+
+
             set
             {
                 if (NSMessageHandler != null && Guid != Guid.Empty && IsMessengerUser != value)
                 {
                     isMessengerUser = value;
-                    NSMessageHandler.ContactService.UpdateContact(this);
+                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
                 }
+
+                NotifyManager();
             }
         }
+
 
         public string Comment
         {
@@ -492,7 +552,7 @@ namespace MSNPSharp
                 if (NSMessageHandler != null && Guid != Guid.Empty && Comment != value)
                 {
                     comment = value;
-                    NSMessageHandler.ContactService.UpdateContact(this);
+                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
                 }
             }
         }
@@ -511,7 +571,7 @@ namespace MSNPSharp
                 if (NSMessageHandler != null && Guid != Guid.Empty && NickName != value)
                 {
                     nickName = value;
-                    NSMessageHandler.ContactService.UpdateContact(this);
+                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
                 }
             }
         }
@@ -533,6 +593,39 @@ namespace MSNPSharp
                     value = 1;
                 }
                 oimCount = value;
+            }
+        }
+
+        /// <summary>
+        /// The amount of ADL commands send for this contact.
+        /// </summary>
+        internal int ADLCount
+        {
+            get { return adlCount; }
+            set 
+            {
+                if (value < 0)
+                {
+                    value = 0;
+                }
+
+                adlCount = value; 
+            }
+        }
+
+        /// <summary>
+        /// The role of a contact in the addressbook.
+        /// </summary>
+        public CirclePersonalMembershipRole CircleRole
+        {
+            get 
+            { 
+                return circleRole; 
+            }
+
+            internal set 
+            { 
+                circleRole = value; 
             }
         }
 
@@ -678,9 +771,11 @@ namespace MSNPSharp
             {
                 return lists;
             }
+
             protected internal set
             {
                 lists = value;
+                NotifyManager();
             }
         }
 
@@ -701,6 +796,13 @@ namespace MSNPSharp
         internal void SetIsMessengerUser(bool isMessengerEnabled)
         {
             isMessengerUser = isMessengerEnabled;
+            NotifyManager();
+        }
+
+        internal void SetList(MSNLists msnLists)
+        {
+            lists = msnLists;
+            NotifyManager();
         }
 
         internal void SetMobileAccess(bool enabled)
@@ -730,7 +832,7 @@ namespace MSNPSharp
                 string oldName = name;
                 name = newName;
 
-                // notify the user we changed our name
+                // notify all of our buddies we changed our name
                 OnScreenNameChanged(oldName);
             }
         }
@@ -770,6 +872,22 @@ namespace MSNPSharp
                         OnContactOffline(oldStatus);
                 }
             }
+        }
+
+        internal void SetDisplayImage(DisplayImage image)
+        {
+            displayImage = image;
+        }
+
+        internal void NotifyManager()
+        {
+            if (AddressBookId != new Guid(WebServiceConstants.MessengerIndividualAddressBookId))
+                return;
+
+            if (NSMessageHandler == null)
+                return;
+
+            NSMessageHandler.Manager.SyncProperties(this);
         }
 
         #region Protected
@@ -881,7 +999,27 @@ namespace MSNPSharp
                 }
             }
 
-            
+            NotifyManager();
+        }
+
+        internal void AddSibling(Contact contact)
+        {
+            lock (syncObject)
+                Siblings[contact.Hash] = contact;
+        }
+
+        internal void AddSibling(Contact[] contacts)
+        {
+            if (contacts == null)
+                return;
+
+            lock (syncObject)
+            {
+                foreach (Contact sibling in contacts)
+                {
+                    Siblings[sibling.Hash] = sibling;
+                }
+            }
         }
 
         internal void RemoveFromList(MSNLists list)
@@ -903,6 +1041,8 @@ namespace MSNPSharp
                     OnContactUnBlocked();
                 }
             }
+
+            NotifyManager();
         }
 
         internal void RemoveFromList()
@@ -911,12 +1051,19 @@ namespace MSNPSharp
             {
                 OnAllowedList = false;
                 OnForwardList = false;
+
+                NotifyManager();
             }
         }
 
-        internal static string MakeHash(string account, ClientType type)
+        internal static string MakeHash(string account, ClientType type, Guid abId)
         {
-            return account.ToLowerInvariant() + ":" + type.ToString();
+            return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToString("D").ToLowerInvariant();
+        }
+
+        internal static string MakeHash(string account, ClientType type, string abId)
+        {
+            return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToLowerInvariant();
         }
 
         internal bool HasLists(MSNLists msnlists)
@@ -968,6 +1115,11 @@ namespace MSNPSharp
                 return true;
 
             return obj.GetHashCode() == GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return Hash;
         }
     }
 };

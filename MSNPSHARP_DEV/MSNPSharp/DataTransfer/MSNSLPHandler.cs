@@ -925,9 +925,9 @@ namespace MSNPSharp.DataTransfer
         /// String activityID = "20521364";        //The activityID of Music Mix activity.
         /// String activityName = "Music Mix";     //Th name of acticvity
         /// 
-        /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.Owner.Mail, remoteAccount);
+        /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.Nameserver.ContactList.Owner.Mail, remoteAccount);
         /// MSNSLPHandler slpHandler =  session.GetHandler(typeof(MSNSLPHandler)) as MSNSLPHandler ;
-        /// slpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, remoteaccount, activityID, activityName);
+        /// slpHandler.SendInvitation(Conversation.Messenger.Nameserver.ContactList.Owner.Mail, remoteaccount, activityID, activityName);
         /// </code>
         /// </example>
         public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string activityID, string activityName)

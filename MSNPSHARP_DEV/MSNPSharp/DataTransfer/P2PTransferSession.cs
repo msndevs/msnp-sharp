@@ -896,7 +896,7 @@ namespace MSNPSharp.DataTransfer
 
                     if (Version == P2PVersion.P2PV2)
                     {
-                        ////First send a 0x08 0x02 prepare message.
+                        //First send a 0x08 0x02 prepare message.
                         P2PMessage prepareMessage = new P2PMessage(P2PVersion.P2PV2);
                         prepareMessage.V2Header.OperationCode = (byte)OperationCode.TransferPrepare;
                         MessageProcessor.SendMessage(prepareMessage);
