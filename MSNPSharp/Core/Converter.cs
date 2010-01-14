@@ -352,6 +352,11 @@ namespace MSNPSharp.Core
 
     public static class WebServiceDateTimeConverter
     {
+        /// <summary>
+        /// Convert the XML time to .net <see cref="DateTime"/> instance.
+        /// </summary>
+        /// <param name="dateTime"></param>
+        /// <returns></returns>
         public static DateTime ConvertToDateTime(string dateTime)
         {
             if (dateTime == null || dateTime == string.Empty)
@@ -384,19 +389,25 @@ namespace MSNPSharp.Core
                 byte[] hash = sha1.ComputeHash(nonce.ToByteArray());
 
                 // Generate the hash from the first 16 bytes
-                UInt32 a = (UInt32)
-                    (((UInt32)(hash[3]) << 24) +
-                    ((UInt32)(hash[2]) << 16) +
-                    ((UInt32)(hash[1]) << 8) +
-                    (UInt32)(hash[0]));
+                Int32 a = BitUtility.ToInt32(hash, 0, BitConverter.IsLittleEndian);
 
-                UInt16 b = (UInt16)
-                    (((UInt16)(hash[5]) << 8) +
-                    ((UInt16)(hash[4])));
+                    //(UInt32)
+                    //(((UInt32)(hash[3]) << 24) +
+                    //((UInt32)(hash[2]) << 16) +
+                    //((UInt32)(hash[1]) << 8) +
+                    //(UInt32)(hash[0]));
 
-                UInt16 c = (UInt16)
-                    (((UInt16)(hash[7]) << 8) +
-                    ((UInt16)(hash[6])));
+                Int16 b = BitUtility.ToInt16(hash, 4, BitConverter.IsLittleEndian);
+                    
+                    //(UInt16)
+                    //(((UInt16)(hash[5]) << 8) +
+                    //((UInt16)(hash[4])));
+
+                Int16 c = BitUtility.ToInt16(hash, 6, BitConverter.IsLittleEndian);
+                    
+                    //(UInt16)
+                    //(((UInt16)(hash[7]) << 8) +
+                    //((UInt16)(hash[6])));
 
                 byte d = hash[8], e = hash[9], f = hash[10], g = hash[11];
                 byte h = hash[12], i = hash[13], j = hash[14], k = hash[15];

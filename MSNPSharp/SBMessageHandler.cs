@@ -523,10 +523,10 @@ namespace MSNPSharp
 
             foreach (Emoticon emoticon in emoticons)
             {
-                if (!NSMessageHandler.Owner.Emoticons.ContainsKey(emoticon.Sha))
+                if (!NSMessageHandler.ContactList.Owner.Emoticons.ContainsKey(emoticon.Sha))
                 {
                     // Add the emotions to owner's emoticon collection.
-                    NSMessageHandler.Owner.Emoticons.Add(emoticon.Sha, emoticon);
+                    NSMessageHandler.ContactList.Owner.Emoticons.Add(emoticon.Sha, emoticon);
                 }
             }
 
@@ -549,7 +549,7 @@ namespace MSNPSharp
 
             MSGMessage msgMessage = new MSGMessage();
             msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.Owner.Mail + "\r\n";
+            msgMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.ContactList.Owner.Mail + "\r\n";
 
 
             sbMessage.InnerMessage = msgMessage;
@@ -766,7 +766,7 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void SendInitialMessage()
         {
-            string auth = NSMessageHandler.Owner.Mail + ";" + NSMessageHandler.MachineGuid.ToString("B");
+            string auth = NSMessageHandler.ContactList.Owner.Mail + ";" + NSMessageHandler.MachineGuid.ToString("B");
 
             if (Invited)
                 MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { auth, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
@@ -828,7 +828,7 @@ namespace MSNPSharp
                 {
                     if (NSMessageHandler != null)
                     {
-                        if (acc != NSMessageHandler.Owner)
+                        if (acc != NSMessageHandler.ContactList.Owner)
                             return;
                     }
                     else
@@ -874,7 +874,7 @@ namespace MSNPSharp
                 endpointGuid = fullaccount.Split(';')[1];
             }
 
-            if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
+            if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() == account)
                 return;
 
             // Get the contact.
@@ -945,7 +945,7 @@ namespace MSNPSharp
                 endpointGuid = fullaccount.Split(';')[1];
             }
 
-            if (NSMessageHandler.Owner.Mail.ToLowerInvariant() != account)
+            if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() != account)
             {
                 // Get the contact.
                 Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
@@ -1013,13 +1013,13 @@ namespace MSNPSharp
                     account = account.Split(';')[0];
                 }
 
-                if (NSMessageHandler.Owner.Mail.ToLowerInvariant() == account)
+                if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() == account)
                 {
                     // update the owner's name. Just to be sure.
-                    // NSMessageHandler.Owner.SetName(message.CommandValues[3].ToString());
+                    // NSMessageHandler.ContactList.Owner.SetName(message.CommandValues[3].ToString());
                     if (NSMessageHandler != null)
                     {
-                        Invite(NSMessageHandler.Owner);
+                        Invite(NSMessageHandler.ContactList.Owner);
                     }
                     // we are now ready to invite other contacts. Notify the client of this.
                     OnSessionEstablished();

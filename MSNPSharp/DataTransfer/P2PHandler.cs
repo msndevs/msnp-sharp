@@ -461,7 +461,7 @@ namespace MSNPSharp.DataTransfer
 
             P2PVersion version = P2PVersion.P2PV1;
             string remoteAccount = (sbMessage.CommandValues.Count > 0) ? sbMessage.CommandValues[0].ToString() : String.Empty;
-            string localAccount = nsMessageHandler.Owner.Mail;
+            string localAccount = NSMessageHandler.ContactList.Owner.Mail;
             Guid remoteMachineGuid = Guid.Empty;
             Guid localMachineGuid = Guid.Empty;
 
@@ -597,7 +597,7 @@ namespace MSNPSharp.DataTransfer
                     return;
                 }
 
-                session.LocalUser = NSMessageHandler.Owner;
+                session.LocalUser = NSMessageHandler.ContactList.Owner;
                 session.RemoteUser = remoteContact;
                 session.RemoteContact = remoteMachineGuid == Guid.Empty ? remoteAccount : (remoteAccount + ";" + remoteMachineGuid.ToString("B"));
                 session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));

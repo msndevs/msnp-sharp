@@ -80,41 +80,183 @@ namespace MSNPSharp.Core
 
         #region Private
 
+        private bool notificationTypeSpecified = false;
+
+        public bool NotificationTypeSpecified
+        {
+            get { return notificationTypeSpecified; }
+            set { notificationTypeSpecified = value; }
+        }
 
         /// <summary>
         /// </summary>
-        NotificationType notificationType;
+        NotificationType notificationType = NotificationType.Alert;
 
-        private int id;
-        private int siteId;
-        private string siteUrl;
+        public NotificationType NotificationType
+        {
+            get { return notificationType; }
+            set { notificationType = value; }
+        }
 
-        private string receiverAccount;
-        private string receiverOfflineMail;
-        private string receiverMemberIdLow;
-        private string receiverMemberIdHigh;
+        private int id = 0;
 
-        private string senderAccount;
-        private string senderMemberIdLow;
-        private string senderMemberIdHigh;
+        public int Id
+        {
+            get { return id; }
+            set { id = value; }
+        }
+        private int siteId = 0;
 
-        private string sendDevice;
+        public int SiteId
+        {
+            get { return siteId; }
+            set { siteId = value; }
+        }
+        private string siteUrl = string.Empty;
 
-        private int messageId;
+        public string SiteUrl
+        {
+            get { return siteUrl; }
+            set { siteUrl = value; }
+        }
 
-        private string pri;
+        private string receiverAccount = string.Empty;
 
-        private string actionUrl;
-        private string subcriptionUrl;
+        public string ReceiverAccount
+        {
+            get { return receiverAccount; }
+            set { receiverAccount = value; }
+        }
+        private string receiverOfflineMail = string.Empty;
+
+        public string ReceiverOfflineMail
+        {
+            get { return receiverOfflineMail; }
+            set { receiverOfflineMail = value; }
+        }
+        private string receiverMemberIdLow = string.Empty;
+
+        public string ReceiverMemberIdLow
+        {
+            get { return receiverMemberIdLow; }
+            set { receiverMemberIdLow = value; }
+        }
+        private string receiverMemberIdHigh = string.Empty;
+
+        public string ReceiverMemberIdHigh
+        {
+            get { return receiverMemberIdHigh; }
+            set { receiverMemberIdHigh = value; }
+        }
+
+        private string senderAccount = string.Empty;
+
+        public string SenderAccount
+        {
+            get { return senderAccount; }
+            set { senderAccount = value; }
+        }
+        private string senderMemberIdLow = string.Empty;
+
+        public string SenderMemberIdLow
+        {
+            get { return senderMemberIdLow; }
+            set { senderMemberIdLow = value; }
+        }
+        private string senderMemberIdHigh = string.Empty;
+
+        public string SenderMemberIdHigh
+        {
+            get { return senderMemberIdHigh; }
+            set { senderMemberIdHigh = value; }
+        }
+
+        private string sendDevice = string.Empty;
+
+        public string SendDevice
+        {
+            get { return sendDevice; }
+            set { sendDevice = value; }
+        }
+
+        private int messageId = 0;
+
+        public int MessageId
+        {
+            get { return messageId; }
+            set { messageId = value; }
+        }
+
+        private string pri = string.Empty;
+
+        public string Pri
+        {
+            get { return pri; }
+            set { pri = value; }
+        }
+
+        private string actionUrl = string.Empty;
+
+        public string ActionUrl
+        {
+            get { return actionUrl; }
+            set { actionUrl = value; }
+        }
+        private string subcriptionUrl = string.Empty;
+
+        public string SubcriptionUrl
+        {
+            get { return subcriptionUrl; }
+            set { subcriptionUrl = value; }
+        }
 
         private string catId = "110110001";
 
-        private string language;
+        public string CatId
+        {
+            get { return catId; }
+            set { catId = value; }
+        }
 
-        private string iconUrl;
+        private string language = string.Empty;
 
-        private string text;
-        private string offlineText;
+        public string Language
+        {
+            get { return language; }
+            set { language = value; }
+        }
+
+        private string iconUrl = string.Empty;
+
+        public string IconUrl
+        {
+            get { return iconUrl; }
+            set { iconUrl = value; }
+        }
+
+        private string text = string.Empty;
+
+        public string Text
+        {
+            get { return text; }
+            set { text = value; }
+        }
+        private string offlineText = string.Empty;
+
+        public string OfflineText
+        {
+            get { return offlineText; }
+            set { offlineText = value; }
+        }
+
+        private string bodyPayload = string.Empty;
+
+        public string BodyPayload
+        {
+            get { return bodyPayload; }
+            set { bodyPayload = value; }
+        }
+
 
         #endregion
 
@@ -127,75 +269,79 @@ namespace MSNPSharp.Core
         {
             XmlDocument doc = new XmlDocument();
             XmlElement root = doc.CreateElement("NOTIFICATION");
-            root.Attributes.Append(doc.CreateAttribute("ver")).Value = ((int)notificationType).ToString();
-            root.Attributes.Append(doc.CreateAttribute("id")).Value = id.ToString();
+
+            if (NotificationTypeSpecified)
+                root.Attributes.Append(doc.CreateAttribute("ver")).Value = ((int)NotificationType).ToString();
+
+            root.Attributes.Append(doc.CreateAttribute("id")).Value = Id.ToString();
             if (siteId > 0)
-                root.Attributes.Append(doc.CreateAttribute("siteid")).Value = siteId.ToString();
+                root.Attributes.Append(doc.CreateAttribute("siteid")).Value = SiteId.ToString();
             if (siteUrl.Length > 0)
-                root.Attributes.Append(doc.CreateAttribute("siteurl")).Value = siteUrl;
+                root.Attributes.Append(doc.CreateAttribute("siteurl")).Value = SiteUrl;
 
             XmlElement to = doc.CreateElement("TO");
-            if (receiverMemberIdLow.Length > 0 && receiverMemberIdHigh.Length > 0)
-                to.Attributes.Append(doc.CreateAttribute("pid")).Value = receiverMemberIdLow.ToString() + ":" + receiverMemberIdHigh.ToString();
-            if (receiverAccount.Length > 0)
-                to.Attributes.Append(doc.CreateAttribute("name")).Value = receiverAccount;
-            if (receiverOfflineMail.Length > 0)
-                to.Attributes.Append(doc.CreateAttribute("email")).Value = receiverOfflineMail;
-            if (sendDevice.Length > 0)
+            if (ReceiverMemberIdLow.Length > 0 && ReceiverMemberIdHigh.Length > 0)
+                to.Attributes.Append(doc.CreateAttribute("pid")).Value = ReceiverMemberIdLow.ToString() + ":" + ReceiverMemberIdHigh.ToString();
+            if (ReceiverAccount.Length > 0)
+                to.Attributes.Append(doc.CreateAttribute("name")).Value = ReceiverAccount;
+            if (ReceiverOfflineMail.Length > 0)
+                to.Attributes.Append(doc.CreateAttribute("email")).Value = ReceiverOfflineMail;
+            if (SendDevice.Length > 0)
             {
                 XmlElement via = doc.CreateElement("VIA");
-                via.Attributes.Append(doc.CreateAttribute("agent")).Value = sendDevice;
+                via.Attributes.Append(doc.CreateAttribute("agent")).Value = SendDevice;
                 to.AppendChild(via);
             }
             root.AppendChild(to);
 
             XmlElement from = doc.CreateElement("FROM");
-            if (senderMemberIdLow.Length > 0 && senderMemberIdHigh.Length > 0)
-                from.Attributes.Append(doc.CreateAttribute("pid")).Value = senderMemberIdLow.ToString() + ":" + senderMemberIdHigh.ToString();
-            if (senderAccount.Length > 0)
-                from.Attributes.Append(doc.CreateAttribute("name")).Value = senderAccount;
+            if (SenderMemberIdLow.Length > 0 && SenderMemberIdHigh.Length > 0)
+                from.Attributes.Append(doc.CreateAttribute("pid")).Value = SenderMemberIdLow.ToString() + ":" + SenderMemberIdHigh.ToString();
+            if (SenderAccount.Length > 0)
+                from.Attributes.Append(doc.CreateAttribute("name")).Value = SenderAccount;
             root.AppendChild(from);
 
             XmlElement msg = doc.CreateElement("MSG");
-            if (pri.Length > 0)
-                msg.Attributes.Append(doc.CreateAttribute("pri")).Value = pri.ToString();
-            if (messageId > 0)
-                msg.Attributes.Append(doc.CreateAttribute("id")).Value = messageId.ToString();
+            if (Pri.Length > 0)
+                msg.Attributes.Append(doc.CreateAttribute("pri")).Value = Pri.ToString();
 
-            if (actionUrl.Length > 0)
+            msg.Attributes.Append(doc.CreateAttribute("id")).Value = MessageId.ToString();
+
+            if (ActionUrl.Length > 0)
             {
                 XmlElement action = doc.CreateElement("ACTION");
-                action.Attributes.Append(doc.CreateAttribute("url")).Value = actionUrl;
+                action.Attributes.Append(doc.CreateAttribute("url")).Value = ActionUrl;
                 msg.AppendChild(action);
             }
-            if (subcriptionUrl.Length > 0)
+            if (SubcriptionUrl.Length > 0)
             {
                 XmlElement subscr = doc.CreateElement("SUBSCR");
-                subscr.Attributes.Append(doc.CreateAttribute("url")).Value = subcriptionUrl;
+                subscr.Attributes.Append(doc.CreateAttribute("url")).Value = SubcriptionUrl;
                 msg.AppendChild(subscr);
             }
-            if (catId.Length > 0)
+            if (CatId.Length > 0)
             {
                 XmlElement cat = doc.CreateElement("CAT");
-                cat.Attributes.Append(doc.CreateAttribute("id")).Value = catId.ToString();
+                cat.Attributes.Append(doc.CreateAttribute("id")).Value = CatId.ToString();
                 msg.AppendChild(cat);
             }
 
             XmlElement body = doc.CreateElement("BODY");
-            if (language.Length > 0)
-                body.Attributes.Append(doc.CreateAttribute("id")).Value = language;
-            if (iconUrl.Length > 0)
-                body.Attributes.Append(doc.CreateAttribute("icon")).Value = iconUrl;
-            if (text.Length > 0)
+            if (Language.Length > 0)
+                body.Attributes.Append(doc.CreateAttribute("id")).Value = Language;
+            if (IconUrl.Length > 0)
+                body.Attributes.Append(doc.CreateAttribute("icon")).Value = IconUrl;
+            if (Text.Length > 0)
             {
                 XmlElement textEl = doc.CreateElement("TEXT");
-                textEl.AppendChild(doc.CreateTextNode(text));
+                textEl.AppendChild(doc.CreateTextNode(Text));
                 body.AppendChild(textEl);
             }
-            if (offlineText.Length > 0)
+
+            if (OfflineText.Length > 0)
             {
                 XmlElement emailTextEl = doc.CreateElement("EMAILTEXT");
-                emailTextEl.AppendChild(doc.CreateTextNode(offlineText));
+                emailTextEl.AppendChild(doc.CreateTextNode(OfflineText));
                 body.AppendChild(emailTextEl);
             }
             msg.AppendChild(body);
@@ -246,14 +392,16 @@ namespace MSNPSharp.Core
                 {
                     if (node.Attributes.GetNamedItem("ver") != null)
                     {
-                        notificationType = (NotificationType)int.Parse(node.Attributes.GetNamedItem("ver").Value);
+                        NotificationType = (NotificationType)int.Parse(node.Attributes.GetNamedItem("ver").Value);
+                        NotificationTypeSpecified = true;
                     }
+
                     if (node.Attributes.GetNamedItem("id") != null)
-                        id = int.Parse(node.Attributes.GetNamedItem("id").Value);
+                        Id = int.Parse(node.Attributes.GetNamedItem("id").Value);
                     if (node.Attributes.GetNamedItem("siteid") != null)
-                        siteId = int.Parse(node.Attributes.GetNamedItem("siteid").Value);
+                        SiteId = int.Parse(node.Attributes.GetNamedItem("siteid").Value);
                     if (node.Attributes.GetNamedItem("siteurl") != null)
-                        siteUrl = node.Attributes.GetNamedItem("siteurl").Value;
+                        SiteUrl = node.Attributes.GetNamedItem("siteurl").Value;
                 }
 
                 // TO element
@@ -263,13 +411,13 @@ namespace MSNPSharp.Core
                     if (node.Attributes.GetNamedItem("pid") != null)
                     {
                         string[] values = node.Attributes.GetNamedItem("pid").Value.Split(':');
-                        receiverMemberIdLow = values[0];
-                        receiverMemberIdHigh = values[1];
+                        ReceiverMemberIdLow = values[0];
+                        ReceiverMemberIdHigh = values[1];
                     }
                     if (node.Attributes.GetNamedItem("name") != null)
-                        receiverAccount = node.Attributes.GetNamedItem("name").Value;
+                        ReceiverAccount = node.Attributes.GetNamedItem("name").Value;
                     if (node.Attributes.GetNamedItem("email") != null)
-                        receiverOfflineMail = node.Attributes.GetNamedItem("email").Value;
+                        ReceiverOfflineMail = node.Attributes.GetNamedItem("email").Value;
                 }
 
                 // VIA element
@@ -277,7 +425,7 @@ namespace MSNPSharp.Core
                 if (node != null)
                 {
                     if (node.Attributes.GetNamedItem("agent") != null)
-                        sendDevice = node.Attributes.GetNamedItem("agent").Value;
+                        SendDevice = node.Attributes.GetNamedItem("agent").Value;
                 }
 
                 // FROM element
@@ -287,11 +435,11 @@ namespace MSNPSharp.Core
                     if (node.Attributes.GetNamedItem("pid") != null)
                     {
                         string[] values = node.Attributes.GetNamedItem("pid").Value.Split(':');
-                        senderMemberIdLow = values[0];
-                        senderMemberIdHigh = values[1];
+                        SenderMemberIdLow = values[0];
+                        SenderMemberIdHigh = values[1];
                     }
                     if (node.Attributes.GetNamedItem("name") != null)
-                        senderAccount = node.Attributes.GetNamedItem("name").Value;
+                        SenderAccount = node.Attributes.GetNamedItem("name").Value;
                 }
 
                 // MSG element
@@ -299,9 +447,9 @@ namespace MSNPSharp.Core
                 if (node != null)
                 {
                     if (node.Attributes.GetNamedItem("pri") != null)
-                        pri = node.Attributes.GetNamedItem("pri").Value;
+                        Pri = node.Attributes.GetNamedItem("pri").Value;
                     if (node.Attributes.GetNamedItem("id") != null)
-                        messageId = int.Parse(node.Attributes.GetNamedItem("id").Value);
+                        MessageId = int.Parse(node.Attributes.GetNamedItem("id").Value);
 
                 }
 
@@ -310,7 +458,7 @@ namespace MSNPSharp.Core
                 if (node != null)
                 {
                     if (node.Attributes.GetNamedItem("url") != null)
-                        actionUrl = node.Attributes.GetNamedItem("url").Value;
+                        ActionUrl = node.Attributes.GetNamedItem("url").Value;
                 }
 
                 // SUBSCR element
@@ -318,7 +466,7 @@ namespace MSNPSharp.Core
                 if (node != null)
                 {
                     if (node.Attributes.GetNamedItem("url") != null)
-                        subcriptionUrl = node.Attributes.GetNamedItem("url").Value;
+                        SubcriptionUrl = node.Attributes.GetNamedItem("url").Value;
                 }
 
                 // CAT element
@@ -326,7 +474,7 @@ namespace MSNPSharp.Core
                 if (node != null)
                 {
                     if (node.Attributes.GetNamedItem("id") != null)
-                        catId = node.Attributes.GetNamedItem("id").Value;
+                        CatId = node.Attributes.GetNamedItem("id").Value;
                 }
 
                 // BODY element
@@ -334,23 +482,28 @@ namespace MSNPSharp.Core
                 if (node != null)
                 {
                     if (node.Attributes.GetNamedItem("lang") != null)
-                        language = node.Attributes.GetNamedItem("lang").Value;
+                        Language = node.Attributes.GetNamedItem("lang").Value;
                     if (node.Attributes.GetNamedItem("icon") != null)
-                        iconUrl = node.Attributes.GetNamedItem("icon").Value;
+                        IconUrl = node.Attributes.GetNamedItem("icon").Value;
+                }
+
+                if (!NotificationTypeSpecified && Id == 0 && node != null)
+                {
+                    bodyPayload = node.InnerText;
                 }
 
                 // TEXT element
                 node = xmlDoc.SelectSingleNode("/NOTIFICATION/MSG/BODY/TEXT");
                 if (node != null)
                 {
-                    text = node.Value;
+                    Text = node.Value;
                 }
 
                 // EMAILTEXT element
                 node = xmlDoc.SelectSingleNode("/NOTIFICATION/MSG/BODY/EMAILTEXT");
                 if (node != null)
                 {
-                    offlineText = node.Value;
+                    OfflineText = node.Value;
                 }
 
 

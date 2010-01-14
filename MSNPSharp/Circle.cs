@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using MSNPSharp.Core;
+using MSNPSharp.MSNWS.MSNABSharingService;
 
 namespace MSNPSharp
 {
@@ -42,7 +43,7 @@ namespace MSNPSharp
     /// The <see cref="Contact"/> who send a join contact invitation.
     /// </summary>
     [Serializable()]
-    public class CircleInviter: Contact
+    public class CircleInviter : Contact
     {
         private string message = string.Empty;
 
@@ -54,15 +55,19 @@ namespace MSNPSharp
             get { return message; }
         }
 
-        protected CircleInviter()
+
+        internal CircleInviter(ContactType inviter, string inviterMessage)
+            :base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, ClientType.PassportMember, null)
         {
+            if (inviterMessage != null)
+                message = inviterMessage;
         }
 
         internal CircleInviter(string inviterEmail, string inviterName, string inviterMessage)
+            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviterEmail, ClientType.PassportMember, null)
         {
-            Mail = inviterEmail;
-            SetName(inviterName);
-            message = inviterMessage;
+            if (inviterMessage != null)
+                message = inviterMessage;
         }
     }
 
@@ -72,107 +77,73 @@ namespace MSNPSharp
     [Serializable()]
     public class Circle : Contact
     {
-        private Guid addressBookId = Guid.Empty;
-        private string creatorEmail = string.Empty;
-        private CircleMemberList members = new CircleMemberList();
+        private ContactList contactList = null;
         private string hostDomain = CircleString.DefaultHostDomain;
-        private string displayName = string.Empty;
-        private string role = string.Empty;
         private long segmentCounter = 0;
 
-        /// <summary>
-        /// The ownership of this circle.
-        /// </summary>
-        public string Role
-        {
-            get { return role; }
-            set { role = value; }
-        }
+        private ContactType meContact = null;
+        private ContactType hiddenRepresentative = null;
+        private ABFindContactsPagedResultTypeAB abinfo = null;
+
 
         public string HostDomain
         {
             get { return hostDomain; }
         }
 
-        /// <summary>
-        /// Circle member list.
-        /// </summary>
-        public CircleMemberList Members
-        {
-            get 
-            {
-                lock (members)
-                    return members;
-            }
-        }
-
-        public Guid AddressBookId
+        public ContactList ContactList
         {
             get
             {
-                return addressBookId;
-            }
-
-            internal set
-            {
-                addressBookId = value;
-            }
-        }
-
-
-        public string CreatorEmail
-        {
-            get
-            {
-                return creatorEmail;
-            }
-
-            internal set
-            {
-                creatorEmail = value;
+                return contactList;
             }
         }
 
         /// <summary>
-        /// Circle account, in abId@HostDomain format.
+        /// The last change time of circle's addressbook.
         /// </summary>
-        public new string Mail
-        {
-            get { return AddressBookId.ToString().ToLowerInvariant() + "@" + HostDomain.ToLowerInvariant(); }
-        }
-
-        /// <summary>
-        /// The display name of circle
-        /// </summary>
-        public new string Name
-        {
-            get { return displayName; }
-        }
-
-        public override string Hash
+        public string LastChanged
         {
             get
             {
-                return Mail.ToLowerInvariant() + ":" + ClientType.ToString();
+                if (abinfo == null)
+                    return WebServiceConstants.ZeroTime;
+
+                return abinfo.lastChange;
             }
         }
 
-        protected Circle()
-            : base()
+        /// <summary>
+        /// Circle constructor
+        /// </summary>
+        /// <param name="me">The "Me Contact" in the addressbook.</param>
+        /// <param name="hidden"></param>
+        /// <param name="circleInfo"></param>
+        /// <param name="handler"></param>
+        public Circle(ContactType me, ContactType hidden, CircleInverseInfoType circleInfo, NSMessageHandler handler)
+            : base(circleInfo.Content.Handle.Id.ToLowerInvariant(), circleInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleInfo.Content.Info.HostedDomain.ToLowerInvariant(), ClientType.CircleMember, handler)
         {
-            Initialize();
-        }
+            hostDomain = circleInfo.Content.Info.HostedDomain.ToLowerInvariant();
+            hiddenRepresentative = hidden;
 
-        public Circle(Guid abId, Guid contactId, string hostDomain, string role, string displayName, NSMessageHandler handler)
-            : base()
-        {
-            AddressBookId = abId;
-            NSMessageHandler = handler;
-            this.Guid = contactId;
-            this.displayName = displayName;
-            this.hostDomain = hostDomain;
-            SetNickName(displayName);
-            this.role = role;
+            CircleRole = (CirclePersonalMembershipRole)Enum.Parse(typeof(CirclePersonalMembershipRole), circleInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role);
+
+            SetName(circleInfo.Content.Info.DisplayName);
+            SetNickName(Name);
+
+            meContact = me;
+
+            if (hidden != null)
+            {
+                Guid = new Guid(hidden.contactId);
+
+                if (hidden.contactInfo != null && hidden.contactInfo.CIDSpecified)
+                    CID = hidden.contactInfo.CID;
+            }
+
+            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, NSMessageHandler), NSMessageHandler);
+            contactList.Owner.CID = me.contactInfo.CID;
+
             Initialize();
         }
 
@@ -183,18 +154,18 @@ namespace MSNPSharp
             if (!NSMessageHandler.IsSignedIn)
                 throw new InvalidOperationException("Cannot send a message without signning in to the server. Please sign in first.");
 
-            if (NSMessageHandler.Owner.Status == PresenceStatus.Hidden)
+            if (NSMessageHandler.ContactList.Owner.Status == PresenceStatus.Hidden)
                 throw new InvalidOperationException("Cannot send a message when you are in 'Hidden' status.");
         }
 
         private string ConstructSDGScheme()
         {
-            string from = ((int)NSMessageHandler.Owner.ClientType).ToString() + ":" +
-                NSMessageHandler.Owner.Mail +
-                ";epid=" + NSMessageHandler.Owner.MachineGuid.ToString("B").ToLowerInvariant();
-                
+            string from = ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString() + ":" +
+                NSMessageHandler.ContactList.Owner.Mail +
+                ";epid=" + NSMessageHandler.ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
 
-            string to = ((int)ClientType).ToString() + ":" + Mail + ";path=IM";;
+
+            string to = ((int)ClientType).ToString() + ":" + Mail + ";path=IM";
 
             string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, to);
             routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, from);
@@ -260,26 +231,11 @@ namespace MSNPSharp
             CheckValidation();
             string scheme = ConstructSDGScheme();
 
-            string typingScheme = CircleString.TypingMessageScheme.Replace(CircleString.OwnerReplacementTag, NSMessageHandler.Owner.Mail);
+            string typingScheme = CircleString.TypingMessageScheme.Replace(CircleString.OwnerReplacementTag, NSMessageHandler.ContactList.Owner.Mail);
             scheme = scheme.Replace(CircleString.MessageSchemeReplacementTag, typingScheme);
 
             NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", scheme);
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
-        }
-
-        public override int GetHashCode()
-        {
-            return Mail.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return Hash + " Name: " + Name;
-        }
-
-        internal new void SetName(string newName)
-        {
-            displayName = newName;
         }
 
         internal long IncreaseSegmentCounter()
@@ -288,183 +244,234 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Add or update member to memberlist.
+        /// Get a specific contact from circle's contact list by the information provided.
         /// </summary>
-        /// <param name="member"></param>
-        internal void AddMember(CircleContactMember member)
+        /// <param name="account">The contact information</param>
+        /// <param name="option">The parse option for the account parameter</param>
+        /// <returns></returns>
+        internal Contact GetMember(string account, AccountParseOption option)
         {
-            lock (members)
+            string lowerAccount = account.ToLowerInvariant();
+            try
             {
-                if (members.Contains(member))
+                switch (option)
                 {
-                    members[member.FullAccount] = member;
-                }
-                else
-                {
-                    members.Add(member);
+                    case AccountParseOption.ParseAsClientTypeAndAccount:
+                        {
+                            string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (typeAccount.Length >= 2)
+                            {
+                                ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                                string mail = typeAccount[1];
+                                if (HasMember(mail, type))
+                                {
+                                    return ContactList.GetContact(mail, type);
+                                }
+
+                                return null;
+
+                            }
+                        }
+                        break;
+                    case AccountParseOption.ParseAsFullCircleAccount:
+                        {
+                            string[] sp = lowerAccount.Split(new string[] { CircleString.ViaCircleGroupSplitter }, StringSplitOptions.RemoveEmptyEntries);
+                            if (sp.Length < 2)
+                            {
+                                return null;
+                            }
+
+                            string[] idDomain = sp[1].Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (idDomain.Length < 2)
+                                return null;
+                            string[] typeAccount = sp[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (typeAccount.Length < 2)
+                                return null;
+                            Guid abid = new Guid(idDomain[0]);
+                            if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
+                                return null;
+
+                            ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                            string mail = typeAccount[1];
+                            if (HasMember(mail, type))
+                            {
+                                return ContactList.GetContact(mail, type);
+                            }
+
+                            return null;
+                        }
+
                 }
             }
-        }
-
-        internal void RemoveMember(CircleContactMember member)
-        {
-            lock (members)
+            catch (Exception ex)
             {
-                members.Remove(member);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get contact from circle error: account: " + account +
+                    " in " + ToString() + "\r\nError Message: " + ex.Message);
             }
+
+            return null;
         }
 
-        internal bool HasMember(CircleContactMember member)
+        /// <summary>
+        /// Remove a specific contact from circle's contact list by the information provided.
+        /// </summary>
+        /// <param name="account">The contact information</param>
+        /// <param name="option">The parse option for the account parameter</param>
+        /// <returns></returns>
+        internal bool RemoveMember(string account, AccountParseOption option)
         {
-            lock (members)
-                return members.Contains(member);
+            string lowerAccount = account.ToLowerInvariant();
+            try
+            {
+                switch (option)
+                {
+                    case AccountParseOption.ParseAsClientTypeAndAccount:
+                        {
+                            string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (typeAccount.Length >= 2)
+                            {
+                                ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                                string mail = typeAccount[1];
+                                if (HasMember(mail, type))
+                                {
+                                    ContactList.Remove(account, type);
+                                    return true;
+                                }
+
+                                return false;
+
+                            }
+                        }
+                        break;
+                    case AccountParseOption.ParseAsFullCircleAccount:
+                        {
+                            string[] sp = lowerAccount.Split(new string[] { CircleString.ViaCircleGroupSplitter }, StringSplitOptions.RemoveEmptyEntries);
+                            if (sp.Length < 2)
+                            {
+                                return false;
+                            }
+
+                            string[] idDomain = sp[1].Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (idDomain.Length < 2)
+                                return false;
+                            string[] typeAccount = sp[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (typeAccount.Length < 2)
+                                return false;
+                            Guid abid = new Guid(idDomain[0]);
+                            if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
+                                return false;
+
+                            ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                            string mail = typeAccount[1];
+                            if (HasMember(mail, type))
+                            {
+                                ContactList.Remove(account, type);
+                                return true;
+                            }
+
+                            return false;
+                        }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Remove contact from circle error: account: " + account +
+                    " in " + ToString() + "\r\nError Message: " + ex.Message);
+            }
+
+            return false;
+        }
+
+
+        /// <summary>
+        /// Check whether a specific contact exists in circle's contact list by the information provided.
+        /// </summary>
+        /// <param name="account">The contact information</param>
+        /// <param name="option">The parse option for the account parameter</param>
+        /// <returns></returns>
+        internal bool HasMember(string account, AccountParseOption option)
+        {
+            string lowerAccount = account.ToLowerInvariant();
+            try
+            {
+                switch (option)
+                {
+                    case AccountParseOption.ParseAsClientTypeAndAccount:
+                        {
+                            string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (typeAccount.Length >= 2)
+                            {
+                                ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                                string mail = typeAccount[1];
+                                return HasMember(mail, type);
+                            }
+                        }
+                        break;
+                    case AccountParseOption.ParseAsFullCircleAccount:
+                        {
+                            string[] sp = lowerAccount.Split(new string[] { CircleString.ViaCircleGroupSplitter }, StringSplitOptions.RemoveEmptyEntries);
+                            if (sp.Length < 2)
+                            {
+                                return false;
+                            }
+
+                            string[] idDomain = sp[1].Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (idDomain.Length < 2)
+                                return false;
+                            string[] typeAccount = sp[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (typeAccount.Length < 2)
+                                return false;
+                            Guid abid = new Guid(idDomain[0]);
+                            if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
+                                return false;
+
+                            ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                            string mail = typeAccount[1];
+                            return HasMember(mail, type);
+                        }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Verifying membership error: account: " + account +
+                    " in " + ToString() + "\r\nError Message: " + ex.Message);
+            }
+
+            return false;
+        }
+
+
+        internal bool HasMember(string account, ClientType type)
+        {
+            lock (ContactList)
+                return ContactList.HasContact(account, type);
+        }
+
+        internal bool HasMember(Guid contactId)
+        {
+            lock (ContactList)
+                return (ContactList.GetContactByGuid(contactId) != null);
+
+        }
+
+        internal bool HasMember(long CID)
+        {
+            lock (ContactList)
+                return (ContactList.GetContactByCID(CID) != null);
+        }
+
+        internal void SetAddressBookInfo(ABFindContactsPagedResultTypeAB abInfo)
+        {
+            abinfo = abInfo;
         }
 
         #region Protected
         protected virtual void Initialize()
         {
             ContactType = MessengerContactType.Circle;
-            ClientType = ClientType.CircleMember;
             Lists = MSNLists.AllowedList | MSNLists.ForwardList;
-        }
-
-        #endregion
-    }
-
-    /// <summary>
-    /// The member of a circle.
-    /// </summary>
-    [Serializable()]
-    public class CircleContactMember : Contact
-    {
-        private string via = string.Empty;
-        private string circleMail = string.Empty;
-        private ClientType memberType = ClientType.PassportMember;
-        private Guid addressBookId = Guid.Empty;
-
-        public Guid AddressBookId
-        {
-            get 
-            {
-                if (addressBookId == Guid.Empty)
-                {
-                    string[] viaMail = Via.Split(':');
-                    if (viaMail.Length > 1)
-                    {
-                        string guid = viaMail[1].Split('@')[0];
-                        addressBookId = new Guid(guid);
-                    }
-                }
-
-                return addressBookId; 
-            }
-        }
-
-        /// <summary>
-        /// The <see cref="ClientType"/> of this <see cref="Contact"/>.
-        /// </summary>
-        public ClientType MemberType
-        {
-            get { return memberType; }
-        }
-
-        public string Via
-        {
-            get { return via; }
-        }
-
-        /// <summary>
-        /// The identifier of contact.
-        /// </summary>
-        public string FullAccount
-        {
-            get
-            {
-                return (((int)MemberType).ToString() + ":" + Mail + ";" + Via).ToLowerInvariant();
-            }
-        }
-
-        /// <summary>
-        /// The identifier of circle.
-        /// </summary>
-        public string CircleMail
-        {
-            get { return circleMail; }
-        }
-
-        protected CircleContactMember()
-            :base()
-        {
-            Initialize();
-        }
-
-        public CircleContactMember(string via, string mail, ClientType type)
-            :base()
-        {
-            this.via = via;
-            this.Mail = mail;
-            memberType = type;
-            SetName(mail);
-
-            string[] viaMail = Via.Split(':');
-            if (viaMail.Length > 0)
-            {
-                circleMail = viaMail[1].ToLowerInvariant();
-            }
-
-            Initialize();
-        }
-
-        public void SyncWithContact(Contact contact)
-        {
-            if (contact == null) return;
-
-            if (contact.Mail.ToLowerInvariant() != Mail.ToLowerInvariant()) return;
-
-            if (contact.ClientType != MemberType) return;
-
-            Lists = contact.Lists;
-            SetPersonalMessage(contact.PersonalMessage);
-            DisplayImage = contact.DisplayImage;
-
-            contact.ContactBlocked += delegate
-            {
-                Lists = contact.Lists;
-                OnContactBlocked();
-            };
-
-            contact.ContactUnBlocked += delegate
-            {
-                Lists = contact.Lists;
-                OnContactUnBlocked();
-            };
-
-            contact.PersonalMessageChanged += delegate
-            {
-                SetPersonalMessage(contact.PersonalMessage);
-            };
-
-            contact.DisplayImageChanged += delegate
-            {
-                DisplayImage = contact.DisplayImage;
-            };
-        }
-
-        public override int GetHashCode()
-        {
-            return FullAccount.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return FullAccount;
-        }
-
-        #region Protected
-        protected virtual void Initialize()
-        {
-            ContactType = MessengerContactType.Circle;
-            ClientType = ClientType.CircleMember;
         }
 
         #endregion

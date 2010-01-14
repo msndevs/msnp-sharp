@@ -53,12 +53,13 @@ namespace MSNPSharp
         private NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
         private RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
 
-        private Owner()
+        public Owner(string abId, string account, NSMessageHandler handler)
+            : base(abId, account, ClientType.PassportMember, handler)
         {
         }
 
-        public Owner(NSMessageHandler handler)
-            : base(handler)
+        public Owner(Guid abId, string account, NSMessageHandler handler)
+            : base(abId, account, ClientType.PassportMember, handler)
         {
         }
 

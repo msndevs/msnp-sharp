@@ -50,6 +50,7 @@
     <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
+    <Compile Include="ContactManager.cs" />
     <Compile Include="Conversation.cs" />
     <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />

@@ -38,122 +38,6 @@ using System.Threading;
 
 namespace MSNPSharp
 {
-    public class CircleMemberList : IEnumerable
-    {
-        private Dictionary<string, CircleContactMember> list = new Dictionary<string, CircleContactMember>();
-
-        [NonSerialized]
-        private object syncRoot;
-
-        /// <summary>
-        /// Get a member by providing an full account which format is: [type:account;via=circletype:guid@hostdomain]
-        /// </summary>
-        /// <param name="fullaccount"></param>
-        /// <returns></returns>
-        public CircleContactMember this[string fullaccount]  //type:account;via=circletype:guid@hostdomain
-        {
-            get
-            {
-                lock (SyncRoot)
-                {
-                    if (list.ContainsKey(fullaccount))
-                        return list[fullaccount];
-                    return null;
-                }
-            }
-
-            set
-            {
-                if (Contains(fullaccount))
-                {
-                    lock (SyncRoot)
-                        list[fullaccount] = value;
-                }
-                else
-                {
-                    Add(value);
-                }
-            }
-        }
-
-        public object SyncRoot
-        {
-            get
-            {
-                if (syncRoot == null)
-                {
-                    object newobj = new object();
-                    Interlocked.CompareExchange(ref syncRoot, newobj, null);
-                }
-                return syncRoot;
-            }
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            return list.Values.GetEnumerator();
-        }
-
-        /// <summary>
-        /// Add a new member to the list.
-        /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
-        public bool Add(CircleContactMember member)
-        {
-            if (Contains(member))
-                return false;
-
-            lock (SyncRoot)
-            {
-                list.Add(member.FullAccount, member);
-                return true;
-            }
-        }
-
-        public bool Remove(CircleContactMember member)
-        {
-            if (!Contains(member))
-                return false;
-
-            lock (SyncRoot)
-            {
-                list.Remove(member.FullAccount);
-                return true;
-            }
-        }
-
-        public bool Contains(CircleContactMember member)
-        {
-            lock (SyncRoot)
-            {
-                return list.ContainsKey(member.FullAccount);
-            }
-        }
-
-        /// <summary>
-        /// Check whether a specified member is in the circle.
-        /// </summary>
-        /// <param name="fullaccount">The format is [type:account;via=circletype:guid@hostdomain]</param>
-        /// <returns></returns>
-        public bool Contains(string fullaccount)
-        {
-            return this[fullaccount] != null;
-        }
-
-        public void Clear()
-        {
-            lock (SyncRoot)
-                list.Clear();
-        }
-
-        public int Count
-        {
-            get { return list.Count; }
-        }
-    }
-
-
     [Serializable()]
     public class CircleList : IEnumerable
     {
@@ -198,6 +82,10 @@ namespace MSNPSharp
             return false;
         }
 
+        /// <summary>
+        ///  Remove a circle from circle list.
+        /// </summary>
+        /// <param name="circle"></param>
         internal void RemoveCircle(Circle circle)
         {
             lock (SyncRoot)
@@ -206,35 +94,11 @@ namespace MSNPSharp
             }
         }
 
-        internal bool AddMemberToCorrespondingCircle(CircleContactMember member)
-        {
-            lock (SyncRoot)
-            {
-                if (list.ContainsKey(member.CircleMail))
-                {
-                    list[member.CircleMail].AddMember(member);
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        internal bool RemoveMemberFromCorrespondingCircle(CircleContactMember member)
-        {
-            lock (SyncRoot)
-            {
-                if (list.ContainsKey(member.CircleMail))
-                {
-                    list[member.CircleMail].RemoveMember(member);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
+        /// <summary>
+        /// Remove a circle from circle list, by providing addressbook Id and Host Domain.
+        /// </summary>
+        /// <param name="abId">The addressbook Id for circle's addressbook page.</param>
+        /// <param name="hostDomain">The host domain of a circle.</param>
         internal void RemoveCircle(Guid abId, string hostDomain)
         {
             lock (SyncRoot)
@@ -271,13 +135,13 @@ namespace MSNPSharp
         /// <summary>
         /// Find <see cref="Circle"/> by circle Id and host domain, if circle not found, return null.
         /// </summary>
-        /// <param name="id">Via Id: guid@hostdomain</param>
+        /// <param name="idAndHostDomain">Via Id: guid@hostdomain</param>
         /// <returns></returns>
-        public Circle this[string id]
+        public Circle this[string idAndHostDomain]
         {
             get
             {
-                string identifier = id.ToLowerInvariant();
+                string identifier = idAndHostDomain.ToLowerInvariant();
                 if (list.ContainsKey(identifier))
                     return list[identifier];
 

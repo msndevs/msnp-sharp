@@ -432,7 +432,7 @@ namespace MSNPSharp
                 e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
 
                 // create a session and send the invitation
-                P2PMessageSession session = Messenger.Nameserver.P2PHandler.GetSession(Messenger.Nameserver.Owner, e.Sender);
+                P2PMessageSession session = Messenger.Nameserver.P2PHandler.GetSession(Messenger.Nameserver.ContactList.Owner, e.Sender);
 
                 object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
                 if (handlerObject != null)
@@ -942,7 +942,7 @@ namespace MSNPSharp
 
                 foreach (Contact acc in _switchboard.Contacts.Keys)
                 {
-                    if (acc != Messenger.Nameserver.Owner)  //MSNP18: owner in switch
+                    if (acc != Messenger.Nameserver.ContactList.Owner)  //MSNP18: owner in switch
                     {
                         _type |= ConversationType.MutipleUsers;
                         break;

@@ -705,7 +705,7 @@ namespace MSNPSharpClient
             richTextHistory.SelectionColor = Color.Navy;
             richTextHistory.SelectionIndent = 0;
             richTextHistory.AppendText("[" + DateTime.Now.ToLongTimeString() + "]" + " ");
-            richTextHistory.SelectionColor = c.Mail == _conversation.Messenger.Owner.Mail ? Color.Blue : Color.Black;
+            richTextHistory.SelectionColor = c.Mail == _conversation.Messenger.Nameserver.ContactList.Owner.Mail ? Color.Blue : Color.Black;
             richTextHistory.AppendText(c.Name + " <" + c.Mail + ">" + Environment.NewLine);
             richTextHistory.SelectionColor = message.Color;
             richTextHistory.SelectionIndent = 10;
@@ -770,7 +770,7 @@ namespace MSNPSharpClient
         {
             Text = "Conversation with " + _firstInvitedContact.Mail + " - MSNPSharp";
             Icon = (Icon)((_firstInvitedContact.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
-            displayOwner.Image = _clientform.Messenger.Owner.DisplayImage.Image;
+            displayOwner.Image = _clientform.Messenger.Nameserver.ContactList.Owner.DisplayImage.Image;
 
             lock (richTextHistory.Emotions)
             {
@@ -825,7 +825,7 @@ namespace MSNPSharpClient
                             // by sending an invitation a P2PTransferSession is automatically created.
                             // the session object takes care of the actual data transfer to the remote client,
                             // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                            P2PTransferSession session = msnslpHandler.SendInvitation(_conversation.Messenger.Owner, _firstInvitedContact, _firstInvitedContact.DisplayImage);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(_conversation.Messenger.Nameserver.ContactList.Owner, _firstInvitedContact, _firstInvitedContact.DisplayImage);
                             session.ClientData = _firstInvitedContact.DisplayImage;
                             session.DataStream = _firstInvitedContact.DisplayImage.OpenStream();
 
@@ -900,7 +900,7 @@ namespace MSNPSharpClient
             if (inputTextBox.Font.Underline)
                 message.Decorations |= TextDecorations.Underline;
 
-            PrintText(_conversation.Messenger.Owner, message);
+            PrintText(_conversation.Messenger.Nameserver.ContactList.Owner, message);
 
             inputTextBox.Clear();
             inputTextBox.Focus();
@@ -954,7 +954,7 @@ namespace MSNPSharpClient
                 List<Contact> contacts = new List<Contact>();
                 foreach (Contact contact in _conversation.Contacts)
                 {
-                    if (contact.Online && contact.ClientType == ClientType.PassportMember && contact.Mail != Conversation.Messenger.Owner.Mail)
+                    if (contact.Online && contact.ClientType == ClientType.PassportMember && contact.Mail != Conversation.Messenger.Nameserver.ContactList.Owner.Mail)
                     {
                         contacts.Add(contact);
                     }
@@ -978,7 +978,7 @@ namespace MSNPSharpClient
                         {
                             MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact);
                             FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner, contact, Path.GetFileName(filename), fileStream);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Nameserver.ContactList.Owner, contact, Path.GetFileName(filename), fileStream);
                         }
                     }
                 }
@@ -996,7 +996,7 @@ namespace MSNPSharpClient
         {
             MemoryStream mem = new MemoryStream();
             Properties.Resources.inner_emoticon.Save(mem, ImageFormat.Png);
-            Emoticon emotest = new Emoticon(_clientform.Messenger.Owner.Mail, mem, "0", "test_em");
+            Emoticon emotest = new Emoticon(_clientform.Messenger.Nameserver.ContactList.Owner.Mail, mem, "0", "test_em");
             MSNObjectCatalog.GetInstance().Add(emotest);
             List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
@@ -1095,7 +1095,7 @@ namespace MSNPSharpClient
             String activityID = "20521364";        //The activityID of Music Mix activity.
             String activityName = "Music Mix";     //Th name of acticvity
             MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(_firstInvitedContact);
-            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Owner, _firstInvitedContact, activityID, activityName);
+            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Nameserver.ContactList.Owner, _firstInvitedContact, activityID, activityName);
             session.DataStream = new MemoryStream();
 
             msnslpHandler.TransferSessionClosed += delegate(object s, P2PTransferSessionEventArgs ea)

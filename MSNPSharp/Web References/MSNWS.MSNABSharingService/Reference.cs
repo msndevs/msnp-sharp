@@ -2630,6 +2630,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string clientErrorDataField;
         
+        private bool isHiddenField;
+        
+        private bool isHiddenFieldSpecified;
+        
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail", IsNullable=false)]
         public contactEmailType[] emails {
@@ -3211,6 +3215,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.clientErrorDataField = value;
             }
         }
+        
+        /// <remarks/>
+        public bool IsHidden {
+            get {
+                return this.isHiddenField;
+            }
+            set {
+                this.isHiddenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool IsHiddenSpecified {
+            get {
+                return this.isHiddenFieldSpecified;
+            }
+            set {
+                this.isHiddenFieldSpecified = value;
+            }
+        }
     }
     
     /// <remarks/>
@@ -3654,6 +3679,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private object propertiesChangedField;
         
+        private string sourceIdField;
+        
         /// <remarks/>
         public int DomainId {
             get {
@@ -3887,6 +3914,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.propertiesChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string SourceId {
+            get {
+                return this.sourceIdField;
+            }
+            set {
+                this.sourceIdField = value;
             }
         }
     }

@@ -116,7 +116,7 @@ namespace MSNPSharp
             MSGMessage msgMessage = new MSGMessage();
 
             msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.Owner.Mail;
+            msgMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.ContactList.Owner.Mail;
 
             nsMessage.InnerMessage = msgMessage;
             // send it over the network
@@ -160,8 +160,8 @@ namespace MSNPSharp
                             if (yimMessage.CommandValues.Count > 3)
                             {
                                 //Verify receiver.
-                                if (yimMessage.CommandValues[2].ToString() != NSMessageHandler.Owner.Mail ||
-                                    yimMessage.CommandValues[3].ToString() != ((int)NSMessageHandler.Owner.ClientType).ToString())
+                                if (yimMessage.CommandValues[2].ToString() != NSMessageHandler.ContactList.Owner.Mail ||
+                                    yimMessage.CommandValues[3].ToString() != ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString())
                                 {
                                     return;
                                 }

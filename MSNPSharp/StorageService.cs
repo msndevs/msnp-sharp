@@ -112,7 +112,7 @@ namespace MSNPSharp
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, create profile skipped.");
                 DisplayImage displayImage = new DisplayImage();
                 displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
-                NSMessageHandler.Owner.DisplayImage = displayImage;
+                NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
 
                 return;
             }
@@ -203,7 +203,7 @@ namespace MSNPSharp
 
                 Alias alias = new Alias();
                 alias.NameSpace = "MyCidStuff";
-                alias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
+                alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
 
                 Handle pHandle = new Handle();
                 pHandle.RelationshipName = "MyProfile";
@@ -249,7 +249,7 @@ namespace MSNPSharp
 
                 DisplayImage displayImage = new DisplayImage();
                 displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
-                NSMessageHandler.Owner.DisplayImage = displayImage;
+                NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
 
                 string resId_Doc = "";
                 try
@@ -287,7 +287,7 @@ namespace MSNPSharp
                 updateProfileRequest.profile.ResourceID = resId_Prof;
                 ExpressionProfile expProf = new ExpressionProfile();
                 expProf.FreeText = "Update";
-                expProf.DisplayName = NSMessageHandler.Owner.NickName;
+                expProf.DisplayName = NSMessageHandler.ContactList.Owner.NickName;
                 updateProfileRequest.profile.ExpressionProfile = expProf;
 
                 updateProfileRequest.profileAttributesToDelete = new UpdateProfileRequestTypeProfileAttributesToDelete();
@@ -323,7 +323,7 @@ namespace MSNPSharp
 
                     PassportDynamicItem passportDyItem = new PassportDynamicItem();
                     passportDyItem.Type = "Passport";
-                    passportDyItem.PassportName = NSMessageHandler.Owner.Mail;
+                    passportDyItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
                     passportDyItem.Changes = "Notifications";
 
                     NotificationDataType notification = new NotificationDataType();
@@ -403,7 +403,7 @@ namespace MSNPSharp
                 GetProfileRequestType request = new GetProfileRequestType();
                 request.profileHandle = new Handle();
                 request.profileHandle.Alias = new Alias();
-                request.profileHandle.Alias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
+                request.profileHandle.Alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
                 request.profileHandle.Alias.NameSpace = "MyCidStuff";
                 request.profileHandle.RelationshipName = "MyProfile";
                 request.profileAttributes = new profileAttributes();
@@ -416,7 +416,7 @@ namespace MSNPSharp
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Get profile cannot get expression profile of this owner.");
                     NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
-                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.Owner.Name;
+                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.ContactList.Owner.Name;
                     return NSMessageHandler.ContactService.Deltas.Profile;
                 }
                 else
@@ -442,7 +442,7 @@ namespace MSNPSharp
                         DisplayImage newDisplayImage = new DisplayImage();
                         newDisplayImage.Image = fileImage;
 
-                        NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                        NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
                     }
                     else
                     {
@@ -463,7 +463,7 @@ namespace MSNPSharp
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
 
                                 SerializableMemoryStream ms = new SerializableMemoryStream();
-                                NSMessageHandler.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.Owner.DisplayImage.Image.RawFormat);
+                                NSMessageHandler.ContactList.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.ContactList.Owner.DisplayImage.Image.RawFormat);
                                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
                                 NSMessageHandler.ContactService.Deltas.Save(true);
                             },
@@ -472,9 +472,9 @@ namespace MSNPSharp
                             {
                                 Exception ex = param as Exception;
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
-                                if (NSMessageHandler.Owner.UserTile != null)
+                                if (NSMessageHandler.ContactList.Owner.UserTile != null)
                                 {
-                                    SyncUserTile(NSMessageHandler.Owner.UserTile.AbsoluteUri, null, null, null);
+                                    SyncUserTile(NSMessageHandler.ContactList.Owner.UserTile.AbsoluteUri, null, null, null);
                                 }
                             });
 
@@ -523,7 +523,7 @@ namespace MSNPSharp
                         DisplayImage newDisplayImage = new DisplayImage();
                         newDisplayImage.Image = fileImage;
 
-                        NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                        NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
                         if (callBackHandler != null)
                         {
                             callBackHandler(param);
@@ -554,7 +554,7 @@ namespace MSNPSharp
             NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
             NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
 
-            if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
+            if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
                 NSMessageHandler.BotMode == false)
             {
@@ -597,7 +597,7 @@ namespace MSNPSharp
 
                     PassportDynamicItem passportDyItem = new PassportDynamicItem();
                     passportDyItem.Type = "Passport";
-                    passportDyItem.PassportName = NSMessageHandler.Owner.Mail;
+                    passportDyItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
                     passportDyItem.Changes = "Notifications";
                     passportDyItem.Notifications = new NotificationDataType[] { new NotificationDataType() };
                     passportDyItem.Notifications[0].StoreService = new ServiceType();
@@ -652,7 +652,7 @@ namespace MSNPSharp
                     return null;
                 }
 
-                if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled && NSMessageHandler.MSNTicket != MSNTicket.Empty)
+                if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled && NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
                     DateTime deltasProfileDateModified = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.Deltas.Profile.DateModified);
                     DateTime annotationLiveProfileExpressionLastChanged = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged]);
@@ -735,13 +735,13 @@ namespace MSNPSharp
                 DisplayImage newDisplayImage = new DisplayImage();
                 newDisplayImage.Image = fileImage;
 
-                NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, new profile is saved locally.");
                 return true;
             }
 
-            if (NSMessageHandler.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
+            if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage,
@@ -794,7 +794,7 @@ namespace MSNPSharp
                                   "Update", 1); // 1= begin transaction, 0=commit transaction
 
                 Alias mycidAlias = new Alias();
-                mycidAlias.Name = Convert.ToString(NSMessageHandler.Owner.CID);
+                mycidAlias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
                 mycidAlias.NameSpace = "MyCidStuff";
 
                 // 3. DeleteRelationships. If an error occurs, don't return, continue...

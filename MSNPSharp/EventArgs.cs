@@ -569,14 +569,14 @@ namespace MSNPSharp
     [Serializable()]
     public class CircleMemberStatusChanged : CircleStatusChangedEventArgs
     {
-        private CircleContactMember circleMember = null;
+        private Contact circleMember = null;
 
-        protected CircleContactMember CircleMember
+        protected Contact CircleMember
         {
             get { return circleMember; }
         }
 
-        internal CircleMemberStatusChanged(Circle circle, CircleContactMember member, PresenceStatus oldStatus)
+        internal CircleMemberStatusChanged(Circle circle, Contact member, PresenceStatus oldStatus)
             : base(circle, oldStatus)
         {
             circleMember = member;

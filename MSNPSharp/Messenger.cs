@@ -189,9 +189,9 @@ namespace MSNPSharp
                     {
                         ie.Accept = true;
 
-                        ie.TransferSession.DataStream = nsMessageHandler.Owner.DisplayImage.OpenStream();
+                        ie.TransferSession.DataStream = Nameserver.ContactList.Owner.DisplayImage.OpenStream();
                         ie.TransferSession.AutoCloseStream = false;
-                        ie.TransferSession.ClientData = nsMessageHandler.Owner.DisplayImage;
+                        ie.TransferSession.ClientData = Nameserver.ContactList.Owner.DisplayImage;
                     }
                     else if (ie.TransferProperties.DataType == DataTransferType.Emoticon)
                     {
@@ -199,7 +199,7 @@ namespace MSNPSharp
                         msnObject.ParseContext(ie.TransferProperties.Context);
 
                         // send an emoticon
-                        foreach (Emoticon emoticon in nsMessageHandler.Owner.Emoticons.Values)
+                        foreach (Emoticon emoticon in Nameserver.ContactList.Owner.Emoticons.Values)
                         {
                             if (emoticon.Sha == msnObject.Sha)
                             {
@@ -418,11 +418,12 @@ namespace MSNPSharp
         /// <remarks>
         /// This property is a reference to the Owner object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
         /// </remarks>
+        [Obsolete("To avoid confuse, this property was obsoleted in 3.1, please use NSMessageHandler.ContactList.Owner instead.")]
         public Owner Owner
         {
             get
             {
-                return nsMessageHandler.Owner;
+                return Nameserver.ContactList.Owner;
             }
         }
 
@@ -449,31 +450,32 @@ namespace MSNPSharp
         /// </summary>
         public virtual void Connect()
         {
-            if (nsMessageProcessor == null)
+            if (NameserverProcessor == null)
                 throw new MSNPSharpException("No message processor defined");
 
-            if (nsMessageHandler == null)
+            if (Nameserver == null)
                 throw new MSNPSharpException("No message handler defined");
 
-            if (credentials == null)
+            if (Credentials == null)
                 throw new MSNPSharpException("No credentials defined");
 
-            if (credentials.Account.Length == 0)
+            if (Credentials.Account.Length == 0)
                 throw new MSNPSharpException("The specified account is empty");
 
-            if (credentials.Password.Length == 0)
+            if (Credentials.Password.Length == 0)
                 throw new MSNPSharpException("The specified password is empty");
 
-            if (credentials.ClientCode.Length == 0 || credentials.ClientID.Length == 0)
+            if (Credentials.ClientCode.Length == 0 || credentials.ClientID.Length == 0)
                 throw new MSNPSharpException("The local messengerclient credentials (client-id and client code) are not specified. This is necessary in order to authenticate the local client with the messenger server. See for more info about the values to use the documentation of the Credentials class.");
 
             // everything is okay, resume
-            nsMessageProcessor.ConnectivitySettings = connectivitySettings;
-            nsMessageProcessor.RegisterHandler(nsMessageHandler);
-            nsMessageHandler.MessageProcessor = nsMessageProcessor;
-            nsMessageHandler.Credentials = credentials;
-            nsMessageHandler.ConnectivitySettings = connectivitySettings;
-            nsMessageProcessor.Connect();
+            NameserverProcessor.ConnectivitySettings = connectivitySettings;
+            NameserverProcessor.RegisterHandler(nsMessageHandler);
+            Nameserver.MessageProcessor = nsMessageProcessor;
+            Nameserver.Credentials = credentials;
+            Nameserver.ConnectivitySettings = connectivitySettings;
+
+            NameserverProcessor.Connect();
         }
 
         /// <summary>
@@ -484,7 +486,7 @@ namespace MSNPSharp
             if (nsMessageProcessor.Connected)
             {
                 if (nsMessageHandler != null)
-                    nsMessageHandler.Owner.SetStatus(PresenceStatus.Offline);
+                    Nameserver.ContactList.Owner.SetStatus(PresenceStatus.Offline);
 
                 nsMessageProcessor.Disconnect();
             }
@@ -518,7 +520,7 @@ namespace MSNPSharp
             if (!Nameserver.ContactList.HasContact(remoteContact.Mail, remoteContact.ClientType))
                 throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
 
-            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Owner, remoteContact);
+            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Nameserver.ContactList.Owner, remoteContact);
             MSNSLPHandler msnslpHandler = (MSNSLPHandler)p2pSession.GetHandler(typeof(MSNSLPHandler));
             if (msnslpHandler == null)
             {
