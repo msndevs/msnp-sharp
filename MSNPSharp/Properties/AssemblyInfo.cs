@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 [assembly: CLSCompliantAttribute(false)]
 [assembly: AssemblyTitleAttribute("MSNPSharp")]
 [assembly: AssemblyDescriptionAttribute("C# implementation of the MSN protocol")]
-[assembly: AssemblyCopyrightAttribute("Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.")]
+[assembly: AssemblyCopyrightAttribute("Copyright (c) 2002-2010, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.")]
 [assembly: AssemblyProductAttribute("MSNPSharp")]
 [assembly: AssemblyDelaySignAttribute(false)]
 
