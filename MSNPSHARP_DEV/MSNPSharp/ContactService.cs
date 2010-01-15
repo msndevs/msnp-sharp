@@ -253,7 +253,7 @@ namespace MSNPSharp
         /// Fires the <see cref="CreateCircleCompleted"/> event.
         /// </summary>
         /// <param name="e"></param>
-        private void OnCreateCircleCompleted(CircleEventArgs e)
+        internal void OnCreateCircleCompleted(CircleEventArgs e)
         {
             if (CreateCircleCompleted != null)
             {
@@ -2241,16 +2241,9 @@ namespace MSNPSharp
                     abRequest(PartnerScenario.JoinedCircleDuringPush,
                         delegate
                         {
-                            //We need USR SHA A again
-                            NSMessageHandler.SendCircleNotifyADL(new Guid(e.Result.CreateCircleResult.Id), CircleString.DefaultHostDomain, MSNLists.AllowedList | MSNLists.ForwardList, false);
-                            Circle newcircle = NSMessageHandler.CircleList[e.Result.CreateCircleResult.Id.ToLowerInvariant() + "@" + CircleString.DefaultHostDomain];
-                            if (newcircle != null)
+                            lock (AddressBook.PendingCreateCircleList)
                             {
-                                OnCreateCircleCompleted(new CircleEventArgs(newcircle));
-                            }
-                            else
-                            {
-                                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("CreateCircle", new MSNPSharpException("Create circle failed.")));
+                                AddressBook.PendingCreateCircleList[new Guid(e.Result.CreateCircleResult.Id)] = circleName;
                             }
                         }
                      );

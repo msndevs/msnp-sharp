@@ -179,6 +179,18 @@ namespace MSNPSharp.IO
                 return contactTable.Count == 0;
         }
 
+        private bool IsPendingCreateConfirmCircle(string abId)
+        {
+            lock (PendingCreateCircleList)
+                return PendingCreateCircleList.ContainsKey(new Guid(abId));
+        }
+
+        private bool IsPendingCreateConfirmCircle(Guid abId)
+        {
+            lock (PendingCreateCircleList)
+                return PendingCreateCircleList.ContainsKey(abId);
+        }
+
         #region New MembershipList
 
         private SerializableDictionary<string, ServiceMembership> mslist = new SerializableDictionary<string, ServiceMembership>(0);
@@ -924,6 +936,38 @@ namespace MSNPSharp.IO
         [NonSerialized]
         Dictionary<string, long> wlInverseConnections = new Dictionary<string, long>();
 
+        [NonSerialized]
+        private CircleList pendingAcceptionCircleList;
+
+        [NonSerialized]
+        Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
+
+        /// <summary>
+        /// Circles created by the library and waiting server's confirm.
+        /// </summary>
+        internal Dictionary<Guid, string> PendingCreateCircleList
+        {
+            get 
+            { 
+                return pendingCreateCircleList; 
+            }
+        }
+
+        /// <summary>
+        /// A collection of all circles which are pending acception.
+        /// </summary>
+        internal CircleList PendingAcceptionCircleList
+        {
+            get
+            {
+                if (pendingAcceptionCircleList == null && NSMessageHandler != null)
+                    pendingAcceptionCircleList = new CircleList(NSMessageHandler);
+
+                return pendingAcceptionCircleList;
+            }
+        }
+
+
         /// <summary>
         /// The relationship mapping from addressbook Ids to hidden represtative's CIDs.
         /// </summary>
@@ -1191,6 +1235,11 @@ namespace MSNPSharp.IO
                             break;
                     }
 
+                    if (IsPendingCreateConfirmCircle(targetCircle.AddressBookId))
+                    {
+                        FireCreateCircleCompletedEvent(targetCircle); 
+                    }
+
                     #region Print Info
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Getting non-default addressbook: \r\nId: " +
@@ -1254,13 +1303,21 @@ namespace MSNPSharp.IO
                 return false;
             }
 
-            lock (NSMessageHandler.PendingCircleList)
+            lock (PendingAcceptionCircleList)
             {
-                NSMessageHandler.PendingCircleList.AddCircle(circle);
+                PendingAcceptionCircleList.AddCircle(circle);
             }
 
             JoinCircleInvitationEventArgs joinArgs = new JoinCircleInvitationEventArgs(circle, invitor);
             NSMessageHandler.ContactService.OnJoinCircleInvitationReceived(joinArgs);
+            return true;
+        }
+
+        private bool FireCreateCircleCompletedEvent(Circle newCircle)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Newly created circle detected, create circle operation succeeded: " + newCircle);
+            RemoveABIdFromPendingCreateCircleList(newCircle.AddressBookId);
+            NSMessageHandler.ContactService.OnCreateCircleCompleted(new CircleEventArgs(newCircle));
             return true;
         }
 
@@ -1917,6 +1974,12 @@ namespace MSNPSharp.IO
             }
         }
 
+        private bool RemoveABIdFromPendingCreateCircleList(Guid abId)
+        {
+            lock (PendingCreateCircleList)
+                return PendingCreateCircleList.Remove(abId);
+        }
+
 
         /// <summary>
         /// Get a circle addressbook by addressbook identifier.
@@ -1983,14 +2046,14 @@ namespace MSNPSharp.IO
         {
             bool result = NSMessageHandler.CircleList.AddCircle(circle);
 
-            lock (NSMessageHandler.PendingCircleList)
+            lock (PendingAcceptionCircleList)
             {
-                if (NSMessageHandler.PendingCircleList[circle.AddressBookId, circle.HostDomain] != null)
+                if (PendingAcceptionCircleList[circle.AddressBookId, circle.HostDomain] != null)
                 {
                     NSMessageHandler.ContactService.OnJoinedCircleCompleted(new CircleEventArgs(NSMessageHandler.CircleList[circle.AddressBookId, circle.HostDomain]));
                 }
 
-                NSMessageHandler.PendingCircleList.RemoveCircle(circle.AddressBookId, circle.HostDomain);
+                PendingAcceptionCircleList.RemoveCircle(circle.AddressBookId, circle.HostDomain);
             }
 
             return result;
