@@ -64,7 +64,6 @@ namespace MSNPSharp
         private P2PHandler p2pHandler;
 
         private CircleList circleList;
-        private CircleList pendingCircleList;
         private ContactGroupList contactGroups;
         private ContactList contactList;
         private ContactManager manager;
@@ -87,7 +86,6 @@ namespace MSNPSharp
         protected internal NSMessageHandler()
         {
             circleList = new CircleList(this);
-            pendingCircleList = new CircleList(this);
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
             manager = new ContactManager(this);
@@ -224,17 +222,6 @@ namespace MSNPSharp
             get
             {
                 return circleList;
-            }
-        }
-
-        /// <summary>
-        /// A collection of all circles which are pending acception.
-        /// </summary>
-        internal CircleList PendingCircleList
-        {
-            get
-            {
-                return pendingCircleList;
             }
         }
 
@@ -3217,13 +3204,16 @@ namespace MSNPSharp
             isSignedIn = false;
             externalEndPoint = null;
 
-            // 4. Clear contact lists
+            // 4. Clear contact lists and circle list.
             ContactList.Reset();
             CircleList.Clear();
             ContactGroups.Clear();
 
             //5. Reset contact manager.
             Manager.Reset();
+
+            //6. Reset censor words
+            CensorWords.Clear();
         }
 
         /// <summary>

@@ -281,7 +281,7 @@ namespace MSNPSharpClient
         void ContactService_JoinedCircle(object sender, CircleEventArgs e)
         {
             RefreshCircleList(sender, e);
-            //messenger.Nameserver.ContactService.ExitCircle(e.Circle); //Demostrate how to leave a circle.
+            messenger.Nameserver.ContactService.ExitCircle(e.Circle); //Demostrate how to leave a circle.
         }
 
 
