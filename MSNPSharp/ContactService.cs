@@ -1170,7 +1170,8 @@ namespace MSNPSharp
                     case ClientType.PassportMember:
                         request.contacts[0].contactInfo.contactType = MessengerContactType.Regular; // MUST BE "Regular". See r746
                         request.contacts[0].contactInfo.passportName = account;
-                        request.contacts[0].contactInfo.isMessengerUser = request.contacts[0].contactInfo.isMessengerUserSpecified = true;
+                        request.contacts[0].contactInfo.isMessengerUser = true;
+                        request.contacts[0].contactInfo.isMessengerUserSpecified = true;
                         request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
                         if (pending == false && !String.IsNullOrEmpty(invitation))
                         {
@@ -1393,6 +1394,13 @@ namespace MSNPSharp
             {
                 propertiesChanged.Add(PropertyString.DisplayName);
                 request.contacts[0].contactInfo.displayName = contact.Name;
+            }
+
+            //HasSpace
+            if (abContactType.contactInfo.hasSpace != contact.HasSpace && abContactType.contactInfo.hasSpaceSpecified)
+            {
+                propertiesChanged.Add(PropertyString.HasSpace);
+                request.contacts[0].contactInfo.hasSpace = contact.HasSpace;
             }
 
             // Annotations

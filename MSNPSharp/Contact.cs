@@ -62,7 +62,7 @@ namespace MSNPSharp
         private string contactType;
         private string comment = string.Empty;
 
-        private bool hasBlog;
+        private bool hasSpace;
         private bool mobileDevice;
         private bool mobileAccess;
         private bool isMessengerUser;
@@ -310,15 +310,17 @@ namespace MSNPSharp
         /// <summary>
         /// Indicates whether this contact has MSN Space.
         /// </summary>
-        public bool HasBlog
+        public bool HasSpace
         {
             get
             {
-                return hasBlog;
+                return hasSpace;
             }
+
             internal set
             {
-                hasBlog = value;
+                hasSpace = value;
+                NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
             }
         }
 
@@ -334,7 +336,7 @@ namespace MSNPSharp
 
                 if ((clientCapacities & ClientCapacities.HasMSNSpaces) == ClientCapacities.HasMSNSpaces)
                 {
-                    HasBlog = true;
+                    SetHasSpace(true);
                 }
             }
         }
@@ -837,6 +839,11 @@ namespace MSNPSharp
             }
         }
 
+        internal void SetHasSpace(bool hasSpaceValue)
+        {
+            hasSpace = hasSpaceValue;
+        }
+
         internal void SetNickName(string newNick)
         {
             nickName = newNick;
@@ -1121,5 +1128,6 @@ namespace MSNPSharp
         {
             return Hash;
         }
+
     }
 };

@@ -159,12 +159,9 @@ namespace MSNPSharp.IO
                 foreach (ContactType contactType in defaultPage.Values)
                 {
                     ReturnState updateResult = UpdateContact(contactType); //Restore contatcs.
-                    switch (updateResult)
+                    if ((updateResult & ReturnState.UpdateError) != ReturnState.None)
                     {
-                        case ReturnState.UpdateError:
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[Initialize Error]: update contact error.");
-                            break;
-
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[Initialize Error]: update contact error.");
                     }
                 }
             }
@@ -1482,7 +1479,7 @@ namespace MSNPSharp.IO
                     if (!isRestore)
                         newContactList[contactType.contactInfo.CID] = contactType;
 
-                    if (UpdateContact(contactType, lowerId, circle) != ReturnState.ProcessNextContact)
+                    if ((UpdateContact(contactType, lowerId, circle) & ReturnState.ProcessNextContact) == ReturnState.None)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "[UpdateCircleMembersFromAddressBookContactPage] Create circle member failed: " +
                             contactType.contactInfo.passportName + ", UpdateContact returns false.");
@@ -2294,7 +2291,7 @@ namespace MSNPSharp.IO
                     contact.Guid = new Guid(contactType.contactId);
                     contact.CID = Convert.ToInt64(cinfo.CID);
                     contact.ContactType = cinfo.contactType;
-                    //contact.SetHasBlog(cit.hasSpace);   //DONOT trust this
+                    contact.SetHasSpace(cit.hasSpace);   //DONOT trust this
                     contact.SetComment(cinfo.comment);
                     contact.SetIsMessengerUser(isMessengeruser);
                     contact.SetMobileAccess(cinfo.isMobileIMEnabled);

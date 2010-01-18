@@ -1005,6 +1005,7 @@ namespace MSNPSharp
         public const string ContactEmail = "ContactEmail";
         public const string ContactPhone = "ContactPhone";
         public const string GroupName = "GroupName";
+        public const string HasSpace = "HasSpace";
     }
 
     /// <summary>
@@ -1327,7 +1328,7 @@ namespace MSNPSharp
         /// </summary>
         LoadAddressBookFromFile = 4,
 
-        UpdateError = 5
+        UpdateError = 8
     }
 
     public enum Scenario: uint
@@ -1362,15 +1363,18 @@ namespace MSNPSharp
         SendInitialCirclesADL = 64
     }
 
+    /// <summary>
+    /// This is the value of different domain type of Network info list.
+    /// </summary>
     internal static class DomainIds
     {
         /// <summary>
-        /// Domain id for Windows Live addressbook
+        /// Domain id for Windows Live addressbook in NetworkInfo.
         /// </summary>
         public const int WLDomain = 1;
 
         /// <summary>
-        /// Domain ID for FaceBook.
+        /// Domain ID for facebook in NetworkInfo.
         /// </summary>
         public const int FBDomain = 7;
         public const int ZUNEDomain = 3;
