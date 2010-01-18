@@ -4512,6 +4512,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool isBetaMigratedFieldSpecified;
         
+        private int migratedToField;
+        
+        private bool migratedToFieldSpecified;
+        
         /// <remarks/>
         public string name {
             get {
@@ -4717,6 +4721,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.isBetaMigratedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int MigratedTo {
+            get {
+                return this.migratedToField;
+            }
+            set {
+                this.migratedToField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool MigratedToSpecified {
+            get {
+                return this.migratedToFieldSpecified;
+            }
+            set {
+                this.migratedToFieldSpecified = value;
             }
         }
     }
