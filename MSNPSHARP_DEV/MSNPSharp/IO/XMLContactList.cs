@@ -2291,7 +2291,7 @@ namespace MSNPSharp.IO
                     contact.Guid = new Guid(contactType.contactId);
                     contact.CID = Convert.ToInt64(cinfo.CID);
                     contact.ContactType = cinfo.contactType;
-                    contact.SetHasSpace(cit.hasSpace);   //DONOT trust this
+                    contact.SetHasSpace(cinfo.hasSpace);   //DONOT trust this
                     contact.SetComment(cinfo.comment);
                     contact.SetIsMessengerUser(isMessengeruser);
                     contact.SetMobileAccess(cinfo.isMobileIMEnabled);
