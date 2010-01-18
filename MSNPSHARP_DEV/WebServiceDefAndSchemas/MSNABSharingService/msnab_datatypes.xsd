@@ -16,6 +16,7 @@
 			<xsd:element name="AddressBookType" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="MessengerApplicationServiceCreated" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="IsBetaMigrated" type="xsd:boolean" minOccurs="0"/>
+			<xsd:element name="MigratedTo" type="xsd:int" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="HandleType">
