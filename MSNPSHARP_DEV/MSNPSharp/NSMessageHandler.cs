@@ -1494,7 +1494,6 @@ namespace MSNPSharp
                     string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
                     string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
 
-
                     if (IsSignedIn && account == ContactList.Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
                     {
                         SetPresenceStatus(newstatus);
@@ -1510,6 +1509,12 @@ namespace MSNPSharp
                         DisplayImage userDisplay = new DisplayImage();
                         userDisplay.Context = newdp;
                         contact.DisplayImage = userDisplay;
+                    }
+
+                    if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == ClientType.EmailMember)
+                    {
+                        newdp = message.CommandValues[5].ToString();
+                        contact.UserTile = new Uri(HttpUtility.UrlDecode(newdp));
                     }
 
                     PresenceStatus oldStatus = contact.Status;
@@ -1635,7 +1640,11 @@ namespace MSNPSharp
 
                 if (contact != null)
                 {
-                    
+                    if (contact != ContactList.Owner && message.CommandValues.Count >= 3 && type == ClientType.EmailMember)
+                    {
+                        string newdp = message.CommandValues[2].ToString();
+                        contact.UserTile = new Uri(HttpUtility.UrlDecode(newdp));
+                    }
 
                     PresenceStatus oldStatus = contact.Status;
                     contact.SetStatus(PresenceStatus.Offline);
@@ -2866,21 +2875,21 @@ namespace MSNPSharp
                     string[] typeMail = mimeDic[MimeHeaderStrings.To].Value.Split(':');
                     if (typeMail.Length == 0)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
                         return;
                     }
 
                     string[] guidDomain = typeMail[1].Split('@');
                     if (guidDomain.Length == 0)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle guid and host domain in id: " + typeMail[1]);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle guid and host domain in id: " + typeMail[1]);
                         return;
                     }
 
                     Circle circle = CircleList[typeMail[1]];
                     if (circle == null)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle " + typeMail[1] + " in your circle list.");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle " + typeMail[1] + " in your circle list.");
                         return;
                     }
 
@@ -2892,7 +2901,7 @@ namespace MSNPSharp
 
                     if (member == null)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
                         return;
                     }
 

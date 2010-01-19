@@ -177,7 +177,8 @@ namespace MSNPSharp
             {
                 return userTile;
             }
-            set
+
+            internal set
             {
                 userTile = value;
             }
