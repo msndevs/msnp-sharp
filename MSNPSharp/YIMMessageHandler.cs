@@ -1,6 +1,6 @@
-#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+#region Copyright (c) 2002-2010, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
+Copyright (c) 2002-2010, Bas Geertsema, Xih Solutions
 (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
@@ -165,6 +165,11 @@ namespace MSNPSharp
                                 {
                                     return;
                                 }
+
+                                if (!NSMessageHandler.ContactList.HasContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember))
+                                {
+                                    return;
+                                }
                             }
 
 
@@ -198,11 +203,12 @@ namespace MSNPSharp
         {
             YIMMessage yimMessage = message as YIMMessage;
 
-            if (!NSMessageHandler.ContactList.HasContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember))
+            Contact contact = NSMessageHandler.ContactList.GetContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember);
+            if (!Contacts.ContainsKey(contact))
             {
                 return;
             }
-            Contact contact = NSMessageHandler.ContactList.GetContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember);
+
             if (yimMessage.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
             {
                 switch (yimMessage.InnerMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
