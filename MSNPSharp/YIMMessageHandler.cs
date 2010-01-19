@@ -165,6 +165,11 @@ namespace MSNPSharp
                                 {
                                     return;
                                 }
+
+                                if (!NSMessageHandler.ContactList.HasContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember))
+                                {
+                                    return;
+                                }
                             }
 
 
@@ -198,11 +203,12 @@ namespace MSNPSharp
         {
             YIMMessage yimMessage = message as YIMMessage;
 
-            if (!NSMessageHandler.ContactList.HasContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember))
+            Contact contact = NSMessageHandler.ContactList.GetContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember);
+            if (!Contacts.ContainsKey(contact))
             {
                 return;
             }
-            Contact contact = NSMessageHandler.ContactList.GetContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember);
+
             if (yimMessage.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
             {
                 switch (yimMessage.InnerMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
