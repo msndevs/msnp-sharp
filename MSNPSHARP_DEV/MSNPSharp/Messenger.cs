@@ -171,7 +171,7 @@ namespace MSNPSharp
                     {
                         if (sb.GetType() == typeof(SBMessageHandler))
                         {
-                            if (sb.Contacts.ContainsKey(see.Session.RemoteUser)) //if (sb.Contacts.ContainsKey(see.Session.RemoteContact))
+                            if (sb.Contacts.ContainsKey(see.Session.RemoteUser))
                             {
                                 see.Session.MessageProcessor = sb.MessageProcessor;
                                 break;

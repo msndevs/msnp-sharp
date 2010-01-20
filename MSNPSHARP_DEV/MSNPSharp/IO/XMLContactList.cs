@@ -66,7 +66,7 @@ namespace MSNPSharp.IO
         /// MemberShipList, Groups, CircleResults and AddressbookContacts is pure clean and no contains DELTAS...
         /// So, member.Deleted is not valid here...
         /// </summary>
-        private void Initialize()
+        internal void Initialize()
         {
             if (initialized)
                 return;
@@ -629,30 +629,6 @@ namespace MSNPSharp.IO
 
             lock (contactTable)
                 return contactTable[CID];
-        }
-
-        public XMLContactList Merge(DeltasList deltas)
-        {
-            Initialize();
-
-            if (deltas.MembershipDeltas.Count > 0)
-            {
-                foreach (FindMembershipResultType membershipResult in deltas.MembershipDeltas)
-                {
-                    Merge(membershipResult);
-                }
-            }
-
-            if (deltas.AddressBookDeltas.Count > 0)
-            {
-                foreach (ABFindContactsPagedResultType findcontactspagedResult in deltas.AddressBookDeltas)
-                {
-                    Merge(findcontactspagedResult);
-                }
-
-            }
-
-            return this;
         }
 
         public XMLContactList Merge(FindMembershipResultType findMembership)

@@ -171,16 +171,16 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void Clear()
         {
-            lock (messageSessions)
+            lock (MessageSessions)
             {
-                foreach (P2PMessageSession session in messageSessions)
+                foreach (P2PMessageSession session in MessageSessions)
                 {
                     session.AbortAllTransfers();
                 }
             }
 
-            lock (messageSessions)
-                messageSessions.Clear();
+            lock (MessageSessions)
+                MessageSessions.Clear();
 
             p2pMessagePool = new P2PMessagePool();
         }
@@ -241,9 +241,9 @@ namespace MSNPSharp.DataTransfer
                     }
                     else
                     {
-                        lock (messageSessions)
+                        lock (MessageSessions)
                         {
-                            messageSessions.Remove(existingSession);
+                            MessageSessions.Remove(existingSession);
                         }
                     }
                 }
@@ -251,8 +251,8 @@ namespace MSNPSharp.DataTransfer
 
             // no session available, create a new session
             P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
-            lock (messageSessions)
-                messageSessions.Add(newSession);
+            lock (MessageSessions)
+                MessageSessions.Add(newSession);
 
             // fire event
             OnSessionCreated(newSession);
@@ -299,7 +299,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected SBMessageHandler GetSwitchboardSession(Contact remoteContact)
         {
-            foreach (SBMessageHandler handler in switchboardSessions)
+            foreach (SBMessageHandler handler in SwitchboardSessions)
             {
                 if (handler.Contacts.Count == 1 && handler.Contacts.ContainsKey(remoteContact) && handler.IsSessionEstablished)
                     return handler;
@@ -315,11 +315,11 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected P2PMessageSession GetSessionFromRemote(Contact remoteContact)
         {
-            lock (messageSessions)
+            lock (MessageSessions)
             {
-                foreach (P2PMessageSession session in messageSessions)
+                foreach (P2PMessageSession session in MessageSessions)
                 {
-                    if (session.RemoteUser == remoteContact)
+                    if (session.RemoteUser.IsSibling(remoteContact))
                         return session;
                 }
             }
@@ -382,9 +382,9 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected P2PMessageSession GetSessionFromLocal(uint identifier)
         {
-            lock (messageSessions)
+            lock (MessageSessions)
             {
-                foreach (P2PMessageSession session in messageSessions)
+                foreach (P2PMessageSession session in MessageSessions)
                 {
                     if (session.LocalIdentifier == identifier)
                         return session;
@@ -415,17 +415,17 @@ namespace MSNPSharp.DataTransfer
             if (sbMessage.Command == "BYE")
             {
                 string account = sbMessage.CommandValues[0].ToString();
-                lock (messageSessions)
+                lock (MessageSessions)
                 {
-                    List<P2PMessageSession> list = new List<P2PMessageSession>(messageSessions);
+                    List<P2PMessageSession> list = new List<P2PMessageSession>(MessageSessions);
                     foreach (P2PMessageSession p2psession in list)
                     {
                         if (p2psession.RemoteContact.ToLowerInvariant() == account.ToLowerInvariant())
                         {
-                            messageSessions.Remove(p2psession);
+                            MessageSessions.Remove(p2psession);
                             p2psession.CleanUp();
 
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed: " + p2psession.RemoteContact + ", remain session count: " + messageSessions.Count.ToString());
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed: " + p2psession.RemoteContact + ", remain session count: " + MessageSessions.Count.ToString());
                         }
                     }
                 }
@@ -603,9 +603,9 @@ namespace MSNPSharp.DataTransfer
                 session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));
 
                 // add the session to the session list
-                lock (messageSessions)
+                lock (MessageSessions)
                 {
-                    messageSessions.Add(session);
+                    MessageSessions.Add(session);
                 }
 
                 // set the default message processor
@@ -755,10 +755,10 @@ namespace MSNPSharp.DataTransfer
 
             if (canremove)
             {
-                lock (messageSessions)
+                lock (MessageSessions)
                 {
                     // in a conversation with multiple contacts we don't want to send p2p messages.
-                    foreach (P2PMessageSession session in messageSessions)
+                    foreach (P2PMessageSession session in MessageSessions)
                     {
                         if (session.MessageProcessor == handler.MessageProcessor)
                         {
@@ -832,9 +832,9 @@ namespace MSNPSharp.DataTransfer
             OnSessionClosed(session);
 
             // and remove the session from the list
-            lock (messageSessions)
+            lock (MessageSessions)
             {
-                messageSessions.Remove(session);
+                MessageSessions.Remove(session);
             }
         }
 

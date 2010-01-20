@@ -248,7 +248,8 @@ namespace MSNPSharp
 
         #region Members
 
-        private Dictionary<Contact, ContactConversationState> contacts = new Dictionary<Contact, ContactConversationState>(0);
+        //private Dictionary<string, KeyValuePair<Contact, ContactConversationState>> contacts = new Dictionary<string, KeyValuePair<Contact, ContactConversationState>>(new SiblingComparer<string>());
+        private Dictionary<Contact, ContactConversationState> contacts = new Dictionary<Contact, ContactConversationState>(new SiblingComparer<Contact>());
         private Dictionary<string, MSGMessage> multiPacketMessages = new Dictionary<string, MSGMessage>();
         private object syncObject = new object();
         private Queue<Contact> invitationQueue = new Queue<Contact>();
@@ -267,7 +268,8 @@ namespace MSNPSharp
         /// <summary>
         /// A collection of all <i>remote</i> contacts present in this session
         /// </summary>
-        public Dictionary<Contact, ContactConversationState> Contacts
+        //internal Dictionary<string, KeyValuePair<Contact, ContactConversationState>> Contacts
+        internal Dictionary<Contact, ContactConversationState> Contacts
         {
             get
             {
@@ -603,11 +605,11 @@ namespace MSNPSharp
                 AllContactsLeft(this, new EventArgs());
             }
 
-            if (contacts.Count == 1)  //MSNP18: owner in the switch
+            if (Contacts.Count == 1)  //MSNP18: owner in the switch
             {
                 Left();
-                lock (contacts)
-                    contacts.Clear();
+                lock (Contacts)
+                    Contacts.Clear();
             }
             else
             {
@@ -824,7 +826,7 @@ namespace MSNPSharp
 
             foreach (Contact acc in Contacts.Keys)
             {
-                if (contacts[acc] != ContactConversationState.Left)
+                if (Contacts[acc] != ContactConversationState.Left)
                 {
                     if (NSMessageHandler != null)
                     {
@@ -1149,7 +1151,8 @@ namespace MSNPSharp
 
         private void ClearAll()
         {
-            Dictionary<Contact, ContactConversationState> cp = new Dictionary<Contact, ContactConversationState>(contacts);
+            //Dictionary<string, KeyValuePair<Contact, ContactConversationState>> cp = new Dictionary<string, KeyValuePair<Contact, ContactConversationState>>(Contacts);
+            Dictionary<Contact, ContactConversationState> cp = new Dictionary<Contact, ContactConversationState>(Contacts, new SiblingComparer<Contact>());
             foreach (Contact account in cp.Keys)
             {
                 SetContactState(account, ContactConversationState.Left);
@@ -1158,9 +1161,9 @@ namespace MSNPSharp
 
         private void SetContactState(Contact account, ContactConversationState state)
         {
-            lock (contacts)
+            lock (Contacts)
             {
-                contacts[account] = state;
+                Contacts[account] = state;
             }
         }
 

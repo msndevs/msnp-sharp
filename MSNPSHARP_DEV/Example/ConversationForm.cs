@@ -35,10 +35,6 @@ namespace MSNPSharpClient
         private ToolStripDropDown emotionDropDown = new ToolStripDropDown();
         private ToolStripDropDown onlineUsersDropDown = new ToolStripDropDown();
 
-        private Conversation _conversation = null;
-        private ClientForm _clientform = null;        
-        private List<string> _contacts = new List<string>(0);
-        private Contact _firstInvitedContact;
         private OpenFileDialog openFileDialog;
         private ToolStrip tsMessage;
         private ToolStripComboBox cbMessageFontName;
@@ -57,7 +53,11 @@ namespace MSNPSharpClient
         private Button btnCustomEmoticon;
         private Button btnActivityTest;
         private ColorDialog dlgColor;
-        
+
+
+        private List<Conversation> _conversations = new List<Conversation>(0);
+        private Messenger _messenger = null;
+        private Contact _firstInvitedContact = null;
 
         /// <summary>
         /// The conversation object which is associated with the form.
@@ -66,24 +66,16 @@ namespace MSNPSharpClient
         {
             get
             {
-                return _conversation;
+                return GetActiveConversation();
             }
 
-        }
-
-        public List<string> Contacts
-        {
-            get
-            {
-                return _contacts;
-            }
         }
 
         protected ConversationForm()
         {
         }
 
-        public ConversationForm(Conversation conversation, ClientForm clientform, Contact contact)
+        public ConversationForm(Conversation conversation, Messenger messenger, Contact contact)
         {
             InitializeComponent();
 
@@ -92,16 +84,10 @@ namespace MSNPSharpClient
                 contact = conversation.Contacts[0];
             }
 
-            _conversation = conversation;
-            AddEvent();
+            AddEvent(conversation);
 
-            _clientform = clientform;
-            _firstInvitedContact = contact;
-
-            if (contact != null)
-            {
-                _conversation.Invite(contact);
-            }            
+            _messenger = messenger;
+            _firstInvitedContact = contact;          
         }
 
         /// <summary>
@@ -110,33 +96,12 @@ namespace MSNPSharpClient
         /// <param name="convers"></param>
         public void AttachConversation(Conversation convers)
         {
-            _conversation.End();
-            _conversation = convers;   //Use the latest conversation, WLM just do the same.
-            AddEvent();
-            DisplaySystemMessage("A new conversation has been attached to this form.");
-            DisplaySystemMessage("The old session will be closed.");
+            AddEvent(convers);
         }
 
         public bool CanAttach(Conversation newconvers)
         {
-            if (((_conversation.Type & ConversationType.Chat) == ConversationType.Chat) || 
-                (Visible == true && _conversation.Type == ConversationType.SwitchBoard))
-            {
-                if ((newconvers.Type | ConversationType.Chat) == (_conversation.Type | ConversationType.Chat))
-                {
-                    if (Conversation.Contacts.Count == newconvers.Contacts.Count)
-                    {
-                        foreach (Contact ct in newconvers.Contacts)
-                        {
-                            if (!Conversation.Contacts.Contains(ct))
-                                return false;
-                        }
-
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return newconvers.HasContact(_firstInvitedContact);
         }
 
         void Switchboard_NudgeReceived(object sender, ContactEventArgs e)
@@ -518,30 +483,42 @@ namespace MSNPSharpClient
         }
         #endregion
 
-        private void RemoveEvent()
+        private void RemoveEvent(Conversation converseation)
         {
-            if (Conversation != null)
+            if (converseation != null)
             {
-                Conversation.TextMessageReceived -= Switchboard_TextMessageReceived;
-                Conversation.SessionClosed -= Switchboard_SessionClosed;
-                Conversation.ContactJoined -= Switchboard_ContactJoined;
-                Conversation.ContactLeft -= Switchboard_ContactLeft;
-                Conversation.NudgeReceived -= Switchboard_NudgeReceived;
+                converseation.TextMessageReceived -= Switchboard_TextMessageReceived;
+                converseation.SessionClosed -= Switchboard_SessionClosed;
+                converseation.ContactJoined -= Switchboard_ContactJoined;
+                converseation.ContactLeft -= Switchboard_ContactLeft;
+                converseation.NudgeReceived -= Switchboard_NudgeReceived;
 
-                Conversation.MSNObjectDataTransferCompleted -= Conversation_MSNObjectDataTransferCompleted;
+                converseation.MSNObjectDataTransferCompleted -= Conversation_MSNObjectDataTransferCompleted;
             }
         }
 
-        private void AddEvent()
+        private void AddEvent(Conversation converse)
         {
-            Conversation.TextMessageReceived += new EventHandler<TextMessageEventArgs>(Switchboard_TextMessageReceived);
-            Conversation.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
-            Conversation.ContactJoined += new EventHandler<ContactEventArgs>(Switchboard_ContactJoined);
-            Conversation.ContactLeft += new EventHandler<ContactEventArgs>(Switchboard_ContactLeft);
-            Conversation.NudgeReceived += new EventHandler<ContactEventArgs>(Switchboard_NudgeReceived);
+            converse.TextMessageReceived += new EventHandler<TextMessageEventArgs>(Switchboard_TextMessageReceived);
+            converse.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
+            converse.ContactJoined += new EventHandler<ContactEventArgs>(Switchboard_ContactJoined);
+            converse.ContactLeft += new EventHandler<ContactEventArgs>(Switchboard_ContactLeft);
+            converse.NudgeReceived += new EventHandler<ContactEventArgs>(Switchboard_NudgeReceived);
 
-            Conversation.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(Conversation_MSNObjectDataTransferCompleted);
+            converse.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(Conversation_MSNObjectDataTransferCompleted);
             //Conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(Conversation_ConversationEnded);
+            _conversations.Add(converse);
+        }
+
+        private Conversation GetActiveConversation()
+        {
+            foreach (Conversation converse in _conversations)
+            {
+                if (!converse.Ended)
+                    return converse;
+            }
+
+            return null;
         }
 
         void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
@@ -691,13 +668,12 @@ namespace MSNPSharpClient
         private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             //Remember to close!
-            RemoveEvent();  //Remove event handlers first, then close the conversation.
-            if (!Conversation.Ended)
+            foreach (Conversation conv in _conversations)
             {
-                Conversation.End();
+                RemoveEvent(conv);  //Remove event handlers first, then close the conversation.
+                if (!conv.Ended)
+                    conv.End();
             }
-
-            _clientform.ConversationForms.Remove(this);
         }
 
         private void PrintText(Contact c, TextMessage message)
@@ -705,7 +681,7 @@ namespace MSNPSharpClient
             richTextHistory.SelectionColor = Color.Navy;
             richTextHistory.SelectionIndent = 0;
             richTextHistory.AppendText("[" + DateTime.Now.ToLongTimeString() + "]" + " ");
-            richTextHistory.SelectionColor = c.Mail == _conversation.Messenger.Nameserver.ContactList.Owner.Mail ? Color.Blue : Color.Black;
+            richTextHistory.SelectionColor = c.Mail == _messenger.Nameserver.ContactList.Owner.Mail ? Color.Blue : Color.Black;
             richTextHistory.AppendText(c.Name + " <" + c.Mail + ">" + Environment.NewLine);
             richTextHistory.SelectionColor = message.Color;
             richTextHistory.SelectionIndent = 10;
@@ -770,7 +746,7 @@ namespace MSNPSharpClient
         {
             Text = "Conversation with " + _firstInvitedContact.Mail + " - MSNPSharp";
             Icon = (Icon)((_firstInvitedContact.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
-            displayOwner.Image = _clientform.Messenger.Nameserver.ContactList.Owner.DisplayImage.Image;
+            displayOwner.Image = _messenger.Nameserver.ContactList.Owner.DisplayImage.Image;
 
             lock (richTextHistory.Emotions)
             {
@@ -809,6 +785,11 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
+            if (_firstInvitedContact.UserTile != null && _firstInvitedContact.DisplayImage == null)
+            {
+                displayUser.LoadAsync(_firstInvitedContact.UserTile.AbsoluteUri);
+            }
+
             // request the image, if not already available
             if (_firstInvitedContact.Status != PresenceStatus.Offline && _firstInvitedContact.DisplayImage != null)
             {
@@ -820,12 +801,12 @@ namespace MSNPSharpClient
                         {
                             // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
                             // The MSNSLPHandler makes use of the underlying P2P framework.
-                            MSNSLPHandler msnslpHandler = _conversation.Messenger.GetMSNSLPHandler(_firstInvitedContact);
+                            MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(_firstInvitedContact);
 
                             // by sending an invitation a P2PTransferSession is automatically created.
                             // the session object takes care of the actual data transfer to the remote client,
                             // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                            P2PTransferSession session = msnslpHandler.SendInvitation(_conversation.Messenger.Nameserver.ContactList.Owner, _firstInvitedContact, _firstInvitedContact.DisplayImage);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, _firstInvitedContact, _firstInvitedContact.DisplayImage);
                             session.ClientData = _firstInvitedContact.DisplayImage;
                             session.DataStream = _firstInvitedContact.DisplayImage.OpenStream();
 
@@ -900,7 +881,7 @@ namespace MSNPSharpClient
             if (inputTextBox.Font.Underline)
                 message.Decorations |= TextDecorations.Underline;
 
-            PrintText(_conversation.Messenger.Nameserver.ContactList.Owner, message);
+            PrintText(_messenger.Nameserver.ContactList.Owner, message);
 
             inputTextBox.Clear();
             inputTextBox.Focus();
@@ -922,7 +903,7 @@ namespace MSNPSharpClient
             int y = Location.Y + 10 + btnInviteUsers.Height + 20;
 
             onlineUsersDropDown.Items.Clear();
-            foreach (Contact c in Conversation.Messenger.ContactList.Forward)
+            foreach (Contact c in _messenger.ContactList.Forward)
             {
                 if (c.Online && c.ClientType == ClientType.PassportMember)
                 {
@@ -952,9 +933,10 @@ namespace MSNPSharpClient
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 List<Contact> contacts = new List<Contact>();
-                foreach (Contact contact in _conversation.Contacts)
+                foreach (Contact contact in Conversation.Contacts)
                 {
-                    if (contact.Online && contact.ClientType == ClientType.PassportMember && contact.Mail != Conversation.Messenger.Nameserver.ContactList.Owner.Mail)
+                    if (contact.Online && contact.ClientType == ClientType.PassportMember && 
+                        contact.Mail != _messenger.Nameserver.ContactList.Owner.Mail)
                     {
                         contacts.Add(contact);
                     }
@@ -976,9 +958,9 @@ namespace MSNPSharpClient
                     {
                         foreach (string filename in openFileDialog.FileNames)
                         {
-                            MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(contact);
+                            MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(contact);
                             FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Nameserver.ContactList.Owner, contact, Path.GetFileName(filename), fileStream);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, contact, Path.GetFileName(filename), fileStream);
                         }
                     }
                 }
@@ -996,7 +978,7 @@ namespace MSNPSharpClient
         {
             MemoryStream mem = new MemoryStream();
             Properties.Resources.inner_emoticon.Save(mem, ImageFormat.Png);
-            Emoticon emotest = new Emoticon(_clientform.Messenger.Nameserver.ContactList.Owner.Mail, mem, "0", "test_em");
+            Emoticon emotest = new Emoticon(_messenger.Nameserver.ContactList.Owner.Mail, mem, "0", "test_em");
             MSNObjectCatalog.GetInstance().Add(emotest);
             List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
@@ -1094,8 +1076,8 @@ namespace MSNPSharpClient
         {
             String activityID = "20521364";        //The activityID of Music Mix activity.
             String activityName = "Music Mix";     //Th name of acticvity
-            MSNSLPHandler msnslpHandler = Conversation.Messenger.GetMSNSLPHandler(_firstInvitedContact);
-            P2PTransferSession session = msnslpHandler.SendInvitation(Conversation.Messenger.Nameserver.ContactList.Owner, _firstInvitedContact, activityID, activityName);
+            MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(_firstInvitedContact);
+            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, _firstInvitedContact, activityID, activityName);
             session.DataStream = new MemoryStream();
 
             msnslpHandler.TransferSessionClosed += delegate(object s, P2PTransferSessionEventArgs ea)

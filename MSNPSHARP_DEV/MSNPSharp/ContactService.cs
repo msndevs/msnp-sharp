@@ -403,7 +403,7 @@ namespace MSNPSharp
 
             if (NSMessageHandler.AutoSynchronize)
             {
-                AddressBook.Merge(Deltas);
+                AddressBook.Initialize();
 
                 if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
                 {
@@ -754,8 +754,7 @@ namespace MSNPSharp
                             if (null != e.Result.FindMembershipResult)
                             {
                                 AddressBook.Merge(e.Result.FindMembershipResult);
-                                Deltas.MembershipDeltas.Add(e.Result.FindMembershipResult);
-                                Deltas.Save();
+                                AddressBook.Save();
                             }
                             if (onSuccess != null)
                             {
@@ -869,8 +868,7 @@ namespace MSNPSharp
                                     AddressBook.MergeGroupAddressBook(e.Result.ABFindContactsPagedResult);
                                 }
 
-                                Deltas.AddressBookDeltas.Add(e.Result.ABFindContactsPagedResult);
-                                Deltas.Save();
+                                AddressBook.Save();
 
                                 if (e.Result.ABFindContactsPagedResult.CircleResult != null)
                                     NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
@@ -2834,8 +2832,6 @@ namespace MSNPSharp
                 // Last save for contact list files
                 if (NSMessageHandler.IsSignedIn && AddressBook != null && Deltas != null)
                 {
-                    AddressBook.Merge(Deltas);
-
                     try
                     {
                         AddressBook.Save();
