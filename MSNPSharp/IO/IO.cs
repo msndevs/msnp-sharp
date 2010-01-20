@@ -263,6 +263,7 @@ namespace MSNPSharp.IO
 
         private void WriteAllBytes(string filename, byte[] content)
         {
+            DateTime beginTime = DateTime.Now;
             fileName = filename;
 
             if (content != null)
@@ -282,19 +283,27 @@ namespace MSNPSharp.IO
                     }
                 }
             }
+
+            TimeSpan timeConsume = DateTime.Now - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> Write raw file time (by ticks): " + timeConsume.Ticks);
         }
 
         private static byte[] Compress(byte[] buffer)
         {
+            DateTime beginTime = DateTime.Now;
             MemoryStream destms = new MemoryStream();
             GZipStream zipsm = new GZipStream(destms, CompressionMode.Compress, true);
             zipsm.Write(buffer, 0, buffer.Length);
             zipsm.Close();
+
+            TimeSpan timeConsume = DateTime.Now - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<Compress> Compress time (by ticks): " + timeConsume.Ticks);
             return destms.ToArray();
         }
 
         private static byte[] Decompress(byte[] compresseddata)
         {
+            DateTime beginTime = DateTime.Now;
             MemoryStream destms = new MemoryStream();
             MemoryStream ms = new MemoryStream(compresseddata);
             ms.Position = 0;
@@ -309,6 +318,9 @@ namespace MSNPSharp.IO
             }
 
             zipsm.Close();
+            TimeSpan timeConsume = DateTime.Now - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<Decompress> Decompress time (by ticks): " + timeConsume.Ticks);
+
             return destms.ToArray();
         }
 
@@ -336,6 +348,7 @@ namespace MSNPSharp.IO
 
         private static byte[] Encyrpt(byte[] val, byte[] secretKey)
         {
+            DateTime beginTime = DateTime.Now;
             byte[] ret = null;
             if (val != null)
             {
@@ -356,11 +369,17 @@ namespace MSNPSharp.IO
                     }
                 }
             }
+
+            TimeSpan timeConsume = DateTime.Now - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<Encyrpt> Encyrpt time (by ticks): " + timeConsume.Ticks);
+
             return ret;
         }
 
         private static byte[] Decyrpt(byte[] buffer, byte[] secretKey)
         {
+            DateTime beginTime = DateTime.Now;
+
             MemoryStream ret = new MemoryStream();
             if (buffer != null)
             {
@@ -383,6 +402,9 @@ namespace MSNPSharp.IO
                     }
                 }
             }
+
+            TimeSpan timeConsume = DateTime.Now - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<Decyrpt> Decyrpt time (by ticks): " + timeConsume.Ticks);
             return ret.ToArray();
         }
 
@@ -541,6 +563,7 @@ namespace MSNPSharp.IO
         /// <remarks>This method is thread safe</remarks>
         public static MclFile Open(string filePath, FileAccess access, MclSerialization st, string password, bool useCache)
         {
+            DateTime beginTime = DateTime.Now;
             filePath = filePath.ToLowerInvariant();
 
             if (useCache)
@@ -566,10 +589,14 @@ namespace MSNPSharp.IO
                     }
                 }
 
+                TimeSpan timeConsume = DateTime.Now - beginTime;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<MCL File Open> load raw file time (by ticks): " + timeConsume.Ticks);
                 return storage[filePath].File;
             }
             else
             {
+                TimeSpan timeConsume = DateTime.Now - beginTime;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<MCL File Open> load raw file time (by ticks): " + timeConsume.Ticks);
                 return new MclFile(filePath, st, access, password);
             }
         }

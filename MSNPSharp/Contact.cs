@@ -61,6 +61,8 @@ namespace MSNPSharp
         private string mobilePhone;
         private string contactType;
         private string comment = string.Empty;
+        private string siblingString = string.Empty;
+        private string hash = string.Empty;
 
         private bool hasSpace;
         private bool mobileDevice;
@@ -103,25 +105,23 @@ namespace MSNPSharp
 
         protected internal Contact(string abId, string account, ClientType cliType, NSMessageHandler handler)
         {
-            NSMessageHandler = handler;
-            addressBookId = new Guid(abId);
-            mail = account.ToLowerInvariant();
-            clientType = cliType;
-            SetName(account);
-
-            if (NSMessageHandler != null)
-            {
-                NSMessageHandler.Manager.Add(this);
-            }
+            Initialized(new Guid(abId), account, cliType, handler);
         }
 
         protected internal Contact(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
+        {
+            Initialized(abId, account, cliType, handler);
+        }
+
+        protected virtual void Initialized(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
         {
             NSMessageHandler = handler;
             addressBookId = abId;
             mail = account.ToLowerInvariant();
             clientType = cliType;
             SetName(account);
+            siblingString = ClientType.ToString() + ":" + account.ToLowerInvariant();
+            hash = MakeHash(Mail, ClientType, AddressBookId);
 
             if (NSMessageHandler != null)
             {
@@ -154,6 +154,13 @@ namespace MSNPSharp
             }
         }
 
+        internal string SiblingString
+        {
+            get
+            {
+                return siblingString;
+            }
+        }
 
         public NSMessageHandler NSMessageHandler
         {
@@ -470,7 +477,7 @@ namespace MSNPSharp
         {
             get
             {
-                return MakeHash(Mail, ClientType, AddressBookId);
+                return hash;
             }
         }
 
@@ -1128,6 +1135,16 @@ namespace MSNPSharp
         public override string ToString()
         {
             return Hash;
+        }
+
+        public virtual bool IsSibling(Contact contact)
+        {
+            if (contact == null)
+                return false;
+            if (ClientType == contact.ClientType && Mail.ToLowerInvariant() == contact.Mail.ToLowerInvariant())
+                return true;
+
+            return false;
         }
 
     }

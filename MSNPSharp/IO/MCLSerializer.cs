@@ -133,10 +133,13 @@ namespace MSNPSharp.IO
 
         protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler, bool useCache)
         {
+            DateTime beginTime = DateTime.Now;
             MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
             if (Settings.NoSave == false && File.Exists(filename))
             {
                 MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password, useCache);
+
+                DateTime deserializeBegin = DateTime.Now;
                 if (file.Content != null)
                 {
                     using (MemoryStream ms = new MemoryStream(file.Content))
@@ -144,12 +147,17 @@ namespace MSNPSharp.IO
                         ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
                     }
                 }
+
+                TimeSpan deserializeTimeConsume = DateTime.Now - deserializeBegin;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Deserialize time (by ticks): " + deserializeTimeConsume.Ticks);
             }
 
             ret.SerializationType = st;
             ret.FileName = filename;
             ret.NSMessageHandler = handler;
             ret.UseCache = useCache;
+            TimeSpan timeConsume = DateTime.Now - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Total loading time (by ticks): " + timeConsume.Ticks);
 
             return ret;
         }
@@ -174,16 +182,25 @@ namespace MSNPSharp.IO
 
         private void SaveToHiddenMCL(string filename)
         {
+            DateTime beginTime = DateTime.Now;
             if (!Settings.NoSave)
             {
+                DateTime serializeBegin = DateTime.Now;
                 XmlSerializer ser = new XmlSerializer(this.GetType());
                 MemoryStream ms = new MemoryStream();
                 ser.Serialize(ms, this);
+
+                TimeSpan serializeTimeConsume = DateTime.Now - serializeBegin;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> serialize time (by ticks): " + serializeTimeConsume.Ticks);
+
                 MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, NSMessageHandler.Credentials.Password, UseCache);
                 file.Content = ms.ToArray();
                 file.SaveAndHide(filename);
                 ms.Close();
             }
+
+            TimeSpan timeConsume = DateTime.Now - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> Total saving time (by ticks): " + timeConsume.Ticks);
         }
 
         #endregion

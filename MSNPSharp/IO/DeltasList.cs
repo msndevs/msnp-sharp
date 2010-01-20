@@ -48,36 +48,8 @@ namespace MSNPSharp.IO
     public class DeltasList : MCLSerializer
     {
 
-        private List<FindMembershipResultType> membershipDeltas = new List<FindMembershipResultType>(0);
         private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
         private SerializableDictionary<string, string> preferredHosts = new SerializableDictionary<string, string>(0);
-        private List<ABFindContactsPagedResultType> addressBookDeltas = new List<ABFindContactsPagedResultType>(0);
-        
-        public List<ABFindContactsPagedResultType> AddressBookDeltas
-        {
-            get
-            {
-                addressBookDeltas.Sort(CompareAddressBookDeltas);
-                return addressBookDeltas;
-            }
-            set
-            {
-                addressBookDeltas = value;
-            }
-        }
-
-        public List<FindMembershipResultType> MembershipDeltas
-        {
-            get
-            {
-                membershipDeltas.Sort(CompareMembershipDeltas);
-                return membershipDeltas;
-            }
-            set
-            {
-                membershipDeltas = value;
-            }
-        }
 
         /// <summary>
         /// CacheKeys for webservices.
@@ -135,8 +107,7 @@ namespace MSNPSharp.IO
         /// </summary>
         public void Empty()
         {
-            membershipDeltas.Clear();
-            addressBookDeltas.Clear();
+
         }
 
         /// <summary>
@@ -151,31 +122,6 @@ namespace MSNPSharp.IO
         public static DeltasList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
             return (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler, useCache);
-        }
-
-        public static int CompareAddressBookDeltas(ABFindContactsPagedResultType x, ABFindContactsPagedResultType y)
-        {
-            return x.Ab.lastChange.CompareTo(y.Ab.lastChange);
-        }
-
-        public static int CompareMembershipDeltas(FindMembershipResultType x, FindMembershipResultType y)
-        {
-            DateTime serviceTypeXMinLastChange = DateTime.MaxValue;
-            DateTime serviceTypeYMinLastChange = DateTime.MaxValue;
-
-            foreach (ServiceType serviceTypeX in x.Services)
-            {
-                if (WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeX.LastChange) < serviceTypeXMinLastChange)
-                    serviceTypeXMinLastChange = WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeX.LastChange);
-            }
-
-            foreach (ServiceType serviceTypeY in y.Services)
-            {
-                if (WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeY.LastChange) < serviceTypeYMinLastChange)
-                    serviceTypeYMinLastChange = WebServiceDateTimeConverter.ConvertToDateTime(serviceTypeY.LastChange);
-            }
-
-            return serviceTypeXMinLastChange.CompareTo(serviceTypeYMinLastChange);
         }
 
         #region Overrides

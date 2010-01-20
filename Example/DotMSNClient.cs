@@ -1064,11 +1064,17 @@ namespace MSNPSharpClient
             // create a new conversation. However do not show the window untill a message is received.
             // for example, a conversation will be created when the remote client sends wants to send
             // you a file. You don't want to show the conversation form in that case.
-            ConversationForm conversationForm = new ConversationForm(conversation, this, remote);
+            ConversationForm conversationForm = new ConversationForm(conversation, Messenger, remote);
             // do this to create the window handle. Otherwise we are not able to call Invoke() on the
             // conversation form later.
             conversationForm.Handle.ToInt32();
             ConversationForms.Add(conversationForm);
+
+            conversationForm.FormClosing += delegate
+            {
+                ConversationForms.Remove(conversationForm);
+            };
+
             return conversationForm;
         }
 
@@ -1087,7 +1093,7 @@ namespace MSNPSharpClient
         void Conversation_ContactJoined(object sender, ContactEventArgs e)
         {
             //The request is initiated by remote user, so we needn't invite anyone.
-            this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { sender, null });
+            this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { sender, e.Contact });
             Conversation convers = sender as Conversation;
             convers.ContactJoined -= Conversation_ContactJoined; //We don't care any further join event anymore.
         }
@@ -1364,8 +1370,7 @@ namespace MSNPSharpClient
             ConversationForm activeForm = null;
             foreach (ConversationForm conv in ConversationForms)
             {
-                if (conv.Conversation.HasContact(contact) && 
-                    (conv.Conversation.Type & ConversationType.Chat) == ConversationType.Chat)
+                if (conv.Conversation.HasContact(contact))
                 {
                     activeForm = conv;
                     activate = true;
@@ -1384,6 +1389,7 @@ namespace MSNPSharpClient
 
 
             Conversation convers = messenger.CreateConversation();
+            convers.Invite(contact);
             ConversationForm form = CreateConversationForm(convers, contact);
 
             form.Show();

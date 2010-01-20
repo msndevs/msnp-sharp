@@ -633,7 +633,10 @@ namespace MSNPSharp
         /// </summary>
         public List<Contact> Contacts
         {
-            get { return _contacts; }
+            get 
+            { 
+                return _contacts; 
+            }
         }
 
         /// <summary>
@@ -1022,7 +1025,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Whether the specified contact is in the conversation.
+        /// Whether the specified contact or its sibling is in the conversation.
         /// </summary>
         /// <param name="contact"></param>
         /// <returns></returns>
@@ -1036,8 +1039,7 @@ namespace MSNPSharp
                     return true;
             }
 
-            if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard &&
-                (contact.ClientType == ClientType.PassportMember || contact.ClientType == ClientType.LCS))
+            if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
                 if (_switchboard.Contacts.ContainsKey(contact))
                     return true;
