@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- edited with XMLSpy v2009 sp1 (http://www.altova.com) by ibm (EMBRACE) -->
+<!-- edited with XMLSpy v2009 sp1 (http://www.altova.com) by wp (freezingsoft) -->
 <xsd:schema xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.msn.com/webservices/AddressBook" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
 	<xsd:include schemaLocation="msnab_datatypes.xsd"/>
 	<xsd:element name="ABApplicationHeader">
@@ -547,4 +547,19 @@
 	<xsd:complexType name="BreakConnectionResponseType"/>
 	<xsd:element name="BreakConnection" type="msnab:BreakConnectionRequestType"/>
 	<xsd:element name="BreakConnectionResponse" type="msnab:BreakConnectionResponseType"/>
+	<xsd:element name="AddDynamicItem" type="msnab:AddDynamicItemRequestType"/>
+	<xsd:complexType name="AddDynamicItemRequestType">
+		<xsd:sequence>
+			<xsd:element name="abId" type="xsd:string"/>
+			<xsd:element name="dynamicItems">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="DynamicItem" type="msnab:BaseDynamicItemType" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="AddDynamicItemResposeType"/>
+	<xsd:element name="AddDynamicItemRespose" type="msnab:AddDynamicItemResposeType"/>
 </xsd:schema>

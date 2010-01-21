@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- edited with XMLSpy v2009 sp1 (http://www.altova.com) by ibm (EMBRACE) -->
+<!-- edited with XMLSpy v2009 sp1 (http://www.altova.com) by wp (freezingsoft) -->
 <definitions xmlns:msnab="http://www.msn.com/webservices/AddressBook" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns="http://www.w3.org/2001/XMLSchema" xmlns:ns1="http://schemas.xmlsoap.org/soap/encoding/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://www.msn.com/webservices/AddressBook">
 	<types>
 		<ns:schema xmlns="http://www.w3.org/2001/XMLSchema">
@@ -141,6 +141,12 @@
 	<message name="BreakConnectionResponseMessage">
 		<part name="BreakConnectionResponse" element="msnab:BreakConnectionResponse"/>
 	</message>
+	<message name="AddDynamicItemMessage">
+		<part name="AddDynamicItem" element="msnab:AddDynamicItem"/>
+	</message>
+	<message name="AddDynamicItemResponseMessage">
+		<part name="AddDynamicItemResponse" element="msnab:AddDynamicItemRespose"/>
+	</message>
 	<portType name="SharingServicePortType">
 		<operation name="FindMembership">
 			<input message="msnab:FindMembershipMessage"/>
@@ -222,6 +228,10 @@
 		<operation name="BreakConnection">
 			<input message="msnab:BreakConnectionMessage"/>
 			<output message="msnab:BreakConnectionResponseMessage"/>
+		</operation>
+		<operation name="AddDynamicItem">
+			<input message="msnab:AddDynamicItemMessage"/>
+			<output message="msnab:AddDynamicItemResponseMessage"/>
 		</operation>
 	</portType>
 	<portType name="WhatsUpServicePortType">
@@ -472,6 +482,18 @@
 				<soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
 			</output>
 		</operation>
+		<operation name="AddDynamicItem">
+			<soap:operation soapAction="http://www.msn.com/webservices/AddressBook/AddDynamicItem"/>
+			<input>
+				<soap:body use="literal"/>
+				<soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal"/>
+				<soap:header message="msnab:ABHeader" part="AuthHeader" use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+				<soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
+			</output>
+		</operation>
 	</binding>
 	<binding name="WhatsUpServiceBinding" type="msnab:WhatsUpServicePortType">
 		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -546,6 +568,9 @@
 			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
 		</port>
 		<port name="BreakConnectionPort" binding="msnab:ABServiceBinding">
+			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
+		</port>
+		<port name="AddDynamicItemPort" binding="msnab:ABServiceBinding">
 			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
 		</port>
 	</service>
