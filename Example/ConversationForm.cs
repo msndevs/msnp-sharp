@@ -809,22 +809,11 @@ namespace MSNPSharpClient
                             // the session object takes care of the actual data transfer to the remote client,
                             // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
                             P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, _firstInvitedContact, _firstInvitedContact.DisplayImage);
-                            session.ClientData = _firstInvitedContact.DisplayImage;
-                            session.DataStream = _firstInvitedContact.DisplayImage.OpenStream();
 
-                            // as usual, via events we want to be notified when a transfer is finished.
-                            // ofcourse, optionally, you can also catch abort and error events.
-                            session.TransferFinished += delegate(object s, EventArgs ea)
+                            _firstInvitedContact.DisplayImageChanged += delegate
                             {
-                                P2PTransferSession sess = (P2PTransferSession)s;
-                                DisplayImage image = (DisplayImage)sess.ClientData;
-                                image.RetrieveImage();
-
-                                if (image.Image != null)
-                                    displayUser.Image = image.Image;
+                                displayUser.Image = _firstInvitedContact.DisplayImage.Image;
                             };
-
-                            _firstInvitedContact.ClientData = _firstInvitedContact.DisplayImage;
                         }
                     }
                     catch (Exception)

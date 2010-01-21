@@ -1380,7 +1380,7 @@ namespace MSNPSharpClient
 
             if (activate)
             {
-                if (activeForm.WindowState == FormWindowState.Minimized)
+                if (activeForm.WindowState == FormWindowState.Minimized || activeForm.Visible == false)
                     activeForm.Show();
 
                 activeForm.Activate();
