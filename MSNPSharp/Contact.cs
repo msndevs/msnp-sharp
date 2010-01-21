@@ -40,6 +40,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using System.Drawing;
 
     /// <summary>
     /// User in roster list.
@@ -78,7 +79,7 @@ namespace MSNPSharp
         private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
         private MSNLists lists = MSNLists.None;
 
-        private DisplayImage displayImage;
+        private DisplayImage displayImage = new DisplayImage();
         private PersonalMessage personalMessage;
 
 
@@ -127,6 +128,8 @@ namespace MSNPSharp
             {
                 NSMessageHandler.Manager.Add(this);
             }
+
+            LoadDisplayImageFromDeltas();
         }
 
         #region Events
@@ -430,20 +433,19 @@ namespace MSNPSharp
             }
         }
 
-        public DisplayImage DisplayImage
+        public virtual DisplayImage DisplayImage
         {
             get
             {
                 return displayImage;
             }
 
-            set
+            internal set
             {
                 if (displayImage != value)
                 {
                     displayImage = value;
-
-                    OnDisplayImageChanged();
+                    SaveDisplayImage(displayImage);
                 }
             }
         }
@@ -894,9 +896,23 @@ namespace MSNPSharp
             }
         }
 
-        internal void SetDisplayImage(DisplayImage image)
+        internal bool SetDisplayImage(DisplayImage image)
         {
-            displayImage = image;
+            if ((displayImage.Sha == image.Sha && displayImage.Image == null && image.Image != null) ||
+                (image != null && displayImage.Sha != image.Sha))
+            {
+                displayImage = image;
+                SaveDisplayImage(displayImage);
+                FireDisplayImageChangedEvent();
+                return true;
+            }
+
+            return false;
+        }
+
+        internal void FireDisplayImageChangedEvent()
+        {
+            OnDisplayImageChanged();
         }
 
         internal void NotifyManager()
@@ -953,6 +969,38 @@ namespace MSNPSharp
             if (DisplayImageChanged != null)
             {
                 DisplayImageChanged(this, EventArgs.Empty);
+            }
+        }
+
+        protected virtual void LoadDisplayImageFromDeltas()
+        {
+            if (NSMessageHandler.ContactService.Deltas == null)
+                return;
+
+            if (displayImage != null && displayImage.Image != null)
+                return;
+
+            if (displayImage == null)
+                displayImage = new DisplayImage();
+
+            Image img = NSMessageHandler.ContactService.Deltas.GetImageBySiblingString(SiblingString);
+            if (img != null)
+            {
+                displayImage.Image = img;
+            }
+        }
+
+        protected virtual void SaveDisplayImage(DisplayImage dispImage)
+        {
+            if (NSMessageHandler.ContactService.Deltas == null || dispImage == null)
+                return;
+
+            if (dispImage.Image == null || string.IsNullOrEmpty(dispImage.Sha))
+                return;
+
+            if (NSMessageHandler.ContactService.Deltas.SaveImageAndRelationship(SiblingString, dispImage.Sha, dispImage.Image))
+            {
+                NSMessageHandler.ContactService.Deltas.Save(true);
             }
         }
 

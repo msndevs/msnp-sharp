@@ -819,6 +819,14 @@ namespace MSNPSharp.DataTransfer
                 transferSession.MessageFooter = P2PConst.DisplayImageFooter12;
 
                 AppID = transferSession.MessageFooter.ToString();
+
+                transferSession.TransferFinished += delegate(object sender, EventArgs ea)
+                {
+                    DisplayImage image = (DisplayImage)msnObject;
+                    image.RetrieveImage();
+                    if (!remoteContact.SetDisplayImage(image))
+                        remoteContact.FireDisplayImageChangedEvent();
+                };
             }
 
             byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(MSNObject.GetDecodeString(msnObject.OriginalContext));//GetEncodedString());

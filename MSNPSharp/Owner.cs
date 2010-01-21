@@ -161,19 +161,20 @@ namespace MSNPSharp
         /// <summary>
         /// Owner display image. The image is broadcasted automatically.
         /// </summary>
-        public new DisplayImage DisplayImage
+        public override DisplayImage DisplayImage
         {
             get
             {
                 return base.DisplayImage;
             }
-            set
+
+            internal set
             {
                 if (value != null)
                 {
                     if (base.DisplayImage != null)
                     {
-                        if (value == base.DisplayImage)
+                        if (value.Sha == base.DisplayImage.Sha)
                         {
                             return;
                         }
@@ -181,7 +182,7 @@ namespace MSNPSharp
                         MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
                     }
 
-                    base.DisplayImage = value;
+                    SetDisplayImage(value);
                     value.Creator = Mail;
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);

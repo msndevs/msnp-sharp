@@ -318,8 +318,10 @@ namespace MSNPSharp
                 }
                 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[SwitchBoardEnd] An error occured while ending the switchboard: " + Switchboard.SessionHash
+                                  + "\r\n  Error Message: " + ex.Message);
             }
 
             sbInitialized = false;
