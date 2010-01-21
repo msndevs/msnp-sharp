@@ -560,6 +560,6 @@
 			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="AddDynamicItemResposeType"/>
-	<xsd:element name="AddDynamicItemRespose" type="msnab:AddDynamicItemResposeType"/>
+	<xsd:complexType name="AddDynamicItemResponseType"/>
+	<xsd:element name="AddDynamicItemResponse" type="msnab:AddDynamicItemResponseType"/>
 </xsd:schema>
