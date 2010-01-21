@@ -193,7 +193,7 @@ namespace MSNPSharp
             return false;
         }
 
-        private GetProfileState GetProfileLiteSync(PartnerScenario scenario, out string profileResourceId, out string expressionProfileResourceId)
+        private InternalOperationReturnValues GetProfileLiteSync(PartnerScenario scenario, out string profileResourceId, out string expressionProfileResourceId)
         {
             MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
             StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
@@ -230,7 +230,7 @@ namespace MSNPSharp
                     NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.ContactList.Owner.Name;
 
                     expressionProfileResourceId = string.Empty;
-                    return GetProfileState.NoExpressionProfile;
+                    return InternalOperationReturnValues.NoExpressionProfile;
                 }
                 else
                 {
@@ -314,14 +314,14 @@ namespace MSNPSharp
 
                 if (ex.Message.ToLowerInvariant().Contains("does not exist"))
                 {
-                    return GetProfileState.ProfileNotExist;
+                    return InternalOperationReturnValues.ProfileNotExist;
                 }
 
                 
-                return GetProfileState.RequestFailed;
+                return InternalOperationReturnValues.RequestFailed;
             }
 
-            return GetProfileState.GetExpressionProfileSucceed;
+            return InternalOperationReturnValues.Succeed;
         }
 
         private bool CreatePhotoDocumentSync(PartnerScenario scenario, out string documentResourceId, string photoName, byte[] photoData)
@@ -733,7 +733,7 @@ namespace MSNPSharp
                 string expressionProfileResourceId = string.Empty;
                 string documentReourceId = string.Empty;
                 bool nextStep = false;
-                GetProfileState getprofileResult = GetProfileState.None;
+                InternalOperationReturnValues getprofileResult = InternalOperationReturnValues.Succeed;
 
 
                 //1. CreateProfile, create a new profile and return its resource id.
@@ -900,9 +900,9 @@ namespace MSNPSharp
 
             string expressProfileId = string.Empty;
             string profileResourceId = string.Empty;
-            GetProfileState result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId);
+            InternalOperationReturnValues result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId);
 
-            if (result == GetProfileState.ProfileNotExist)
+            if (result == InternalOperationReturnValues.ProfileNotExist)
             {
                 CreateProfile();
             }

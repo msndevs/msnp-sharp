@@ -181,7 +181,7 @@ namespace MSNPSharp
                         foreach (Contact sibling in initator.Siblings.Values)
                         {
                             if (sibling != initator)
-                                sibling.SetDisplayImage(initator.DisplayImage);
+                                sibling.DisplayImage = initator.DisplayImage;
                         }
                     }
                 }
@@ -206,7 +206,7 @@ namespace MSNPSharp
                         foreach (Contact sibling in root.Siblings.Values)
                         {
                             if (sibling != root)
-                                sibling.SetDisplayImage(root.DisplayImage);
+                                sibling.DisplayImage = root.DisplayImage;
                         }
                     }
                 }

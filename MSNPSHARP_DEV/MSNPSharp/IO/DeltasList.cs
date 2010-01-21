@@ -40,6 +40,7 @@ namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.Core;
+using System.Drawing;
 
     /// <summary>
     /// Storage class for deltas request
@@ -47,10 +48,38 @@ namespace MSNPSharp.IO
     [Serializable]
     public class DeltasList : MCLSerializer
     {
+        private const int MaxSlot = 1000;
 
         private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
         private SerializableDictionary<string, string> preferredHosts = new SerializableDictionary<string, string>(0);
+        private SerializableDictionary<string, byte[]> userTileSlots = new SerializableDictionary<string, byte[]>(MaxSlot);
+        private SerializableDictionary<string, uint> visitCount = new SerializableDictionary<string, uint>(MaxSlot);
+        private SerializableDictionary<string, string> userImageRelationships = new SerializableDictionary<string, string>();
         private object syncObject = new object();
+
+        public SerializableDictionary<string, string> UserImageRelationships
+        {
+            get { return userImageRelationships; }
+            set { userImageRelationships = value; }
+        }
+
+
+        public SerializableDictionary<string, uint> VisitCount
+        {
+            get { return visitCount; }
+            set { visitCount = value; }
+        }
+
+        /// <summary>
+        /// Data structure that store the user's display images.
+        /// </summary>
+        public SerializableDictionary<string, byte[]> UserTileSlots
+        {
+            get { return userTileSlots; }
+            set { userTileSlots = value; }
+        }
+
+
 
         public object SyncObject
         {
@@ -108,6 +137,248 @@ namespace MSNPSharp.IO
 
         #endregion
 
+        #region Private methods
+
+        private bool HasRelationship(string siblingAccount)
+        {
+            lock (UserImageRelationships)
+                return UserImageRelationships.ContainsKey(siblingAccount.ToLowerInvariant());
+        }
+
+        private bool HasImage(string imageKey)
+        {
+            lock (UserTileSlots)
+                return UserTileSlots.ContainsKey(imageKey);
+        }
+
+        private bool HasRelationshipAndImage(string siblingAccount, out string imageKey)
+        {
+            imageKey = string.Empty;
+            if (!HasRelationship(siblingAccount))
+            {
+                return false;
+            }
+
+            string imgKey = string.Empty;
+            lock (UserImageRelationships)
+                imgKey = UserImageRelationships[siblingAccount.ToLowerInvariant()];
+
+            if (!HasImage(imgKey))
+                return false;
+
+            imageKey = imgKey;
+            return true;
+        }
+
+        private bool AddImage(string imageKey, byte[] data)
+        {
+            if (HasImage(imageKey))
+                return false;
+
+            lock (UserTileSlots)
+                UserTileSlots[imageKey] = data;
+            return true;
+        }
+
+        private bool AddRelationship(string siblingAccount, string imageKey)
+        {
+            if (HasRelationship(siblingAccount))
+                return false;
+
+            lock (UserImageRelationships)
+                UserImageRelationships[siblingAccount.ToLowerInvariant()] = imageKey;
+
+            return true;
+        }
+
+        private bool AddImageAndRelationship(string siblingAccount, string imageKey, byte[] data)
+        {
+            AddImage(imageKey, data);
+
+            if (AddRelationship(siblingAccount, imageKey))
+            {
+                return true;
+            }
+
+
+            return false;
+        }
+
+        private bool RemoveImage(string imageKey)
+        {
+            bool noerror = true;
+
+            lock (UserTileSlots)
+                noerror |= UserTileSlots.Remove(imageKey);
+
+            lock (VisitCount)
+                noerror |= VisitCount.Remove(imageKey);
+
+            lock (UserImageRelationships)
+            {
+                Dictionary<string, string> cp = new Dictionary<string, string>(UserImageRelationships);
+                foreach (string account in cp.Keys)
+                {
+                    if (cp[account] == imageKey)
+                        UserImageRelationships.Remove(account);
+                }
+            }
+
+            return noerror;
+        }
+
+        private bool RemoveRelationship(string siblingAccount)
+        {
+            if (!HasRelationship(siblingAccount))
+                return false;
+
+            lock (UserImageRelationships)
+            {
+                string key = UserImageRelationships[siblingAccount];
+                UserImageRelationships.Remove(siblingAccount);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="imageKey"></param>
+        /// <remarks>This function does NOT exam whether the correspondent slot exist.</remarks>
+        private uint IncreaseVisitCount(string imageKey)
+        {
+            lock (VisitCount)
+            {
+                if (!VisitCount.ContainsKey(imageKey))
+                    VisitCount[imageKey] = 0;
+
+                return ++VisitCount[imageKey];
+            }
+        }
+
+        private uint DecreaseVisitCount(string imageKey)
+        {
+            lock (VisitCount)
+            {
+                if (!VisitCount.ContainsKey(imageKey))
+                    return uint.MinValue;
+
+                if (VisitCount[imageKey] > 0)
+                {
+                    return --VisitCount[imageKey];
+                }
+            }
+
+            //error
+            return 0;
+        }
+
+        private bool GetLeastVisitImage(out string imageKey)
+        {
+            imageKey = string.Empty;
+            lock (VisitCount)
+            {
+                if (VisitCount.Count == 0)
+                    return false;
+                uint minValue = uint.MaxValue;
+                uint maxValue = 0;
+                ulong sum = 0;
+
+                string lastKey = string.Empty;
+
+                foreach (string key in VisitCount.Keys)
+                {
+                    if (VisitCount[key] <= minValue)
+                    {
+                        minValue = VisitCount[key];
+                        lastKey = key;
+                    }
+
+                    if (VisitCount[key] >= maxValue)
+                        maxValue = VisitCount[key];
+
+                    sum += VisitCount[key];
+                }
+
+                if (string.IsNullOrEmpty(lastKey))
+                    return false;
+
+                imageKey = lastKey;
+                if (maxValue == uint.MaxValue)  //Prevent overflow.
+                {
+                    uint avg = (uint)(sum / (ulong)VisitCount.Count);
+                    if (avg == uint.MaxValue)
+                        avg = 0;
+
+                    lock (VisitCount)
+                    {
+                        Dictionary<string, uint> cp = new Dictionary<string, uint>(VisitCount);
+                        foreach (string imgKey in cp.Keys)
+                        {
+                            if (cp[imgKey] == uint.MaxValue)
+                                VisitCount[imgKey] = avg;
+                        }
+                    }
+                }
+
+                return true;
+
+            }
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal Image GetImageBySiblingString(string siblingAccount)
+        {
+            string key = string.Empty;
+            if (HasRelationshipAndImage(siblingAccount, out key))
+            {
+                lock (UserTileSlots)
+                {
+                    IncreaseVisitCount(key);
+                    return Image.FromStream(new MemoryStream(UserTileSlots[key]));
+                }
+
+            }
+
+            return null;
+        }
+
+        internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, Image userTile)
+        {
+            MemoryStream mem = new MemoryStream();
+            userTile.Save(mem, userTile.RawFormat);
+
+            lock (UserTileSlots)
+            {
+                if (UserTileSlots.Count == MaxSlot)
+                {
+                    //The heaven is full.
+                    string deleteKey = string.Empty;
+                    if (GetLeastVisitImage(out deleteKey))
+                    {
+                        RemoveImage(deleteKey);
+                    }
+                    else
+                    {
+                        //OMG no one want to give a place?
+                        return false;
+                    }
+                }
+
+                AddImageAndRelationship(siblingAccount, imageKey, mem.ToArray());
+            }
+
+            return true;
+        }
+
+        #endregion
+
+        #region Public methods
+
         /// <summary>
         /// Empty all of the lists
         /// </summary>
@@ -128,7 +399,9 @@ namespace MSNPSharp.IO
         public static DeltasList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
             return (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler, useCache);
-        }
+        } 
+
+        #endregion
 
         #region Overrides
 

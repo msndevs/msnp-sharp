@@ -563,7 +563,6 @@ namespace MSNPSharp.IO
         /// <remarks>This method is thread safe</remarks>
         public static MclFile Open(string filePath, FileAccess access, MclSerialization st, string password, bool useCache)
         {
-            DateTime beginTime = DateTime.Now;
             filePath = filePath.ToLowerInvariant();
 
             if (useCache)
@@ -589,14 +588,10 @@ namespace MSNPSharp.IO
                     }
                 }
 
-                TimeSpan timeConsume = DateTime.Now - beginTime;
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<MCL File Open> load raw file time (by ticks): " + timeConsume.Ticks);
                 return storage[filePath].File;
             }
             else
             {
-                TimeSpan timeConsume = DateTime.Now - beginTime;
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<MCL File Open> load raw file time (by ticks): " + timeConsume.Ticks);
                 return new MclFile(filePath, st, access, password);
             }
         }

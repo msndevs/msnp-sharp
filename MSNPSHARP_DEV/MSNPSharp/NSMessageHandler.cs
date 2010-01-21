@@ -1506,9 +1506,9 @@ namespace MSNPSharp
 
                     if (contact != ContactList.Owner && !String.IsNullOrEmpty(newdp) && newdp != "0")
                     {
-                        DisplayImage userDisplay = new DisplayImage();
+                        DisplayImage userDisplay = contact.DisplayImage;
                         userDisplay.Context = newdp;
-                        contact.DisplayImage = userDisplay;
+                        contact.SetDisplayImage(userDisplay);
                     }
 
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == ClientType.EmailMember)

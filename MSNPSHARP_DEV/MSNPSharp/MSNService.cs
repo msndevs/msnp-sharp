@@ -541,7 +541,7 @@ namespace MSNPSharp
                                     lock (deltas.SyncObject)
                                         deltas.PreferredHosts[preferredHostKey] = FetchHost(redirectUrl);
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Get redirect URL by HTTP error succeed, method " + methodName + ":\r\n " +
-                                        "Original: " + originalHost + "\r\n " +
+                                        "Original: " + FetchHost(ws.Url) + "\r\n " +
                                         "Redirect: " + FetchHost(redirectUrl) + "\r\n");
                                 }
 
@@ -665,11 +665,16 @@ namespace MSNPSharp
                 {
                     if (!String.IsNullOrEmpty(sh.PreferredHostName))
                     {
+                        string methodKey = ws.ToString() + "." + ss.MethodName;
+                        string preferredHost = FetchHost(sh.PreferredHostName);
+                        if (NSMessageHandler.ContactService.Deltas.PreferredHosts[methodKey] == preferredHost)
+                            return;
+
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Update redirect URL by response succeed, method " + ss.MethodName + ":\r\n " +
                                         "Original: " + FetchHost(ws.Url) + "\r\n " +
-                                        "Redirect: " + FetchHost(sh.PreferredHostName) + "\r\n");
+                                        "Redirect: " + preferredHost + "\r\n");
 
-                        NSMessageHandler.ContactService.Deltas.PreferredHosts[ws.ToString() + "." + ss.MethodName] = FetchHost(sh.PreferredHostName);
+                        NSMessageHandler.ContactService.Deltas.PreferredHosts[methodKey] = preferredHost;
                     }
 
                     NSMessageHandler.ContactService.Deltas.Save();
