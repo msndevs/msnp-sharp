@@ -1424,6 +1424,15 @@ namespace MSNPSharp
         Rejected = 4
     }
 
+    internal enum GetProfileState
+    {
+        None,
+        NoExpressionProfile,
+        GetExpressionProfileSucceed,
+        ProfileNotExist,
+        RequestFailed
+    }
+
     #region Enums: MsnServiceType and PartnerScenario
 
     public enum MsnServiceType

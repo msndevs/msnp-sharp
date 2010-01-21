@@ -487,14 +487,19 @@ namespace MSNPSharp
                 CacheKeyType keyType = (st == MsnServiceType.Storage) ? CacheKeyType.StorageServiceCacheKey : CacheKeyType.OmegaContactServiceCacheKey;
 
                 string originalUrl = ws.Url;
-                string originalHost = ws.Url.Substring(ws.Url.IndexOf(@"://") + 3 /* @"://".Length */);
-                originalHost = originalHost.Substring(0, originalHost.IndexOf(@"/"));
+                string originalHost = FetchHost(ws.Url);
+                bool needRequest = false;
 
-                if (deltas.CacheKeys.ContainsKey(keyType) == false ||
-                    deltas.CacheKeys[keyType] == string.Empty ||
-                    (deltas.CacheKeys[keyType] != string.Empty &&
-                    (deltas.PreferredHosts.ContainsKey(preferredHostKey) == false ||
-                    deltas.PreferredHosts[preferredHostKey] == String.Empty)))
+                lock (deltas.SyncObject)
+                {
+                    needRequest = (deltas.CacheKeys.ContainsKey(keyType) == false ||
+                                   deltas.CacheKeys[keyType] == string.Empty ||
+                                   (deltas.CacheKeys[keyType] != string.Empty &&
+                                   (deltas.PreferredHosts.ContainsKey(preferredHostKey) == false ||
+                                    deltas.PreferredHosts[preferredHostKey] == String.Empty)));
+                }
+
+                if(needRequest)
                 {
 
                     try
@@ -517,68 +522,128 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
-                        try
+                        bool getHost = false;
+                        if (ex.InnerException is WebException)
                         {
-                            XmlDocument errdoc = new XmlDocument();
-                            string errorMessage = ex.InnerException.Message;
-                            string xmlstr = errorMessage.Substring(errorMessage.IndexOf("<?xml"));
-                            xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+                            WebException webException = ex.InnerException as WebException;
+                            HttpWebResponse webResponse = webException.Response as HttpWebResponse;
 
-                            //I think the xml parser microsoft used internally is just a super parser, it can ignore everything.
-                            xmlstr = xmlstr.Replace("&amp;", "&");
-                            xmlstr = xmlstr.Replace("&", "&amp;");
+                            if (webResponse.StatusCode == HttpStatusCode.Moved ||
+                                webResponse.StatusCode == HttpStatusCode.MovedPermanently ||
+                                webResponse.StatusCode == HttpStatusCode.Redirect ||
+                                webResponse.StatusCode == HttpStatusCode.RedirectKeepVerb)
+                            {
+                                string redirectUrl = webResponse.Headers[HttpResponseHeader.Location];
+                                if (!string.IsNullOrEmpty(redirectUrl))
+                                {
+                                    getHost = true;
 
-                            errdoc.LoadXml(xmlstr);
-                            XmlNodeList findnodelist = errdoc.GetElementsByTagName("PreferredHostName");
-                            if (findnodelist.Count > 0)
-                            {
-                                deltas.PreferredHosts[preferredHostKey] = findnodelist[0].InnerText;
-                            }
-                            else
-                            {
-                                deltas.PreferredHosts[preferredHostKey] = originalHost;  //If nothing (Storage), just use the old host.
-                            }
+                                    lock (deltas.SyncObject)
+                                        deltas.PreferredHosts[preferredHostKey] = FetchHost(redirectUrl);
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Get redirect URL by HTTP error succeed, method " + methodName + ":\r\n " +
+                                        "Original: " + originalHost + "\r\n " +
+                                        "Redirect: " + FetchHost(redirectUrl) + "\r\n");
+                                }
 
-                            findnodelist = errdoc.GetElementsByTagName("CacheKey");
-                            if (findnodelist.Count > 0)
-                            {
-                                deltas.CacheKeys[keyType] = findnodelist[0].InnerText;
+                                #region Fetch CacheKey
+
+                                try
+                                {
+                                    XmlDocument errdoc = new XmlDocument();
+                                    string errorMessage = ex.InnerException.Message;
+                                    string xmlstr = errorMessage.Substring(errorMessage.IndexOf("<?xml"));
+                                    xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+
+                                    //I think the xml parser microsoft used internally is just a super parser, it can ignore everything.
+                                    xmlstr = xmlstr.Replace("&amp;", "&");
+                                    xmlstr = xmlstr.Replace("&", "&amp;");
+
+                                    errdoc.LoadXml(xmlstr);
+
+                                    XmlNodeList findnodelist = errdoc.GetElementsByTagName("CacheKey");
+                                    if (findnodelist.Count > 0)
+                                    {
+                                        deltas.CacheKeys[keyType] = findnodelist[0].InnerText;
+                                    }
+                                }
+                                catch (Exception exc)
+                                {
+                                    Trace.WriteLineIf(
+                                        Settings.TraceSwitch.TraceError,
+                                        "An error occured while getting CacheKey:\r\n" +
+                                        "Service:    " + ws.GetType().ToString() + "\r\n" +
+                                        "MethodName: " + methodName + "\r\n" +
+                                        "Message:    " + exc.Message);
+
+                                }
+
+                                #endregion
                             }
                         }
-                        catch (Exception exc)
+
+                        if (!getHost)
                         {
                             Trace.WriteLineIf(
                                 Settings.TraceSwitch.TraceError,
                                 "An error occured while getting CacheKey and Preferred host:\r\n" +
                                 "Service:    " + ws.GetType().ToString() + "\r\n" +
                                 "MethodName: " + methodName + "\r\n" +
-                                "Message:    " + exc.Message);
-
-                            deltas.PreferredHosts[preferredHostKey] = originalHost; //If there's an error, we must set the host back to its original value.
+                                "Message:    " + ex.Message);
+                            lock (deltas.SyncObject)
+                                deltas.PreferredHosts[preferredHostKey] = originalHost; //If there's an error, we must set the host back to its original value.
                         }
+
                     }
                     deltas.Save();
                 }
 
-                if (originalHost != null && originalHost != String.Empty)
+                lock (deltas.SyncObject)
                 {
-                    ws.Url = originalUrl.Replace(originalHost, deltas.PreferredHosts[preferredHostKey]);
-                }
+                    if (originalHost != null && originalHost != String.Empty)
+                    {
+                        ws.Url = originalUrl.Replace(originalHost, FetchHost(deltas.PreferredHosts[preferredHostKey]));
+                    }
 
-                // Set cache key
-                if (st == MsnServiceType.AB)
-                {
-                    ((ABServiceBinding)ws).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
-                }
-                else if (st == MsnServiceType.Sharing)
-                {
-                    ((SharingServiceBinding)ws).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
-                }
-                else if (st == MsnServiceType.Storage)
-                {
-                    ((StorageService)ws).AffinityCacheHeaderValue.CacheKey = deltas.CacheKeys[keyType];
+                    // Set cache key
+                    if (st == MsnServiceType.AB)
+                    {
+                        ((ABServiceBinding)ws).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
+                    }
+                    else if (st == MsnServiceType.Sharing)
+                    {
+                        ((SharingServiceBinding)ws).ABApplicationHeaderValue.CacheKey = deltas.CacheKeys[keyType];
+                    }
+                    else if (st == MsnServiceType.Storage)
+                    {
+                        ((StorageService)ws).AffinityCacheHeaderValue.CacheKey = deltas.CacheKeys[keyType];
+                    }
                 }
             }
+        }
+
+        private string FetchHost(string fullUrl)
+        {
+            string httpsHeader = "https://";
+            string httpHeader = "http://";
+            string sp = "/";
+            string host = fullUrl;
+
+            if (fullUrl.StartsWith(httpsHeader))
+            {
+                host = fullUrl.Substring(httpsHeader.Length);
+            }
+
+            if (fullUrl.StartsWith(httpHeader))
+            {
+                host = fullUrl.Substring(httpHeader.Length);
+            }
+
+            int spIndex = host.IndexOf(sp);
+
+            if (spIndex > 0)
+                host = host.Substring(0, spIndex);
+
+            return host;
         }
 
         private void HandleServiceHeader(SoapHttpClientProtocol ws, MsnServiceType st, MsnServiceState ss)
@@ -596,12 +661,19 @@ namespace MSNPSharp
                     NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
                 }
 
-                if (!String.IsNullOrEmpty(sh.PreferredHostName))
+                lock (NSMessageHandler.ContactService.Deltas.SyncObject)
                 {
-                    NSMessageHandler.ContactService.Deltas.PreferredHosts[ws.ToString() + "." + ss.MethodName] = sh.PreferredHostName;
-                }
+                    if (!String.IsNullOrEmpty(sh.PreferredHostName))
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Update redirect URL by response succeed, method " + ss.MethodName + ":\r\n " +
+                                        "Original: " + FetchHost(ws.Url) + "\r\n " +
+                                        "Redirect: " + FetchHost(sh.PreferredHostName) + "\r\n");
 
-                NSMessageHandler.ContactService.Deltas.Save();
+                        NSMessageHandler.ContactService.Deltas.PreferredHosts[ws.ToString() + "." + ss.MethodName] = FetchHost(sh.PreferredHostName);
+                    }
+
+                    NSMessageHandler.ContactService.Deltas.Save();
+                }
             }
         }
 

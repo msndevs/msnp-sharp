@@ -157,7 +157,7 @@ namespace MSNPSharp.IO
             ret.NSMessageHandler = handler;
             ret.UseCache = useCache;
             TimeSpan timeConsume = DateTime.Now - beginTime;
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Total loading time (by ticks): " + timeConsume.Ticks);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Total loading time (by ticks): " + timeConsume.Ticks + "\r\n");
 
             return ret;
         }
@@ -167,7 +167,7 @@ namespace MSNPSharp.IO
         /// </summary>
         public virtual void Save()
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Underlying data saved.", "< " + GetType() + " >");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Saving underlying data...", "<" + GetType() + ">");
             Save(FileName);
         }
 
@@ -200,7 +200,7 @@ namespace MSNPSharp.IO
             }
 
             TimeSpan timeConsume = DateTime.Now - beginTime;
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> Total saving time (by ticks): " + timeConsume.Ticks);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> Total saving time (by ticks): " + timeConsume.Ticks + "\r\n");
         }
 
         #endregion

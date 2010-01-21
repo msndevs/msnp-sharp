@@ -335,6 +335,13 @@ namespace MSNPSharp.IO
         private string personalMessage = string.Empty;
         private ProfilePhoto photo = new ProfilePhoto();
         private bool hasExpressionProfile = true;
+        private ProfileResource expressionProfile = new ProfileResource();
+
+        public ProfileResource ExpressionProfile
+        {
+            get { return expressionProfile; }
+            set { expressionProfile = value; }
+        }
 
         /// <summary>
         /// Whether the profile owner is using hotmail or live account for msn login.

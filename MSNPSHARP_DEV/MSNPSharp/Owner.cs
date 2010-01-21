@@ -484,26 +484,20 @@ namespace MSNPSharp
             }
         }
 
-        new public string Name
+        public override string Name
         {
             get
             {
-                return (base.Name == null) ? NickName : base.Name;
+                return string.IsNullOrEmpty(base.Name) ? NickName : base.Name;
             }
+
             set
             {
+                if (Name == value) return;
                 if (NSMessageHandler != null)
                 {
                     NSMessageHandler.SetScreenName(value);
                 }
-            }
-        }
-
-        new public string NickName
-        {
-            get
-            {
-                return base.NickName;
             }
         }
 

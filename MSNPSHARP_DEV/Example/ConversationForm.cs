@@ -62,7 +62,7 @@ namespace MSNPSharpClient
         /// <summary>
         /// The conversation object which is associated with the form.
         /// </summary>
-        public Conversation Conversation
+        public Conversation ActiveConversation
         {
             get
             {
@@ -518,7 +518,9 @@ namespace MSNPSharpClient
                     return converse;
             }
 
-            return null;
+            Conversation newActiveConversation = _messenger.CreateConversation();
+            newActiveConversation.Invite(_firstInvitedContact);
+            return newActiveConversation;
         }
 
         void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
@@ -551,7 +553,7 @@ namespace MSNPSharpClient
 
         private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            if (Conversation.Expired)
+            if (ActiveConversation.Expired)
                 return;
 
             if ((e.KeyCode == Keys.Return) && (e.Alt || e.Control || e.Shift))
@@ -559,7 +561,7 @@ namespace MSNPSharpClient
                 return;
             }
 
-            Conversation.SendTypingMessage();
+            ActiveConversation.SendTypingMessage();
 
             if (e.KeyCode == Keys.Return)
             {
@@ -886,7 +888,7 @@ namespace MSNPSharpClient
             inputTextBox.Clear();
             inputTextBox.Focus();
 
-            Conversation.SendTextMessage(message);
+            ActiveConversation.SendTextMessage(message);
         }
 
         private void bMessageInsertEmoticon_Click(object sender, EventArgs e)
@@ -918,12 +920,12 @@ namespace MSNPSharpClient
         private void onlineUsersDropDown_Click(object sender, EventArgs args)
         {
             ToolStripItem item = (ToolStripItem)sender;
-            Conversation.Invite(item.ToolTipText, ClientType.PassportMember);
+            ActiveConversation.Invite(item.ToolTipText, ClientType.PassportMember);
         }
 
         private void bMessageSendNudge_Click(object sender, EventArgs e)
         {
-            Conversation.SendNudge();
+            ActiveConversation.SendNudge();
             DisplaySystemMessage("You send a nudge.");
             PerformNudge();
         }
@@ -933,7 +935,7 @@ namespace MSNPSharpClient
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 List<Contact> contacts = new List<Contact>();
-                foreach (Contact contact in Conversation.Contacts)
+                foreach (Contact contact in ActiveConversation.Contacts)
                 {
                     if (contact.Online && contact.ClientType == ClientType.PassportMember && 
                         contact.Mail != _messenger.Nameserver.ContactList.Owner.Mail)
@@ -990,9 +992,9 @@ namespace MSNPSharpClient
 
             try
             {
-                Conversation.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
+                ActiveConversation.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
                 TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
-                Conversation.SendTextMessage(emotxt);
+                ActiveConversation.SendTextMessage(emotxt);
                 DisplaySystemMessage("You send a custom emoticon with text message: Hey, this is a custom emoticon: [test_em].");
             }
             catch (NotSupportedException)

@@ -2194,6 +2194,8 @@ namespace MSNPSharp.IO
             ClientType type = ClientType.PassportMember;
             string account = cinfo.passportName;
             string displayName = cinfo.displayName;
+            string nickName = GetContactNickName(contactType);
+            Uri userTitle = GetUserTitleURLFromWindowsLiveNetworkInfo(contactType);
             bool isMessengeruser = cinfo.isMessengerUser;
             string lowerId = abId.ToLowerInvariant();
             ReturnState returnValue = ReturnState.ProcessNextContact;
@@ -2271,9 +2273,13 @@ namespace MSNPSharp.IO
                     contact.SetComment(cinfo.comment);
                     contact.SetIsMessengerUser(isMessengeruser);
                     contact.SetMobileAccess(cinfo.isMobileIMEnabled);
-                    contact.UserTile = GetUserTitleURLFromWindowsLiveNetworkInfo(contactType);
+                    contact.UserTile = userTitle;
                     SetContactPhones(contact, cinfo);
-                    contact.SetNickName(GetContactNickName(contactType));
+
+                    if (!string.IsNullOrEmpty(nickName) && string.IsNullOrEmpty(contact.NickName))
+                    {
+                        contact.SetNickName(nickName);
+                    }
 
 
                     if (contact.IsMessengerUser)
@@ -2281,10 +2287,13 @@ namespace MSNPSharp.IO
                         contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
                     }
 
-                    if (!String.IsNullOrEmpty(displayName))
+                    if (!string.IsNullOrEmpty(displayName))
                     {
-                        if (contact.Name == contact.Mail && displayName != contact.Mail)
+                        if ((contact.Name == contact.Mail && displayName != contact.Mail) || 
+                            string.IsNullOrEmpty(contact.Name))
+                        {
                             contact.SetName(displayName);
+                        }
                     }
 
 
@@ -2380,9 +2389,19 @@ namespace MSNPSharp.IO
                     owner.Guid = new Guid(contactType.contactId);
                     owner.CID = Convert.ToInt64(cinfo.CID);
                     owner.ContactType = cinfo.contactType;
-                    owner.SetName(displayName);
-                    owner.SetNickName(GetContactNickName(contactType));
-                    owner.UserTile = GetUserTitleURLFromWindowsLiveNetworkInfo(contactType);
+
+                    if (!string.IsNullOrEmpty(displayName) && string.IsNullOrEmpty(owner.Name))
+                    {
+                        //We set display name by the addressbook information only if it's initially empty.
+                        owner.SetName(displayName);
+                    }
+
+                    if (!string.IsNullOrEmpty(nickName) && string.IsNullOrEmpty(owner.NickName))
+                    {
+                        owner.SetNickName(nickName);
+                    }
+
+                    owner.UserTile = userTitle;
                     SetContactPhones(owner, cinfo);
 	#endregion
 
@@ -2674,7 +2693,7 @@ namespace MSNPSharp.IO
                 MyProperties[AnnotationNames.MSN_IM_BLP] = "0";
 
             if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_MPOP))
-                MyProperties[AnnotationNames.MSN_IM_MPOP] = "0";
+                MyProperties[AnnotationNames.MSN_IM_MPOP] = "1";
 
             if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_RoamLiveProperties))
                 MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] = "1";

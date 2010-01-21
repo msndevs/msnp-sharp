@@ -267,11 +267,16 @@ namespace MSNPSharp
         /// <summary>
         /// The display name of contact.
         /// </summary>
-        public string Name
+        public virtual string Name
         {
             get
             {
                 return name;
+            }
+
+            set
+            {
+                throw new NotImplementedException("Must be override in subclass.");
             }
         }
 
