@@ -1136,7 +1136,7 @@ namespace MSNPSharp
                 {
                     // 3.1 UserTiles -> Photo
                     DeleteRelationshipByNameSync(PartnerScenario.RoamingIdentityChanged, 
-                        "/UserTitles", 
+                        "/UserTiles", 
                         NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID);
                     
 
