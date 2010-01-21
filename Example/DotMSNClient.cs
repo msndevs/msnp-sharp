@@ -1370,7 +1370,7 @@ namespace MSNPSharpClient
             ConversationForm activeForm = null;
             foreach (ConversationForm conv in ConversationForms)
             {
-                if (conv.Conversation.HasContact(contact))
+                if (conv.ActiveConversation.HasContact(contact))
                 {
                     activeForm = conv;
                     activate = true;

@@ -888,10 +888,6 @@ namespace MSNPSharp
 
         public static string[] ConstructLists(Dictionary<string, MSNLists> contacts, bool initial)
         {
-            if (contacts.Count == 0)
-            {
-                return new string[0];
-            }
 
             List<string> mls = new List<string>();
             XmlDocument xmlDoc = new XmlDocument();

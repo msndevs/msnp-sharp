@@ -322,6 +322,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private System.Threading.SendOrPostCallback BreakConnectionOperationCompleted;
         
+        private System.Threading.SendOrPostCallback AddDynamicItemOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -431,6 +433,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         public event BreakConnectionCompletedEventHandler BreakConnectionCompleted;
+        
+        /// <remarks/>
+        public event AddDynamicItemCompletedEventHandler AddDynamicItemCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
@@ -928,6 +933,39 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/AddDynamicItem", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("AddDynamicItemRespose", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public AddDynamicItemResposeType AddDynamicItem([System.Xml.Serialization.XmlElementAttribute("AddDynamicItem", Namespace="http://www.msn.com/webservices/AddressBook")] AddDynamicItemRequestType AddDynamicItem1) {
+            object[] results = this.Invoke("AddDynamicItem", new object[] {
+                        AddDynamicItem1});
+            return ((AddDynamicItemResposeType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void AddDynamicItemAsync(AddDynamicItemRequestType AddDynamicItem1) {
+            this.AddDynamicItemAsync(AddDynamicItem1, null);
+        }
+        
+        /// <remarks/>
+        public void AddDynamicItemAsync(AddDynamicItemRequestType AddDynamicItem1, object userState) {
+            if ((this.AddDynamicItemOperationCompleted == null)) {
+                this.AddDynamicItemOperationCompleted = new System.Threading.SendOrPostCallback(this.OnAddDynamicItemOperationCompleted);
+            }
+            this.InvokeAsync("AddDynamicItem", new object[] {
+                        AddDynamicItem1}, this.AddDynamicItemOperationCompleted, userState);
+        }
+        
+        private void OnAddDynamicItemOperationCompleted(object arg) {
+            if ((this.AddDynamicItemCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.AddDynamicItemCompleted(this, new AddDynamicItemCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -1119,6 +1157,1349 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.ticketTokenField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class AddDynamicItemResposeType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class AddDynamicItemRequestType {
+        
+        private string abIdField;
+        
+        private BaseDynamicItemType[] dynamicItemsField;
+        
+        /// <remarks/>
+        public string abId {
+            get {
+                return this.abIdField;
+            }
+            set {
+                this.abIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("DynamicItem", IsNullable=false)]
+        public BaseDynamicItemType[] dynamicItems {
+            get {
+                return this.dynamicItemsField;
+            }
+            set {
+                this.dynamicItemsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PassportDynamicItem))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CircleDynamicItem))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class BaseDynamicItemType {
+        
+        private string typeField;
+        
+        private bool deletedField;
+        
+        private bool deletedFieldSpecified;
+        
+        private string lastChangedField;
+        
+        private NotificationDataType[] notificationsField;
+        
+        private string changesField;
+        
+        /// <remarks/>
+        public string Type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool Deleted {
+            get {
+                return this.deletedField;
+            }
+            set {
+                this.deletedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool DeletedSpecified {
+            get {
+                return this.deletedFieldSpecified;
+            }
+            set {
+                this.deletedFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LastChanged {
+            get {
+                return this.lastChangedField;
+            }
+            set {
+                this.lastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("NotificationData", IsNullable=false)]
+        public NotificationDataType[] Notifications {
+            get {
+                return this.notificationsField;
+            }
+            set {
+                this.notificationsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class NotificationDataType {
+        
+        private ServiceType storeServiceField;
+        
+        private string statusField;
+        
+        private string lastChangedField;
+        
+        private bool gleamField;
+        
+        private string instanceIdField;
+        
+        public NotificationDataType() {
+            this.gleamField = false;
+            this.instanceIdField = "0";
+        }
+        
+        /// <remarks/>
+        public ServiceType StoreService {
+            get {
+                return this.storeServiceField;
+            }
+            set {
+                this.storeServiceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Status {
+            get {
+                return this.statusField;
+            }
+            set {
+                this.statusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LastChanged {
+            get {
+                return this.lastChangedField;
+            }
+            set {
+                this.lastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool Gleam {
+            get {
+                return this.gleamField;
+            }
+            set {
+                this.gleamField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string InstanceId {
+            get {
+                return this.instanceIdField;
+            }
+            set {
+                this.instanceIdField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ServiceType {
+        
+        private Membership[] membershipsField;
+        
+        private InfoType infoField;
+        
+        private string changesField;
+        
+        private string lastChangeField;
+        
+        private bool deletedField;
+        
+        public ServiceType() {
+            this.lastChangeField = "0001-01-01T00:00:00";
+            this.deletedField = false;
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
+        public Membership[] Memberships {
+            get {
+                return this.membershipsField;
+            }
+            set {
+                this.membershipsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public InfoType Info {
+            get {
+                return this.infoField;
+            }
+            set {
+                this.infoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LastChange {
+            get {
+                return this.lastChangeField;
+            }
+            set {
+                this.lastChangeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool Deleted {
+            get {
+                return this.deletedField;
+            }
+            set {
+                this.deletedField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class Membership {
+        
+        private string memberRoleField;
+        
+        private BaseMember[] membersField;
+        
+        private bool membershipIsCompleteField;
+        
+        private bool membershipIsCompleteFieldSpecified;
+        
+        /// <remarks/>
+        public string MemberRole {
+            get {
+                return this.memberRoleField;
+            }
+            set {
+                this.memberRoleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("Member", IsNullable=false)]
+        public BaseMember[] Members {
+            get {
+                return this.membersField;
+            }
+            set {
+                this.membersField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool MembershipIsComplete {
+            get {
+                return this.membershipIsCompleteField;
+            }
+            set {
+                this.membershipIsCompleteField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool MembershipIsCompleteSpecified {
+            get {
+                return this.membershipIsCompleteFieldSpecified;
+            }
+            set {
+                this.membershipIsCompleteFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(GroupMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PartnerMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EveryoneMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(DomainMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ServiceMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(RoleMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PhoneMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EmailMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PassportMember))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CircleMember))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class BaseMember {
+        
+        private string membershipIdField;
+        
+        private string typeField;
+        
+        private BaseMemberLocation locationField;
+        
+        private string displayNameField;
+        
+        private MemberState stateField;
+        
+        private Annotation[] annotationsField;
+        
+        private bool deletedField;
+        
+        private string lastChangedField;
+        
+        private string joinedDateField;
+        
+        private string expirationDateField;
+        
+        private string changesField;
+        
+        public BaseMember() {
+            this.deletedField = false;
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="positiveInteger")]
+        public string MembershipId {
+            get {
+                return this.membershipIdField;
+            }
+            set {
+                this.membershipIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public BaseMemberLocation Location {
+            get {
+                return this.locationField;
+            }
+            set {
+                this.locationField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public MemberState State {
+            get {
+                return this.stateField;
+            }
+            set {
+                this.stateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
+        public Annotation[] Annotations {
+            get {
+                return this.annotationsField;
+            }
+            set {
+                this.annotationsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.ComponentModel.DefaultValueAttribute(false)]
+        public bool Deleted {
+            get {
+                return this.deletedField;
+            }
+            set {
+                this.deletedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LastChanged {
+            get {
+                return this.lastChangedField;
+            }
+            set {
+                this.lastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string JoinedDate {
+            get {
+                return this.joinedDateField;
+            }
+            set {
+                this.joinedDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ExpirationDate {
+            get {
+                return this.expirationDateField;
+            }
+            set {
+                this.expirationDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class BaseMemberLocation {
+        
+        private string idField;
+        
+        private bool isPassportNameHiddenField;
+        
+        private long cIDField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsPassportNameHidden {
+            get {
+                return this.isPassportNameHiddenField;
+            }
+            set {
+                this.isPassportNameHiddenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long CID {
+            get {
+                return this.cIDField;
+            }
+            set {
+                this.cIDField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public enum MemberState {
+        
+        /// <remarks/>
+        Accepted,
+        
+        /// <remarks/>
+        Pending,
+        
+        /// <remarks/>
+        Removed,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class Annotation {
+        
+        private string nameField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class GroupMember : BaseMember {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class PartnerMember : BaseMember {
+        
+        private long appIdField;
+        
+        private string scopeField;
+        
+        /// <remarks/>
+        public long AppId {
+            get {
+                return this.appIdField;
+            }
+            set {
+                this.appIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string Scope {
+            get {
+                return this.scopeField;
+            }
+            set {
+                this.scopeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class EveryoneMember : BaseMember {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class DomainMember : BaseMember {
+        
+        private string domainNameField;
+        
+        /// <remarks/>
+        public string DomainName {
+            get {
+                return this.domainNameField;
+            }
+            set {
+                this.domainNameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ServiceMember : BaseMember {
+        
+        private HandleType serviceField;
+        
+        /// <remarks/>
+        public HandleType Service {
+            get {
+                return this.serviceField;
+            }
+            set {
+                this.serviceField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class HandleType {
+        
+        private string idField;
+        
+        private string typeField;
+        
+        private string foreignIdField;
+        
+        public HandleType() {
+            this.typeField = "Messenger";
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ForeignId {
+            get {
+                return this.foreignIdField;
+            }
+            set {
+                this.foreignIdField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class RoleMember : BaseMember {
+        
+        private string idField;
+        
+        private RoleMemberDefiningService definingServiceField;
+        
+        private string maxRoleRecursionDepthField;
+        
+        private string maxDegreesSeparationField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public RoleMemberDefiningService DefiningService {
+            get {
+                return this.definingServiceField;
+            }
+            set {
+                this.definingServiceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string MaxRoleRecursionDepth {
+            get {
+                return this.maxRoleRecursionDepthField;
+            }
+            set {
+                this.maxRoleRecursionDepthField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string MaxDegreesSeparation {
+            get {
+                return this.maxDegreesSeparationField;
+            }
+            set {
+                this.maxDegreesSeparationField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class RoleMemberDefiningService {
+        
+        private string idField;
+        
+        private string typeField;
+        
+        private string foreignIdField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ForeignId {
+            get {
+                return this.foreignIdField;
+            }
+            set {
+                this.foreignIdField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class PhoneMember : BaseMember {
+        
+        private string phoneNumberField;
+        
+        /// <remarks/>
+        public string PhoneNumber {
+            get {
+                return this.phoneNumberField;
+            }
+            set {
+                this.phoneNumberField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class EmailMember : BaseMember {
+        
+        private string emailField;
+        
+        /// <remarks/>
+        public string Email {
+            get {
+                return this.emailField;
+            }
+            set {
+                this.emailField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class PassportMember : BaseMember {
+        
+        private string passportNameField;
+        
+        private bool isPassportNameHiddenField;
+        
+        private bool isPassportNameHiddenFieldSpecified;
+        
+        private int passportIdField;
+        
+        private bool passportIdFieldSpecified;
+        
+        private long cIDField;
+        
+        private bool cIDFieldSpecified;
+        
+        private string passportChangesField;
+        
+        /// <remarks/>
+        public string PassportName {
+            get {
+                return this.passportNameField;
+            }
+            set {
+                this.passportNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsPassportNameHidden {
+            get {
+                return this.isPassportNameHiddenField;
+            }
+            set {
+                this.isPassportNameHiddenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool IsPassportNameHiddenSpecified {
+            get {
+                return this.isPassportNameHiddenFieldSpecified;
+            }
+            set {
+                this.isPassportNameHiddenFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int PassportId {
+            get {
+                return this.passportIdField;
+            }
+            set {
+                this.passportIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool PassportIdSpecified {
+            get {
+                return this.passportIdFieldSpecified;
+            }
+            set {
+                this.passportIdFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public long CID {
+            get {
+                return this.cIDField;
+            }
+            set {
+                this.cIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool CIDSpecified {
+            get {
+                return this.cIDFieldSpecified;
+            }
+            set {
+                this.cIDFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string PassportChanges {
+            get {
+                return this.passportChangesField;
+            }
+            set {
+                this.passportChangesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CircleMember : BaseMember {
+        
+        private string circleIdField;
+        
+        /// <remarks/>
+        public string CircleId {
+            get {
+                return this.circleIdField;
+            }
+            set {
+                this.circleIdField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class InfoType {
+        
+        private HandleType handleField;
+        
+        private string displayNameField;
+        
+        private bool inverseRequiredField;
+        
+        private string authorizationCriteriaField;
+        
+        private string rSSUrlField;
+        
+        private bool isBotField;
+        
+        public InfoType() {
+            this.inverseRequiredField = false;
+            this.isBotField = false;
+        }
+        
+        /// <remarks/>
+        public HandleType Handle {
+            get {
+                return this.handleField;
+            }
+            set {
+                this.handleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool InverseRequired {
+            get {
+                return this.inverseRequiredField;
+            }
+            set {
+                this.inverseRequiredField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string AuthorizationCriteria {
+            get {
+                return this.authorizationCriteriaField;
+            }
+            set {
+                this.authorizationCriteriaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="anyURI")]
+        public string RSSUrl {
+            get {
+                return this.rSSUrlField;
+            }
+            set {
+                this.rSSUrlField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsBot {
+            get {
+                return this.isBotField;
+            }
+            set {
+                this.isBotField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class PassportDynamicItem : BaseDynamicItemType {
+        
+        private string cIDField;
+        
+        private string passportNameField;
+        
+        private string passportIdField;
+        
+        private string spaceStatusField;
+        
+        private string spaceLastChangedField;
+        
+        private string spaceLastViewedField;
+        
+        private bool spaceGleamField;
+        
+        private bool spaceGleamFieldSpecified;
+        
+        private string profileLastChangedField;
+        
+        private string profileLastViewField;
+        
+        private string profileStatusField;
+        
+        private bool profileGleamField;
+        
+        private bool profileGleamFieldSpecified;
+        
+        private string contactProfileStatusField;
+        
+        private string contactProfileLastChangedField;
+        
+        private string contactProfileLastViewedField;
+        
+        private string liveContactLastChangedField;
+        
+        /// <remarks/>
+        public string CID {
+            get {
+                return this.cIDField;
+            }
+            set {
+                this.cIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string PassportName {
+            get {
+                return this.passportNameField;
+            }
+            set {
+                this.passportNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string PassportId {
+            get {
+                return this.passportIdField;
+            }
+            set {
+                this.passportIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string SpaceStatus {
+            get {
+                return this.spaceStatusField;
+            }
+            set {
+                this.spaceStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string SpaceLastChanged {
+            get {
+                return this.spaceLastChangedField;
+            }
+            set {
+                this.spaceLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string SpaceLastViewed {
+            get {
+                return this.spaceLastViewedField;
+            }
+            set {
+                this.spaceLastViewedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool SpaceGleam {
+            get {
+                return this.spaceGleamField;
+            }
+            set {
+                this.spaceGleamField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool SpaceGleamSpecified {
+            get {
+                return this.spaceGleamFieldSpecified;
+            }
+            set {
+                this.spaceGleamFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ProfileLastChanged {
+            get {
+                return this.profileLastChangedField;
+            }
+            set {
+                this.profileLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ProfileLastView {
+            get {
+                return this.profileLastViewField;
+            }
+            set {
+                this.profileLastViewField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ProfileStatus {
+            get {
+                return this.profileStatusField;
+            }
+            set {
+                this.profileStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool ProfileGleam {
+            get {
+                return this.profileGleamField;
+            }
+            set {
+                this.profileGleamField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ProfileGleamSpecified {
+            get {
+                return this.profileGleamFieldSpecified;
+            }
+            set {
+                this.profileGleamFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ContactProfileStatus {
+            get {
+                return this.contactProfileStatusField;
+            }
+            set {
+                this.contactProfileStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ContactProfileLastChanged {
+            get {
+                return this.contactProfileLastChangedField;
+            }
+            set {
+                this.contactProfileLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ContactProfileLastViewed {
+            get {
+                return this.contactProfileLastViewedField;
+            }
+            set {
+                this.contactProfileLastViewedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LiveContactLastChanged {
+            get {
+                return this.liveContactLastChangedField;
+            }
+            set {
+                this.liveContactLastChangedField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class CircleDynamicItem : BaseDynamicItemType {
+        
+        private string idField;
+        
+        /// <remarks/>
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
             }
         }
     }
@@ -1447,39 +2828,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.annotationsField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class Annotation {
-        
-        private string nameField;
-        
-        private string valueField;
-        
-        /// <remarks/>
-        public string Name {
-            get {
-                return this.nameField;
-            }
-            set {
-                this.nameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Value {
-            get {
-                return this.valueField;
-            }
-            set {
-                this.valueField = value;
             }
         }
     }
@@ -4904,1273 +6252,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PassportDynamicItem))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CircleDynamicItem))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class BaseDynamicItemType {
-        
-        private string typeField;
-        
-        private bool deletedField;
-        
-        private bool deletedFieldSpecified;
-        
-        private string lastChangedField;
-        
-        private NotificationDataType[] notificationsField;
-        
-        private string changesField;
-        
-        /// <remarks/>
-        public string Type {
-            get {
-                return this.typeField;
-            }
-            set {
-                this.typeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool Deleted {
-            get {
-                return this.deletedField;
-            }
-            set {
-                this.deletedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool DeletedSpecified {
-            get {
-                return this.deletedFieldSpecified;
-            }
-            set {
-                this.deletedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string LastChanged {
-            get {
-                return this.lastChangedField;
-            }
-            set {
-                this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("NotificationData", IsNullable=false)]
-        public NotificationDataType[] Notifications {
-            get {
-                return this.notificationsField;
-            }
-            set {
-                this.notificationsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Changes {
-            get {
-                return this.changesField;
-            }
-            set {
-                this.changesField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class NotificationDataType {
-        
-        private ServiceType storeServiceField;
-        
-        private string statusField;
-        
-        private string lastChangedField;
-        
-        private bool gleamField;
-        
-        private string instanceIdField;
-        
-        public NotificationDataType() {
-            this.gleamField = false;
-            this.instanceIdField = "0";
-        }
-        
-        /// <remarks/>
-        public ServiceType StoreService {
-            get {
-                return this.storeServiceField;
-            }
-            set {
-                this.storeServiceField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Status {
-            get {
-                return this.statusField;
-            }
-            set {
-                this.statusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string LastChanged {
-            get {
-                return this.lastChangedField;
-            }
-            set {
-                this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool Gleam {
-            get {
-                return this.gleamField;
-            }
-            set {
-                this.gleamField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string InstanceId {
-            get {
-                return this.instanceIdField;
-            }
-            set {
-                this.instanceIdField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class ServiceType {
-        
-        private Membership[] membershipsField;
-        
-        private InfoType infoField;
-        
-        private string changesField;
-        
-        private string lastChangeField;
-        
-        private bool deletedField;
-        
-        public ServiceType() {
-            this.lastChangeField = "0001-01-01T00:00:00";
-            this.deletedField = false;
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
-        public Membership[] Memberships {
-            get {
-                return this.membershipsField;
-            }
-            set {
-                this.membershipsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public InfoType Info {
-            get {
-                return this.infoField;
-            }
-            set {
-                this.infoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Changes {
-            get {
-                return this.changesField;
-            }
-            set {
-                this.changesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string LastChange {
-            get {
-                return this.lastChangeField;
-            }
-            set {
-                this.lastChangeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool Deleted {
-            get {
-                return this.deletedField;
-            }
-            set {
-                this.deletedField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class Membership {
-        
-        private string memberRoleField;
-        
-        private BaseMember[] membersField;
-        
-        private bool membershipIsCompleteField;
-        
-        private bool membershipIsCompleteFieldSpecified;
-        
-        /// <remarks/>
-        public string MemberRole {
-            get {
-                return this.memberRoleField;
-            }
-            set {
-                this.memberRoleField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Member", IsNullable=false)]
-        public BaseMember[] Members {
-            get {
-                return this.membersField;
-            }
-            set {
-                this.membersField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool MembershipIsComplete {
-            get {
-                return this.membershipIsCompleteField;
-            }
-            set {
-                this.membershipIsCompleteField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool MembershipIsCompleteSpecified {
-            get {
-                return this.membershipIsCompleteFieldSpecified;
-            }
-            set {
-                this.membershipIsCompleteFieldSpecified = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(GroupMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PartnerMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EveryoneMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(DomainMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ServiceMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(RoleMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PhoneMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EmailMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(PassportMember))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CircleMember))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class BaseMember {
-        
-        private string membershipIdField;
-        
-        private string typeField;
-        
-        private BaseMemberLocation locationField;
-        
-        private string displayNameField;
-        
-        private MemberState stateField;
-        
-        private Annotation[] annotationsField;
-        
-        private bool deletedField;
-        
-        private string lastChangedField;
-        
-        private string joinedDateField;
-        
-        private string expirationDateField;
-        
-        private string changesField;
-        
-        public BaseMember() {
-            this.deletedField = false;
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="positiveInteger")]
-        public string MembershipId {
-            get {
-                return this.membershipIdField;
-            }
-            set {
-                this.membershipIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Type {
-            get {
-                return this.typeField;
-            }
-            set {
-                this.typeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public BaseMemberLocation Location {
-            get {
-                return this.locationField;
-            }
-            set {
-                this.locationField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string DisplayName {
-            get {
-                return this.displayNameField;
-            }
-            set {
-                this.displayNameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public MemberState State {
-            get {
-                return this.stateField;
-            }
-            set {
-                this.stateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
-        public Annotation[] Annotations {
-            get {
-                return this.annotationsField;
-            }
-            set {
-                this.annotationsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(false)]
-        public bool Deleted {
-            get {
-                return this.deletedField;
-            }
-            set {
-                this.deletedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string LastChanged {
-            get {
-                return this.lastChangedField;
-            }
-            set {
-                this.lastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string JoinedDate {
-            get {
-                return this.joinedDateField;
-            }
-            set {
-                this.joinedDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ExpirationDate {
-            get {
-                return this.expirationDateField;
-            }
-            set {
-                this.expirationDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Changes {
-            get {
-                return this.changesField;
-            }
-            set {
-                this.changesField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class BaseMemberLocation {
-        
-        private string idField;
-        
-        private bool isPassportNameHiddenField;
-        
-        private long cIDField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool IsPassportNameHidden {
-            get {
-                return this.isPassportNameHiddenField;
-            }
-            set {
-                this.isPassportNameHiddenField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public long CID {
-            get {
-                return this.cIDField;
-            }
-            set {
-                this.cIDField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public enum MemberState {
-        
-        /// <remarks/>
-        Accepted,
-        
-        /// <remarks/>
-        Pending,
-        
-        /// <remarks/>
-        Removed,
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class GroupMember : BaseMember {
-        
-        private string idField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class PartnerMember : BaseMember {
-        
-        private long appIdField;
-        
-        private string scopeField;
-        
-        /// <remarks/>
-        public long AppId {
-            get {
-                return this.appIdField;
-            }
-            set {
-                this.appIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string Scope {
-            get {
-                return this.scopeField;
-            }
-            set {
-                this.scopeField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class EveryoneMember : BaseMember {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class DomainMember : BaseMember {
-        
-        private string domainNameField;
-        
-        /// <remarks/>
-        public string DomainName {
-            get {
-                return this.domainNameField;
-            }
-            set {
-                this.domainNameField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class ServiceMember : BaseMember {
-        
-        private HandleType serviceField;
-        
-        /// <remarks/>
-        public HandleType Service {
-            get {
-                return this.serviceField;
-            }
-            set {
-                this.serviceField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class HandleType {
-        
-        private string idField;
-        
-        private string typeField;
-        
-        private string foreignIdField;
-        
-        public HandleType() {
-            this.typeField = "Messenger";
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Type {
-            get {
-                return this.typeField;
-            }
-            set {
-                this.typeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ForeignId {
-            get {
-                return this.foreignIdField;
-            }
-            set {
-                this.foreignIdField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class RoleMember : BaseMember {
-        
-        private string idField;
-        
-        private RoleMemberDefiningService definingServiceField;
-        
-        private string maxRoleRecursionDepthField;
-        
-        private string maxDegreesSeparationField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public RoleMemberDefiningService DefiningService {
-            get {
-                return this.definingServiceField;
-            }
-            set {
-                this.definingServiceField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string MaxRoleRecursionDepth {
-            get {
-                return this.maxRoleRecursionDepthField;
-            }
-            set {
-                this.maxRoleRecursionDepthField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string MaxDegreesSeparation {
-            get {
-                return this.maxDegreesSeparationField;
-            }
-            set {
-                this.maxDegreesSeparationField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class RoleMemberDefiningService {
-        
-        private string idField;
-        
-        private string typeField;
-        
-        private string foreignIdField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Type {
-            get {
-                return this.typeField;
-            }
-            set {
-                this.typeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ForeignId {
-            get {
-                return this.foreignIdField;
-            }
-            set {
-                this.foreignIdField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class PhoneMember : BaseMember {
-        
-        private string phoneNumberField;
-        
-        /// <remarks/>
-        public string PhoneNumber {
-            get {
-                return this.phoneNumberField;
-            }
-            set {
-                this.phoneNumberField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class EmailMember : BaseMember {
-        
-        private string emailField;
-        
-        /// <remarks/>
-        public string Email {
-            get {
-                return this.emailField;
-            }
-            set {
-                this.emailField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class PassportMember : BaseMember {
-        
-        private string passportNameField;
-        
-        private bool isPassportNameHiddenField;
-        
-        private bool isPassportNameHiddenFieldSpecified;
-        
-        private int passportIdField;
-        
-        private bool passportIdFieldSpecified;
-        
-        private long cIDField;
-        
-        private bool cIDFieldSpecified;
-        
-        private string passportChangesField;
-        
-        /// <remarks/>
-        public string PassportName {
-            get {
-                return this.passportNameField;
-            }
-            set {
-                this.passportNameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool IsPassportNameHidden {
-            get {
-                return this.isPassportNameHiddenField;
-            }
-            set {
-                this.isPassportNameHiddenField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool IsPassportNameHiddenSpecified {
-            get {
-                return this.isPassportNameHiddenFieldSpecified;
-            }
-            set {
-                this.isPassportNameHiddenFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public int PassportId {
-            get {
-                return this.passportIdField;
-            }
-            set {
-                this.passportIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool PassportIdSpecified {
-            get {
-                return this.passportIdFieldSpecified;
-            }
-            set {
-                this.passportIdFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public long CID {
-            get {
-                return this.cIDField;
-            }
-            set {
-                this.cIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CIDSpecified {
-            get {
-                return this.cIDFieldSpecified;
-            }
-            set {
-                this.cIDFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string PassportChanges {
-            get {
-                return this.passportChangesField;
-            }
-            set {
-                this.passportChangesField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class CircleMember : BaseMember {
-        
-        private string circleIdField;
-        
-        /// <remarks/>
-        public string CircleId {
-            get {
-                return this.circleIdField;
-            }
-            set {
-                this.circleIdField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class InfoType {
-        
-        private HandleType handleField;
-        
-        private string displayNameField;
-        
-        private bool inverseRequiredField;
-        
-        private string authorizationCriteriaField;
-        
-        private string rSSUrlField;
-        
-        private bool isBotField;
-        
-        public InfoType() {
-            this.inverseRequiredField = false;
-            this.isBotField = false;
-        }
-        
-        /// <remarks/>
-        public HandleType Handle {
-            get {
-                return this.handleField;
-            }
-            set {
-                this.handleField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string DisplayName {
-            get {
-                return this.displayNameField;
-            }
-            set {
-                this.displayNameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool InverseRequired {
-            get {
-                return this.inverseRequiredField;
-            }
-            set {
-                this.inverseRequiredField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string AuthorizationCriteria {
-            get {
-                return this.authorizationCriteriaField;
-            }
-            set {
-                this.authorizationCriteriaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="anyURI")]
-        public string RSSUrl {
-            get {
-                return this.rSSUrlField;
-            }
-            set {
-                this.rSSUrlField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool IsBot {
-            get {
-                return this.isBotField;
-            }
-            set {
-                this.isBotField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class PassportDynamicItem : BaseDynamicItemType {
-        
-        private string cIDField;
-        
-        private string passportNameField;
-        
-        private string passportIdField;
-        
-        private string spaceStatusField;
-        
-        private string spaceLastChangedField;
-        
-        private string spaceLastViewedField;
-        
-        private bool spaceGleamField;
-        
-        private bool spaceGleamFieldSpecified;
-        
-        private string profileLastChangedField;
-        
-        private string profileLastViewField;
-        
-        private string profileStatusField;
-        
-        private bool profileGleamField;
-        
-        private bool profileGleamFieldSpecified;
-        
-        private string contactProfileStatusField;
-        
-        private string contactProfileLastChangedField;
-        
-        private string contactProfileLastViewedField;
-        
-        private string liveContactLastChangedField;
-        
-        /// <remarks/>
-        public string CID {
-            get {
-                return this.cIDField;
-            }
-            set {
-                this.cIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string PassportName {
-            get {
-                return this.passportNameField;
-            }
-            set {
-                this.passportNameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string PassportId {
-            get {
-                return this.passportIdField;
-            }
-            set {
-                this.passportIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string SpaceStatus {
-            get {
-                return this.spaceStatusField;
-            }
-            set {
-                this.spaceStatusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string SpaceLastChanged {
-            get {
-                return this.spaceLastChangedField;
-            }
-            set {
-                this.spaceLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string SpaceLastViewed {
-            get {
-                return this.spaceLastViewedField;
-            }
-            set {
-                this.spaceLastViewedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool SpaceGleam {
-            get {
-                return this.spaceGleamField;
-            }
-            set {
-                this.spaceGleamField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SpaceGleamSpecified {
-            get {
-                return this.spaceGleamFieldSpecified;
-            }
-            set {
-                this.spaceGleamFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ProfileLastChanged {
-            get {
-                return this.profileLastChangedField;
-            }
-            set {
-                this.profileLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ProfileLastView {
-            get {
-                return this.profileLastViewField;
-            }
-            set {
-                this.profileLastViewField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ProfileStatus {
-            get {
-                return this.profileStatusField;
-            }
-            set {
-                this.profileStatusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool ProfileGleam {
-            get {
-                return this.profileGleamField;
-            }
-            set {
-                this.profileGleamField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool ProfileGleamSpecified {
-            get {
-                return this.profileGleamFieldSpecified;
-            }
-            set {
-                this.profileGleamFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ContactProfileStatus {
-            get {
-                return this.contactProfileStatusField;
-            }
-            set {
-                this.contactProfileStatusField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ContactProfileLastChanged {
-            get {
-                return this.contactProfileLastChangedField;
-            }
-            set {
-                this.contactProfileLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ContactProfileLastViewed {
-            get {
-                return this.contactProfileLastViewedField;
-            }
-            set {
-                this.contactProfileLastViewedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string LiveContactLastChanged {
-            get {
-                return this.liveContactLastChangedField;
-            }
-            set {
-                this.liveContactLastChangedField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class CircleDynamicItem : BaseDynamicItemType {
-        
-        private string idField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -8730,6 +8811,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((BreakConnectionResponseType)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    public delegate void AddDynamicItemCompletedEventHandler(object sender, AddDynamicItemCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class AddDynamicItemCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal AddDynamicItemCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public AddDynamicItemResposeType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((AddDynamicItemResposeType)(this.results[0]));
             }
         }
     }

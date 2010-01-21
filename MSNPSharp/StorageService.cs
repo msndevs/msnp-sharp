@@ -87,351 +87,173 @@ namespace MSNPSharp
             return expAttrib;
         }
 
-        /// <summary>
-        /// Initialize the user profile if the contact connect to live network the firt time.
-        /// 
-        /// CreateProfile
-        /// ShareItem
-        /// AddMember
-        /// [GetProfile]
-        /// CreateDocument
-        /// CreateRelationships
-        /// UpdateProfile
-        /// FindDocuments
-        /// UpdateDynamicItem - Error
-        /// ABContactUpdate
-        /// 
-        /// 9 steps, what the hell!! If M$ change any protocol in their strageservice, it will be a disaster to find the difference.
-        /// </summary>
-        private void CreateProfile()
+        private bool CreateProfileSync(PartnerScenario scenario, out string profileResourceId)
         {
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || NSMessageHandler.ContactService.Deltas == null)
-                return;
-            if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile == false)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, create profile skipped.");
-                DisplayImage displayImage = new DisplayImage();
-                displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
-                NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
 
-                return;
-            }
+            //1. CreateProfile, create a new profile and return its resource id.
+            MsnServiceState serviceState = new MsnServiceState(scenario, "CreateProfile", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            CreateProfileRequestType createRequest = new CreateProfileRequestType();
+            createRequest.profile = new CreateProfileRequestTypeProfile();
+            createRequest.profile.ExpressionProfile = new ExpressionProfile();
+            createRequest.profile.ExpressionProfile.PersonalStatus = "";
+            createRequest.profile.ExpressionProfile.RoleDefinitionName = "ExpressionProfileDefault";
 
             try
             {
-                MsnServiceState serviceState = new MsnServiceState(PartnerScenario.RoamingSeed, "CreateProfile", false);
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
-                storageService.AllowAutoRedirect = true;
-
-                //1. CreateProfile, create a new profile and return its resource id.
-                CreateProfileRequestType createRequest = new CreateProfileRequestType();
-                createRequest.profile = new CreateProfileRequestTypeProfile();
-                createRequest.profile.ExpressionProfile = new ExpressionProfile();
-                createRequest.profile.ExpressionProfile.PersonalStatus = "";
-                createRequest.profile.ExpressionProfile.RoleDefinitionName = "ExpressionProfileDefault";
-                string resId_Prof = "";
-                try
-                {
-                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, createRequest);
-                    CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
-                    resId_Prof = createResponse.CreateProfileResult;
-                    NSMessageHandler.ContactService.Deltas.Profile.ResourceID = resId_Prof;
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateProfile error: " + ex.Message, GetType().Name);
-                }
-
-                //2. ShareItem, share the profile.
-                ShareItemRequestType shareItemRequest = new ShareItemRequestType();
-                shareItemRequest.resourceID = resId_Prof;
-                shareItemRequest.displayName = "Messenger Roaming Identity";
-                try
-                {
-                    storageService.ShareItem(shareItemRequest);
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ShareItem error: " + ex.Message, GetType().Name); //Item already shared.
-                }
-
-                //3. AddMember, add a ProfileExpression role member into the newly created profile and define messenger service.
-                HandleType srvHandle = new HandleType();
-                srvHandle.ForeignId = "MyProfile";
-                srvHandle.Id = "0";
-                srvHandle.Type = ServiceFilterType.Profile;
-                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
-                {
-                    serviceState = new MsnServiceState(PartnerScenario.RoamingSeed, "AddMember", false);
-                    SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, serviceState);
-                    sharingService.AllowAutoRedirect = true;
-
-                    AddMemberRequestType addMemberRequest = new AddMemberRequestType();
-
-                    addMemberRequest.serviceHandle = srvHandle;
-
-                    Membership memberShip = new Membership();
-                    memberShip.MemberRole = MemberRole.ProfileExpression;
-                    RoleMember roleMember = new RoleMember();
-                    roleMember.Type = "Role";
-                    roleMember.Id = "Allow";
-                    roleMember.State = MemberState.Accepted;
-                    roleMember.MaxRoleRecursionDepth = "0";
-                    roleMember.MaxDegreesSeparation = "0";
-
-                    RoleMemberDefiningService defService = new RoleMemberDefiningService();
-                    defService.ForeignId = "";
-                    defService.Id = "0";
-                    defService.Type = "Messenger";
-
-                    roleMember.DefiningService = defService;
-                    memberShip.Members = new RoleMember[] { roleMember };
-                    addMemberRequest.memberships = new Membership[] { memberShip };
-                    try
-                    {
-                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, MsnServiceType.Sharing, serviceState, addMemberRequest);
-                        sharingService.AddMember(addMemberRequest);
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "AddMember error: " + ex.Message, GetType().Name);
-                    }
-                }
-
-                // [GetProfile], get the new ProfileExpression resource id.
-                GetProfileRequestType getprofileRequest = new GetProfileRequestType();
-
-                Alias alias = new Alias();
-                alias.NameSpace = "MyCidStuff";
-                alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
-
-                Handle pHandle = new Handle();
-                pHandle.RelationshipName = "MyProfile";
-                pHandle.Alias = alias;
-
-                getprofileRequest.profileHandle = pHandle;
-                getprofileRequest.profileAttributes = new profileAttributes();
-
-                ExpressionProfileAttributesType expAttrib = CreateFullExpressionProfileAttributes();
-
-                getprofileRequest.profileAttributes.ExpressionProfileAttributes = expAttrib;
-                string resId_ExProf = "";
-
-                try
-                {
-                    GetProfileResponse getprofileResponse = storageService.GetProfile(getprofileRequest);
-                    resId_ExProf = getprofileResponse.GetProfileResult.ExpressionProfile.ResourceID;
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "GetProfile error: " + ex.Message, GetType().FullName);
-                }
-
-                //4. CreateDocument, create a new document for this profile and return its resource id.
-                CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
-                createDocRequest.relationshipName = "Messenger User Tile";
-
-                Handle parenthandle = new Handle();
-                parenthandle.RelationshipName = "/UserTiles";
-
-                parenthandle.Alias = alias;
-                createDocRequest.parentHandle = parenthandle;
-                createDocRequest.document = new Photo();
-                createDocRequest.document.Name = "MSNPSharp";
-
-                PhotoStream photoStream = new PhotoStream();
-                photoStream.DataSize = 0;
-                photoStream.MimeType = "png";
-                photoStream.DocumentStreamType = "UserTileStatic";
-                MemoryStream mem = SerializableMemoryStream.FromImage(Properties.Resources.WLXLarge_default);
-                photoStream.Data = mem.ToArray();
-                createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
-
-                DisplayImage displayImage = new DisplayImage();
-                displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
-                NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
-
-                string resId_Doc = "";
-                try
-                {
-                    CreateDocumentResponseType createDocResponse = storageService.CreateDocument(createDocRequest);
-                    resId_Doc = createDocResponse.CreateDocumentResult;
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateDocument error: " + ex.Message, GetType().Name);
-                }
-
-                //5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
-                CreateRelationshipsRequestType createRelationshipRequest = new CreateRelationshipsRequestType();
-                Relationship relationship = new Relationship();
-                relationship.RelationshipName = "ProfilePhoto";
-                relationship.SourceType = "SubProfile"; //From SubProfile
-                relationship.TargetType = "Photo";      //To Photo
-                relationship.SourceID = resId_ExProf;  //From Expression profile
-                relationship.TargetID = resId_Doc;     //To Document
-
-                createRelationshipRequest.relationships = new Relationship[] { relationship };
-                try
-                {
-                    storageService.CreateRelationships(createRelationshipRequest);
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateRelationships error: " + ex.Message, GetType().Name);
-                }
-
-                //6.1 UpdateProfile
-                UpdateProfileRequestType updateProfileRequest = new UpdateProfileRequestType();
-                updateProfileRequest.profile = new UpdateProfileRequestTypeProfile();
-                updateProfileRequest.profile.ResourceID = resId_Prof;
-                ExpressionProfile expProf = new ExpressionProfile();
-                expProf.FreeText = "Update";
-                expProf.DisplayName = NSMessageHandler.ContactList.Owner.NickName;
-                updateProfileRequest.profile.ExpressionProfile = expProf;
-
-                updateProfileRequest.profileAttributesToDelete = new UpdateProfileRequestTypeProfileAttributesToDelete();
-                ExpressionProfileAttributesType exProfAttrbUpdate = new ExpressionProfileAttributesType();
-                exProfAttrbUpdate.PersonalStatus = true;
-                exProfAttrbUpdate.PersonalStatusSpecified = true;
-
-                updateProfileRequest.profileAttributesToDelete.ExpressionProfileAttributes = exProfAttrbUpdate;
-                try
-                {
-                    storageService.UpdateProfile(updateProfileRequest);
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateProfile error: " + ex.Message, GetType().Name);
-                }
-
-                // 6.2 Get Profile again to get notification.LastChanged
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.Initial);
-
-                //7. FindDocuments Hmm....
-
-
-                //8. UpdateDynamicItem
-                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
-                {
-                    serviceState = new MsnServiceState(PartnerScenario.RoamingSeed, "UpdateDynamicItem", false);
-                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
-                    abService.AllowAutoRedirect = true;
-
-                    UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
-                    updateDyItemRequest.abId = Guid.Empty.ToString();
-
-                    PassportDynamicItem passportDyItem = new PassportDynamicItem();
-                    passportDyItem.Type = "Passport";
-                    passportDyItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
-                    passportDyItem.Changes = "Notifications";
-
-                    NotificationDataType notification = new NotificationDataType();
-                    notification.Status = "Exist Access";
-                    //notification.InstanceId = "0";
-                    //notification.Gleam = false;
-                    notification.LastChanged = NSMessageHandler.ContactService.Deltas.Profile.DateModified;
-
-                    ServiceType srvInfo = new ServiceType();
-                    srvInfo.Changes = "";
-                    //srvInfo.LastChange = XmlConvert.ToDateTime("0001-01-01T00:00:00", XmlDateTimeSerializationMode.RoundtripKind);
-                    //srvInfo.Deleted = false;
-
-                    InfoType info = new InfoType();
-                    info.Handle = srvHandle;
-                    info.IsBot = false;
-                    info.InverseRequired = false;
-
-                    srvInfo.Info = info;
-                    notification.StoreService = srvInfo;
-                    passportDyItem.Notifications = new NotificationDataType[] { notification };
-                    updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
-                    try
-                    {
-                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, updateDyItemRequest);
-                        abService.UpdateDynamicItem(updateDyItemRequest);
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: You don't receive any contact updates, vice versa! " + ex.Message, GetType().Name);
-                    }
-
-                    //9. ABContactUpdate
-                    ABContactUpdateRequestType abcontactUpdateRequest = new ABContactUpdateRequestType();
-                    abcontactUpdateRequest.abId = Guid.Empty.ToString();
-
-                    ContactType meContact = new ContactType();
-                    meContact.propertiesChanged = PropertyString.Annotation; //"Annotation";
-
-                    contactInfoType meinfo = new contactInfoType();
-                    meinfo.contactType = MessengerContactType.Me;
-
-                    Annotation anno = new Annotation();
-                    anno.Name = AnnotationNames.MSN_IM_RoamLiveProperties;
-                    anno.Value = "1";
-
-                    meinfo.annotations = new Annotation[] { anno };
-                    meContact.contactInfo = meinfo;
-                    abcontactUpdateRequest.contacts = new ContactType[] { meContact };
-                    try
-                    {
-                        serviceState = new MsnServiceState(PartnerScenario.ContactSave, "ABContactUpdate", false);
-                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, abcontactUpdateRequest);
-                        abService.ABContactUpdate(abcontactUpdateRequest);
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ABContactUpdate error: " + ex.Message, GetType().Name);
-                    }
-                }
-
-                //10. OK, there's no 10, that's all....
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, createRequest);
+                CreateProfileResponse createResponse = storageService.CreateProfile(createRequest);
+                profileResourceId = createResponse.CreateProfileResult;
+                NSMessageHandler.ContactService.Deltas.Profile.ResourceID = profileResourceId;
+                NSMessageHandler.ContactService.Deltas.Save(true);
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex.Message);
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("CreateProfile", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateProfile error: " + ex.Message, GetType().Name);
+                profileResourceId = string.Empty;
+
+                return false;
             }
+
+            return true;
         }
 
-        private OwnerProfile GetProfileImpl(PartnerScenario scenario)
+        private bool ShareItemSync(PartnerScenario scenario, string profileResourceId)
         {
+            MsnServiceState serviceState = new MsnServiceState(scenario, "ShareItem", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            ShareItemRequestType shareItemRequest = new ShareItemRequestType();
+            shareItemRequest.resourceID = profileResourceId;
+            shareItemRequest.displayName = "Messenger Roaming Identity";
             try
             {
-                MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, shareItemRequest);
+                storageService.ShareItem(shareItemRequest);
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("ShareItem", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ShareItem error: " + ex.Message, GetType().Name); //Item already shared.
+                return false;
+            }
 
-                GetProfileRequestType request = new GetProfileRequestType();
-                request.profileHandle = new Handle();
-                request.profileHandle.Alias = new Alias();
-                request.profileHandle.Alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
-                request.profileHandle.Alias.NameSpace = "MyCidStuff";
-                request.profileHandle.RelationshipName = "MyProfile";
-                request.profileAttributes = new profileAttributes();
-                request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
+            return true;
+        }
 
-                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
-                GetProfileResponse response = storageService.GetProfile(request);
+        private bool AddProfileExpressionRoleMemberSync(PartnerScenario scenario)
+        {
+            HandleType srvHandle = new HandleType();
+            srvHandle.ForeignId = "MyProfile";
+            srvHandle.Id = "0";
+            srvHandle.Type = ServiceFilterType.Profile;
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            {
+                MsnServiceState serviceState = new MsnServiceState(scenario, "AddMember", false);
+                SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, serviceState);
+
+                AddMemberRequestType addMemberRequest = new AddMemberRequestType();
+
+                addMemberRequest.serviceHandle = srvHandle;
+
+                Membership memberShip = new Membership();
+                memberShip.MemberRole = MemberRole.ProfileExpression;
+                RoleMember roleMember = new RoleMember();
+                roleMember.Type = "Role";
+                roleMember.Id = "Allow";
+                roleMember.State = MemberState.Accepted;
+                roleMember.MaxRoleRecursionDepth = "0";
+                roleMember.MaxDegreesSeparation = "0";
+
+                RoleMemberDefiningService defService = new RoleMemberDefiningService();
+                defService.ForeignId = "";
+                defService.Id = "0";
+                defService.Type = "Messenger";
+
+                roleMember.DefiningService = defService;
+                memberShip.Members = new RoleMember[] { roleMember };
+                addMemberRequest.memberships = new Membership[] { memberShip };
+                try
+                {
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(sharingService, MsnServiceType.Sharing, serviceState, addMemberRequest);
+                    sharingService.AddMember(addMemberRequest);
+                }
+                catch (Exception ex)
+                {
+                    OnServiceOperationFailed(sharingService, new ServiceOperationFailedEventArgs("ShareItem", ex));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "AddMember error: " + ex.Message, GetType().Name);
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private GetProfileState GetProfileLiteSync(PartnerScenario scenario, out string profileResourceId, out string expressionProfileResourceId)
+        {
+            MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            GetProfileRequestType getprofileRequest = new GetProfileRequestType();
+
+            Alias alias = new Alias();
+            alias.NameSpace = "MyCidStuff";
+            alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
+
+            Handle pHandle = new Handle();
+            pHandle.RelationshipName = "MyProfile";
+            pHandle.Alias = alias;
+
+            getprofileRequest.profileHandle = pHandle;
+            getprofileRequest.profileAttributes = new profileAttributes();
+
+            ExpressionProfileAttributesType expAttrib = CreateFullExpressionProfileAttributes();
+
+            getprofileRequest.profileAttributes.ExpressionProfileAttributes = expAttrib;
+
+            try
+            {
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, getprofileRequest);
+                GetProfileResponse response = storageService.GetProfile(getprofileRequest);
+
+                #region Process Profile
+                profileResourceId = response.GetProfileResult.ResourceID;
 
                 if (response.GetProfileResult.ExpressionProfile == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Get profile cannot get expression profile of this owner.");
                     NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
                     NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.ContactList.Owner.Name;
-                    return NSMessageHandler.ContactService.Deltas.Profile;
+
+                    expressionProfileResourceId = string.Empty;
+                    return GetProfileState.NoExpressionProfile;
                 }
                 else
                 {
                     NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = true;
+                    NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
+                    NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
+
+                    expressionProfileResourceId = response.GetProfileResult.ExpressionProfile.ResourceID;
                 }
 
-                NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
-                NSMessageHandler.ContactService.Deltas.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
+                NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.DateModified;
+                NSMessageHandler.ContactService.Deltas.Profile.ResourceID = response.GetProfileResult.ResourceID;
 
                 // Display name
                 NSMessageHandler.ContactService.Deltas.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
 
                 // Personal status
-                NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+                if (response.GetProfileResult.ExpressionProfile.PersonalStatus != null)
+                {
+                    NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+                }
+
+                NSMessageHandler.ContactService.Deltas.Save(true);
 
                 // Display photo
                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
@@ -479,18 +301,611 @@ namespace MSNPSharp
                             });
 
                     }
-                }
+                } 
+
+                #endregion
             }
             catch (Exception ex)
             {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("GetProfile", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "GetProfile error: " + ex.Message, GetType().FullName);
+                expressionProfileResourceId = string.Empty;
+                profileResourceId = string.Empty;
+
                 if (ex.Message.ToLowerInvariant().Contains("does not exist"))
                 {
-                    CreateProfile();
+                    return GetProfileState.ProfileNotExist;
                 }
 
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                
+                return GetProfileState.RequestFailed;
             }
 
+            return GetProfileState.GetExpressionProfileSucceed;
+        }
+
+        private bool CreatePhotoDocumentSync(PartnerScenario scenario, out string documentResourceId, string photoName, byte[] photoData)
+        {
+            if (photoData == null)
+            {
+                documentResourceId = string.Empty;
+                return false;
+            }
+
+            MsnServiceState serviceState = new MsnServiceState(scenario, "CreateDocument", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+
+            CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
+            createDocRequest.relationshipName = "Messenger User Tile";
+
+            Handle parenthandle = new Handle();
+            parenthandle.RelationshipName = "/UserTiles";
+
+            Alias alias = new Alias();
+            alias.NameSpace = "MyCidStuff";
+            alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
+
+            parenthandle.Alias = alias;
+            createDocRequest.parentHandle = parenthandle;
+            createDocRequest.document = new Photo();
+            createDocRequest.document.Name = photoName;
+
+            PhotoStream photoStream = new PhotoStream();
+            photoStream.DataSize = 0;
+            photoStream.MimeType = "png";
+            photoStream.DocumentStreamType = "UserTileStatic";
+            photoStream.Data = photoData;
+            createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
+
+            DisplayImage displayImage = new DisplayImage();
+            displayImage.Image = Image.FromStream(new MemoryStream(photoData));
+            NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
+
+            try
+            {
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, createDocRequest);
+                CreateDocumentResponseType createDocResponse = storageService.CreateDocument(createDocRequest);
+                documentResourceId = createDocResponse.CreateDocumentResult;
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("CreateDocument", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateDocument error: " + ex.Message, GetType().Name);
+                documentResourceId = string.Empty;
+                return false;
+            }
+
+            NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
+            NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
+            NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(photoData, 0, photoData.Length);
+            NSMessageHandler.ContactService.Deltas.Save(true);
+
+            return true;
+        }
+
+        private bool CreateRelationshipsSync(PartnerScenario scenario, string expressionProfileResourceId, string documentResourceId)
+        {
+            if (string.IsNullOrEmpty(expressionProfileResourceId) || string.IsNullOrEmpty(documentResourceId))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateRelationships error: expression profile Id or document resource Id is empty.");
+                return false;
+            }
+
+            MsnServiceState serviceState = new MsnServiceState(scenario, "CreateRelationships", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            CreateRelationshipsRequestType createRelationshipRequest = new CreateRelationshipsRequestType();
+            Relationship relationship = new Relationship();
+            relationship.RelationshipName = "ProfilePhoto";
+            relationship.SourceType = "SubProfile"; //From SubProfile
+            relationship.TargetType = "Photo";      //To Photo
+            relationship.SourceID = expressionProfileResourceId;  //From Expression profile
+            relationship.TargetID = documentResourceId;     //To Document
+
+            createRelationshipRequest.relationships = new Relationship[] { relationship };
+            try
+            {
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, createRelationshipRequest);
+                storageService.CreateRelationships(createRelationshipRequest);
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("CreateRelationships", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateRelationships error: " + ex.Message, GetType().Name);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool DeleteRelationshipByNameSync(PartnerScenario scenario, string relationshipName, string targetHandlerResourceId)
+        {
+            MsnServiceState serviceState = new MsnServiceState(scenario, "DeleteRelationships", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            Alias mycidAlias = new Alias();
+            mycidAlias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
+            mycidAlias.NameSpace = "MyCidStuff";
+
+            // 3. DeleteRelationships. If an error occurs, don't return, continue...
+
+            // 3.1 UserTiles -> Photo
+            DeleteRelationshipsRequestType request = new DeleteRelationshipsRequestType();
+            request.sourceHandle = new Handle();
+            request.sourceHandle.RelationshipName = relationshipName; //"/UserTiles";
+            request.sourceHandle.Alias = mycidAlias;
+            request.targetHandles = new Handle[] { new Handle() };
+            request.targetHandles[0].ResourceID = targetHandlerResourceId;
+            try
+            {
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
+                storageService.DeleteRelationships(request);
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                return false;
+            }
+
+            return true;
+
+            
+        }
+
+        private bool DeleteRelationshipByResourceIdSync(PartnerScenario scenario, string sourceHandlerResourceId, string targetHandlerResourceId)
+        {
+            if (string.IsNullOrEmpty(sourceHandlerResourceId) || string.IsNullOrEmpty(targetHandlerResourceId))
+                return false;
+
+            MsnServiceState serviceState = new MsnServiceState(scenario, "DeleteRelationships", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            //3.2 Profile -> Photo
+            DeleteRelationshipsRequestType request = new DeleteRelationshipsRequestType();
+            request.sourceHandle = new Handle();
+            request.sourceHandle.ResourceID = sourceHandlerResourceId;
+            request.targetHandles = new Handle[] { new Handle() };
+            request.targetHandles[0].ResourceID = targetHandlerResourceId;
+            try
+            {
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
+                storageService.DeleteRelationships(request);
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool UpdatePhotoDocumentSync(PartnerScenario scenario, string photoName, string documentResourceId, byte[] photoData)
+        {
+            if (string.IsNullOrEmpty(photoName) || string.IsNullOrEmpty(documentResourceId) || photoData == null)
+                return false;
+
+            MsnServiceState serviceState = new MsnServiceState(scenario, "UpdateDocument", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            UpdateDocumentRequestType request = new UpdateDocumentRequestType();
+            request.document = new Photo();
+            request.document.Name = photoName;
+            request.document.ResourceID = documentResourceId;
+            request.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
+            request.document.DocumentStreams[0].DataSize = 0;
+            request.document.DocumentStreams[0].MimeType = "image/png";
+            request.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
+            request.document.DocumentStreams[0].Data = photoData;
+
+            try
+            {
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
+                storageService.UpdateDocument(request);
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateDocument", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+                return false;
+            }
+
+            NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
+            NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
+            NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(photoData, 0, photoData.Length);
+            NSMessageHandler.ContactService.Deltas.Save(true);
+
+            return true;
+        }
+
+        private bool UpdateProfileLiteSync(PartnerScenario scenario, string profileResourceId, string displayName, string personalStatus, string freeText, int flag)
+        {
+            MsnServiceState serviceState = new MsnServiceState(scenario, "UpdateProfile", false);
+            StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            UpdateProfileRequestType updateProfileRequest = new UpdateProfileRequestType();
+            updateProfileRequest.profile = new UpdateProfileRequestTypeProfile();
+            updateProfileRequest.profile.ResourceID = profileResourceId;
+            ExpressionProfile expProf = new ExpressionProfile();
+            expProf.FreeText = freeText;
+            expProf.DisplayName = displayName;
+            expProf.Flags = flag;
+
+            if (!string.IsNullOrEmpty(personalStatus))
+            {
+                expProf.PersonalStatus = personalStatus;
+            }
+            updateProfileRequest.profile.ExpressionProfile = expProf;
+
+            updateProfileRequest.profileAttributesToDelete = new UpdateProfileRequestTypeProfileAttributesToDelete();
+            ExpressionProfileAttributesType exProfAttrbUpdate = new ExpressionProfileAttributesType();
+            exProfAttrbUpdate.PersonalStatus = true;
+            exProfAttrbUpdate.PersonalStatusSpecified = true;
+
+            updateProfileRequest.profileAttributesToDelete.ExpressionProfileAttributes = exProfAttrbUpdate;
+
+            NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
+            NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
+            NSMessageHandler.ContactService.Deltas.Save(true);  //Save no matter the request succeed or fail.
+
+            try
+            {
+                ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, updateProfileRequest);
+                storageService.UpdateProfile(updateProfileRequest);
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateProfile", ex));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateProfile error: " + ex.Message, GetType().Name);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool AddDynamicItemSync(PartnerScenario scenario)
+        {
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            {
+                MsnServiceState serviceState = new MsnServiceState(scenario, "AddDynamicItem", false);
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
+
+                PassportDynamicItem newDynamicItem = new PassportDynamicItem();
+                newDynamicItem.Type = "Passport";
+                newDynamicItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
+
+                AddDynamicItemRequestType addDynamicItemRequest = new AddDynamicItemRequestType();
+                addDynamicItemRequest.abId = WebServiceConstants.MessengerIndividualAddressBookId;
+                addDynamicItemRequest.dynamicItems = new BaseDynamicItemType[] { newDynamicItem };
+
+                try
+                {
+
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, addDynamicItemRequest);
+                    abService.AddDynamicItem(addDynamicItemRequest);
+                }
+                catch (Exception ex)
+                {
+                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("AddDynamicItem", ex));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "AddDynamicItem error: " + ex.Message, GetType().Name);
+                    return false;
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool UpdateDynamicItemSync(PartnerScenario scenario)
+        {
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            {
+                //9. UpdateDynamicItem
+                MsnServiceState serviceState = new MsnServiceState(scenario, "UpdateDynamicItem", false);
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
+
+                UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
+                updateDyItemRequest.abId = Guid.Empty.ToString();
+
+                PassportDynamicItem passportDyItem = new PassportDynamicItem();
+                passportDyItem.Type = "Passport";
+                passportDyItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
+                passportDyItem.Changes = "Notifications";
+
+                NotificationDataType notification = new NotificationDataType();
+                notification.Status = "Exist Access";
+                notification.InstanceId = "0";
+                notification.Gleam = false;
+                notification.LastChanged = NSMessageHandler.ContactService.Deltas.Profile.DateModified;
+
+                ServiceType srvInfo = new ServiceType();
+                srvInfo.Changes = "";
+
+                HandleType srvHandle = new HandleType();
+                srvHandle.ForeignId = "MyProfile";
+                srvHandle.Id = "0";
+                srvHandle.Type = ServiceFilterType.Profile;
+
+                InfoType info = new InfoType();
+                info.Handle = srvHandle;
+                info.IsBot = false;
+                info.InverseRequired = false;
+
+                srvInfo.Info = info;
+                notification.StoreService = srvInfo;
+                passportDyItem.Notifications = new NotificationDataType[] { notification };
+                updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
+                try
+                {
+
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, updateDyItemRequest);
+                    abService.UpdateDynamicItem(updateDyItemRequest);
+                }
+                catch (Exception ex)
+                {
+                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: You don't receive any contact updates, vice versa! " + ex.Message, GetType().Name);
+                    return false;
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool UpdateContactSync(PartnerScenario scenario)
+        {
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            {
+                MsnServiceState serviceState = new MsnServiceState(scenario, "ABContactUpdate", false);
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
+
+                ABContactUpdateRequestType abcontactUpdateRequest = new ABContactUpdateRequestType();
+                abcontactUpdateRequest.abId = Guid.Empty.ToString();
+
+                ContactType meContact = new ContactType();
+                meContact.propertiesChanged = PropertyString.Annotation; //"Annotation";
+
+                contactInfoType meinfo = new contactInfoType();
+                meinfo.contactType = MessengerContactType.Me;
+
+                Annotation anno = new Annotation();
+                anno.Name = AnnotationNames.MSN_IM_RoamLiveProperties;
+                anno.Value = "1";
+
+                meinfo.annotations = new Annotation[] { anno };
+                meContact.contactInfo = meinfo;
+                abcontactUpdateRequest.contacts = new ContactType[] { meContact };
+                try
+                {
+
+                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, abcontactUpdateRequest);
+                    abService.ABContactUpdate(abcontactUpdateRequest);
+                }
+                catch (Exception ex)
+                {
+                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("ABContactUpdate", ex));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ABContactUpdate error: " + ex.Message, GetType().Name);
+                    return false;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Initialize the user profile if the contact connect to live network the firt time.
+        /// 
+        /// CreateProfile
+        /// ShareItem
+        /// AddMember
+        /// [GetProfile]
+        /// CreateDocument
+        /// CreateRelationships
+        /// UpdateProfile
+        /// FindDocuments
+        /// AddDynamicItem
+        /// UpdateDynamicItem
+        /// ABContactUpdate
+        /// 
+        /// 10 steps, what the hell!! If M$ change any protocol in their strageservice, it will be a disaster to find the difference.
+        /// </summary>
+        private void CreateProfile()
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || NSMessageHandler.ContactService.Deltas == null)
+                return;
+            if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile == false)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, create profile skipped.");
+                DisplayImage displayImage = new DisplayImage();
+                displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
+                NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
+
+                return;
+            }
+
+            try
+            {
+                string profileResourceId = string.Empty;
+                string expressionProfileResourceId = string.Empty;
+                string documentReourceId = string.Empty;
+                bool nextStep = false;
+                GetProfileState getprofileResult = GetProfileState.None;
+
+
+                //1. CreateProfile, create a new profile and return its resource id.
+                nextStep = CreateProfileSync(PartnerScenario.RoamingSeed, out profileResourceId);
+
+                //2. ShareItem, share the profile.
+                if (nextStep)
+                {
+
+                    nextStep = ShareItemSync(PartnerScenario.RoamingSeed, profileResourceId);
+
+                    //3. AddMember, add a ProfileExpression role member into the newly created profile and define messenger service.
+                    AddProfileExpressionRoleMemberSync(PartnerScenario.RoamingSeed);
+                }
+
+                // [GetProfile], get the new ProfileExpression resource id.
+                getprofileResult = GetProfileLiteSync(PartnerScenario.RoamingSeed,out profileResourceId, out expressionProfileResourceId);
+
+                //4. CreateDocument, create a new document for this profile and return its resource id.
+                MemoryStream defaultDisplayImageStream = new MemoryStream();
+                Properties.Resources.WLXLarge_default.Save(defaultDisplayImageStream, Properties.Resources.WLXLarge_default.RawFormat);
+                nextStep = CreatePhotoDocumentSync(PartnerScenario.RoamingSeed, out documentReourceId, "MSNPSharp", defaultDisplayImageStream.ToArray());
+
+                //5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
+                if (expressionProfileResourceId != string.Empty && documentReourceId != string.Empty)
+                {
+                    nextStep = CreateRelationshipsSync(PartnerScenario.RoamingSeed, expressionProfileResourceId, documentReourceId);
+                }
+
+                //6.1 UpdateProfile
+                if (profileResourceId != string.Empty)
+                {
+                    nextStep = UpdateProfileLiteSync(PartnerScenario.RoamingSeed, profileResourceId, NSMessageHandler.ContactList.Owner.NickName, string.Empty, "Update", 0);
+                }
+
+                // 6.2 Get Profile again to get notification.LastChanged
+                if (expressionProfileResourceId != string.Empty)
+                {
+                    getprofileResult = GetProfileLiteSync(PartnerScenario.RoamingSeed, out profileResourceId, out expressionProfileResourceId);
+                }
+
+                //7. FindDocuments Hmm....
+
+                //8. AddDynamicItem
+                nextStep = AddDynamicItemSync(PartnerScenario.RoamingSeed);
+                if (nextStep)
+                {
+                    //9. UpdateDynamicItem
+                    nextStep = UpdateDynamicItemSync(PartnerScenario.RoamingSeed);
+                }
+
+                //10. ABContactUpdate
+                nextStep = UpdateContactSync(PartnerScenario.RoamingSeed);
+
+                //11. OK, there's no 11, that's all....
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex.Message);
+            }
+        }
+
+        private OwnerProfile GetProfileImpl(PartnerScenario scenario)
+        {
+            #region old
+
+            //try
+            //{
+            //    MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
+            //    StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
+
+            //    GetProfileRequestType request = new GetProfileRequestType();
+            //    request.profileHandle = new Handle();
+            //    request.profileHandle.Alias = new Alias();
+            //    request.profileHandle.Alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
+            //    request.profileHandle.Alias.NameSpace = "MyCidStuff";
+            //    request.profileHandle.RelationshipName = "MyProfile";
+            //    request.profileAttributes = new profileAttributes();
+            //    request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
+
+            //    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
+            //    GetProfileResponse response = storageService.GetProfile(request);
+
+            //    if (response.GetProfileResult.ExpressionProfile == null)
+            //    {
+            //        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Get profile cannot get expression profile of this owner.");
+            //        NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
+            //        NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.ContactList.Owner.Name;
+            //        return NSMessageHandler.ContactService.Deltas.Profile;
+            //    }
+            //    else
+            //    {
+            //        NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = true;
+            //    }
+
+            //    NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
+            //    NSMessageHandler.ContactService.Deltas.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
+
+            //    // Display name
+            //    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
+
+            //    // Personal status
+            //    NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
+
+            //    // Display photo
+            //    if (null != response.GetProfileResult.ExpressionProfile.Photo)
+            //    {
+            //        if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL)
+            //        {
+            //            System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
+            //            DisplayImage newDisplayImage = new DisplayImage();
+            //            newDisplayImage.Image = fileImage;
+
+            //            NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
+            //        }
+            //        else
+            //        {
+            //            string requesturi = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+            //            if (requesturi.StartsWith("/"))
+            //            {
+            //                requesturi = "http://blufiles.storage.msn.com" + requesturi;  //I found it http://byfiles.storage.msn.com is also ok
+            //            }
+
+            //            // Don't urlencode t= :))
+            //            string usertitleURL = requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2));
+            //            SyncUserTile(usertitleURL,
+            //                delegate(object nullParam)
+            //                {
+            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = response.GetProfileResult.ExpressionProfile.Photo.Name;
+            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
+            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
+            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+
+            //                    SerializableMemoryStream ms = new SerializableMemoryStream();
+            //                    NSMessageHandler.ContactList.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.ContactList.Owner.DisplayImage.Image.RawFormat);
+            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+            //                    NSMessageHandler.ContactService.Deltas.Save(true);
+            //                },
+            //                null,
+            //                delegate(object param)
+            //                {
+            //                    Exception ex = param as Exception;
+            //                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
+            //                    if (NSMessageHandler.ContactList.Owner.UserTile != null)
+            //                    {
+            //                        SyncUserTile(NSMessageHandler.ContactList.Owner.UserTile.AbsoluteUri, null, null, null);
+            //                    }
+            //                });
+
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    if (ex.Message.ToLowerInvariant().Contains("does not exist"))
+            //    {
+            //        CreateProfile();
+            //    }
+
+            //    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
+            //} 
+
+            #endregion
+
+            string expressProfileId = string.Empty;
+            string profileResourceId = string.Empty;
+            GetProfileState result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId);
+
+            if (result == GetProfileState.ProfileNotExist)
+            {
+                CreateProfile();
+            }
             return NSMessageHandler.ContactService.Deltas.Profile;
         }
 
@@ -551,88 +966,32 @@ namespace MSNPSharp
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags)
         {
-            NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
-            NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
+
 
             if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
                 NSMessageHandler.BotMode == false)
             {
-                MsnServiceState serviceState = new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateProfile", false);
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
-
-                UpdateProfileRequestType request = new UpdateProfileRequestType();
-                request.profile = new UpdateProfileRequestTypeProfile();
-                request.profile.ResourceID = NSMessageHandler.ContactService.Deltas.Profile.ResourceID;
-                request.profile.ExpressionProfile = new ExpressionProfile();
-                request.profile.ExpressionProfile.FreeText = freeText;  //DONOT set any default value of this field in the xsd file, default value will make this field missing.
-                request.profile.ExpressionProfile.DisplayName = displayName;
-                request.profile.ExpressionProfile.PersonalStatus = personalStatus;
-                request.profile.ExpressionProfile.FlagsSpecified = true;
-                request.profile.ExpressionProfile.Flags = flags;   //DONOT set any default value of this field in the xsd file, default value will make this field missing.
-
-                try
-                {
-                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
-                    storageService.UpdateProfile(request);
-                }
-                catch (Exception ex)
-                {
-                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateProfile", ex));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                    return;
-                }
+                UpdateProfileLiteSync(PartnerScenario.RoamingIdentityChanged,
+                    NSMessageHandler.ContactService.Deltas.Profile.ResourceID,
+                    displayName,
+                    personalStatus,
+                    freeText,
+                    flags);
 
                 // And get profile again
                 NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
 
                 // UpdateDynamicItem
-                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
-                {
-                    serviceState = new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateDynamicItem", false);
-                    ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
+                UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
 
-                    UpdateDynamicItemRequestType updateDyItemRequest = new UpdateDynamicItemRequestType();
-                    updateDyItemRequest.abId = Guid.Empty.ToString();
-
-                    PassportDynamicItem passportDyItem = new PassportDynamicItem();
-                    passportDyItem.Type = "Passport";
-                    passportDyItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
-                    passportDyItem.Changes = "Notifications";
-                    passportDyItem.Notifications = new NotificationDataType[] { new NotificationDataType() };
-                    passportDyItem.Notifications[0].StoreService = new ServiceType();
-                    passportDyItem.Notifications[0].StoreService.Info = new InfoType();
-                    passportDyItem.Notifications[0].StoreService.Info.Handle = new HandleType();
-                    passportDyItem.Notifications[0].StoreService.Info.Handle.Id = "0";
-                    passportDyItem.Notifications[0].StoreService.Info.Handle.Type = ServiceFilterType.Profile;
-                    passportDyItem.Notifications[0].StoreService.Info.Handle.ForeignId = "MyProfile";
-                    passportDyItem.Notifications[0].StoreService.Info.IsBot = false;
-                    passportDyItem.Notifications[0].StoreService.Info.InverseRequired = false;
-                    passportDyItem.Notifications[0].StoreService.Changes = String.Empty;
-                    passportDyItem.Notifications[0].Status = "Exist Access";
-                    passportDyItem.Notifications[0].LastChanged = NSMessageHandler.ContactService.Deltas.Profile.DateModified;
-
-                    updateDyItemRequest.dynamicItems = new PassportDynamicItem[] { passportDyItem };
-                    try
-                    {
-                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, updateDyItemRequest);
-                        abService.UpdateDynamicItem(updateDyItemRequest);
-                    }
-                    catch (Exception ex2)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "You don't receive any contact updates, vice versa! " + ex2.Message, GetType().Name);
-                        return;
-                    }
-                    finally
-                    {
-                        NSMessageHandler.ContactService.Deltas.Save();
-                    }
-                }
             }
             else
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Roaming disabled or invalid expression profile. Update skipped.");
-                NSMessageHandler.ContactService.Deltas.Save();
+                NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
+                NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
+                NSMessageHandler.ContactService.Deltas.Save(true);
             }
 
         }
@@ -673,7 +1032,7 @@ namespace MSNPSharp
 
                     NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = serStream;
                     NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
-                    NSMessageHandler.ContactService.Deltas.Save();
+                    NSMessageHandler.ContactService.Deltas.Save(true);
                 }
             }
 
@@ -729,7 +1088,7 @@ namespace MSNPSharp
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
                 NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
                 photo.Save(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage, photo.RawFormat);
-                NSMessageHandler.ContactService.Deltas.Save();
+                NSMessageHandler.ContactService.Deltas.Save(true);
 
                 Image fileImage = Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);  //Make a copy.
                 DisplayImage newDisplayImage = new DisplayImage();
@@ -744,8 +1103,7 @@ namespace MSNPSharp
             if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
                 NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage,
-                    new MsnServiceState(PartnerScenario.RoamingIdentityChanged, "UpdateDocument", false));
+                SerializableMemoryStream mem = SerializableMemoryStream.FromImage(photo);
 
                 // 1. Getprofile
                 NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
@@ -753,38 +1111,18 @@ namespace MSNPSharp
                 // 1.1 UpdateDocument
                 if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
                 {
-                    UpdateDocumentRequestType request = new UpdateDocumentRequestType();
-                    request.document = new Photo();
-                    request.document.Name = NSMessageHandler.ContactService.Deltas.Profile.Photo.Name;
-                    request.document.ResourceID = NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID;
-                    request.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
-                    request.document.DocumentStreams[0].DataSize = 0;
-                    request.document.DocumentStreams[0].MimeType = "image/png";
-                    request.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
-                    request.document.DocumentStreams[0].Data = SerializableMemoryStream.FromImage(photo).ToArray();
+                    UpdatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged,
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.Name,
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID,
+                        mem.ToArray());
 
-                    try
-                    {
-                        storageService.UpdateDocument(request);
 
-                        // UpdateDynamicItem
-                        UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
-                                  NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
-                                  "Update", 0); // 1= begin transaction, 0=commit transaction
+                    // UpdateDynamicItem
+                    UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
+                              NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
+                              "Update", 0); // 1= begin transaction, 0=commit transaction
 
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(request.document.DocumentStreams[0].Data, 0, request.document.DocumentStreams[0].Data.Length);
-                        NSMessageHandler.ContactService.Deltas.Save(true);
-
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("UpdateDocument", ex));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Creating new document", GetType().Name);
-                    }
+                    return true;
                 }
 
                 // 2. UpdateProfile
@@ -793,96 +1131,35 @@ namespace MSNPSharp
                                   NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
                                   "Update", 1); // 1= begin transaction, 0=commit transaction
 
-                Alias mycidAlias = new Alias();
-                mycidAlias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
-                mycidAlias.NameSpace = "MyCidStuff";
-
                 // 3. DeleteRelationships. If an error occurs, don't return, continue...
                 if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
                 {
                     // 3.1 UserTiles -> Photo
-                    DeleteRelationshipsRequestType request = new DeleteRelationshipsRequestType();
-                    request.sourceHandle = new Handle();
-                    request.sourceHandle.RelationshipName = "/UserTiles";
-                    request.sourceHandle.Alias = mycidAlias;
-                    request.targetHandles = new Handle[] { new Handle() };
-                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID;
-                    try
-                    {
-                        storageService.DeleteRelationships(request);
-                    }
-                    catch (Exception ex)
-                    {
-                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                    }
+                    DeleteRelationshipByNameSync(PartnerScenario.RoamingIdentityChanged, 
+                        "/UserTitles", 
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID);
+                    
 
                     //3.2 Profile -> Photo
-                    request = new DeleteRelationshipsRequestType();
-                    request.sourceHandle = new Handle();
-                    request.sourceHandle.ResourceID = NSMessageHandler.ContactService.Deltas.Profile.ResourceID;
-                    request.targetHandles = new Handle[] { new Handle() };
-                    request.targetHandles[0].ResourceID = NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID;
-                    try
-                    {
-                        storageService.DeleteRelationships(request);
-                    }
-                    catch (Exception ex)
-                    {
-                        OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("DeleteRelationships", ex));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-                    }
+                    DeleteRelationshipByResourceIdSync(PartnerScenario.RoamingIdentityChanged,
+                        NSMessageHandler.ContactService.Deltas.Profile.ResourceID,
+                        NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID);
                 }
 
                 // 4. CreateDocument
-                SerializableMemoryStream mem = SerializableMemoryStream.FromImage(photo);
-                CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
-                createDocRequest.relationshipName = "Messenger User Tile";
-                createDocRequest.parentHandle = new Handle();
-                createDocRequest.parentHandle.RelationshipName = "/UserTiles";
-                createDocRequest.parentHandle.Alias = mycidAlias;
-                createDocRequest.document = new Photo();
-                createDocRequest.document.Name = photoName;
-                createDocRequest.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
-                createDocRequest.document.DocumentStreams[0].DataSize = 0;
-                createDocRequest.document.DocumentStreams[0].MimeType = "png";
-                createDocRequest.document.DocumentStreams[0].DocumentStreamType = "UserTileStatic";
-                createDocRequest.document.DocumentStreams[0].Data = mem.ToArray();
+                string documentResourceId = string.Empty;
 
-                NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = photoName;
-                NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = new SerializableMemoryStream();
-                NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage.Write(mem.ToArray(), 0, mem.ToArray().Length);
-                NSMessageHandler.ContactService.Deltas.Save();
-                string resId_Doc = String.Empty;
-                try
-                {
-                    CreateDocumentResponseType createDocResponse = storageService.CreateDocument(createDocRequest);
-                    resId_Doc = createDocResponse.CreateDocumentResult;
-                }
-                catch (Exception ex)
-                {
-                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("CreateDocument", ex));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateDocument error: " + ex.Message, GetType().Name);
-                    return false;
-                }
+
+                CreatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged, out documentResourceId, photoName, mem.ToArray());
+                
 
                 // 5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
-                CreateRelationshipsRequestType createRelationshipRequest = new CreateRelationshipsRequestType();
-                createRelationshipRequest.relationships = new Relationship[] { new Relationship() };
-                createRelationshipRequest.relationships[0].RelationshipName = "ProfilePhoto";
-                createRelationshipRequest.relationships[0].SourceType = "SubProfile"; //From SubProfile
-                createRelationshipRequest.relationships[0].TargetType = "Photo";      //To Photo
-                createRelationshipRequest.relationships[0].SourceID = NSMessageHandler.ContactService.Deltas.Profile.ResourceID;  //From Expression profile
-                createRelationshipRequest.relationships[0].TargetID = resId_Doc;      //To Document                
-                try
+                if (documentResourceId != string.Empty && 
+                    string.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.ResourceID) == false)
                 {
-                    storageService.CreateRelationships(createRelationshipRequest);
-                }
-                catch (Exception ex)
-                {
-                    OnServiceOperationFailed(storageService, new ServiceOperationFailedEventArgs("CreateRelationships", ex));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateRelationships error: " + ex.Message, GetType().Name);
-                    return false;
+                    CreateRelationshipsSync(PartnerScenario.RoamingIdentityChanged, 
+                        NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.ResourceID, 
+                        documentResourceId);
                 }
 
                 //6. ok, done - Updateprofile again

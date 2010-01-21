@@ -50,6 +50,12 @@ namespace MSNPSharp.IO
 
         private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
         private SerializableDictionary<string, string> preferredHosts = new SerializableDictionary<string, string>(0);
+        private object syncObject = new object();
+
+        public object SyncObject
+        {
+            get { return syncObject; }
+        }
 
         /// <summary>
         /// CacheKeys for webservices.
