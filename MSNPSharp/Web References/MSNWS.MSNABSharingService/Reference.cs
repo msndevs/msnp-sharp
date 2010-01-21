@@ -937,11 +937,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/AddDynamicItem", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
-        [return: System.Xml.Serialization.XmlElementAttribute("AddDynamicItemRespose", Namespace="http://www.msn.com/webservices/AddressBook")]
-        public AddDynamicItemResposeType AddDynamicItem([System.Xml.Serialization.XmlElementAttribute("AddDynamicItem", Namespace="http://www.msn.com/webservices/AddressBook")] AddDynamicItemRequestType AddDynamicItem1) {
+        [return: System.Xml.Serialization.XmlElementAttribute("AddDynamicItemResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public AddDynamicItemResponseType AddDynamicItem([System.Xml.Serialization.XmlElementAttribute("AddDynamicItem", Namespace="http://www.msn.com/webservices/AddressBook")] AddDynamicItemRequestType AddDynamicItem1) {
             object[] results = this.Invoke("AddDynamicItem", new object[] {
                         AddDynamicItem1});
-            return ((AddDynamicItemResposeType)(results[0]));
+            return ((AddDynamicItemResponseType)(results[0]));
         }
         
         /// <remarks/>
@@ -1167,7 +1167,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class AddDynamicItemResposeType {
+    public partial class AddDynamicItemResponseType {
     }
     
     /// <remarks/>
@@ -8833,10 +8833,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public AddDynamicItemResposeType Result {
+        public AddDynamicItemResponseType Result {
             get {
                 this.RaiseExceptionIfNecessary();
-                return ((AddDynamicItemResposeType)(this.results[0]));
+                return ((AddDynamicItemResponseType)(this.results[0]));
             }
         }
     }

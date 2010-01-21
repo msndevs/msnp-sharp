@@ -2195,7 +2195,7 @@ namespace MSNPSharp.IO
             string account = cinfo.passportName;
             string displayName = cinfo.displayName;
             string nickName = GetContactNickName(contactType);
-            Uri userTitle = GetUserTitleURLFromWindowsLiveNetworkInfo(contactType);
+            Uri userTile = GetUserTileURLFromWindowsLiveNetworkInfo(contactType);
             bool isMessengeruser = cinfo.isMessengerUser;
             string lowerId = abId.ToLowerInvariant();
             ReturnState returnValue = ReturnState.ProcessNextContact;
@@ -2273,7 +2273,7 @@ namespace MSNPSharp.IO
                     contact.SetComment(cinfo.comment);
                     contact.SetIsMessengerUser(isMessengeruser);
                     contact.SetMobileAccess(cinfo.isMobileIMEnabled);
-                    contact.UserTile = userTitle;
+                    contact.UserTile = userTile;
                     SetContactPhones(contact, cinfo);
 
                     if (!string.IsNullOrEmpty(nickName) && string.IsNullOrEmpty(contact.NickName))
@@ -2401,7 +2401,7 @@ namespace MSNPSharp.IO
                         owner.SetNickName(nickName);
                     }
 
-                    owner.UserTile = userTitle;
+                    owner.UserTile = userTile;
                     SetContactPhones(owner, cinfo);
 	#endregion
 
@@ -2480,9 +2480,9 @@ namespace MSNPSharp.IO
         /// </summary>
         /// <param name="contact"></param>
         /// <returns></returns>
-        private Uri GetUserTitleURLFromWindowsLiveNetworkInfo(ContactType contact)
+        private Uri GetUserTileURLFromWindowsLiveNetworkInfo(ContactType contact)
         {
-            string returnURL = GetUserTitleURLByDomainIdFromNetworkInfo(contact, DomainIds.WLDomain);
+            string returnURL = GetUserTileURLByDomainIdFromNetworkInfo(contact, DomainIds.WLDomain);
             try
             {
                 Uri urlResult = null;
@@ -2503,7 +2503,7 @@ namespace MSNPSharp.IO
         /// <param name="contact"></param>
         /// <param name="domainId"></param>
         /// <returns></returns>
-        private string GetUserTitleURLByDomainIdFromNetworkInfo(ContactType contact, int domainId)
+        private string GetUserTileURLByDomainIdFromNetworkInfo(ContactType contact, int domainId)
         {
             if (contact.contactInfo == null)
                 return string.Empty;

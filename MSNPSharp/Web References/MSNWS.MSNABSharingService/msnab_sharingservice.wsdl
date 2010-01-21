@@ -144,7 +144,7 @@
     <part name="AddDynamicItem" element="msnab:AddDynamicItem" />
   </message>
   <message name="AddDynamicItemResponseMessage">
-    <part name="AddDynamicItemResponse" element="msnab:AddDynamicItemRespose" />
+    <part name="AddDynamicItemResponse" element="msnab:AddDynamicItemResponse" />
   </message>
   <portType name="SharingServicePortType">
     <operation name="FindMembership">

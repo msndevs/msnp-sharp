@@ -381,7 +381,7 @@
     <None Include="Web References\MSNWS.MSNABSharingService\ABFindContactsPagedResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNWS.MSNABSharingService\AddDynamicItemResposeType.datasource">
+    <None Include="Web References\MSNWS.MSNABSharingService\AddDynamicItemResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\BreakConnectionResponseType.datasource">
