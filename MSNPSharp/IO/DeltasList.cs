@@ -331,15 +331,15 @@ using System.Drawing;
 
         #region Internal Methods
 
-        internal Image GetImageBySiblingString(string siblingAccount)
+        internal Image GetImageBySiblingString(string siblingAccount, out string imageKey)
         {
-            string key = string.Empty;
-            if (HasRelationshipAndImage(siblingAccount, out key))
+            imageKey = string.Empty;
+            if (HasRelationshipAndImage(siblingAccount, out imageKey))
             {
                 lock (UserTileSlots)
                 {
-                    IncreaseVisitCount(key);
-                    return Image.FromStream(new MemoryStream(UserTileSlots[key]));
+                    IncreaseVisitCount(imageKey);
+                    return Image.FromStream(new MemoryStream(UserTileSlots[imageKey]));
                 }
 
             }
