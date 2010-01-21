@@ -41,6 +41,8 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
     using System.Drawing;
+    using System.IO;
+    using System.Diagnostics;
 
     /// <summary>
     /// User in roster list.
@@ -128,8 +130,6 @@ namespace MSNPSharp
             {
                 NSMessageHandler.Manager.Add(this);
             }
-
-            LoadDisplayImageFromDeltas();
         }
 
         #region Events
@@ -437,6 +437,8 @@ namespace MSNPSharp
         {
             get
             {
+
+                LoadDisplayImageFromDeltas();
                 return displayImage;
             }
 
@@ -902,16 +904,16 @@ namespace MSNPSharp
                 (image != null && displayImage.Sha != image.Sha))
             {
                 displayImage = image;
-                SaveDisplayImage(displayImage);
-                FireDisplayImageChangedEvent();
+                SaveOriginalDisplayImageAndFireDisplayImageChangedEvent();
                 return true;
             }
 
             return false;
         }
 
-        internal void FireDisplayImageChangedEvent()
+        internal void SaveOriginalDisplayImageAndFireDisplayImageChangedEvent()
         {
+            SaveDisplayImage(displayImage);
             OnDisplayImageChanged();
         }
 
@@ -983,10 +985,16 @@ namespace MSNPSharp
             if (displayImage == null)
                 displayImage = new DisplayImage();
 
-            Image img = NSMessageHandler.ContactService.Deltas.GetImageBySiblingString(SiblingString);
+            string Sha = string.Empty;
+            Image img = NSMessageHandler.ContactService.Deltas.GetImageBySiblingString(SiblingString, out Sha);
             if (img != null)
             {
-                displayImage.Image = img;
+                MemoryStream mem = new MemoryStream();
+                img.Save(mem, img.RawFormat);
+                displayImage = new DisplayImage(Mail, mem, "MSNPSharp");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s displayimage restored.\r\n " +
+                    "Old SHA:     " + Sha + "\r\n " +
+                    "Current SHA: " + displayImage.Sha + "\r\n");
             }
         }
 

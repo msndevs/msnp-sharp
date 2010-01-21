@@ -825,7 +825,7 @@ namespace MSNPSharp.DataTransfer
                     DisplayImage image = (DisplayImage)msnObject;
                     image.RetrieveImage();
                     if (!remoteContact.SetDisplayImage(image))
-                        remoteContact.FireDisplayImageChangedEvent();
+                        remoteContact.SaveOriginalDisplayImageAndFireDisplayImageChangedEvent();
                 };
             }
 

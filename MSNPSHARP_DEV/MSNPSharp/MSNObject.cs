@@ -286,6 +286,7 @@ namespace MSNPSharp
             {
                 return sha;
             }
+
             set
             {
                 sha = value;
