@@ -87,7 +87,8 @@ namespace MSNPSharpClient
             AddEvent(conversation);
 
             _messenger = messenger;
-            _firstInvitedContact = contact;          
+            _firstInvitedContact = contact;
+
         }
 
         /// <summary>
@@ -676,6 +677,9 @@ namespace MSNPSharpClient
                 if (!conv.Ended)
                     conv.End();
             }
+
+            _firstInvitedContact.DisplayImageChanged -= Contact_DisplayImageChanged;
+            _firstInvitedContact.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
         }
 
         private void PrintText(Contact c, TextMessage message)
@@ -787,42 +791,69 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
-            if (_firstInvitedContact.UserTile != null && _firstInvitedContact.DisplayImage == null)
-            {
-                displayUser.LoadAsync(_firstInvitedContact.UserTile.AbsoluteUri);
-            }
+            displayUser.Image = _firstInvitedContact.DisplayImage.Image;
+            _firstInvitedContact.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
+            _firstInvitedContact.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
 
             // request the image, if not already available
-            if (_firstInvitedContact.Status != PresenceStatus.Offline && _firstInvitedContact.DisplayImage != null)
+            if (_firstInvitedContact.Status != PresenceStatus.Offline)
             {
-                if (_firstInvitedContact.DisplayImage.Image == null)
+                if (_firstInvitedContact.DisplayImage.IsDefaultImage)
                 {
                     try
                     {
-                        if (_firstInvitedContact.ClientType == ClientType.PassportMember)
-                        {
-                            // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
-                            // The MSNSLPHandler makes use of the underlying P2P framework.
-                            MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(_firstInvitedContact);
-
-                            // by sending an invitation a P2PTransferSession is automatically created.
-                            // the session object takes care of the actual data transfer to the remote client,
-                            // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, _firstInvitedContact, _firstInvitedContact.DisplayImage);
-
-                            _firstInvitedContact.DisplayImageChanged += delegate
-                            {
-                                displayUser.Image = _firstInvitedContact.DisplayImage.Image;
-                            };
-                        }
+                        RequestDisplayImage(_firstInvitedContact, null);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        throw;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message + "\r\n StackTrace: " + ex.StackTrace);
                     }
                 }
-                else
-                    displayUser.Image = _firstInvitedContact.DisplayImage.Image;
+
+
+            }
+        }
+
+        private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
+        {
+            if (remoteContact.ClientType == ClientType.PassportMember)
+            {
+                // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
+                // The MSNSLPHandler makes use of the underlying P2P framework.
+                MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(remoteContact);
+
+                if (updateImage == null)
+                    updateImage = remoteContact.DisplayImage;
+
+                // by sending an invitation a P2PTransferSession is automatically created.
+                // the session object takes care of the actual data transfer to the remote client,
+                // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
+                P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, remoteContact, updateImage);
+
+            }
+        }
+
+        private void Contact_DisplayImageConextChanged(object sender, DisplayImageChangedEventArgs e)
+        {
+            try
+            {
+                RequestDisplayImage(_firstInvitedContact, e.NewDisplayImage);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message + "\r\n StackTrace: " + ex.StackTrace);
+            }
+        }
+
+        private void Contact_DisplayImageChanged(object sender, DisplayImageChangedEventArgs e)
+        {
+            if (displayUser.InvokeRequired)
+            {
+                Invoke(new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged), new object[] { sender, e });
+            }
+            else
+            {
+                displayUser.Image = e.NewDisplayImage.Image;
             }
         }
 

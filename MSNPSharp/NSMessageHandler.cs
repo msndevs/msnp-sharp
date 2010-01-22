@@ -1392,6 +1392,9 @@ namespace MSNPSharp
             ClientCapacities newcaps = ClientCapacities.None;
             ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
 
+            string newName = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
+            string newDisplayImageContext = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
+
             if (message.CommandValues.Count >= 4)
             {
                 if (message.CommandValues[3].ToString().Contains(":"))
@@ -1439,6 +1442,12 @@ namespace MSNPSharp
                     contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
                     contact.ClientCapacities = newcaps;
                     contact.ClientCapacitiesEx = newcapsex;
+
+                    if (contact != circle.ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
+                    {
+                        contact.DisplayImage.ParseContext(HttpUtility.UrlDecode(newDisplayImageContext));
+                        contact.FireDisplayImageContextChangedEvent(contact.DisplayImage);
+                    }
 
                     PresenceStatus oldStatus = contact.Status;
 
@@ -1491,8 +1500,6 @@ namespace MSNPSharp
 
                 if (contact != null)
                 {
-                    string newname = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-                    string newdp = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
 
                     if (IsSignedIn && account == ContactList.Owner.Mail.ToLowerInvariant() && type == ClientType.PassportMember)
                     {
@@ -1500,21 +1507,20 @@ namespace MSNPSharp
                         return;
                     }
 
-                    contact.SetName(HttpUtility.UrlDecode(newname));
+                    contact.SetName(HttpUtility.UrlDecode(newName));
                     contact.ClientCapacities = newcaps;
                     contact.ClientCapacitiesEx = newcapsex;
 
-                    if (contact != ContactList.Owner && !String.IsNullOrEmpty(newdp) && newdp != "0")
+                    if (contact != ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
                     {
-                        DisplayImage userDisplay = contact.DisplayImage;
-                        userDisplay.Context = newdp;
-                        contact.SetDisplayImage(userDisplay);
+                        contact.DisplayImage.ParseContext(HttpUtility.UrlDecode(newDisplayImageContext));
+                        contact.FireDisplayImageContextChangedEvent(contact.DisplayImage);
                     }
 
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == ClientType.EmailMember)
                     {
-                        newdp = message.CommandValues[5].ToString();
-                        contact.UserTile = new Uri(HttpUtility.UrlDecode(newdp));
+                        newDisplayImageContext = message.CommandValues[5].ToString();
+                        contact.UserTile = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
                     }
 
                     PresenceStatus oldStatus = contact.Status;

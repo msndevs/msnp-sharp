@@ -1331,7 +1331,7 @@ namespace MSNPSharp
         UpdateError = 8
     }
 
-    public enum Scenario: uint
+    internal enum Scenario: uint
     {
         None = 0,
 
@@ -1433,6 +1433,29 @@ namespace MSNPSharp
         AddImageFailed,
         AddRelationshipFailed,
         AddImageRelationshipFailed
+    }
+
+    /// <summary>
+    /// The reason that fires <see cref="Contact.DisplayImageChanged"/> event.
+    /// </summary>
+    public enum DisplayImageChangedType
+    {
+        None,
+
+        /// <summary>
+        /// The <see cref="DisplayImage"/> is just recreate from file.
+        /// </summary>
+        Restore,
+
+        /// <summary>
+        /// The <see cref="DisplayImage"/> is just transmitted from the remote user. 
+        /// </summary>
+        TransmissionCompleted,
+
+        /// <summary>
+        /// Remote user notified it has its <see cref="DisplayImage"/> changed.
+        /// </summary>
+        UpdateTransmissionRequired,
     }
 
     #region Enums: MsnServiceType and PartnerScenario

@@ -81,8 +81,8 @@ namespace MSNPSharp
         private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
         private MSNLists lists = MSNLists.None;
 
-        private DisplayImage displayImage = new DisplayImage();
-        private PersonalMessage personalMessage;
+        private DisplayImage displayImage = null;
+        private PersonalMessage personalMessage = null;
 
 
         private Dictionary<string, Emoticon> emoticons = new Dictionary<string, Emoticon>(0);
@@ -90,10 +90,10 @@ namespace MSNPSharp
 
         private ulong oimCount = 1;
         private int adlCount = 1;
-        private object clientData;
+        private object clientData = null;
 
         private List<ActivityDetailsType> activities = new List<ActivityDetailsType>(0);
-        private Uri userTile;
+        private Uri userTile = null;
 
         private object syncObject = new object();
 
@@ -130,13 +130,16 @@ namespace MSNPSharp
             {
                 NSMessageHandler.Manager.Add(this);
             }
+
+            displayImage = DisplayImage.CreateDefaultImage(Mail);
         }
 
         #region Events
 
         public event EventHandler<EventArgs> ScreenNameChanged;
         public event EventHandler<EventArgs> PersonalMessageChanged;
-        public event EventHandler<EventArgs> DisplayImageChanged;
+        public event EventHandler<DisplayImageChangedEventArgs> DisplayImageChanged;
+        public event EventHandler<DisplayImageChangedEventArgs> DisplayImageContextChanged;
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
         public event EventHandler<EventArgs> ContactBlocked;
@@ -898,23 +901,67 @@ namespace MSNPSharp
             }
         }
 
-        internal bool SetDisplayImage(DisplayImage image)
+        /// <summary>
+        /// This method will lead to fire <see cref="Contact.DisplayImageContextChanged"/> event if the DisplayImage.Sha has been changed.
+        /// </summary>
+        /// <param name="updatedImage"></param>
+        /// <returns>
+        /// false: No event was fired.<br/>
+        /// true: The <see cref="Contact.DisplayImageContextChanged"/> was fired.
+        /// </returns>
+        internal bool FireDisplayImageContextChangedEvent(DisplayImage updatedImage)
         {
-            if ((displayImage.Sha == image.Sha && displayImage.Image == null && image.Image != null) ||
-                (image != null && displayImage.Sha != image.Sha))
-            {
-                displayImage = image;
-                SaveOriginalDisplayImageAndFireDisplayImageChangedEvent();
-                return true;
-            }
+            if (updatedImage == null) return false;
+            if (displayImage != null && updatedImage.Sha == displayImage.Sha) return false;
 
-            return false;
+            OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(updatedImage, DisplayImageChangedType.UpdateTransmissionRequired));
+            return true;
         }
 
-        internal void SaveOriginalDisplayImageAndFireDisplayImageChangedEvent()
+        /// <summary>
+        /// This method will lead to fire <see cref="Contact.DisplayImageChanged"/> event if the DisplayImage.Image has been changed.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns>
+        /// false: No event was fired.<br/>
+        /// true: The <see cref="Contact.DisplayImageChanged"/> event was fired.
+        /// </returns>
+        internal bool SetDisplayImage(DisplayImage image)
+        {
+            if (image == null) return false;
+
+            if (displayImage != null && displayImage.Sha == image.Sha &&
+              ((displayImage.Image == null) ^ (image.Image == null)) == false &&
+              !object.ReferenceEquals(displayImage, image))
+            {
+                //We think that SHA and the image are the same. return.
+                return false ;
+            }
+
+            DisplayImageChangedEventArgs displayImageChangedArg = null;
+            if ((displayImage != null && displayImage.Sha == image.Sha && displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. default Image -> new Image
+                (displayImage != null && displayImage.Sha != image.Sha && !displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. old Image -> new Image.
+                (displayImage != null && object.ReferenceEquals(displayImage, image) && displayImage.Image != null) ||              //Transmission completed. old Image -> updated old Image.
+                (displayImage == null))
+            {
+
+                displayImageChangedArg = new DisplayImageChangedEventArgs(image, DisplayImageChangedType.TransmissionCompleted, false);
+            }
+
+            if (!object.ReferenceEquals(displayImage, image))
+            {
+                displayImage = image;
+            }
+
+            SaveOriginalDisplayImageAndFireDisplayImageChangedEvent(displayImageChangedArg);
+
+            return true;
+        }
+
+        internal void SaveOriginalDisplayImageAndFireDisplayImageChangedEvent(DisplayImageChangedEventArgs arg)
         {
             SaveDisplayImage(displayImage);
-            OnDisplayImageChanged();
+            OnDisplayImageChanged(arg);
         }
 
         internal void NotifyManager()
@@ -966,11 +1013,19 @@ namespace MSNPSharp
             }
         }
 
-        protected virtual void OnDisplayImageChanged()
+        protected virtual void OnDisplayImageChanged(DisplayImageChangedEventArgs arg)
         {
             if (DisplayImageChanged != null)
             {
-                DisplayImageChanged(this, EventArgs.Empty);
+                DisplayImageChanged(this, arg);
+            }
+        }
+
+        protected virtual void OnDisplayImageContextChanged(DisplayImageChangedEventArgs arg)
+        {
+            if (DisplayImageContextChanged != null)
+            {
+                DisplayImageContextChanged(this, arg);
             }
         }
 
@@ -979,11 +1034,8 @@ namespace MSNPSharp
             if (NSMessageHandler.ContactService.Deltas == null)
                 return;
 
-            if (displayImage != null && displayImage.Image != null)
+            if (displayImage != null && !displayImage.IsDefaultImage) //Not default, no need to restore.
                 return;
-
-            if (displayImage == null)
-                displayImage = new DisplayImage();
 
             string Sha = string.Empty;
             Image img = NSMessageHandler.ContactService.Deltas.GetImageBySiblingString(SiblingString, out Sha);

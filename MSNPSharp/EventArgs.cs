@@ -641,4 +641,69 @@ namespace MSNPSharp
             }
         }
     }
+
+    /// <summary>
+    /// Event argument used when a user's <see cref="DisplayImage"/> property has been changed.
+    /// </summary>
+    public class DisplayImageChangedEventArgs : EventArgs
+    {
+        private bool callFromContactManager = false;
+        private DisplayImageChangedType status = DisplayImageChangedType.None;
+        private DisplayImage newDisplayImage = null;
+
+        public DisplayImage NewDisplayImage
+        {
+            get 
+            { 
+                return newDisplayImage; 
+            }
+        }
+
+        /// <summary>
+        ///  The reason that fires <see cref="Contact.DisplayImageChanged"/> event.
+        /// </summary>
+        public DisplayImageChangedType Status
+        {
+            get 
+            { 
+                return status; 
+            }
+        }
+
+        /// <summary>
+        /// Whether we need to do display image synchronize.
+        /// </summary>
+        internal bool CallFromContactManager
+        {
+            get 
+            { 
+                return callFromContactManager; 
+            }
+        }
+
+        private DisplayImageChangedEventArgs()
+        {
+        }
+
+        internal DisplayImageChangedEventArgs(DisplayImage dispImage, DisplayImageChangedType type, bool needSync)
+        {
+            status = type;
+            callFromContactManager = needSync;
+            newDisplayImage = dispImage;
+        }
+
+        internal DisplayImageChangedEventArgs(DisplayImageChangedEventArgs arg, bool needSync)
+        {
+            status = arg.Status;
+            callFromContactManager = needSync;
+            newDisplayImage = arg.NewDisplayImage;
+        }
+
+        public DisplayImageChangedEventArgs(DisplayImage dispImage, DisplayImageChangedType type)
+        {
+            status = type;
+            callFromContactManager = false;
+            newDisplayImage = dispImage;
+        }
+    }
 };
