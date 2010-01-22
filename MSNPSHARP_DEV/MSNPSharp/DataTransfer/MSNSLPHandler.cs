@@ -46,6 +46,7 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
+    using System.Drawing;
 
     /// <summary>
     /// Defines the type of datatransfer for a MSNSLPHandler
@@ -812,6 +813,7 @@ namespace MSNPSharp.DataTransfer
                 transferSession.MessageFooter = P2PConst.CustomEmoticonFooter11;
 
                 AppID = transferSession.MessageFooter.ToString();
+                transferSession.DataStream = msnObject.OpenStream();
             }
             else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
             {
@@ -822,11 +824,19 @@ namespace MSNPSharp.DataTransfer
 
                 transferSession.TransferFinished += delegate(object sender, EventArgs ea)
                 {
-                    DisplayImage image = (DisplayImage)msnObject;
+                    DisplayImage image = msnObject as DisplayImage;
+                    image.Image = Image.FromStream(transferSession.DataStream);
                     image.RetrieveImage();
-                    if (!remoteContact.SetDisplayImage(image))
-                        remoteContact.SaveOriginalDisplayImageAndFireDisplayImageChangedEvent();
+                    image.IsDefaultImage = false;
+                    remoteContact.SetDisplayImage(image);
                 };
+            }
+
+            if (string.IsNullOrEmpty(msnObject.OriginalContext))
+            {
+                //This is a default displayImage or any object created by the client programmer.
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[SendInitation] msnObject does not have OriginalContext.");
+                throw new InvalidOperationException("Parameter msnObject does not have valid OriginalContext property.");
             }
 
             byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(MSNObject.GetDecodeString(msnObject.OriginalContext));//GetEncodedString());
@@ -904,8 +914,6 @@ namespace MSNPSharp.DataTransfer
             transferSession.MessageSession = (P2PMessageSession)MessageProcessor;
             MessageSession.AddTransferSession(transferSession);
 
-            // set the data stream to write to
-            transferSession.DataStream = msnObject.OpenStream();
             transferSession.IsSender = false;
 
             OnTransferSessionCreated(transferSession);

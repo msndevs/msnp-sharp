@@ -499,15 +499,15 @@ namespace MSNPSharpClient
             }
         }
 
-        void Owner_DisplayImageChanged(object sender, EventArgs e)
+        void Owner_DisplayImageChanged(object sender, DisplayImageChangedEventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<EventArgs>(Owner_DisplayImageChanged), sender, e);
+                Invoke(new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged), sender, e);
                 return;
             }
 
-            displayImageBox.Image = Messenger.Nameserver.ContactList.Owner.DisplayImage.Image;
+            displayImageBox.Image = e.NewDisplayImage.Image;
         }
         
 
@@ -962,7 +962,7 @@ namespace MSNPSharpClient
             pnlNameAndPM.Visible = true;
             comboPlaces.Visible = true;
 
-            Messenger.Nameserver.ContactList.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
+            Messenger.Nameserver.ContactList.Owner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged);
             Messenger.Nameserver.ContactList.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             Messenger.Nameserver.ContactList.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             Messenger.Nameserver.ContactList.Owner.PlacesChanged += new EventHandler<EventArgs>(Owner_PlacesChanged);

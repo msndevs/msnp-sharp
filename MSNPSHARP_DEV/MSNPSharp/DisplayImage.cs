@@ -43,7 +43,19 @@ namespace MSNPSharp
     [Serializable()]
     public class DisplayImage : MSNObject
     {
-        Image image;
+        private Image image = null;
+        private bool isDefaultImage = false;
+        private static Image defaultImage = Properties.Resources.WLXLarge_default;
+        private static string defaultLocation = "MSNPSharpDefault";
+
+        public bool IsDefaultImage
+        {
+            get { return isDefaultImage; }
+            internal set
+            {
+                isDefaultImage = value;
+            }
+        }
 
         public DisplayImage()
         {
@@ -58,10 +70,31 @@ namespace MSNPSharp
             Creator = creator;
         }
 
+        internal DisplayImage(string creator, bool isDefault)
+        {
+            ObjectType = MSNObjectType.UserDisplay;
+
+            if (isDefault)
+            {
+                Location = defaultLocation;
+                Image = defaultImage;
+            }
+
+            isDefaultImage = isDefault;
+            Creator = creator;
+
+            RetrieveImage();
+        }
+
         public DisplayImage(string creator, Stream input, string location)
             : base(creator, input, MSNObjectType.UserDisplay, location)
         {
             RetrieveImage();
+        }
+
+        public static DisplayImage CreateDefaultImage(string creator)
+        {
+            return new DisplayImage(creator, true);
         }
 
         public Image Image
@@ -77,7 +110,7 @@ namespace MSNPSharp
             }
         }
 
-        void UpdateStream()
+        private void UpdateStream()
         {
             image.Save(DataStream, image.RawFormat);
             Size = (int)DataStream.Length;

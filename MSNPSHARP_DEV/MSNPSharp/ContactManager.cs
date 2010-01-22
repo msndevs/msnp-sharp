@@ -217,7 +217,7 @@ namespace MSNPSharp
         {
             string key = AddToDefaultContactPage(contact);
             AddToOtherContactPage(contact);
-            contact.DisplayImageChanged += new EventHandler<EventArgs>(DisplayImageChanged);
+            contact.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(DisplayImageChanged);
             if (!NeedSync(key))
             {
                 return;
