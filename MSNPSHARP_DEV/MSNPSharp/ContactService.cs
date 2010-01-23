@@ -1066,7 +1066,6 @@ namespace MSNPSharp
 
                     // Add to Forward List
                     contact.OnForwardList = true;
-                    System.Threading.Thread.CurrentThread.Join(100);
 
                     // Get all information. LivePending will be Live :)
                     abRequest(PartnerScenario.ContactSave, null);
@@ -1078,7 +1077,6 @@ namespace MSNPSharp
         {
             // Delete PL with "ContactMsgrAPI"
             RemoveContactFromList(contact, MSNLists.PendingList, null);
-            System.Threading.Thread.CurrentThread.Join(200);
 
             // ADD contact to AB with "ContactMsgrAPI"
             AddNewOrPendingContact(
@@ -1093,7 +1091,6 @@ namespace MSNPSharp
 
                     // FL
                     contact.OnForwardList = true;
-                    System.Threading.Thread.CurrentThread.Join(100);
 
                     // Add RL membership with "ContactMsgrAPI"
                     AddContactToList(contact,
@@ -1106,7 +1103,6 @@ namespace MSNPSharp
                                 if (ClientType.EmailMember == contact.ClientType)
                                 {
                                     contact.OnAllowedList = true;
-                                    System.Threading.Thread.CurrentThread.Join(100);
                                 }
                                 else
                                 {
@@ -1116,8 +1112,6 @@ namespace MSNPSharp
                                     string payload = ConstructLists(hashlist, false)[0];
                                     NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                                     contact.AddToList(MSNLists.AllowedList);
-
-                                    System.Threading.Thread.CurrentThread.Join(100);
                                 }
                             }
 

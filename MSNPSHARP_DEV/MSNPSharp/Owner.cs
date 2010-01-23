@@ -137,6 +137,7 @@ namespace MSNPSharp
         /// </summary>
         public void SignoutFromEverywhere()
         {
+            Status = PresenceStatus.Hidden;
             NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail, "8" }, "gtfo"));
             Status = PresenceStatus.Offline;
         }
@@ -150,11 +151,11 @@ namespace MSNPSharp
             if (Places.ContainsKey(place))
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
-                    new string[] { Mail + ";" + place, "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
+                    new string[] { Mail + ";" + place.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
             }
             else
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place (signed out already): " + place.ToString(), GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place (signed out already): " + place.ToString("B"), GetType().Name);
             }
         }
 
@@ -470,12 +471,13 @@ namespace MSNPSharp
             }
         }
 
-        new public PresenceStatus Status
+        public override PresenceStatus Status
         {
             get
             {
                 return base.Status;
             }
+
             set
             {
                 if (NSMessageHandler != null)
