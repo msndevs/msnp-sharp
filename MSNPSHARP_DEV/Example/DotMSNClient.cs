@@ -885,7 +885,7 @@ namespace MSNPSharpClient
                 else
                 {
 
-                    Messenger.Nameserver.ContactList.Owner.SignoutFrom(places[comboPlaces.SelectedIndex - 1]);  //places does not contain the current places.
+                    Messenger.Nameserver.ContactList.Owner.SignoutFrom(places[comboPlaces.SelectedIndex - 2]);  //places does not contain the current places.
                 }
             }
         }
