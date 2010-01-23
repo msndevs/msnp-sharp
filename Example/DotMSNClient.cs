@@ -821,7 +821,6 @@ namespace MSNPSharpClient
             }
             else if (newstatus == PresenceStatus.Offline)
             {
-                MessageBox.Show("You can not login as Offline :)");
                 comboStatus.SelectedIndex = 0;
             }
         }
@@ -885,14 +884,8 @@ namespace MSNPSharpClient
                 }
                 else
                 {
-                    foreach (KeyValuePair<Guid, string> keyvalue in Messenger.Nameserver.ContactList.Owner.Places)
-                    {
-                        if (keyvalue.Value == place)
-                        {
-                            Messenger.Nameserver.ContactList.Owner.SignoutFrom(keyvalue.Key);
-                            break;
-                        }
-                    }
+
+                    Messenger.Nameserver.ContactList.Owner.SignoutFrom(places[comboPlaces.SelectedIndex - 1]);  //places does not contain the current places.
                 }
             }
         }
@@ -902,6 +895,8 @@ namespace MSNPSharpClient
             ComboBox cbBotMode = sender as ComboBox;
             messenger.Nameserver.BotMode = cbRobotMode.Checked;
         }
+
+        List<Guid> places = new List<Guid>(0);
 
         private void Owner_PlacesChanged(object sender, EventArgs e)
         {
@@ -923,6 +918,7 @@ namespace MSNPSharpClient
                     if (keyvalue.Key != NSMessageHandler.MachineGuid)
                     {
                         comboPlaces.Items.Add("Signout from " + keyvalue.Value);
+                        places.Add(keyvalue.Key);
                     }
                 }
 
@@ -948,13 +944,14 @@ namespace MSNPSharpClient
 
         private void Nameserver_SignedIn(object sender, EventArgs e)
         {
-            SetStatus("Signed into the messenger network as " + Messenger.Nameserver.ContactList.Owner.Name);
 
             if (InvokeRequired)
             {
                 Invoke(new EventHandler(Nameserver_SignedIn), sender, e);
                 return;
             }
+
+            SetStatus("Signed into the messenger network as " + Messenger.Nameserver.ContactList.Owner.Name);
 
             // set our presence status
             loginButton.Tag = 2;
@@ -977,14 +974,18 @@ namespace MSNPSharpClient
 
         private void Nameserver_SignedOff(object sender, SignedOffEventArgs e)
         {
-            SetStatus("Signed off from the messenger network");
-
             if (InvokeRequired)
             {
                 Invoke(new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff), sender, e);
                 return;
             }
 
+            SetStatus("Signed off from the messenger network");
+            ResetAll();
+        }
+
+        private void ResetAll()
+        {
             tmrKeepOnLine.Enabled = false;
             tmrNews.Enabled = false;
 
@@ -993,15 +994,34 @@ namespace MSNPSharpClient
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
             comboPlaces.Visible = false;
+            propertyGrid.SelectedObject = null;
+
+            treeViewFavoriteList.Nodes.Clear();
+            treeViewFilterList.Nodes.Clear();
+
+            if (toolStripSortByStatus.Checked)
+                SortByStatus(null);
+            else
+                SortByGroup(null);
+
+            places.Clear();
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
         {
-            // ignore the unauthorized exception, since we're handling that error in another method.
-            if (e.Exception is UnauthorizedException)
-                return;
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred), new object[] { sender, e });
+            }
+            else
+            {
 
-            MessageBox.Show(e.Exception.ToString(), "Nameserver exception");
+                // ignore the unauthorized exception, since we're handling that error in another method.
+                if (e.Exception is UnauthorizedException)
+                    return;
+
+                MessageBox.Show(e.Exception.ToString(), "Nameserver exception");
+            }
         }
 
         private void NameserverProcessor_ConnectingException(object sender, ExceptionEventArgs e)

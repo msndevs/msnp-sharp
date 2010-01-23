@@ -375,11 +375,16 @@ namespace MSNPSharp
         /// <summary>
         /// The online status of contact.
         /// </summary>
-        public PresenceStatus Status
+        public virtual PresenceStatus Status
         {
             get
             {
                 return status;
+            }
+
+            set
+            {
+                throw new NotImplementedException("This property is real-only for base class. Must be override in subclass.");
             }
         }
 
@@ -881,24 +886,36 @@ namespace MSNPSharp
 
         internal void SetStatus(PresenceStatus newStatus)
         {
+            //Becareful deadlock!
+
+            PresenceStatus currentStatus = PresenceStatus.Unknown;
+
             lock (syncObject)
             {
-                if (status != newStatus)
-                {
-                    PresenceStatus oldStatus = status;
-                    status = newStatus;
-
-                    // raise an event									
-                    OnStatusChanged(oldStatus);
-
-                    // raise the online/offline events
-                    if (oldStatus == PresenceStatus.Offline)
-                        OnContactOnline(oldStatus);
-
-                    if (newStatus == PresenceStatus.Offline)
-                        OnContactOffline(oldStatus);
-                }
+                currentStatus = status;
             }
+
+            if (currentStatus != newStatus)
+            {
+                PresenceStatus oldStatus = currentStatus;
+
+                lock (syncObject)
+                {
+                    
+                    status = newStatus;
+                }
+
+                // raise an event									
+                OnStatusChanged(oldStatus);
+
+                // raise the online/offline events
+                if (oldStatus == PresenceStatus.Offline)
+                    OnContactOnline(oldStatus);
+
+                if (newStatus == PresenceStatus.Offline)
+                    OnContactOffline(oldStatus);
+            }
+
         }
 
         /// <summary>

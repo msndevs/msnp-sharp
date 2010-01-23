@@ -426,7 +426,6 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().ToString());
                 }
 
-                System.Threading.Thread.CurrentThread.Join(100);
                 Close();
             }
         }
