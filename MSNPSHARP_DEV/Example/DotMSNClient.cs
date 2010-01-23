@@ -882,7 +882,7 @@ namespace MSNPSharpClient
                     Messenger.Nameserver.ContactList.Owner.SignoutFromEverywhere();
                     comboPlaces.Visible = false;
                 }
-                else
+                else if (comboPlaces.SelectedIndex >= 2)
                 {
 
                     Messenger.Nameserver.ContactList.Owner.SignoutFrom(places[comboPlaces.SelectedIndex - 2]);  //places does not contain the current places.
