@@ -1955,12 +1955,15 @@ namespace MSNPSharp
                 member = new PassportMember();
                 PassportMember passportMember = member as PassportMember;
                 passportMember.PassportName = contact.Mail;
+                passportMember.State = MemberState.Accepted;
+                passportMember.Type = MembershipType.Passport;
             }
             else if (contact.ClientType == ClientType.EmailMember)
             {
                 member = new EmailMember();
                 EmailMember emailMember = member as EmailMember;
                 emailMember.State = MemberState.Accepted;
+                emailMember.Type = MembershipType.Email;
                 emailMember.Email = contact.Mail;
                 emailMember.Annotations = new Annotation[] { new Annotation() };
                 emailMember.Annotations[0].Name = AnnotationNames.MSN_IM_BuddyType;
@@ -1971,6 +1974,7 @@ namespace MSNPSharp
                 member = new PhoneMember();
                 PhoneMember phoneMember = member as PhoneMember;
                 phoneMember.State = MemberState.Accepted;
+                phoneMember.Type = MembershipType.Phone;
                 phoneMember.PhoneNumber = contact.Mail;
             }
 
@@ -1992,7 +1996,7 @@ namespace MSNPSharp
                     }
 
                     contact.AddToList(list);
-                    AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), member);
+                    AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), member, Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, list));
 
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
@@ -2070,7 +2074,7 @@ namespace MSNPSharp
                     }
 
                     contact.RemoveFromList(list);
-                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
+                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
 
                     if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
@@ -2106,7 +2110,8 @@ namespace MSNPSharp
                 case ClientType.PassportMember:
 
                     deleteMember = new PassportMember();
-
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Passport : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
                         (deleteMember as PassportMember).PassportName = contact.Mail;
@@ -2116,7 +2121,8 @@ namespace MSNPSharp
                 case ClientType.EmailMember:
 
                     deleteMember = new EmailMember();
-
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Email : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
                         (deleteMember as EmailMember).Email = contact.Mail;
@@ -2126,7 +2132,8 @@ namespace MSNPSharp
                 case ClientType.PhoneMember:
 
                     deleteMember = new PhoneMember();
-
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Phone : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
                         (deleteMember as PhoneMember).PhoneNumber = contact.Mail;
