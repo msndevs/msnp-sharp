@@ -235,7 +235,17 @@ namespace MSNPSharp.IO
             return null;
         }
 
-        public void AddMemberhip(string servicetype, string account, ClientType type, string memberrole, BaseMember member)
+        /// <summary>
+        /// Add a member to the underlying membership data structure.
+        /// </summary>
+        /// <param name="servicetype"></param>
+        /// <param name="account"></param>
+        /// <param name="type"></param>
+        /// <param name="memberrole"></param>
+        /// <param name="member"></param>
+        /// <param name="scene"></param>
+        /// <remarks>Since AllowList and BlockList are mutally exclusive, adding a member to AllowList will lead to the remove of BlockList, revese is as the same.</remarks>
+        internal void AddMemberhip(string servicetype, string account, ClientType type, string memberrole, BaseMember member, Scenario scene)
         {
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             if (ms != null)
@@ -245,9 +255,25 @@ namespace MSNPSharp.IO
 
                 ms[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)] = member;
             }
+
+            switch (scene)
+            {
+                case Scenario.DeltaRequest:
+                    if (memberrole == MemberRole.Allow)
+                    {
+                        RemoveMemberhip(servicetype, account, type, MemberRole.Block, Scenario.InternalCall);
+                    }
+
+                    if (memberrole == MemberRole.Block)
+                    {
+                        RemoveMemberhip(servicetype, account, type, MemberRole.Allow, Scenario.InternalCall);
+                    }
+
+                    break;
+            }
         }
 
-        public void RemoveMemberhip(string servicetype, string account, ClientType type, string memberrole)
+        internal void RemoveMemberhip(string servicetype, string account, ClientType type, string memberrole, Scenario scene)
         {
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             if (ms != null)
@@ -668,208 +694,16 @@ namespace MSNPSharp.IO
 
                             if (null != serviceType.Memberships)
                             {
-                                #region Messenger memberhips
-
                                 if (ServiceFilterType.Messenger == serviceType.Info.Handle.Type)
                                 {
-                                    foreach (Membership membership in serviceType.Memberships)
-                                    {
-                                        if (null != membership.Members)
-                                        {
-                                            string memberrole = membership.MemberRole;
-                                            List<BaseMember> members = new List<BaseMember>(membership.Members);
-                                            members.Sort(CompareBaseMembers);
 
-                                            foreach (BaseMember bm in members)
-                                            {
-                                                long cid = 0;
-                                                string account = null;
-                                                ClientType type = ClientType.None;
-
-                                                if (bm is PassportMember)
-                                                {
-                                                    type = ClientType.PassportMember;
-                                                    PassportMember pm = bm as PassportMember;
-                                                    if (!pm.IsPassportNameHidden)
-                                                    {
-                                                        account = pm.PassportName;
-                                                    }
-                                                    cid = Convert.ToInt64(pm.CID);
-                                                }
-                                                else if (bm is EmailMember)
-                                                {
-                                                    type = ClientType.EmailMember;
-                                                    account = ((EmailMember)bm).Email;
-                                                }
-                                                else if (bm is PhoneMember)
-                                                {
-                                                    type = ClientType.PhoneMember;
-                                                    account = ((PhoneMember)bm).PhoneNumber;
-                                                }
-                                                else if (bm is CircleMember)
-                                                {
-                                                    type = ClientType.CircleMember;
-                                                    account = ((CircleMember)bm).CircleId;
-                                                    if (!circlesMembership.ContainsKey(memberrole))
-                                                    {
-                                                        circlesMembership.Add(memberrole, new List<CircleMember>(0));
-                                                    }
-                                                    circlesMembership[memberrole].Add(bm as CircleMember);
-                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, serviceType.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
-                                                }
-
-                                                if (account != null && type != ClientType.None)
-                                                {
-                                                    account = account.ToLowerInvariant();
-                                                    MSNLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
-
-                                                    if (bm.Deleted)
-                                                    {
-                                                        #region Members deleted in other clients.
-
-                                                        if (type != ClientType.CircleMember)
-                                                        {
-                                                            if (HasMemberhip(updatedService.ServiceType, account, type, memberrole) &&
-                                                                WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged)
-                                                                < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
-                                                            {
-                                                                RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
-                                                            }
-
-                                                            if (NSMessageHandler.ContactList.HasContact(account, type))
-                                                            {
-                                                                Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
-                                                                contact.CID = cid;
-                                                                if (contact.HasLists(msnlist))
-                                                                {
-                                                                    contact.RemoveFromList(msnlist);
-
-                                                                    // Fire ReverseRemoved
-                                                                    if (msnlist == MSNLists.ReverseList)
-                                                                    {
-                                                                        NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
-                                                                    }
-
-                                                                    // Send a list remove event
-                                                                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
-                                                                }
-                                                            }
-                                                        }
-
-                                                        #endregion
-
-                                                    }
-                                                    else
-                                                    {
-                                                        #region Members added in other clients.
-
-                                                        if (type != ClientType.CircleMember)
-                                                        {
-                                                            if (false == MembershipList[updatedService.ServiceType].Memberships.ContainsKey(memberrole) ||
-                                                                /*new*/ false == MembershipList[updatedService.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)) ||
-                                                                /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
-                                                                > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[updatedService.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged))
-                                                            {
-                                                                AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
-                                                            }
-
-                                                            string displayname = bm.DisplayName == null ? account : bm.DisplayName;
-                                                            Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                                                            contact.CID = cid;
-
-                                                            if (!contact.HasLists(msnlist))
-                                                            {
-                                                                contact.AddToList(msnlist);
-
-                                                                // Don't fire ReverseAdded(contact.Pending) here... It fires 2 times:
-                                                                // The first is OnConnect after abSynchronized
-                                                                // The second is here, not anymore here :)
-                                                                // The correct place is in OnADLReceived.
-
-                                                                // Send a list add event
-                                                                NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
-                                                            }
-                                                        }
-
-                                                        #endregion
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                                    ProcessMessengerServiceMemberships(serviceType, ref updatedService);
                                 }
-                                #endregion
-
-                                #region ~Messenger
                                 else
                                 {
-                                    foreach (Membership membership in serviceType.Memberships)
-                                    {
-                                        if (null != membership.Members)
-                                        {
-                                            string memberrole = membership.MemberRole;
-                                            List<BaseMember> members = new List<BaseMember>(membership.Members);
-                                            members.Sort(CompareBaseMembers);
-                                            foreach (BaseMember bm in members)
-                                            {
-                                                string account = null;
-                                                ClientType type = ClientType.None;
-
-                                                switch (bm.Type)
-                                                {
-                                                    case MembershipType.Passport:
-                                                        type = ClientType.PassportMember;
-                                                        PassportMember pm = bm as PassportMember;
-                                                        if (!pm.IsPassportNameHidden)
-                                                        {
-                                                            account = pm.PassportName;
-                                                        }
-                                                        break;
-
-                                                    case MembershipType.Email:
-                                                        type = ClientType.EmailMember;
-                                                        account = ((EmailMember)bm).Email;
-                                                        break;
-
-                                                    case MembershipType.Phone:
-                                                        type = ClientType.PhoneMember;
-                                                        account = ((PhoneMember)bm).PhoneNumber;
-                                                        break;
-
-                                                    case MembershipType.Role:
-                                                    case MembershipType.Service:
-                                                    case MembershipType.Everyone:
-                                                    case MembershipType.Partner:
-                                                        account = bm.Type + "/" + bm.MembershipId;
-                                                        break;
-
-                                                    case MembershipType.Domain:
-                                                        account = ((DomainMember)bm).DomainName;
-                                                        break;
-
-                                                    case MembershipType.Circle:
-                                                        type = ClientType.CircleMember;
-                                                        account = ((CircleMember)bm).CircleId;
-                                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, serviceType.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
-                                                        break;
-                                                }
-
-                                                if (account != null)
-                                                {
-                                                    if (bm.Deleted)
-                                                    {
-                                                        RemoveMemberhip(updatedService.ServiceType, account, type, memberrole);
-                                                    }
-                                                    else
-                                                    {
-                                                        AddMemberhip(updatedService.ServiceType, account, type, memberrole, bm);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                                    ProcessOtherMemberships(serviceType, ref updatedService);
                                 }
-                                #endregion
+
                             }
 
                             // Update service.LastChange
@@ -880,6 +714,209 @@ namespace MSNPSharp.IO
             }
 
             return this;
+        }
+
+        private void ProcessMessengerServiceMemberships(ServiceType messengerService, ref Service messengerServiceClone)
+        {
+            #region Messenger Service memberhips
+
+            foreach (Membership membership in messengerService.Memberships)
+            {
+                if (null != membership.Members)
+                {
+                    string memberrole = membership.MemberRole;
+                    List<BaseMember> members = new List<BaseMember>(membership.Members);
+                    members.Sort(CompareBaseMembers);
+
+                    foreach (BaseMember bm in members)
+                    {
+                        long cid = 0;
+                        string account = null;
+                        ClientType type = ClientType.None;
+
+                        if (bm is PassportMember)
+                        {
+                            type = ClientType.PassportMember;
+                            PassportMember pm = bm as PassportMember;
+                            if (!pm.IsPassportNameHidden)
+                            {
+                                account = pm.PassportName;
+                            }
+                            cid = Convert.ToInt64(pm.CID);
+                        }
+                        else if (bm is EmailMember)
+                        {
+                            type = ClientType.EmailMember;
+                            account = ((EmailMember)bm).Email;
+                        }
+                        else if (bm is PhoneMember)
+                        {
+                            type = ClientType.PhoneMember;
+                            account = ((PhoneMember)bm).PhoneNumber;
+                        }
+                        else if (bm is CircleMember)
+                        {
+                            type = ClientType.CircleMember;
+                            account = ((CircleMember)bm).CircleId;
+                            if (!circlesMembership.ContainsKey(memberrole))
+                            {
+                                circlesMembership.Add(memberrole, new List<CircleMember>(0));
+                            }
+                            circlesMembership[memberrole].Add(bm as CircleMember);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, messengerService.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
+                        }
+
+                        if (account != null && type != ClientType.None)
+                        {
+                            account = account.ToLowerInvariant();
+                            MSNLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
+
+                            if (bm.Deleted)
+                            {
+                                #region Members deleted in other clients.
+
+                                if (type != ClientType.CircleMember)
+                                {
+                                    if (HasMemberhip(messengerServiceClone.ServiceType, account, type, memberrole) &&
+                                        WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged)
+                                        < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
+                                    {
+                                        RemoveMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
+                                    }
+
+                                    if (NSMessageHandler.ContactList.HasContact(account, type))
+                                    {
+                                        Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
+                                        contact.CID = cid;
+                                        if (contact.HasLists(msnlist))
+                                        {
+                                            contact.RemoveFromList(msnlist);
+
+                                            // Fire ReverseRemoved
+                                            if (msnlist == MSNLists.ReverseList)
+                                            {
+                                                NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
+                                            }
+
+                                            // Send a list remove event
+                                            NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
+                                        }
+                                    }
+                                }
+
+                                #endregion
+
+                            }
+                            else
+                            {
+                                #region Newly added memberships.
+
+                                if (type != ClientType.CircleMember)
+                                {
+
+                                    if (false == MembershipList[messengerServiceClone.ServiceType].Memberships.ContainsKey(memberrole) ||
+                                        /*new*/ false == MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)) ||
+                                        /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
+                                        > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged))
+                                    {
+                                        AddMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
+                                    }
+
+                                    string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                                    Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                                    contact.CID = cid;
+
+                                    if (!contact.HasLists(msnlist))
+                                    {
+                                        contact.AddToList(msnlist);
+                                        contact.Lists ^= Contact.GetConflictLists(contact.Lists, msnlist);
+                                        // Don't fire ReverseAdded(contact.Pending) here... It fires 2 times:
+                                        // The first is OnConnect after abSynchronized
+                                        // The second is here, not anymore here :)
+                                        // The correct place is in OnADLReceived.
+
+                                        // Send a list add event
+                                        NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
+                                    }
+                                }
+
+                                #endregion
+                            }
+                        }
+                    }
+                }
+            }
+
+            #endregion
+        }
+
+        private void ProcessOtherMemberships(ServiceType service, ref Service serviceClone)
+        {
+            foreach (Membership membership in service.Memberships)
+            {
+                if (null != membership.Members)
+                {
+                    string memberrole = membership.MemberRole;
+                    List<BaseMember> members = new List<BaseMember>(membership.Members);
+                    members.Sort(CompareBaseMembers);
+                    foreach (BaseMember bm in members)
+                    {
+                        string account = null;
+                        ClientType type = ClientType.None;
+
+                        switch (bm.Type)
+                        {
+                            case MembershipType.Passport:
+                                type = ClientType.PassportMember;
+                                PassportMember pm = bm as PassportMember;
+                                if (!pm.IsPassportNameHidden)
+                                {
+                                    account = pm.PassportName;
+                                }
+                                break;
+
+                            case MembershipType.Email:
+                                type = ClientType.EmailMember;
+                                account = ((EmailMember)bm).Email;
+                                break;
+
+                            case MembershipType.Phone:
+                                type = ClientType.PhoneMember;
+                                account = ((PhoneMember)bm).PhoneNumber;
+                                break;
+
+                            case MembershipType.Role:
+                            case MembershipType.Service:
+                            case MembershipType.Everyone:
+                            case MembershipType.Partner:
+                                account = bm.Type + "/" + bm.MembershipId;
+                                break;
+
+                            case MembershipType.Domain:
+                                account = ((DomainMember)bm).DomainName;
+                                break;
+
+                            case MembershipType.Circle:
+                                type = ClientType.CircleMember;
+                                account = ((CircleMember)bm).CircleId;
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, service.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
+                                break;
+                        }
+
+                        if (account != null)
+                        {
+                            if (bm.Deleted)
+                            {
+                                RemoveMemberhip(serviceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
+                            }
+                            else
+                            {
+                                AddMemberhip(serviceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private static int CompareBaseMembers(BaseMember x, BaseMember y)

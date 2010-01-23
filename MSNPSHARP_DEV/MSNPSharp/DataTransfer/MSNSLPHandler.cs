@@ -811,9 +811,9 @@ namespace MSNPSharp.DataTransfer
             {
                 properties.DataType = DataTransferType.Emoticon;
                 transferSession.MessageFooter = P2PConst.CustomEmoticonFooter11;
-
-                AppID = transferSession.MessageFooter.ToString();
                 transferSession.DataStream = msnObject.OpenStream();
+                AppID = transferSession.MessageFooter.ToString();
+
             }
             else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
             {
@@ -835,7 +835,7 @@ namespace MSNPSharp.DataTransfer
             if (string.IsNullOrEmpty(msnObject.OriginalContext))
             {
                 //This is a default displayImage or any object created by the client programmer.
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[SendInitation] msnObject does not have OriginalContext.");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[SendInvitation] msnObject does not have OriginalContext.");
                 throw new InvalidOperationException("Parameter msnObject does not have valid OriginalContext property.");
             }
 

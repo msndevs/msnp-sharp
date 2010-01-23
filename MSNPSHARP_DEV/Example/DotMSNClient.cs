@@ -1208,7 +1208,7 @@ namespace MSNPSharpClient
         {
             if ((e.Button == MouseButtons.Left) && (e.Node.Level != 0))
             {
-                Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
+                Contact selectedContact = treeViewFavoriteList.SelectedNode.Tag as Contact;
 
                 if (selectedContact != null)
                 {

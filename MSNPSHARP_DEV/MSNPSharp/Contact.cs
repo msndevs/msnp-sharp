@@ -1115,6 +1115,11 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Add a membership list for this contact.
+        /// </summary>
+        /// <param name="list"></param>
+        /// <remarks>Since AllowList and BlockList are mutally exclusive, adding a member to AllowList will lead to the remove of BlockList, revese is as the same.</remarks>
         internal void AddToList(MSNLists list)
         {
             if ((lists & list) == MSNLists.None)
@@ -1125,9 +1130,10 @@ namespace MSNPSharp
                 {
                     OnContactBlocked();
                 }
+                
+                NotifyManager();
             }
 
-            NotifyManager();
         }
 
         internal void AddSibling(Contact contact)
@@ -1168,9 +1174,11 @@ namespace MSNPSharp
                 {
                     OnContactUnBlocked();
                 }
+                
+                NotifyManager();
             }
 
-            NotifyManager();
+
         }
 
         internal void RemoveFromList()
@@ -1182,6 +1190,23 @@ namespace MSNPSharp
 
                 NotifyManager();
             }
+        }
+
+        internal static MSNLists GetConflictLists(MSNLists currentLists, MSNLists newLists)
+        {
+            MSNLists conflictLists = MSNLists.None;
+
+            if ((currentLists & MSNLists.AllowedList) != MSNLists.None && (newLists & MSNLists.BlockedList) != MSNLists.None)
+            {
+                conflictLists |= MSNLists.AllowedList;
+            }
+
+            if ((currentLists & MSNLists.BlockedList) != MSNLists.None && (newLists & MSNLists.AllowedList) != MSNLists.None)
+            {
+                conflictLists |= MSNLists.BlockedList;
+            }
+
+            return conflictLists;
         }
 
         internal static string MakeHash(string account, ClientType type, Guid abId)

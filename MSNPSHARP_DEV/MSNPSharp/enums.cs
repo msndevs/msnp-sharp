@@ -1360,7 +1360,11 @@ namespace MSNPSharp
         /// <summary>
         /// Send the initial ADL command for circles.
         /// </summary>
-        SendInitialCirclesADL = 64
+        SendInitialCirclesADL = 64,
+
+        ContactServeAPI = 128,
+
+        InternalCall = 256
     }
 
     /// <summary>
