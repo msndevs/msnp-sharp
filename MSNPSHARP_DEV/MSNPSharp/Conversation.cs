@@ -153,19 +153,21 @@ namespace MSNPSharp
         #region Members
 
         private Messenger _messenger = null;
-        private SBMessageHandler _switchboard = new SBMessageHandler();
-        private YIMMessageHandler _yimHandler = new YIMMessageHandler();
-        private bool expired = false;
+        private SBMessageHandler _switchboard = null;
+        private YIMMessageHandler _yimHandler = null;
         private bool sbInitialized = false;
         private bool yimInitialized = false;
         private bool ended = false;
         private bool ending = false;
+        private bool canSendMessage = false;
 
         private bool autoRequestEmoticons = true;
         private bool autoKeepAlive = false;
 
-        private List<Contact> _leftContacts = new List<Contact>(0);
+        private List<Contact> _pendingInviteContacts = new List<Contact>(0);
         private List<Contact> _contacts = new List<Contact>(0);
+        private Contact _firstContact = null;
+        private object _syncObject = new object();
 
         private Queue<MessageObject> _messageQueues = new Queue<MessageObject>(0);
         private ConversationType _type = ConversationType.None;
@@ -189,14 +191,30 @@ namespace MSNPSharp
 
         }
 
-        private void AddContact(Contact contact)
+        private bool AddContact(Contact contact)
         {
             lock (_contacts)
             {
                 if (_contacts.Contains(contact))
-                    return;
+                    return false; ;
                 _contacts.Add(contact);
             }
+
+            return true;
+        }
+
+        private bool RemoveContact(Contact contact)
+        {
+            lock (_contacts)
+            {
+                return _contacts.Remove(contact);
+            }
+        }
+
+        private void ClearContacts()
+        {
+            lock (_contacts)
+                _contacts.Clear();
         }
 
         private static void KeepAlive(object state)
@@ -206,7 +224,7 @@ namespace MSNPSharp
             {
                 if ((convers.Type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
                 {
-                    if (convers.sbInitialized && !convers.Expired && !convers.Ended)
+                    if (convers.sbInitialized && !convers.Ended)
                     {
                         convers._switchboard.SendKeepAliveMessage();
                     }
@@ -216,70 +234,88 @@ namespace MSNPSharp
 
         private void IniCommonSettings()
         {
+            if (_switchboard == null)
+            {
+                _switchboard = new SBMessageHandler(Messenger.Nameserver);
+
+            }
+
+            if (_yimHandler == null)
+            {
+                _yimHandler = new YIMMessageHandler(Messenger.Nameserver);
+
+            }
+
             //Must call after _switchboard and _yimHandler have been initialized.
             AttachEvents(_switchboard);
             AttachEvents(_yimHandler);
+
+            _messenger.Conversations.Add(this);
         }
 
-        private void LeftContactEnqueue(Contact leftcontact)
+        private bool IsPendingContact(Contact contact)
         {
-            lock (_leftContacts)
+            lock (_pendingInviteContacts)
             {
-                if (!_leftContacts.Contains(leftcontact))
-                    _leftContacts.Add(leftcontact);
+                foreach (Contact pendingContact in _pendingInviteContacts)
+                {
+                    if (pendingContact.IsSibling(contact))
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        private void PendingContactEnqueue(Contact pendingContact)
+        {
+            lock (_pendingInviteContacts)
+            {
+                if (!_pendingInviteContacts.Contains(pendingContact))
+                    _pendingInviteContacts.Add(pendingContact);
             }
         }
 
         private void MessageEnqueue(MessageObject message)
         {
-            lock (_leftContacts)
+            lock (_messageQueues)
             {
-                lock (_messageQueues)
-                {
-                    foreach (Contact contact in _leftContacts)
-                    {
-                        _messageQueues.Enqueue(message);
-                    }
-                }
+                _messageQueues.Enqueue(message);
             }
         }
 
-        private void SwitchBoardReInvite()
+        private void SwitchBoardInvitePendingContacts()
         {
-            List<Contact> leftcontacts = new List<Contact>(_leftContacts);
-            foreach (Contact contact in leftcontacts)
+            List<Contact> pendingInviteContacts = new List<Contact>(_pendingInviteContacts);
+            foreach (Contact contact in pendingInviteContacts)
             {
                 if (contact.Status == PresenceStatus.Offline)
                 {
-                    lock (_leftContacts)
+                    lock (_pendingInviteContacts)
                     {
-                        _leftContacts.Remove(contact);
-                    }
-
-                    foreach (MessageObject msgobj in _messageQueues)
-                    {
-                        if (msgobj is TextMessageObject && _switchboard.NSMessageHandler != null)
-                        {
-                            _switchboard.NSMessageHandler.OIMService.SendOIMMessage(contact, msgobj.InnerObject as TextMessage);
-
-                        }
+                        _pendingInviteContacts.Remove(contact);
                     }
                 }
             }
 
-            leftcontacts = new List<Contact>(_leftContacts);
-            foreach (Contact contact in leftcontacts)
+            pendingInviteContacts = new List<Contact>(_pendingInviteContacts);
+            foreach (Contact contact in pendingInviteContacts)
             {
-                _switchboard.Invite(contact);
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard " + _switchboard.SessionHash + " inviting user: " + contact.Mail);
+                if (contact.Status != PresenceStatus.Offline)
+                {
+                    _switchboard.Invite(contact);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard " + _switchboard.SessionHash + " inviting user: " + contact.Mail);
+                }
             }
         }
 
         private void AttachEvents(SBMessageHandler switchboard)
         {
+            DetachEvents(switchboard);
+
             switchboard.AllContactsLeft += new EventHandler<EventArgs>(OnAllContactsLeft);
-            switchboard.ContactJoined += new EventHandler<ContactEventArgs>(OnContactJoined);
-            switchboard.ContactLeft += new EventHandler<ContactEventArgs>(OnContactLeft);
+            switchboard.ContactJoined += new EventHandler<ContactConversationEventArgs>(OnContactJoined);
+            switchboard.ContactLeft += new EventHandler<ContactConversationEventArgs>(OnContactLeft);
             switchboard.EmoticonDefinitionReceived += new EventHandler<EmoticonDefinitionEventArgs>(OnEmoticonDefinitionReceived);
             switchboard.ExceptionOccurred += new EventHandler<ExceptionEventArgs>(OnExceptionOccurred);
             switchboard.NudgeReceived += new EventHandler<ContactEventArgs>(OnNudgeReceived);
@@ -314,7 +350,7 @@ namespace MSNPSharp
             {
                 if ((bool)param == false)
                 {
-                    Switchboard.Left();
+                    Switchboard.Close(false);
                 }
                 
             }
@@ -325,6 +361,36 @@ namespace MSNPSharp
             }
 
             sbInitialized = false;
+        }
+
+        private Contact GetFirstJoinedContact()
+        {
+            lock (Contacts)
+            {
+                foreach (Contact contact in Contacts)
+                {
+                    if (!contact.IsSibling(Messenger.ContactList.Owner))
+                    {
+                        return contact;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private bool SetFirstJoinedContact(Contact firstJoinedContact)
+        {
+            lock (_syncObject)
+            {
+                if (_firstContact == null)
+                {
+                    _firstContact = firstJoinedContact;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         #endregion
@@ -341,6 +407,23 @@ namespace MSNPSharp
 
         protected virtual void OnConversationEnded(Conversation conversation)
         {
+            if (Ended) return;
+            Ended = true;
+
+            canSendMessage = false;
+            if (ending)
+            {
+                DetachEvents(_switchboard);
+                DetachEvents(_yimHandler);
+                ending = false;
+            }
+
+            
+            ClearContacts();
+
+            lock (_pendingInviteContacts)
+                _pendingInviteContacts.Clear();
+
             if (ConversationEnded != null)
             {
                 ConversationEnded(this, new ConversationEndEventArgs(conversation));
@@ -376,7 +459,7 @@ namespace MSNPSharp
         {
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
-                SwitchBoardReInvite();
+                SwitchBoardInvitePendingContacts();
             }
 
             if (SessionEstablished != null)
@@ -395,12 +478,10 @@ namespace MSNPSharp
             if (SessionClosed != null)
                 SessionClosed(this, e);
 
-            if (ending)
-            {
-                DetachEvents(_switchboard);
-                DetachEvents(_yimHandler);
-                ending = false;
-            }
+            Messenger.P2PHandler.RemoveSwitchboardSession(_switchboard);
+            Messenger.P2PHandler.RemoveSwitchboardSession(_yimHandler);
+
+            OnConversationEnded(this);
         }
 
         protected virtual void OnServerErrorReceived(object sender, MSNErrorEventArgs e)
@@ -434,7 +515,7 @@ namespace MSNPSharp
                 e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
 
                 // create a session and send the invitation
-                P2PMessageSession session = Messenger.Nameserver.P2PHandler.GetSession(Messenger.Nameserver.ContactList.Owner, e.Sender);
+                P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.ContactList.Owner, e.Sender);
 
                 object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
                 if (handlerObject != null)
@@ -464,45 +545,60 @@ namespace MSNPSharp
                 EmoticonDefinitionReceived(this, e);
         }
 
-        protected virtual void OnContactLeft(object sender, ContactEventArgs e)
+        protected virtual void OnContactLeft(object sender, ContactConversationEventArgs e)
         {
-            LeftContactEnqueue(e.Contact);
+            if (e.Palce != Guid.Empty)
+                return;
+
+            RemoveContact(e.Contact);
+
             if (ContactLeft != null)
                 ContactLeft(this, e);
         }
 
-        protected virtual void OnContactJoined(object sender, ContactEventArgs e)
+        protected virtual void OnContactJoined(object sender, ContactConversationEventArgs e)
         {
-            AddContact(e.Contact);
-            lock (_leftContacts)
+            if (e.Palce != Guid.Empty)
             {
-                if (_leftContacts.Contains(e.Contact))
-                    _leftContacts.Remove(e.Contact);
-                if (_leftContacts.Count == 0)
+                //Wait until contacts from all locations have joined.
+                return;
+            }
+
+            if (!AddContact(e.Contact))
+                return;
+
+            lock (_pendingInviteContacts)
+                _pendingInviteContacts.Remove(e.Contact);
+
+            canSendMessage = true;
+
+            if (!e.Contact.IsSibling(Messenger.ContactList.Owner))
+            {
+                SetFirstJoinedContact(e.Contact);
+            }
+
+            lock (_messageQueues)
+            {
+                while (_messageQueues.Count > 0)
                 {
-                    lock (_messageQueues)
+                    MessageObject msgobj = _messageQueues.Dequeue();
+                    if (msgobj is TextMessageObject)
                     {
-                        while (_messageQueues.Count > 0)
-                        {
-                            MessageObject msgobj = _messageQueues.Dequeue();
-                            if (msgobj is TextMessageObject)
-                            {
-                                SendTextMessage(msgobj.InnerObject as TextMessage);
-                            }
+                        SendTextMessage(msgobj.InnerObject as TextMessage);
+                    }
 
-                            if (msgobj is NudgeObject)
-                            {
-                                SendNudge();
-                            }
+                    if (msgobj is NudgeObject)
+                    {
+                        SendNudge();
+                    }
 
-                            if (msgobj is EmoticonObject)
-                            {
-                                SendEmoticonDefinitions(msgobj.InnerObject as List<Emoticon>, (msgobj as EmoticonObject).Type);
-                            }
-                        }
+                    if (msgobj is EmoticonObject)
+                    {
+                        SendEmoticonDefinitions(msgobj.InnerObject as List<Emoticon>, (msgobj as EmoticonObject).Type);
                     }
                 }
             }
+
 
             if (ContactJoined != null)
                 ContactJoined(this, e);
@@ -522,13 +618,18 @@ namespace MSNPSharp
         /// <exception cref="InvalidOperationException">The current conversation is not expired.</exception>
         protected virtual Conversation ReCreate()
         {
-            if (!Expired)
+            if (canSendMessage || (!Ended) || (sbInitialized || yimInitialized))
                 return this;
 
+            if (_firstContact.Status == PresenceStatus.Offline)
+            {
+                throw new InvalidOperationException("Contact " + _firstContact.Mail + " not online, please send offline message instead.");
+            }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
-                Messenger.Nameserver.RequestSwitchboard(_switchboard, Messenger);
+                Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
+
                 sbInitialized = true;
             }
 
@@ -537,12 +638,12 @@ namespace MSNPSharp
                 yimInitialized = true;  //For further use.
             }
 
-            expired = false;
+            Ended = false;
 
-            foreach (Contact contact in _leftContacts)
-            {
-                Invite(contact);
-            }
+
+            //This is a very important priciple:
+            //If all contacts left, we try to re-invite the first contact ONLY.
+            PendingContactEnqueue(_firstContact);
 
             return this;
         }
@@ -576,11 +677,11 @@ namespace MSNPSharp
         /// <summary>
         /// Fired when a contact joins. In case of a conversation with two people in it this event is called with the remote contact specified in the event argument.
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactJoined;
+        public event EventHandler<ContactConversationEventArgs> ContactJoined;
         /// <summary>
         /// Fired when a contact leaves the conversation.
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactLeft;
+        public event EventHandler<ContactConversationEventArgs> ContactLeft;
 
         /// <summary>
         /// Fired when a message is received from any of the other contacts in the conversation.
@@ -650,22 +751,22 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Indicates whether all contacts in conversation have left.<br/>
-        /// A YIM conversation will never expired. <br/>
-        /// A switchboard conversation expired after all contacts left.
-        /// </summary>
-        public bool Expired
-        {
-            get { return expired; }
-        }
-
-        /// <summary>
         /// Indicates whether the conversation is ended by user.<br/>
         /// If a conversation is ended, it can't be used to send any message.
         /// </summary>
         public bool Ended
         {
-            get { return ended; }
+            get 
+            {
+                lock (_syncObject)
+                    return ended;
+            }
+
+            internal set
+            {
+                lock (_syncObject)
+                    ended = value;
+            }
         }
 
         /// <summary>
@@ -706,7 +807,7 @@ namespace MSNPSharp
                     throw new InvalidOperationException("Conversation ended.");
                 }
 
-                if (Expired || (_type & ConversationType.YIM) == ConversationType.YIM)
+                if ((_type & ConversationType.YIM) == ConversationType.YIM)
                 {
                     //YIM handlers, expired handlers. Should I throw an exception here?
                     throw new NotSupportedException("Cannot set keep-alive property to true for this conversation type.");
@@ -765,21 +866,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The switchboard processor. Sends and receives messages over the switchboard connection
-        /// </summary>
-        public SocketMessageProcessor SwitchboardProcessor
-        {
-            get
-            {
-                return (SocketMessageProcessor)_switchboard.MessageProcessor;
-            }
-            set
-            {
-                _switchboard.MessageProcessor = value;
-            }
-        }
-
-        /// <summary>
         /// The switchboard handler. Handles incoming/outgoing messages.<br/>
         /// If the conversation ended, this property will be null.
         /// </summary>
@@ -823,7 +909,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="parent">The messenger object that requests the conversation.</param>
         /// <param name="sbHandler">The switchboard to interface to.</param>		
-        public Conversation(Messenger parent, SBMessageHandler sbHandler)
+        internal Conversation(Messenger parent, SBMessageHandler sbHandler)
         {
             if (sbHandler is YIMMessageHandler)
             {
@@ -865,32 +951,25 @@ namespace MSNPSharp
         /// <param name="type">Contact type</param>
         /// <exception cref="InvalidOperationException">Operating on an ended conversation.</exception>
         /// <exception cref="NotSupportedException">Inviting mutiple YIM users into a YIM conversation, invite YIM users to a switchboard conversation, or passport members are invited into YIM conversation.</exception>
-        public void Invite(string contactMail, ClientType type)
+        public SBMessageHandler Invite(string contactMail, ClientType type)
         {
-            if (Ended)
-            {
-                throw new InvalidOperationException("Conversation ended.");
-            }
-
-            if (Expired)
-            {
-                ReCreate();
-            }
-
-            if ((_type & ConversationType.YIM) == ConversationType.YIM && type != ClientType.EmailMember)
+            if ((_type & ConversationType.YIM) == ConversationType.YIM && 
+                type != ClientType.EmailMember)
             {
                 throw new NotSupportedException("Only Yahoo messenger users can be invited in a YIM conversation.");
             }
 
 
-            if ((_type & ConversationType.YIM) == ConversationType.YIM && type == ClientType.EmailMember)
+            if ((_type & ConversationType.YIM) == ConversationType.YIM && 
+                type == ClientType.EmailMember)
             {
                 if (_contacts.Count > 1)
                     throw new NotSupportedException("Mutiple user not supported in YIM conversation.");
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard &&
-                (type != ClientType.PassportMember && type != ClientType.LCS))
+                (type != ClientType.PassportMember && 
+                type != ClientType.LCS))
             {
                 throw new NotSupportedException("Only Passport members can be invited in a switchboard conversation.");
             }
@@ -915,71 +994,68 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Contact not on your contact list.");
             }
 
-            Contact contact = Messenger.ContactList.GetContact(contactMail, type);
-
-            if ((_type & ConversationType.YIM) == ConversationType.YIM)
+            Contact contact = Messenger.ContactList.GetContact(contactMail, type);  //Only contacts on default addressbook can join conversations.
+            if (contact.Status == PresenceStatus.Offline)
             {
-                _yimHandler.NSMessageHandler = Messenger.Nameserver;
-                _yimHandler.MessageProcessor = Messenger.Nameserver.MessageProcessor;
-
-                lock (Messenger.Nameserver.P2PHandler.SwitchboardSessions)
-                {
-                    if (!Messenger.Nameserver.P2PHandler.SwitchboardSessions.Contains(_yimHandler))
-                    {
-                        Messenger.Nameserver.P2PHandler.SwitchboardSessions.Add(_yimHandler);
-                    }
-                }
-
-                Messenger.Nameserver.MessageProcessor.RegisterHandler(_yimHandler);
-                yimInitialized = true;
-                if (!_yimHandler.Contacts.ContainsKey(contact))
-                {
-                    _yimHandler.Invite(contact);
-                }
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "YIM hanlder inviting user: " + contactMail);
-                return;
+                throw new InvalidOperationException("Contact " + contactMail + " not online, please send offline message instead.");
             }
 
-            if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
+            if (Ended)
             {
-                if (Switchboard.NSMessageHandler == null)
-                    Switchboard.NSMessageHandler = Messenger.Nameserver;
+                ReCreate();
+                PendingContactEnqueue(contact);  //Must added after recreate.
+            }
+            else
+            {
+                #region Initialize YIMHandler and invite.
 
-                foreach (Contact acc in _switchboard.Contacts.Keys)
+                if ((_type & ConversationType.YIM) == ConversationType.YIM)
                 {
-                    if (acc != Messenger.Nameserver.ContactList.Owner)  //MSNP18: owner in switch
+                    yimInitialized = true;
+                    if (!_yimHandler.HasContact(contact))
+                    {
+                        _yimHandler.Invite(contact);
+                    }
+
+                    return _yimHandler;
+                } 
+
+                #endregion
+
+                #region Initialize SBMessageHandler and invite.
+
+                if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
+                {
+
+                    if (!sbInitialized || (sbInitialized && !canSendMessage))
+                    {
+                        PendingContactEnqueue(contact);  //Enqueue the contact if user send message before it join.
+                        Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
+
+                        sbInitialized = true;
+                        return _switchboard;
+                    }
+
+                    bool inviteResult = _switchboard.Invite(contact);
+                    if (inviteResult && _switchboard.GetRosterUniqueUserCount() > 1)
                     {
                         _type |= ConversationType.MutipleUsers;
-                        break;
                     }
+                   
+
                 }
+                 #endregion
 
-                lock (Messenger.Nameserver.P2PHandler.SwitchboardSessions)
-                {
-                    if (!Messenger.Nameserver.P2PHandler.SwitchboardSessions.Contains(_switchboard))
-                    {
-                        Messenger.Nameserver.P2PHandler.SwitchboardSessions.Add(_switchboard);
-                    }
-                }
+                return _switchboard;
+            }
 
-                if (sbInitialized == false)
-                {
-                    LeftContactEnqueue(contact);  //Enqueue the contact if user send message before it join.
-                    Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
-
-                    sbInitialized = true;
-                    return;
-                }
-
-                if (Switchboard.Contacts.ContainsKey(contact) &&
-                    (Switchboard.Contacts[contact] == ContactConversationState.Left ||
-                    Switchboard.Contacts[contact] == ContactConversationState.Invited))
-                {
-                    LeftContactEnqueue(contact); //Enqueue the contact if user send message before it join.
-                }
-
-                Switchboard.Invite(contact);
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard inviting user: " + contactMail);
+            if ((_type & ConversationType.SwitchBoard) != ConversationType.None)
+            {
+                return _switchboard;
+            }
+            else
+            {
+                return _yimHandler;
             }
         }
 
@@ -989,9 +1065,9 @@ namespace MSNPSharp
         /// <param name="contact">The remote contact to invite.</param>
         /// <exception cref="InvalidOperationException">Operating on an expired conversation will get this exception.</exception>
         /// <exception cref="NotSupportedException">Inviting mutiple YIM users into a YIM conversation, invite YIM users to a switchboard conversation, or passport members are invited into YIM conversation.</exception>
-        public void Invite(Contact contact)
+        public SBMessageHandler Invite(Contact contact)
         {
-            Invite(contact.Mail, contact.ClientType);
+            return Invite(contact.Mail, contact.ClientType);
         }
 
         /// <summary>
@@ -1001,13 +1077,11 @@ namespace MSNPSharp
         {
             ending = true;
             EndSwitchBoardSession(false);
-            ended = true;
-
-            OnConversationEnded(this);
         }
 
-        public void EndSwitchBoardSession(bool remoteDisconnect)
+        private void EndSwitchBoardSession(bool remoteDisconnect)
         {
+
             if (sbInitialized)
             {
                 Thread endthread = new Thread(new ParameterizedThreadStart(SwitchBoardEnd));  //Avoid blocking the UI thread.
@@ -1016,14 +1090,12 @@ namespace MSNPSharp
 
             if (yimInitialized)
             {
-                YIMHandler.Left();
+                YIMHandler.Close(remoteDisconnect);
                 yimInitialized = false;
             }
 
-            expired = true;
             if (keepaliveTimer != null)
                 keepaliveTimer.Dispose();
-
         }
 
         /// <summary>
@@ -1037,13 +1109,16 @@ namespace MSNPSharp
                 return false;
             if ((_type & ConversationType.YIM) == ConversationType.YIM && contact.ClientType == ClientType.EmailMember)
             {
-                if (_yimHandler.Contacts.ContainsKey(contact))
+                if (_yimHandler.HasContact(contact))
                     return true;
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
-                if (_switchboard.Contacts.ContainsKey(contact))
+                if (_switchboard.HasContact(contact))
+                    return true;
+
+                if (IsPendingContact(contact))
                     return true;
             }
 
@@ -1064,12 +1139,13 @@ namespace MSNPSharp
 
             if (Ended)
             {
-                throw new InvalidOperationException("Conversation ended.");
+                ReCreate();
             }
 
-            if (Expired)
+            if (!canSendMessage)
             {
-                ReCreate();
+                MessageEnqueue(new TextMessageObject(message));
+                return;
             }
 
             if ((_type & ConversationType.YIM) == ConversationType.YIM)
@@ -1079,15 +1155,7 @@ namespace MSNPSharp
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
-                if (_leftContacts.Count > 0)
-                {
-                    MessageEnqueue(new TextMessageObject(message));
-                    SwitchBoardReInvite();
-                }
-                else
-                {
-                    _switchboard.SendTextMessage(message);
-                }
+                _switchboard.SendTextMessage(message);
             }
         }
 
@@ -1101,31 +1169,17 @@ namespace MSNPSharp
 
             if (Ended)
             {
-                throw new InvalidOperationException("Conversation ended.");
+                return;
             }
-
-            if (Expired)
-            {
-                ReCreate();
-            }
-
 
             if ((_type & ConversationType.YIM) == ConversationType.YIM)
             {
                 _yimHandler.SendTypingMessage();
             }
 
-            if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
+            if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard && canSendMessage)
             {
-                if (_leftContacts.Count > 0)
-                {
-                    MessageEnqueue(new UserTypingObject());
-                    SwitchBoardReInvite();
-                }
-                else
-                {
-                    _switchboard.SendTypingMessage();
-                }
+                _switchboard.SendTypingMessage();
             }
         }
 
@@ -1139,14 +1193,14 @@ namespace MSNPSharp
 
             if (Ended)
             {
-                throw new InvalidOperationException("Conversation ended.");
-            }
-
-            if (Expired)
-            {
                 ReCreate();
             }
 
+            if (!canSendMessage)
+            {
+                MessageEnqueue(new NudgeObject());
+                return;
+            }
 
             if ((_type & ConversationType.YIM) == ConversationType.YIM)
             {
@@ -1155,15 +1209,7 @@ namespace MSNPSharp
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
-                if (_leftContacts.Count > 0)
-                {
-                    MessageEnqueue(new NudgeObject());
-                    SwitchBoardReInvite();
-                }
-                else
-                {
-                    _switchboard.SendNudge();
-                }
+                _switchboard.SendNudge();
             }
         }
 
@@ -1180,12 +1226,13 @@ namespace MSNPSharp
             _type |= ConversationType.Chat;
             if (Ended)
             {
-                throw new InvalidOperationException("Conversation ended.");
+                ReCreate();
             }
 
-            if (Expired)
+            if (!canSendMessage)
             {
-                ReCreate();
+                MessageEnqueue(new EmoticonObject(emoticons, icontype));
+                return;
             }
 
             if ((_type & ConversationType.YIM) == ConversationType.YIM)
@@ -1195,15 +1242,7 @@ namespace MSNPSharp
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
-                if (_leftContacts.Count > 0)
-                {
-                    MessageEnqueue(new EmoticonObject(emoticons, icontype));
-                    SwitchBoardReInvite();
-                }
-                else
-                {
-                    _switchboard.SendEmoticonDefinitions(emoticons, icontype);
-                }
+                _switchboard.SendEmoticonDefinitions(emoticons, icontype);
             }
         }
 

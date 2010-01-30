@@ -105,7 +105,7 @@ namespace MSNPSharpClient
             return newconvers.HasContact(_firstInvitedContact);
         }
 
-        void Switchboard_NudgeReceived(object sender, ContactEventArgs e)
+        void NudgeReceived(object sender, ContactEventArgs e)
         {
             if (Visible == false)
             {
@@ -488,47 +488,57 @@ namespace MSNPSharpClient
         {
             if (converseation != null)
             {
-                converseation.TextMessageReceived -= Switchboard_TextMessageReceived;
-                converseation.SessionClosed -= Switchboard_SessionClosed;
-                converseation.ContactJoined -= Switchboard_ContactJoined;
-                converseation.ContactLeft -= Switchboard_ContactLeft;
-                converseation.NudgeReceived -= Switchboard_NudgeReceived;
+                converseation.TextMessageReceived -= TextMessageReceived;
+                converseation.SessionClosed -= SessionClosed;
+                converseation.ContactJoined -= ContactJoined;
+                converseation.ContactLeft -= ContactLeft;
+                converseation.NudgeReceived -= NudgeReceived;
 
-                converseation.MSNObjectDataTransferCompleted -= Conversation_MSNObjectDataTransferCompleted;
+                converseation.MSNObjectDataTransferCompleted -= MSNObjectDataTransferCompleted;
             }
         }
 
         private void AddEvent(Conversation converse)
         {
-            converse.TextMessageReceived += new EventHandler<TextMessageEventArgs>(Switchboard_TextMessageReceived);
-            converse.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
-            converse.ContactJoined += new EventHandler<ContactEventArgs>(Switchboard_ContactJoined);
-            converse.ContactLeft += new EventHandler<ContactEventArgs>(Switchboard_ContactLeft);
-            converse.NudgeReceived += new EventHandler<ContactEventArgs>(Switchboard_NudgeReceived);
+            if (_conversations.Contains(converse))
+                return;
 
-            converse.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(Conversation_MSNObjectDataTransferCompleted);
+            RemoveEvent(converse);
+
+            converse.TextMessageReceived += new EventHandler<TextMessageEventArgs>(TextMessageReceived);
+            converse.SessionClosed += new EventHandler<EventArgs>(SessionClosed);
+            converse.ContactJoined += new EventHandler<ContactConversationEventArgs>(ContactJoined);
+            converse.ContactLeft += new EventHandler<ContactConversationEventArgs>(ContactLeft);
+            converse.NudgeReceived += new EventHandler<ContactEventArgs>(NudgeReceived);
+
+            converse.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(MSNObjectDataTransferCompleted);
             //Conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(Conversation_ConversationEnded);
             _conversations.Add(converse);
         }
 
         private Conversation GetActiveConversation()
         {
-            foreach (Conversation converse in _conversations)
+            foreach (Conversation conversation in _conversations)
             {
-                if (!converse.Ended)
-                    return converse;
+                if (!conversation.Ended)
+                    return conversation;
             }
+
+            if (_conversations.Count > 0)
+                return _conversations[0];
 
             Conversation newActiveConversation = _messenger.CreateConversation();
             newActiveConversation.Invite(_firstInvitedContact);
+            _conversations.Add(newActiveConversation);
+
             return newActiveConversation;
         }
 
-        void Conversation_MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
+        void MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<MSNObjectDataTransferCompletedEventArgs>(Conversation_MSNObjectDataTransferCompleted), sender, e);
+                Invoke(new EventHandler<MSNObjectDataTransferCompletedEventArgs>(MSNObjectDataTransferCompleted), sender, e);
                 return;
             }
 
@@ -554,7 +564,7 @@ namespace MSNPSharpClient
 
         private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            if (ActiveConversation.Expired)
+            if (ActiveConversation.Ended && e.KeyCode != Keys.Return)
                 return;
 
             if ((e.KeyCode == Keys.Return) && (e.Alt || e.Control || e.Shift))
@@ -563,7 +573,6 @@ namespace MSNPSharpClient
             }
 
             ActiveConversation.SendTypingMessage();
-
             if (e.KeyCode == Keys.Return)
             {
                 if (!inputTextBox.Text.Equals(String.Empty))
@@ -572,6 +581,8 @@ namespace MSNPSharpClient
                 }
                 e.Handled = true;
             }
+
+
         }
 
         private void inputTextBox_KeyPress(object sender, KeyPressEventArgs e)
@@ -617,7 +628,7 @@ namespace MSNPSharpClient
         }
 
 
-        private void Switchboard_TextMessageReceived(object sender, TextMessageEventArgs e)
+        private void TextMessageReceived(object sender, TextMessageEventArgs e)
         {
             if (!Visible)
             {
@@ -627,7 +638,7 @@ namespace MSNPSharpClient
             Invoke(new EventHandler<TextMessageEventArgs>(PrintText), sender, e);
         }
 
-        private void Switchboard_SessionClosed(object sender, EventArgs e)
+        private void SessionClosed(object sender, EventArgs e)
         {
             if (!richTextHistory.InvokeRequired)
             {
@@ -635,17 +646,17 @@ namespace MSNPSharpClient
             }
             else
             {
-                richTextHistory.Invoke(new EventHandler<EventArgs>(Switchboard_SessionClosed), sender, e);
+                richTextHistory.Invoke(new EventHandler<EventArgs>(SessionClosed), sender, e);
             }
         }
 
         #region These three functions causes reinvite
 
-        private void Switchboard_ContactJoined(object sender, ContactEventArgs e)
+        private void ContactJoined(object sender, ContactEventArgs e)
         {
             if (richTextHistory.InvokeRequired)
             {
-                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(Switchboard_ContactJoined), sender, e);
+                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(ContactJoined), sender, e);
             }
             else
             {
@@ -653,11 +664,11 @@ namespace MSNPSharpClient
             }
         }
 
-        private void Switchboard_ContactLeft(object sender, ContactEventArgs e)
+        private void ContactLeft(object sender, ContactEventArgs e)
         {
             if (richTextHistory.InvokeRequired)
             {
-                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(Switchboard_ContactLeft), sender, e);
+                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(ContactLeft), sender, e);
             }
             else
             {
@@ -687,7 +698,7 @@ namespace MSNPSharpClient
             richTextHistory.SelectionColor = Color.Navy;
             richTextHistory.SelectionIndent = 0;
             richTextHistory.AppendText("[" + DateTime.Now.ToLongTimeString() + "]" + " ");
-            richTextHistory.SelectionColor = c.Mail == _messenger.Nameserver.ContactList.Owner.Mail ? Color.Blue : Color.Black;
+            richTextHistory.SelectionColor = c.Mail == _messenger.ContactList.Owner.Mail ? Color.Blue : Color.Black;
             richTextHistory.AppendText(c.Name + " <" + c.Mail + ">" + Environment.NewLine);
             richTextHistory.SelectionColor = message.Color;
             richTextHistory.SelectionIndent = 10;
@@ -752,7 +763,7 @@ namespace MSNPSharpClient
         {
             Text = "Conversation with " + _firstInvitedContact.Mail + " - MSNPSharp";
             Icon = (Icon)((_firstInvitedContact.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
-            displayOwner.Image = _messenger.Nameserver.ContactList.Owner.DisplayImage.Image;
+            displayOwner.Image = _messenger.ContactList.Owner.DisplayImage.Image;
 
             lock (richTextHistory.Emotions)
             {
@@ -828,7 +839,7 @@ namespace MSNPSharpClient
                 // by sending an invitation a P2PTransferSession is automatically created.
                 // the session object takes care of the actual data transfer to the remote client,
                 // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, remoteContact, updateImage);
+                P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, remoteContact, updateImage);
 
             }
         }
@@ -903,12 +914,19 @@ namespace MSNPSharpClient
             if (inputTextBox.Font.Underline)
                 message.Decorations |= TextDecorations.Underline;
 
-            PrintText(_messenger.Nameserver.ContactList.Owner, message);
-
             inputTextBox.Clear();
             inputTextBox.Focus();
 
-            ActiveConversation.SendTextMessage(message);
+            try
+            {
+                ActiveConversation.SendTextMessage(message);
+                PrintText(_messenger.ContactList.Owner, message);
+            }
+            catch (InvalidOperationException)
+            {
+                _messenger.OIMService.SendOIMMessage(_firstInvitedContact, message);
+                PrintText(_messenger.ContactList.Owner, new TextMessage(message.Text + "\r\n(Send as Offline message.)"));
+            }
         }
 
         private void bMessageInsertEmoticon_Click(object sender, EventArgs e)
@@ -945,9 +963,16 @@ namespace MSNPSharpClient
 
         private void bMessageSendNudge_Click(object sender, EventArgs e)
         {
-            ActiveConversation.SendNudge();
-            DisplaySystemMessage("You send a nudge.");
-            PerformNudge();
+            try
+            {
+                ActiveConversation.SendNudge();
+                DisplaySystemMessage("You send a nudge.");
+                PerformNudge();
+            }
+            catch (InvalidOperationException)
+            {
+                DisplaySystemMessage("Remote contact not online.");
+            }
         }
 
         private void bMessageSendFiles_Click(object sender, EventArgs e)
@@ -958,7 +983,7 @@ namespace MSNPSharpClient
                 foreach (Contact contact in ActiveConversation.Contacts)
                 {
                     if (contact.Online && contact.ClientType == ClientType.PassportMember && 
-                        contact.Mail != _messenger.Nameserver.ContactList.Owner.Mail)
+                        contact.Mail != _messenger.ContactList.Owner.Mail)
                     {
                         contacts.Add(contact);
                     }
@@ -982,7 +1007,7 @@ namespace MSNPSharpClient
                         {
                             MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(contact);
                             FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, contact, Path.GetFileName(filename), fileStream);
+                            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, contact, Path.GetFileName(filename), fileStream);
                         }
                     }
                 }
@@ -1000,7 +1025,7 @@ namespace MSNPSharpClient
         {
             MemoryStream mem = new MemoryStream();
             Properties.Resources.inner_emoticon.Save(mem, ImageFormat.Png);
-            Emoticon emotest = new Emoticon(_messenger.Nameserver.ContactList.Owner.Mail, mem, "0", "test_em");
+            Emoticon emotest = new Emoticon(_messenger.ContactList.Owner.Mail, mem, "0", "test_em");
             MSNObjectCatalog.GetInstance().Add(emotest);
             List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
@@ -1016,6 +1041,10 @@ namespace MSNPSharpClient
                 TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
                 ActiveConversation.SendTextMessage(emotxt);
                 DisplaySystemMessage("You send a custom emoticon with text message: Hey, this is a custom emoticon: [test_em].");
+            }
+            catch (InvalidOperationException)
+            {
+                DisplaySystemMessage("Remote contact not online, emoticon will not be sent.");
             }
             catch (NotSupportedException)
             {
@@ -1099,7 +1128,7 @@ namespace MSNPSharpClient
             String activityID = "20521364";        //The activityID of Music Mix activity.
             String activityName = "Music Mix";     //Th name of acticvity
             MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(_firstInvitedContact);
-            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.Nameserver.ContactList.Owner, _firstInvitedContact, activityID, activityName);
+            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, _firstInvitedContact, activityID, activityName);
             session.DataStream = new MemoryStream();
 
             msnslpHandler.TransferSessionClosed += delegate(object s, P2PTransferSessionEventArgs ea)

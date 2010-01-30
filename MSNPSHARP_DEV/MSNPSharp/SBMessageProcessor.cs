@@ -77,18 +77,6 @@ namespace MSNPSharp
 
             message.ParseBytes(data);
 
-            if (message.InnerBody == null)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
-            }
-            else
-            {
-                if (message.Acknowledgement != "D")
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Message received:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
-                }
-            }
-
             // send the message
             DispatchMessage(message);
         }
@@ -104,8 +92,6 @@ namespace MSNPSharp
             {
                 try
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Handling received message " + handler.ToString(), GetType().Name);
-
                     handler.HandleMessage(this, message);
                 }
                 catch (Exception e)

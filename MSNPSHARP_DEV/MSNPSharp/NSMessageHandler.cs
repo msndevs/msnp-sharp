@@ -62,6 +62,7 @@ namespace MSNPSharp
         private ConnectivitySettings connectivitySettings;
         private IPEndPoint externalEndPoint;
         private P2PHandler p2pHandler;
+        private Messenger messenger;
 
         private CircleList circleList;
         private ContactGroupList contactGroups;
@@ -82,8 +83,9 @@ namespace MSNPSharp
         private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
         private List<Regex> censorWords = new List<Regex>(0);
+        Dictionary<string, string> sessions = new Dictionary<string, string>(0);
 
-        protected internal NSMessageHandler()
+        protected internal NSMessageHandler(Messenger parentMessenger)
         {
             circleList = new CircleList(this);
             contactGroups = new ContactGroupList(this);
@@ -95,7 +97,9 @@ namespace MSNPSharp
             storageService = new MSNStorageService(this);
             whatsUpService = new WhatsUpService(this);
 
-            p2pHandler = new P2PHandler(this);
+            p2pHandler = new P2PHandler(this, parentMessenger);
+
+            messenger = parentMessenger;
         }
 
         #endregion
@@ -617,20 +621,6 @@ namespace MSNPSharp
 
         #region RequestSwitchboard & SendPing
 
-        // List<SBMessageHandler> SwitchBoards = new List<SBMessageHandler>(0);
-
-        /// <summary>
-        /// Sends a request to the server to start a new switchboard session.
-        /// </summary>
-        public virtual SBMessageHandler RequestSwitchboard(object initiator)
-        {
-            // create a switchboard object
-            SBMessageHandler handler = new SBMessageHandler();
-
-            RequestSwitchboard(handler, initiator);
-
-            return handler;
-        }
 
         /// <summary>
         /// Sends a request to the server to start a new switchboard session. The specified switchboard handler will be associated with the new switchboard session.
@@ -643,6 +633,8 @@ namespace MSNPSharp
             pendingSwitchboards.Enqueue(new SwitchboardQueueItem(switchboardHandler, initiator));
             MessageProcessor.SendMessage(new NSMessage("XFR", new string[] { "SB" }));
         }
+
+
 
         /// <summary>
         /// Sends PNG (ping) command.
@@ -926,6 +918,31 @@ namespace MSNPSharp
             byte[] utf8ByteArray = Encoding.UTF8.GetBytes(circleTicket);
             string nonce = Convert.ToBase64String(utf8ByteArray);
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SHA", "A", nonce }));
+        }
+
+        internal void SenSwitchBoardClosedNotify(string sessionId)
+        {
+            string host = GetSessionHost(sessionId);
+            if (string.IsNullOrEmpty(host))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Session " + sessionId + " not found.");
+                return;
+            }
+
+            if (ContactList.Owner.MPOPEnable && ContactList.Owner.Places.Count > 1)
+            {
+                MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Mail, "5" }, sessionId + ";" + host));
+                RemoveSession(sessionId);
+            }
+        }
+
+        internal void SenSwitchBoardClosedNotify(string sessionId, string host)
+        {
+            if (ContactList.Owner.MPOPEnable && ContactList.Owner.Places.Count > 1)
+            {
+                MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Mail, "5" }, sessionId + ";" + host));
+                RemoveSession(sessionId);
+            }
         }
 
         #endregion
@@ -1236,8 +1253,8 @@ namespace MSNPSharp
 
             string account = string.Empty;
             ClientType type = ClientType.PassportMember;
-            bool isCircleMember = false;
             Circle circle = null;
+            Contact contact = null;
 
             if (fullaccount.Contains(CircleString.ViaCircleGroupSplitter))
             {
@@ -1260,96 +1277,33 @@ namespace MSNPSharp
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Cannot retrieve user for from circle: " + fullaccount);
                         return;
                     }
-                }
 
-                isCircleMember = true;
+                    contact = circle.GetMember(fullaccount, AccountParseOption.ParseAsFullCircleAccount);
+                }
             }
             else
             {
                 type = (ClientType)int.Parse(fullaccount.Split(':')[0]);
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
-            }
 
-            if (message.InnerBody != null &&
-                account.ToLowerInvariant() == ContactList.Owner.Mail.ToLowerInvariant() && 
-                type == ClientType.PassportMember &&
-                (!isCircleMember))
-            {
-                XmlDocument xmlDoc = new XmlDocument();
-                try
+                if (account != ContactList.Owner.Mail.ToLowerInvariant())
                 {
-                    xmlDoc.Load(new MemoryStream(message.InnerBody));
-                    XmlNodeList privateendpoints = xmlDoc.GetElementsByTagName("PrivateEndpointData");
-
-                    if (privateendpoints.Count > 0)
+                    if (ContactList.HasContact(account, type))
                     {
-                        Guid lastSignedInPlace = NSMessageHandler.MachineGuid; // For AutoLogoff
-                        Dictionary<Guid, string> newPlaces = new Dictionary<Guid, string>(privateendpoints.Count);
-                        foreach (XmlNode pepdNode in privateendpoints)
-                        {
-                            Guid id = new Guid(pepdNode.Attributes["id"].Value);
-                            String epname = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
-
-                            newPlaces[id] = epname;
-                            lastSignedInPlace = id;
-
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
-                        }
-
-                        if (newPlaces.Count > 1 && ContactList.Owner.MPOPMode == MPOP.AutoLogoff)
-                        {
-                            foreach (KeyValuePair<Guid, string> keyvalue in newPlaces)
-                            {
-                                if (keyvalue.Key != NSMessageHandler.MachineGuid &&
-                                    keyvalue.Key != lastSignedInPlace)
-                                {
-                                    ContactList.Owner.SignoutFrom(keyvalue.Key);
-                                }
-                            }
-                        }
-
-                        ContactList.Owner.Places.Clear();
-                        ContactList.Owner.Places = newPlaces;
-
-                        if (ContactList.Owner.MPOPMode == MPOP.AutoLogoff &&
-                            newPlaces.Count > 1 &&
-                            lastSignedInPlace != NSMessageHandler.MachineGuid)
-                        {
-                            // No owner.Status = PresenceStatus.Offline, because we haven't signed in yet.
-                            ContactList.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
-                            return;
-                        }
+                        contact = ContactList.GetContact(account, type);
                     }
-                }
-                catch (Exception xmlex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Xml parse error: " + xmlex.Message);
-                }
-
-                ContactList.Owner.SetPersonalMessage(new PersonalMessage(message));
-            }
-            else
-            {
-                
-                Contact contact = null;
-
-                if (!isCircleMember)
-                {
-                    contact = ContactList.GetContact(account, type);
                 }
                 else
                 {
-                    contact = circle.ContactList.GetContact(account, type);
+                    contact = ContactList.Owner;
                 }
+            }
 
-                if (contact == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "Set contact info failed by UBX command: Cannot get contact: " + fullaccount);
-
-                    return;
-                }
-
+            if (message.InnerBody != null && 
+                type == ClientType.PassportMember &&
+                contact != null)
+            {
+                contact.SetPersonalMessage(new PersonalMessage(message));
                 XmlDocument xmlDoc = new XmlDocument();
                 try
                 {
@@ -1358,16 +1312,70 @@ namespace MSNPSharp
                     XmlNode friendlyNameNode = xmlDoc.SelectSingleNode(@"//Data/FriendlyName");
                     if (friendlyNameNode != null)
                     {
-                        contact.SetName(friendlyNameNode.InnerXml == "" ? contact.Mail : friendlyNameNode.InnerXml);
+                        contact.SetName(friendlyNameNode.InnerXml == "" ? contact.Mail : friendlyNameNode.InnerText);
+                    }
+
+                    XmlNodeList privateendpoints = xmlDoc.GetElementsByTagName("PrivateEndpointData");
+
+                    if (privateendpoints.Count > 0)
+                    {
+                        Guid lastSignedInPlace = NSMessageHandler.MachineGuid; // For AutoLogoff
+                        Dictionary<Guid, string> newPlaces = new Dictionary<Guid, string>(privateendpoints.Count);
+                        
+                        foreach (XmlNode pepdNode in privateendpoints)
+                        {
+                            Guid id = new Guid(pepdNode.Attributes["id"].Value);
+                            String epname = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
+
+                            if (!contact.Places.ContainsKey(id))
+                            {
+                                contact.SetChangedPlace(id, epname, PlaceChangedReason.SignedIn);
+                                
+                            }
+
+                            newPlaces.Add(id, epname);
+                            lastSignedInPlace = id;
+
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
+                        }
+
+                        Dictionary<Guid, string > placesClone = new Dictionary<Guid,string>(contact.Places);
+                        foreach (Guid id in placesClone.Keys)
+                        {
+                            if (!newPlaces.ContainsKey(id))
+                            {
+                                contact.SetChangedPlace(id, contact.Places[id], PlaceChangedReason.SignedOut);
+                            }
+                        }
+
+                        if (contact is Owner)
+                        {
+                            if (contact.Places.Count > 1 && ContactList.Owner.MPOPMode == MPOP.AutoLogoff)
+                            {
+                                if (lastSignedInPlace != MachineGuid)
+                                {
+                                    ContactList.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
+                                }
+                                else
+                                {
+                                    foreach (Guid id in contact.Places.Keys)
+                                    {
+                                        if (id != MachineGuid)
+                                        {
+                                            ContactList.Owner.SignoutFrom(id);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 catch (Exception xmlex)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Xml parse error: " + xmlex.Message);
                 }
-
-                contact.SetPersonalMessage(new PersonalMessage(message));
             }
+           
         }
 
         /// <summary>
@@ -1850,18 +1858,40 @@ namespace MSNPSharp
             }
         }
 
+        internal void SetSession(string sessionId, string ip)
+        {
+            lock (sessions)
+            {
+                sessions[sessionId] = ip;
+            }
+        }
+
+        private string GetSessionHost(string sessionId)
+        {
+            lock (sessions)
+            {
+                if (sessions.ContainsKey(sessionId))
+                    return sessions[sessionId];
+            }
+
+            return string.Empty;
+        }
+
+        private bool RemoveSession(string sessionId)
+        {
+            lock (sessions)
+                return sessions.Remove(sessionId);
+        }
+
         /// <summary>
         /// Gets a new switchboard handler object. Called when a remote client initiated the switchboard.
         /// </summary>
-        /// <param name="processor"></param>
         /// <param name="sessionHash"></param>
         /// <param name="sessionId"></param>
         /// <returns></returns>
-        protected virtual IMessageHandler CreateSBHandler(IMessageProcessor processor, string sessionHash, int sessionId)
+        protected virtual IMessageHandler CreateSBHandler(string sessionHash, string sessionId)
         {
-            SBMessageHandler handler = new SBMessageHandler();
-            handler.MessageProcessor = processor;
-            handler.NSMessageHandler = this;
+            SBMessageHandler handler = new SBMessageHandler(this);
             handler.SetInvitation(sessionHash, sessionId);
 
             return handler;
@@ -1875,7 +1905,7 @@ namespace MSNPSharp
         /// <param name="account"></param>
         /// <param name="name"></param>
         /// <param name="anonymous">Indecates that whether it is an anonymous request.</param>
-        protected virtual void OnSBCreated(SBMessageHandler switchboard, object initiator, string account, string name, bool anonymous)
+        internal virtual void OnSBCreated(SBMessageHandler switchboard, object initiator, string account, string name, bool anonymous)
         {
             if (SBCreated != null)
                 SBCreated(this, new SBCreatedEventArgs(switchboard, initiator, account, name, anonymous));
@@ -1892,7 +1922,10 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnRNGReceived(NSMessage message)
         {
-            SBMessageProcessor processor = new SBMessageProcessor();
+
+            // create a switchboard object
+            SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(message.CommandValues[3].ToString(), message.CommandValues[0].ToString());
+            SBMessageProcessor processor = handler.MessageProcessor as SBMessageProcessor;
 
             // set new connectivity settings
             ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
@@ -1901,11 +1934,6 @@ namespace MSNPSharp
             newSettings.Host = values[0];
             newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
             processor.ConnectivitySettings = newSettings;
-
-            // create a switchboard object
-            SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[3].ToString(), int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture));
-
-            processor.RegisterHandler(handler);
 
             // start connecting
             processor.Connect();
@@ -1970,10 +1998,10 @@ namespace MSNPSharp
                 if (pendingSwitchboards.Count > 0)
                 {
                     if (ContactList.Owner.Status == PresenceStatus.Offline)
-                        System.Diagnostics.Trace.WriteLine("Owner not yet online!", "NS15MessageHandler");
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Owner not yet online!", GetType().ToString());
 
-                    SBMessageProcessor processor = new SBMessageProcessor();
                     SwitchboardQueueItem queueItem = (SwitchboardQueueItem)pendingSwitchboards.Dequeue();
+                    SBMessageProcessor processor = queueItem.SwitchboardHandler.MessageProcessor as SBMessageProcessor;
 
                     // set new connectivity settings
                     ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
@@ -1987,14 +2015,10 @@ namespace MSNPSharp
                     processor.ConnectivitySettings = newSettings;
 
                     // set the switchboard objects with the processor values
-                    // SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(processor, message.CommandValues[4].ToString());
                     string sessionHash = message.CommandValues[4].ToString();
-                    queueItem.SwitchboardHandler.SetInvitation(sessionHash);
-                    queueItem.SwitchboardHandler.MessageProcessor = processor;
-                    queueItem.SwitchboardHandler.NSMessageHandler = this;
 
-                    // register this handler so the switchboard can respond
-                    processor.RegisterHandler(queueItem.SwitchboardHandler);
+                    queueItem.SwitchboardHandler.SetInvitation(sessionHash);
+
 
                     // notify the client
                     OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator, string.Empty, string.Empty, false);
@@ -2061,7 +2085,7 @@ namespace MSNPSharp
                                 if (sbMessageHandler is YIMMessageHandler)
                                 {
                                     YIMMessageHandler YimHandler = sbMessageHandler as YIMMessageHandler;
-                                    if (YimHandler.Contacts.ContainsKey(ContactList.GetContact(sender, ClientType.EmailMember)))
+                                    if (YimHandler.HasContact(sender))
                                     {
                                         return;  //The handler have been registered, return.
                                     }
@@ -2070,16 +2094,8 @@ namespace MSNPSharp
                         }
 
                         //YIMMessageHandler not found, we create a new one and register it.
-                        YIMMessageHandler switchboard = new YIMMessageHandler();
-                        switchboard.NSMessageHandler = this;
+                        YIMMessageHandler switchboard = new YIMMessageHandler(this);
 
-                        switchboard.MessageProcessor = MessageProcessor;
-                        lock (P2PHandler.SwitchboardSessions)
-                        {
-                            P2PHandler.SwitchboardSessions.Add(switchboard);
-                        }
-
-                        messageProcessor.RegisterHandler(switchboard);
                         OnSBCreated(switchboard, null, sender, sender, false);
 
                         switchboard.HandleMessage(MessageProcessor, messageClone);
@@ -3231,6 +3247,7 @@ namespace MSNPSharp
 
             //6. Reset censor words
             CensorWords.Clear();
+            sessions.Clear();
         }
 
         /// <summary>

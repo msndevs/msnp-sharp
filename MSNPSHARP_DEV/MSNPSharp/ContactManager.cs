@@ -36,7 +36,7 @@ using System.Text;
 
 namespace MSNPSharp
 {
-    public class ContactManager
+    internal sealed class ContactManager
     {
         #region Fields
         private NSMessageHandler nsMessageHandler = null;

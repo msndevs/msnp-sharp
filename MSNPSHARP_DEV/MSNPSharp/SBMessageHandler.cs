@@ -175,11 +175,20 @@ namespace MSNPSharp
     /// </summary>
     public class SBMessageHandler : IMessageHandler
     {
+        private SBMessageHandler()
+        {
+        }
+
         /// <summary>
         /// Constructor
         /// </summary>
-        protected internal SBMessageHandler()
+        protected internal SBMessageHandler(NSMessageHandler hander)
         {
+            nsMessageHandler = hander;
+            SetNewProcessor();
+            ResigerHandlersToProcessor(MessageProcessor);
+            NSMessageHandler.P2PHandler.AddSwitchboardSession(this);
+            NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(ContactOfflineHandler);
         }
 
         #region Public Events
@@ -202,12 +211,12 @@ namespace MSNPSharp
         /// <summary>
         /// Fired when a contact joins. In case of a conversation with two people in it this event is called with the remote contact specified in the event argument.
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactJoined;
+        public event EventHandler<ContactConversationEventArgs> ContactJoined;
 
         /// <summary>
         /// Fired when a contact leaves the conversation.
         /// </summary>
-        public event EventHandler<ContactEventArgs> ContactLeft;
+        public event EventHandler<ContactConversationEventArgs> ContactLeft;
 
         /// <summary>
         /// Fired when a message is received from any of the other contacts in the conversation.
@@ -248,15 +257,17 @@ namespace MSNPSharp
 
         #region Members
 
-        //private Dictionary<string, KeyValuePair<Contact, ContactConversationState>> contacts = new Dictionary<string, KeyValuePair<Contact, ContactConversationState>>(new SiblingComparer<string>());
-        private Dictionary<Contact, ContactConversationState> contacts = new Dictionary<Contact, ContactConversationState>(new SiblingComparer<Contact>());
+        private Dictionary<string, string> rosterName = new Dictionary<string, string>(0);
+        private Dictionary<string, string> rosterCapacities = new Dictionary<string, string>(0);
+        private Dictionary<string, ContactConversationState> rosterState = new Dictionary<string, ContactConversationState>(0);
+
         private Dictionary<string, MSGMessage> multiPacketMessages = new Dictionary<string, MSGMessage>();
         private object syncObject = new object();
         private Queue<Contact> invitationQueue = new Queue<Contact>();
         private string sessionHash = String.Empty;
-        private SocketMessageProcessor messageProcessor;
+        protected SocketMessageProcessor messageProcessor;
         private NSMessageHandler nsMessageHandler;
-        private int sessionId;
+        private string sessionId;
 
         protected bool sessionEstablished;
         protected bool invited;
@@ -266,18 +277,6 @@ namespace MSNPSharp
         #region Properties
 
         /// <summary>
-        /// A collection of all <i>remote</i> contacts present in this session
-        /// </summary>
-        //internal Dictionary<string, KeyValuePair<Contact, ContactConversationState>> Contacts
-        internal Dictionary<Contact, ContactConversationState> Contacts
-        {
-            get
-            {
-                return contacts;
-            }
-        }
-
-        /// <summary>
         /// The nameserver that received the request for the switchboard session
         /// </summary>
         public NSMessageHandler NSMessageHandler
@@ -285,10 +284,6 @@ namespace MSNPSharp
             get
             {
                 return nsMessageHandler;
-            }
-            set
-            {
-                nsMessageHandler = value;
             }
         }
 
@@ -314,7 +309,7 @@ namespace MSNPSharp
             }
         }
 
-        protected int SessionId
+        protected string SessionId
         {
             get
             {
@@ -369,34 +364,23 @@ namespace MSNPSharp
         /// If there is not yet a connection established the invitation will be stored in a queue and processed as soon as a connection is established.
         /// </remarks>
         /// <param name="contact">The contact's account to invite.</param>
-        public virtual void Invite(Contact contact)
+        public virtual bool Invite(Contact contact)
         {
-            if (Contacts.ContainsKey(contact))
-            {
-                //If already invited or joined, do nothing.
-                if (Contacts[contact] == ContactConversationState.Joined ||
-                    Contacts[contact] == ContactConversationState.Invited)
-                {
-                    return;
-                }
-            }
-
-            SetContactState(contact, ContactConversationState.Invited);
-            invitationQueue.Enqueue(contact);
-            ProcessInvitations();
+            return Invite(contact, Guid.Empty);
         }
-
 
         /// <summary>
         /// Called when a switchboard session is created on request of a remote client.
         /// </summary>
         /// <param name="sessionHash"></param>
         /// <param name="sessionId"></param>
-        public void SetInvitation(string sessionHash, int sessionId)
+        public void SetInvitation(string sessionHash, string sessionId)
         {
-            this.sessionId = sessionId;
-            this.sessionHash = sessionHash;
+            SessionId = sessionId;
+            SessionHash = sessionHash;
             this.invited = true;
+
+            NSMessageHandler.SetSession(SessionId, SessionHash);
         }
 
         /// <summary>
@@ -405,39 +389,38 @@ namespace MSNPSharp
         /// <param name="sessionHash"></param>
         public void SetInvitation(string sessionHash)
         {
-            this.sessionHash = sessionHash;
+            SessionHash = sessionHash;
+            SessionId = SessionHash.Split('.')[0];
+
+            NSMessageHandler.SetSession(SessionId, SessionHash);
+
             this.invited = false;
         }
 
         /// <summary>
         /// Left the conversation then closes the switchboard session by disconnecting from the server. 
         /// </summary>
-        public virtual void Left()
+        public virtual void Close(bool causeByRemote)
         {
             if (MessageProcessor != null)
             {
-                SocketMessageProcessor processor = messageProcessor as SocketMessageProcessor;
+                if (!causeByRemote)
+                {
+                    SendSwitchBoardClosedNotifyToNS();
+                }
+
+                SocketMessageProcessor processor = MessageProcessor as SocketMessageProcessor;
+
                 try
                 {
+                    processor.UnregisterHandler(this);
                     processor.SendMessage(new SBMessage("OUT", new string[] { }));
+                    processor.Disconnect();
                 }
                 catch (Exception ex)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().ToString());
                 }
-
-                Close();
-            }
-        }
-
-        /// <summary>
-        /// Closes the switchboard session by disconnecting from the server. 
-        /// </summary>
-        public virtual void Close()
-        {
-            if (MessageProcessor != null)
-            {
-                ((SocketMessageProcessor)MessageProcessor).Disconnect();
             }
         }
 
@@ -604,30 +587,20 @@ namespace MSNPSharp
                 AllContactsLeft(this, new EventArgs());
             }
 
-            if (Contacts.Count == 1)  //MSNP18: owner in the switch
-            {
-                Left();
-                lock (Contacts)
-                    Contacts.Clear();
-            }
-            else
-            {
-                Close();
-            }
-
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ToString() + " all contacts left, disconnect automately.", GetType().ToString());
+            Close(false);
         }
 
         /// <summary>
         /// Fires the <see cref="ContactJoined"/> event.
         /// </summary>
         /// <param name="contact">The contact who joined the session.</param>
-        protected virtual void OnContactJoined(Contact contact)
+        /// <param name="endPoint">The machine guid where this contact joined from.</param>
+        protected virtual void OnContactJoined(Contact contact, Guid endPoint)
         {
-            SetContactState(contact, ContactConversationState.Joined);
             if (ContactJoined != null)
             {
-                ContactJoined(this, new ContactEventArgs(contact));
+                ContactJoined(this, new ContactConversationEventArgs(contact, endPoint));
             }
         }
 
@@ -635,12 +608,12 @@ namespace MSNPSharp
         /// Fires the <see cref="ContactLeft"/> event.
         /// </summary>
         /// <param name="contact">The contact who left the session.</param>
-        protected virtual void OnContactLeft(Contact contact)
+        /// <param name="endPoint">The machine guid where this contact left from.</param>
+        protected virtual void OnContactLeft(Contact contact, Guid endPoint)
         {
-            SetContactState(contact, ContactConversationState.Left);
             if (ContactLeft != null)
             {
-                ContactLeft(this, new ContactEventArgs(contact));
+                ContactLeft(this, new ContactConversationEventArgs(contact, endPoint));
             }
         }
 
@@ -717,6 +690,7 @@ namespace MSNPSharp
         protected virtual void OnSessionClosed()
         {
             ClearAll();  //Session closed, force all contact left this conversation.
+
             if (SessionClosed != null)
                 SessionClosed(this, new EventArgs());
         }
@@ -775,6 +749,248 @@ namespace MSNPSharp
                 MessageProcessor.SendMessage(new SBMessage("USR", new string[] { auth, SessionHash }));
         }
 
+        protected virtual void SendSwitchBoardClosedNotifyToNS()
+        {
+            NSMessageHandler.SenSwitchBoardClosedNotify(SessionId.ToString());
+        }
+
+        protected virtual void SetNewProcessor()
+        {
+            messageProcessor = new SBMessageProcessor();
+
+            // catch the connect event to start sending the USR command upon initiating
+            messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
+            messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
+        }
+
+        protected virtual void ResigerHandlersToProcessor(IMessageProcessor processor)
+        {
+            if (processor != null)
+            {
+                processor.RegisterHandler(this);
+                processor.RegisterHandler(NSMessageHandler.P2PHandler);
+            }
+        }
+
+        protected virtual void SetRosterProperty(string key, string value, RosterProperties property)
+        {
+            switch (property)
+            {
+                case RosterProperties.Name:
+                    lock (rosterName)
+                        rosterName[key.ToLowerInvariant()] = value;
+                    break;
+                case RosterProperties.ClientCapacityString:
+                    lock (rosterCapacities)
+                        rosterCapacities[key.ToLowerInvariant()] = value;
+                    break;
+                case RosterProperties.Status:
+                    lock (rosterState)
+                        rosterState[key.ToLowerInvariant()] = (ContactConversationState)Enum.Parse(typeof(ContactConversationState), value);
+                    break;
+            }
+        }
+
+        protected virtual bool IsAllContactsInRosterLeft()
+        {
+            lock (rosterState)
+            {
+                foreach (string key in rosterState.Keys)
+                {
+                    if (rosterState[key] != ContactConversationState.Left)
+                        return false;
+                }
+
+                return true;
+            }
+        }
+
+        protected virtual bool Invite(Contact contact, Guid endPoint)
+        {
+            string fullaccount = contact.Mail.ToLowerInvariant();
+            if (endPoint != Guid.Empty)
+            {
+                fullaccount += ";" + endPoint.ToString("B").ToLowerInvariant();
+            }
+
+            if (GetRosterProperty(fullaccount, RosterProperties.Status) != null)
+            {
+                //Invite repeatly.
+                return false;
+            }
+
+            //Add "this contact"
+            SetRosterProperty(contact.Mail.ToLowerInvariant() + ";" + contact.MachineGuid.ToString("B").ToLowerInvariant(),
+                ContactConversationState.Invited.ToString(),
+                RosterProperties.Status);
+
+            if (endPoint == Guid.Empty)
+            {
+                //Add "all contact"
+                SetRosterProperty(contact.Mail.ToLowerInvariant(), ContactConversationState.Invited.ToString(), RosterProperties.Status);
+                foreach (Guid place in contact.Places.Keys)
+                {
+                    string currentAccount = contact.Mail.ToLowerInvariant() + ";" + place.ToString("B").ToLowerInvariant();
+                    SetRosterProperty(currentAccount, ContactConversationState.Invited.ToString(), RosterProperties.Status);
+                }
+            }
+
+            invitationQueue.Enqueue(contact);
+            ProcessInvitations();
+            return true;
+        }
+
+        protected virtual object GetRosterProperty(string key, RosterProperties property)
+        {
+            string value = string.Empty;
+            string lowerKey = key.ToLowerInvariant();
+
+            switch (property)
+            {
+                case RosterProperties.Name:
+                    lock (rosterName)
+                    {
+                        if (!rosterName.ContainsKey(lowerKey))
+                            return null;
+                        return rosterName[lowerKey];
+                    }
+
+                case RosterProperties.ClientCapacities:
+                    lock (rosterCapacities)
+                    {
+                        if (!rosterCapacities.ContainsKey(lowerKey))
+                            return null;
+
+                        value = rosterCapacities[lowerKey];
+                        int cap = 0;
+                        if (value.Contains(":"))
+                        {
+                            int.TryParse(value.Split(':')[0], out cap);
+                            return (ClientCapacities)cap;
+                        }
+
+                        return ClientCapacities.None;
+                    }
+
+                case RosterProperties.ClientCapacitiesEx:
+                    lock (rosterCapacities)
+                    {
+                        if (!rosterCapacities.ContainsKey(lowerKey))
+                            return null;
+
+                        value = rosterCapacities[lowerKey];
+                        int cap = 0;
+                        if (value.Contains(":"))
+                        {
+                            int.TryParse(value.Split(':')[1], out cap);
+                            return (ClientCapacitiesEx)cap;
+                        }
+
+                        return ClientCapacitiesEx.None;
+                    }
+                case RosterProperties.ClientCapacityString:
+                    lock (rosterCapacities)
+                    {
+                        if (!rosterCapacities.ContainsKey(lowerKey))
+                            return null;
+                        return rosterCapacities[lowerKey];
+                    }
+                case RosterProperties.Status:
+                    lock (rosterState)
+                    {
+                        if (!rosterState.ContainsKey(lowerKey))
+                            return null;
+                        return rosterState[lowerKey];
+                    }
+            }
+
+            return null;
+        }
+
+        protected virtual void ContactOfflineHandler(object sender, ContactEventArgs e)
+        {
+            Contact contact = e.Contact;
+
+            if (HasContact(contact) && GetRosterUniqueUserCount() == 1)
+            {
+                Close(true);
+            }
+        }
+
+        internal virtual int GetRosterUserCount()
+        {
+            int count = 0;
+            lock (rosterState)
+            {
+                foreach (string key in rosterState.Keys)
+                {
+                    if (NSMessageHandler.ContactList.Owner != null)
+                    {
+                        if (key.Split(';')[0] != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+                        {
+                            count++;
+                        }
+                    }
+                }
+
+                return count;
+            }
+        }
+
+        internal virtual int GetRosterUniqueUserCount()
+        {
+            Dictionary<string, string> uniqueUsers = new Dictionary<string, string>(0);
+
+            lock (rosterState)
+            {
+                foreach (string key in rosterState.Keys)
+                {
+                    if (NSMessageHandler.ContactList.Owner != null)
+                    {
+                        uniqueUsers[key.Split(';')[0]] = string.Empty;
+                    }
+                }
+
+                return uniqueUsers.Count;
+            }
+        }
+
+        internal bool HasContact(Contact contact)
+        {
+            lock (rosterState)
+            {
+                if (HasContact(contact.Mail))
+                    return true;
+
+                if (HasContact(contact.Mail, contact.Guid))
+                    return true;
+
+                lock (contact.SyncObject)
+                {
+                    foreach (Guid place in contact.Places.Keys)
+                    {
+                        if (HasContact(contact.Mail, place))
+                            return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        internal bool HasContact(string account)
+        {
+            lock (rosterState)
+                return rosterState.ContainsKey(account.ToLowerInvariant());
+        }
+
+        internal bool HasContact(string account, Guid place)
+        {
+            string fullaccount = account.ToLowerInvariant() + ";" + place.ToString("B").ToLowerInvariant();
+            lock (rosterState)
+                return rosterState.ContainsKey(fullaccount);
+        }
+
         #endregion
 
         #region Protected CMDs
@@ -807,10 +1023,37 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnBYEReceived(SBMessage message)
         {
-            string account = message.CommandValues[0].ToString().ToLowerInvariant();
-            if (account.Contains(";"))
+            string fullaccount = message.CommandValues[0].ToString().ToLowerInvariant();
+
+            ContactConversationState oldStatus = ContactConversationState.None;
+            object result = GetRosterProperty(fullaccount, RosterProperties.Status);
+            if (result != null)
             {
-                account = account.Split(';')[0];
+                oldStatus = (ContactConversationState)(result);
+            }
+
+            if (oldStatus == ContactConversationState.Left || oldStatus == ContactConversationState.None)
+                return;
+
+            SetRosterProperty(fullaccount, ContactConversationState.Left.ToString(), RosterProperties.Status);
+
+            Guid endPointId = Guid.Empty;
+            string account = fullaccount;
+
+            if (fullaccount.Contains(";"))
+            {
+                string[] accountGuid = fullaccount.Split(';');
+                account = accountGuid[0];
+                endPointId = new Guid(accountGuid[1]);
+            }
+
+            if (account == NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+            {
+                if (IsAllContactsInRosterLeft())
+                {
+                    OnAllContactsLeft();
+                }
+                return;
             }
 
             Contact contact = (message.CommandValues.Count >= 2) ?
@@ -818,28 +1061,12 @@ namespace MSNPSharp
                 :
                 NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
-            if (Contacts[contact] == ContactConversationState.Left)
-                return;
+            OnContactLeft(contact, endPointId); // notify the client programmer
 
-            OnContactLeft(contact); // notify the client programmer
-
-            foreach (Contact acc in Contacts.Keys)
+            if (IsAllContactsInRosterLeft())
             {
-                if (Contacts[acc] != ContactConversationState.Left)
-                {
-                    if (NSMessageHandler != null)
-                    {
-                        if (acc != NSMessageHandler.ContactList.Owner)
-                            return;
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
+                OnAllContactsLeft();  //Indicates whe should end the conversation and disconnect.
             }
-
-            OnAllContactsLeft();  //Indicates whe should end the conversation and disconnect.
         }
 
         /// <summary>
@@ -859,20 +1086,34 @@ namespace MSNPSharp
         /// Called when a IRO command has been received.
         /// </summary>
         /// <remarks>
-        /// Indicates that a remote contact was already present in the session that was joined.
+        /// Indicates contacts in the session that have joined.
         /// <code>IRO [Transaction] [Current] [Total] [account[;GUID]] [DisplayName] [Caps]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnIROReceived(SBMessage message)
         {
             string fullaccount = message.CommandValues[3].ToString().ToLowerInvariant();
+            string displayName = HttpUtility.UrlDecode(message.CommandValues[4].ToString());
+            string capacitiesString = message.CommandValues[5].ToString();
+
+            ContactConversationState oldStatus = ContactConversationState.None;
+            object result = GetRosterProperty(fullaccount, RosterProperties.Status);
+            if (result != null)
+            {
+                oldStatus = (ContactConversationState)(result);
+            }
+
+            SetRosterProperty(fullaccount, displayName, RosterProperties.Name);
+            SetRosterProperty(fullaccount, capacitiesString, RosterProperties.ClientCapacityString);
+            SetRosterProperty(fullaccount, ContactConversationState.Joined.ToString(), RosterProperties.Status);
+
             string account = fullaccount;
-            string endpointGuid = string.Empty;
+            Guid endpointGuid = Guid.Empty;
 
             if (fullaccount.Contains(";"))
             {
                 account = fullaccount.Split(';')[0];
-                endpointGuid = fullaccount.Split(';')[1];
+                endpointGuid = new Guid(fullaccount.Split(';')[1]);
             }
 
             if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() == account)
@@ -884,17 +1125,17 @@ namespace MSNPSharp
             // Not in contact list (anonymous). Update it's name and caps.
             if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
             {
-                if (endpointGuid != string.Empty)
+                if (endpointGuid != Guid.Empty)
                 {
                     if (contact.PersonalMessage == null)
                     {
-                        PersonalMessage personalMessage = new PersonalMessage("", MediaType.None, new string[] { }, new Guid(endpointGuid));
+                        PersonalMessage personalMessage = new PersonalMessage("", MediaType.None, new string[] { }, endpointGuid);
                         contact.SetPersonalMessage(personalMessage);
                     }
                     else
                     {
                         PersonalMessage personalMessage = new PersonalMessage(contact.PersonalMessage.Message,
-                            contact.PersonalMessage.MediaType, contact.PersonalMessage.CurrentMediaContent, new Guid(endpointGuid));
+                            contact.PersonalMessage.MediaType, contact.PersonalMessage.CurrentMediaContent, endpointGuid);
                         contact.SetPersonalMessage(personalMessage);
                     }
                 }
@@ -919,9 +1160,9 @@ namespace MSNPSharp
 
 
             // Notify the client programmer.
-            if (!Contacts.ContainsKey(contact) || Contacts[contact] != ContactConversationState.Joined)
+            if (oldStatus != ContactConversationState.Joined)
             {
-                OnContactJoined(contact);
+                OnContactJoined(contact, endpointGuid);
             }
         }
 
@@ -937,13 +1178,27 @@ namespace MSNPSharp
         protected virtual void OnJOIReceived(SBMessage message)
         {
             string fullaccount = message.CommandValues[0].ToString().ToLowerInvariant();
+            string displayName = HttpUtility.UrlDecode(message.CommandValues[1].ToString());
+            string capacitiesString = message.CommandValues[2].ToString();
+
+            ContactConversationState oldStatus = ContactConversationState.None;
+            object result = GetRosterProperty(fullaccount, RosterProperties.Status);
+            if (result != null)
+            {
+                oldStatus = (ContactConversationState)(result);
+            }
+
+            SetRosterProperty(fullaccount, displayName, RosterProperties.Name);
+            SetRosterProperty(fullaccount, capacitiesString, RosterProperties.ClientCapacityString);
+            SetRosterProperty(fullaccount, ContactConversationState.Joined.ToString(), RosterProperties.Status);
+
             string account = fullaccount;
-            string endpointGuid = string.Empty;
+            Guid endpointGuid = Guid.Empty;
 
             if (fullaccount.Contains(";"))
             {
                 account = fullaccount.Split(';')[0];
-                endpointGuid = fullaccount.Split(';')[1];
+                endpointGuid = new Guid(fullaccount.Split(';')[1]);
             }
 
             if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() != account)
@@ -954,17 +1209,17 @@ namespace MSNPSharp
                 // Not in contact list (anonymous). Update it's name and caps.
                 if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
                 {
-                    if (endpointGuid != string.Empty)
+                    if (endpointGuid != Guid.Empty)
                     {
                         if (contact.PersonalMessage == null)
                         {
-                            PersonalMessage personalMessage = new PersonalMessage("", MediaType.None, new string[] { }, new Guid(endpointGuid));
+                            PersonalMessage personalMessage = new PersonalMessage("", MediaType.None, new string[] { }, endpointGuid);
                             contact.SetPersonalMessage(personalMessage);
                         }
                         else
                         {
                             PersonalMessage personalMessage = new PersonalMessage(contact.PersonalMessage.Message,
-                                contact.PersonalMessage.MediaType, contact.PersonalMessage.CurrentMediaContent, new Guid(endpointGuid));
+                                contact.PersonalMessage.MediaType, contact.PersonalMessage.CurrentMediaContent, endpointGuid);
                             contact.SetPersonalMessage(personalMessage);
                         }
                     }
@@ -989,9 +1244,9 @@ namespace MSNPSharp
 
 
                 // Notify the client programmer.
-                if (!Contacts.ContainsKey(contact) || Contacts[contact] != ContactConversationState.Joined)
+                if (oldStatus != ContactConversationState.Joined)
                 {
-                    OnContactJoined(contact);
+                    OnContactJoined(contact, endpointGuid);
                 }
             }
         }
@@ -1096,18 +1351,29 @@ namespace MSNPSharp
             }
 
             if (sbMSGMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
+            {
+                switch (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
+                {
+                    case "text/x-msmsgscontrol":
+                    case "text/x-mms-emoticon":
+                    case "text/x-mms-animemoticon":
+                    case "text/x-msnmsgr-datacast":
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, message.ToDebugString(), GetType().Name);
+                        break;
+                    default:
+                        if (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, message.ToDebugString(), GetType().Name);
+                        }
+                        break;
+                }
+
                 switch (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "text/x-msmsgscontrol":
                         // make sure we don't parse the rest of the message in the next loop											
                         OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"], ClientType.PassportMember));
                         break;
-
-                    /*case "text/x-msmsgsinvite":
-                        break;
-					
-                    case "application/x-msnmsgrp2p":
-                        break;*/
 
                     case "text/x-mms-emoticon":
                     case "text/x-mms-animemoticon":
@@ -1131,6 +1397,7 @@ namespace MSNPSharp
                         }
                         break;
                 }
+            }
         }
 
         /// <summary>
@@ -1150,20 +1417,12 @@ namespace MSNPSharp
 
         private void ClearAll()
         {
-            //Dictionary<string, KeyValuePair<Contact, ContactConversationState>> cp = new Dictionary<string, KeyValuePair<Contact, ContactConversationState>>(Contacts);
-            Dictionary<Contact, ContactConversationState> cp = new Dictionary<Contact, ContactConversationState>(Contacts, new SiblingComparer<Contact>());
-            foreach (Contact account in cp.Keys)
-            {
-                SetContactState(account, ContactConversationState.Left);
-            }
-        }
-
-        private void SetContactState(Contact account, ContactConversationState state)
-        {
-            lock (Contacts)
-            {
-                Contacts[account] = state;
-            }
+            lock (rosterState)
+                rosterState.Clear();
+            lock (rosterName)
+                rosterName.Clear();
+            lock (rosterCapacities)
+                rosterCapacities.Clear();
         }
 
         /// <summary>
@@ -1182,7 +1441,6 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB processor disconnected.", GetType().Name);
             lock (syncObject)
             {
                 if (sessionEstablished)
@@ -1201,22 +1459,25 @@ namespace MSNPSharp
             {
                 return messageProcessor;
             }
+            
             set
             {
-                if (messageProcessor != null)
-                {
-                    messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
-                    messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
-                }
+                ////if (messageProcessor != null)
+                ////{
+                ////    messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
+                ////    messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
+                ////}
 
-                messageProcessor = value as SocketMessageProcessor;
+                ////messageProcessor = value as SocketMessageProcessor;
 
-                if (messageProcessor != null)
-                {
-                    // catch the connect event to start sending the USR command upon initiating
-                    messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
-                    messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
-                }
+                ////if (messageProcessor != null)
+                ////{
+                ////    // catch the connect event to start sending the USR command upon initiating
+                ////    messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
+                ////    messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
+                ////}
+
+                throw new InvalidOperationException("This property is read-only.");
             }
         }
 
@@ -1237,6 +1498,20 @@ namespace MSNPSharp
             {
                 // We expect at least a SBMessage object
                 SBMessage sbMessage = (SBMessage)message;
+
+                switch (sbMessage.Command)
+                {
+                    case "ACK":
+                    case "ANS":
+                    case "BYE":
+                    case "CAL":
+                    case "IRO":
+                    case "JOI":
+                    case "USR":
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, sbMessage.ToDebugString(), GetType().Name);
+                        break;
+                }
+
                 switch (sbMessage.Command)
                 {
                     case "MSG":

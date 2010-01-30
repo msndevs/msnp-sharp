@@ -196,10 +196,10 @@ namespace MSNPSharp.Core
             StringBuilder builder = new StringBuilder();
             foreach (StrKeyValuePair entry in MimeHeader)
             {
-                builder.Append(entry.Key).Append(": ").Append(entry.Value).Append("\r\n");
+                builder.Append("  " + entry.Key).Append(": ").Append(entry.Value).Append("\r\n");
             }
             builder.Append("\r\n");
-            return "[MSGMessage] " + builder.ToString();
+            return "  [MSGMessage] " + builder.ToString();
         }
     }
 };

@@ -392,7 +392,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public override string ToString()
         {
-            return "[TextMessage] : \r\n" + Text;
+            return "  [TextMessage] : \r\n  " + Text;
         }
 
 

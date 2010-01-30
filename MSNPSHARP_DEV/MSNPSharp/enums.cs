@@ -1439,6 +1439,16 @@ namespace MSNPSharp
         AddImageRelationshipFailed
     }
 
+    public enum RosterProperties
+    {
+        None,
+        Name,
+        ClientCapacityString,
+        ClientCapacities,
+        ClientCapacitiesEx,
+        Status
+    }
+
     /// <summary>
     /// The reason that fires <see cref="Contact.DisplayImageChanged"/> event.
     /// </summary>
@@ -1460,6 +1470,13 @@ namespace MSNPSharp
         /// Remote user notified it has its <see cref="DisplayImage"/> changed.
         /// </summary>
         UpdateTransmissionRequired,
+    }
+
+    public enum PlaceChangedReason
+    {
+        None,
+        SignedIn,
+        SignedOut
     }
 
     #region Enums: MsnServiceType and PartnerScenario

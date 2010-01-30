@@ -111,10 +111,11 @@ namespace MSNPSharp
         #region Members
 
         private NSMessageProcessor nsMessageProcessor = new NSMessageProcessor();
-        private NSMessageHandler nsMessageHandler = new NSMessageHandler();
+        private NSMessageHandler nsMessageHandler = null;
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
+        private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
 
         #endregion
 
@@ -124,19 +125,24 @@ namespace MSNPSharp
         /// </summary>
         public Messenger()
         {
+            #region Initialize
+
+            nsMessageHandler = new NSMessageHandler(this);
+
+            #endregion
+
             #region private events
-            nsMessageProcessor.ConnectionClosed += delegate
+
+            NameserverProcessor.ConnectionClosed += delegate
             {
                 tsMsnslpHandlers.Clear();
             };
 
-            nsMessageHandler.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
+            Nameserver.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
             {
-                //Register the p2phandler to handle all incoming p2p message through this switchboard.
-                ce.Switchboard.MessageProcessor.RegisterHandler(nsMessageHandler.P2PHandler);
 
                 // check if the request is remote or on our initiative
-                if (ce.Initiator != null && (ce.Initiator == this || ce.Initiator == nsMessageHandler.P2PHandler))
+                if (ce.Initiator != null)
                 {
                     return;
                 }
@@ -156,7 +162,7 @@ namespace MSNPSharp
                 return;
             };
 
-            nsMessageHandler.P2PHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
+            Nameserver.P2PHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
             {
                 MSNSLPHandler msnslpHandler = CreateMSNSLPHandler(see.Session.Version);
                 msnslpHandler.MessageProcessor = see.Session;
@@ -164,21 +170,21 @@ namespace MSNPSharp
 
                 tsMsnslpHandlers.Add(msnslpHandler);
 
-                // set the correct switchboard to send messages to
-                lock (nsMessageHandler.P2PHandler.SwitchboardSessions)
-                {
-                    foreach (SBMessageHandler sb in nsMessageHandler.P2PHandler.SwitchboardSessions)
-                    {
-                        if (sb.GetType() == typeof(SBMessageHandler))
-                        {
-                            if (sb.Contacts.ContainsKey(see.Session.RemoteUser))
-                            {
-                                see.Session.MessageProcessor = sb.MessageProcessor;
-                                break;
-                            }
-                        }
-                    }
-                }
+                //////// set the correct switchboard to send messages to
+                //////lock (Nameserver.P2PHandler.SwitchboardSessions)
+                //////{
+                //////    foreach (SBMessageHandler sb in Nameserver.P2PHandler.SwitchboardSessions)
+                //////    {
+                //////        if (sb.GetType() == typeof(SBMessageHandler))
+                //////        {
+                //////            if (sb.Contacts.ContainsKey(see.Session.RemoteUser))
+                //////            {
+                //////                see.Session.MessageProcessor = sb.MessageProcessor;
+                //////                break;
+                //////            }
+                //////        }
+                //////    }
+                //////}
 
                 // Accepts by default owner display images and contact emoticons.
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
@@ -221,7 +227,7 @@ namespace MSNPSharp
                 return;
             };
 
-            nsMessageHandler.P2PHandler.SessionClosed += delegate(object sender, P2PSessionAffectedEventArgs e)
+            Nameserver.P2PHandler.SessionClosed += delegate(object sender, P2PSessionAffectedEventArgs e)
             {
                 MSNSLPHandler handler = GetMSNSLPHandler(e.Session);
                 if (handler != null)
@@ -337,56 +343,55 @@ namespace MSNPSharp
         /// <summary>
         /// A list of all contacts.
         /// </summary>
-        /// <remarks>
-        ///	This property is a reference to the ContactList object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
-        /// </remarks>
         public ContactList ContactList
         {
             get
             {
-                return nsMessageHandler.ContactList;
+                return Nameserver.ContactList;
             }
         }
 
         /// <summary>
         /// A list of all contactgroups.
         /// </summary>
-        /// <remarks>
-        ///	This property is a reference to the ContactGroups object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
-        /// </remarks>
         public ContactGroupList ContactGroups
         {
             get
             {
-                return nsMessageHandler.ContactGroups;
+                return Nameserver.ContactGroups;
+            }
+        }
+
+        /// <summary>
+        /// A collection of all circles which are defined by the user who logged into the messenger network.
+        /// </summary>
+        public CircleList CircleList
+        {
+            get
+            {
+                return Nameserver.CircleList;
             }
         }
 
         /// <summary>
         /// Offline message service.
         /// </summary>
-        /// <remarks>
-        /// This property is a reference to the OIMService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
-        /// </remarks>
         public OIMService OIMService
         {
             get
             {
-                return nsMessageHandler.OIMService;
+                return Nameserver.OIMService;
             }
         }
 
         /// <summary>
         /// Storage service to get/update display name, personal status, display picture etc.
         /// </summary>
-        /// <remarks>
-        /// This property is a reference to the StorageService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
-        /// </remarks>
         public MSNStorageService StorageService
         {
             get
             {
-                return nsMessageHandler.StorageService;
+                return Nameserver.StorageService;
             }
         }
 
@@ -394,7 +399,7 @@ namespace MSNPSharp
         {
             get
             {
-                return nsMessageHandler.WhatsUpService;
+                return Nameserver.WhatsUpService;
             }
         }
 
@@ -402,13 +407,13 @@ namespace MSNPSharp
         /// Contact service.
         /// </summary>
         /// <remarks>
-        /// This property is a reference to the ContactService object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
+        /// This property is a reference to the ContactService object in the <see cref="Nameserver"/> property.
         /// </remarks>
         public ContactService ContactService
         {
             get
             {
-                return nsMessageHandler.ContactService;
+                return Nameserver.ContactService;
             }
         }
 
@@ -416,7 +421,7 @@ namespace MSNPSharp
         /// The local user logged into the network.
         /// </summary>
         /// <remarks>
-        /// This property is a reference to the Owner object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
+        /// This property is a reference to the Owner object in the <see cref="Nameserver"/> property.
         /// </remarks>
         [Obsolete("To avoid confuse, this property was obsoleted in 3.1, please use NSMessageHandler.ContactList.Owner instead.")]
         public Owner Owner
@@ -437,8 +442,13 @@ namespace MSNPSharp
         {
             get
             {
-                return nsMessageHandler.P2PHandler;
+                return Nameserver.P2PHandler;
             }
+        }
+
+        public ArrayList Conversations
+        {
+            get { return conversations; }
         }
 
         #endregion
