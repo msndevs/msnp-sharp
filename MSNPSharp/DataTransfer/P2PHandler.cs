@@ -81,7 +81,8 @@ namespace MSNPSharp.DataTransfer
     {
         #region Members
 
-        private NSMessageHandler nsMessageHandler;
+        private NSMessageHandler nsMessageHandler = null;
+        private Messenger messenger = null;
         private P2PMessagePool p2pMessagePool = new P2PMessagePool();
         private List<P2PMessageSession> messageSessions = new List<P2PMessageSession>();
         private List<SBMessageHandler> switchboardSessions = new List<SBMessageHandler>(0);
@@ -91,9 +92,10 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Protected constructor.
         /// </summary>
-        protected internal P2PHandler(NSMessageHandler nsHandler)
+        protected internal P2PHandler(NSMessageHandler nsHandler, Messenger parentMessenger)
         {
-            NSMessageHandler = nsHandler;
+            nsMessageHandler = nsHandler;
+            messenger = parentMessenger;
         }
 
         #region Properties
@@ -106,24 +108,6 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 return nsMessageHandler;
-            }
-            set
-            {
-                // de-register from the previous ns handler
-                if (nsMessageHandler != null)
-                {
-                    nsMessageHandler.SBCreated -= (nsMessageHandler_SBCreated);
-                    nsMessageHandler.ContactOffline -= (nsMessageHandler_ContactOffline);
-                }
-
-                nsMessageHandler = value;
-
-                // register new ns handler
-                if (nsMessageHandler != null)
-                {
-                    nsMessageHandler.SBCreated += (nsMessageHandler_SBCreated);
-                    nsMessageHandler.ContactOffline += (nsMessageHandler_ContactOffline);
-                }
             }
         }
 
@@ -175,7 +159,7 @@ namespace MSNPSharp.DataTransfer
             {
                 foreach (P2PMessageSession session in MessageSessions)
                 {
-                    session.AbortAllTransfers();
+                    session.CleanUp();
                 }
             }
 
@@ -211,7 +195,7 @@ namespace MSNPSharp.DataTransfer
         /// Fires the SessionClosed event.
         /// </summary>
         /// <param name="session"></param>
-        protected virtual void OnSessionClosed(P2PMessageSession session)
+        protected internal virtual void OnSessionClosed(P2PMessageSession session)
         {
             if (SessionClosed != null)
                 SessionClosed(this, new P2PSessionAffectedEventArgs(session));
@@ -250,12 +234,8 @@ namespace MSNPSharp.DataTransfer
             }
 
             // no session available, create a new session
-            P2PMessageSession newSession = CreateSessionFromLocal(localContact, remoteContact);
-            lock (MessageSessions)
-                MessageSessions.Add(newSession);
+            P2PMessageSession newSession = CreateSession(localContact, remoteContact, null);
 
-            // fire event
-            OnSessionCreated(newSession);
 
             return newSession;
         }
@@ -266,12 +246,21 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="localContact"></param>
         /// <param name="remoteContact"></param>
+        /// <param name="initatorMessage"></param>
         /// <returns></returns>
-        protected virtual P2PMessageSession CreateSessionFromLocal(Contact localContact, Contact remoteContact)
+        protected virtual P2PMessageSession CreateSession(Contact localContact, Contact remoteContact, P2PMessage initatorMessage)
         {
-            P2PMessageSession session =
-                ((localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 && (remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
-                ? new P2PMessageSession(P2PVersion.P2PV2) : new P2PMessageSession(P2PVersion.P2PV1);
+            P2PMessageSession session = null;
+
+            if (initatorMessage == null)
+            {
+                session = ((localContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 && (remoteContact.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
+                ? new P2PMessageSession(P2PVersion.P2PV2, NSMessageHandler) : new P2PMessageSession(P2PVersion.P2PV1, NSMessageHandler);
+            }
+            else
+            {
+                session = new P2PMessageSession(initatorMessage.Version, NSMessageHandler);
+            }
 
 
             // set the parameters
@@ -280,15 +269,30 @@ namespace MSNPSharp.DataTransfer
             session.RemoteContact = (session.Version == P2PVersion.P2PV1) ? remoteContact.Mail : remoteContact.Mail + ";" + remoteContact.MachineGuid.ToString("B");
             session.LocalContact = (session.Version == P2PVersion.P2PV1) ? localContact.Mail : localContact.Mail + ";" + localContact.MachineGuid.ToString("B");
 
-            session.ProcessorInvalid += session_ProcessorInvalid;
+            session.ProcessorInvalid += OnP2PMessageSessionProcessorInvalid;
 
             // generate a local base identifier.
             session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
 
             // uses -1 because the first message must be the localbaseidentifier and the identifier
             // is automatically increased
-            session.LocalIdentifier = (uint)session.LocalBaseIdentifier;// - (ulong)session.LocalInitialCorrection);//session.LocalBaseIdentifier - 4;
+            session.LocalIdentifier = (uint)session.LocalBaseIdentifier;
 
+            if (initatorMessage != null)
+            {
+                session.RemoteBaseIdentifier = initatorMessage.Header.Identifier;
+                session.RemoteIdentifier = initatorMessage.Header.Identifier;
+
+                if (initatorMessage.Version == P2PVersion.P2PV2)
+                {
+                    session.RemoteIdentifier += initatorMessage.V2Header.MessageSize;
+                }
+            }
+
+            lock (MessageSessions)
+                MessageSessions.Add(session);
+
+            OnSessionCreated(session);
             return session;
         }
 
@@ -297,14 +301,19 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="remoteContact"></param>
         /// <returns></returns>
-        protected SBMessageHandler GetSwitchboardSession(Contact remoteContact)
+        protected SBMessageHandler GetSwitchboardForP2PMessageSession(Contact remoteContact)
         {
-            foreach (SBMessageHandler handler in SwitchboardSessions)
+            lock (SwitchboardSessions)
             {
-                if (handler.Contacts.Count == 1 && handler.Contacts.ContainsKey(remoteContact) && handler.IsSessionEstablished)
-                    return handler;
+                foreach (SBMessageHandler switchboard in SwitchboardSessions)
+                {
+                    if (switchboard.HasContact(remoteContact) && switchboard.IsSessionEstablished)
+                    {
+                        return switchboard;
+                    }
+                }
+                return null;
             }
-            return null;
         }
 
         /// <summary>
@@ -324,34 +333,6 @@ namespace MSNPSharp.DataTransfer
                 }
             }
             return null;
-        }
-
-
-        /// <summary>
-        /// Creates a session based on a message received from the remote client.
-        /// </summary>
-        /// <param name="receivedMessage"></param>
-        /// <returns></returns>
-        protected P2PMessageSession CreateSessionFromRemote(P2PMessage receivedMessage)
-        {
-            P2PMessageSession session = new P2PMessageSession(receivedMessage.Version);
-
-            // generate a local base identifier.
-            session.LocalBaseIdentifier = (uint)((new Random()).Next(10000, int.MaxValue));
-            session.LocalIdentifier = (uint)(session.LocalBaseIdentifier);
-
-            session.ProcessorInvalid += new EventHandler<EventArgs>(session_ProcessorInvalid);
-
-            // setup the remote identifier
-            session.RemoteBaseIdentifier = receivedMessage.Header.Identifier;
-            session.RemoteIdentifier = receivedMessage.Header.Identifier;
-
-            if (receivedMessage.Version == P2PVersion.P2PV2)
-            {
-                session.RemoteIdentifier += receivedMessage.V2Header.MessageSize;
-            }
-
-            return session;
         }
 
         /// <summary>
@@ -409,33 +390,8 @@ namespace MSNPSharp.DataTransfer
             if (sbMessage == null)
                 return;
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming msg message", GetType().Name);
-
-            // Clean the MessageSessions, or it will lead to memory leak.
-            if (sbMessage.Command == "BYE")
-            {
-                string account = sbMessage.CommandValues[0].ToString();
-                lock (MessageSessions)
-                {
-                    List<P2PMessageSession> list = new List<P2PMessageSession>(MessageSessions);
-                    foreach (P2PMessageSession p2psession in list)
-                    {
-                        if (p2psession.RemoteContact.ToLowerInvariant() == account.ToLowerInvariant())
-                        {
-                            MessageSessions.Remove(p2psession);
-                            p2psession.CleanUp();
-
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "P2PMessageSession removed: " + p2psession.RemoteContact + ", remain session count: " + MessageSessions.Count.ToString());
-                        }
-                    }
-                }
-                return;
-            }
-
-
             if (sbMessage.Command != "MSG")
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "No MSG: " + sbMessage.Command + " instead", GetType().Name);
                 return;
             }
 
@@ -569,7 +525,7 @@ namespace MSNPSharp.DataTransfer
                     {
                         // there is no session available at all. the remote client sends the first message
                         // in the session. So create a new session to handle following messages.
-                        session = CreateSessionFromRemote(p2pMessage);
+                        session = CreateSession(NSMessageHandler.ContactList.Owner, remoteContact, p2pMessage);
                     }
                 }
 
@@ -586,7 +542,7 @@ namespace MSNPSharp.DataTransfer
                             req.Method == "INVITE" &&
                             req.ContentType == "application/x-msnmsgr-sessionreqbody")
                         {
-                            session = CreateSessionFromRemote(p2pMessage);
+                            session = CreateSession(NSMessageHandler.ContactList.Owner, remoteContact, p2pMessage);
                         }
                     }
                 }
@@ -602,17 +558,8 @@ namespace MSNPSharp.DataTransfer
                 session.RemoteContact = remoteMachineGuid == Guid.Empty ? remoteAccount : (remoteAccount + ";" + remoteMachineGuid.ToString("B"));
                 session.LocalContact = localMachineGuid == Guid.Empty ? localAccount : (localAccount + ";" + localMachineGuid.ToString("B"));
 
-                // add the session to the session list
-                lock (MessageSessions)
-                {
-                    MessageSessions.Add(session);
-                }
-
                 // set the default message processor
                 session.MessageProcessor = sender;
-
-                // notify the client programmer
-                OnSessionCreated(session);
 
             }
 
@@ -646,175 +593,41 @@ namespace MSNPSharp.DataTransfer
 
         #endregion
 
-
-        /// <summary>
-        /// Requests a new switchboard processor.
-        /// </summary>
-        /// <remarks>
-        /// This is done by delegating the request to the nameserver handler. The supplied contact is also direct invited to the newly created switchboard session.
-        /// </remarks>
-        /// <param name="remoteContact"></param>
-        protected virtual SBMessageHandler RequestSwitchboard(Contact remoteContact)
-        {
-            if (NSMessageHandler == null)
-                throw new MSNPSharpException("P2PHandler could not request a new switchboard session because the NSMessageHandler property is null.");
-
-            SBMessageHandler handler = new SBMessageHandler();
-            NSMessageHandler.RequestSwitchboard(handler, this);
-            handler.NSMessageHandler = NSMessageHandler;
-
-            handler.Invite(remoteContact);
-            return handler;
-        }
-
         /// <summary>
         /// Add a switchboard handler to the list of switchboard sessions to send messages to.
         /// </summary>
         /// <param name="session"></param>
-        protected virtual void AddSwitchboardSession(SBMessageHandler session)
+        internal virtual bool AddSwitchboardSession(SBMessageHandler session)
         {
             lock (SwitchboardSessions)
             {
                 if (SwitchboardSessions.Contains(session) == false)
+                {
                     SwitchboardSessions.Add(session);
+                    return true;
+                }
             }
+
+            return false;
         }
 
         /// <summary>
         /// Removes a switchboard handler from the list of switchboard sessions to send messages to.
         /// </summary>
         /// <param name="session"></param>
-        protected virtual void RemoveSwitchboardSession(SBMessageHandler session)
+        internal virtual bool RemoveSwitchboardSession(SBMessageHandler session)
         {
             int remainCount = 0;
+            bool succeed = true;
             lock (SwitchboardSessions)
             {
-                SwitchboardSessions.Remove(session);
+                succeed = SwitchboardSessions.Remove(session);
                 remainCount = SwitchboardSessions.Count;
             }
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A " + session.GetType().ToString() + " has been removed.");
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "There is/are " + remainCount.ToString() + " switchboard(s) remain(s) unclosed.");
-        }
 
-        /// <summary>
-        /// Registers events of the new switchboard in order to act on these.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void nsMessageHandler_SBCreated(object sender, SBCreatedEventArgs e)
-        {
-
-            SBMessageHandler sbHandler = e.Switchboard;
-            sbHandler.MessageProcessor.RegisterHandler(this);
-
-            // act on these events to ensure messages are properly sent to the right switchboards
-            e.Switchboard.ContactJoined += new EventHandler<ContactEventArgs>(Switchboard_ContactJoined);
-            e.Switchboard.ContactLeft += new EventHandler<ContactEventArgs>(Switchboard_ContactLeft);
-            e.Switchboard.SessionClosed += new EventHandler<EventArgs>(Switchboard_SessionClosed);
-            // keep track of this switchboard
-            AddSwitchboardSession(sbHandler);
-        }
-
-        /// <summary>
-        /// Removes the messageprocessor from the specified messagesession, because it is invalid.
-        /// </summary>
-        protected virtual void RemoveSessionProcessor(P2PMessageSession session)
-        {
-            session.MessageProcessor = null;
-
-            return;
-        }
-
-        /// <summary>
-        /// Sets the specified messageprocessor as the default messageprocessor for the message session.
-        /// </summary>
-        /// <param name="session"></param>
-        /// <param name="processor"></param>
-        protected virtual void AddSessionProcessor(P2PMessageSession session, IMessageProcessor processor)
-        {
-            session.MessageProcessor = processor;
-
-            return;
-        }
-
-        /// <summary>
-        /// Updates the internal switchboard collection to reflect the changes.
-        /// </summary>
-        /// <remarks>
-        /// Conversations with more than one contact are not found suitable for p2p transfers.
-        /// If multiple contacts are present, then any message sessions associated with the switchboard are unplugged.
-        /// </remarks>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Switchboard_ContactJoined(object sender, ContactEventArgs e)
-        {
-            SBMessageHandler handler = (SBMessageHandler)sender;
-            //MSNP18: owner in the switchboard, so there're 2 contacts.
-            bool canremove = (handler.Contacts.Count > 2);
-
-            if (canremove)
-            {
-                lock (MessageSessions)
-                {
-                    // in a conversation with multiple contacts we don't want to send p2p messages.
-                    foreach (P2PMessageSession session in MessageSessions)
-                    {
-                        if (session.MessageProcessor == handler.MessageProcessor)
-                        {
-                            // set this to null to prevent sending messages to this processor.
-                            // it will invalidate the processor when trying to send messages and thus
-                            // force the p2p handler to create a new switchboard
-                            RemoveSessionProcessor(session);
-                        }
-                    }
-                }
-            }
-
-            // MSNP18: owner in the switchboard, so there're 2 contacts.
-            bool canadd = (handler.Contacts.Count == 2);
-
-            if (canadd)
-            {
-                P2PMessageSession session = GetSessionFromRemote(e.Contact);
-
-                // check whether the session exists and is valid
-                // if so, we set this switchboard as new output gateway for the message session.
-                if (session != null && session.ProcessorValid == false)
-                {
-                    AddSessionProcessor(session, handler.MessageProcessor);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Removes the switchboard processor from the corresponding p2p message session, if necessary.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Switchboard_ContactLeft(object sender, ContactEventArgs e)
-        {
-            SBMessageHandler handler = (SBMessageHandler)sender;
-            P2PMessageSession session = GetSessionFromRemote(e.Contact);
-            if (session != null && session.MessageProcessor == handler.MessageProcessor)
-            {
-                // invalidate the processor
-                RemoveSessionProcessor(session);
-            }
-        }
-
-        /// <summary>
-        /// Cleans up p2p resources associated with the offline contact.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void nsMessageHandler_ContactOffline(object sender, ContactEventArgs e)
-        {
-            // destroy all message sessions that dealt with this contact
-            P2PMessageSession session = GetSessionFromRemote(e.Contact);
-            if (session != null)
-            {
-                CloseMessageSession(session);
-            }
+            return succeed;
         }
 
         /// <summary>
@@ -842,12 +655,12 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void session_ProcessorInvalid(object sender, EventArgs e)
+        private void OnP2PMessageSessionProcessorInvalid(object sender, EventArgs e)
         {
             P2PMessageSession session = (P2PMessageSession)sender;
 
             // create a new switchboard to fill the hole
-            SBMessageHandler sbHandler = GetSwitchboardSession(session.RemoteUser);
+            SBMessageHandler sbHandler = GetSwitchboardForP2PMessageSession(session.RemoteUser);
 
             // if the contact is offline, there is no need to request a new switchboard. close the session.
             if (session.RemoteUser.Status == PresenceStatus.Offline)
@@ -856,28 +669,24 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            // check whether the switchboard handler is valid and has a valid processor.
-            // if that is the case, use that processor. Otherwise request a new session.
-            if (sbHandler == null || sbHandler.MessageProcessor == null ||
-                ((SocketMessageProcessor)sbHandler.MessageProcessor).Connected == false ||
-                (sbHandler.Contacts.ContainsKey(session.RemoteUser) == false))
+            // check whether the switchboard handler is valid. Otherwise request a new session.
+            if (sbHandler == null)
             {
-                RequestSwitchboard(session.RemoteUser);
+                Conversation conversation = messenger.CreateConversation();
+                sbHandler = conversation.Invite(session.RemoteUser);
+                conversation.ContactJoined += delegate
+                {
+                    if (!session.ProcessorValid)
+                    {
+                        session.MessageProcessor = conversation.Switchboard.MessageProcessor;
+                    }
+                };
             }
             else
             {
+                //Set processor, trigger the SendBuffer().
                 session.MessageProcessor = sbHandler.MessageProcessor;
             }
-        }
-
-        /// <summary>
-        /// Removes the session from the list.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Switchboard_SessionClosed(object sender, EventArgs e)
-        {
-            RemoveSwitchboardSession((SBMessageHandler)sender);
         }
     }
 };

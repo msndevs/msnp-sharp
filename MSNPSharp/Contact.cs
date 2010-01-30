@@ -87,6 +87,7 @@ namespace MSNPSharp
 
         private Dictionary<string, Emoticon> emoticons = new Dictionary<string, Emoticon>(0);
         private Dictionary<string, Contact> siblings = new Dictionary<string, Contact>(0);
+        private Dictionary<Guid, string> places = new Dictionary<Guid, string>(0);
 
         private ulong oimCount = 1;
         private int adlCount = 1;
@@ -135,10 +136,26 @@ namespace MSNPSharp
         }
 
         #region Events
-
+        /// <summary>
+        /// Fired when contact's display name changed.
+        /// </summary>
         public event EventHandler<EventArgs> ScreenNameChanged;
+
         public event EventHandler<EventArgs> PersonalMessageChanged;
+
+        /// <summary>
+        /// Fired when owner places changed.
+        /// </summary>
+        public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
+
+        /// <summary>
+        /// Fired after contact's display image has been changed.
+        /// </summary>
         public event EventHandler<DisplayImageChangedEventArgs> DisplayImageChanged;
+
+        /// <summary>
+        /// Fired after received contact's display image changed notification.
+        /// </summary>
         public event EventHandler<DisplayImageChangedEventArgs> DisplayImageContextChanged;
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
@@ -157,6 +174,22 @@ namespace MSNPSharp
             get 
             { 
                 return syncObject; 
+            }
+        }
+
+        /// <summary>
+        /// The end points.
+        /// </summary>
+        public Dictionary<Guid, string> Places
+        {
+            get
+            {
+                return places;
+            }
+
+            internal set
+            {
+                places = value;
             }
         }
 
@@ -640,6 +673,15 @@ namespace MSNPSharp
             }
         }
 
+        internal string LocalContactString
+        {
+            get
+            {
+                return GetLocalContactString();
+
+            }
+        }
+
         /// <summary>
         /// The role of a contact in the addressbook.
         /// </summary>
@@ -864,6 +906,38 @@ namespace MSNPSharp
             }
         }
 
+        internal void SetChangedPlace(Guid placeId, string placeName, PlaceChangedReason action)
+        {
+            bool triggerEvent = false;
+            lock (SyncObject)
+            {
+                switch (action)
+                {
+                    case PlaceChangedReason.SignedIn:
+                        if (!Places.ContainsKey(placeId))
+                        {
+                            Places[placeId] = placeName;
+                            triggerEvent = true;
+                        }
+                        break;
+
+                    case PlaceChangedReason.SignedOut:
+                        if (Places.ContainsKey(placeId))
+                        {
+                            Places.Remove(placeId);
+                            triggerEvent = true;
+                        }
+                        break;
+                }
+
+            }
+
+            if (triggerEvent)
+            {
+                OnPlacesChanged(new PlaceChangedEventArgs(placeId, placeName, action));
+            }
+        }
+
         internal void SetHasSpace(bool hasSpaceValue)
         {
             hasSpace = hasSpaceValue;
@@ -994,6 +1068,14 @@ namespace MSNPSharp
 
         #region Protected
 
+        protected virtual string GetLocalContactString()
+        {
+            if (MachineGuid == Guid.Empty)
+                return Mail.ToLowerInvariant();
+
+            return Mail.ToLowerInvariant() + ";" + MachineGuid.ToString("B");
+        }
+
         protected virtual void OnScreenNameChanged(string oldName)
         {
             if (ScreenNameChanged != null)
@@ -1044,6 +1126,16 @@ namespace MSNPSharp
             {
                 DisplayImageContextChanged(this, arg);
             }
+        }
+
+        /// <summary>
+        /// Called when the <see cref="Places "/> (End Points) changed.
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void OnPlacesChanged(PlaceChangedEventArgs e)
+        {
+            if (PlacesChanged != null)
+                PlacesChanged(this, e);
         }
 
         protected virtual void LoadDisplayImageFromDeltas()

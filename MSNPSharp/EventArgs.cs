@@ -105,6 +105,63 @@ namespace MSNPSharp
         }
     }
 
+    [Serializable()]
+    public class ContactConversationEventArgs : ContactEventArgs
+    {
+        private Guid palce = Guid.Empty;
+
+        public Guid Palce
+        {
+            get { return palce; }
+        }
+
+        public ContactConversationEventArgs(Contact contact, Guid endPoint)
+            :base(contact)
+        {
+            palce = endPoint;
+        }
+    }
+
+    /// <summary>
+    /// Use when user's sign in places changed.
+    /// </summary>
+    public class PlaceChangedEventArgs : EventArgs
+    {
+        private string placeName = string.Empty;
+        private Guid placeId = Guid.Empty;
+        private PlaceChangedReason reason = PlaceChangedReason.None;
+
+        public PlaceChangedReason Reason
+        {
+            get { return reason; }
+        }
+
+        public string PlaceName
+        {
+            get { return placeName; }
+        }
+
+
+        public Guid PlaceId
+        {
+            get { return placeId; }
+        }
+
+        private PlaceChangedEventArgs()
+            : base()
+        {
+        }
+
+        public PlaceChangedEventArgs(Guid id, string name, PlaceChangedReason action)
+            : base()
+        {
+            placeId = id;
+            placeName = name;
+            reason = action;
+        }
+
+    }
+
     /// <summary>
     /// Used when a contact changed its status.
     /// </summary>

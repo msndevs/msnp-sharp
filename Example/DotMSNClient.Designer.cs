@@ -695,6 +695,7 @@ namespace MSNPSharpClient
             this.Name = "ClientForm";
             this.Text = "MSNPSharp Example Client";
             this.Load += new System.EventHandler(this.ClientForm_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ClientForm_FormClosing);
             this.ListPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
             this.SortPanel.PerformLayout();
@@ -716,6 +717,7 @@ namespace MSNPSharpClient
             this.ResumeLayout(false);
 
         }
+
         #endregion
 
         private Panel ListPanel;

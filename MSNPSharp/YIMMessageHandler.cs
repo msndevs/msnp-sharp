@@ -45,11 +45,14 @@ namespace MSNPSharp
     /// </summary>
     public class YIMMessageHandler :SBMessageHandler
     {
-        protected internal YIMMessageHandler()
-            : base()
+        private string remoteContact = string.Empty;
+
+        protected internal YIMMessageHandler(NSMessageHandler handler)
+            : base(handler)
         {
             sessionEstablished = true;
             invited = true;
+            SessionId = NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant();
         }
 
         #region Message sending methods
@@ -58,18 +61,15 @@ namespace MSNPSharp
         /// Do nothing except fire OnContactJoined event and add the contact to the <see cref="Contact"/> property.
         /// </summary>
         /// <param name="contact"></param>
-        public override void Invite(Contact contact)
+        public override bool Invite(Contact contact)
         {
-            OnContactJoined(contact);// (NSMessageHandler.ContactList[contact, ClientType.EmailMember]);
+            return ForceJoin(contact);
         }
 
         public override void SendNudge()
         {
-            IEnumerator iemu = Contacts.Keys.GetEnumerator();
-            iemu.MoveNext();
-
             YIMMessage nsMessage = new YIMMessage("UUM",
-                new string[] { ((Contact)(iemu.Current)).Mail, 
+                new string[] { remoteContact, 
                 ((int)ClientType.EmailMember).ToString(), 
                  ((uint)TextMessageType.Nudge).ToString() },
                  NSMessageHandler.Credentials.MsnProtocol);
@@ -85,11 +85,8 @@ namespace MSNPSharp
 
         public override void SendTextMessage(TextMessage message)
         {
-            IEnumerator iemu = Contacts.Keys.GetEnumerator();
-            iemu.MoveNext();
-
             YIMMessage nsMessage = new YIMMessage("UUM",
-                new string[] { ((Contact)(iemu.Current)).Mail, 
+                new string[] { remoteContact, 
                 ((int)ClientType.EmailMember).ToString(), 
                 ((uint)TextMessageType.Text).ToString()},
                 NSMessageHandler.Credentials.MsnProtocol);
@@ -104,11 +101,8 @@ namespace MSNPSharp
 
         public override void SendTypingMessage()
         {
-            IEnumerator iemu = Contacts.Keys.GetEnumerator();
-            iemu.MoveNext();
-
             YIMMessage nsMessage = new YIMMessage("UUM",
-                new string[] { ((Contact)(iemu.Current)).Mail, 
+                new string[] { remoteContact, 
                 ((int)ClientType.EmailMember).ToString(), 
                 ((uint)TextMessageType.Typing).ToString()},
                 NSMessageHandler.Credentials.MsnProtocol);
@@ -130,18 +124,20 @@ namespace MSNPSharp
 
         #endregion
 
-        public override void Left()
+        protected override void SendSwitchBoardClosedNotifyToNS()
         {
-            IEnumerator ienum = Contacts.Keys.GetEnumerator();
-            ienum.MoveNext();
-            OnContactLeft(NSMessageHandler.ContactList[((Contact)(ienum.Current)).Mail, ClientType.EmailMember]);
-            Close();
+            NSMessageHandler.SenSwitchBoardClosedNotify(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(),
+                "yahoo:" + remoteContact + ":0");
         }
-
-        public override void Close()
+        public override void Close(bool causeByRemote)
         {
+            if (!causeByRemote)
+                SendSwitchBoardClosedNotifyToNS();
+
+            OnContactLeft(NSMessageHandler.ContactList[remoteContact, ClientType.EmailMember], Guid.Empty);
+
             OnSessionClosed();
-            NSMessageHandler.MessageProcessor.UnregisterHandler(this);
+            MessageProcessor.UnregisterHandler(this);
         }
 
         public override void HandleMessage(IMessageProcessor sender, NetworkMessage message)
@@ -186,9 +182,15 @@ namespace MSNPSharp
             }
         }
 
-        internal void ForceJoin(Contact contact)
+        internal bool ForceJoin(Contact contact)
         {
-            OnContactJoined(contact);
+            if (GetRosterProperty(contact.Mail.ToLowerInvariant(), RosterProperties.Status) != null)
+                return false;
+
+            remoteContact = contact.Mail.ToLowerInvariant();
+            SetRosterProperty(contact.Mail, ContactConversationState.Joined.ToString(), RosterProperties.Status);
+            OnContactJoined(contact, Guid.Empty);
+            return true;
         }
 
         /// <summary>
@@ -202,12 +204,12 @@ namespace MSNPSharp
         protected virtual void OnUBMReceived(NetworkMessage message)
         {
             YIMMessage yimMessage = message as YIMMessage;
+            if(!HasContact(yimMessage.CommandValues[0].ToString()))
+            {
+                return ;
+            }
 
             Contact contact = NSMessageHandler.ContactList.GetContact(yimMessage.CommandValues[0].ToString(), ClientType.EmailMember);
-            if (!Contacts.ContainsKey(contact))
-            {
-                return;
-            }
 
             if (yimMessage.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
             {
@@ -241,6 +243,16 @@ namespace MSNPSharp
 
         protected override void ProcessInvitations()
         {
+        }
+
+        protected override void SetNewProcessor()
+        {
+            messageProcessor = NSMessageHandler.MessageProcessor as NSMessageProcessor;
+        }
+
+        protected override void ResigerHandlersToProcessor(IMessageProcessor processor)
+        {
+            MessageProcessor.RegisterHandler(this);
         }
 
         public override string ToString()

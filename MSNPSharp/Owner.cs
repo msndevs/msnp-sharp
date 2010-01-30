@@ -45,7 +45,6 @@ namespace MSNPSharp
     [Serializable]
     public class Owner : Contact
     {
-        private Dictionary<Guid, string> places = new Dictionary<Guid, string>();
         private string epName = Environment.MachineName;
 
         private bool passportVerified;
@@ -67,11 +66,6 @@ namespace MSNPSharp
         /// Fired when owner profile received.
         /// </summary>
         public event EventHandler<EventArgs> ProfileReceived;
-
-        /// <summary>
-        /// Fired when owner places changed.
-        /// </summary>
-        public event EventHandler<EventArgs> PlacesChanged;
 
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
@@ -113,22 +107,6 @@ namespace MSNPSharp
                 {
                     NSMessageHandler.SetPresenceStatusUUX(Status);
                 }
-            }
-        }
-
-        /// <summary>
-        /// The end points.
-        /// </summary>
-        public Dictionary<Guid, string> Places
-        {
-            get
-            {
-                return places;
-            }
-            internal set
-            {
-                places = value;
-                OnPlacesChanged(EventArgs.Empty);
             }
         }
 
@@ -829,14 +807,5 @@ namespace MSNPSharp
                 ProfileReceived(this, e);
         }
 
-        /// <summary>
-        /// Called when the <see cref="Places "/> (End Points) changed.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnPlacesChanged(EventArgs e)
-        {
-            if (PlacesChanged != null)
-                PlacesChanged(this, e);
-        }
     }
 };

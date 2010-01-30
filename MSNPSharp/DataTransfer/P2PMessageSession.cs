@@ -44,6 +44,7 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
+    using System.Net.Sockets;
 
     /// <summary>
     /// P2PMessageSession routes all messages in the p2p framework between the local client and a single remote client.
@@ -66,12 +67,14 @@ namespace MSNPSharp.DataTransfer
         private string remoteContact;
         private string localContact;
         private Contact remoteClient;
-
-
+        private NSMessageHandler nsMessageHandler;
         private Contact localUser;
-
-
         private P2PVersion version = P2PVersion.P2PV1;
+
+        /// <summary>
+        /// Occurs when a P2P session is closed.
+        /// </summary>
+        public event EventHandler<P2PSessionAffectedEventArgs> SessionClosed;
 
         public Contact LocalUser
         {
@@ -95,6 +98,11 @@ namespace MSNPSharp.DataTransfer
         public P2PVersion Version
         {
             get { return version; }
+        }
+
+        public NSMessageHandler NSMessageHandler
+        {
+            get { return nsMessageHandler; }
         }
 
         /// <summary>
@@ -211,10 +219,25 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PMessageSession(P2PVersion ver)
+        public P2PMessageSession(P2PVersion ver, NSMessageHandler handler)
         {
             version = ver;
+            nsMessageHandler = handler;
+            NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(NSMessageHandler_ContactOffline);
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object, version = " + ver.ToString(), GetType().Name);
+        }
+
+        /// <summary>
+        /// Cleans up p2p resources associated with the offline contact.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected virtual void NSMessageHandler_ContactOffline(object sender, ContactEventArgs e)
+        {
+            if (e.Contact == RemoteUser)
+            {
+                CleanUp();
+            }
         }
 
         /// <summary>
@@ -222,6 +245,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public virtual void CleanUp()
         {
+            NSMessageHandler.ContactOffline -= NSMessageHandler_ContactOffline;
+            OnSessionClosed(this);
+            NSMessageHandler.P2PHandler.OnSessionClosed(this);
+
             StopAllPendingProcessors();
             AbortAllTransfers();
 
@@ -599,7 +626,7 @@ namespace MSNPSharp.DataTransfer
                                 BufferMessage(chunkMessage);
                             }
                         }
-                        catch (System.Net.Sockets.SocketException)
+                        catch (SocketException)
                         {
                             InvalidateProcessor();
                             BufferMessage(chunkMessage);
@@ -632,7 +659,7 @@ namespace MSNPSharp.DataTransfer
                             BufferMessage(p2pMessage);
                         }
                     }
-                    catch (System.Net.Sockets.SocketException)
+                    catch (SocketException)
                     {
                         InvalidateProcessor();
                         BufferMessage(p2pMessage);
@@ -642,6 +669,7 @@ namespace MSNPSharp.DataTransfer
             #endregion
 
             #region P2P Version 2
+
             if (Version == P2PVersion.P2PV2)
             {
                 if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > maxSize)
@@ -680,7 +708,7 @@ namespace MSNPSharp.DataTransfer
                                 BufferMessage(chunkMessage);
                             }
                         }
-                        catch (System.Net.Sockets.SocketException)
+                        catch (SocketException)
                         {
                             InvalidateProcessor();
                             BufferMessage(chunkMessage);
@@ -714,10 +742,11 @@ namespace MSNPSharp.DataTransfer
                             BufferMessage(p2pMessage);
                         }
                     }
-                    catch (System.Net.Sockets.SocketException)
+                    catch (SocketException)
                     {
                         InvalidateProcessor();
                         BufferMessage(p2pMessage);
+
                     }
                 }
             }
@@ -778,6 +807,16 @@ namespace MSNPSharp.DataTransfer
         {
             if (ProcessorInvalid != null)
                 ProcessorInvalid(this, new EventArgs());
+        }
+
+        /// <summary>
+        /// Fires the SessionClosed event.
+        /// </summary>
+        /// <param name="session"></param>
+        protected virtual void OnSessionClosed(P2PMessageSession session)
+        {
+            if (SessionClosed != null)
+                SessionClosed(this, new P2PSessionAffectedEventArgs(session));
         }
 
         /// <summary>
