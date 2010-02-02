@@ -249,8 +249,6 @@ namespace MSNPSharp
             //Must call after _switchboard and _yimHandler have been initialized.
             AttachEvents(_switchboard);
             AttachEvents(_yimHandler);
-
-            _messenger.Conversations.Add(this);
         }
 
         private bool IsPendingContact(Contact contact)
@@ -418,6 +416,8 @@ namespace MSNPSharp
                 ending = false;
             }
 
+            _messenger.Conversations.Remove(this);
+
             
             ClearContacts();
 
@@ -566,6 +566,11 @@ namespace MSNPSharp
 
             if (!AddContact(e.Contact))
                 return;
+
+            if (!_messenger.Conversations.Contains(this))
+            {
+                _messenger.Conversations.Add(this);
+            }
 
             lock (_pendingInviteContacts)
                 _pendingInviteContacts.Remove(e.Contact);

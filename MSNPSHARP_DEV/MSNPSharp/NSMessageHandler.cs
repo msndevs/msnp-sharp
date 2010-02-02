@@ -1319,7 +1319,9 @@ namespace MSNPSharp
 
                     if (privateendpoints.Count > 0)
                     {
-                        Guid lastSignedInPlace = NSMessageHandler.MachineGuid; // For AutoLogoff
+                        Guid lastSignedInPlace = Guid.Empty; // For AutoLogoff
+                        int placeCounter = 0;
+
                         Dictionary<Guid, string> newPlaces = new Dictionary<Guid, string>(privateendpoints.Count);
                         
                         foreach (XmlNode pepdNode in privateendpoints)
@@ -1334,7 +1336,13 @@ namespace MSNPSharp
                             }
 
                             newPlaces.Add(id, epname);
-                            lastSignedInPlace = id;
+
+                            if (placeCounter == 0)
+                            {
+                                lastSignedInPlace = id;
+                            }
+
+                            placeCounter++;
 
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
                         }

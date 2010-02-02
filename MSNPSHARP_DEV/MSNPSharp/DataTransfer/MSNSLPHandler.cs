@@ -919,7 +919,7 @@ namespace MSNPSharp.DataTransfer
             OnTransferSessionCreated(transferSession);
 
             // send the invitation
-            MessageSession.SendMessage(p2pMessage);
+            P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage);
 
             return transferSession;
         }
@@ -958,6 +958,7 @@ namespace MSNPSharp.DataTransfer
             //byte[] contextArray  = System.Text.ASCIIEncoding.ASCII.GetBytes(System.Web.HttpUtility.UrlDecode(msnObject.OriginalContext));//GetEncodedString());
             //string base64Context = Convert.ToBase64String(contextArray, 0, contextArray.Length);
             //string activityUrl = "99991065" + ";1;" + Tip;
+
             string activityUrl = activityID + ";1;" + activityName;
             byte[] contextData = System.Text.UnicodeEncoding.Unicode.GetBytes(activityUrl);
             string base64Context = Convert.ToBase64String(contextData, 0, contextData.Length);
@@ -1018,8 +1019,7 @@ namespace MSNPSharp.DataTransfer
             transferSession.IsSender = false;
 
             OnTransferSessionCreated(transferSession);
-
-            MessageSession.SendMessage(p2pMessage);
+            P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage);
 
             return transferSession;
         }
@@ -1147,7 +1147,7 @@ namespace MSNPSharp.DataTransfer
 
             OnTransferSessionCreated(transferSession);
 
-            MessageSession.SendMessage(p2pMessage);
+            P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage);
 
             return transferSession;
         }
