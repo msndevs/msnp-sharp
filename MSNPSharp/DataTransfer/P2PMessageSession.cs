@@ -622,14 +622,12 @@ namespace MSNPSharp.DataTransfer
                             }
                             else
                             {
-                                InvalidateProcessor();
-                                BufferMessage(chunkMessage);
+                                RequestProcessorAndBufferMessage(chunkMessage);
                             }
                         }
                         catch (SocketException)
                         {
-                            InvalidateProcessor();
-                            BufferMessage(chunkMessage);
+                            RequestProcessorAndBufferMessage(chunkMessage);
                         }
                     } 
 
@@ -655,14 +653,12 @@ namespace MSNPSharp.DataTransfer
                         }
                         else
                         {
-                            InvalidateProcessor();
-                            BufferMessage(p2pMessage);
+                            RequestProcessorAndBufferMessage(p2pMessage);
                         }
                     }
                     catch (SocketException)
                     {
-                        InvalidateProcessor();
-                        BufferMessage(p2pMessage);
+                        RequestProcessorAndBufferMessage(p2pMessage);
                     }
                 }
             } 
@@ -704,14 +700,12 @@ namespace MSNPSharp.DataTransfer
                             }
                             else
                             {
-                                InvalidateProcessor();
-                                BufferMessage(chunkMessage);
+                                RequestProcessorAndBufferMessage(chunkMessage);
                             }
                         }
                         catch (SocketException)
                         {
-                            InvalidateProcessor();
-                            BufferMessage(chunkMessage);
+                            RequestProcessorAndBufferMessage(chunkMessage);
                         }
                     }
                 }
@@ -738,14 +732,12 @@ namespace MSNPSharp.DataTransfer
                         }
                         else
                         {
-                            InvalidateProcessor();
-                            BufferMessage(p2pMessage);
+                            RequestProcessorAndBufferMessage(p2pMessage);
                         }
                     }
                     catch (SocketException)
                     {
-                        InvalidateProcessor();
-                        BufferMessage(p2pMessage);
+                        RequestProcessorAndBufferMessage(p2pMessage);
 
                     }
                 }
@@ -863,7 +855,15 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        
+        /// <summary>
+        /// Buffer the message, then trigger <see cref="OnProcessorInvalid"/> event.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void RequestProcessorAndBufferMessage(NetworkMessage message)
+        {
+            BufferMessage(message);
+            InvalidateProcessor();
+        }
 
         #endregion
     }

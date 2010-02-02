@@ -225,10 +225,7 @@ namespace MSNPSharp.DataTransfer
                     }
                     else
                     {
-                        lock (MessageSessions)
-                        {
-                            MessageSessions.Remove(existingSession);
-                        }
+                        RemoveP2PMessageSession(existingSession);
                     }
                 }
             }
@@ -289,8 +286,7 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            lock (MessageSessions)
-                MessageSessions.Add(session);
+            AddP2PMessageSession(session);
 
             OnSessionCreated(session);
             return session;
@@ -593,6 +589,19 @@ namespace MSNPSharp.DataTransfer
 
         #endregion
 
+        internal virtual bool AddP2PMessageSession(P2PMessageSession session)
+        {
+            lock (MessageSessions)
+            {
+                if (MessageSessions.Contains(session))
+                    return false;
+
+                MessageSessions.Add(session);
+                return true;
+            }
+        }
+
+
         /// <summary>
         /// Add a switchboard handler to the list of switchboard sessions to send messages to.
         /// </summary>
@@ -609,6 +618,14 @@ namespace MSNPSharp.DataTransfer
             }
 
             return false;
+        }
+
+        internal virtual bool RemoveP2PMessageSession(P2PMessageSession session)
+        {
+            lock (MessageSessions)
+            {
+                return MessageSessions.Remove(session);
+            }
         }
 
         /// <summary>
@@ -644,10 +661,7 @@ namespace MSNPSharp.DataTransfer
             OnSessionClosed(session);
 
             // and remove the session from the list
-            lock (MessageSessions)
-            {
-                MessageSessions.Remove(session);
-            }
+            RemoveP2PMessageSession(session);
         }
 
         /// <summary>
