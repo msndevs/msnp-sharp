@@ -170,22 +170,6 @@ namespace MSNPSharp
 
                 tsMsnslpHandlers.Add(msnslpHandler);
 
-                //////// set the correct switchboard to send messages to
-                //////lock (Nameserver.P2PHandler.SwitchboardSessions)
-                //////{
-                //////    foreach (SBMessageHandler sb in Nameserver.P2PHandler.SwitchboardSessions)
-                //////    {
-                //////        if (sb.GetType() == typeof(SBMessageHandler))
-                //////        {
-                //////            if (sb.Contacts.ContainsKey(see.Session.RemoteUser))
-                //////            {
-                //////                see.Session.MessageProcessor = sb.MessageProcessor;
-                //////                break;
-                //////            }
-                //////        }
-                //////    }
-                //////}
-
                 // Accepts by default owner display images and contact emoticons.
                 msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
                 {

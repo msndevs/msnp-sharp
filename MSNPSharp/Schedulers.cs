@@ -96,6 +96,9 @@ namespace MSNPSharp
         }
     }
 
+    /// <summary>
+    /// Base form of a message scheduler.
+    /// </summary>
     internal interface IScheduler
     {
         int DelayTime
@@ -113,11 +116,11 @@ namespace MSNPSharp
     /// </summary>
     internal class Scheduler : IScheduler
     {
-        private object syncObject = new object();
+        protected object syncObject = new object();
         private int delayTime = 5000; //In ms.
         private Thread timerThread = null;
-        private Queue<SchedulerQueueObject> messageQueue = new Queue<SchedulerQueueObject>();
-        private Dictionary<Guid, Messenger> messengerList = new Dictionary<Guid, Messenger>(0);
+        protected Queue<SchedulerQueueObject> messageQueue = new Queue<SchedulerQueueObject>();
+        protected Dictionary<Guid, Messenger> messengerList = new Dictionary<Guid, Messenger>(0);
 
         public int DelayTime
         {
@@ -149,23 +152,38 @@ namespace MSNPSharp
 
                 lock (syncObject)
                 {
-                    while (messageQueue.Count > 0 && currentTime - messageQueue.Peek().CreateTime >= span)
-                    {
-                        SchedulerQueueObject item = messageQueue.Dequeue();
-                        if (messengerList.ContainsKey(item.MessengerId) && messengerList[item.MessengerId].Connected)
-                        {
-                            item.MessageProcessor.SendMessage(item.Message);
-                        }
-                    }
-
-
-                    if (messageQueue.Count == 0)
+                    if (DequeueAndProcess(currentTime, span) == 0)
                     {
                         return;
                     }
                 }
 
                 Thread.Sleep(span);
+            }
+        }
+
+
+        protected virtual int DequeueAndProcess(DateTime currentTime, TimeSpan span)
+        {
+            lock (syncObject)
+            {
+                while (messageQueue.Count > 0 && currentTime - messageQueue.Peek().CreateTime >= span)
+                {
+                    SchedulerQueueObject item = messageQueue.Dequeue();
+                    if (messengerList.ContainsKey(item.MessengerId) && messengerList[item.MessengerId].Connected)
+                    {
+                        try
+                        {
+                            item.MessageProcessor.SendMessage(item.Message);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().Name + " send bufferred message error: " + ex.Message);
+                        }
+                    }
+                }
+
+                return messageQueue.Count;
             }
         }
 
@@ -241,10 +259,45 @@ namespace MSNPSharp
         #endregion
     }
 
+    /// <summary>
+    /// The <see cref="Scheduler"/> for switchboard request. The scheduler will only send one request every second.
+    /// </summary>
+    internal class SwitchBoardRequestScheduler : Scheduler
+    {
+        public SwitchBoardRequestScheduler(int delay)
+            : base(delay)
+        {
+        }
+
+        protected override int DequeueAndProcess(DateTime currentTime, TimeSpan span)
+        {
+            lock (syncObject)
+            {
+                if (currentTime - messageQueue.Peek().CreateTime >= span)
+                {
+                    SchedulerQueueObject item = messageQueue.Dequeue();
+                    if (messengerList.ContainsKey(item.MessengerId) && messengerList[item.MessengerId].Connected)
+                    {
+                        try
+                        {
+                            item.MessageProcessor.SendMessage(item.Message);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().Name + " send bufferred message error: " + ex.Message);
+                        }
+                    }
+                }
+
+                return messageQueue.Count;
+            }
+        }
+    }
+
     internal static class Schedulers
     {
         private static Scheduler p2pInvitationScheduler = new Scheduler(5000);
-        private static Scheduler sbRequestScheduler = new Scheduler(1000);
+        private static Scheduler sbRequestScheduler = new SwitchBoardRequestScheduler(1000);
 
         internal static Scheduler SwitchBoardRequestScheduler
         {
