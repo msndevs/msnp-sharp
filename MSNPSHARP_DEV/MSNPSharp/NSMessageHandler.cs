@@ -83,7 +83,9 @@ namespace MSNPSharp
         private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
         private List<Regex> censorWords = new List<Regex>(0);
-        Dictionary<string, string> sessions = new Dictionary<string, string>(0);
+        private Dictionary<string, string> sessions = new Dictionary<string, string>(0);
+        private Guid p2pInviteSchedulerId = Guid.Empty;
+        private Guid sbRequestSchedulerId = Guid.Empty;
 
         protected internal NSMessageHandler(Messenger parentMessenger)
         {
@@ -375,6 +377,25 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The scheduler identifier for <see cref="Schedulers.P2PInvitationScheduler"/>
+        /// </summary>
+        internal Guid P2PInvitationSchedulerId
+        {
+            get
+            {
+                return p2pInviteSchedulerId;
+            }
+        }
+
+        internal Guid SwitchBoardRequestSchedulerId
+        {
+            get
+            {
+                return sbRequestSchedulerId;
+            }
+        }
+
         #endregion
 
         #region Public Events
@@ -631,7 +652,9 @@ namespace MSNPSharp
         public virtual void RequestSwitchboard(SBMessageHandler switchboardHandler, object initiator)
         {
             pendingSwitchboards.Enqueue(new SwitchboardQueueItem(switchboardHandler, initiator));
-            MessageProcessor.SendMessage(new NSMessage("XFR", new string[] { "SB" }));
+
+            Schedulers.SwitchBoardRequestScheduler.Enqueue(MessageProcessor, new NSMessage("XFR", new string[] { "SB" }), sbRequestSchedulerId);
+            ////MessageProcessor.SendMessage(new NSMessage("XFR", new string[] { "SB" }));
         }
 
 
@@ -1106,6 +1129,8 @@ namespace MSNPSharp
         protected internal virtual void OnSignedIn(EventArgs e)
         {
             isSignedIn = true;
+            p2pInviteSchedulerId = Schedulers.P2PInvitationScheduler.Register(messenger);
+            sbRequestSchedulerId = Schedulers.SwitchBoardRequestScheduler.Register(messenger);
 
             if (SignedIn != null)
                 SignedIn(this, e);
@@ -3256,6 +3281,10 @@ namespace MSNPSharp
             //6. Reset censor words
             CensorWords.Clear();
             sessions.Clear();
+
+            //7. Unregister schedulers
+            Schedulers.P2PInvitationScheduler.UnRegister(p2pInviteSchedulerId);
+            Schedulers.SwitchBoardRequestScheduler.UnRegister(sbRequestSchedulerId);
         }
 
         /// <summary>

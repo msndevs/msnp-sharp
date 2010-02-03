@@ -919,7 +919,7 @@ namespace MSNPSharp.DataTransfer
             OnTransferSessionCreated(transferSession);
 
             // send the invitation
-            P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage);
+            Schedulers.P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage, MessageSession.NSMessageHandler.P2PInvitationSchedulerId);
 
             return transferSession;
         }
@@ -1019,7 +1019,7 @@ namespace MSNPSharp.DataTransfer
             transferSession.IsSender = false;
 
             OnTransferSessionCreated(transferSession);
-            P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage);
+            Schedulers.P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage, MessageSession.NSMessageHandler.P2PInvitationSchedulerId);
 
             return transferSession;
         }
@@ -1147,7 +1147,7 @@ namespace MSNPSharp.DataTransfer
 
             OnTransferSessionCreated(transferSession);
 
-            P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage);
+            Schedulers.P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage, MessageSession.NSMessageHandler.P2PInvitationSchedulerId);
 
             return transferSession;
         }

@@ -495,8 +495,10 @@ namespace MSNPSharp
         {
             if (nsMessageProcessor.Connected)
             {
-                if (nsMessageHandler != null)
+                if (nsMessageHandler != null && Nameserver.ContactList.Owner != null)
+                {
                     Nameserver.ContactList.Owner.SetStatus(PresenceStatus.Offline);
+                }
 
                 nsMessageProcessor.Disconnect();
             }
