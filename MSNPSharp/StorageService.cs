@@ -721,7 +721,7 @@ namespace MSNPSharp
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, create profile skipped.");
                 DisplayImage displayImage = new DisplayImage();
-                displayImage.Image = Properties.Resources.WLXLarge_default;  //Set default
+                displayImage.Image = Properties.Resources.MSNPSharp_logo;  //Set default
                 NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
 
                 return;
@@ -754,7 +754,7 @@ namespace MSNPSharp
 
                 //4. CreateDocument, create a new document for this profile and return its resource id.
                 MemoryStream defaultDisplayImageStream = new MemoryStream();
-                Properties.Resources.WLXLarge_default.Save(defaultDisplayImageStream, Properties.Resources.WLXLarge_default.RawFormat);
+                Properties.Resources.MSNPSharp_logo.Save(defaultDisplayImageStream, Properties.Resources.MSNPSharp_logo.RawFormat);
                 nextStep = CreatePhotoDocumentSync(PartnerScenario.RoamingSeed, out documentReourceId, "MSNPSharp", defaultDisplayImageStream.ToArray());
 
                 //5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
@@ -1028,7 +1028,7 @@ namespace MSNPSharp
                 if (NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage == null)
                 {
                     SerializableMemoryStream serStream = new SerializableMemoryStream();
-                    Properties.Resources.WLXLarge_default.Save(serStream, Properties.Resources.WLXLarge_default.RawFormat);
+                    Properties.Resources.MSNPSharp_logo.Save(serStream, Properties.Resources.MSNPSharp_logo.RawFormat);
 
                     NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = serStream;
                     NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
