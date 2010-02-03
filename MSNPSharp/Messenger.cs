@@ -136,7 +136,7 @@ namespace MSNPSharp
                 ce.Switchboard.MessageProcessor.RegisterHandler(nsMessageHandler.P2PHandler);
 
                 // check if the request is remote or on our initiative
-                if (ce.Initiator != null && (ce.Initiator == this || ce.Initiator == nsMessageHandler.P2PHandler))
+                if (ce.Initiator != null)
                 {
                     return;
                 }
