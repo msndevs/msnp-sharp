@@ -273,18 +273,29 @@ namespace MSNPSharp
         {
             lock (syncObject)
             {
-                if (currentTime - messageQueue.Peek().CreateTime >= span)
+                Dictionary<Guid, IMessageProcessor> uniqueProcessors = new Dictionary<Guid, IMessageProcessor>(0);
+
+                while (messageQueue.Count > 0 && currentTime - messageQueue.Peek().CreateTime >= span)
                 {
-                    SchedulerQueueObject item = messageQueue.Dequeue();
-                    if (messengerList.ContainsKey(item.MessengerId) && messengerList[item.MessengerId].Connected)
+                    if (uniqueProcessors.ContainsKey(messageQueue.Peek().MessengerId))
                     {
-                        try
+                        break;
+                    }
+                    else
+                    {
+
+                        SchedulerQueueObject item = messageQueue.Dequeue();
+                        if (messengerList.ContainsKey(item.MessengerId) && messengerList[item.MessengerId].Connected)
                         {
-                            item.MessageProcessor.SendMessage(item.Message);
-                        }
-                        catch (Exception ex)
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().Name + " send bufferred message error: " + ex.Message);
+                            try
+                            {
+                                item.MessageProcessor.SendMessage(item.Message);
+                                uniqueProcessors.Add(item.MessengerId, item.MessageProcessor);
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().Name + " send bufferred message error: " + ex.Message);
+                            }
                         }
                     }
                 }
