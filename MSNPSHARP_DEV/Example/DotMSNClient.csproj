@@ -6,7 +6,7 @@
     <ProjectGuid>{BDF3E472-EFE8-44D6-AFB6-062DD929D56F}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ApplicationIcon>App.ico</ApplicationIcon>
+    <ApplicationIcon>MSNPSharp_logo.ico</ApplicationIcon>
     <AssemblyKeyContainerName>
     </AssemblyKeyContainerName>
     <AssemblyName>DotMSNClient</AssemblyName>
@@ -91,26 +91,28 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App.ico" />
-    <None Include="Resource\status\open.png" />
-    <None Include="Resource\status\online.png" />
-    <None Include="Resource\status\offline.png" />
-    <None Include="Resource\status\idle.png" />
-    <None Include="Resource\status\hidden.png" />
-    <None Include="Resource\status\closed.png" />
-    <None Include="Resource\status\circle.png" />
-    <None Include="Resource\status\busy.png" />
-    <None Include="Resource\status\away.png" />
-    <None Include="Resource\file.png" />
-    <None Include="Resource\nudge.png" />
-    <None Include="Resource\yahoo_ico.ico" />
-    <None Include="Resource\msn_ico.ico" />
-    <None Include="Resource\smileys\tongueout.gif" />
-    <None Include="Resource\smileys\smiley.gif" />
-    <None Include="Resource\smileys\sad.gif" />
-    <None Include="Resource\smileys\biggrin.gif" />
-    <None Include="Resource\smileys\wink.gif" />
-    <None Include="Resource\inner_emoicon.png" />
+    <Content Include="MSNPSharp_logo.ico" />
+    <None Include="Resources\msn_ico.ico" />
+    <None Include="Resources\MSNPSharp_logo_small.ico" />
+    <None Include="Resources\MSNPSharp_logo.ico" />
+    <None Include="Resources\status\open.png" />
+    <None Include="Resources\status\online.png" />
+    <None Include="Resources\status\offline.png" />
+    <None Include="Resources\status\idle.png" />
+    <None Include="Resources\status\hidden.png" />
+    <None Include="Resources\status\closed.png" />
+    <None Include="Resources\status\circle.png" />
+    <None Include="Resources\status\busy.png" />
+    <None Include="Resources\status\away.png" />
+    <None Include="Resources\file.png" />
+    <None Include="Resources\nudge.png" />
+    <None Include="Resources\yahoo_ico.ico" />
+    <None Include="Resources\smileys\tongueout.gif" />
+    <None Include="Resources\smileys\smiley.gif" />
+    <None Include="Resources\smileys\sad.gif" />
+    <None Include="Resources\smileys\biggrin.gif" />
+    <None Include="Resources\smileys\wink.gif" />
+    <None Include="Resources\inner_emoicon.png" />
     <Compile Include="AddContactForm.cs">
       <SubType>Form</SubType>
     </Compile>

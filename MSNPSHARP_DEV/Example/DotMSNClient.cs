@@ -49,6 +49,8 @@ namespace MSNPSharpClient
             //
             InitializeComponent();
 
+            this.Icon = Properties.Resources.MSNPSharp_logo_small_ico;
+
             // You can set proxy settings here
             // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
 

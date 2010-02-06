@@ -20,6 +20,7 @@ namespace MSNPSharpClient
         public TraceForm()
         {
             InitializeComponent();
+            this.Icon = Properties.Resources.MSNPSharp_logo_small_ico;
             rtbTraceListener = new RichTextBoxTraceListener(rtbTrace);
             Trace.Listeners.Add(rtbTraceListener);
 
