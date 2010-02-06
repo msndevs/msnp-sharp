@@ -25,7 +25,7 @@ namespace MSNPSharpClient
         // Create a Messenger object to use MSNPSharp.
         private Messenger messenger = new Messenger();
         private List<ConversationForm> convforms = new List<ConversationForm>(0);
-
+        private TraceForm traceform = new TraceForm();
         public List<ConversationForm> ConversationForms
         {
             get
@@ -218,7 +218,6 @@ namespace MSNPSharpClient
                 SortByGroup(null);
 
             // ******* Listen traces *****
-            TraceForm traceform = new TraceForm();
             traceform.Show();
         }
 
@@ -228,9 +227,12 @@ namespace MSNPSharpClient
             if (Messenger.Connected)
             {
                 Messenger.Nameserver.SignedOff -= Nameserver_SignedOff;
-                Messenger.Disconnect();
+                
                 ResetAll();
+                Messenger.Disconnect();
             }
+
+            traceform.Close();
         }
 
         void Nameserver_CircleMemberOffline(object sender, CircleMemberEventArgs e)
@@ -803,26 +805,23 @@ namespace MSNPSharpClient
                 if (newstatus == PresenceStatus.Offline)
                 {
                     PresenceStatus old = Messenger.ContactList.Owner.Status;
-                    //close all ConversationForms
-                    if (ConversationForms.Count == 0 ||
-                        MessageBox.Show("You are signing out from example client. All windows will be closed.", "Sign out",
-                        MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+
+                    foreach (ConversationForm convform in ConversationForms)
                     {
-                        if (ConversationForms.Count != 0)
+                        if (convform.Visible == true)
                         {
-                            for (int i = 0; i < ConversationForms.Count; i++)
+                            if (MessageBox.Show("You are signing out from example client. All windows will be closed.", "Sign out", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                             {
-                                ConversationForms[i].Close();
+                                return;
                             }
-
+                            else
+                            {
+                                break;
+                            }
                         }
-                        loginButton.Tag = 2;
-                        loginButton.PerformClick();
-                        pnlNameAndPM.Visible = false;
-                        comboPlaces.Visible = false;
-
                     }
-                    comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(old));
+
+                    Messenger.Disconnect();
                 }
                 else
                 {
@@ -1016,12 +1015,11 @@ namespace MSNPSharpClient
 
             places.Clear();
 
-            for (int i = 0; i < ConversationForms.Count; i++)
+            List<ConversationForm> convFormsClone = new List<ConversationForm>(ConversationForms);
+            foreach(ConversationForm convForm in convFormsClone)
             {
-                ConversationForms[i].Close();
+                convForm.Close();
             }
-
-            ConversationForms.Clear();
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
