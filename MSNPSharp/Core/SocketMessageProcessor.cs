@@ -487,8 +487,7 @@ namespace MSNPSharp.Core
                 socket.Shutdown(SocketShutdown.Both);
                 socket.Close();
                 socket = null;
-
-                OnDisconnected();
+                //We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on.
             }
         }
 
