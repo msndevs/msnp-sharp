@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
@@ -12,8 +13,7 @@ using System.Security.Permissions;
 namespace MSNPSharpClient
 {
     using MSNPSharp;
-using System.Threading;
-    
+
     public partial class TraceForm : Form
     {
         RichTextBoxTraceListener rtbTraceListener = null;
