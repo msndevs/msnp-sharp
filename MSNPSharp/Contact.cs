@@ -752,23 +752,34 @@ namespace MSNPSharp
 
         internal void SetStatus(PresenceStatus newStatus)
         {
+            //Becareful deadlock!
+
+            PresenceStatus currentStatus = PresenceStatus.Unknown;
+
             lock (syncObject)
             {
-                if (status != newStatus)
+                currentStatus = status;
+            }
+
+            if (currentStatus != newStatus)
+            {
+                PresenceStatus oldStatus = currentStatus;
+
+                lock (syncObject)
                 {
-                    PresenceStatus oldStatus = status;
+
                     status = newStatus;
-
-                    // raise an event									
-                    OnStatusChanged(oldStatus);
-
-                    // raise the online/offline events
-                    if (oldStatus == PresenceStatus.Offline)
-                        OnContactOnline(oldStatus);
-
-                    if (newStatus == PresenceStatus.Offline)
-                        OnContactOffline(oldStatus);
                 }
+
+                // raise an event									
+                OnStatusChanged(oldStatus);
+
+                // raise the online/offline events
+                if (oldStatus == PresenceStatus.Offline)
+                    OnContactOnline(oldStatus);
+
+                if (newStatus == PresenceStatus.Offline)
+                    OnContactOffline(oldStatus);
             }
         }
 
