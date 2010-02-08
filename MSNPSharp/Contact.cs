@@ -35,14 +35,15 @@ using System.Net;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Diagnostics;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
-    using System.Drawing;
-    using System.IO;
-    using System.Diagnostics;
+
 
     /// <summary>
     /// User in roster list.
