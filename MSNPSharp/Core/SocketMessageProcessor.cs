@@ -370,13 +370,13 @@ namespace MSNPSharp.Core
                 {
                     socket.Blocking = false;
 
-                    //This is our old code, can not work under Mono
-                    //socket.Send(new byte[0], 0, 0);
-                    //returnValue = true;
-
                     int pollWait = 1;
 
-                    if (socket.Poll(pollWait, SelectMode.SelectWrite))
+                    if (socket.Poll(pollWait, SelectMode.SelectRead) && socket.Available == 0)
+                    {
+                        returnValue = false;
+                    }
+                    else
                     {
                         returnValue = true;
                     }
