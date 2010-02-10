@@ -25,6 +25,7 @@ namespace MSNPSharpClient
         // Create a Messenger object to use MSNPSharp.
         private Messenger messenger = new Messenger();
         private List<ConversationForm> convforms = new List<ConversationForm>(0);
+        private TraceForm traceform = new TraceForm();
 
         public List<ConversationForm> ConversationForms
         {
@@ -205,10 +206,13 @@ namespace MSNPSharpClient
                 SortByGroup(null);
 
             // ******* Listen traces *****
-            TraceForm traceform = new TraceForm();
             traceform.Show();
         }
 
+        private void ClientForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            traceform.Close();
+        }
 
         void Nameserver_CircleMemberOffline(object sender, CircleMemberEventArgs e)
         {

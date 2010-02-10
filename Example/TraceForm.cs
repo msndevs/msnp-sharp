@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ using System.Security.Permissions;
 namespace MSNPSharpClient
 {
     using MSNPSharp;
-    
+
     public partial class TraceForm : Form
     {
         RichTextBoxTraceListener rtbTraceListener = null;
@@ -28,6 +29,7 @@ namespace MSNPSharpClient
         void TraceForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             Trace.Listeners.Remove(rtbTraceListener);
+            rtbTraceListener.Close();
         }
 
         private void tsbClear_Click(object sender, EventArgs e)
@@ -64,46 +66,102 @@ namespace MSNPSharpClient
     public class TraceWriter : TextWriter
     {
         private RichTextBox richTextBox = null;
-        private delegate void WriteHandler(StringBuilder buffe, RichTextBox rtb);
-        private int MaxBufferLen = 1024;
-        private StringBuilder buffer = new StringBuilder();
+        private delegate void WriteHandler(string buffer, RichTextBox rtb);
+        private const int MaxBufferLen = 1024;
+        private StringBuilder buffer = new StringBuilder(MaxBufferLen);
         private DateTime lastInputTime = DateTime.Now;
+        private Thread writeThread = null;
+        private Queue<char> messageQueue = new Queue<char>(MaxBufferLen);
+        private bool canClose = false;
+        private bool userClick = false;
+        private int selectionStart = 0;
+        private int selectionLength = 0;
 
-        protected virtual void OutPut(StringBuilder buffer, RichTextBox rtb)
+        protected virtual void WriteBuffer()
         {
-            rtb.Text += buffer.ToString();
-            rtb.Select(rtb.Text.Length, 0);
-            rtb.ScrollToCaret();
+            StringBuilder trace = new StringBuilder(MaxBufferLen);
+
+            while (!canClose)
+            {
+                lock (messageQueue)
+                {
+
+                    while (messageQueue.Count > 0)
+                    {
+                        trace.EnsureCapacity(buffer.Length < MaxBufferLen ? MaxBufferLen : MaxBufferLen + 2);
+                        trace.Append(messageQueue.Dequeue());
+                    }
+                }
+
+                if (trace.Length > 0 && richTextBox.Created)
+                {
+                    try
+                    {
+                        richTextBox.Invoke(new WriteHandler(OutPut), new object[] { trace.ToString(), richTextBox });
+                    }
+                    catch (Exception)
+                    {
+                        return;
+                    }
+
+                    trace.Remove(0, trace.Length);
+                }
+
+                Thread.Sleep(100);
+            }
+        }
+
+        protected virtual void OutPut(string buffer, RichTextBox rtb)
+        {
+            if (selectionStart == rtb.Text.Length)
+                userClick = false;
+
+            rtb.AppendText(buffer);
+            if (userClick)
+            {
+                rtb.Select(selectionStart, selectionLength);
+                rtb.ScrollToCaret();
+            }
         }
 
         public TraceWriter(RichTextBox outputRTB)
         {
             richTextBox = outputRTB;
+            richTextBox.Click += new EventHandler(richTextBox_Click);
+            richTextBox.KeyDown += new KeyEventHandler(richTextBox_KeyDown);
+            writeThread = new Thread(new ThreadStart(WriteBuffer));
+            writeThread.Start();
+        }
+
+        void richTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            userClick = true;
+            selectionStart = richTextBox.SelectionStart;
+            selectionLength = richTextBox.SelectionLength;
+        }
+
+        void richTextBox_Click(object sender, EventArgs e)
+        {
+            userClick = true;
+            selectionStart = richTextBox.SelectionStart;
+            selectionLength = richTextBox.SelectionLength;
         }
 
         public override void Write(char value)
         {
             if (richTextBox != null && buffer != null)
             {
-                buffer.Append(value);
-                if ((value == '\n' && buffer.Length >= MaxBufferLen) ||
-                    buffer.Length == MaxBufferLen ||
-                    (value == '\n' && (DateTime.Now - lastInputTime).Milliseconds >= 100))
+                lock (messageQueue)
                 {
-                    if (richTextBox.InvokeRequired)
-                    {
-                        StringBuilder copybuffer = new StringBuilder(buffer.ToString());
-                        richTextBox.BeginInvoke(new WriteHandler(OutPut), new object[] { copybuffer, richTextBox });
-                    }
-                    else
-                    {
-                        OutPut(buffer, richTextBox);
-                    }
-
-                    buffer.Remove(0, buffer.Length);
-                    lastInputTime = DateTime.Now;
+                    messageQueue.Enqueue(value);
                 }
             }
+        }
+
+        public override void Close()
+        {
+            canClose = true;
+            base.Close();
         }
 
         public override Encoding Encoding
@@ -135,13 +193,12 @@ namespace MSNPSharpClient
 
         public override void Close()
         {
-            if (!EnsureWriter()) return;
-
             if (this.writer != null)
             {
                 this.writer.Close();
             }
             this.writer = null;
+            this.stop = true;
         }
 
         private bool EnsureWriter()

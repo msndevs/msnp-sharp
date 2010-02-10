@@ -695,6 +695,7 @@ namespace MSNPSharpClient
             this.Name = "ClientForm";
             this.Text = "MSNPSharp Example Client (v3.0.2 - r1435)";
             this.Load += new System.EventHandler(this.ClientForm_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(ClientForm_FormClosing);
             this.ListPanel.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
             this.SortPanel.PerformLayout();
