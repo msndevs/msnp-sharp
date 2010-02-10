@@ -1498,6 +1498,7 @@ namespace MSNPSharp
         Timer,
         BlockUnblock,
         GroupSave,
+        GeneralDialogApply,
         ContactSave,
         ContactMsgrAPI,
         MessengerPendingList,

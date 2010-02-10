@@ -1541,7 +1541,7 @@ namespace MSNPSharp
 
             if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                MsnServiceState ABContactUpdateObject = new MsnServiceState(PartnerScenario.PrivacyApply, "ABContactUpdate", true); // In msnp17 this is "GeneralDialogApply"
+                MsnServiceState ABContactUpdateObject = new MsnServiceState(PartnerScenario.GeneralDialogApply, "ABContactUpdate", true); // In msnp17 this is "GeneralDialogApply"
                 ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
                 abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
                 {
