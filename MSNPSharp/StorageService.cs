@@ -533,19 +533,13 @@ namespace MSNPSharp
             expProf.FreeText = freeText;
             expProf.DisplayName = displayName;
             expProf.Flags = flag;
+            expProf.FlagsSpecified = true;
 
             if (!string.IsNullOrEmpty(personalStatus))
             {
                 expProf.PersonalStatus = personalStatus;
             }
             updateProfileRequest.profile.ExpressionProfile = expProf;
-
-            updateProfileRequest.profileAttributesToDelete = new UpdateProfileRequestTypeProfileAttributesToDelete();
-            ExpressionProfileAttributesType exProfAttrbUpdate = new ExpressionProfileAttributesType();
-            exProfAttrbUpdate.PersonalStatus = true;
-            exProfAttrbUpdate.PersonalStatusSpecified = true;
-
-            updateProfileRequest.profileAttributesToDelete.ExpressionProfileAttributes = exProfAttrbUpdate;
 
             NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
             NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
