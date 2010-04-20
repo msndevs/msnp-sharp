@@ -233,7 +233,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private bool isSender;
+        private bool isSender = false;
 
         /// <summary>
         /// Defines whether the local client is sender or receiver

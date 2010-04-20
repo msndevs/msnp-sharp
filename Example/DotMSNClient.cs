@@ -1536,10 +1536,23 @@ namespace MSNPSharpClient
 
             if (selectedContact.Online)
             {
+                /*
+                 * This is the old demo, this demo can only open the activity's default URL, now the new demo can open any URL.
                 String activityID = "20521364";        //The activityID of Music Mix activity.
                 String activityName = "Music Mix";     //Th name of acticvity
                 MSNSLPHandler msnslpHandler = messenger.GetMSNSLPHandler(selectedContact.Mail);
                 P2PTransferSession session = msnslpHandler.SendInvitation(messenger.Owner.Mail, selectedContact.Mail, activityID, activityName);
+                 */
+
+
+                //New demo of activity.
+                String activityID = "99996558";        //The applicationID of some existing activity, or you can apply one from M$.
+                String activityName = "MSNPSharp Testing Activity";     //Th name of acticvity
+                String activityURL = @"http://www.ohloh.net/p/msnp-sharp/widgets/project_basic_stats.html";       //The URL open in the side box after usr accept the invitation.
+
+                MSNSLPHandler msnslpHandler = messenger.GetMSNSLPHandler(selectedContact.Mail);
+                P2PTransferSession session = msnslpHandler.SendInvitation(messenger.Owner.Mail, selectedContact.Mail, activityID, activityName, activityURL);
+
 
             }
         }

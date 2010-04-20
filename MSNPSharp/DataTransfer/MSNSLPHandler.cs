@@ -828,7 +828,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="localContact"></param>
         /// <param name="remoteContact"></param>
-        /// <param name="activityID">The ID of activity, that was register by Microsoft.</param>
+        /// <param name="applicationID">The ID of activity, that was register by Microsoft.</param>
         /// <param name="activityName">The name of Activity.</param>
         /// <returns></returns>
         /// <example>
@@ -845,7 +845,36 @@ namespace MSNPSharp.DataTransfer
         /// slpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, remoteaccount, activityID, activityName);
         /// </code>
         /// </example>
-        public P2PTransferSession SendInvitation(string localContact, string remoteContact, string activityID, string activityName)
+        public P2PTransferSession SendInvitation(string localContact, string remoteContact, string applicationID, string activityName)
+        {
+            return SendInvitation(localContact, remoteContact, applicationID, activityName, string.Empty);
+        }
+
+        /// <summary>
+        /// Sends the remote contact a invitation for the activity. The invitation message is send over the current MessageProcessor.
+        /// </summary>
+        /// <param name="localContact"></param>
+        /// <param name="remoteContact"></param>
+        /// <param name="applicationID">The ID of activity, that was register by Microsoft.</param>
+        /// <param name="activityName">The name of Activity.</param>
+        /// <param name="activityURL">The URL you want the side window open.</param>
+        /// <returns></returns>
+        /// <example>
+        /// <code language="C#">
+        /// //An example that invites a remote user to attend the "Music Mix" activity.
+        /// 
+        /// String remoteAccount = @"remoteUser@hotmail.com";
+        /// 
+        /// String activityID = "99995868";                         //The applicationID of some existing activity, or you can apply one from M$.
+        /// String activityName = "MSNPSharp Testing Activity";     //The name of acticvity
+        /// String activityURL = @"http://www.ohloh.net/p/msnp-sharp/widgets/project_basic_stats.html";       //The URL open in the side box.
+        /// 
+        /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.Owner.Mail, remoteAccount);
+        /// MSNSLPHandler slpHandler =  session.GetHandler(typeof(MSNSLPHandler)) as MSNSLPHandler ;
+        /// slpHandler.SendInvitation(Conversation.Messenger.Owner.Mail, remoteaccount, activityID, activityName, activityURL);
+        /// </code>
+        /// </example>
+        public P2PTransferSession SendInvitation(string localContact, string remoteContact, string applicationID, string activityName, string activityURL)
         {
             // set class variables
             MSNSLPTransferProperties properties = new MSNSLPTransferProperties();
@@ -857,11 +886,9 @@ namespace MSNPSharp.DataTransfer
             properties.DataType = DataTransferType.Activity;
 
             MSNSLPMessage slpMessage = new MSNSLPMessage();
-            //byte[] contextArray  = System.Text.ASCIIEncoding.ASCII.GetBytes(System.Web.HttpUtility.UrlDecode(msnObject.OriginalContext));//GetEncodedString());
-            //string base64Context = Convert.ToBase64String(contextArray, 0, contextArray.Length);
-            //string activityUrl = "99991065" + ";1;" + Tip;
-            string activityUrl = activityID + ";1;" + activityName;
-            byte[] contextData = System.Text.UnicodeEncoding.Unicode.GetBytes(activityUrl);
+
+            string activityIdentifier = applicationID + ";1;" + activityName;
+            byte[] contextData = System.Text.UnicodeEncoding.Unicode.GetBytes(activityIdentifier);
             string base64Context = Convert.ToBase64String(contextData, 0, contextData.Length);
 
             properties.Context = base64Context;
@@ -881,7 +908,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
             slpMessage.BodyValues["SChannelState"] = "0";
             slpMessage.BodyValues["Capabilities-Flags"] = "1";
-            slpMessage.BodyValues["AppID"] = activityID.ToString();
+            slpMessage.BodyValues["AppID"] = applicationID.ToString();
             slpMessage.BodyValues["Context"] = base64Context;
 
             P2PMessage p2pMessage = new P2PMessage();
@@ -897,14 +924,28 @@ namespace MSNPSharp.DataTransfer
             P2PTransferSession session = new P2PTransferSession();
             session.MessageSession = (P2PMessageSession)MessageProcessor;
             session.SessionId = properties.SessionId;
-
-            uint uActivityID = 0;
-            uint.TryParse(activityID, out uActivityID);
-            session.MessageFooter = uActivityID;
-
             MessageSession.AddTransferSession(session);
 
-            session.IsSender = false;
+            if (activityURL != null && activityURL != string.Empty)
+            {
+                activityURL += "\0";
+                int urlLength = System.Text.Encoding.Unicode.GetByteCount(activityURL);
+
+                MemoryStream urlDataStream = new MemoryStream();
+
+                byte[] header = new byte[] { 0x80, 0x00, 0x00, 0x00 };
+
+                urlDataStream.Write(header, 0, header.Length);
+                urlDataStream.Write(new byte[] { 0x08, 0x00 }, 0, 2);  //data type: 0x08: string
+                urlDataStream.Write(BitConverter.GetBytes(P2PMessage.ToLittleEndian((uint)urlLength)), 0, sizeof(int));
+                urlDataStream.Write(System.Text.Encoding.Unicode.GetBytes(activityURL), 0, urlLength);
+
+                urlDataStream.Seek(0, SeekOrigin.Begin);
+                session.DataStream = urlDataStream;
+                session.IsSender = true;
+            }
+
+
             session.CallId = properties.CallId;
 
             OnTransferSessionCreated(session);
@@ -1584,7 +1625,7 @@ namespace MSNPSharp.DataTransfer
                     OnSessionRequest(slpMessage);
                     break;
                 case "application/x-msnmsgr-transreqbody":
-                    OnDCRequest(slpMessage);
+                    //OnDCRequest(slpMessage);
                     break;
                 case "application/x-msnmsgr-transrespbody":
                     OnDCResponse(slpMessage);
@@ -1658,11 +1699,17 @@ namespace MSNPSharp.DataTransfer
                 P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
                 if (properties.DataType == DataTransferType.File)
                 {
-                    // ok we can receive the OK message. we can no send the invitation to setup a transfer connection
+                    // ok we can receive the OK message. we can now send the invitation to setup a transfer connection
                     if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
                         SendDCInvitation(properties);
-
                     session.StartDataTransfer(true);
+                }
+                else if (properties.DataType == DataTransferType.Activity)
+                {
+                    if (session.IsSender && session.DataStream != null)  //We have URL to be sent here.
+                    {
+                        session.StartDataTransfer(false);
+                    }
                 }
 
             }
