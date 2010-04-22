@@ -97,7 +97,7 @@ namespace MSNPSharpClient
                 {
                     try
                     {
-                        richTextBox.Invoke(new WriteHandler(OutPut), new object[] { trace.ToString(), richTextBox });
+                        richTextBox.BeginInvoke(new WriteHandler(OutPut), new object[] { trace.ToString(), richTextBox });
                     }
                     catch (Exception)
                     {
