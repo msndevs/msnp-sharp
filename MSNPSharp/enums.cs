@@ -1204,7 +1204,7 @@ namespace MSNPSharp
     /// <summary>
     /// The relationship between a contact and circle.
     /// </summary>
-    public enum CirclePersonalMembershipRole: int
+    public enum CirclePersonalMembershipRole : int
     {
         None = 0,
 
@@ -1317,7 +1317,7 @@ namespace MSNPSharp
         ParseAsClientTypeAndAccount = 2
     }
 
-    internal enum ReturnState: uint
+    internal enum ReturnState : uint
     {
         None = 0,
         ProcessNextContact = 1,
@@ -1331,7 +1331,7 @@ namespace MSNPSharp
         UpdateError = 8
     }
 
-    internal enum Scenario: uint
+    internal enum Scenario : uint
     {
         None = 0,
 
@@ -1513,6 +1513,169 @@ namespace MSNPSharp
         ABChangeNotifyAlert,
         RoamingSeed,
         RoamingIdentityChanged
+    }
+
+    #endregion
+
+    #region P2PFlag
+
+    /// <summary>
+    /// Defines the type of P2P message.
+    /// </summary>
+    [Flags]
+    public enum P2PFlag : uint
+    {
+        /// <summary>
+        /// Normal (protocol) message.
+        /// </summary>
+        Normal = 0,
+        /// <summary>
+        /// Negative Ack
+        /// </summary>
+        NegativeAck = 0x1,
+        /// <summary>
+        /// Acknowledgement message.
+        /// </summary>
+        Acknowledgement = 0x2,
+        /// <summary>
+        /// Waiting
+        /// </summary>
+        Waiting = 0x4,
+        /// <summary>
+        /// Messages notifies a binary error.
+        /// </summary>
+        Error = 0x8,
+        /// <summary>
+        /// File
+        /// </summary>
+        File = 0x10,
+        /// <summary>
+        /// Messages defines a msn object.
+        /// </summary>
+        Data = 0x20,
+        /// <summary>
+        /// Close session
+        /// </summary>
+        CloseSession = 0x40,
+        /// <summary>
+        /// Tlp error
+        /// </summary>
+        TlpError = 0x80,
+        /// <summary>
+        /// Direct handshake
+        /// </summary>
+        DirectHandshake = 0x100,
+        /// <summary>
+        /// Messages for info data, such as INVITE, 200 OK, 500 INTERNAL ERROR
+        /// </summary>
+        MSNSLPInfo = 0x01000000,
+        /// <summary>
+        /// Messages defines data for a filetransfer.
+        /// </summary>
+        FileData = MSNSLPInfo | P2PFlag.Data | P2PFlag.File,
+        /// <summary>
+        /// Messages defines data for a MSNObject transfer.
+        /// </summary>
+        MSNObjectData = MSNSLPInfo | P2PFlag.Data
+    }
+
+    #endregion
+
+    #region P2PConst
+
+    internal static class P2PConst
+    {
+        /// <summary>
+        /// The guid used in invitations for a filetransfer.
+        /// </summary>
+        public const string FileTransferGuid = "{5D3E02AB-6190-11D3-BBBB-00C04F795683}";
+
+        /// <summary>
+        /// The guid used in invitations for a user display transfer.
+        /// </summary>
+        public const string UserDisplayGuid = "{A4268EEC-FEC5-49E5-95C3-F126696BDBF6}";
+
+        /// <summary>
+        /// The guid used in invitations for a share photo.
+        /// </summary>
+        public const string SharePhotoGuid = "{41D3E74E-04A2-4B37-96F8-08ACDB610874}";
+
+        /// <summary>
+        /// The guid used in invitations for an activity.
+        /// </summary>
+        public const string ActivityGuid = "{6A13AF9C-5308-4F35-923A-67E8DDA40C2F}";
+
+        /// <summary>
+        /// Footer for a msn DisplayImage p2pMessage.
+        /// </summary>
+        public const uint DisplayImageFooter12 = 12;
+
+        /// <summary>
+        /// Footer for a filetransfer p2pMessage.
+        /// </summary>
+        public const uint FileTransFooter2 = 2;
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        public const uint CustomEmoticonFooter11 = 11;
+
+        /// <summary>
+        /// Footer for a msn object p2pMessage.
+        /// </summary>
+        public const uint DisplayImageFooter1 = 1;
+
+        /// <summary>
+        /// Footer for a msn CustomEmoticon p2pMessage.
+        /// </summary>
+        public const uint CustomEmoticonFooter1 = 1;
+
+        /// <summary>
+        /// The value of protocol version field of Peer info TLV.
+        /// </summary>
+        public const ushort ProtocolVersion = 512;
+
+        /// <summary>
+        /// The value of implementation ID field of Peer info TLV.
+        /// </summary>
+        public const ushort ImplementationID = 0;
+
+        /// <summary>
+        /// The value of version field of Peer info TLV.
+        /// </summary>
+        public const ushort PeerInfoVersion = 3584;
+
+        /// <summary>
+        /// The unknown field of Peer info TLV.
+        /// </summary>
+        public const ushort PeerInfoReservedField = 0;
+
+        /// <summary>
+        /// The value of capacities field of Peer info TLV.
+        /// </summary>
+        public const uint Capabilities = 271;
+    }
+
+    #endregion
+
+    #region OperationCode
+
+    public enum OperationCode : byte
+    {
+        /// <summary>
+        /// Nothing required
+        /// </summary>
+        None = 0x0,
+
+        /// <summary>
+        /// This is a SYN message.
+        /// </summary>
+        SYN = 0x1,
+
+        /// <summary>
+        /// Required ACK.
+        /// </summary>
+        RAK = 0x2
     }
 
     #endregion
