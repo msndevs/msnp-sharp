@@ -36,6 +36,7 @@ using System.Net;
 using System.Web;
 using System.Xml;
 using System.Text;
+using System.Threading;
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
@@ -58,27 +59,28 @@ namespace MSNPSharp
         #region Members
 
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
-        private SocketMessageProcessor messageProcessor;
-        private ConnectivitySettings connectivitySettings;
-        private IPEndPoint externalEndPoint;
-        private P2PHandler p2pHandler;
-        private Messenger messenger;
+        private SocketMessageProcessor messageProcessor = null;
+        private ConnectivitySettings connectivitySettings = null;
+        private IPEndPoint externalEndPoint = null;
+        private P2PHandler p2pHandler = null;
+        private Messenger messenger = null;
 
-        private CircleList circleList;
-        private ContactGroupList contactGroups;
-        private ContactList contactList;
-        private ContactManager manager;
+        private CircleList circleList = null;
+        private ContactGroupList contactGroups = null;
+        private ContactList contactList = null;
+        private ContactManager manager = null;
         private bool autoSynchronize = true;
         private bool botMode = false;
+        private int canSendPing = 1;
 
-        private bool isSignedIn;
+        private bool isSignedIn = false;
         private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
 
-        private ContactService contactService;
-        private OIMService oimService;
-        private MSNStorageService storageService;
-        private WhatsUpService whatsUpService;
+        private ContactService contactService = null;
+        private OIMService oimService = null;
+        private MSNStorageService storageService = null;
+        private WhatsUpService whatsUpService = null;
         private ClientCapacities defaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.SupportP2PUUNBootstrap | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
         private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
@@ -664,7 +666,10 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SendPing()
         {
-            MessageProcessor.SendMessage(new NSMessage("PNG"));
+            if (Interlocked.CompareExchange(ref canSendPing, 0, 1) == 1)
+            {
+                MessageProcessor.SendMessage(new NSMessage("PNG"));
+            }
         }
 
         #endregion
@@ -3169,6 +3174,8 @@ namespace MSNPSharp
                 // with the correct parameters.
                 int seconds = int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture);
                 PingAnswer(this, new PingAnswerEventArgs(seconds));
+
+                Interlocked.CompareExchange(ref canSendPing, 1, 0);
             }
         }
 

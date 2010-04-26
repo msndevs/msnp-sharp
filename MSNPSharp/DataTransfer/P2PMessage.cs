@@ -664,7 +664,7 @@ namespace MSNPSharp.DataTransfer
             if (ver == P2PVersion.P2PV1)
                 V1Header.Flags = P2PFlag.DirectHandshake;
             else if (ver == P2PVersion.P2PV2)
-                V2Header.OperationCode = 0x0; //v!
+                V2Header.OperationCode = (byte)OperationCode.None;
         }
 
         /// <summary>
