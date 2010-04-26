@@ -1182,10 +1182,13 @@ namespace MSNPSharpClient
         private int nextPing = 50;
         private void tmrKeepOnLine_Tick(object sender, EventArgs e)
         {
-            if (nextPing >= 0)
+            if (nextPing > 0)
                 nextPing--;
             if (nextPing == 0)
+            {
+                nextPing--;
                 messenger.Nameserver.SendPing();
+            }
         }
 
 
