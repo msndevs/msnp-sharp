@@ -1272,7 +1272,10 @@ namespace MSNPSharpClient
             if (nextPing > 0)
                 nextPing--;
             if (nextPing == 0)
+            {
+                nextPing--;
                 messenger.Nameserver.SendPing();
+            }
         }
 
         private static Font PARENT_NODE_FONT = new Font("Tahoma", 8f, FontStyle.Bold);
