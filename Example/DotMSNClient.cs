@@ -1125,7 +1125,10 @@ namespace MSNPSharpClient
             if (nextPing > 0)
                 nextPing--;
             if (nextPing == 0)
+            {
+                nextPing--;
                 messenger.Nameserver.SendPing();
+            }
         }
 
 
