@@ -888,7 +888,7 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
-                p2pMessage.V2Header.OperationCode = (byte)OperationCode.InitSession;
+                p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
 
                 if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
                 {
@@ -929,7 +929,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="localContact"></param>
         /// <param name="remoteContact"></param>
-        /// <param name="activityID">The ID of activity, that was register by Microsoft.</param>
+        /// <param name="applicationID">The ID of activity, that was register by Microsoft.</param>
         /// <param name="activityName">The name of Activity.</param>
         /// <returns></returns>
         /// <example>
@@ -946,21 +946,23 @@ namespace MSNPSharp.DataTransfer
         /// slpHandler.SendInvitation(Conversation.Messenger.ContactList.Owner.Mail, remoteaccount, activityID, activityName);
         /// </code>
         /// </example>
-        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string activityID, string activityName)
+        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string applicationID, string activityName)
         {
+            // set class variables
+            return SendInvitation(localContact, remoteContact, applicationID, activityName, string.Empty);
+        }
+
+        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string applicationID, string activityName, string activityURL)
+        {
+
             // set class variables
             MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, remoteContact);
             properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
 
             properties.DataType = DataTransferType.Activity;
 
-
-            //byte[] contextArray  = System.Text.ASCIIEncoding.ASCII.GetBytes(System.Web.HttpUtility.UrlDecode(msnObject.OriginalContext));//GetEncodedString());
-            //string base64Context = Convert.ToBase64String(contextArray, 0, contextArray.Length);
-            //string activityUrl = "99991065" + ";1;" + Tip;
-
-            string activityUrl = activityID + ";1;" + activityName;
-            byte[] contextData = System.Text.UnicodeEncoding.Unicode.GetBytes(activityUrl);
+            string activityID = applicationID + ";1;" + activityName;
+            byte[] contextData = System.Text.UnicodeEncoding.Unicode.GetBytes(activityID);
             string base64Context = Convert.ToBase64String(contextData, 0, contextData.Length);
 
             properties.Context = base64Context;
@@ -980,7 +982,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["SessionID"] = properties.SessionId.ToString();
             slpMessage.BodyValues["SChannelState"] = "0";
             slpMessage.BodyValues["Capabilities-Flags"] = "1";
-            slpMessage.BodyValues["AppID"] = activityID.ToString();
+            slpMessage.BodyValues["AppID"] = applicationID.ToString();
             slpMessage.BodyValues["Context"] = base64Context;
 
             if (Version == P2PVersion.P2PV2)
@@ -1000,7 +1002,7 @@ namespace MSNPSharp.DataTransfer
 
             if (Version == P2PVersion.P2PV2)
             {
-                p2pMessage.V2Header.OperationCode = (byte)OperationCode.InitSession;
+                p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
                 if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
                 {
                     p2pMessage.V2Header.PackageNumber = (ushort)((p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength) / 1202 + 1);
@@ -1014,9 +1016,30 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
             }
 
+            if (activityURL != string.Empty && activityURL != null)
+            {
+                activityURL += "\0";
+
+                int urlLength = Encoding.Unicode.GetByteCount(activityURL);
+
+                MemoryStream urlDataStream = new MemoryStream();
+
+                byte[] header = new byte[] { 0x80, 0x00, 0x00, 0x00 };
+
+                urlDataStream.Write(header, 0, header.Length);
+                urlDataStream.Write(BitUtility.GetBytes((ushort)0x08, true), 0, sizeof(ushort));  //data type: 0x08: string
+                urlDataStream.Write(BitUtility.GetBytes(urlLength, true), 0, sizeof(int));
+                urlDataStream.Write(Encoding.Unicode.GetBytes(activityURL), 0, urlLength);
+
+                urlDataStream.Seek(0, SeekOrigin.Begin);
+                transferSession.DataStream = urlDataStream;
+                transferSession.IsSender = true;
+            }
+
+            transferSession.MessageFlag = (uint)P2PFlag.Normal;
             MessageSession.AddTransferSession(transferSession);
 
-            transferSession.IsSender = false;
+
 
             OnTransferSessionCreated(transferSession);
             Schedulers.P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage, MessageSession.NSMessageHandler.P2PInvitationSchedulerId);
@@ -1866,6 +1889,14 @@ namespace MSNPSharp.DataTransfer
                         {
                             session.StartDataTransfer(false);
                         }          
+                    }
+
+                    if (properties.DataType == DataTransferType.Activity)
+                    {
+                        if (session.DataStream != null && session.IsSender)
+                        {
+                            session.StartDataTransfer(false);
+                        }
                     }
 
                 }

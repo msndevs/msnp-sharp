@@ -253,7 +253,8 @@ namespace MSNPSharp
         {
             get
             {
-                return owner;
+                lock (SyncRoot)
+                    return owner;
             }
         }
 

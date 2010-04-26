@@ -574,8 +574,7 @@ namespace MSNPSharp.DataTransfer
             if (version == P2PVersion.P2PV2)
             {
                 //Case 1: 0x18 0x03 Invite
-                if (p2pMessage.Header.IsAcknowledgement == false &&
-                    p2pMessage.V2Header.OperationCode > 0)
+                if ((p2pMessage.V2Header.OperationCode & (byte)OperationCode.RAK) > 0)
                 {
                     P2PMessage ack = p2pMessage.CreateAcknowledgement();
                     session.SendMessage(ack);

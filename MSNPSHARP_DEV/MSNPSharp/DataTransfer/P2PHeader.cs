@@ -126,12 +126,9 @@ namespace MSNPSharp.DataTransfer
             set;
         }
 
-        public virtual bool IsAcknowledgement
+        public abstract bool IsAcknowledgement
         {
-            get
-            {
-                return (AckIdentifier != 0);
-            }
+            get;
         }
 
         public abstract P2PHeader CreateAck();
@@ -298,7 +295,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        #endregion
+
 
         public override int HeaderLength
         {
@@ -307,6 +304,16 @@ namespace MSNPSharp.DataTransfer
                 return 48;
             }
         }
+
+        public override bool IsAcknowledgement
+        {
+            get
+            {
+                return (AckIdentifier != 0);
+            }
+        }
+
+        #endregion
 
         public override P2PHeader CreateAck()
         {
@@ -536,6 +543,11 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        public override bool IsAcknowledgement
+        {
+            get { return headerTLVs.ContainsKey(0x2); }
+        }
+
         private TFCombination tfCombination;
         public TFCombination TFCombination
         {
@@ -592,32 +604,40 @@ namespace MSNPSharp.DataTransfer
         public override P2PHeader CreateAck()
         {
             P2Pv2Header ack = new P2Pv2Header();
-            if (OperationCode > 0)
+            if ((OperationCode & (byte)MSNPSharp.OperationCode.RAK) > 0)
             {
                 ack.AckIdentifier = Identifier + MessageSize;
-            }
-            else
-            {
-                ack.AckIdentifier = Identifier;
-            }
 
-            if (MessageSize == 0)
-            {
-                //Message begins with 0x1c, 0x03 or 0x08, 0x02
-                ack.OperationCode = 0;
-            }
-            else
-            {
-                //Message begins with 0x18, 0x03 or 0x08, 0x03
-                ack.OperationCode = OperationCode;
-
-                foreach (byte bytKey in HeaderTLVs.Keys)
+                if (MessageSize == 0)
                 {
-                    if (bytKey != 0x2)  //Ignore the ackIdentifier field.
+                    //never ACK an ACK with RAK included to prevent storm 
+                    //                         ---  Scott Werndorfer
+                    ack.OperationCode |= (byte)MSNPSharp.OperationCode.None;
+                }
+                else
+                {
+                    if (!IsAcknowledgement)
                     {
-                        ack.HeaderTLVs.Add(bytKey, HeaderTLVs[bytKey]);
+                        ack.OperationCode |= (byte)MSNPSharp.OperationCode.RAK;
+
+                        if ((OperationCode & (byte)MSNPSharp.OperationCode.SYN) != 0)
+                        {
+                            ack.OperationCode |= (byte)MSNPSharp.OperationCode.SYN;
+                            ack.HeaderTLVs.Add(0x01, CreatePeerInfoValue());
+                        }
+                    }
+                    else
+                    {
+                        //never ACK an ACK with RAK included to prevent storm 
+                        //                         ---  Scott Werndorfer
+                        ack.OperationCode |= (byte)MSNPSharp.OperationCode.None;
                     }
                 }
+                
+            }
+            else
+            {
+                throw new MSNPSharpException("This P2Pv2 message do not need to be acknowledged.");
             }
 
             return ack;
@@ -732,6 +752,19 @@ namespace MSNPSharp.DataTransfer
                 case 2:
                     return;
             }
+        }
+
+        protected byte[] CreatePeerInfoValue()
+        {
+            MemoryStream peerInfoStream = new MemoryStream(0);
+            peerInfoStream.Write(BitUtility.GetBytes((ushort)P2PConst.ProtocolVersion, true), 0, sizeof(ushort));
+            peerInfoStream.Write(BitUtility.GetBytes((ushort)P2PConst.ImplementationID, true), 0, sizeof(ushort));
+            peerInfoStream.Write(BitUtility.GetBytes((ushort)P2PConst.PeerInfoVersion, true), 0, sizeof(ushort));
+            peerInfoStream.Write(BitUtility.GetBytes((ushort)P2PConst.PeerInfoReservedField, true), 0, sizeof(ushort));
+            peerInfoStream.Write(BitUtility.GetBytes((uint)P2PConst.Capabilities, true), 0, sizeof(uint));
+
+            return peerInfoStream.ToArray();
+
         }
 
         public override byte[] GetBytes()

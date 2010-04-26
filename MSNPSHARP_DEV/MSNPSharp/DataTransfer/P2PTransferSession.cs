@@ -898,7 +898,7 @@ namespace MSNPSharp.DataTransfer
                     {
                         //First send a 0x08 0x02 prepare message.
                         P2PMessage prepareMessage = new P2PMessage(P2PVersion.P2PV2);
-                        prepareMessage.V2Header.OperationCode = (byte)OperationCode.TransferPrepare;
+                        prepareMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
                         MessageProcessor.SendMessage(prepareMessage);
 
                         if (TransferProperties.DataType != DataTransferType.File &&
