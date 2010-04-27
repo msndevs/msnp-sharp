@@ -439,7 +439,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(121, 20);
             this.passwordTextBox.TabIndex = 3;
-            this.passwordTextBox.Text = "tstmsnpshrp@123";
+            this.passwordTextBox.Text = "tstmsnpsharp";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // comboStatus
