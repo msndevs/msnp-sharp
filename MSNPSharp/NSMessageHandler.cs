@@ -689,7 +689,7 @@ namespace MSNPSharp
             if (contact.Guid == null || contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
-            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", MSNHttpUtility.UrlEncode(contact.Name) }));
+            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", MSNHttpUtility.NSEncode(contact.Name) }));
         }
 
         /// <summary>
@@ -703,7 +703,7 @@ namespace MSNPSharp
 
             if (ContactList.Owner.PassportVerified)
             {
-                MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.UrlEncode(newName) }));
+                MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.NSEncode(newName) }));
             }
 
 
@@ -1485,13 +1485,13 @@ namespace MSNPSharp
 
                     contact = circle.ContactList.GetContact(account, type);
 
-                    contact.SetName(HttpUtility.UrlDecode(message.CommandValues[2].ToString()));
+                    contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
                     contact.ClientCapacities = newcaps;
                     contact.ClientCapacitiesEx = newcapsex;
 
                     if (contact != circle.ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
                     {
-                        contact.DisplayImage.ParseContext(HttpUtility.UrlDecode(newDisplayImageContext));
+                        contact.DisplayImage.ParseContext(MSNHttpUtility.NSDecode(newDisplayImageContext));
                         contact.FireDisplayImageContextChangedEvent(contact.DisplayImage);
                     }
 
@@ -1553,7 +1553,7 @@ namespace MSNPSharp
                         return;
                     }
 
-                    contact.SetName(HttpUtility.UrlDecode(newName));
+                    contact.SetName(MSNHttpUtility.NSDecode(newName));
                     contact.ClientCapacities = newcaps;
                     contact.ClientCapacitiesEx = newcapsex;
 
@@ -3106,14 +3106,14 @@ namespace MSNPSharp
             if (message.CommandValues.Count >= 4)
             {
                 if (message.CommandValues.Count >= 4)
-                    number = HttpUtility.UrlDecode((string)message.CommandValues[3]);
+                    number = MSNHttpUtility.NSDecode((string)message.CommandValues[3]);
                 else
                     number = String.Empty;
                 type = message.CommandValues[1].ToString();
             }
             else
             {
-                number = HttpUtility.UrlDecode((string)message.CommandValues[2]);
+                number = MSNHttpUtility.NSDecode((string)message.CommandValues[2]);
                 type = message.CommandValues[1].ToString();
             }
 
@@ -3135,7 +3135,7 @@ namespace MSNPSharp
                     ContactList.Owner.SetMobileAccess((number == "Y") ? true : false);
                     break;
                 case "MFN":
-                    ContactList.Owner.SetName(HttpUtility.UrlDecode((string)message.CommandValues[2]));
+                    ContactList.Owner.SetName(MSNHttpUtility.NSDecode((string)message.CommandValues[2]));
                     break;
             }
         }

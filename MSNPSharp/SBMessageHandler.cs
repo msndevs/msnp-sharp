@@ -1093,7 +1093,7 @@ namespace MSNPSharp
         protected virtual void OnIROReceived(SBMessage message)
         {
             string fullaccount = message.CommandValues[3].ToString().ToLowerInvariant();
-            string displayName = HttpUtility.UrlDecode(message.CommandValues[4].ToString());
+            string displayName = MSNHttpUtility.NSDecode(message.CommandValues[4].ToString());
             string capacitiesString = message.CommandValues[5].ToString();
 
             ContactConversationState oldStatus = ContactConversationState.None;
@@ -1142,7 +1142,7 @@ namespace MSNPSharp
             }
 
             if (message.CommandValues.Count >= 5)
-                contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[4].ToString()));
+                contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[4].ToString()));
 
             if (message.CommandValues.Count >= 6)
             {
@@ -1178,7 +1178,7 @@ namespace MSNPSharp
         protected virtual void OnJOIReceived(SBMessage message)
         {
             string fullaccount = message.CommandValues[0].ToString().ToLowerInvariant();
-            string displayName = HttpUtility.UrlDecode(message.CommandValues[1].ToString());
+            string displayName = MSNHttpUtility.NSDecode(message.CommandValues[1].ToString());
             string capacitiesString = message.CommandValues[2].ToString();
 
             ContactConversationState oldStatus = ContactConversationState.None;
@@ -1226,7 +1226,7 @@ namespace MSNPSharp
                 }
 
                 if (message.CommandValues.Count >= 2)
-                    contact.SetName(MSNHttpUtility.UrlDecode(message.CommandValues[1].ToString()));
+                    contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[1].ToString()));
 
                 if (message.CommandValues.Count >= 3)
                 {

@@ -112,6 +112,15 @@ namespace MSNPSharp.Core
             return UrlEncode(str, Encoding.UTF8, EscapeType.EscapeExceptPlus);
         }
 
+        /// <summary>
+        /// Replace space into %20.
+        /// </summary>
+        /// <param name="str">The string to encode.</param>
+        /// <returns>An encoded string.</returns>
+        public static string NSEncode(string str)
+        {
+            return str.Replace(" ", "%20");
+        }
 
         /// <summary>
         /// Encodes a URL string using UTF-8 encoding by default.
@@ -202,6 +211,16 @@ namespace MSNPSharp.Core
         public static string UrlDecode(string str, Encoding e)
         {
             return UrlDecode(str, e, EscapeType.EscapeAll);
+        }
+
+        /// <summary>
+        /// Replace "%20" into space.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <returns>A decoded string.</returns>
+        public static string NSDecode(string str)
+        {
+            return str.Replace("%20", " ");
         }
 
         private static string UrlDecode(string str, Encoding e, EscapeType type)
