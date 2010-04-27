@@ -3276,6 +3276,7 @@ namespace MSNPSharp
             // b) Owner.ClientCapacities = ClientCapacities.None doesn't send CHG command if isSignedIn=false.
             isSignedIn = false;
             externalEndPoint = null;
+            Interlocked.Exchange(ref canSendPing, 1);
 
             // 4. Clear contact lists and circle list.
             ContactList.Reset();
