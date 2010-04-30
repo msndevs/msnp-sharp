@@ -600,6 +600,11 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        public void AppendPeerInfoTLV()
+        {
+            OperationCode |= (byte)MSNPSharp.OperationCode.SYN;
+            HeaderTLVs.Add(0x01, CreatePeerInfoValue());
+        }
 
         public override P2PHeader CreateAck()
         {
@@ -622,8 +627,7 @@ namespace MSNPSharp.DataTransfer
 
                         if ((OperationCode & (byte)MSNPSharp.OperationCode.SYN) != 0)
                         {
-                            ack.OperationCode |= (byte)MSNPSharp.OperationCode.SYN;
-                            ack.HeaderTLVs.Add(0x01, CreatePeerInfoValue());
+                            ack.AppendPeerInfoTLV();
                         }
                     }
                     else
