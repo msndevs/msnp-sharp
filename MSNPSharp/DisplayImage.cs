@@ -45,7 +45,7 @@ namespace MSNPSharp
     {
         private Image image = null;
         private bool isDefaultImage = false;
-        private static Image defaultImage = Properties.Resources.WLXLarge_default;
+        private Image defaultImage = Properties.Resources.WLXLarge_default.Clone() as Image;
         private static string defaultLocation = "MSNPSharpDefault";
 
         public bool IsDefaultImage
@@ -101,12 +101,16 @@ namespace MSNPSharp
         {
             get
             {
-                return image == null ? null : image.Clone() as Image;
+                lock (SyncObject)
+                    return image == null ? null : image.Clone() as Image;
             }
             set
             {
-                image = value;
-                UpdateStream();
+                lock (SyncObject)
+                {
+                    image = value;
+                    UpdateStream();
+                }
             }
         }
 
@@ -128,7 +132,8 @@ namespace MSNPSharp
                     input.Position = 0;
                     if (input.Length > 0)
                     {
-                        image = System.Drawing.Image.FromStream(input);
+                        lock (SyncObject)
+                            image = System.Drawing.Image.FromStream(input);
                     }
 
                     input.Position = 0;

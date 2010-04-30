@@ -117,19 +117,26 @@ namespace MSNPSharp
     [Serializable()]
     public class MSNObject
     {
-        private string originalContext;
-        private string oldHash = String.Empty;
+        private string originalContext = string.Empty;
+        private string oldHash = string.Empty;
 
         [NonSerialized]
-        private PersistentStream dataStream;
+        private PersistentStream dataStream = null;
 
 
-        private string fileLocation;
-        private string creator;
-        private int size;
-        private MSNObjectType type;
-        private string location;
-        private string sha;
+        private string fileLocation = string.Empty;
+        private string creator = string.Empty;
+        private int size = 0;
+        private MSNObjectType type = MSNObjectType.Unknown;
+        private string location = string.Empty;
+        private string sha = string.Empty;
+
+        private object syncObject = new object();
+
+        public object SyncObject
+        {
+            get { return syncObject; }
+        }
 
         /// <summary>
         /// The datastream to write to, or to read from
@@ -138,11 +145,13 @@ namespace MSNPSharp
         {
             get
             {
-                return dataStream;
+                lock (SyncObject)
+                    return dataStream;
             }
             set
             {
-                dataStream = value;
+                lock (SyncObject)
+                    dataStream = value;
             }
         }
 
@@ -460,18 +469,10 @@ namespace MSNPSharp
         /// <returns></returns>
         public virtual Stream OpenStream()
         {
-            /*if(dataStream == null)
-            {
-                if(fileLocation != null && this.fileLocation.Length > 0)
-                    dataStream = new PersistentStream(new FileStream(fileLocation, FileMode.Open, FileAccess.Read));
-                else
-                    throw new MSNPSharpException("No memorystream or filestream available to open in a MSNObject context.");
-            }
-            else*/
-            dataStream.Open();
+            DataStream.Open();
 
             // otherwise it's a memorystream
-            return dataStream;
+            return DataStream;
         }
 
         /// <summary>
