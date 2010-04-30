@@ -1032,17 +1032,6 @@ namespace MSNPSharp.DataTransfer
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Exception in transfer thread: " + oex.ToString(), GetType().Name);
             }
-            //catch (Exception e)
-            //{
-            //    OnTransferAborted();
-
-            //    if (Settings.TraceSwitch.TraceInfo)
-            //        System.Diagnostics.Trace.WriteLine("Exception in transfer thread: " + e.ToString(), "P2PTransferSession");
-
-            //    //SendAbortMessage();
-
-            //    //throw new MSNPSharpException("Exception Occurred while sending p2p data. See inner exception for details.", e);
-            //}
             finally
             {
                 if (Version == P2PVersion.P2PV2)
