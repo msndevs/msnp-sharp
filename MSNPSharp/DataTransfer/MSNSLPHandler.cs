@@ -889,6 +889,7 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
+                p2pMessage.V2Header.AppendPeerInfoTLV();
 
                 if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
                 {
@@ -1003,6 +1004,8 @@ namespace MSNPSharp.DataTransfer
             if (Version == P2PVersion.P2PV2)
             {
                 p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
+                p2pMessage.V2Header.AppendPeerInfoTLV();
+
                 if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
                 {
                     p2pMessage.V2Header.PackageNumber = (ushort)((p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength) / 1202 + 1);
@@ -1024,7 +1027,17 @@ namespace MSNPSharp.DataTransfer
 
                 MemoryStream urlDataStream = new MemoryStream();
 
-                byte[] header = new byte[] { 0x80, 0x00, 0x00, 0x00 };
+                byte[] header = null; ;
+
+                if (Version == P2PVersion.P2PV1)
+                {
+                    header = new byte[] { 0x80, 0x00, 0x00, 0x00 };
+                }
+
+                if (Version == P2PVersion.P2PV2)
+                {
+                    header = new byte[] { 0x80, 0x3f, 0x14, 0x05 };
+                }
 
                 urlDataStream.Write(header, 0, header.Length);
                 urlDataStream.Write(BitUtility.GetBytes((ushort)0x08, true), 0, sizeof(ushort));  //data type: 0x08: string
@@ -1141,7 +1154,9 @@ namespace MSNPSharp.DataTransfer
 
             if (Version == P2PVersion.P2PV2)
             {
-                p2pMessage.V2Header.OperationCode = (byte)OperationCode.None;
+                p2pMessage.V2Header.OperationCode = (byte)(OperationCode.RAK | OperationCode.SYN);
+                p2pMessage.V2Header.AppendPeerInfoTLV();
+
                 if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
                 {
                     p2pMessage.V2Header.PackageNumber = (ushort)((p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength) / 1202 + 1);
