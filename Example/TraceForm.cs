@@ -239,7 +239,7 @@ namespace MSNPSharpClient
             {
                 this.WriteIndent();
             }
-            this.writer.Write(message);
+            this.writer.Write("[" + DateTime.Now.ToString("u") + "] " + message);
         }
 
         public override void WriteLine(string message)
@@ -249,7 +249,7 @@ namespace MSNPSharpClient
             {
                 this.WriteIndent();
             }
-            this.writer.WriteLine(message);
+            this.writer.WriteLine("[" + DateTime.Now.ToString("u") + "] " + message);
             base.NeedIndent = true;
         }
 
