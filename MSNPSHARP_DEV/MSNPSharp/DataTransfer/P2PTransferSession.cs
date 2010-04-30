@@ -876,9 +876,7 @@ namespace MSNPSharp.DataTransfer
                 if (direct == false)
                 {
                     // send the data preparation message
-                    if (Version == P2PVersion.P2PV1 && 
-                        (TransferProperties.DataType != DataTransferType.File && 
-                        TransferProperties.DataType != DataTransferType.Unknown))
+                    if (Version == P2PVersion.P2PV1 && TransferProperties.DataType == DataTransferType.DisplayImage)
                     {
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV1);
                         p2pDataMessage.WritePreparationBytes();
@@ -894,29 +892,20 @@ namespace MSNPSharp.DataTransfer
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }
 
-                    if (Version == P2PVersion.P2PV2)
+                    if (Version == P2PVersion.P2PV1 && TransferProperties.DataType == DataTransferType.DisplayImage)
                     {
-                        //First send a 0x08 0x02 prepare message.
-                        P2PMessage prepareMessage = new P2PMessage(P2PVersion.P2PV2);
-                        prepareMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
-                        MessageProcessor.SendMessage(prepareMessage);
+                        //Then send data preparation message.
+                        P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
 
-                        if (TransferProperties.DataType != DataTransferType.File &&
-                        TransferProperties.DataType != DataTransferType.Unknown)
-                        {
-                            //Then send data preparation message.
-                            P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
+                        p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.None;
+                        p2pDataMessage.V2Header.TFCombination = TFCombination.First;
 
-                            p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.None;
-                            p2pDataMessage.V2Header.TFCombination = TFCombination.First;
+                        p2pDataMessage.WritePreparationBytes();
+                        p2pDataMessage.Header.SessionId = TransferProperties.SessionId;
 
-                            p2pDataMessage.WritePreparationBytes();
-                            p2pDataMessage.Header.SessionId = TransferProperties.SessionId;
-
-                            MessageProcessor.SendMessage(p2pDataMessage);
-                        }
-
+                        MessageProcessor.SendMessage(p2pDataMessage);
                     }
+
                 }
 
                 if (Version == P2PVersion.P2PV1)
@@ -1000,33 +989,28 @@ namespace MSNPSharp.DataTransfer
                             p2pDataMessage.V2Header.PackageNumber = 1; //Always sets to 1.
                         }
 
+                        switch (MessageFlag)
+                        {
+                            case (uint)P2PFlag.MSNObjectData:
+                                {
+                                    p2pDataMessage.V2Header.TFCombination = TFCombination.MsnObject;
+                                    break;
+                                }
+
+                            case (uint)P2PFlag.FileData:
+                                {
+                                    p2pDataMessage.V2Header.TFCombination = TFCombination.FileTransfer;
+                                    break;
+                                }
+                        }
+
                         if (isFirstPacket)
                         {
-                            if (MessageFlag == (uint)P2PFlag.MSNObjectData)
-                            {
-                                p2pDataMessage.V2Header.TFCombination = (TFCombination.MsnObject | TFCombination.First);
-                            }
-
-                            if (MessageFlag == (uint)P2PFlag.FileData)
-                            {
-                                p2pDataMessage.V2Header.TFCombination = (TFCombination.FileTransfer | TFCombination.First);
-                            }
+                            p2pDataMessage.V2Header.TFCombination |= TFCombination.First;
                             isFirstPacket = false;
                         }
-                        else
-                        {
-                            if (MessageFlag == (uint)P2PFlag.MSNObjectData)
-                            {
-                                p2pDataMessage.V2Header.TFCombination = TFCombination.MsnObject;
-                            }
 
-                            if (MessageFlag == (uint)P2PFlag.FileData)
-                            {
-                                p2pDataMessage.V2Header.TFCombination = TFCombination.FileTransfer;
-                            }
-                        }
-
-                        Thread.Sleep(300);                        
+                        Thread.Sleep(300);
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }
                 }
