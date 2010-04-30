@@ -1125,11 +1125,10 @@ namespace MSNPSharpClient
 
         private void btnActivityTest_Click(object sender, EventArgs e)
         {
-            String activityID = "20521364";        //The activityID of Music Mix activity.
-            String activityName = "Music Mix";     //Th name of acticvity
+            String activityID = "99995225"; //"20521364";        //The activityID of Music Mix activity.
+            String activityName = "MSNPSharp Activity Test";     //Th name of acticvity
             MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(_firstInvitedContact);
-            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, _firstInvitedContact, activityID, activityName);
-            session.DataStream = new MemoryStream();
+            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, _firstInvitedContact, activityID, activityName, @"http://code.google.com/p/msnp-sharp");
 
             msnslpHandler.TransferSessionClosed += delegate(object s, P2PTransferSessionEventArgs ea)
             {
