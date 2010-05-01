@@ -892,12 +892,12 @@ namespace MSNPSharp.DataTransfer
                         MessageProcessor.SendMessage(p2pDataMessage);
                     }
 
-                    if (Version == P2PVersion.P2PV1 && TransferProperties.DataType == DataTransferType.DisplayImage)
+                    if (Version == P2PVersion.P2PV2 && TransferProperties.DataType == DataTransferType.DisplayImage)
                     {
                         //Then send data preparation message.
                         P2PDataMessage p2pDataMessage = new P2PDataMessage(P2PVersion.P2PV2);
 
-                        p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.None;
+                        p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
                         p2pDataMessage.V2Header.TFCombination = TFCombination.First;
 
                         p2pDataMessage.WritePreparationBytes();

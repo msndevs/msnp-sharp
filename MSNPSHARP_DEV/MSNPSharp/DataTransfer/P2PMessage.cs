@@ -395,7 +395,8 @@ namespace MSNPSharp.DataTransfer
             return "[P2PMessage]\r\n" +
                 header.ToString() +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "FOOTER              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n", ((InnerMessage != null) ? InnerMessage.ToString() : "{Binary data}" /* DumpBytes(InnerBody) */));
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n", 
+                ((InnerMessage != null) ? InnerMessage.ToString() : String.Format("Binary data: {0:D} bytes", InnerBody.Length)));
         }
 
         public static string DumpBytes(byte[] data)
