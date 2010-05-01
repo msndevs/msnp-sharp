@@ -627,7 +627,11 @@ namespace MSNPSharp.DataTransfer
 
                         if ((OperationCode & (byte)MSNPSharp.OperationCode.SYN) != 0)
                         {
-                            ack.AppendPeerInfoTLV();
+                            if (HeaderTLVs.ContainsKey(0x01))
+                            {
+                                ack.HeaderTLVs.Add(0x01, HeaderTLVs[0x01]);  //If this is an ACK, we MUST copy the peer info TLV.
+                                ack.OperationCode |= (byte)MSNPSharp.OperationCode.SYN;
+                            }
                         }
                     }
                     else
