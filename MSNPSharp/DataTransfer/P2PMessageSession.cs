@@ -48,7 +48,7 @@ namespace MSNPSharp.DataTransfer
 
     /// <summary>
     /// P2PMessageSession routes all messages in the p2p framework between the local client and a single remote client.<br/>
-    /// It is the transfer layer of MSN P2P messages.
+    /// It is the Transfer Layer of MSNP2P Protocol.
     /// </summary>
     /// <remarks>
     /// A single message session can hold multiple p2p transfer sessions. This for example occurs when a contact sends
