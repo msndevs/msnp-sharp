@@ -355,7 +355,11 @@ namespace MSNPSharp.DataTransfer
                     byte[] chunk = new byte[dataSize];
                     Array.Copy(totalMessage, (int)offset, chunk, 0, (int)dataSize);
 
-                    chunkMessage.V2Header.OperationCode = V2Header.OperationCode;
+                    if (offset == 0)
+                    {
+                        chunkMessage.V2Header.OperationCode = V2Header.OperationCode;
+                    }
+
                     chunkMessage.V2Header.SessionId = V2Header.SessionId;
                     chunkMessage.V2Header.TFCombination = V2Header.TFCombination;
                     chunkMessage.V2Header.PackageNumber = V2Header.PackageNumber;
@@ -375,7 +379,6 @@ namespace MSNPSharp.DataTransfer
                     chunkMessage.Header.Identifier = nextId;
                     nextId += chunkMessage.Header.MessageSize;
 
-                    chunkMessage.PrepareMessage();
                     chunks.Add(chunkMessage);
 
                     offset += dataSize;
