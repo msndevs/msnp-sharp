@@ -305,15 +305,6 @@ namespace MSNPSharp.DataTransfer
         public void AddTransferSession(P2PTransferSession session)
         {
             session.MessageProcessor = this;
-
-            lock (handlers)
-            {
-                foreach (IMessageHandler handler in handlers)
-                {
-                    session.RegisterHandler(handler);
-                }
-            }
-
             transferSessions.Add(session.TransferProperties.SessionId, session);
         }
 
