@@ -952,7 +952,7 @@ namespace MSNPSharp.DataTransfer
             return SendInvitation(localContact, remoteContact, applicationID, activityName, string.Empty);
         }
 
-        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string applicationID, string activityName, string activityURL)
+        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string applicationID, string activityName, string activityData)
         {
 
             // set class variables
@@ -1017,11 +1017,11 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
             }
 
-            if (activityURL != string.Empty && activityURL != null)
+            if (activityData != string.Empty && activityData != null)
             {
-                activityURL += "\0";
+                activityData += "\0";
 
-                int urlLength = Encoding.Unicode.GetByteCount(activityURL);
+                int urlLength = Encoding.Unicode.GetByteCount(activityData);
 
                 MemoryStream urlDataStream = new MemoryStream();
 
@@ -1040,7 +1040,7 @@ namespace MSNPSharp.DataTransfer
                 urlDataStream.Write(header, 0, header.Length);
                 urlDataStream.Write(BitUtility.GetBytes((ushort)0x08, true), 0, sizeof(ushort));  //data type: 0x08: string
                 urlDataStream.Write(BitUtility.GetBytes(urlLength, true), 0, sizeof(int));
-                urlDataStream.Write(Encoding.Unicode.GetBytes(activityURL), 0, urlLength);
+                urlDataStream.Write(Encoding.Unicode.GetBytes(activityData), 0, urlLength);
 
                 urlDataStream.Seek(0, SeekOrigin.Begin);
                 transferSession.DataStream = urlDataStream;
@@ -1860,22 +1860,8 @@ namespace MSNPSharp.DataTransfer
 
                 if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
                 {
-                    P2PMessage replyMessage = new P2PMessage(Version);
-                    Contact remote = MessageSession.RemoteUser;
 
-                    if (replyMessage.Version == P2PVersion.P2PV1)
-                    {
-                        replyMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
-                    }
-                    replyMessage.InnerMessage = CreateInternalErrorMessage(properties);
-
-                    if (Version == P2PVersion.P2PV2)
-                    {
-                        replyMessage.V2Header.TFCombination = TFCombination.First;
-                        replyMessage.V2Header.PackageNumber = transferSession.GetNextSLPStatusDataPacketNumber();
-                    }
-
-                    MessageProcessor.SendMessage(replyMessage);
+                    MessageSession.SendMessage(CreateInternalErrorMessage(properties));
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
                         properties.DataTypeGuid + ". 500 INTERNAL ERROR send.", GetType().ToString());
                     return;
