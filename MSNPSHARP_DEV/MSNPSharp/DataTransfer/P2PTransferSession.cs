@@ -268,10 +268,14 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PTransferSession(P2PVersion ver, MSNSLPTransferProperties properties)
+        public P2PTransferSession(P2PVersion ver, MSNSLPTransferProperties properties, P2PMessageSession transferLayer)
         {
             version = ver;
             TransferProperties = properties;
+            MessageSession = transferLayer;
+            transferLayer.AddTransferSession(this);
+            transferLayer.RegisterHandler(this);
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object, version = " + ver.ToString(), GetType().Name);
         }
 
@@ -555,7 +559,7 @@ namespace MSNPSharp.DataTransfer
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                "P2P Info message received", GetType().Name);
+                "P2P Info message received, session Id: " + TransferProperties.SessionId, GetType().Name);
 
             // It is not a datamessage. Extract the messages one-by-one and dispatch it to all handlers.
             IMessageHandler[] cpHandlers = handlers.ToArray();

@@ -803,7 +803,7 @@ namespace MSNPSharp.DataTransfer
 
 
             P2PMessage p2pMessage = new P2PMessage(Version);
-            P2PTransferSession transferSession = new P2PTransferSession(p2pMessage.Version, properties);
+            P2PTransferSession transferSession = new P2PTransferSession(p2pMessage.Version, properties, MessageSession);
             transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
 
             Contact remote = MessageSession.RemoteUser;
@@ -913,10 +913,7 @@ namespace MSNPSharp.DataTransfer
             lock (transferProperties)
                 transferProperties[properties.CallId] = properties;
 
-            // create a transfer session to handle the actual data transfer
-            transferSession.MessageSession = (P2PMessageSession)MessageProcessor;
-            MessageSession.AddTransferSession(transferSession);
-
+ 
             transferSession.IsSender = false;
 
             OnTransferSessionCreated(transferSession);
@@ -1000,8 +997,7 @@ namespace MSNPSharp.DataTransfer
                 transferProperties[properties.CallId] = properties;
 
             // create a transfer session to handle the actual data transfer
-            P2PTransferSession transferSession = new P2PTransferSession(Version, properties);
-            transferSession.MessageSession = (P2PMessageSession)MessageProcessor;
+            P2PTransferSession transferSession = new P2PTransferSession(Version, properties, MessageSession);
 
             if (Version == P2PVersion.P2PV2)
             {
@@ -1052,7 +1048,6 @@ namespace MSNPSharp.DataTransfer
             }
 
             transferSession.MessageFlag = (uint)P2PFlag.Normal;
-            MessageSession.AddTransferSession(transferSession);
             transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
 
 
@@ -1148,8 +1143,7 @@ namespace MSNPSharp.DataTransfer
             //p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
 
             // create a transfer session to handle the actual data transfer
-            P2PTransferSession transferSession = new P2PTransferSession(Version, properties);
-            transferSession.MessageSession = (P2PMessageSession)MessageProcessor;
+            P2PTransferSession transferSession = new P2PTransferSession(Version, properties, MessageSession);
 
             if (Version == P2PVersion.P2PV2)
             {
@@ -1174,8 +1168,6 @@ namespace MSNPSharp.DataTransfer
             transferSession.MessageFlag = (uint)P2PFlag.FileData;
             transferSession.MessageFooter = P2PConst.FileTransFooter2;
             
-
-            MessageSession.AddTransferSession(transferSession);
             transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
             // set the data stream to read from
             transferSession.DataStream = file;
@@ -1222,8 +1214,6 @@ namespace MSNPSharp.DataTransfer
             // the client programmer has accepted, continue !
             lock (transferProperties)
                 transferProperties[properties.CallId] = properties;
-
-            ((P2PMessageSession)MessageProcessor).AddTransferSession(transferSession);
 
             // we want to be notified of messages through this session
             transferSession.RegisterHandler(this);
@@ -1856,10 +1846,8 @@ namespace MSNPSharp.DataTransfer
                 MSNSLPTransferProperties properties = ParseInvitationMessage(message);
 
                 // create a p2p transfer
-                P2PTransferSession transferSession = new P2PTransferSession(Version, properties);
+                P2PTransferSession transferSession = new P2PTransferSession(Version, properties, MessageSession);
                 transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
-
-                transferSession.MessageSession = (P2PMessageSession)MessageProcessor;
 
                 if (Version == P2PVersion.P2PV2)
                 {
