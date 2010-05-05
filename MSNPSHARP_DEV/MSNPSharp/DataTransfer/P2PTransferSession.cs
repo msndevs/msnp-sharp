@@ -260,7 +260,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PTransferSession()
+        private P2PTransferSession()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object", GetType().Name);
         }
@@ -1111,6 +1111,9 @@ namespace MSNPSharp.DataTransfer
                 // Dispose managed resources
                 if (dataStream != null)
                     dataStream.Dispose();
+
+                MessageSession.UnregisterHandler(this);
+                MessageSession.RemoveTransferSession(this);
             }
 
             // Free native resources
