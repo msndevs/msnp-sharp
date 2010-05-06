@@ -196,7 +196,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private bool remoteInvited;
+        private bool remoteInvited = false;
 
         /// <summary>
         /// Defines whether the remote client has invited the transfer (true) or the local client has initiated the transfer (false).
@@ -287,7 +287,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint sessionId;
+        private uint sessionId = 0;
 
         /// <summary>
         /// The total length of the data, in bytes
@@ -306,7 +306,7 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private uint dataSize;
+        private uint dataSize = 0;
 
         /// <summary>
         /// The context send in the invitation. This informs the client about the type of transfer, filename, file-hash, msn object settings, etc.
@@ -363,9 +363,9 @@ namespace MSNPSharp.DataTransfer
 
         /// <summary>
         /// </summary>
-        private int lastCSeq;
+        private int lastCSeq = 0;
 
-        private Contact localContact;
+        private Contact localContact = null;
 
         /// <summary>
         /// The the local contact in the transfer session.
@@ -374,7 +374,8 @@ namespace MSNPSharp.DataTransfer
         {
             get { return localContact; }
         }
-        private Contact remoteContact;
+
+        private Contact remoteContact = null;
 
         /// <summary>
         /// The the remote contact in the transfer session.
@@ -734,6 +735,18 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private Guid schedulerID = Guid.Empty;
+
+        /// <summary>
+        /// The P2P invitation scheduler guid.
+        /// </summary>
+        protected Guid SchedulerID
+        {
+            get { return schedulerID; }
+        }
+
+
+
         #endregion
 
         #region Public
@@ -746,10 +759,16 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
         }
 
-        public MSNSLPHandler(P2PVersion ver)
+        public MSNSLPHandler(P2PVersion ver, Guid invitationSchedulerId)
         {
             version = ver;
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object, version = " + ver.ToString(), GetType().Name);
+            schedulerID = invitationSchedulerId;
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                "Constructing object, version = " + ver.ToString() + "\r\n" +
+                "A new " + GetType().Name + " created, with scheduler id = " 
+                + SchedulerID.ToString("B")
+                , GetType().Name);
         }
 
         ~MSNSLPHandler()
@@ -919,7 +938,7 @@ namespace MSNPSharp.DataTransfer
             OnTransferSessionCreated(transferSession);
 
             // send the invitation
-            Schedulers.P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage, MessageSession.NSMessageHandler.P2PInvitationSchedulerId);
+            Schedulers.P2PInvitationScheduler.Enqueue(transferSession, p2pMessage, SchedulerID);
 
             return transferSession;
         }
@@ -1052,7 +1071,7 @@ namespace MSNPSharp.DataTransfer
 
 
             OnTransferSessionCreated(transferSession);
-            Schedulers.P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage, MessageSession.NSMessageHandler.P2PInvitationSchedulerId);
+            Schedulers.P2PInvitationScheduler.Enqueue(transferSession, p2pMessage, SchedulerID);
 
             return transferSession;
         }
@@ -1175,7 +1194,7 @@ namespace MSNPSharp.DataTransfer
 
             OnTransferSessionCreated(transferSession);
 
-            Schedulers.P2PInvitationScheduler.Enqueue(MessageSession, p2pMessage, MessageSession.NSMessageHandler.P2PInvitationSchedulerId);
+            Schedulers.P2PInvitationScheduler.Enqueue(transferSession, p2pMessage, SchedulerID);
 
             return transferSession;
         }
@@ -1861,7 +1880,7 @@ namespace MSNPSharp.DataTransfer
                 if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
                 {
 
-                    MessageSession.SendMessage(CreateInternalErrorMessage(properties));
+                    transferSession.SendMessage(CreateInternalErrorMessage(properties));
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
                         properties.DataTypeGuid + ". 500 INTERNAL ERROR send.", GetType().ToString());
                     return;
