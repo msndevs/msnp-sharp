@@ -61,15 +61,15 @@ namespace MSNPSharp.DataTransfer
     {
         #region Properties
 
-        private uint localBaseIdentifier;
-        private uint localIdentifier;
-        private uint remoteBaseIdentifier;
-        private uint remoteIdentifier;
-        private string remoteContact;
-        private string localContact;
-        private Contact remoteClient;
-        private NSMessageHandler nsMessageHandler;
-        private Contact localUser;
+        private uint localBaseIdentifier = 0;
+        private uint localIdentifier = 0;
+        private uint remoteBaseIdentifier = 0;
+        private uint remoteIdentifier = 0;
+        private string remoteContact = string.Empty;
+        private string localContact = string.Empty;
+        private Contact remoteClient = null;
+        private Contact localUser = null;
+        private NSMessageHandler nsMessageHandler = null;
         private P2PVersion version = P2PVersion.P2PV1;
         private OperationCode transferLayerState = OperationCode.SYN | OperationCode.RAK;
 
@@ -102,7 +102,7 @@ namespace MSNPSharp.DataTransfer
             get { return version; }
         }
 
-        public NSMessageHandler NSMessageHandler
+        protected NSMessageHandler NSMessageHandler
         {
             get { return nsMessageHandler; }
         }
@@ -226,7 +226,7 @@ namespace MSNPSharp.DataTransfer
             version = ver;
             nsMessageHandler = handler;
             NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(NSMessageHandler_ContactOffline);
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object, version = " + ver.ToString(), GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Initializing P2P Transfer Layer object, version = " + ver.ToString(), GetType().Name);
         }
 
         /// <summary>

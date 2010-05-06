@@ -260,7 +260,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        private P2PTransferSession()
+        protected P2PTransferSession()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object", GetType().Name);
         }
@@ -419,6 +419,12 @@ namespace MSNPSharp.DataTransfer
             P2PMessage p2pMessage = message as P2PMessage;
 
             Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
+
+            if (p2pMessage.Header.SessionId != TransferProperties.SessionId)
+            {
+                //The data is not for this transfer session, return.
+                return;
+            }
 
             if (p2pMessage.Version == P2PVersion.P2PV1)
             {
