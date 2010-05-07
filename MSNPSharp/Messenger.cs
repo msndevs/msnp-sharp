@@ -555,7 +555,7 @@ namespace MSNPSharp
         /// <returns></returns>
         private MSNSLPHandler CreateMSNSLPHandler(P2PVersion ver)
         {
-            MSNSLPHandler msnslpHandler = new MSNSLPHandler(ver);
+            MSNSLPHandler msnslpHandler = new MSNSLPHandler(ver, Nameserver.P2PInvitationSchedulerId);
             msnslpHandler.ExternalEndPoint = Nameserver.ExternalEndPoint;
             return msnslpHandler;
         }
