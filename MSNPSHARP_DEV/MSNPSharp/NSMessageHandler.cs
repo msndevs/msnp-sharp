@@ -656,7 +656,6 @@ namespace MSNPSharp
             pendingSwitchboards.Enqueue(new SwitchboardQueueItem(switchboardHandler, initiator));
 
             Schedulers.SwitchBoardRequestScheduler.Enqueue(MessageProcessor, new NSMessage("XFR", new string[] { "SB" }), sbRequestSchedulerId);
-            ////MessageProcessor.SendMessage(new NSMessage("XFR", new string[] { "SB" }));
         }
 
 
