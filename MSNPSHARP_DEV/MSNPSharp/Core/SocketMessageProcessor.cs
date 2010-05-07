@@ -48,9 +48,10 @@ namespace MSNPSharp.Core
     {
         ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         byte[] socketBuffer = new byte[1500];
-        IPEndPoint proxyEndPoint;
-        ProxySocket socket;
-        MessagePool messagePool;
+        bool hasFiredDisconnectEvent = false;
+        IPEndPoint proxyEndPoint = null;
+        ProxySocket socket = null;
+        MessagePool messagePool = null;
         List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
 
         public event EventHandler<EventArgs> ConnectionEstablished;
@@ -282,6 +283,7 @@ namespace MSNPSharp.Core
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback Daarna", GetType().Name);
 
+                hasFiredDisconnectEvent = false;
                 OnConnected();
 
                 // Begin receiving data
@@ -318,6 +320,15 @@ namespace MSNPSharp.Core
 
         protected virtual void OnDisconnected()
         {
+            if (hasFiredDisconnectEvent)
+            {
+                return;
+            }
+            else
+            {
+                hasFiredDisconnectEvent = true;
+            }
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Disconnected", GetType().Name);
 
             if (ConnectionClosed != null)
