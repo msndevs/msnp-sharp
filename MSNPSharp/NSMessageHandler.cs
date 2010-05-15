@@ -655,7 +655,7 @@ namespace MSNPSharp
         {
             pendingSwitchboards.Enqueue(new SwitchboardQueueItem(switchboardHandler, initiator));
 
-            Schedulers.SwitchBoardRequestScheduler.Enqueue(MessageProcessor, new NSMessage("XFR", new string[] { "SB" }), sbRequestSchedulerId);
+            Schedulers.SwitchBoardRequestScheduler.Enqueue(MessageProcessor, new NSMessage("XFR", new string[] { "SB" }), SwitchBoardRequestSchedulerId);
         }
 
 
@@ -730,7 +730,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Not a valid owner");
 
             string xmlstr = "<EndpointData><Capabilities>" +
-                ((long)ContactList.Owner.ClientCapacities).ToString() + ":" + ((long)ContactList.Owner.ClientCapacitiesEx).ToString()
+                ((long)ContactList.Owner.LocalEndPointClientCapacities).ToString() + ":" + ((long)ContactList.Owner.LocalEndPointClientCapacitiesEx).ToString()
             + "</Capabilities></EndpointData>";
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", xmlstr));
@@ -792,19 +792,19 @@ namespace MSNPSharp
             {
                 string capacities = String.Empty;
 
-                if (ContactList.Owner.ClientCapacities == ClientCapacities.None)
+                if (ContactList.Owner.LocalEndPointClientCapacities == ClientCapacities.None)
                 {
                     isSetDefault = true;
 
                     //don't set the same status or it will result in disconnection
-                    ContactList.Owner.ClientCapacities = defaultClientCapacities;
+                    ContactList.Owner.LocalEndPointClientCapacities = defaultClientCapacities;
 
                     if (BotMode)
                     {
-                        ContactList.Owner.ClientCapacities |= ClientCapacities.IsBot;
+                        ContactList.Owner.LocalEndPointClientCapacities |= ClientCapacities.IsBot;
                     }
 
-                    ContactList.Owner.ClientCapacitiesEx = defaultClientCapacitiesEx;
+                    ContactList.Owner.LocalEndPointClientCapacitiesEx = defaultClientCapacitiesEx;
 
                     SetEndPointCapabilities();
                     SetPresenceStatusUUX(status);
@@ -821,8 +821,8 @@ namespace MSNPSharp
                     SetScreenName(ContactList.Owner.Name);
                 }
 
-                ClientCapacitiesEx capsext = ContactList.Owner.ClientCapacitiesEx;
-                capacities = ((long)ContactList.Owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
+                ClientCapacitiesEx capsext = ContactList.Owner.LocalEndPointClientCapacitiesEx;
+                capacities = ((long)ContactList.Owner.LocalEndPointClientCapacities).ToString() + ":" + ((long)capsext).ToString();
 
                 if (!isSetDefault)
                 {
@@ -862,8 +862,8 @@ namespace MSNPSharp
             if (ContactList.Owner.DisplayImage != null)
                 context = ContactList.Owner.DisplayImage.Context;
 
-            ClientCapacitiesEx capsext = ContactList.Owner.ClientCapacitiesEx;
-            string capacities = ((long)ContactList.Owner.ClientCapacities).ToString() + ":" + ((long)capsext).ToString();
+            ClientCapacitiesEx capsext = ContactList.Owner.LocalEndPointClientCapacitiesEx;
+            string capacities = ((long)ContactList.Owner.LocalEndPointClientCapacities).ToString() + ":" + ((long)capsext).ToString();
 
             MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(ContactList.Owner.Status), capacities, context }));
         }
@@ -956,7 +956,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (ContactList.Owner.MPOPEnable && ContactList.Owner.Places.Count > 1)
+            if (ContactList.Owner.MPOPEnable && ContactList.Owner.HasSignedInWithMultipleEndPoints)
             {
                 MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Mail, "5" }, sessionId + ";" + host));
                 RemoveSession(sessionId);
@@ -965,7 +965,7 @@ namespace MSNPSharp
 
         internal void SenSwitchBoardClosedNotify(string sessionId, string host)
         {
-            if (ContactList.Owner.MPOPEnable && ContactList.Owner.Places.Count > 1)
+            if (ContactList.Owner.MPOPEnable && ContactList.Owner.HasSignedInWithMultipleEndPoints)
             {
                 MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Mail, "5" }, sessionId + ";" + host));
                 RemoveSession(sessionId);
@@ -1344,27 +1344,62 @@ namespace MSNPSharp
                         contact.SetName(friendlyNameNode.InnerXml == "" ? contact.Mail : friendlyNameNode.InnerText);
                     }
 
-                    XmlNodeList privateendpoints = xmlDoc.GetElementsByTagName("PrivateEndpointData");
+                    XmlNodeList endPoints = xmlDoc.GetElementsByTagName("EndpointData");
+                    if (endPoints.Count > 0)
+                    {
+                        foreach (XmlNode epNode in endPoints)
+                        {
+                            Guid epId = new Guid(epNode.Attributes["id"].Value);
+                            string capsString = (epNode["Capabilities"] == null) ? "0:0" : epNode["Capabilities"].InnerText;
+                            ClientCapacities clientCaps = ClientCapacities.None;
+                            ClientCapacitiesEx clientCapsEx = ClientCapacitiesEx.None;
 
-                    if (privateendpoints.Count > 0)
+                            string[] capsGroup = capsString.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (capsGroup.Length > 0)
+                            {
+                                clientCaps = (ClientCapacities)uint.Parse(capsGroup[0]);
+                            }
+
+                            if (capsGroup.Length > 1)
+                            {
+                                clientCapsEx = (ClientCapacitiesEx)uint.Parse(capsGroup[1]);
+                            }
+
+                            EndPointData epData = (contact is Owner ? new PrivateEndPointData(epId) : new EndPointData(epId));
+                            epData.ClientCapacities = clientCaps;
+                            epData.ClientCapacitiesEx = clientCapsEx;
+                            contact.EndPointData[epId] = epData;
+                        }
+                    }
+
+                    #region Only for Owner
+
+                    XmlNodeList privateEndPoints = xmlDoc.GetElementsByTagName("PrivateEndpointData"); //Only the owner will have this field.
+
+                    if (privateEndPoints.Count > 0)
                     {
                         Guid lastSignedInPlace = Guid.Empty; // For AutoLogoff
                         int placeCounter = 0;
 
-                        Dictionary<Guid, string> newPlaces = new Dictionary<Guid, string>(privateendpoints.Count);
-                        
-                        foreach (XmlNode pepdNode in privateendpoints)
+                        foreach (XmlNode pepdNode in privateEndPoints)
                         {
                             Guid id = new Guid(pepdNode.Attributes["id"].Value);
-                            String epname = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
+                            PrivateEndPointData privateEndPoint = (contact.EndPointData.ContainsKey(id) ? (contact.EndPointData[id] as PrivateEndPointData) : new PrivateEndPointData(id));
+                            privateEndPoint.Name = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
+                            privateEndPoint.Idle = (pepdNode["Idle"] == null) ? false : bool.Parse(pepdNode["Idle"].InnerText);
+                            privateEndPoint.ClientType = (pepdNode["ClientType"] == null) ? "1" : pepdNode["ClientType"].InnerText;
+                            privateEndPoint.State = (pepdNode["State"] == null) ? PresenceStatus.Unknown : ParseStatus(pepdNode["State"].InnerText);
 
-                            if (!contact.Places.ContainsKey(id))
+                            if (!contact.EndPointData.ContainsKey(id))
                             {
-                                contact.SetChangedPlace(id, epname, PlaceChangedReason.SignedIn);
-                                
+                                if (contact is Owner)
+                                {
+                                    (contact as Owner).SetChangedPlace(id, privateEndPoint.Name, PlaceChangedReason.SignedIn);
+                                }
+
                             }
 
-                            newPlaces.Add(id, epname);
+                            contact.EndPointData[id] = privateEndPoint;
 
                             if (placeCounter == 0)
                             {
@@ -1373,21 +1408,14 @@ namespace MSNPSharp
 
                             placeCounter++;
 
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + epname + " " + id, GetType().Name);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + privateEndPoint.Name + " " + id, GetType().Name);
                         }
 
-                        Dictionary<Guid, string > placesClone = new Dictionary<Guid,string>(contact.Places);
-                        foreach (Guid id in placesClone.Keys)
-                        {
-                            if (!newPlaces.ContainsKey(id))
-                            {
-                                contact.SetChangedPlace(id, contact.Places[id], PlaceChangedReason.SignedOut);
-                            }
-                        }
+                        Dictionary<Guid, EndPointData> epDataClone = new Dictionary<Guid, EndPointData>(contact.EndPointData);
 
                         if (contact is Owner)
                         {
-                            if (contact.Places.Count > 1 && ContactList.Owner.MPOPMode == MPOP.AutoLogoff)
+                            if (contact.HasSignedInWithMultipleEndPoints && ContactList.Owner.MPOPMode == MPOP.AutoLogoff)  //The minimal count of EndPointData is 1.
                             {
                                 if (lastSignedInPlace != MachineGuid)
                                 {
@@ -1395,9 +1423,9 @@ namespace MSNPSharp
                                 }
                                 else
                                 {
-                                    foreach (Guid id in contact.Places.Keys)
+                                    foreach (Guid id in contact.EndPointData.Keys)
                                     {
-                                        if (id != MachineGuid)
+                                        if (id != MachineGuid && id != Guid.Empty)
                                         {
                                             ContactList.Owner.SignoutFrom(id);
                                         }
@@ -1405,7 +1433,9 @@ namespace MSNPSharp
                                 }
                             }
                         }
-                    }
+                    } 
+
+                    #endregion
                 }
                 catch (Exception xmlex)
                 {
@@ -1485,8 +1515,8 @@ namespace MSNPSharp
                     contact = circle.ContactList.GetContact(account, type);
 
                     contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
-                    contact.ClientCapacities = newcaps;
-                    contact.ClientCapacitiesEx = newcapsex;
+                    contact.EndPointData[Guid.Empty].ClientCapacities = newcaps;
+                    contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newcapsex;
 
                     if (contact != circle.ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
                     {
@@ -1553,8 +1583,8 @@ namespace MSNPSharp
                     }
 
                     contact.SetName(MSNHttpUtility.NSDecode(newName));
-                    contact.ClientCapacities = newcaps;
-                    contact.ClientCapacitiesEx = newcapsex;
+                    contact.EndPointData[Guid.Empty].ClientCapacities = newcaps;
+                    contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newcapsex;
 
                     if (contact != ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
                     {
@@ -3290,8 +3320,8 @@ namespace MSNPSharp
             sessions.Clear();
 
             //7. Unregister schedulers
-            Schedulers.P2PInvitationScheduler.UnRegister(p2pInviteSchedulerId);
-            Schedulers.SwitchBoardRequestScheduler.UnRegister(sbRequestSchedulerId);
+            Schedulers.P2PInvitationScheduler.UnRegister(P2PInvitationSchedulerId);
+            Schedulers.SwitchBoardRequestScheduler.UnRegister(SwitchBoardRequestSchedulerId);
         }
 
         /// <summary>

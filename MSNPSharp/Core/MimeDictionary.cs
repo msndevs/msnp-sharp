@@ -195,9 +195,9 @@ namespace MSNPSharp.Core
                     {
                         key = param.Substring(0, index).Trim();
                         val = param.Substring(index + 1).Trim();
-
-                        //key = param.Substring(0, index);
-                        //val = param.Substring(index + 1);
+                    }
+                    else
+                    {
 
                     }
 

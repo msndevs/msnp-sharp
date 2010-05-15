@@ -529,9 +529,9 @@ namespace MSNPSharp
             if (Owner != null)
             {
                 Owner.Emoticons.Clear();
-                Owner.Places.Clear();
-                Owner.ClientCapacities = ClientCapacities.None;
-                Owner.ClientCapacitiesEx = ClientCapacitiesEx.None;
+                Owner.EndPointData.Clear();
+                Owner.LocalEndPointClientCapacities = ClientCapacities.None;
+                Owner.LocalEndPointClientCapacitiesEx = ClientCapacitiesEx.None;
             }
 
             Clear();

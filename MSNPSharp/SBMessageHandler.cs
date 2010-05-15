@@ -41,6 +41,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
+    using System.Threading;
 
     #region Event argument classes
     /// <summary>
@@ -168,6 +169,40 @@ namespace MSNPSharp
             this.anonymous = anonymous;
         }
     }
+
+    /// <summary>
+    /// Use when the acknowledgement of a message received.
+    /// </summary>
+    public class SBMessageDeliverResultEventArgs : SBEventArgs
+    {
+        private bool success = false;
+
+        /// <summary>
+        /// Whether the specified message has been successfully delivered.
+        /// </summary>
+        public bool Success
+        {
+            get { return success; }
+        }
+
+        private int messageID = 0;
+
+        /// <summary>
+        /// The transision ID of the message.
+        /// </summary>
+        public int MessageID
+        {
+            get { return messageID; }
+        }
+
+        public SBMessageDeliverResultEventArgs(bool success, int transId, SBMessageHandler switchBoard)
+            : base(switchBoard)
+        {
+            this.success = success;
+            messageID = transId;
+        }
+    }
+
     #endregion
 
     /// <summary>
@@ -186,6 +221,7 @@ namespace MSNPSharp
         {
             nsMessageHandler = hander;
             SetNewProcessor();
+
             ResigerHandlersToProcessor(MessageProcessor);
             NSMessageHandler.P2PHandler.AddSwitchboardSession(this);
             NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(ContactOfflineHandler);
@@ -253,6 +289,11 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
 
+        /// <summary>
+        /// Fired when the MSN Switchboard Server sends us an acknowledgement (ACK or NAK).
+        /// </summary>
+        public event EventHandler<SBMessageDeliverResultEventArgs> MessageAcknowledgementReceived;
+
         #endregion
 
         #region Members
@@ -265,12 +306,13 @@ namespace MSNPSharp
         private object syncObject = new object();
         private Queue<Contact> invitationQueue = new Queue<Contact>();
         private string sessionHash = String.Empty;
-        protected SocketMessageProcessor messageProcessor;
-        private NSMessageHandler nsMessageHandler;
-        private string sessionId;
+        protected SocketMessageProcessor messageProcessor = null;
+        private NSMessageHandler nsMessageHandler = null;
+        private string sessionId = string.Empty;
 
-        protected bool sessionEstablished;
-        protected bool invited;
+        protected bool sessionEstablished = false;
+        protected bool invited = false;
+        private bool waitingForRing = false;
 
         #endregion
 
@@ -437,58 +479,7 @@ namespace MSNPSharp
         /// <param name="message">The message to send.</param>
         public virtual void SendTextMessage(TextMessage message)
         {
-            //First, we have to check whether the content of the message is not to big for one message
-            //There's a maximum of 1600 bytes per message, let's play safe and take 1400 bytes
-            UTF8Encoding encoding = new UTF8Encoding();
-
-            if (encoding.GetByteCount(message.Text) > 1400)
-            {
-                //we'll have to use multi-packets messages
-                Guid guid = Guid.NewGuid();
-                byte[] text = encoding.GetBytes(message.Text);
-                int chunks = Convert.ToInt32(Math.Ceiling((double)text.GetUpperBound(0) / (double)1400));
-                for (int i = 0; i < chunks; i++)
-                {
-                    SBMessage sbMessage = new SBMessage();
-                    MSGMessage msgMessage = new MSGMessage();
-
-                    //Clone the message
-                    TextMessage chunkMessage = (TextMessage)message.Clone();
-
-                    //Get the part of the message that we are going to send
-                    if (text.GetUpperBound(0) - (i * 1400) > 1400)
-                        chunkMessage.Text = encoding.GetString(text, i * 1400, 1400);
-                    else
-                        chunkMessage.Text = encoding.GetString(text, i * 1400, text.GetUpperBound(0) - (i * 1400));
-
-                    //Add the correct headers
-                    msgMessage.MimeHeader.Add("Message-ID", "{" + guid.ToString() + "}");
-
-                    if (i == 0)
-                        msgMessage.MimeHeader.Add("Chunks", Convert.ToString(chunks));
-                    else
-                        msgMessage.MimeHeader.Add("Chunk", Convert.ToString(i));
-
-                    sbMessage.InnerMessage = msgMessage;
-
-                    msgMessage.InnerMessage = chunkMessage;
-
-                    //send it over the network
-                    MessageProcessor.SendMessage(sbMessage);
-                }
-            }
-            else
-            {
-                SBMessage sbMessage = new SBMessage();
-                MSGMessage msgMessage = new MSGMessage();
-
-                sbMessage.InnerMessage = msgMessage;
-
-                msgMessage.InnerMessage = message;
-
-                // send it over the network
-                MessageProcessor.SendMessage(sbMessage);
-            }
+            MessageProcessor.SendMessage(message);
         }
 
         /// <summary>
@@ -502,9 +493,6 @@ namespace MSNPSharp
             if (emoticons == null)
                 throw new ArgumentNullException("emoticons");
 
-            SBMessage sbMessage = new SBMessage();
-            MSGMessage msgMessage = new MSGMessage();
-
             foreach (Emoticon emoticon in emoticons)
             {
                 if (!NSMessageHandler.ContactList.Owner.Emoticons.ContainsKey(emoticon.Sha))
@@ -516,11 +504,8 @@ namespace MSNPSharp
 
             EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons, icontype);
 
-            msgMessage.InnerMessage = emoticonMessage;
-            sbMessage.InnerMessage = msgMessage;
-
             // send it over the network
-            MessageProcessor.SendMessage(sbMessage);
+            MessageProcessor.SendMessage(emoticonMessage);
         }
 
         /// <summary>
@@ -528,18 +513,7 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SendTypingMessage()
         {
-            SBMessage sbMessage = new SBMessage();
-            sbMessage.Acknowledgement = "U";
-
-            MSGMessage msgMessage = new MSGMessage();
-            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
-            msgMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.ContactList.Owner.Mail + "\r\n";
-
-
-            sbMessage.InnerMessage = msgMessage;
-
-            // send it over the network
-            MessageProcessor.SendMessage(sbMessage);
+            MessageProcessor.SendMessage(new TypingMessage(NSMessageHandler.ContactList.Owner));
         }
 
         /// <summary>
@@ -547,14 +521,8 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SendNudge()
         {
-            SBMessage sbMessage = new SBMessage();
-
-            MSGMessage msgMessage = new MSGMessage();
-            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast\r\n\r\nID: 1\r\n\r\n\r\n";
-            sbMessage.InnerMessage = msgMessage;
-
             // send it over the network
-            MessageProcessor.SendMessage(sbMessage);
+            MessageProcessor.SendMessage(new NudgeMessage());
         }
 
         /// <summary>
@@ -562,15 +530,8 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SendKeepAliveMessage()
         {
-            SBMessage sbMessage = new SBMessage();
-
-            MSGMessage msgMessage = new MSGMessage();
-            msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-keepalive\r\n";
-
-            sbMessage.InnerMessage = msgMessage;
-
             // send it over the network
-            MessageProcessor.SendMessage(sbMessage);
+            MessageProcessor.SendMessage(new KeepAliveMessage());
         }
 
         #endregion
@@ -684,6 +645,12 @@ namespace MSNPSharp
                 TextMessageReceived(this, new TextMessageEventArgs(message, contact));
         }
 
+        protected virtual void OnMessageAcknowledgementReceived(SBMessageDeliverResultEventArgs args)
+        {
+            if (MessageAcknowledgementReceived != null)
+                MessageAcknowledgementReceived(this, args);
+        }
+
         /// <summary>
         /// Fires the SessionClosed event.
         /// </summary>
@@ -705,22 +672,32 @@ namespace MSNPSharp
                 SessionEstablished(this, new EventArgs());
 
             // process ant remaining invitations
-            ProcessInvitations();
+            SendOneQueuedInvitation();
         }
 
         /// <summary>
         /// Handles all remaining invitations. If no connection is yet established it will do nothing.
         /// </summary>
-        protected virtual void ProcessInvitations()
+        protected virtual void SendOneQueuedInvitation()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Processing invitations for switchboard...", GetType().Name);
 
-            if (IsSessionEstablished)
+            lock (syncObject)
             {
-                while (invitationQueue.Count > 0)
-                    SendInvitationCommand(invitationQueue.Dequeue());
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Invitation send", GetType().Name);
+                if (IsSessionEstablished && !waitingForRing)
+                {
+                    if (invitationQueue.Count > 0)
+                    {
+                        Contact targetContact = invitationQueue.Dequeue();
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Invitation to contact " + targetContact + " has been sent.", GetType().Name);
+                        SendInvitationCommand(targetContact);
+                        waitingForRing = true;
+                    }
+                }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Invitation to contact request has been denied since SwitchBoard session is in waitingForRING status.");
+                }
             }
         }
 
@@ -828,15 +805,20 @@ namespace MSNPSharp
             {
                 //Add "all contact"
                 SetRosterProperty(contact.Mail.ToLowerInvariant(), ContactConversationState.Invited.ToString(), RosterProperties.Status);
-                foreach (Guid place in contact.Places.Keys)
+                if (contact.HasSignedInWithMultipleEndPoints)
                 {
-                    string currentAccount = contact.Mail.ToLowerInvariant() + ";" + place.ToString("B").ToLowerInvariant();
-                    SetRosterProperty(currentAccount, ContactConversationState.Invited.ToString(), RosterProperties.Status);
+                    foreach (Guid epId in contact.EndPointData.Keys)
+                    {
+                        if (epId == Guid.Empty) continue;
+                        string currentAccount = contact.Mail.ToLowerInvariant() + ";" + epId.ToString("B").ToLowerInvariant();
+                        SetRosterProperty(currentAccount, ContactConversationState.Invited.ToString(), RosterProperties.Status);
+                    }
                 }
             }
 
             invitationQueue.Enqueue(contact);
-            ProcessInvitations();
+            SendOneQueuedInvitation();
+
             return true;
         }
 
@@ -967,9 +949,11 @@ namespace MSNPSharp
 
                 lock (contact.SyncObject)
                 {
-                    foreach (Guid place in contact.Places.Keys)
+                    foreach (Guid epId in contact.EndPointData.Keys)
                     {
-                        if (HasContact(contact.Mail, place))
+                        if (epId == Guid.Empty) continue;
+
+                        if (HasContact(contact.Mail, epId))
                             return true;
                     }
                 }
@@ -1079,7 +1063,28 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnCALReceived(SBMessage message)
         {
-            // this is not very interesting so do nothing at the moment
+            lock (syncObject)
+            {
+                if (waitingForRing)
+                {
+                    waitingForRing = false;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "CAL RINGING received, watingForRING status has been reset.");
+                    SendOneQueuedInvitation();
+
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called when a NAK command has been received. Inidcates switch board failed to deliver a message to the target contact.
+        /// </summary>
+        /// <remarks>
+        /// <code>NAK [MSGTransid]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        protected virtual void OnNAKReceived(SBMessage message)
+        {
+            OnMessageAcknowledgementReceived(new SBMessageDeliverResultEventArgs(false, message.TransactionID, this));
         }
 
         /// <summary>
@@ -1108,10 +1113,12 @@ namespace MSNPSharp
             SetRosterProperty(fullaccount, ContactConversationState.Joined.ToString(), RosterProperties.Status);
 
             string account = fullaccount;
+            bool supportMPOP = false;
             Guid endpointGuid = Guid.Empty;
 
             if (fullaccount.Contains(";"))
             {
+                supportMPOP = true;
                 account = fullaccount.Split(';')[0];
                 endpointGuid = new Guid(fullaccount.Split(';')[1]);
             }
@@ -1125,7 +1132,7 @@ namespace MSNPSharp
             // Not in contact list (anonymous). Update it's name and caps.
             if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
             {
-                if (endpointGuid != Guid.Empty)
+                if (supportMPOP)
                 {
                     if (contact.PersonalMessage == null)
                     {
@@ -1147,15 +1154,7 @@ namespace MSNPSharp
             if (message.CommandValues.Count >= 6)
             {
                 string caps = message.CommandValues[5].ToString();
-                if (caps.Contains(":"))
-                {
-                    contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                    contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
-                }
-                else
-                {
-                    contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
-                }
+                UpdateContactEndPointData(contact, endpointGuid, caps, supportMPOP);
             }
 
 
@@ -1193,10 +1192,12 @@ namespace MSNPSharp
             SetRosterProperty(fullaccount, ContactConversationState.Joined.ToString(), RosterProperties.Status);
 
             string account = fullaccount;
+            bool supportMPOP = false;
             Guid endpointGuid = Guid.Empty;
 
             if (fullaccount.Contains(";"))
             {
+                supportMPOP = true;
                 account = fullaccount.Split(';')[0];
                 endpointGuid = new Guid(fullaccount.Split(';')[1]);
             }
@@ -1209,7 +1210,7 @@ namespace MSNPSharp
                 // Not in contact list (anonymous). Update it's name and caps.
                 if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
                 {
-                    if (endpointGuid != Guid.Empty)
+                    if (supportMPOP)
                     {
                         if (contact.PersonalMessage == null)
                         {
@@ -1231,15 +1232,7 @@ namespace MSNPSharp
                 if (message.CommandValues.Count >= 3)
                 {
                     string caps = message.CommandValues[2].ToString();
-                    if (caps.Contains(":"))
-                    {
-                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                        contact.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
-                    }
-                    else
-                    {
-                        contact.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
-                    }
+                    UpdateContactEndPointData(contact, endpointGuid, caps, supportMPOP);
                 }
 
 
@@ -1381,7 +1374,7 @@ namespace MSNPSharp
                         break;
 
                     case "text/x-msnmsgr-datacast":
-                        if (message.CommandValues[2].Equals("69"))
+                        if (Encoding.UTF8.GetString(sbMSGMessage.InnerBody).Replace("\r\n", "") == "ID: 1")
                             OnNudgeReceived(contact);
                         else if (message.CommandValues[2].Equals("1325"))
                             OnWinkReceived(sbMSGMessage, contact);
@@ -1409,11 +1402,10 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnACKReceived(SBMessage message)
         {
+            OnMessageAcknowledgementReceived(new SBMessageDeliverResultEventArgs(true, message.TransactionID, this));
         }
 
         #endregion
-
-        #region Switchboard Handling
 
         private void ClearAll()
         {
@@ -1425,13 +1417,69 @@ namespace MSNPSharp
                 rosterCapacities.Clear();
         }
 
+        private void UpdateContactEndPointData(Contact contact, Guid endpointGuid, string caps, bool supportMPOP)
+        {
+            bool dump = false;
+
+            if (caps.Contains(":"))
+            {
+                if (!contact.EndPointData.ContainsKey(endpointGuid))
+                {
+                    EndPointData epData = new EndPointData(endpointGuid);
+                    epData.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
+                    epData.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                    contact.EndPointData[endpointGuid] = epData;
+                    dump = true;
+                }
+
+                if (supportMPOP)
+                {
+                    contact.EndPointData[endpointGuid].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
+                    contact.EndPointData[endpointGuid].ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                }
+                else
+                {
+                    contact.EndPointData[Guid.Empty].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
+                    contact.EndPointData[Guid.Empty].ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                }
+            }
+            else
+            {
+                if (!contact.EndPointData.ContainsKey(endpointGuid))
+                {
+                    EndPointData epData = new EndPointData(endpointGuid);
+                    epData.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                    contact.EndPointData[endpointGuid] = epData;
+                    dump = true;
+                }
+
+                if (supportMPOP)
+                {
+                    contact.EndPointData[endpointGuid].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                }
+                else
+                {
+                    contact.EndPointData[Guid.Empty].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                }
+            }
+
+            if (dump)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "EndPoint ID " + endpointGuid.ToString("B") + " not found in " + contact.ToString() + "new EndPointData added.");
+            }
+        }
+
+        #region Switchboard Handling
+
+
+
         /// <summary>
         /// Called when the message processor has established a connection. This function will 
         /// begin the login procedure by sending the USR or ANS command.
         /// </summary>
         protected virtual void OnProcessorConnectCallback(object sender, EventArgs e)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB processor connected.", GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "OnProcessorConnectCallback: SB processor connected.", GetType().Name);
             SendInitialMessage();
         }
 
@@ -1462,21 +1510,6 @@ namespace MSNPSharp
             
             set
             {
-                ////if (messageProcessor != null)
-                ////{
-                ////    messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
-                ////    messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
-                ////}
-
-                ////messageProcessor = value as SocketMessageProcessor;
-
-                ////if (messageProcessor != null)
-                ////{
-                ////    // catch the connect event to start sending the USR command upon initiating
-                ////    messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
-                ////    messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
-                ////}
-
                 throw new InvalidOperationException("This property is read-only.");
             }
         }
@@ -1508,6 +1541,7 @@ namespace MSNPSharp
                     case "IRO":
                     case "JOI":
                     case "USR":
+                    case "NAK":
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, sbMessage.ToDebugString(), GetType().Name);
                         break;
                 }

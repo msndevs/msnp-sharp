@@ -52,6 +52,17 @@ namespace MSNPSharp.DataTransfer
         private MimeDictionary mimeHeaders = new MimeDictionary();
         private MimeDictionary mimeBodies = new MimeDictionary();
 
+        private Guid GetEndPointIDFromMailEPIDString(string mailEPID)
+        {
+            if (mailEPID.Contains(";"))
+            {
+                return new Guid(mailEPID.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)[1]);
+            }
+
+            return Guid.Empty;
+        }
+
+
         protected SLPMessage()
         {
             Via = "MSNSLP/1.0/TLP ";
@@ -114,6 +125,24 @@ namespace MSNPSharp.DataTransfer
             get
             {
                 return mimeHeaders[MimeHeaderStrings.From];
+            }
+        }
+
+        public Guid FromEndPoint
+        {
+            get
+            {
+                string mailEpID = From.Replace("<msnmsgr:", String.Empty).Replace(">", String.Empty);
+                return GetEndPointIDFromMailEPIDString(mailEpID);
+            }
+        }
+
+        public Guid ToEndPoint
+        {
+            get
+            {
+                string mailEpID = To.Replace("<msnmsgr:", String.Empty).Replace(">", String.Empty);
+                return GetEndPointIDFromMailEPIDString(mailEpID);
             }
         }
 
@@ -317,6 +346,11 @@ namespace MSNPSharp.DataTransfer
         }
     }
 
+    /// <summary>
+    /// The MSNSLP INVITE (request to create transfer), 
+    /// BYE (request to close transfer), 
+    /// ACK message (request for acknowledgement).
+    /// </summary>
     public class SLPRequestMessage : SLPMessage
     {
         string method = "UNKNOWN";
@@ -374,6 +408,9 @@ namespace MSNPSharp.DataTransfer
         }
     }
 
+    /// <summary>
+    /// The MSNSLP OK, Decline, Internal Error message.
+    /// </summary>
     public class SLPStatusMessage : SLPMessage
     {
         string version = "MSNSLP/1.0";

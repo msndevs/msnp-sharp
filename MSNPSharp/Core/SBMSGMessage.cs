@@ -39,6 +39,7 @@ using System.Collections.Generic;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
+using MSNPSharp.DataTransfer;
 
     [Serializable()]
     public class MSGMessage : NetworkMessage
@@ -48,7 +49,7 @@ namespace MSNPSharp.Core
         public MSGMessage()
         {
             mimeHeader = new StrDictionary();
-            mimeHeader.Add("MIME-Version", "1.0");
+            MimeHeader.Add("MIME-Version", "1.0");
         }
 
         public MSGMessage(NetworkMessage message)
@@ -128,53 +129,6 @@ namespace MSNPSharp.Core
             return table;
         }
 
-
-        [Obsolete]
-        protected static StrDictionary ParseMime(IEnumerator enumerator)
-        {
-            StrDictionary table = new StrDictionary();
-
-            StringBuilder name = new StringBuilder();
-            StringBuilder val = new StringBuilder();
-            StringBuilder active = name;
-
-            while (enumerator.MoveNext())
-            {
-                if ((byte)enumerator.Current == 13)
-                {
-                    // no name specified -> end of header (presumably \r\n\r\n)
-                    if (name.Length == 0)
-                    {
-                        enumerator.MoveNext();
-                        return table;
-                    }
-
-                    string strname = name.ToString();
-
-                    if (!table.ContainsKey(strname))
-                        table.Add(strname, val.ToString());
-
-                    name.Length = 0;
-                    val.Length = 0;
-                    active = name;
-                }
-                else if ((byte)enumerator.Current == 58) //:
-                {
-                    if (active == name)
-                    {
-                        active = val;
-                        enumerator.MoveNext();
-                    }
-                }
-                else if ((byte)enumerator.Current != 10)
-                {
-                    active.Append(Convert.ToChar(enumerator.Current, System.Globalization.CultureInfo.InvariantCulture));
-                }
-            }
-
-            return table;
-        }
-
         public override void ParseBytes(byte[] data)
         {
             // parse the header
@@ -196,10 +150,66 @@ namespace MSNPSharp.Core
             StringBuilder builder = new StringBuilder();
             foreach (StrKeyValuePair entry in MimeHeader)
             {
-                builder.Append("  " + entry.Key).Append(": ").Append(entry.Value).Append("\r\n");
+                builder.Append(entry.Key).Append(": ").Append(entry.Value).Append("\r\n");
             }
             builder.Append("\r\n");
-            return "  [MSGMessage] " + builder.ToString();
+            return builder.ToString();
         }
     }
+
+    /// <summary>
+    /// The message indicating the user is typing.
+    /// </summary>
+    public class TypingMessage : MSGMessage
+    {
+        public TypingMessage(Contact typingContact)
+            : base()
+        {
+            MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
+            MimeHeader[MimeHeaderStrings.TypingUser] = typingContact.Mail.ToLowerInvariant();
+            InnerMessage = new TextPayloadMessage("\r\n");
+        }
+    }
+
+    public class DatacastMessage : MSGMessage
+    {
+        public DatacastMessage()
+            : base()
+        {
+            MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast";
+        }
+    }
+
+    public class NudgeMessage : DatacastMessage
+    {
+        public NudgeMessage()
+            : base()
+        {
+            InnerMessage = new TextPayloadMessage("ID: 1\r\n\r\n");
+        }
+    }
+
+    public class KeepAliveMessage : MSGMessage
+    {
+        public KeepAliveMessage()
+            : base()
+        {
+            MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-keepalive";
+            InnerMessage = new TextPayloadMessage("\r\n");
+        }
+    }
+
+    public class SBP2PMessage : MSGMessage
+    {
+        public SBP2PMessage(string destString, string srcString, NetworkMessage payLoad)
+            :base()
+        {
+            MimeHeader["P2P-Dest"] = destString;
+            MimeHeader["P2P-Src"] = srcString;
+            MimeHeader[MimeHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
+
+            InnerMessage = payLoad;
+        }
+    }
+
 };

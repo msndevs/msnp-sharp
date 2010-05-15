@@ -114,7 +114,6 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler = null;
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
-        private ArrayList tsMsnslpHandlers = ArrayList.Synchronized(new ArrayList());
         private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
 
         #endregion
@@ -132,11 +131,6 @@ namespace MSNPSharp
             #endregion
 
             #region private events
-
-            NameserverProcessor.ConnectionClosed += delegate
-            {
-                tsMsnslpHandlers.Clear();
-            };
 
             Nameserver.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
             {
@@ -162,65 +156,6 @@ namespace MSNPSharp
                 return;
             };
 
-            Nameserver.P2PHandler.SessionCreated += delegate(object sender, P2PSessionAffectedEventArgs see)
-            {
-                MSNSLPHandler msnslpHandler = CreateMSNSLPHandler(see.Session.Version);
-                msnslpHandler.MessageProcessor = see.Session;
-                see.Session.RegisterHandler(msnslpHandler);
-
-                tsMsnslpHandlers.Add(msnslpHandler);
-
-                // Accepts by default owner display images and contact emoticons.
-                msnslpHandler.TransferInvitationReceived += delegate(object sndr, MSNSLPInvitationEventArgs ie)
-                {
-                    
-
-                    if (ie.TransferProperties.DataType == DataTransferType.DisplayImage)
-                    {
-                        ie.Accept = true;
-
-                        ie.TransferSession.DataStream = Nameserver.ContactList.Owner.DisplayImage.OpenStream();
-                        ie.TransferSession.AutoCloseStream = false;
-                        ie.TransferSession.ClientData = Nameserver.ContactList.Owner.DisplayImage;
-                    }
-                    else if (ie.TransferProperties.DataType == DataTransferType.Emoticon)
-                    {
-                        MSNObject msnObject = new MSNObject();
-                        msnObject.ParseContext(ie.TransferProperties.Context);
-
-                        // send an emoticon
-                        foreach (Emoticon emoticon in Nameserver.ContactList.Owner.Emoticons.Values)
-                        {
-                            if (emoticon.Sha == msnObject.Sha)
-                            {
-                                ie.Accept = true;
-                                ie.TransferSession.AutoCloseStream = true;
-                                ie.TransferSession.DataStream = emoticon.OpenStream();
-                                ie.TransferSession.ClientData = emoticon;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // forward the invitation to the client programmer
-                        if (TransferInvitationReceived != null)
-                            TransferInvitationReceived(sndr, ie);
-                    }
-                    return;
-                };
-                return;
-            };
-
-            Nameserver.P2PHandler.SessionClosed += delegate(object sender, P2PSessionAffectedEventArgs e)
-            {
-                MSNSLPHandler handler = GetMSNSLPHandler(e.Session);
-                if (handler != null)
-                {
-                    tsMsnslpHandlers.Remove(handler);
-                }
-                return;
-            };
-
             #endregion
         }
 
@@ -243,6 +178,12 @@ namespace MSNPSharp
         /// Occurs when a remote client has send an invitation for a filetransfer session.
         /// </summary>
         public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
+
+        internal void OnTransferInvitationReceived(object sender, MSNSLPInvitationEventArgs args)
+        {
+            if (TransferInvitationReceived != null)
+                TransferInvitationReceived(sender, args);
+        }
 
         #endregion
 
@@ -516,16 +457,8 @@ namespace MSNPSharp
             if (!Nameserver.ContactList.HasContact(remoteContact.Mail, remoteContact.ClientType))
                 throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
 
-            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Nameserver.ContactList.Owner, remoteContact);
-            MSNSLPHandler msnslpHandler = (MSNSLPHandler)p2pSession.GetHandler(typeof(MSNSLPHandler));
-            if (msnslpHandler == null)
-            {
-                // create a msn slp handler
-                msnslpHandler = CreateMSNSLPHandler(p2pSession.Version);
-                p2pSession.RegisterHandler(msnslpHandler);
-                msnslpHandler.MessageProcessor = p2pSession;
-            }
-            return msnslpHandler;
+            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Nameserver.ContactList.Owner, Nameserver.ContactList.Owner.MachineGuid, remoteContact, remoteContact.SelectRandomEPID());
+            return p2pSession.MasterSession;
         }
 
         #endregion
@@ -548,34 +481,6 @@ namespace MSNPSharp
         #endregion
 
         #region Private
-
-        /// <summary>
-        /// Creates the object and sets the external end point.
-        /// </summary>
-        /// <returns></returns>
-        private MSNSLPHandler CreateMSNSLPHandler(P2PVersion ver)
-        {
-            MSNSLPHandler msnslpHandler = new MSNSLPHandler(ver, Nameserver.P2PInvitationSchedulerId);
-            msnslpHandler.ExternalEndPoint = Nameserver.ExternalEndPoint;
-            return msnslpHandler;
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="session"></param>
-        /// <returns></returns>
-        private MSNSLPHandler GetMSNSLPHandler(P2PMessageSession session)
-        {
-            lock (tsMsnslpHandlers.SyncRoot)
-            {
-                foreach (MSNSLPHandler handler in tsMsnslpHandlers)
-                {
-                    if (handler.MessageSession == session)
-                        return handler;
-                }
-            }
-            return null;
-        }
 
         #endregion
 

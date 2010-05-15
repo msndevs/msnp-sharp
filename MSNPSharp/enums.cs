@@ -362,6 +362,9 @@ namespace MSNPSharp
     {
         None = 0x00,
         RTCVideoEnabled = 0x10,
+        /// <summary>
+        /// The client can handle new stack of MSNP2P.
+        /// </summary>
         CanP2PV2 = 0x20,
         CanP2PV1 = 0x400,   //I guess.
         UNKnownEx1000 = 0x1000,
@@ -1280,6 +1283,8 @@ namespace MSNPSharp
         /// </summary>
         public const string Max_Forwards = "Max-Forwards";
         public const string Uri = "Uri";
+
+        internal const string KeyParam = ";";
 
     }
 

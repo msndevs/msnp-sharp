@@ -108,17 +108,17 @@ namespace MSNPSharp
     [Serializable()]
     public class ContactConversationEventArgs : ContactEventArgs
     {
-        private Guid palce = Guid.Empty;
+        private Guid epoint = Guid.Empty;
 
-        public Guid Palce
+        public Guid EndPoint
         {
-            get { return palce; }
+            get { return epoint; }
         }
 
         public ContactConversationEventArgs(Contact contact, Guid endPoint)
             :base(contact)
         {
-            palce = endPoint;
+            epoint = endPoint;
         }
     }
 

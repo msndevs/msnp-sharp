@@ -53,28 +53,27 @@ namespace MSNPSharp
     {
         #region Fields
 
-        protected Guid guid;
-        protected Guid addressBookId;
-        private long cid;
-        private string mail;
-        private string name;
-        private string nickName;
+        protected Guid guid = Guid.Empty;
+        protected Guid addressBookId = Guid.Empty;
+        private long cid = 0;
+        private string mail = string.Empty;
+        private string name = string.Empty;
+        private string nickName = string.Empty;
 
-        private string homePhone;
-        private string workPhone;
-        private string mobilePhone;
-        private string contactType;
+        private string homePhone = string.Empty;
+        private string workPhone = string.Empty;
+        private string mobilePhone = string.Empty;
+        private string contactType = string.Empty;
         private string comment = string.Empty;
         private string siblingString = string.Empty;
         private string hash = string.Empty;
 
-        private bool hasSpace;
-        private bool mobileDevice;
-        private bool mobileAccess;
-        private bool isMessengerUser;
+        private bool hasSpace = false;
+        private bool mobileDevice = false;
+        private bool mobileAccess = false;
+        private bool isMessengerUser = false;
+        private bool hasInitialized = false;
 
-        private ClientCapacities clientCapacities = ClientCapacities.None;
-        private ClientCapacitiesEx clientCapacitiesEx = ClientCapacitiesEx.None;
         private PresenceStatus status = PresenceStatus.Offline;
         private ClientType clientType = ClientType.PassportMember;
         private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
@@ -88,7 +87,7 @@ namespace MSNPSharp
 
         private Dictionary<string, Emoticon> emoticons = new Dictionary<string, Emoticon>(0);
         private Dictionary<string, Contact> siblings = new Dictionary<string, Contact>(0);
-        private Dictionary<Guid, string> places = new Dictionary<Guid, string>(0);
+        protected Dictionary<Guid, EndPointData> endPointData = new Dictionary<Guid, EndPointData>(0);
 
         private ulong oimCount = 1;
         private int adlCount = 1;
@@ -120,6 +119,8 @@ namespace MSNPSharp
 
         protected virtual void Initialized(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
         {
+            if (hasInitialized) return;
+
             NSMessageHandler = handler;
             addressBookId = abId;
             mail = account.ToLowerInvariant();
@@ -127,6 +128,7 @@ namespace MSNPSharp
             SetName(account);
             siblingString = ClientType.ToString() + ":" + account.ToLowerInvariant();
             hash = MakeHash(Mail, ClientType, AddressBookId);
+            EndPointData[Guid.Empty] = new EndPointData(Guid.Empty);
 
             if (NSMessageHandler != null)
             {
@@ -134,6 +136,8 @@ namespace MSNPSharp
             }
 
             displayImage = DisplayImage.CreateDefaultImage(Mail);
+
+            hasInitialized = true;
         }
 
         #region Events
@@ -143,11 +147,6 @@ namespace MSNPSharp
         public event EventHandler<EventArgs> ScreenNameChanged;
 
         public event EventHandler<EventArgs> PersonalMessageChanged;
-
-        /// <summary>
-        /// Fired when owner places changed.
-        /// </summary>
-        public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
 
         /// <summary>
         /// Fired after contact's display image has been changed.
@@ -175,22 +174,6 @@ namespace MSNPSharp
             get 
             { 
                 return syncObject; 
-            }
-        }
-
-        /// <summary>
-        /// The end points.
-        /// </summary>
-        public Dictionary<Guid, string> Places
-        {
-            get
-            {
-                return places;
-            }
-
-            internal set
-            {
-                places = value;
             }
         }
 
@@ -259,7 +242,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// EndPoint ID
+        /// Machine ID, this may be different from the endpoint id.
         /// </summary>
         public Guid MachineGuid
         {
@@ -377,32 +360,28 @@ namespace MSNPSharp
             }
         }
 
-        public ClientCapacities ClientCapacities
+        public Dictionary<Guid, EndPointData> EndPointData
         {
             get
             {
-                return clientCapacities;
-            }
-            set
-            {
-                clientCapacities = value;
-
-                if ((clientCapacities & ClientCapacities.HasMSNSpaces) == ClientCapacities.HasMSNSpaces)
-                {
-                    SetHasSpace(true);
-                }
+                return endPointData;
             }
         }
 
-        public ClientCapacitiesEx ClientCapacitiesEx
+        public bool HasSignedInWithMultipleEndPoints
         {
             get
             {
-                return clientCapacitiesEx;
+                //One for Guid.Empty added when calling the constructor, another for contact's own end point.
+                return EndPointData.Count > 2;
             }
-            set
+        }
+
+        public int PlaceCount
+        {
+            get
             {
-                clientCapacitiesEx = value;
+                return HasSignedInWithMultipleEndPoints ? EndPointData.Count - 1 : 1;
             }
         }
 
@@ -907,37 +886,7 @@ namespace MSNPSharp
             }
         }
 
-        internal void SetChangedPlace(Guid placeId, string placeName, PlaceChangedReason action)
-        {
-            bool triggerEvent = false;
-            lock (SyncObject)
-            {
-                switch (action)
-                {
-                    case PlaceChangedReason.SignedIn:
-                        if (!Places.ContainsKey(placeId))
-                        {
-                            Places[placeId] = placeName;
-                            triggerEvent = true;
-                        }
-                        break;
-
-                    case PlaceChangedReason.SignedOut:
-                        if (Places.ContainsKey(placeId))
-                        {
-                            Places.Remove(placeId);
-                            triggerEvent = true;
-                        }
-                        break;
-                }
-
-            }
-
-            if (triggerEvent)
-            {
-                OnPlacesChanged(new PlaceChangedEventArgs(placeId, placeName, action));
-            }
-        }
+        
 
         internal void SetHasSpace(bool hasSpaceValue)
         {
@@ -1129,16 +1078,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Called when the <see cref="Places "/> (End Points) changed.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnPlacesChanged(PlaceChangedEventArgs e)
-        {
-            if (PlacesChanged != null)
-                PlacesChanged(this, e);
-        }
-
         protected virtual void LoadDisplayImageFromDeltas()
         {
             if (NSMessageHandler.ContactService.Deltas == null)
@@ -1317,6 +1256,17 @@ namespace MSNPSharp
             }
 
             return conflictLists;
+        }
+
+        internal Guid SelectRandomEPID()
+        {
+            foreach (Guid epId in EndPointData.Keys)
+            {
+                if (epId != Guid.Empty)
+                    return epId;
+            }
+
+            return Guid.Empty;
         }
 
         internal static string MakeHash(string account, ClientType type, Guid abId)

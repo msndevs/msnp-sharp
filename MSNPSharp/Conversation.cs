@@ -515,14 +515,12 @@ namespace MSNPSharp
                 e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
 
                 // create a session and send the invitation
-                P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.ContactList.Owner, e.Sender);
+                P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.ContactList.Owner, Messenger.ContactList.Owner.MachineGuid, e.Sender, e.Sender.SelectRandomEPID());
 
-                object handlerObject = session.GetHandler(typeof(MSNSLPHandler));
-                if (handlerObject != null)
+                MSNSLPHandler msnslpHandler = session.MasterSession;
+                if (msnslpHandler != null)
                 {
-                    MSNSLPHandler msnslpHandler = (MSNSLPHandler)handlerObject;
-
-                    P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalUser, session.RemoteUser, e.Emoticon);
+                    P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalContact, session.RemoteContact, e.Emoticon);
                     transferSession.DataStream = e.Emoticon.OpenStream();
                     transferSession.ClientData = e.Emoticon;
 
@@ -547,7 +545,7 @@ namespace MSNPSharp
 
         protected virtual void OnContactLeft(object sender, ContactConversationEventArgs e)
         {
-            if (e.Palce != Guid.Empty)
+            if (e.EndPoint != Guid.Empty)
                 return;
 
             RemoveContact(e.Contact);
@@ -558,7 +556,7 @@ namespace MSNPSharp
 
         protected virtual void OnContactJoined(object sender, ContactConversationEventArgs e)
         {
-            if (e.Palce != Guid.Empty)
+            if (e.EndPoint != Guid.Empty)
             {
                 //Wait until contacts from all locations have joined.
                 return;

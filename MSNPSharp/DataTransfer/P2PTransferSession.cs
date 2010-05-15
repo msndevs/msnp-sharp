@@ -129,7 +129,7 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 messageSession = value;
-                MessageProcessor = messageSession;
+                messageSession.AddTransferSession(this);  //The massage processor of transfer session will be set by AddTransferSession.
                 messageSession.DirectConnectionEstablished += new EventHandler<EventArgs>(messageSession_DirectConnectionEstablished);
                 messageSession.DirectConnectionFailed += new EventHandler<EventArgs>(messageSession_DirectConnectionFailed);
             }
@@ -273,8 +273,6 @@ namespace MSNPSharp.DataTransfer
             version = ver;
             TransferProperties = properties;
             MessageSession = transferLayer;
-            transferLayer.AddTransferSession(this);
-            transferLayer.RegisterHandler(this);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing p2p transfer session object, version = " + ver.ToString(), GetType().Name);
         }
@@ -407,7 +405,23 @@ namespace MSNPSharp.DataTransfer
             }
             set
             {
+                if (value != null && object.ReferenceEquals(MessageProcessor, value))
+                    return;
+
+                if (value == null && MessageProcessor != null)
+                {
+                    MessageProcessor.UnregisterHandler(this);
+                    messageProcessor = value;
+                    return;
+                }
+
+                if (MessageProcessor != null)
+                {
+                    MessageProcessor.UnregisterHandler(this);
+                }
+
                 messageProcessor = value;
+                messageProcessor.RegisterHandler(this);
             }
         }
 
@@ -416,9 +430,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            P2PMessage p2pMessage = message as P2PMessage;
+            Trace.Assert(message is P2PMessage, "Incoming message is not a P2PMessage", "");
 
-            Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
+            P2PMessage p2pMessage = message as P2PMessage;
 
             if (p2pMessage.Header.SessionId != TransferProperties.SessionId)
             {
@@ -488,6 +502,10 @@ namespace MSNPSharp.DataTransfer
 
                                 DataStream.Seek((long)p2pMessage.V1Header.Offset, SeekOrigin.Begin);
                                 DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                                    "Data received, " + (p2pMessage.V1Header.Offset + (ulong)p2pMessage.Header.MessageSize).ToString() + 
+                                    " of " + p2pMessage.Header.TotalSize);
                             }
                             // check for end of file transfer
                             if (p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
@@ -500,6 +518,9 @@ namespace MSNPSharp.DataTransfer
                                 if (AutoCloseStream)
                                     DataStream.Close();
 
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                                    "All data for transfer session " + TransferProperties.SessionId + 
+                                    " have been received, trigger OnTransferFinished event.");
                                 OnTransferFinished();
                             }
                         }
@@ -550,6 +571,10 @@ namespace MSNPSharp.DataTransfer
                         {
                             if (AutoCloseStream)
                                 DataStream.Close();
+
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                    "All data for transfer session " + TransferProperties.SessionId +
+                                    " have been received, trigger OnTransferFinished event.");
 
                             OnTransferFinished();
                         }

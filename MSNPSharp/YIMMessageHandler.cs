@@ -241,7 +241,7 @@ namespace MSNPSharp
         {
         }
 
-        protected override void ProcessInvitations()
+        protected override void SendOneQueuedInvitation()
         {
         }
 
