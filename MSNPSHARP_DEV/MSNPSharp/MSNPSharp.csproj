@@ -57,12 +57,14 @@
     <Compile Include="Core\Converter.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />
     <Compile Include="Core\PersistentStream.cs" />
+    <Compile Include="Core\TextPayloadMessage.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DataTransfer\P2PHeader.cs" />
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
+    <Compile Include="EndPointData.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="EventArgs.cs" />
     <Compile Include="Core\Factory.cs" />

@@ -250,6 +250,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+
         /// <summary>
         /// Creates an acknowledgement message to this message.
         /// </summary>
@@ -423,17 +424,6 @@ namespace MSNPSharp.DataTransfer
             }
 
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Sets the D as acknowledgement in the ParentMessage.ParentMessage. This should be a SBMessage object.
-        /// </summary>
-        public override void PrepareMessage()
-        {
-            base.PrepareMessage();
-            if (ParentMessage != null && ParentMessage is MSGMessage)
-                if (ParentMessage.ParentMessage != null && ParentMessage.ParentMessage is SBMessage)
-                    ((SBMessage)ParentMessage.ParentMessage).Acknowledgement = "D";
         }
 
         public override byte[] GetBytes()

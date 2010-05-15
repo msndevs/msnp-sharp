@@ -142,23 +142,27 @@ namespace MSNPSharp.DataTransfer
         {
         }
 
-        public MSNSLPTransferProperties(Contact local, Contact remote)
+        public MSNSLPTransferProperties(Contact local, Guid localEndPointID, Contact remote, Guid remoteEndPointID)
         {
-            localContactIDString = local.Mail;
-            remoteContactIDString = remote.Mail;
-
-            if ((remote.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
-                (local.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0)
-            {
-                if (local.MachineGuid != Guid.Empty && remote.MachineGuid != Guid.Empty)
-                {
-                    localContactIDString = local.Mail + ";" + local.MachineGuid.ToString("B");
-                    remoteContactIDString = remote.Mail + ";" + remote.MachineGuid.ToString("B"); ;
-                }
-            }
-
             remoteContact = remote;
             localContact = local;
+            localContactEndPointID = localEndPointID;
+            remoteContactEndPointID = remoteEndPointID;
+
+            transferStackVersion = JudgeP2PStackVersion(local, localContactEndPointID, remote, remoteContactEndPointID, false);
+        }
+
+        private P2PVersion transferStackVersion = P2PVersion.P2PV1;
+
+        /// <summary>
+        /// The transfer stack that transfer layer (P2PMessageSession) used for this data transfer.
+        /// </summary>
+        public P2PVersion TransferStackVersion
+        {
+            get 
+            { 
+                return transferStackVersion; 
+            }
         }
 
         private string dataTypeGuid = string.Empty;
@@ -365,6 +369,26 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         private int lastCSeq = 0;
 
+        private Guid localContactEndPointID = Guid.Empty;
+
+        /// <summary>
+        /// The <see cref="EndPointData"/> id of local contact that involved in the transfer.
+        /// </summary>
+        public Guid LocalContactEndPointID
+        {
+            get { return localContactEndPointID; }
+        }
+
+        private Guid remoteContactEndPointID = Guid.Empty;
+
+        /// <summary>
+        /// The <see cref="EndPointData"/> id of remote contact that involved in the transfer.
+        /// </summary>
+        public Guid RemoteContactEndPointID
+        {
+            get { return remoteContactEndPointID; }
+        }
+
         private Contact localContact = null;
 
         /// <summary>
@@ -385,29 +409,85 @@ namespace MSNPSharp.DataTransfer
             get { return remoteContact; }
         }
 
-        /// <summary>
-        /// </summary>
-        private string localContactIDString = "";
+        internal static P2PVersion JudgeP2PStackVersion(Contact local, Guid localEPID, Contact remote, Guid remoteEPID, bool dumpJudgeProcedure)
+        {
+            P2PVersion result = P2PVersion.P2PV1;
 
-        
-        internal string LocalContactIDString
+            if (!local.EndPointData.ContainsKey(localEPID))
+            {
+                string errorMessage = "Invalid parameter localEndPointID, EndPointData with id = " +
+                    localEPID.ToString("B") + " not exists in contact: " + local;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError && dumpJudgeProcedure, "[JudgeP2PStackVersion] " + errorMessage);
+
+            }
+
+            if (!remote.EndPointData.ContainsKey(remoteEPID))
+            {
+                string errorMessage = "Invalid parameter remoteEndPointID, EndPointData with id = " +
+                    remoteEPID.ToString("B") + " not exists in contact: " + remote;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError && dumpJudgeProcedure, "[JudgeP2PStackVersion] " + errorMessage);
+            }
+
+            bool supportMPOP = (localEPID != Guid.Empty && remoteEPID != Guid.Empty);
+
+            if (local.EndPointData.ContainsKey(localEPID) && remote.EndPointData.ContainsKey(remoteEPID))
+            {
+                bool supportMSNC10 = ((local.EndPointData[localEPID].ClientCapacities & ClientCapacities.CanHandleMSNC10) > 0 &&
+                                      (remote.EndPointData[remoteEPID].ClientCapacities & ClientCapacities.CanHandleMSNC10) > 0);
+                bool supportP2Pv2 = ((local.EndPointData[localEPID].ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
+                                     (remote.EndPointData[remoteEPID].ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0);
+
+
+
+                if (supportMPOP && supportP2Pv2 && supportMSNC10)
+                    result = P2PVersion.P2PV2;
+                else
+                    result = P2PVersion.P2PV1;
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && dumpJudgeProcedure,
+                    "Version Triggers: supportMPOP = " + supportMPOP + ", supportMSNC10 = " + supportMSNC10 + ", supportP2Pv2 = " + supportP2Pv2 + ", Result = " + result);
+            }
+            else
+            {
+
+                if (localEPID != Guid.Empty && remoteEPID != Guid.Empty)
+                {
+                    result = P2PVersion.P2PV2;
+                }
+
+                result = P2PVersion.P2PV1;
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError && dumpJudgeProcedure, "[JudgeP2PStackVersion] Judge only based on EPIDs, result:" + result);
+            }
+
+            return result;
+        }
+
+        internal string LocalContactEPIDString
         {
             get
             {
-                return localContactIDString;
+                if (TransferStackVersion == P2PVersion.P2PV1)
+                {
+                    return LocalContact.Mail.ToLowerInvariant();
+                }
+
+                return LocalContact.Mail.ToLowerInvariant() + ";" + LocalContactEndPointID.ToString("B").ToLowerInvariant();
             }
         }
 
-        /// <summary>
-        /// </summary>
-        private string remoteContactIDString = "";
-
-        internal string RemoteContactIDString
+        internal string RemoteContactEPIDString
         {
             get
             {
-                return remoteContactIDString;
+                if (TransferStackVersion == P2PVersion.P2PV1)
+                {
+                    return RemoteContact.Mail.ToLowerInvariant();
+                }
+
+                return RemoteContact.Mail.ToLowerInvariant() + ";" + RemoteContactEndPointID.ToString("B").ToLowerInvariant();
             }
+
         }
 
         
@@ -684,7 +764,23 @@ namespace MSNPSharp.DataTransfer
             }
             set
             {
+                if (value != null && object.ReferenceEquals(MessageProcessor, value))
+                    return;
+
+                if (value == null && MessageProcessor != null)
+                {
+                    MessageProcessor.UnregisterHandler(this);
+                    messageProcessor = value;
+                    return;
+                }
+
+                if (MessageProcessor != null)
+                {
+                    MessageProcessor.UnregisterHandler(this);
+                }
+
                 messageProcessor = value;
+                messageProcessor.RegisterHandler(this);
             }
         }
 
@@ -817,7 +913,8 @@ namespace MSNPSharp.DataTransfer
         public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, MSNObject msnObject)
         {
             // set class variables
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, remoteContact);
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
+                remoteContact, MessageSession.RemoteContactEndPointID); ;
             properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
 
 
@@ -825,7 +922,7 @@ namespace MSNPSharp.DataTransfer
             P2PTransferSession transferSession = new P2PTransferSession(p2pMessage.Version, properties, MessageSession);
             transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
 
-            Contact remote = MessageSession.RemoteUser;
+            Contact remote = MessageSession.RemoteContact;
             string AppID = "1";
 
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
@@ -868,9 +965,9 @@ namespace MSNPSharp.DataTransfer
             properties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
             properties.CallId = Guid.NewGuid();
 
-            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactIDString, "INVITE");
-            slpMessage.ToMail = properties.RemoteContactIDString;
-            slpMessage.FromMail = properties.LocalContactIDString;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, "INVITE");
+            slpMessage.ToMail = properties.RemoteContactEPIDString;
+            slpMessage.FromMail = properties.LocalContactEPIDString;
             slpMessage.Branch = properties.LastBranch;
             slpMessage.CSeq = 0;
             slpMessage.CallId = properties.CallId;
@@ -896,14 +993,6 @@ namespace MSNPSharp.DataTransfer
 
             slpMessage.BodyValues["AppID"] = AppID;
             slpMessage.BodyValues["Context"] = base64Context;
-
-            if (p2pMessage.Version == P2PVersion.P2PV1)
-            {
-                // p2pMessage.InnerMessage = slpMessage;
-
-                // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
-                //p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-            }
 
             p2pMessage.InnerMessage = slpMessage;
 
@@ -975,7 +1064,8 @@ namespace MSNPSharp.DataTransfer
         {
 
             // set class variables
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, remoteContact);
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
+                remoteContact, MessageSession.RemoteContactEndPointID);
             properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
 
             properties.DataType = DataTransferType.Activity;
@@ -989,9 +1079,9 @@ namespace MSNPSharp.DataTransfer
             properties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
             properties.CallId = Guid.NewGuid();
 
-            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactIDString, "INVITE");
-            slpMessage.ToMail = properties.RemoteContactIDString;
-            slpMessage.FromMail = properties.LocalContactIDString;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, "INVITE");
+            slpMessage.ToMail = properties.RemoteContactEPIDString;
+            slpMessage.FromMail = properties.LocalContactEPIDString;
             slpMessage.Branch = properties.LastBranch;
             slpMessage.CSeq = 0;
             slpMessage.CallId = properties.CallId;
@@ -1090,7 +1180,8 @@ namespace MSNPSharp.DataTransfer
             //16-19: I don't know or need it so...
             //20-540: location I use to get the file name
             // set class variables
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, remoteContact);
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
+                remoteContact, MessageSession.RemoteContactEndPointID); ;
             do
             {
                 properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
@@ -1137,9 +1228,9 @@ namespace MSNPSharp.DataTransfer
                 transferProperties[properties.CallId] = properties;
 
             // create the message
-            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactIDString, "INVITE");
-            slpMessage.ToMail = properties.RemoteContactIDString;
-            slpMessage.FromMail = properties.LocalContactIDString;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, "INVITE");
+            slpMessage.ToMail = properties.RemoteContactEPIDString;
+            slpMessage.FromMail = properties.LocalContactEPIDString;
             slpMessage.Branch = properties.LastBranch;
             slpMessage.CSeq = 0;
             slpMessage.CallId = properties.CallId;
@@ -1388,9 +1479,9 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual SLPRequestMessage CreateClosingMessage(MSNSLPTransferProperties transferProperties)
         {
-            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactIDString, "BYE");
-            slpMessage.ToMail = transferProperties.RemoteContactIDString;
-            slpMessage.FromMail = transferProperties.LocalContactIDString;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, "BYE");
+            slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
+            slpMessage.FromMail = transferProperties.LocalContactEPIDString;
 
             slpMessage.Branch = transferProperties.LastBranch;
             slpMessage.CSeq = 0;
@@ -1417,9 +1508,9 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual SLPStatusMessage CreateInternalErrorMessage(MSNSLPTransferProperties transferProperties)
         {
-            SLPStatusMessage slpMessage = new SLPStatusMessage(transferProperties.RemoteContactIDString, 500, "Internal Error");
-            slpMessage.ToMail = transferProperties.RemoteContactIDString;
-            slpMessage.FromMail = transferProperties.LocalContactIDString;
+            SLPStatusMessage slpMessage = new SLPStatusMessage(transferProperties.RemoteContactEPIDString, 500, "Internal Error");
+            slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
+            slpMessage.FromMail = transferProperties.LocalContactEPIDString;
             slpMessage.Branch = transferProperties.LastBranch;
             slpMessage.CSeq = transferProperties.LastCSeq;
             slpMessage.CallId = transferProperties.CallId;
@@ -1436,7 +1527,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="message"></param>
         protected virtual MSNSLPTransferProperties ParseInvitationMessage(SLPMessage message)
         {
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(MessageSession.LocalUser, MessageSession.RemoteUser);
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(MessageSession.LocalContact, message.ToEndPoint, MessageSession.RemoteContact, message.FromEndPoint);
 
             properties.RemoteInvited = true;
 
@@ -1535,9 +1626,9 @@ namespace MSNPSharp.DataTransfer
             }
 
             // create the message
-            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactIDString, "INVITE");
-            slpMessage.ToMail = transferProperties.RemoteContactIDString;
-            slpMessage.FromMail = transferProperties.LocalContactIDString;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, "INVITE");
+            slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
+            slpMessage.FromMail = transferProperties.LocalContactEPIDString;
             slpMessage.Branch = transferProperties.LastBranch;
             slpMessage.CSeq = 0;
             slpMessage.CallId = transferProperties.CallId;
@@ -1563,9 +1654,9 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected static SLPStatusMessage CreateAcceptanceMessage(MSNSLPTransferProperties properties)
         {
-            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactIDString, 200, "OK");
-            newMessage.ToMail = properties.RemoteContactIDString;
-            newMessage.FromMail = properties.LocalContactIDString;
+            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 200, "OK");
+            newMessage.ToMail = properties.RemoteContactEPIDString;
+            newMessage.FromMail = properties.LocalContactEPIDString;
             newMessage.Branch = properties.LastBranch;
             newMessage.CSeq = 1;
             newMessage.CallId = properties.CallId;
@@ -1584,9 +1675,9 @@ namespace MSNPSharp.DataTransfer
         protected static SLPStatusMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
         {
             // create 603 Decline message
-            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactIDString, 603, "Decline");
-            newMessage.ToMail = properties.RemoteContactIDString;
-            newMessage.FromMail = properties.LocalContactIDString;
+            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 603, "Decline");
+            newMessage.ToMail = properties.RemoteContactEPIDString;
+            newMessage.FromMail = properties.LocalContactEPIDString;
             newMessage.Branch = properties.LastBranch;
             newMessage.CSeq = 1;
             newMessage.CallId = properties.CallId;
@@ -1603,10 +1694,10 @@ namespace MSNPSharp.DataTransfer
         protected virtual void RemoveTransferSession(P2PTransferSession session)
         {
             // remove the session
-            MessageSession.RemoveTransferSession(session);
             OnTransferSessionClosed(session);
             if (session.AutoCloseStream)
                 session.DataStream.Close();
+            MessageSession.RemoveTransferSession(session);
         }
 
         #endregion
@@ -1653,7 +1744,7 @@ namespace MSNPSharp.DataTransfer
         private void MSNSLPHandler_TransferFinished(object sender, EventArgs e)
         {
             P2PTransferSession transferSession = (P2PTransferSession)sender;
-            Contact remote = MessageSession.RemoteUser;
+            Contact remote = MessageSession.RemoteContact;
 
             MSNSLPTransferProperties properties = transferSession.TransferProperties;
             
@@ -1731,9 +1822,6 @@ namespace MSNPSharp.DataTransfer
 
             if (slpMessage != null)
             {
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "MSNSLPMessage incoming:\r\n" + slpMessage.ToDebugString(), GetType().Name);
-
                 // call the methods belonging to the content-type to handle the message
                 switch (slpMessage.ContentType)
                 {
@@ -1774,20 +1862,16 @@ namespace MSNPSharp.DataTransfer
             MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
             if (properties != null) // Closed before or never accepted?
             {
-                P2PMessageSession msgSession = MessageProcessor as P2PMessageSession;
-                if (msgSession != null)
-                {
-                    P2PTransferSession session = msgSession.GetTransferSession(properties.SessionId);
+                P2PTransferSession session = MessageSession.GetTransferSession(properties.SessionId);
 
-                    if (session == null)
-                        return;
+                if (session == null)
+                    return;
 
-                    // remove the resources
-                    RemoveTransferSession(session);
-                    // and close the connection
-                    if (session.MessageSession.DirectConnected)
-                        session.MessageSession.CloseDirectConnection();
-                }
+                // remove the resources
+                RemoveTransferSession(session);
+                // and close the connection
+                if (session.MessageSession.DirectConnected)
+                    session.MessageSession.CloseDirectConnection();
             }
             else
             {
@@ -2003,7 +2087,7 @@ namespace MSNPSharp.DataTransfer
             if (properties == null)
                 return;
 
-            SLPStatusMessage slpMessage = new SLPStatusMessage(properties.RemoteContactIDString, 200, "OK");
+            SLPStatusMessage slpMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 200, "OK");
             properties.Nonce = Guid.NewGuid();
 
 
@@ -2033,8 +2117,8 @@ namespace MSNPSharp.DataTransfer
             }
 
 
-            slpMessage.ToMail = properties.RemoteContactIDString;
-            slpMessage.FromMail = properties.LocalContactIDString;
+            slpMessage.ToMail = properties.RemoteContactEPIDString;
+            slpMessage.FromMail = properties.LocalContactEPIDString;
             slpMessage.Branch = properties.LastBranch;
             slpMessage.CSeq = 1;
             slpMessage.CallId = properties.CallId;

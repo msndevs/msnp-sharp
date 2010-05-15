@@ -65,10 +65,10 @@ namespace MSNPSharp.DataTransfer
         private uint localIdentifier = 0;
         private uint remoteBaseIdentifier = 0;
         private uint remoteIdentifier = 0;
-        private string remoteContact = string.Empty;
-        private string localContact = string.Empty;
-        private Contact remoteClient = null;
-        private Contact localUser = null;
+        private Contact remoteContact = null;
+        private Contact localContact = null;
+        private Guid localContactEndPointID = Guid.Empty;
+        private Guid remoteContactEndPointID = Guid.Empty;
         private NSMessageHandler nsMessageHandler = null;
         private P2PVersion version = P2PVersion.P2PV1;
         private OperationCode transferLayerState = OperationCode.SYN | OperationCode.RAK;
@@ -78,25 +78,20 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public event EventHandler<P2PSessionAffectedEventArgs> SessionClosed;
 
-        public Contact LocalUser
+
+        public Guid LocalContactEndPointID
         {
-            get { return localUser; }
-            set 
-            {
-                LocalContact = value.Mail;
-                localUser = value;
-            }
+            get { return localContactEndPointID; }
         }
 
-        public Contact RemoteUser
+        public Guid RemoteContactEndPointID
         {
-            get { return remoteClient; }
-            set { 
-                remoteClient = value;
-                RemoteContact = value.Mail;
-            }
+            get { return remoteContactEndPointID; }
         }
 
+        /// <summary>
+        /// The P2P Version of the transfer layer.
+        /// </summary>
         public P2PVersion Version
         {
             get { return version; }
@@ -117,9 +112,11 @@ namespace MSNPSharp.DataTransfer
         /// A collection of all transfersessions
         /// </summary>
         private Dictionary<uint, P2PTransferSession> transferSessions = new Dictionary<uint, P2PTransferSession>();
+
+        private MSNSLPHandler masterSession = null;
         
         /// <summary>
-        /// The base identifier of the local client
+        /// The sequence number that local transfer starts from.
         /// </summary>
         public uint LocalBaseIdentifier
         {
@@ -134,7 +131,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// The identifier of the local contact. This identifier is increased just before a message is send.
+        /// The local sequence number of transfer layer message packet.
         /// </summary>
         public uint LocalIdentifier
         {
@@ -149,7 +146,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// The base identifier of the remote client
+        /// The sequence number that remote transfer starts from.
         /// </summary>
         public uint RemoteBaseIdentifier
         {
@@ -162,8 +159,9 @@ namespace MSNPSharp.DataTransfer
                 remoteBaseIdentifier = value;
             }
         }
+
         /// <summary>
-        /// The expected identifier of the remote client for the next message.
+        /// The remote sequence number of transfer layer message packet.
         /// </summary>
         public uint RemoteIdentifier
         {
@@ -180,31 +178,53 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// The account of the local contact.
         /// </summary>
-        public string LocalContact
+        public Contact LocalContact
         {
             get
             {
                 return localContact;
             }
-            set
-            {
-                localContact = value;
-            }
+
         }
 
         /// <summary>
         /// The account of the remote contact.
         /// </summary>
-        public string RemoteContact
+        public Contact RemoteContact
         {
             get
             {
                 return remoteContact;
             }
-            set
+
+        }
+
+        private string LocalContactEPIDString
+        {
+            get
             {
-                remoteContact = value;
+                if (Version == P2PVersion.P2PV1)
+                    return LocalContact.Mail.ToLowerInvariant();
+
+                return LocalContact.Mail.ToLowerInvariant() + ";" + LocalContactEndPointID.ToString("B").ToLowerInvariant();
             }
+        }
+
+        private string RemoteContactEPIDString
+        {
+            get
+            {
+                if (Version == P2PVersion.P2PV1)
+                    return RemoteContact.Mail.ToLowerInvariant();
+
+                return RemoteContact.Mail.ToLowerInvariant() + ";" + RemoteContactEndPointID.ToString("B").ToLowerInvariant();
+            }
+        }
+
+        private void CreateMasterSession()
+        {
+            masterSession = new MSNSLPHandler(Version, NSMessageHandler.P2PInvitationSchedulerId);
+            masterSession.MessageProcessor = this;
         }
 
         #endregion
@@ -221,13 +241,24 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PMessageSession(P2PVersion ver, NSMessageHandler handler)
+        public P2PMessageSession(Contact local, Guid localEPID, Contact remote, Guid remoteEPID, NSMessageHandler handler)
         {
-            version = ver;
+            version = MSNSLPTransferProperties.JudgeP2PStackVersion(local, localEPID, remote, remoteEPID, true);
+
+            localContact = local;
+            localContactEndPointID = localEPID;
+            remoteContact = remote;
+            remoteContactEndPointID = remoteEPID;
+
             nsMessageHandler = handler;
             NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(NSMessageHandler_ContactOffline);
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Initializing P2P Transfer Layer object, version = " + ver.ToString(), GetType().Name);
+
+            CreateMasterSession();
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Initializing P2P Transfer Layer object, version = " + Version.ToString(), GetType().Name);
         }
+
+
 
         /// <summary>
         /// Cleans up p2p resources associated with the offline contact.
@@ -236,7 +267,7 @@ namespace MSNPSharp.DataTransfer
         /// <param name="e"></param>
         protected virtual void NSMessageHandler_ContactOffline(object sender, ContactEventArgs e)
         {
-            if (e.Contact == RemoteUser)
+            if (e.Contact.IsSibling(RemoteContact))
             {
                 CleanUp();
             }
@@ -315,8 +346,14 @@ namespace MSNPSharp.DataTransfer
         {
             if (session != null)
             {
+                session.MessageProcessor = null;
+
                 lock (transferSessions)
                     transferSessions.Remove(session.TransferProperties.SessionId);
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, session.GetType() + " with SessionId = " +
+                    session.TransferProperties.SessionId + " has been removed\r\n" + "There is(are) " +
+                    transferSessions.Count + " P2PTransferSession still in this " + GetType());
             }
         }
 
@@ -331,18 +368,29 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Searches through all handlers and returns the first object with the specified type, or null if not found.
+        /// Get the <see cref="MSNSLPHandler"/> of the transfer layer, each transfer layer have only one <see cref="MSNSLPHandler"/>
         /// </summary>
-        /// <param name="handlerType"></param>
         /// <returns></returns>
-        public object GetHandler(Type handlerType)
+        public MSNSLPHandler MasterSession
         {
-            foreach (IMessageHandler handler in handlers)
+            get
             {
-                if (handler.GetType() == handlerType)
-                    return handler;
+                return masterSession;
             }
-            return null;
+        }
+
+        public Guid SelectEndPointID(Contact contact)
+        {
+            if (Version == P2PVersion.P2PV1)
+                return Guid.Empty;
+
+            foreach (Guid epId in contact.EndPointData.Keys)
+            {
+                if (epId != Guid.Empty)
+                    return epId;
+            }
+
+            return Guid.Empty;
         }
 
         #endregion
@@ -353,42 +401,9 @@ namespace MSNPSharp.DataTransfer
         /// Wraps a P2PMessage in a MSGMessage and SBMessage.
         /// </summary>
         /// <returns></returns>
-        protected SBMessage WrapMessage(NetworkMessage networkMessage)
+        protected SBP2PMessage WrapMessage(NetworkMessage networkMessage)
         {
-            // create wrapper messages
-            MSGMessage msgWrapper = new MSGMessage();
-            if (Version == P2PVersion.P2PV1)
-            {
-                msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
-                msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
-            }
-
-            if (Version == P2PVersion.P2PV2)
-            {
-                if (RemoteUser != null &&
-                    LocalUser != null &&
-                    RemoteUser.MachineGuid != Guid.Empty &&
-                    LocalUser.MachineGuid != Guid.Empty)
-                {
-                    //Created from local.
-                    msgWrapper.MimeHeader["P2P-Dest"] = RemoteUser.Mail + ";" + RemoteUser.MachineGuid.ToString("B");
-                    msgWrapper.MimeHeader["P2P-Src"] = LocalUser.Mail + ";" + LocalUser.MachineGuid.ToString("B");
-                }
-                else
-                {
-                    //Created from remote
-                    msgWrapper.MimeHeader["P2P-Dest"] = RemoteContact;
-                    msgWrapper.MimeHeader["P2P-Src"] = LocalContact;
-                }
-            }
-
-            msgWrapper.MimeHeader[MimeHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
-            msgWrapper.InnerMessage = networkMessage;
-
-            SBMessage sbMessageWrapper = new SBMessage();
-            sbMessageWrapper.InnerMessage = msgWrapper;
-
-            return sbMessageWrapper;
+            return new SBP2PMessage(RemoteContactEPIDString, LocalContactEPIDString, networkMessage);
         }
 
         #endregion

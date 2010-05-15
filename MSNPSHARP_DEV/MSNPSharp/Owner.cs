@@ -45,6 +45,12 @@ namespace MSNPSharp
     [Serializable]
     public class Owner : Contact
     {
+        /// <summary>
+        /// Fired when owner places changed.
+        /// </summary>
+        public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
+
+
         private string epName = Environment.MachineName;
 
         private bool passportVerified;
@@ -61,6 +67,25 @@ namespace MSNPSharp
             : base(abId, account, ClientType.PassportMember, handler)
         {
         }
+
+        protected override void Initialized(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
+        {
+            base.Initialized(abId, account, cliType, handler);
+            EndPointData.Clear();
+            EndPointData.Add(Guid.Empty, new PrivateEndPointData(Guid.Empty));
+            EndPointData.Add(NSMessageHandler.MachineGuid, new PrivateEndPointData(NSMessageHandler.MachineGuid));
+        }
+
+        /// <summary>
+        /// Called when the End Points changed.
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void OnPlacesChanged(PlaceChangedEventArgs e)
+        {
+            if (PlacesChanged != null)
+                PlacesChanged(this, e);
+        }
+
 
         /// <summary>
         /// Fired when owner profile received.
@@ -90,6 +115,40 @@ namespace MSNPSharp
             roamLiveProperty = mode;
         }
 
+        internal void SetChangedPlace(Guid epId, string placeName, PlaceChangedReason action)
+        {
+            bool triggerEvent = false;
+            lock (SyncObject)
+            {
+                switch (action)
+                {
+                    case PlaceChangedReason.SignedIn:
+                        if (!EndPointData.ContainsKey(epId))
+                        {
+                            PrivateEndPointData newEndPoint = new PrivateEndPointData(epId);
+                            newEndPoint.Name = placeName;
+                            EndPointData[epId] = newEndPoint;
+                            triggerEvent = true;
+                        }
+                        break;
+
+                    case PlaceChangedReason.SignedOut:
+                        if (EndPointData.ContainsKey(epId))
+                        {
+                            EndPointData.Remove(epId);
+                            triggerEvent = true;
+                        }
+                        break;
+                }
+
+            }
+
+            if (triggerEvent)
+            {
+                OnPlacesChanged(new PlaceChangedEventArgs(epId, placeName, action));
+            }
+        }
+
         /// <summary>
         /// This place's name
         /// </summary>
@@ -111,6 +170,52 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Get or set the <see cref="ClientCapacities"/> of local end point.
+        /// </summary>
+        public ClientCapacities LocalEndPointClientCapacities
+        {
+            get
+            {
+                if (EndPointData.ContainsKey(NSMessageHandler.MachineGuid))
+                    return EndPointData[NSMessageHandler.MachineGuid].ClientCapacities;
+
+                return ClientCapacities.None;
+            }
+
+            set
+            {
+                if (value != LocalEndPointClientCapacities)
+                {
+                    EndPointData[NSMessageHandler.MachineGuid].ClientCapacities = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get or set the <see cref="ClientCapacitiesEx"/> of local end point.
+        /// </summary>
+        public ClientCapacitiesEx LocalEndPointClientCapacitiesEx
+        {
+            get
+            {
+                if (EndPointData.ContainsKey(NSMessageHandler.MachineGuid))
+                    return EndPointData[NSMessageHandler.MachineGuid].ClientCapacitiesEx;
+
+                return ClientCapacitiesEx.None;
+            }
+
+            set
+            {
+                if (value != LocalEndPointClientCapacitiesEx)
+                {
+                    EndPointData[NSMessageHandler.MachineGuid].ClientCapacitiesEx = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
+        /// <summary>
         /// Sign the owner out from every place.
         /// </summary>
         public void SignoutFromEverywhere()
@@ -123,17 +228,17 @@ namespace MSNPSharp
         /// <summary>
         /// Sign the owner out from the specificed place.
         /// </summary>
-        /// <param name="place">The place guid to be signed out</param>
-        public void SignoutFrom(Guid place)
+        /// <param name="endPointID">The EndPoint guid to be signed out</param>
+        public void SignoutFrom(Guid endPointID)
         {
-            if (Places.ContainsKey(place))
+            if (EndPointData.ContainsKey(endPointID))
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
-                    new string[] { Mail + ";" + place.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
+                    new string[] { Mail + ";" + endPointID.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
             }
             else
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place (signed out already): " + place.ToString("B"), GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Invalid place (signed out already): " + endPointID.ToString("B"), GetType().Name);
             }
         }
 
@@ -192,37 +297,6 @@ namespace MSNPSharp
             }
         }
 
-        public new ClientCapacities ClientCapacities
-        {
-            get
-            {
-                return base.ClientCapacities;
-            }
-            set
-            {
-                if (base.ClientCapacities != value)
-                {
-                    base.ClientCapacities = value;
-                    BroadcastDisplayImage();
-                }
-            }
-        }
-
-        public new ClientCapacitiesEx ClientCapacitiesEx
-        {
-            get
-            { 
-                return base.ClientCapacitiesEx;
-            }
-            set
-            {
-                if (base.ClientCapacitiesEx != value)
-                {
-                    base.ClientCapacitiesEx = value;
-                    BroadcastDisplayImage();
-                }
-            }
-        }
 
         internal void BroadcastDisplayImage()
         {
@@ -230,7 +304,7 @@ namespace MSNPSharp
             {
                 // Resend the user status so other client can see the new msn object
 
-                string capacities = ((long)ClientCapacities).ToString() + ":" + ((long)ClientCapacitiesEx).ToString();
+                string capacities = ((long)LocalEndPointClientCapacities).ToString() + ":" + ((long)LocalEndPointClientCapacitiesEx).ToString();
 
                 string context = String.Empty;
 
@@ -461,6 +535,15 @@ namespace MSNPSharp
                 if (NSMessageHandler != null)
                 {
                     NSMessageHandler.SetPresenceStatus(value);
+                }
+
+                if (PersonalMessage != null)
+                {
+                    (EndPointData[MachineGuid] as PrivateEndPointData).State = base.Status;
+                }
+                else
+                {
+                    (EndPointData[NSMessageHandler.MachineGuid] as PrivateEndPointData).State = base.Status;
                 }
             }
         }
