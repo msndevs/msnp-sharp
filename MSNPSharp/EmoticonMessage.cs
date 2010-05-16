@@ -130,22 +130,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Sets the mime-headers in the <see cref="MSGMessage"/> object. This is the 'parent' message object.
-        /// </summary>
-        public override void PrepareMessage()
-        {
-            base.PrepareMessage();
-            if (ParentMessage != null)
-            {
-                MSGMessage msgMessage = (MSGMessage)ParentMessage;
-                if (emoticontype == EmoticonType.StaticEmoticon)
-                    msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-mms-emoticon";
-                else if (emoticontype == EmoticonType.AnimEmoticon)
-                    msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text-/x-mms-animemoticon";
-            }
-        }
-
 
         /// <summary>
         /// Gets the header with the body appended as a byte array
@@ -171,7 +155,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public override string ToString()
         {
-            return "[EmoticonMessage] " + System.Text.Encoding.UTF8.GetString(GetBytes());
+            return System.Text.Encoding.UTF8.GetString(GetBytes());
         }
 
     }

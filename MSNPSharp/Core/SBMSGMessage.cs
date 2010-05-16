@@ -157,10 +157,29 @@ using MSNPSharp.DataTransfer;
         }
     }
 
+    public class SBTextPayloadMessage : MSGMessage
+    {
+        public SBTextPayloadMessage()
+            : base()
+        {
+        }
+
+        public SBTextPayloadMessage(NetworkMessage message)
+            : base(message)
+        {
+        }
+
+        public override void ParseBytes(byte[] data)
+        {
+            base.ParseBytes(data);
+            InnerMessage = new TextPayloadMessage(Encoding.UTF8.GetString(InnerBody), Encoding.UTF8);
+        }
+    }
+
     /// <summary>
     /// The message indicating the user is typing.
     /// </summary>
-    public class TypingMessage : MSGMessage
+    public class TypingMessage : SBTextPayloadMessage
     {
         public TypingMessage(Contact typingContact)
             : base()
@@ -169,14 +188,26 @@ using MSNPSharp.DataTransfer;
             MimeHeader[MimeHeaderStrings.TypingUser] = typingContact.Mail.ToLowerInvariant();
             InnerMessage = new TextPayloadMessage("\r\n");
         }
+
+        public TypingMessage(NetworkMessage message)
+            : base(message)
+        {
+
+        }
     }
 
-    public class DatacastMessage : MSGMessage
+    public class DatacastMessage : SBTextPayloadMessage
     {
         public DatacastMessage()
             : base()
         {
             MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast";
+        }
+
+        public DatacastMessage(NetworkMessage message)
+            : base(message)
+        {
+
         }
     }
 
@@ -187,15 +218,27 @@ using MSNPSharp.DataTransfer;
         {
             InnerMessage = new TextPayloadMessage("ID: 1\r\n\r\n");
         }
+
+        public NudgeMessage(NetworkMessage message)
+            : base(message)
+        {
+
+        }
     }
 
-    public class KeepAliveMessage : MSGMessage
+    public class KeepAliveMessage : SBTextPayloadMessage
     {
         public KeepAliveMessage()
             : base()
         {
             MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-keepalive";
             InnerMessage = new TextPayloadMessage("\r\n");
+        }
+
+        public KeepAliveMessage(NetworkMessage message)
+            : base(message)
+        {
+
         }
     }
 

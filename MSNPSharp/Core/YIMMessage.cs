@@ -173,37 +173,6 @@ namespace MSNPSharp.Core
                 InnerMessage.PrepareMessage();
         }
 
-        public override string ToDebugString()
-        {
-            GetBytes();
-            byte[] contents = null;
-
-            //FIXME: maybe move this to SBMessage?
-            if (InnerMessage != null)
-            {
-                contents = InnerMessage.GetBytes();
-            }
-
-            StringBuilder builder = new StringBuilder(128);
-            builder.Append(Command);
-
-            if (CommandValues.Count > 0)
-            {
-                foreach (string val in CommandValues)
-                {
-                    builder.Append(' ');
-                    builder.Append(val);
-                }
-
-                builder.Append("\r\n");
-            }
-
-            if (InnerMessage != null)
-                return System.Text.Encoding.UTF8.GetString(AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), contents));
-            else
-                return System.Text.Encoding.UTF8.GetString(System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
-        }
-
         public new ArrayList CommandValues
         {
             get

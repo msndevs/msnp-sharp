@@ -79,6 +79,11 @@ namespace MSNPSharp.Core
             }
         }
 
+        public override string ToString()
+        {
+            return Encoding.UTF8.GetString(GetBytes());
+        }
+
         #region ICloneable ≥…‘±
 
         object ICloneable.Clone()

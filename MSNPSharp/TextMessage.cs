@@ -219,23 +219,6 @@ namespace MSNPSharp
             Text = System.Text.Encoding.UTF8.GetString(data);
         }
 
-        /// <summary>
-        /// Sets the mime-headers in the <see cref="MSGMessage"/> object. This is the 'parent' message object.
-        /// </summary>
-        public override void PrepareMessage()
-        {
-            base.PrepareMessage();
-            if (ParentMessage != null)
-            {
-                MSGMessage msgMessage = (MSGMessage)ParentMessage;
-                msgMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
-                msgMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = GetStyleString();
-
-                if (customNickname != string.Empty)
-                    msgMessage.MimeHeader[MimeHeaderStrings.P4_Context] = customNickname;
-            }
-        }
-
 
         /// <summary>
         /// Gets the style string specifying charset, font, etc. This is used in the MIME header send with a switchboard message.

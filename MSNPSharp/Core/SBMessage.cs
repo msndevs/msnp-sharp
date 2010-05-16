@@ -38,10 +38,31 @@ using System.Collections;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
+    using System.Globalization;
 
     [Serializable]
     public class SBMessage : MSNMessage
     {
+        private string acknowledgement = "N";
+        protected bool hasAckField = false;
+
+        public string Acknowledgement
+        {
+            get
+            {
+                return acknowledgement;
+            }
+            set
+            {
+                if (Command == "MSG")
+                    hasAckField = true;
+                else
+                    return;
+
+                acknowledgement = value;
+            }
+        }
+
         public SBMessage()
         {
         }
@@ -54,6 +75,95 @@ namespace MSNPSharp.Core
         public SBMessage(string command, ArrayList commandValues)
             : base(command, commandValues)
         {
+        }
+
+        public override byte[] GetBytes()
+        {
+            StringBuilder builder = new StringBuilder(128);
+            builder.Append(Command);
+
+            if (Command != "OUT")
+            {
+                if (TransactionID != -1)
+                {
+                    builder.Append(' ');
+                    builder.Append(TransactionID.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            if (Command == "MSG" && hasAckField)
+            {
+                builder.Append(' ');
+                builder.Append(Acknowledgement);
+            }
+            else
+            {
+
+                foreach (string val in CommandValues)
+                {
+                    builder.Append(' ');
+                    builder.Append(val);
+                }
+            }
+
+            if (InnerMessage != null && InnerBody == null)  //This is a message created locally.
+            {
+                builder.Append(' ');
+                builder.Append(InnerMessage.GetBytes().Length.ToString(CultureInfo.InvariantCulture));
+            }
+
+            builder.Append("\r\n");
+
+            if (InnerMessage != null)
+                return AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), InnerMessage.GetBytes());
+            else
+                return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+        }
+
+        public override string ToString()
+        {
+            StringBuilder builder = new StringBuilder(128);
+            builder.Append(Command);
+
+            if (Command != "OUT")
+            {
+                if (TransactionID != -1)
+                {
+                    builder.Append(' ');
+                    builder.Append(TransactionID.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            if (Command == "MSG" && hasAckField)
+            {
+                builder.Append(' ');
+                builder.Append(Acknowledgement);
+
+                foreach (string val in CommandValues)
+                {
+                    builder.Append(' ');
+                    builder.Append(val);
+                }
+            }
+            else
+            {
+
+                foreach (string val in CommandValues)
+                {
+                    builder.Append(' ');
+                    builder.Append(val);
+                }
+            }
+
+            if (InnerMessage != null && InnerBody == null)
+            {
+                builder.Append(' ');
+                builder.Append(InnerMessage.GetBytes().Length.ToString(CultureInfo.InvariantCulture));
+            }
+
+            builder.Append("\r\n");
+
+            return builder.ToString();
         }
     }
 };

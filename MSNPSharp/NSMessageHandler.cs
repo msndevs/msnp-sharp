@@ -1031,7 +1031,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnVERReceived(NSMessage message)
         {
-            MsnProtocol msnProtocol = (MsnProtocol)Convert.ToInt32(message.CommandValues[1].ToString().Substring("MSNP".Length, 2));
+            MsnProtocol msnProtocol = (MsnProtocol)Convert.ToInt32(message.CommandValues[0].ToString().Substring("MSNP".Length, 2));
             Credentials oldcred = Credentials;
             Credentials = new Credentials(oldcred.Account, oldcred.Password, msnProtocol);
 
@@ -1075,10 +1075,10 @@ namespace MSNPSharp
         protected virtual void OnUSRReceived(NSMessage message)
         {
             //single-sign-on stuff
-            if ((string)message.CommandValues[1] == "SSO")
+            if ((string)message.CommandValues[0] == "SSO")
             {
-                string policy = (string)message.CommandValues[3];
-                string nonce = (string)message.CommandValues[4];
+                string policy = (string)message.CommandValues[2];
+                string nonce = (string)message.CommandValues[3];
 
                 try
                 {
@@ -1115,14 +1115,14 @@ namespace MSNPSharp
                     return;
                 }
             }
-            else if ((string)message.CommandValues[1] == "OK")
+            else if ((string)message.CommandValues[0] == "OK")
             {
                 // we sucesfully logged in, set the owner's name
                 if (ContactList.Owner == null)
                 {
-                    ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[2].ToString(), this));
+                    ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), this));
                 }
-                ContactList.Owner.PassportVerified = message.CommandValues[3].Equals("1");
+                ContactList.Owner.PassportVerified = message.CommandValues[2].Equals("1");
             }
         }
 
@@ -1270,6 +1270,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// Called when a UBX command has been received.
+        /// UBX [type:account;via] [payload length]
         /// </summary>
         /// <param name="message"></param>
         protected virtual void OnUBXReceived(NSMessage message)
@@ -1892,7 +1893,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnCHGReceived(NSMessage message)
         {
-            ContactList.Owner.SetStatus(ParseStatus((string)message.CommandValues[1]));
+            ContactList.Owner.SetStatus(ParseStatus((string)message.CommandValues[0]));
         }
 
         #endregion
@@ -2040,7 +2041,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnXFRReceived(NSMessage message)
         {
-            if ((string)message.CommandValues[1] == "NS")
+            if ((string)message.CommandValues[0] == "NS")
             {
                 // switch to a new notification server. That means reconnecting our current message processor.
                 SocketMessageProcessor processor = (SocketMessageProcessor)MessageProcessor;
@@ -2050,7 +2051,7 @@ namespace MSNPSharp
 
                 // set new connectivity settings
                 ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-                string[] values = ((string)message.CommandValues[2]).Split(new char[] { ':' });
+                string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
 
                 newSettings.Host = values[0];
                 newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
@@ -2060,7 +2061,7 @@ namespace MSNPSharp
                 // and reconnect. The login procedure will now start over again
                 processor.Connect();
             }
-            if ((string)message.CommandValues[1] == "SB")
+            if ((string)message.CommandValues[0] == "SB")
             {
                 if (pendingSwitchboards.Count > 0)
                 {
@@ -2072,7 +2073,7 @@ namespace MSNPSharp
 
                     // set new connectivity settings
                     ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-                    string[] values = ((string)message.CommandValues[2]).Split(new char[] { ':' });
+                    string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
 
                     newSettings.Host = values[0];
                     newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
@@ -2082,7 +2083,7 @@ namespace MSNPSharp
                     processor.ConnectivitySettings = newSettings;
 
                     // set the switchboard objects with the processor values
-                    string sessionHash = message.CommandValues[4].ToString();
+                    string sessionHash = message.CommandValues[3].ToString();
 
                     queueItem.SwitchboardHandler.SetInvitation(sessionHash);
 
@@ -2524,12 +2525,13 @@ namespace MSNPSharp
 
         /// <summary>
         /// Called when a ADL command has been received.
+        /// ADL [TransactionID] [OK]
         /// </summary>
         /// <param name="message"></param>
         protected virtual void OnADLReceived(NSMessage message)
         {
             if (message.TransactionID != 0 &&
-                message.CommandValues[1].ToString() == "OK" &&
+                message.CommandValues[0].ToString() == "OK" &&
                 ContactService.ProcessADL(message.TransactionID))
             {
             }
@@ -2710,7 +2712,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFQYReceived(NSMessage message)
         {
-            int pendingTransactionId = int.Parse(message.CommandValues[0].ToString());
+            int pendingTransactionId = message.TransactionID;
             if (ContactService.pendingFQYs.Contains(pendingTransactionId))
             {
                 lock (ContactService.pendingFQYs)
@@ -3115,7 +3117,7 @@ namespace MSNPSharp
             if (Credentials == null)
                 throw new MSNPSharpException("No credentials available for the NSMSNP15 handler. No challenge answer could be send.");
 
-            string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[1].ToString());
+            string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[0].ToString());
             MSNTicket.OIMLockKey = payload;
             MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, payload));
         }
@@ -3132,18 +3134,15 @@ namespace MSNPSharp
         {
             string number = String.Empty;
             string type = String.Empty;
-            if (message.CommandValues.Count >= 4)
+            if (message.CommandValues.Count >= 3)
             {
-                if (message.CommandValues.Count >= 4)
-                    number = MSNHttpUtility.NSDecode((string)message.CommandValues[3]);
-                else
-                    number = String.Empty;
+                number = MSNHttpUtility.NSDecode((string)message.CommandValues[2]);
                 type = message.CommandValues[1].ToString();
             }
             else
             {
-                number = MSNHttpUtility.NSDecode((string)message.CommandValues[2]);
-                type = message.CommandValues[1].ToString();
+                number = MSNHttpUtility.NSDecode((string)message.CommandValues[1]);
+                type = message.CommandValues[0].ToString();
             }
 
             switch (type)
@@ -3164,7 +3163,7 @@ namespace MSNPSharp
                     ContactList.Owner.SetMobileAccess((number == "Y") ? true : false);
                     break;
                 case "MFN":
-                    ContactList.Owner.SetName(MSNHttpUtility.NSDecode((string)message.CommandValues[2]));
+                    ContactList.Owner.SetName(MSNHttpUtility.NSDecode((string)message.CommandValues[1]));
                     break;
             }
         }
@@ -3227,12 +3226,8 @@ namespace MSNPSharp
             if (ContactList.Owner == null)
                 return;
 
-            string type = String.Empty;
+            string type = message.CommandValues[0].ToString();
 
-            if (message.CommandValues.Count == 1)
-                type = message.CommandValues[0].ToString();
-            else
-                type = message.CommandValues[1].ToString();
 
             switch (type)
             {

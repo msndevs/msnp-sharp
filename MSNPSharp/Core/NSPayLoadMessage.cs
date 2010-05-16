@@ -138,5 +138,6 @@ namespace MSNPSharp.Core
 
             return System.Text.Encoding.UTF8.GetBytes(cmdBuilder.ToString());
         }
+
     }
 };
