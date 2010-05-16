@@ -80,7 +80,7 @@ namespace MSNPSharp
                 for (int i = 0; i < chunks; i++)
                 {
                     SBMessage sbMessage = new SBMessage();
-                    MSGMessage msgMessage = new MSGMessage();
+                    sbMessage.Acknowledgement = "N";
 
                     //Clone the message
                     TextMessage chunkMessage = (TextMessage)message.Clone();
@@ -90,6 +90,8 @@ namespace MSNPSharp
                         chunkMessage.Text = encoding.GetString(text, i * 1400, 1400);
                     else
                         chunkMessage.Text = encoding.GetString(text, i * 1400, text.GetUpperBound(0) - (i * 1400));
+
+                    MSGMessage msgMessage = WrapMessage(chunkMessage);
 
                     //Add the correct headers
                     msgMessage.MimeHeader.Add("Message-ID", "{" + guid.ToString() + "}");
@@ -101,8 +103,6 @@ namespace MSNPSharp
 
                     sbMessage.InnerMessage = msgMessage;
 
-                    msgMessage.InnerMessage = chunkMessage;
-
                     //send it over the network
                     DeliverToNetwork(sbMessage);
                 }
@@ -110,15 +110,48 @@ namespace MSNPSharp
             else
             {
                 SBMessage sbMessage = new SBMessage();
-                MSGMessage msgMessage = new MSGMessage();
+                sbMessage.Acknowledgement = "N";
 
-                sbMessage.InnerMessage = msgMessage;
-
-                msgMessage.InnerMessage = message;
+                sbMessage.InnerMessage = WrapMessage(message);
 
                 // send it over the network
                 DeliverToNetwork(sbMessage);
             }
+        }
+
+        private void SendMessage(EmoticonMessage message)
+        {
+            SBMessage sbMessage = new SBMessage();
+            sbMessage.Acknowledgement = "N";
+            sbMessage.InnerMessage = WrapMessage(message);
+            DeliverToNetwork(sbMessage);
+        }
+
+        private MSGMessage WrapMessage(TextMessage message)
+        {
+            MSGMessage msgParentMessage = new MSGMessage();
+            msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
+            msgParentMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = message.GetStyleString();
+
+            if (message.CustomNickname != string.Empty)
+                msgParentMessage.MimeHeader[MimeHeaderStrings.P4_Context] = message.CustomNickname;
+
+            msgParentMessage.InnerMessage = message;
+
+            return msgParentMessage;
+        }
+
+        private MSGMessage WrapMessage(EmoticonMessage message)
+        {
+            MSGMessage msgParentMessage = new MSGMessage();
+            if (message.EmoticonType == EmoticonType.StaticEmoticon)
+                msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-mms-emoticon";
+            else if (message.EmoticonType == EmoticonType.AnimEmoticon)
+                msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text-/x-mms-animemoticon";
+
+            msgParentMessage.InnerMessage = message;
+
+            return msgParentMessage;
         }
 
         private void SendMessage(TypingMessage message)
@@ -189,6 +222,7 @@ namespace MSNPSharp
         protected virtual void DeliverToNetwork(SBMessage sbMessage)
         {
             sbMessage.TransactionID = IncreaseTransactionID();
+            sbMessage.Acknowledgement = sbMessage.Acknowledgement;
 
             if (sbMessage.InnerMessage == null)
             {
@@ -204,8 +238,8 @@ namespace MSNPSharp
 
             int x = 0;
 
-            if (sbMessage.CommandValues.Count > 1)
-                int.TryParse(sbMessage.CommandValues[1].ToString(), out x);
+            if (sbMessage.CommandValues.Count > 0)
+                int.TryParse(sbMessage.CommandValues[0].ToString(), out x);
 
             Debug.Assert(x < 1500, "?");
 
@@ -233,6 +267,10 @@ namespace MSNPSharp
             else if (message is SBP2PMessage)
             {
                 SendMessage(message as SBP2PMessage);
+            }
+            else if (message is EmoticonMessage)
+            {
+                SendMessage(message as EmoticonMessage);
             }
             else if (message is MSGMessage)
             {

@@ -123,7 +123,7 @@ namespace MSNPSharp.Core
         public abstract byte[] GetBytes();
         public abstract void ParseBytes(byte[] data);
 
-        public virtual string ToDebugString()
+        public string ToDebugString()
         {
             if (InnerMessage != null)
                 return ToString() + "\r\n" + InnerMessage.ToDebugString();

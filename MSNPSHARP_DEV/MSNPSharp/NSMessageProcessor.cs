@@ -82,7 +82,7 @@ namespace MSNPSharp
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
             message.ParseBytes(data);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Dispatching incoming NS command: " + System.Text.Encoding.UTF8.GetString(data)/*message.ToDebugString()*/, GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Dispatching incoming NS command: " + /*System.Text.Encoding.UTF8.GetString(data)*/message.ToDebugString(), GetType().Name);
             DispatchMessage(message);
         }
 

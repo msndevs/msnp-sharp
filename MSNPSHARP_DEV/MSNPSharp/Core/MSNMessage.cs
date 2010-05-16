@@ -43,10 +43,10 @@ namespace MSNPSharp.Core
     public class MSNMessage : NetworkMessage, ICloneable
     {
         int transactionID = -1;
-        string command;
+        string command = "MSG";
         ArrayList commandValues;
-        string acknowledgement = "N";
-        bool dataChanged = false;
+
+        protected bool dataChanged = false;
         byte[] rawData = null;
 
         public MSNMessage()
@@ -63,30 +63,12 @@ namespace MSNPSharp.Core
         public override void PrepareMessage()
         {
             bool changed = dataChanged;
-            if (InnerMessage != null)
-            {
-                Command = "";
-                CommandValues.Clear();
-            }
 
             base.PrepareMessage();
             if (!changed)
                 dataChanged = changed;
         }
 
-        public string Acknowledgement
-        {
-            get
-            {
-                return acknowledgement;
-            }
-            set
-            {
-                if (value != acknowledgement)
-                    dataChanged = true;
-                acknowledgement = value;
-            }
-        }
 
         public int TransactionID
         {
@@ -135,44 +117,28 @@ namespace MSNPSharp.Core
             if (dataChanged == false && rawData != null)
                 return rawData;
 
-            byte[] contents = null;
-
-            //FIXME: maybe move this to SBMessage?
-            if (InnerMessage != null)
-            {
-                contents = InnerMessage.GetBytes();
-
-                // prepare a default MSG message if an inner message is specified
-                if (Command.Length == 0)
-                {
-                    Command = "MSG";
-                    CommandValues.Add(Acknowledgement);
-                    CommandValues.Add(contents.Length.ToString(CultureInfo.InvariantCulture));
-                }
-            }
-
             StringBuilder builder = new StringBuilder(128);
             builder.Append(Command);
 
-            if (CommandValues.Count > 0)
+            if (Command != "OUT")
             {
-                if (TransactionID.ToString() != CommandValues[0].ToString() && TransactionID != -1)
+                if (TransactionID != -1)
                 {
                     builder.Append(' ');
                     builder.Append(TransactionID.ToString(CultureInfo.InvariantCulture));
                 }
-
-                foreach (string val in CommandValues)
-                {
-                    builder.Append(' ');
-                    builder.Append(val);
-                }
-
-                builder.Append("\r\n");
             }
 
+            foreach (string val in CommandValues)
+            {
+                builder.Append(' ');
+                builder.Append(val);
+            }
+
+            builder.Append("\r\n");
+
             if (InnerMessage != null)
-                return AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), contents);
+                return AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), InnerMessage.GetBytes());
             else
                 return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
         }
@@ -201,14 +167,28 @@ namespace MSNPSharp.Core
 
             // get the command parameters
             Command = System.Text.Encoding.UTF8.GetString(data, 0, 3);
-            CommandValues = new ArrayList(System.Text.Encoding.UTF8.GetString(data, 4, cnt - 4).Split(new char[] { ' ' }));
- 
-            if (CommandValues.Count > 0)
+            string commandLine = Encoding.UTF8.GetString(data, 4, cnt - 4);
+            CommandValues = new ArrayList(commandLine.Split(new char[] { ' ' }));
+
+            switch (Command)
             {
-                if (!int.TryParse((string)CommandValues[0], out transactionID))
-                {
-                    transactionID = -1;  //if there's no transid, set to -1
-                }
+                //Filter those commands follow by a number but not transaction id.
+                case "QNG":
+                case "RNG":
+                    break;
+                default:
+                    if (CommandValues.Count > 0)
+                    {
+                        if (!int.TryParse((string)CommandValues[0], out transactionID))
+                        {
+                            transactionID = -1;  //if there's no transid, set to -1
+                        }
+                        else
+                        {
+                            CommandValues.RemoveAt(0);
+                        }
+                    }
+                    break;
             }
 
             // set the inner body contents, if it is available
@@ -223,17 +203,39 @@ namespace MSNPSharp.Core
             dataChanged = false;
         }
 
+        /// <summary>
+        /// Get the debug string representation of the message
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>
+        /// To futher developers:
+        /// You cannot simply apply Encoding.UTF8.GetString(GetByte()) in this function 
+        /// since the InnerMessage of MSNMessage may contain binary data.
+        /// </remarks>
         public override string ToString()
         {
-            PrepareMessage();
+            StringBuilder builder = new StringBuilder(128);
+            builder.Append(Command);
 
-            return System.Text.Encoding.UTF8.GetString(GetBytes());
-        }
+            if (CommandValues.Count > 0)
+            {
+                if (TransactionID != -1)
+                {
+                    builder.Append(' ');
+                    builder.Append(TransactionID.ToString(CultureInfo.InvariantCulture));
+                }
 
-        public override string ToDebugString()
-        {
-            PrepareMessage();
-            return base.ToDebugString();
+                foreach (string val in CommandValues)
+                {
+                    builder.Append(' ');
+                    builder.Append(val);
+                }
+
+                builder.Append("\r\n");
+            }
+
+            //For toString, we do not return the inner message's string.
+            return builder.ToString();
         }
 
         #region ICloneable Member

@@ -989,7 +989,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnANSReceived(SBMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK")
+            if (message.CommandValues[0].ToString() == "OK")
             {
                 // we are now ready to invite other contacts. Notify the client of this.
                 OnSessionEstablished();
@@ -1097,9 +1097,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnIROReceived(SBMessage message)
         {
-            string fullaccount = message.CommandValues[3].ToString().ToLowerInvariant();
-            string displayName = MSNHttpUtility.NSDecode(message.CommandValues[4].ToString());
-            string capacitiesString = message.CommandValues[5].ToString();
+            string fullaccount = message.CommandValues[2].ToString().ToLowerInvariant();
+            string displayName = MSNHttpUtility.NSDecode(message.CommandValues[3].ToString());
+            string capacitiesString = message.CommandValues[4].ToString();
 
             ContactConversationState oldStatus = ContactConversationState.None;
             object result = GetRosterProperty(fullaccount, RosterProperties.Status);
@@ -1148,12 +1148,12 @@ namespace MSNPSharp
                 }
             }
 
-            if (message.CommandValues.Count >= 5)
-                contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[4].ToString()));
+            if (message.CommandValues.Count >= 4)
+                contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[3].ToString()));
 
-            if (message.CommandValues.Count >= 6)
+            if (message.CommandValues.Count >= 5)
             {
-                string caps = message.CommandValues[5].ToString();
+                string caps = message.CommandValues[4].ToString();
                 UpdateContactEndPointData(contact, endpointGuid, caps, supportMPOP);
             }
 
@@ -1254,9 +1254,9 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnUSRReceived(SBMessage message)
         {
-            if (message.CommandValues[1].ToString() == "OK")
+            if (message.CommandValues[0].ToString() == "OK")
             {
-                string account = message.CommandValues[2].ToString().ToLowerInvariant();
+                string account = message.CommandValues[1].ToString().ToLowerInvariant();
                 if (account.Contains(";"))
                 {
                     account = account.Split(';')[0];
@@ -1265,7 +1265,7 @@ namespace MSNPSharp
                 if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() == account)
                 {
                     // update the owner's name. Just to be sure.
-                    // NSMessageHandler.ContactList.Owner.SetName(message.CommandValues[3].ToString());
+                    // NSMessageHandler.ContactList.Owner.SetName(message.CommandValues[2].ToString());
                     if (NSMessageHandler != null)
                     {
                         Invite(NSMessageHandler.ContactList.Owner);
@@ -1345,20 +1345,30 @@ namespace MSNPSharp
 
             if (sbMSGMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
             {
+                NetworkMessage actualMessage = null;
                 switch (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "text/x-msmsgscontrol":
+                        actualMessage = new TypingMessage(message);
+                        break;
                     case "text/x-mms-emoticon":
                     case "text/x-mms-animemoticon":
                     case "text/x-msnmsgr-datacast":
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, message.ToDebugString(), GetType().Name);
+                        actualMessage = new DatacastMessage(message);
                         break;
                     default:
                         if (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                         {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, message.ToDebugString(), GetType().Name);
+                            actualMessage = new TextMessage();
+                            actualMessage.CreateFromMessage(sbMSGMessage);
+
                         }
                         break;
+                }
+
+                if (actualMessage != null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, message.ToDebugString(), GetType().Name);
                 }
 
                 switch (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
@@ -1384,8 +1394,7 @@ namespace MSNPSharp
                         if (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                         {
                             // a normal message has been sent, notify the client programmer
-                            TextMessage msg = new TextMessage();
-                            msg.CreateFromMessage(sbMSGMessage);
+                            TextMessage msg = actualMessage as TextMessage;
                             OnTextMessageReceived(msg, contact);
                         }
                         break;
