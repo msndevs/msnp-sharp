@@ -858,7 +858,11 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
-            displayUser.Image = _firstInvitedContact.DisplayImage.Image;
+            if (!isYIM)
+                displayUser.Image = _firstInvitedContact.DisplayImage.Image;
+            else
+                displayUser.Image = Properties.Resources.YahooMessenger_logo.Clone() as Image;
+
             _firstInvitedContact.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
             _firstInvitedContact.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
 

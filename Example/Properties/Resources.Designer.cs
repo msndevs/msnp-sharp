@@ -213,5 +213,12 @@ namespace MSNPSharpClient.Properties {
                 return ((System.Drawing.Icon)(obj));
             }
         }
+        
+        internal static System.Drawing.Bitmap YahooMessenger_logo {
+            get {
+                object obj = ResourceManager.GetObject("YahooMessenger_logo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

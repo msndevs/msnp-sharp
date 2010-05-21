@@ -92,6 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MSNPSharp_logo.ico" />
+    <None Include="Resources\YahooMessenger_logo.png" />
     <None Include="Resources\msn_ico.ico" />
     <None Include="Resources\MSNPSharp_logo_small.ico" />
     <None Include="Resources\MSNPSharp_logo.ico" />

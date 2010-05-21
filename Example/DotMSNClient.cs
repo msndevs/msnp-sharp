@@ -87,21 +87,31 @@ namespace MSNPSharpClient
             messenger.Nameserver.ExceptionOccurred += new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred);
             messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
+
+            // Receive messages send by MSN contacts.
             messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
+            // Receive messages sent from Yahoo! Messenger contacts.
             messenger.Nameserver.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived);
+
+            // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)
             messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
+
+            // Listen to ping answer event. In each ping answer, MSN will give you a number. That is the interval to send the next Ping.
+            // You can send a Ping by using Messenger.Nameserver.SendPing().
             messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
 
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
 
-
+            // ReverseAdded will fired after a contact adds you to his/her contact list.
             messenger.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
+            // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
 
 
             #region Circle events
 
+            // These are circle events. They will be fired after corresponding circle operation completed.
             messenger.ContactService.CreateCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
             messenger.ContactService.JoinedCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
             messenger.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
@@ -122,7 +132,11 @@ namespace MSNPSharpClient
 
             #region Offline Message Operation events
 
+            // OIMReceived will be triggered after receved an Offline Message.
             messenger.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
+
+            // Triggered after the send operation for an Offline Message has been completed.
+            // If the operation failed, there will contains an error in the event args.
             messenger.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted); 
 
             #endregion
@@ -144,6 +158,7 @@ namespace MSNPSharpClient
 
         void Nameserver_CrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
         {
+            //The message from Yahoo! Messenger is sent through NS server, so it's diffrent from SB conversation.
             if (InvokeRequired)
             {
                 Invoke(new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived), new object[] { sender, e });
