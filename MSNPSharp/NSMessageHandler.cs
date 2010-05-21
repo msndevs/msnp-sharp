@@ -528,7 +528,9 @@ namespace MSNPSharp
         public event EventHandler<CircleTextMessageEventArgs> CircleTextMessageReceived;
 
         /// <summary>
-        /// Fire after received a message from other IM network (i.e. Yahoo)
+        /// Fire after received a message from other IM network (i.e. Yahoo! Messenger network) <br/>
+        /// This event is another source of incoming messages, since some IM can communicate
+        /// with MSN. MSN will deliver messages from these network to MSN client by NS server.
         /// </summary>
         public event EventHandler<CrossNetworkMessageEventArgs> CrossNetworkMessageReceived;
 
