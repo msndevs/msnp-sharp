@@ -15,6 +15,7 @@ namespace MSNPSharpClient
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
     using System.Threading;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Summary description for ConversationForm.
@@ -58,6 +59,7 @@ namespace MSNPSharpClient
         private List<Conversation> _conversations = new List<Conversation>(0);
         private Messenger _messenger = null;
         private Contact _firstInvitedContact = null;
+        bool isYIM = false;
 
         /// <summary>
         /// The conversation object which is associated with the form.
@@ -92,6 +94,25 @@ namespace MSNPSharpClient
         }
 
         /// <summary>
+        /// For sending and receiving YIM messages.
+        /// </summary>
+        /// <param name="messenger"></param>
+        /// <param name="contact"></param>
+        public ConversationForm(Messenger messenger, Contact contact)
+        {
+            InitializeComponent();
+
+            _firstInvitedContact = contact;
+            _messenger = messenger;
+            isYIM = true;
+
+            btnActivityTest.Enabled = false;
+            btnCustomEmoticon.Enabled = false;
+            btnInviteUsers.Enabled = false;
+            btnSendFiles.Enabled = false;
+        }
+
+        /// <summary>
         /// Attatch a new conversation to this chatting form
         /// </summary>
         /// <param name="convers"></param>
@@ -102,6 +123,8 @@ namespace MSNPSharpClient
 
         public bool CanAttach(Conversation newconvers)
         {
+            if (isYIM) return false;
+
             return newconvers.HasContact(_firstInvitedContact);
         }
 
@@ -518,6 +541,8 @@ namespace MSNPSharpClient
 
         private Conversation GetActiveConversation()
         {
+            if (isYIM) throw new InvalidOperationException("This is a YIM conversation.");
+
             foreach (Conversation conversation in _conversations)
             {
                 if (!conversation.Ended)
@@ -564,15 +589,20 @@ namespace MSNPSharpClient
 
         private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            if (ActiveConversation.Ended && e.KeyCode != Keys.Return)
-                return;
+            if (!isYIM)
+                if (ActiveConversation.Ended && e.KeyCode != Keys.Return)
+                    return;
 
             if ((e.KeyCode == Keys.Return) && (e.Alt || e.Control || e.Shift))
             {
                 return;
             }
 
-            ActiveConversation.SendTypingMessage();
+            if (!isYIM)
+                ActiveConversation.SendTypingMessage();
+            else
+                _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, new TypingMessage(_messenger.ContactList.Owner));
+
             if (e.KeyCode == Keys.Return)
             {
                 if (!inputTextBox.Text.Equals(String.Empty))
@@ -604,14 +634,39 @@ namespace MSNPSharpClient
 
         private void PrintText(object sender, TextMessageEventArgs e)
         {
-
             PrintText(e.Sender, e.Message);
         }
 
         private void PrintNudge(object sender, ContactEventArgs e)
         {
-            DisplaySystemMessage(e.Contact.Name + " has sent a nudge!");
+            PrintNudge(e.Contact);
+        }
+
+        private void PrintNudge(Contact sender)
+        {
+            DisplaySystemMessage(sender.Name + " has sent a nudge!");
             PerformNudge();
+        }
+
+        public void OnCrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<CrossNetworkMessageEventArgs>(OnCrossNetworkMessageReceived), new object[] { sender, e });
+            }
+            else
+            {
+                switch (e.MesageType)
+                {
+                    case NetworkMessageType.Nudge:
+                        PrintNudge(e.From);
+                        break;
+                    case NetworkMessageType.Text:
+                        MakeVisible(sender, e);
+                        PrintText(e.From, e.Message as TextMessage);
+                        break;
+                }
+            }
         }
 
         public void DisplaySystemMessage(string systemMessage)
@@ -809,7 +864,7 @@ namespace MSNPSharpClient
             // request the image, if not already available
             if (_firstInvitedContact.Status != PresenceStatus.Offline)
             {
-                if (_firstInvitedContact.DisplayImage.IsDefaultImage)
+                if (_firstInvitedContact.DisplayImage.IsDefaultImage && isYIM == false)
                 {
                     try
                     {
@@ -919,7 +974,12 @@ namespace MSNPSharpClient
 
             try
             {
-                ActiveConversation.SendTextMessage(message);
+                if (!isYIM)
+                    ActiveConversation.SendTextMessage(message);
+                else
+                    _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, message);
+
+
                 PrintText(_messenger.ContactList.Owner, message);
             }
             catch (InvalidOperationException)
@@ -965,7 +1025,11 @@ namespace MSNPSharpClient
         {
             try
             {
-                ActiveConversation.SendNudge();
+                if (!isYIM)
+                    ActiveConversation.SendNudge();
+                else
+                    _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, new NudgeMessage());
+
                 DisplaySystemMessage("You send a nudge.");
                 PerformNudge();
             }
@@ -1125,8 +1189,8 @@ namespace MSNPSharpClient
 
         private void btnActivityTest_Click(object sender, EventArgs e)
         {
-            String activityID = "99995225"; //"20521364";        //The activityID of Music Mix activity.
-            String activityName = "MSNPSharp Activity Test";     //Th name of acticvity
+            String activityID = "7"; //"20521364";        //The activityID of Music Mix activity.
+            String activityName = "Activity Test";     //Th name of acticvity
             MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(_firstInvitedContact);
             P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, _firstInvitedContact, activityID, activityName, @"http://code.google.com/p/msnp-sharp");
 

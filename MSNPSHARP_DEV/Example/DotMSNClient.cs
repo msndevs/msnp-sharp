@@ -26,6 +26,8 @@ namespace MSNPSharpClient
         private Messenger messenger = new Messenger();
         private List<ConversationForm> convforms = new List<ConversationForm>(0);
         private TraceForm traceform = new TraceForm();
+        private Dictionary<string, ConversationForm> YIMMessageForms = new Dictionary<string, ConversationForm>(0);
+
         public List<ConversationForm> ConversationForms
         {
             get
@@ -86,6 +88,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
             messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
+            messenger.Nameserver.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived);
             messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
             messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
 
@@ -137,6 +140,29 @@ namespace MSNPSharpClient
             messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed; 
 
             #endregion
+        }
+
+        void Nameserver_CrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived), new object[] { sender, e });
+            }
+            else
+            {
+                ConversationForm convForm = null;
+                if (YIMMessageForms.ContainsKey(e.From.Mail.ToLowerInvariant()))
+                {
+                    convForm = YIMMessageForms[e.From.Mail.ToLowerInvariant()];
+                }
+                else
+                {
+                    convForm = new ConversationForm(Messenger, e.From);
+                    YIMMessageForms[e.From.Mail.ToLowerInvariant()] = convForm;
+                }
+
+                convForm.OnCrossNetworkMessageReceived(sender, e);
+            }
         }
 
         public static class ImageIndexes
@@ -921,14 +947,14 @@ namespace MSNPSharpClient
             {
                 comboPlaces.BeginUpdate();
                 comboPlaces.Items.Clear();
-                comboPlaces.Items.Add("(" + Messenger.ContactList.Owner.Places.Count + ") Places");
+                comboPlaces.Items.Add("(" + Messenger.ContactList.Owner.PlaceCount + ") Places");
                 comboPlaces.Items.Add("Signout from here (" + Messenger.ContactList.Owner.EpName + ")");
 
-                foreach (KeyValuePair<Guid, string> keyvalue in Messenger.ContactList.Owner.Places)
+                foreach (KeyValuePair<Guid, EndPointData> keyvalue in Messenger.ContactList.Owner.EndPointData)
                 {
                     if (keyvalue.Key != NSMessageHandler.MachineGuid)
                     {
-                        comboPlaces.Items.Add("Signout from " + keyvalue.Value);
+                        comboPlaces.Items.Add("Signout from " + (keyvalue.Value as PrivateEndPointData).Name);
                         places.Add(keyvalue.Key);
                     }
                 }
@@ -1022,6 +1048,8 @@ namespace MSNPSharpClient
             {
                 convForm.Close();
             }
+
+            YIMMessageForms.Clear();
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
@@ -1385,6 +1413,7 @@ namespace MSNPSharpClient
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Contact contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+            if (!contact.IsMessengerUser) return;
 
             if (!contact.OnForwardList)
             {
@@ -1401,14 +1430,26 @@ namespace MSNPSharpClient
 
             bool activate = false;
             ConversationForm activeForm = null;
-            foreach (ConversationForm conv in ConversationForms)
+
+            if (contact.ClientType != ClientType.EmailMember)
             {
-                if (conv.ActiveConversation.HasContact(contact))
+                foreach (ConversationForm conv in ConversationForms)
                 {
-                    activeForm = conv;
+                    if (conv.ActiveConversation.HasContact(contact))
+                    {
+                        activeForm = conv;
+                        activate = true;
+                    }
+
+                }
+            }
+            else
+            {
+                if (YIMMessageForms.ContainsKey(contact.Mail.ToLowerInvariant()))
+                {
+                    activeForm = YIMMessageForms[contact.Mail.ToLowerInvariant()];
                     activate = true;
                 }
-
             }
 
             if (activate)
@@ -1420,10 +1461,18 @@ namespace MSNPSharpClient
                 return;
             }
 
-
-            Conversation convers = messenger.CreateConversation();
-            convers.Invite(contact);
-            ConversationForm form = CreateConversationForm(convers, contact);
+            ConversationForm form = null;
+            if (contact.ClientType != ClientType.EmailMember)
+            {
+                Conversation convers = messenger.CreateConversation();
+                convers.Invite(contact);
+                form = CreateConversationForm(convers, contact);
+            }
+            else
+            {
+                form = new ConversationForm(Messenger, contact);
+                YIMMessageForms[contact.Mail.ToLowerInvariant()] = form;
+            }
 
             form.Show();
         }
