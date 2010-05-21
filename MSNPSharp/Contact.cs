@@ -558,7 +558,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Indicates whether the contact is a mail contact or a messenger buddy.
+        /// Indicates whether the contact can receive MSN message.
         /// </summary>
         public bool IsMessengerUser
         {

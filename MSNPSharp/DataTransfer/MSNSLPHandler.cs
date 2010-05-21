@@ -179,6 +179,24 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private int sessionCloseState = (int)SessionCloseState.None;
+
+        /// <summary>
+        /// Indicates whether we should remove this transfer session from its transferlayer (P2PMessageSession).
+        /// </summary>
+        internal SessionCloseState SessionCloseState
+        {
+            get 
+            { 
+                return (SessionCloseState)sessionCloseState; 
+            }
+
+            set 
+            { 
+                sessionCloseState = (int)value; 
+            }
+        }
+
         /// <summary>
         /// The kind of data that will be transferred
         /// </summary>
@@ -965,7 +983,7 @@ namespace MSNPSharp.DataTransfer
             properties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
             properties.CallId = Guid.NewGuid();
 
-            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, "INVITE");
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
             slpMessage.ToMail = properties.RemoteContactEPIDString;
             slpMessage.FromMail = properties.LocalContactEPIDString;
             slpMessage.Branch = properties.LastBranch;
@@ -1079,7 +1097,7 @@ namespace MSNPSharp.DataTransfer
             properties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
             properties.CallId = Guid.NewGuid();
 
-            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, "INVITE");
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
             slpMessage.ToMail = properties.RemoteContactEPIDString;
             slpMessage.FromMail = properties.LocalContactEPIDString;
             slpMessage.Branch = properties.LastBranch;
@@ -1228,7 +1246,7 @@ namespace MSNPSharp.DataTransfer
                 transferProperties[properties.CallId] = properties;
 
             // create the message
-            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, "INVITE");
+            SLPRequestMessage slpMessage = new SLPRequestMessage(properties.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
             slpMessage.ToMail = properties.RemoteContactEPIDString;
             slpMessage.FromMail = properties.LocalContactEPIDString;
             slpMessage.Branch = properties.LastBranch;
@@ -1479,7 +1497,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual SLPRequestMessage CreateClosingMessage(MSNSLPTransferProperties transferProperties)
         {
-            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, "BYE");
+            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, MSNSLPRequestMethod.BYE);
             slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
             slpMessage.FromMail = transferProperties.LocalContactEPIDString;
 
@@ -1626,7 +1644,7 @@ namespace MSNPSharp.DataTransfer
             }
 
             // create the message
-            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, "INVITE");
+            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
             slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
             slpMessage.FromMail = transferProperties.LocalContactEPIDString;
             slpMessage.Branch = transferProperties.LastBranch;
@@ -1697,6 +1715,7 @@ namespace MSNPSharp.DataTransfer
             OnTransferSessionClosed(session);
             if (session.AutoCloseStream)
                 session.DataStream.Close();
+
             MessageSession.RemoveTransferSession(session);
         }
 
@@ -1860,8 +1879,10 @@ namespace MSNPSharp.DataTransfer
 
             Guid callGuid = message.CallId;
             MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
+
             if (properties != null) // Closed before or never accepted?
             {
+                properties.SessionCloseState--;
                 P2PTransferSession session = MessageSession.GetTransferSession(properties.SessionId);
 
                 if (session == null)

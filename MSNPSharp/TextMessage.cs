@@ -203,7 +203,7 @@ namespace MSNPSharp
                 return;
 
             // we expect a MSGMessage object
-            MSGMessage MSGMessage = (MSGMessage)ParentMessage;
+            MimeMessage MSGMessage = (MimeMessage)ParentMessage;
 
             // parse the header from the parent message
             ParseHeader(MSGMessage.MimeHeader);

@@ -66,7 +66,7 @@ namespace MSNPSharp.Core
     /// <item>GCF</item>
     /// <item>
     /// UBM
-    /// <description>Yahoo messenger message command. You can also send the command as <see cref="YIMMessage"/></description>
+    /// <description>Yahoo messenger message command.</description>
     /// </item>
     /// <item>IPG</item>
     /// <item>UUX</item>

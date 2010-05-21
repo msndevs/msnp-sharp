@@ -527,6 +527,11 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<CircleTextMessageEventArgs> CircleTextMessageReceived;
 
+        /// <summary>
+        /// Fire after received a message from other IM network (i.e. Yahoo)
+        /// </summary>
+        public event EventHandler<CrossNetworkMessageEventArgs> CrossNetworkMessageReceived;
+
         #endregion
 
         #region Public Methods
@@ -621,15 +626,13 @@ namespace MSNPSharp
                 string to = (receiver.ClientType == ClientType.PhoneMember) ? "tel:" + receiver.Mail : receiver.Mail;
 
                 TextMessage txtMsg = new TextMessage(text);
-                MSGMessage msgMessage = new MSGMessage();
-                msgMessage.InnerMessage = txtMsg;
-                msgMessage.MimeHeader["Dest-Agent"] = "mobile";
+                MimeMessage mimeMessage = new MimeMessage();
+                mimeMessage.InnerMessage = txtMsg;
+                mimeMessage.MimeHeader["Dest-Agent"] = "mobile";
 
-                YIMMessage nsMessage = new YIMMessage("UUM",
-                    new string[] { to, ((int)receiver.ClientType).ToString(), "1" },
-                    Credentials.MsnProtocol);
+                NSMessage nsMessage = new NSMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" });
 
-                nsMessage.InnerMessage = msgMessage;
+                nsMessage.InnerMessage = mimeMessage;
                 MessageProcessor.SendMessage(nsMessage);
 
             }
@@ -640,6 +643,64 @@ namespace MSNPSharp
         }
 
 
+        #endregion
+
+        #region Send Message to other networks.
+
+        /// <summary>
+        /// Send message to contacts in other IM networks.
+        /// </summary>
+        /// <param name="targetContact"></param>
+        /// <param name="message"></param>
+        public void SendCrossNetworkMessage(Contact targetContact, NetworkMessage message)
+        {
+            if (targetContact.ClientType == ClientType.EmailMember)
+            {
+                SendMessageToYahooNetwork(targetContact, message);
+            }
+            else
+            {
+                throw new MSNPSharpException("Contact Network not supported.");
+            }
+        }
+
+        private void SendMessageToYahooNetwork(Contact yimContact, NetworkMessage message)
+        {
+            string messageType = "";
+
+            if (message is NudgeMessage)
+                messageType = "3";
+            if (message is TypingMessage)
+                messageType = "2";
+            if (message is TextMessage)
+                messageType = "1";
+
+            NetworkMessage innerMessage = message;
+            if (message is TextMessage)
+            {
+                innerMessage = WrapTextMessageIntoMIMEMessage(message as TextMessage);
+            }
+
+            NSMessage nsMessage = new NSMessage("UUM", new string[]{yimContact.Mail.ToLowerInvariant(), 
+                ((int)ClientType.EmailMember).ToString(CultureInfo.InvariantCulture),
+                messageType,
+                innerMessage.GetBytes().Length.ToString(CultureInfo.InvariantCulture)});
+
+            nsMessage.InnerMessage = innerMessage;
+
+            MessageProcessor.SendMessage(nsMessage);
+
+        }
+
+        private MimeMessage WrapTextMessageIntoMIMEMessage(TextMessage message)
+        {
+            MimeMessage msgParentMessage = new MimeMessage();
+            msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
+            msgParentMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = message.GetStyleString();
+            msgParentMessage.InnerMessage = message;
+
+            return msgParentMessage;
+        }
         #endregion
 
         #region RequestSwitchboard & SendPing
@@ -963,7 +1024,7 @@ namespace MSNPSharp
             }
         }
 
-        internal void SenSwitchBoardClosedNotify(string sessionId, string host)
+        internal void SendSwitchBoardClosedNotify(string sessionId, string host)
         {
             if (ContactList.Owner.MPOPEnable && ContactList.Owner.HasSignedInWithMultipleEndPoints)
             {
@@ -1827,7 +1888,7 @@ namespace MSNPSharp
                             }
                             else if (slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
                             {
-                                SLPRequestMessage slpResponseMessage = new SLPRequestMessage(slpMessage.FromMail, "ACK");
+                                SLPRequestMessage slpResponseMessage = new SLPRequestMessage(slpMessage.FromMail, MSNSLPRequestMethod.ACK);
                                 slpResponseMessage.FromMail = slpMessage.ToMail;
                                 slpResponseMessage.Via = slpMessage.Via;
                                 slpResponseMessage.CSeq = 0;
@@ -2114,90 +2175,73 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that the notification server has send us a UBM. This is usually a message from Yahoo Messenger.
-        /// <code>UBM [Remote user account] 32 [Destination user account] [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
+        /// <code>UBM [Remote user account] [Remote user client type] [Destination user account] [Destination user client type] [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnUBMReceived(NSMessage message)
         {
             string sender = message.CommandValues[0].ToString();
-            NSMessage messageClone = ((ICloneable)message).Clone() as NSMessage;  //Always pass the clone ones into messagehandler.
+            int senderType = 0;
+            int.TryParse(message.CommandValues[1].ToString(), out senderType);
 
-            if (sender == null)
+            string receiver = message.CommandValues[2].ToString();
+            int receiverType = 0;
+            int.TryParse(message.CommandValues[3].ToString(), out receiverType);
+
+            if (!(receiverType == (int)ContactList.Owner.ClientType && 
+                receiver.ToLowerInvariant() == ContactList.Owner.Mail.ToLowerInvariant()))
             {
-                sender = message.CommandValues[0].ToString();
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
+                    "[OnUBMReceived] The receiver is not owner, receiver account = " + receiver 
+                    + ", receiver type = " + (ClientType)receiverType);
+
+                return;
             }
 
-            YIMMessage msg = new YIMMessage(message, Credentials.MsnProtocol);
-
-            if (msg.CommandValues.Count > 2)
+            if (!ContactList.HasContact(sender, (ClientType)senderType))
             {
-                if (msg.CommandValues[1].ToString() == ((int)ClientType.EmailMember).ToString())  //Verify sender.
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    "[OnUBMReceived] The sender is not in contact list, sender account = " + sender
+                    + ", sender type = " + (ClientType)senderType);
+
+                return;
+            }
+
+            Contact from = ContactList.GetContact(sender, (ClientType)senderType);
+            Contact to = ContactList.Owner;
+
+            MimeMessage mimeMessage = new MimeMessage(message);
+            if (mimeMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
+            {
+                switch (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type])
                 {
-                    if (msg.CommandValues.Count > 3)
-                    {
-                        //Verify receiver.
-                        if (msg.CommandValues[2].ToString() != ContactList.Owner.Mail ||
-                            msg.CommandValues[3].ToString() != ((int)ContactList.Owner.ClientType).ToString())
-                        {
-                            return;
-                        }
-                    }
+                    case "text/x-msmsgscontrol":
+                        OnCrossNetworkMessageReceived(
+                            new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Typing, new TypingMessage(from)));
+                        break;
+                    case "text/x-msnmsgr-datacast":
+                        OnCrossNetworkMessageReceived(
+                            new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Nudge, new NudgeMessage(mimeMessage)));
+                        break;
 
-                    if ((!msg.InnerMessage.MimeHeader.ContainsKey(MimeHeaderStrings.TypingUser))   //filter the typing message
-                        && ContactList.HasContact(sender, ClientType.EmailMember))
-                    {
-                        lock (P2PHandler.SwitchboardSessions)
-                        {
-                            foreach (SBMessageHandler sbMessageHandler in P2PHandler.SwitchboardSessions)
-                            {
-                                if (sbMessageHandler is YIMMessageHandler)
-                                {
-                                    YIMMessageHandler YimHandler = sbMessageHandler as YIMMessageHandler;
-                                    if (YimHandler.HasContact(sender))
-                                    {
-                                        return;  //The handler have been registered, return.
-                                    }
-                                }
-                            }
-                        }
-
-                        //YIMMessageHandler not found, we create a new one and register it.
-                        YIMMessageHandler switchboard = new YIMMessageHandler(this);
-
-                        OnSBCreated(switchboard, null, sender, sender, false);
-
-                        switchboard.HandleMessage(MessageProcessor, messageClone);
-                    }
                 }
 
-                if (msg.CommandValues[1].ToString() == ((int)ClientType.PhoneMember).ToString())
+                if (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                 {
-                    if (msg.CommandValues.Count > 3)
-                    {
-                        //Verify receiver.
-                        if (msg.CommandValues[2].ToString() != ContactList.Owner.Mail ||
-                            msg.CommandValues[3].ToString() != ((int)ContactList.Owner.ClientType).ToString())
-                        {
-                            return;
-                        }
-                    }
+                    TextMessage txtMessage = new TextMessage();
+                    txtMessage.CreateFromMessage(mimeMessage);
 
-                    if (ContactList.HasContact(msg.CommandValues[0].ToString(),
-                        ((ClientType)(int.Parse(msg.CommandValues[1].ToString())))))
-                    {
-                        Contact msgSender = ContactList.GetContact(msg.CommandValues[0].ToString(),
-                        ((ClientType)(int.Parse(msg.CommandValues[1].ToString()))));
-
-                        TextMessage txtmsg = new TextMessage();
-                        txtmsg.CreateFromMessage(msg.InnerMessage);
-
-                        TextMessageEventArgs e = new TextMessageEventArgs(txtmsg, msgSender);
-
-                        OnMobileMessageReceived(e);
-
-                    }
+                    OnCrossNetworkMessageReceived(new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Text, txtMessage));
                 }
             }
+            
+          
+        }
+
+        protected virtual void OnCrossNetworkMessageReceived(CrossNetworkMessageEventArgs e)
+        {
+            if (CrossNetworkMessageReceived != null)
+                CrossNetworkMessageReceived(this, e);
         }
 
         #endregion
@@ -2278,7 +2322,7 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnMSGReceived(MSNMessage message)
         {
-            MSGMessage msgMessage = new MSGMessage(message);
+            MimeMessage msgMessage = new MimeMessage(message);
             string mime = msgMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToString();
 
             if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
@@ -2329,7 +2373,7 @@ namespace MSNPSharp
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
             {
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
-                msgMessage = new MSGMessage(message);
+                msgMessage = new MimeMessage(message);
 
                 OnMailNotificationReceived(new NewMailEventArgs(
                     (string)msgMessage.MimeHeader[MimeHeaderStrings.From],
@@ -2345,7 +2389,7 @@ namespace MSNPSharp
             {
                 //Now this is the unread OIM info, not the new mail.
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
-                msgMessage = new MSGMessage(message);
+                msgMessage = new MimeMessage(message);
 
                 OnMailChanged(new MailChangedEventArgs(
                     (string)msgMessage.MimeHeader["Src-Folder"],
@@ -2366,7 +2410,7 @@ namespace MSNPSharp
             else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
             {
                 message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
-                msgMessage = new MSGMessage(message);
+                msgMessage = new MimeMessage(message);
 
 
                 /*

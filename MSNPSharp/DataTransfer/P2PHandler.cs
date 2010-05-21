@@ -433,7 +433,7 @@ namespace MSNPSharp.DataTransfer
             }
 
             // create a MSGMessage from the sb message
-            MSGMessage msgMessage = new MSGMessage();
+            MimeMessage msgMessage = new MimeMessage();
             try
             {
                 msgMessage.CreateFromMessage(sbMessage);

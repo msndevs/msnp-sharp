@@ -39,20 +39,23 @@ using System.Collections.Generic;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
-using MSNPSharp.DataTransfer;
+    using MSNPSharp.DataTransfer;
 
+    /// <summary>
+    /// Message with MIME headers.
+    /// </summary>
     [Serializable()]
-    public class MSGMessage : NetworkMessage
+    public class MimeMessage : NetworkMessage
     {
         StrDictionary mimeHeader;
 
-        public MSGMessage()
+        public MimeMessage()
         {
             mimeHeader = new StrDictionary();
             MimeHeader.Add("MIME-Version", "1.0");
         }
 
-        public MSGMessage(NetworkMessage message)
+        public MimeMessage(NetworkMessage message)
         {
             ParseBytes(message.InnerBody);
             message.InnerMessage = this;
@@ -157,7 +160,7 @@ using MSNPSharp.DataTransfer;
         }
     }
 
-    public class SBTextPayloadMessage : MSGMessage
+    public class SBTextPayloadMessage : MimeMessage
     {
         public SBTextPayloadMessage()
             : base()
@@ -242,7 +245,7 @@ using MSNPSharp.DataTransfer;
         }
     }
 
-    public class SBP2PMessage : MSGMessage
+    public class SBP2PMessage : MimeMessage
     {
         public SBP2PMessage(string destString, string srcString, NetworkMessage payLoad)
             :base()

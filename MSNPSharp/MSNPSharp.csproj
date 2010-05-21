@@ -134,7 +134,7 @@
     <Compile Include="Core\SBMessage.cs" />
     <Compile Include="Core\SBMessagePool.cs" />
     <Compile Include="SBMessageProcessor.cs" />
-    <Compile Include="Core\SBMSGMessage.cs" />
+    <Compile Include="Core\MimeMessage.cs" />
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
     <Compile Include="StorageService.cs" />
@@ -170,8 +170,6 @@
     <Compile Include="WhatsUpService.cs" />
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
-    <Compile Include="Core\YIMMessage.cs" />
-    <Compile Include="YIMMessageHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -302,7 +302,7 @@ namespace MSNPSharp
         private Dictionary<string, string> rosterCapacities = new Dictionary<string, string>(0);
         private Dictionary<string, ContactConversationState> rosterState = new Dictionary<string, ContactConversationState>(0);
 
-        private Dictionary<string, MSGMessage> multiPacketMessages = new Dictionary<string, MSGMessage>();
+        private Dictionary<string, MimeMessage> multiPacketMessages = new Dictionary<string, MimeMessage>();
         private object syncObject = new object();
         private Queue<Contact> invitationQueue = new Queue<Contact>();
         private string sessionHash = String.Empty;
@@ -583,7 +583,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="message">The emoticon message.</param>
         /// <param name="contact">The contact who is sending the definition.</param>
-        protected virtual void OnEmoticonDefinition(MSGMessage message, Contact contact)
+        protected virtual void OnEmoticonDefinition(MimeMessage message, Contact contact)
         {
             EmoticonMessage emoticonMessage = new EmoticonMessage();
             emoticonMessage.CreateFromMessage(message);
@@ -623,7 +623,7 @@ namespace MSNPSharp
             }
         }
 
-        protected virtual void OnWinkReceived(MSGMessage message, Contact contact)
+        protected virtual void OnWinkReceived(MimeMessage message, Contact contact)
         {
             string body = System.Text.Encoding.UTF8.GetString(message.InnerBody);
 
@@ -1295,7 +1295,7 @@ namespace MSNPSharp
             //contact.SetName(message.CommandValues[1].ToString());
 
             // get the corresponding SBMSGMessage object
-            MSGMessage sbMSGMessage = new MSGMessage(message);
+            MimeMessage sbMSGMessage = new MimeMessage(message);
 
             //first check if we are dealing with multi-packet-messages
             if (sbMSGMessage.MimeHeader.ContainsKey("Message-ID"))
@@ -1313,14 +1313,14 @@ namespace MSNPSharp
                     if (Convert.ToInt32(sbMSGMessage.MimeHeader["Chunk"]) + 1 == Convert.ToInt32(multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"].MimeHeader["Chunks"]))
                     {
                         //Paste all the pieces together
-                        MSGMessage completeMessage = multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"];
+                        MimeMessage completeMessage = multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/0"];
                         multiPacketMessages.Remove(sbMSGMessage.MimeHeader["Message-ID"] + "/0");
 
                         int chunksToProcess = Convert.ToInt32(completeMessage.MimeHeader["Chunks"]) - 2;
                         List<byte> completeText = new List<byte>(completeMessage.InnerBody);
                         for (int i = 0; i < chunksToProcess; i++)
                         {
-                            MSGMessage part = multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/" + Convert.ToString(i + 1)];
+                            MimeMessage part = multiPacketMessages[sbMSGMessage.MimeHeader["Message-ID"] + "/" + Convert.ToString(i + 1)];
                             completeText.AddRange(part.InnerBody);
 
                             //Remove the part from the buffer
@@ -1563,7 +1563,9 @@ namespace MSNPSharp
                     case "ACK":
                         OnACKReceived(sbMessage);
                         return;
-
+                    case "NAK":
+                        OnNAKReceived(sbMessage);
+                        return;
                     case "ANS":
                         OnANSReceived(sbMessage);
                         return;

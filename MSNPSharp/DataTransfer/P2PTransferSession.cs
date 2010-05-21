@@ -628,7 +628,11 @@ namespace MSNPSharp.DataTransfer
 
         public P2PMessage SendMessage(SLPMessage slpMessage)
         {
-
+            if (slpMessage is SLPRequestMessage)
+            {
+                if ((slpMessage as SLPRequestMessage).Method == MSNSLPRequestMethod.BYE)
+                    TransferProperties.SessionCloseState--;
+            }
             return SendMessage(WrapSLPMessage(slpMessage));
         }
 

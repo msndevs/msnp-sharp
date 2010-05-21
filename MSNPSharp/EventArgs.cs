@@ -763,4 +763,85 @@ namespace MSNPSharp
             newDisplayImage = dispImage;
         }
     }
+
+    /// <summary>
+    /// Use when receiving messages from IM network other than MSN.
+    /// </summary>
+    public class CrossNetworkMessageEventArgs : EventArgs
+    {
+        private Contact from = null;
+
+        /// <summary>
+        /// The sender of message.
+        /// </summary>
+        public Contact From
+        {
+            get { return from; }
+        }
+
+        private Contact to = null;
+
+        /// <summary>
+        /// The receiver of the message.
+        /// </summary>
+        public Contact To
+        {
+            get { return to; }
+        }
+
+        private int messageType = 0;
+
+        /// <summary>
+        /// The type of message received. Please refer to <see cref="NetworkMessageType"/>
+        /// </summary>
+        public NetworkMessageType MesageType
+        {
+            get 
+            { 
+                return (NetworkMessageType)messageType; 
+            }
+        }
+
+
+        private NetworkMessage message = null;
+
+        /// <summary>
+        /// The message received.
+        /// </summary>
+        public NetworkMessage Message
+        {
+            get { return message; }
+        }
+
+        /// <summary>
+        /// The IM network we get the message.
+        /// </summary>
+        public NetworkType Network
+        {
+            get
+            {
+                if (From != null)
+                {
+                    switch (From.ClientType)
+                    {
+                        case ClientType.EmailMember:
+                            return NetworkType.Yahoo;
+                        default:
+                            return NetworkType.WindowsLive;
+                    }
+                }
+
+                return NetworkType.None;
+            }
+        }
+
+
+        public CrossNetworkMessageEventArgs(Contact sender, Contact receiver, int type, NetworkMessage msg)
+        {
+            from = sender;
+            to = receiver;
+            messageType = type;
+            message = msg;
+        }
+    }
 };

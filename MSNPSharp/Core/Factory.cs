@@ -47,7 +47,6 @@ namespace MSNPSharp.Core
         private static Type nameserverHandler = typeof(NSMessageHandler);
         private static Type nameserverProcessor = typeof(NSMessageProcessor);
         private static Type switchboardHandler = typeof(SBMessageHandler);
-        private static Type yimmessageHandler = typeof(YIMMessageHandler);
         private static Type switchboardProcessor = typeof(SBMessageProcessor);
         private static Type contact = typeof(Contact);
         private static Type circle = typeof(Circle);
@@ -101,20 +100,6 @@ namespace MSNPSharp.Core
             }
         }
 
-        /// <summary>
-        /// The type used to create Yahoo Messenger message handler objects.
-        /// </summary>
-        public static Type YIMMessageHandler
-        {
-            get
-            {
-                return yimmessageHandler;
-            }
-            set
-            {
-                yimmessageHandler = value;
-            }
-        }
 
         /// <summary>
         /// The type used to create nameserver processor objects.
@@ -287,15 +272,6 @@ namespace MSNPSharp.Core
         public static SBMessageHandler CreateSwitchboardHandler()
         {
             return (SBMessageHandler)Activator.CreateInstance(switchboardHandler, true);
-        }
-
-        /// <summary>
-        /// Creates a default Yahoo Messenger message handler.
-        /// </summary>
-        /// <returns></returns>
-        public static YIMMessageHandler CreateYIMMessageHandler()
-        {
-            return (YIMMessageHandler)Activator.CreateInstance(yimmessageHandler, true);
         }
 
         /// <summary>
