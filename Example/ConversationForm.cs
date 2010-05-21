@@ -659,6 +659,7 @@ namespace MSNPSharpClient
                 switch (e.MesageType)
                 {
                     case NetworkMessageType.Nudge:
+                        MakeVisible(sender, e);
                         PrintNudge(e.From);
                         break;
                     case NetworkMessageType.Text:
