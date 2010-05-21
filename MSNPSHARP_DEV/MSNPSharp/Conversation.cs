@@ -154,9 +154,7 @@ namespace MSNPSharp
 
         private Messenger _messenger = null;
         private SBMessageHandler _switchboard = null;
-        private YIMMessageHandler _yimHandler = null;
         private bool sbInitialized = false;
-        private bool yimInitialized = false;
         private bool ended = false;
         private bool ending = false;
         private bool canSendMessage = false;
@@ -240,15 +238,8 @@ namespace MSNPSharp
 
             }
 
-            if (_yimHandler == null)
-            {
-                _yimHandler = new YIMMessageHandler(Messenger.Nameserver);
-
-            }
-
             //Must call after _switchboard and _yimHandler have been initialized.
             AttachEvents(_switchboard);
-            AttachEvents(_yimHandler);
         }
 
         private bool IsPendingContact(Contact contact)
@@ -412,7 +403,6 @@ namespace MSNPSharp
             if (ending)
             {
                 DetachEvents(_switchboard);
-                DetachEvents(_yimHandler);
                 ending = false;
             }
 
@@ -479,7 +469,6 @@ namespace MSNPSharp
                 SessionClosed(this, e);
 
             Messenger.P2PHandler.RemoveSwitchboardSession(_switchboard);
-            Messenger.P2PHandler.RemoveSwitchboardSession(_yimHandler);
 
             OnConversationEnded(this);
         }
@@ -621,7 +610,7 @@ namespace MSNPSharp
         /// <exception cref="InvalidOperationException">The current conversation is not expired.</exception>
         protected virtual Conversation ReCreate()
         {
-            if (canSendMessage || (!Ended) || (sbInitialized || yimInitialized))
+            if (canSendMessage || (!Ended) || (sbInitialized))
                 return this;
 
             if (_firstContact.Status == PresenceStatus.Offline)
@@ -636,10 +625,6 @@ namespace MSNPSharp
                 sbInitialized = true;
             }
 
-            if ((_type & ConversationType.YIM) == ConversationType.YIM)
-            {
-                yimInitialized = true;  //For further use.
-            }
 
             Ended = false;
 
@@ -887,24 +872,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Yahoo! Message handler.<br/>
-        /// If the conversation ended, this property will be null.
-        /// </summary>
-        public YIMMessageHandler YIMHandler
-        {
-            get
-            {
-                if ((_type & ConversationType.YIM) != ConversationType.YIM)
-                {
-                    return null;
-                }
-                else
-                {
-                    return _yimHandler;
-                }
-            }
-        }
         #endregion
 
         /// <summary>
@@ -914,20 +881,11 @@ namespace MSNPSharp
         /// <param name="sbHandler">The switchboard to interface to.</param>		
         internal Conversation(Messenger parent, SBMessageHandler sbHandler)
         {
-            if (sbHandler is YIMMessageHandler)
-            {
-                _yimHandler = sbHandler as YIMMessageHandler;
-                sbInitialized = false;
-                yimInitialized = true;
-                _type = ConversationType.YIM;
-            }
-            else
-            {
-                _switchboard = sbHandler;
-                sbInitialized = true;
-                yimInitialized = false;
-                _type = ConversationType.SwitchBoard;
-            }
+
+            _switchboard = sbHandler;
+            sbInitialized = true;
+
+            _type = ConversationType.SwitchBoard;
 
             _messenger = parent;
             IniCommonSettings();
@@ -941,7 +899,6 @@ namespace MSNPSharp
         {
             _messenger = parent;
             sbInitialized = false;
-            yimInitialized = false;
 
             _type = ConversationType.None;
             IniCommonSettings();
@@ -1010,20 +967,6 @@ namespace MSNPSharp
             }
             else
             {
-                #region Initialize YIMHandler and invite.
-
-                if ((_type & ConversationType.YIM) == ConversationType.YIM)
-                {
-                    yimInitialized = true;
-                    if (!_yimHandler.HasContact(contact))
-                    {
-                        _yimHandler.Invite(contact);
-                    }
-
-                    return _yimHandler;
-                } 
-
-                #endregion
 
                 #region Initialize SBMessageHandler and invite.
 
@@ -1049,17 +992,9 @@ namespace MSNPSharp
                 }
                  #endregion
 
-                return _switchboard;
             }
 
-            if ((_type & ConversationType.SwitchBoard) != ConversationType.None)
-            {
-                return _switchboard;
-            }
-            else
-            {
-                return _yimHandler;
-            }
+            return _switchboard;
         }
 
         /// <summary>
@@ -1091,12 +1026,6 @@ namespace MSNPSharp
                 endthread.Start(remoteDisconnect);
             }
 
-            if (yimInitialized)
-            {
-                YIMHandler.Close(remoteDisconnect);
-                yimInitialized = false;
-            }
-
             if (keepaliveTimer != null)
                 keepaliveTimer.Dispose();
         }
@@ -1110,11 +1039,7 @@ namespace MSNPSharp
         {
             if (_type == ConversationType.None)
                 return false;
-            if ((_type & ConversationType.YIM) == ConversationType.YIM && contact.ClientType == ClientType.EmailMember)
-            {
-                if (_yimHandler.HasContact(contact))
-                    return true;
-            }
+
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
@@ -1151,10 +1076,6 @@ namespace MSNPSharp
                 return;
             }
 
-            if ((_type & ConversationType.YIM) == ConversationType.YIM)
-            {
-                _yimHandler.SendTextMessage(message);
-            }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
@@ -1175,10 +1096,6 @@ namespace MSNPSharp
                 return;
             }
 
-            if ((_type & ConversationType.YIM) == ConversationType.YIM)
-            {
-                _yimHandler.SendTypingMessage();
-            }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard && canSendMessage)
             {
@@ -1205,10 +1122,6 @@ namespace MSNPSharp
                 return;
             }
 
-            if ((_type & ConversationType.YIM) == ConversationType.YIM)
-            {
-                _yimHandler.SendNudge();
-            }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {

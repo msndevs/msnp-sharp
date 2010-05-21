@@ -268,7 +268,7 @@ namespace MSNPSharp
 
 
 
-        internal void ProcessOIM(MSGMessage message, bool initial)
+        internal void ProcessOIM(MimeMessage message, bool initial)
         {
             if (OIMReceived == null)
                 return;
@@ -630,15 +630,14 @@ namespace MSNPSharp
             try
             {
                 TextMessage txtmsgClone = msg.Clone() as TextMessage;
-                MSGMessage msgMessage = new MSGMessage();
+                MimeMessage msgMessage = new MimeMessage();
                 msgMessage.InnerMessage = txtmsgClone;
                 msgMessage.MimeHeader["Dest-Agent"] = "client";
 
-                YIMMessage nsMessage = new YIMMessage("UUM",
+                NSMessage nsMessage = new NSMessage("UUM",
                     new string[] { receiver.Mail, 
                         ((int)receiver.ClientType).ToString(), 
-                        "1" },
-                    NSMessageHandler.Credentials.MsnProtocol);
+                        "1" });
 
                 nsMessage.InnerMessage = msgMessage;
 

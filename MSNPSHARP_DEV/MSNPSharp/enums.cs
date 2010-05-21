@@ -497,7 +497,7 @@ namespace MSNPSharp
     /// Email account type.
     /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string)"/> method.</remarks>
     /// </summary>
-    public enum ClientType
+    public enum ClientType : int
     {
         /// <summary>
         /// No client
@@ -878,7 +878,7 @@ namespace MSNPSharp
     /// <summary>
     /// Types of text messages send through switchboard.
     /// </summary>
-    public enum TextMessageType : uint
+    public enum NetworkMessageType : int
     {
         /// <summary>
         /// Unspecified
@@ -1683,6 +1683,32 @@ namespace MSNPSharp
         RAK = 0x2
     }
 
+    internal enum SessionCloseState : int
+    {
+        None = 2,
+        TimeWait = 1,
+        Close = 0
+    }
+
+    internal static class MSNSLPRequestMethod
+    {
+        public const string INVITE = "INVITE";
+        public const string BYE = "BYE";
+        public const string ACK = "ACK";
+    }
+
     #endregion
 
+    public enum NetworkType
+    {
+        None,
+        /// <summary>
+        /// MSN Network
+        /// </summary>
+        WindowsLive,
+        /// <summary>
+        /// Yahoo Messenger Network.
+        /// </summary>
+        Yahoo
+    }
 };

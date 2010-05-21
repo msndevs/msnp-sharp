@@ -91,7 +91,7 @@ namespace MSNPSharp
                     else
                         chunkMessage.Text = encoding.GetString(text, i * 1400, text.GetUpperBound(0) - (i * 1400));
 
-                    MSGMessage msgMessage = WrapMessage(chunkMessage);
+                    MimeMessage msgMessage = WrapMessage(chunkMessage);
 
                     //Add the correct headers
                     msgMessage.MimeHeader.Add("Message-ID", "{" + guid.ToString() + "}");
@@ -127,9 +127,9 @@ namespace MSNPSharp
             DeliverToNetwork(sbMessage);
         }
 
-        private MSGMessage WrapMessage(TextMessage message)
+        private MimeMessage WrapMessage(TextMessage message)
         {
-            MSGMessage msgParentMessage = new MSGMessage();
+            MimeMessage msgParentMessage = new MimeMessage();
             msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
             msgParentMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = message.GetStyleString();
 
@@ -141,9 +141,9 @@ namespace MSNPSharp
             return msgParentMessage;
         }
 
-        private MSGMessage WrapMessage(EmoticonMessage message)
+        private MimeMessage WrapMessage(EmoticonMessage message)
         {
-            MSGMessage msgParentMessage = new MSGMessage();
+            MimeMessage msgParentMessage = new MimeMessage();
             if (message.EmoticonType == EmoticonType.StaticEmoticon)
                 msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-mms-emoticon";
             else if (message.EmoticonType == EmoticonType.AnimEmoticon)
@@ -272,7 +272,7 @@ namespace MSNPSharp
             {
                 SendMessage(message as EmoticonMessage);
             }
-            else if (message is MSGMessage)
+            else if (message is MimeMessage)
             {
                 SBMessage sbMessage = new SBMessage();
 
@@ -286,7 +286,7 @@ namespace MSNPSharp
             else
             {
                 SBMessage sbMessage = new SBMessage();
-                MSGMessage msgMessage = new MSGMessage();
+                MimeMessage msgMessage = new MimeMessage();
 
                 msgMessage.InnerMessage = message;
                 sbMessage.InnerMessage = msgMessage;
