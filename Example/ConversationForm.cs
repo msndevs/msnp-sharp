@@ -601,7 +601,7 @@ namespace MSNPSharpClient
             if (!isYIM)
                 ActiveConversation.SendTypingMessage();
             else
-                _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, new TypingMessage(_messenger.ContactList.Owner));
+                _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, NetworkMessageType.Typing);
 
             if (e.KeyCode == Keys.Return)
             {
@@ -1033,7 +1033,7 @@ namespace MSNPSharpClient
                 if (!isYIM)
                     ActiveConversation.SendNudge();
                 else
-                    _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, new NudgeMessage());
+                    _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, NetworkMessageType.Nudge);
 
                 DisplaySystemMessage("You send a nudge.");
                 PerformNudge();
