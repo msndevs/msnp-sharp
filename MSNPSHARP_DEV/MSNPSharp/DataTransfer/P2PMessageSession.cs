@@ -401,9 +401,9 @@ namespace MSNPSharp.DataTransfer
         /// Wraps a P2PMessage in a MSGMessage and SBMessage.
         /// </summary>
         /// <returns></returns>
-        protected SBP2PMessage WrapMessage(NetworkMessage networkMessage)
+        protected P2PMimeMessage WrapMessage(NetworkMessage networkMessage)
         {
-            return new SBP2PMessage(RemoteContactEPIDString, LocalContactEPIDString, networkMessage);
+            return new P2PMimeMessage(RemoteContactEPIDString, LocalContactEPIDString, networkMessage);
         }
 
         #endregion
@@ -619,7 +619,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void InvalidateProcessor()
         {
-            if (processorValid == false)
+            if (!ProcessorValid)
                 return;
 
             processorValid = false;
@@ -685,17 +685,7 @@ namespace MSNPSharp.DataTransfer
                 while (sendMessages.Count > 0)
                 {
                     NetworkMessage p2pMessage = sendMessages.Dequeue() as NetworkMessage;
-
-                    if (DirectConnected == true)
-                    {
-                        MessageProcessor.SendMessage(new P2PDCMessage(p2pMessage as P2PMessage));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
-                    }
-                    else
-                    {
-                        MessageProcessor.SendMessage(WrapMessage(p2pMessage));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing " + p2pMessage.GetType().Name + ":\r\n" + p2pMessage.ToDebugString() + "\r\n", GetType().Name);
-                    }
+                    MessageProcessor.SendMessage(WrapToProcessorMessage(p2pMessage));
                 }
             }
             catch (System.Net.Sockets.SocketException)
@@ -729,14 +719,19 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <param name="message">The message to wrap.</param>
         /// <returns></returns>
-        protected virtual NetworkMessage WrapToTransferLayerMessage(P2PMessage message)
+        protected virtual NetworkMessage WrapToProcessorMessage(NetworkMessage message)
         {
             if (DirectConnected)
             {
-                return new P2PDCMessage(message);
+                return new P2PDCMessage(message as P2PMessage);
             }
 
-            return WrapMessage(message);
+            MimeMessage mimeMessage = WrapMessage(message);
+            SBMessage sbMessage = new SBMessage();
+            sbMessage.Acknowledgement = "D";
+
+            sbMessage.InnerMessage = mimeMessage;
+            return sbMessage;
         }
 
         /// <summary>

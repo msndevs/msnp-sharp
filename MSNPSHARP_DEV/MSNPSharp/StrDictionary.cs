@@ -134,6 +134,23 @@ namespace MSNPSharp
             return false;
         }
 
+        public bool Remove(string key)
+        {
+            bool found = false;
+
+            List<StrKeyValuePair> contentClone = new List<StrKeyValuePair>(content);
+            foreach (StrKeyValuePair kvp in contentClone)
+            {
+                if (kvp.Key == key)
+                {
+                    content.Remove(kvp);
+                    found = true;
+                }
+            }
+
+            return found;
+        }
+
         public void Clear()
         {
             content.Clear();

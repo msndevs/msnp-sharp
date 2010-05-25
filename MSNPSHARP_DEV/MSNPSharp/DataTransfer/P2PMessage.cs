@@ -50,8 +50,8 @@ namespace MSNPSharp.DataTransfer
     [Serializable]
     public class P2PMessage : NetworkMessage
     {
-        private P2PVersion version;
-        private P2PHeader header;
+        private P2PVersion version = P2PVersion.P2PV1;
+        private P2PHeader header = null;
         private uint footer = 0;
 
         public P2PMessage(P2PVersion ver)

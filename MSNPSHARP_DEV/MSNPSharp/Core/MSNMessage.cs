@@ -42,12 +42,10 @@ namespace MSNPSharp.Core
     [Serializable()]
     public class MSNMessage : NetworkMessage, ICloneable
     {
-        int transactionID = -1;
-        string command = "MSG";
-        ArrayList commandValues;
-
-        protected bool dataChanged = false;
-        byte[] rawData = null;
+        protected int transactionID = -1;
+        private string command = "MSG";
+        private ArrayList commandValues;
+        private const string noTransactionIDCommands = "OUT PNG QNG RNG";
 
         public MSNMessage()
         {
@@ -62,11 +60,7 @@ namespace MSNPSharp.Core
 
         public override void PrepareMessage()
         {
-            bool changed = dataChanged;
-
             base.PrepareMessage();
-            if (!changed)
-                dataChanged = changed;
         }
 
 
@@ -78,8 +72,6 @@ namespace MSNPSharp.Core
             }
             set
             {
-                if (value != transactionID)
-                    dataChanged = true;
                 transactionID = value;
             }
         }
@@ -92,8 +84,6 @@ namespace MSNPSharp.Core
             }
             set
             {
-                if (value != command)
-                    dataChanged = true;
                 command = value;
             }
         }
@@ -106,21 +96,17 @@ namespace MSNPSharp.Core
             }
             set
             {
-                if (commandValues != value)
-                    dataChanged = true;
                 commandValues = value;
             }
         }
 
         public override byte[] GetBytes()
         {
-            if (dataChanged == false && rawData != null)
-                return rawData;
 
             StringBuilder builder = new StringBuilder(128);
             builder.Append(Command);
 
-            if (Command != "OUT")
+            if (noTransactionIDCommands.IndexOf(Command) == -1)
             {
                 if (TransactionID != -1)
                 {
@@ -135,17 +121,24 @@ namespace MSNPSharp.Core
                 builder.Append(val);
             }
 
-            builder.Append("\r\n");
+
 
             if (InnerMessage != null)
+            {
+                builder.Append(' ');
+                builder.Append(InnerMessage.GetBytes().Length);
+                builder.Append("\r\n");
                 return AppendArray(System.Text.Encoding.UTF8.GetBytes(builder.ToString()), InnerMessage.GetBytes());
+            }
             else
+            {
+                builder.Append("\r\n");
                 return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+            }
         }
 
         public override void ParseBytes(byte[] data)
         {
-            rawData = data;
 
             int cnt = 0;
             int bodyStart = 0;
@@ -170,37 +163,39 @@ namespace MSNPSharp.Core
             string commandLine = Encoding.UTF8.GetString(data, 4, cnt - 4);
             CommandValues = new ArrayList(commandLine.Split(new char[] { ' ' }));
 
-            switch (Command)
-            {
+
                 //Filter those commands follow by a number but not transaction id.
-                case "QNG":
-                case "RNG":
-                    break;
-                default:
-                    if (CommandValues.Count > 0)
+            if (noTransactionIDCommands.IndexOf(Command) == -1)
+            {
+                if (CommandValues.Count > 0)
+                {
+                    if (!int.TryParse((string)CommandValues[0], out transactionID))
                     {
-                        if (!int.TryParse((string)CommandValues[0], out transactionID))
-                        {
-                            transactionID = -1;  //if there's no transid, set to -1
-                        }
-                        else
-                        {
-                            CommandValues.RemoveAt(0);
-                        }
+                        transactionID = -1;  //if there's no transid, set to -1
                     }
-                    break;
+                    else
+                    {
+                        CommandValues.RemoveAt(0);
+                    }
+                }
+
             }
 
             // set the inner body contents, if it is available
             if (bodyStart < data.Length)
             {
+                if (CommandValues.Count > 0)
+                {
+                    CommandValues.RemoveAt(CommandValues.Count - 1);
+                }
+
                 int startIndex = bodyStart;
                 int newLength = data.Length - startIndex;
                 InnerBody = new byte[newLength];
                 Array.Copy(data, startIndex, InnerBody, 0, newLength);
             }
 
-            dataChanged = false;
+
         }
 
         /// <summary>
@@ -217,21 +212,28 @@ namespace MSNPSharp.Core
             StringBuilder builder = new StringBuilder(128);
             builder.Append(Command);
 
-            if (CommandValues.Count > 0)
+
+            if (noTransactionIDCommands.IndexOf(Command) == -1)
             {
                 if (TransactionID != -1)
                 {
                     builder.Append(' ');
                     builder.Append(TransactionID.ToString(CultureInfo.InvariantCulture));
                 }
+            }
 
-                foreach (string val in CommandValues)
-                {
-                    builder.Append(' ');
-                    builder.Append(val);
-                }
 
-                builder.Append("\r\n");
+            foreach (string val in CommandValues)
+            {
+                builder.Append(' ');
+                builder.Append(val);
+            }
+
+
+            if (InnerMessage != null)
+            {
+                builder.Append(' ');
+                builder.Append(InnerMessage.GetBytes().Length);
             }
 
             //For toString, we do not return the inner message's string.

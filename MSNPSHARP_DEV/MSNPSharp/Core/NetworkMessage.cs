@@ -46,7 +46,7 @@ namespace MSNPSharp.Core
         {
         }
 
-        public virtual void CreateFromMessage(NetworkMessage containerMessage)
+        public virtual void CreateFromParentMessage(NetworkMessage containerMessage)
         {
             ParentMessage = containerMessage;
             ParentMessage.InnerMessage = this;
