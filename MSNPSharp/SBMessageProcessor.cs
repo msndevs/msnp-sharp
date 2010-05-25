@@ -65,112 +65,6 @@ namespace MSNPSharp
             }
         }
 
-        private void SendMessage(TextMessage message)
-        {
-            //First, we have to check whether the content of the message is not to big for one message
-            //There's a maximum of 1600 bytes per message, let's play safe and take 1400 bytes
-            UTF8Encoding encoding = new UTF8Encoding();
-
-            if (encoding.GetByteCount(message.Text) > 1400)
-            {
-                //we'll have to use multi-packets messages
-                Guid guid = Guid.NewGuid();
-                byte[] text = encoding.GetBytes(message.Text);
-                int chunks = Convert.ToInt32(Math.Ceiling((double)text.GetUpperBound(0) / (double)1400));
-                for (int i = 0; i < chunks; i++)
-                {
-                    SBMessage sbMessage = new SBMessage();
-                    sbMessage.Acknowledgement = "N";
-
-                    //Clone the message
-                    TextMessage chunkMessage = (TextMessage)message.Clone();
-
-                    //Get the part of the message that we are going to send
-                    if (text.GetUpperBound(0) - (i * 1400) > 1400)
-                        chunkMessage.Text = encoding.GetString(text, i * 1400, 1400);
-                    else
-                        chunkMessage.Text = encoding.GetString(text, i * 1400, text.GetUpperBound(0) - (i * 1400));
-
-                    MimeMessage msgMessage = WrapMessage(chunkMessage);
-
-                    //Add the correct headers
-                    msgMessage.MimeHeader.Add("Message-ID", "{" + guid.ToString() + "}");
-
-                    if (i == 0)
-                        msgMessage.MimeHeader.Add("Chunks", Convert.ToString(chunks));
-                    else
-                        msgMessage.MimeHeader.Add("Chunk", Convert.ToString(i));
-
-                    sbMessage.InnerMessage = msgMessage;
-
-                    //send it over the network
-                    DeliverToNetwork(sbMessage);
-                }
-            }
-            else
-            {
-                SBMessage sbMessage = new SBMessage();
-                sbMessage.Acknowledgement = "N";
-
-                sbMessage.InnerMessage = WrapMessage(message);
-
-                // send it over the network
-                DeliverToNetwork(sbMessage);
-            }
-        }
-
-        private void SendMessage(EmoticonMessage message)
-        {
-            SBMessage sbMessage = new SBMessage();
-            sbMessage.Acknowledgement = "N";
-            sbMessage.InnerMessage = WrapMessage(message);
-            DeliverToNetwork(sbMessage);
-        }
-
-        private MimeMessage WrapMessage(TextMessage message)
-        {
-            MimeMessage msgParentMessage = new MimeMessage();
-            msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
-            msgParentMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = message.GetStyleString();
-
-            if (message.CustomNickname != string.Empty)
-                msgParentMessage.MimeHeader[MimeHeaderStrings.P4_Context] = message.CustomNickname;
-
-            msgParentMessage.InnerMessage = message;
-
-            return msgParentMessage;
-        }
-
-        private MimeMessage WrapMessage(EmoticonMessage message)
-        {
-            MimeMessage msgParentMessage = new MimeMessage();
-            if (message.EmoticonType == EmoticonType.StaticEmoticon)
-                msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-mms-emoticon";
-            else if (message.EmoticonType == EmoticonType.AnimEmoticon)
-                msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text-/x-mms-animemoticon";
-
-            msgParentMessage.InnerMessage = message;
-
-            return msgParentMessage;
-        }
-
-        private void SendMessage(TypingMessage message)
-        {
-            SBMessage sbMessage = new SBMessage();
-            sbMessage.Acknowledgement = "U";
-
-            sbMessage.InnerMessage = message;
-            DeliverToNetwork(sbMessage);
-        }
-
-        private void SendMessage(SBP2PMessage message)
-        {
-            SBMessage sbMessage = new SBMessage();
-            sbMessage.Acknowledgement = "D";
-
-            sbMessage.InnerMessage = message;
-            DeliverToNetwork(sbMessage);
-        }
 
         protected int IncreaseTransactionID()
         {
@@ -224,17 +118,8 @@ namespace MSNPSharp
             sbMessage.TransactionID = IncreaseTransactionID();
             sbMessage.Acknowledgement = sbMessage.Acknowledgement;
 
-            if (sbMessage.InnerMessage == null)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + sbMessage.ToDebugString() + "\r\n", GetType().Name);
-            }
-            else
-            {
-                if (!(sbMessage.InnerMessage is SBP2PMessage))
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + sbMessage.ToDebugString() + "\r\n", GetType().Name);
-                }
-            }
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + sbMessage.ToDebugString() + "\r\n", GetType().Name);
+
 
             int x = 0;
 
@@ -252,47 +137,17 @@ namespace MSNPSharp
             SendSocketData(sbMessage.GetBytes());
         }
 
-        
+
 
         public override void SendMessage(NetworkMessage message)
         {
-            if (message is TextMessage)
+            if (!(message is SBMessage))
             {
-                SendMessage(message as TextMessage);
+                throw new MSNPSharpException("Cannot use " + GetType().ToString() + " to deliver a " + message.GetType().ToString() + " message.");
             }
-            else if (message is TypingMessage)
-            {
-                SendMessage(message as TypingMessage);
-            }
-            else if (message is SBP2PMessage)
-            {
-                SendMessage(message as SBP2PMessage);
-            }
-            else if (message is EmoticonMessage)
-            {
-                SendMessage(message as EmoticonMessage);
-            }
-            else if (message is MimeMessage)
-            {
-                SBMessage sbMessage = new SBMessage();
 
-                sbMessage.InnerMessage = message;
-                DeliverToNetwork(sbMessage);
-            }
-            else if (message is SBMessage)
-            {
-                DeliverToNetwork(message as SBMessage);
-            }
-            else
-            {
-                SBMessage sbMessage = new SBMessage();
-                MimeMessage msgMessage = new MimeMessage();
+            DeliverToNetwork(message as SBMessage);
 
-                msgMessage.InnerMessage = message;
-                sbMessage.InnerMessage = msgMessage;
-
-                DeliverToNetwork(sbMessage);
-            }
         }
 
         public override void Disconnect()

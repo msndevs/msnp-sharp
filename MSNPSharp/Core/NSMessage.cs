@@ -81,7 +81,7 @@ namespace MSNPSharp.Core
 
         public override string ToString()
         {
-            return Encoding.UTF8.GetString(GetBytes());
+            return base.ToString();
         }
 
         #region ICloneable ≥…‘±
@@ -90,6 +90,13 @@ namespace MSNPSharp.Core
         {
             NSMessage messageClone = new NSMessage();
             messageClone.ParseBytes(GetBytes());
+
+            if (messageClone.InnerBody == null && InnerBody != null)
+            {
+                messageClone.InnerBody = new byte[InnerBody.Length];
+                Array.Copy(InnerBody, messageClone.InnerBody, InnerBody.Length);
+            }
+
             return messageClone;
         }
 

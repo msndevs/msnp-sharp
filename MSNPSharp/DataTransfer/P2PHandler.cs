@@ -436,7 +436,7 @@ namespace MSNPSharp.DataTransfer
             MimeMessage msgMessage = new MimeMessage();
             try
             {
-                msgMessage.CreateFromMessage(sbMessage);
+                msgMessage.CreateFromParentMessage(sbMessage);
             }
             catch (Exception e)
             {
@@ -496,7 +496,7 @@ namespace MSNPSharp.DataTransfer
 
             // Create a P2P Message from the msg message
             P2PMessage p2pMessage = new P2PMessage(version);
-            p2pMessage.CreateFromMessage(msgMessage);
+            p2pMessage.CreateFromParentMessage(msgMessage);
 
             if (Settings.TraceSwitch.TraceVerbose)
             {
@@ -710,6 +710,7 @@ namespace MSNPSharp.DataTransfer
             // if the contact is offline, there is no need to request a new switchboard. close the session.
             if (session.RemoteContact.Status == PresenceStatus.Offline)
             {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[OnP2PMessageSessionProcessorInvalid]" + session.RemoteContact + " is already offline, P2PMessageSession closed.");
                 CloseMessageSession(session);
                 return;
             }
@@ -719,11 +720,22 @@ namespace MSNPSharp.DataTransfer
             {
                 Conversation conversation = messenger.CreateConversation();
                 sbHandler = conversation.Invite(session.RemoteContact);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                    "[OnP2PMessageSessionProcessorInvalid] A " + session.GetType().ToString() + "\r\n" +
+                    " with remote contact " + session.RemoteContact + "\r\n" +
+                    " and local contact " + session.LocalContact + "\r\n" +
+                    " is requesting a new switchboard as its processor...");
+
                 conversation.ContactJoined += delegate
                 {
                     if (!session.ProcessorValid)
                     {
                         session.MessageProcessor = conversation.Switchboard.MessageProcessor;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "A " + session.GetType().ToString() + "\r\n" +
+                            " with remote contact " + session.RemoteContact + "\r\n" +
+                            " and local contact " + session.LocalContact + "\r\n" +
+                            " successfully request a new switchboard as its processor: " + sbHandler);
                     }
                 };
             }
@@ -731,6 +743,10 @@ namespace MSNPSharp.DataTransfer
             {
                 //Set processor, trigger the SendBuffer().
                 session.MessageProcessor = sbHandler.MessageProcessor;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A " + session.GetType().ToString() + "\r\n" +
+                    " with remote contact " + session.RemoteContact + "\r\n" +
+                    " and local contact " + session.LocalContact + "\r\n" +
+                    " has switched its processor to another switchboard: " + sbHandler);
             }
         }
     }

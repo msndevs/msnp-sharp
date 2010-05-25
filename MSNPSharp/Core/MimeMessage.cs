@@ -55,10 +55,12 @@ namespace MSNPSharp.Core
             MimeHeader.Add("MIME-Version", "1.0");
         }
 
-        public MimeMessage(NetworkMessage message)
+        public MimeMessage(bool autoAppendHeaderVersion)
         {
-            ParseBytes(message.InnerBody);
-            message.InnerMessage = this;
+            mimeHeader = new StrDictionary();
+
+            if (autoAppendHeaderVersion)
+                MimeHeader.Add("MIME-Version", "1.0");
         }
 
         public StrDictionary MimeHeader
@@ -83,7 +85,6 @@ namespace MSNPSharp.Core
 
             return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
         }
-
 
         protected static StrDictionary ParseMime(IEnumerator enumerator, byte[] data)
         {
@@ -160,94 +161,10 @@ namespace MSNPSharp.Core
         }
     }
 
-    public class SBTextPayloadMessage : MimeMessage
+
+    public class P2PMimeMessage : MimeMessage
     {
-        public SBTextPayloadMessage()
-            : base()
-        {
-        }
-
-        public SBTextPayloadMessage(NetworkMessage message)
-            : base(message)
-        {
-        }
-
-        public override void ParseBytes(byte[] data)
-        {
-            base.ParseBytes(data);
-            InnerMessage = new TextPayloadMessage(Encoding.UTF8.GetString(InnerBody), Encoding.UTF8);
-        }
-    }
-
-    /// <summary>
-    /// The message indicating the user is typing.
-    /// </summary>
-    public class TypingMessage : SBTextPayloadMessage
-    {
-        public TypingMessage(Contact typingContact)
-            : base()
-        {
-            MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
-            MimeHeader[MimeHeaderStrings.TypingUser] = typingContact.Mail.ToLowerInvariant();
-            InnerMessage = new TextPayloadMessage("\r\n");
-        }
-
-        public TypingMessage(NetworkMessage message)
-            : base(message)
-        {
-
-        }
-    }
-
-    public class DatacastMessage : SBTextPayloadMessage
-    {
-        public DatacastMessage()
-            : base()
-        {
-            MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast";
-        }
-
-        public DatacastMessage(NetworkMessage message)
-            : base(message)
-        {
-
-        }
-    }
-
-    public class NudgeMessage : DatacastMessage
-    {
-        public NudgeMessage()
-            : base()
-        {
-            InnerMessage = new TextPayloadMessage("ID: 1\r\n\r\n");
-        }
-
-        public NudgeMessage(NetworkMessage message)
-            : base(message)
-        {
-
-        }
-    }
-
-    public class KeepAliveMessage : SBTextPayloadMessage
-    {
-        public KeepAliveMessage()
-            : base()
-        {
-            MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-keepalive";
-            InnerMessage = new TextPayloadMessage("\r\n");
-        }
-
-        public KeepAliveMessage(NetworkMessage message)
-            : base(message)
-        {
-
-        }
-    }
-
-    public class SBP2PMessage : MimeMessage
-    {
-        public SBP2PMessage(string destString, string srcString, NetworkMessage payLoad)
+        public P2PMimeMessage(string destString, string srcString, NetworkMessage payLoad)
             :base()
         {
             MimeHeader["P2P-Dest"] = destString;
@@ -255,6 +172,21 @@ namespace MSNPSharp.Core
             MimeHeader[MimeHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
 
             InnerMessage = payLoad;
+        }
+
+        public override byte[] GetBytes()
+        {
+            return base.GetBytes();
+        }
+
+        public override void ParseBytes(byte[] data)
+        {
+            base.ParseBytes(data);
+        }
+
+        public override string ToString()
+        {
+            return base.ToString();
         }
     }
 

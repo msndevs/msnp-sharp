@@ -34,6 +34,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Collections;
+using System.Globalization;
 
 namespace MSNPSharp.Core
 {
@@ -64,10 +65,6 @@ namespace MSNPSharp.Core
     /// <item>NOT</item>
     /// <item>UBX</item>
     /// <item>GCF</item>
-    /// <item>
-    /// UBM
-    /// <description>Yahoo messenger message command.</description>
-    /// </item>
     /// <item>IPG</item>
     /// <item>UUX</item>
     /// <item>MSG</item>
@@ -85,11 +82,12 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return payLoad;
-            }
-            set
-            {
-                payLoad = value;
+                if (InnerMessage == null)
+                    return string.Empty;
+                else
+                {
+                    return (InnerMessage as TextPayloadMessage).Text;
+                }
             }
         }
 
@@ -102,41 +100,34 @@ namespace MSNPSharp.Core
         public NSPayLoadMessage(string command, ArrayList commandValues, string payload)
             : base(command, commandValues)
         {
-            payLoad = payload;
+            InnerMessage = new TextPayloadMessage(payload);
         }
 
         public NSPayLoadMessage(string command, string[] commandValues, string payload)
             : base(command, new ArrayList(commandValues))
         {
-            payLoad = payload;
+            InnerMessage = new TextPayloadMessage(payload);
         }
 
         public NSPayLoadMessage(string command, string payload)
             : base(command)
         {
-            payLoad = payload;
+            InnerMessage = new TextPayloadMessage(payload);
+        }
+
+        public override void ParseBytes(byte[] data)
+        {
+            base.ParseBytes(data);
         }
 
         public override byte[] GetBytes()
         {
-            StringBuilder cmdBuilder = new StringBuilder();
-            cmdBuilder.Append(Command);
-            cmdBuilder.Append(' ');
-            cmdBuilder.Append(TransactionID.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            return base.GetBytes();
+        }
 
-            foreach (string val in CommandValues)
-            {
-                cmdBuilder.Append(' ');
-                cmdBuilder.Append(val);
-            }
-
-            cmdBuilder.Append(' ');
-
-            cmdBuilder.Append(System.Text.Encoding.UTF8.GetBytes(payLoad).Length);
-            cmdBuilder.Append("\r\n");
-            cmdBuilder.Append(payLoad);
-
-            return System.Text.Encoding.UTF8.GetBytes(cmdBuilder.ToString());
+        public override string ToString()
+        {
+            return base.ToString();
         }
 
     }

@@ -195,9 +195,9 @@ namespace MSNPSharp
         /// Parses the header in the parent message and sets the style properties.
         /// </summary>
         /// <param name="containerMessage"></param>
-        public override void CreateFromMessage(NetworkMessage containerMessage)
+        public override void CreateFromParentMessage(NetworkMessage containerMessage)
         {
-            base.CreateFromMessage(containerMessage);
+            base.CreateFromParentMessage(containerMessage);
 
             if (ParentMessage == null)
                 return;

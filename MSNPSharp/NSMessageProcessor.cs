@@ -37,6 +37,7 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using System.Text;
 
     public class NSMessageProcessor : SocketMessageProcessor
     {
@@ -82,7 +83,8 @@ namespace MSNPSharp
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
             message.ParseBytes(data);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Dispatching incoming NS command: " + /*System.Text.Encoding.UTF8.GetString(data)*/message.ToDebugString(), GetType().Name);
+            string compareDebugString = Encoding.UTF8.GetString(data);
+
             DispatchMessage(message);
         }
 
@@ -93,11 +95,20 @@ namespace MSNPSharp
 
         public virtual void SendMessage(NetworkMessage message, int transactionID)
         {
-            MSNMessage nsMessage = (MSNMessage)message;
+            if (!(message is NSMessage))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    "Cannot use this Message Processor to send a " + message.GetType().ToString() + " message.",
+                    GetType().Name);
+
+                return;
+            }
+
+            NSMessage nsMessage = message as NSMessage;
             nsMessage.TransactionID = transactionID;
             message.PrepareMessage();
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString(), GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
 
             // convert to bytes and send it over the socket
             SendSocketData(message.GetBytes());

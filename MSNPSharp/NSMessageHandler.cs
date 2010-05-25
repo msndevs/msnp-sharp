@@ -654,11 +654,11 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="targetContact"></param>
         /// <param name="message"></param>
-        public void SendCrossNetworkMessage(Contact targetContact, NetworkMessage message)
+        public void SendCrossNetworkMessage(Contact targetContact, TextMessage message)
         {
             if (targetContact.ClientType == ClientType.EmailMember)
             {
-                SendMessageToYahooNetwork(targetContact, message);
+                SendMessageToYahooNetwork(targetContact, message, NetworkMessageType.Text);
             }
             else
             {
@@ -666,42 +666,64 @@ namespace MSNPSharp
             }
         }
 
-        private void SendMessageToYahooNetwork(Contact yimContact, NetworkMessage message)
+        /// <summary>
+        /// Send message to contacts in other IM networks.
+        /// </summary>
+        /// <param name="targetContact"></param>
+        /// <param name="type"></param>
+        public void SendCrossNetworkMessage(Contact targetContact, NetworkMessageType type)
         {
-            string messageType = "";
-
-            if (message is NudgeMessage)
-                messageType = "3";
-            if (message is TypingMessage)
-                messageType = "2";
-            if (message is TextMessage)
-                messageType = "1";
-
-            NetworkMessage innerMessage = message;
-            if (message is TextMessage)
+            if (targetContact.ClientType == ClientType.EmailMember)
             {
-                innerMessage = WrapTextMessageIntoMIMEMessage(message as TextMessage);
+                switch (type)
+                {
+                    case NetworkMessageType.Nudge:
+                        MimeMessage mimeMessage = new MimeMessage(false);
+                        mimeMessage.MimeHeader["ID"] = "1";
+                        SendMessageToYahooNetwork(targetContact, mimeMessage, type);
+                        break;
+                    case NetworkMessageType.Typing:
+                        //YIM typing message is different from MSN typing message.
+                        //For MSN typing message, you need to pass a "\r\n" as content.
+                        SendMessageToYahooNetwork(targetContact, null, type);
+                        break;
+                }
+            }
+            else
+            {
+                throw new MSNPSharpException("Contact Network not supported.");
+            }
+        }
+
+        private void SendMessageToYahooNetwork(Contact yimContact, NetworkMessage message, NetworkMessageType type)
+        {
+            string messageType = ((int)type).ToString(CultureInfo.InvariantCulture);
+
+            MimeMessage mimeMessage = new MimeMessage();
+            switch (type)
+            {
+                case NetworkMessageType.Nudge:
+                    mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast";
+                    break;
+                case NetworkMessageType.Typing:
+                    mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
+                    mimeMessage.MimeHeader[MimeHeaderStrings.TypingUser] = ContactList.Owner.Mail.ToLowerInvariant();
+                    break;
+                case NetworkMessageType.Text:
+                    mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
+                    mimeMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = (message as TextMessage).GetStyleString();
+                    break;
             }
 
             NSMessage nsMessage = new NSMessage("UUM", new string[]{yimContact.Mail.ToLowerInvariant(), 
                 ((int)ClientType.EmailMember).ToString(CultureInfo.InvariantCulture),
-                messageType,
-                innerMessage.GetBytes().Length.ToString(CultureInfo.InvariantCulture)});
+                messageType});
 
-            nsMessage.InnerMessage = innerMessage;
+            mimeMessage.InnerMessage = message;
+            nsMessage.InnerMessage = mimeMessage;
 
             MessageProcessor.SendMessage(nsMessage);
 
-        }
-
-        private MimeMessage WrapTextMessageIntoMIMEMessage(TextMessage message)
-        {
-            MimeMessage msgParentMessage = new MimeMessage();
-            msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
-            msgParentMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = message.GetStyleString();
-            msgParentMessage.InnerMessage = message;
-
-            return msgParentMessage;
         }
         #endregion
 
@@ -1339,7 +1361,7 @@ namespace MSNPSharp
         protected virtual void OnUBXReceived(NSMessage message)
         {
             //check the payload length
-            if (message.CommandValues[1].ToString() == "0")
+            if (message.InnerMessage == null)
                 return;
 
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
@@ -2015,20 +2037,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Gets a new switchboard handler object. Called when a remote client initiated the switchboard.
-        /// </summary>
-        /// <param name="sessionHash"></param>
-        /// <param name="sessionId"></param>
-        /// <returns></returns>
-        protected virtual IMessageHandler CreateSBHandler(string sessionHash, string sessionId)
-        {
-            SBMessageHandler handler = new SBMessageHandler(this);
-            handler.SetInvitation(sessionHash, sessionId);
-
-            return handler;
-        }
-
-        /// <summary>
         /// Fires the <see cref="SBCreated"/> event.
         /// </summary>
         /// <param name="switchboard">The switchboard created</param>
@@ -2053,23 +2061,6 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnRNGReceived(NSMessage message)
         {
-
-            // create a switchboard object
-            SBMessageHandler handler = (SBMessageHandler)CreateSBHandler(message.CommandValues[3].ToString(), message.CommandValues[0].ToString());
-            SBMessageProcessor processor = handler.MessageProcessor as SBMessageProcessor;
-
-            // set new connectivity settings
-            ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-            string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
-
-            newSettings.Host = values[0];
-            newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
-            processor.ConnectivitySettings = newSettings;
-
-            // start connecting
-            processor.Connect();
-
-            // notify the client
             string account = string.Empty;
             string name = string.Empty;
             bool anonymous = false;
@@ -2090,6 +2081,23 @@ namespace MSNPSharp
                 anonymous = true;
             }
 
+
+            // create a switchboard object
+            SBMessageHandler handler = new SBMessageHandler(this, callingContact, message.CommandValues[3].ToString(), message.CommandValues[0].ToString());
+            SBMessageProcessor processor = handler.MessageProcessor as SBMessageProcessor;
+
+            // set new connectivity settings
+            ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
+            string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
+
+            newSettings.Host = values[0];
+            newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
+            processor.ConnectivitySettings = newSettings;
+
+            // start connecting
+            processor.Connect();
+
+            // notify the client
             OnSBCreated(handler, null, account, name, anonymous);
         }
 
@@ -2212,28 +2220,42 @@ namespace MSNPSharp
             Contact from = ContactList.GetContact(sender, (ClientType)senderType);
             Contact to = ContactList.Owner;
 
-            MimeMessage mimeMessage = new MimeMessage(message);
+            MimeMessage mimeMessage = message.InnerMessage as MimeMessage;
+
             if (mimeMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
             {
                 switch (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type])
                 {
                     case "text/x-msmsgscontrol":
-                        OnCrossNetworkMessageReceived(
-                            new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Typing, new TypingMessage(from)));
-                        break;
+                        {
+                            OnCrossNetworkMessageReceived(
+                                new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Typing, mimeMessage.InnerMessage as TextPayloadMessage));
+                            break;
+                        }
                     case "text/x-msnmsgr-datacast":
-                        OnCrossNetworkMessageReceived(
-                            new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Nudge, new NudgeMessage(mimeMessage)));
-                        break;
+                        {
+
+                            if (mimeMessage.InnerMessage is MimeMessage)
+                            {
+                                MimeMessage innerMime = mimeMessage.InnerMessage as MimeMessage;
+
+                                if (innerMime.MimeHeader.ContainsKey("ID"))
+                                {
+                                    if (innerMime.MimeHeader["ID"] == "1")
+                                    {
+                                        OnCrossNetworkMessageReceived(
+                                            new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Nudge, innerMime));
+                                    }
+                                }
+                            }
+                            break;
+                        }
 
                 }
 
                 if (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                 {
-                    TextMessage txtMessage = new TextMessage();
-                    txtMessage.CreateFromMessage(mimeMessage);
-
-                    OnCrossNetworkMessageReceived(new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Text, txtMessage));
+                    OnCrossNetworkMessageReceived(new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Text, mimeMessage.InnerMessage as TextMessage));
                 }
             }
             
@@ -2322,20 +2344,20 @@ namespace MSNPSharp
         /// <code>MSG [Account] [Name] [Length]</code>
         /// </remarks>
         /// <param name="message"></param>
-        protected virtual void OnMSGReceived(MSNMessage message)
+        protected virtual void OnMSGReceived(NSMessage message)
         {
-            MimeMessage msgMessage = new MimeMessage(message);
-            string mime = msgMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToString();
+            MimeMessage mimeMessage = message.InnerMessage as MimeMessage;
+            string mime = mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToString();
 
             if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
             {
-                StrDictionary hdr = msgMessage.MimeHeader;
+                StrDictionary hdr = mimeMessage.MimeHeader;
 
                 int clientPort = 0;
 
                 if (hdr.ContainsKey("ClientPort"))
                 {
-                    clientPort = int.Parse(msgMessage.MimeHeader["ClientPort"].Replace('.', ' '), System.Globalization.CultureInfo.InvariantCulture);
+                    clientPort = int.Parse(mimeMessage.MimeHeader["ClientPort"].Replace('.', ' '), System.Globalization.CultureInfo.InvariantCulture);
                     clientPort = ((clientPort & 255) * 256) + ((clientPort & 65280) / 256);
                 }
 
@@ -2374,45 +2396,44 @@ namespace MSNPSharp
             }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
             {
-                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
-                msgMessage = new MimeMessage(message);
+                MimeMessage mimeEmailNotificationMessage = mimeMessage.InnerMessage as MimeMessage;
 
                 OnMailNotificationReceived(new NewMailEventArgs(
-                    (string)msgMessage.MimeHeader[MimeHeaderStrings.From],
-                    (string)msgMessage.MimeHeader["Message-URL"],
-                    (string)msgMessage.MimeHeader["Post-URL"],
-                    (string)msgMessage.MimeHeader["Subject"],
-                    (string)msgMessage.MimeHeader["Dest-Folder"],
-                    (string)msgMessage.MimeHeader["From-Addr"],
-                    msgMessage.MimeHeader.ContainsKey("id") ? int.Parse((string)msgMessage.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture) : 0
+                    mimeMessage.MimeHeader[MimeHeaderStrings.From],
+                    mimeEmailNotificationMessage.MimeHeader["Message-URL"],
+                    mimeEmailNotificationMessage.MimeHeader["Post-URL"],
+                    mimeEmailNotificationMessage.MimeHeader["Subject"],
+                    mimeEmailNotificationMessage.MimeHeader["Dest-Folder"],
+                    mimeEmailNotificationMessage.MimeHeader["From-Addr"],
+                    mimeEmailNotificationMessage.MimeHeader.ContainsKey("id") ? int.Parse(mimeEmailNotificationMessage.MimeHeader["id"], System.Globalization.CultureInfo.InvariantCulture) : 0
                 ));
             }
             else if (mime.IndexOf("x-msmsgsactivemailnotification") >= 0)
             {
                 //Now this is the unread OIM info, not the new mail.
-                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
-                msgMessage = new MimeMessage(message);
+                MimeMessage mimeActiveEmailNotificationMessage = mimeMessage.InnerMessage as MimeMessage;
 
                 OnMailChanged(new MailChangedEventArgs(
-                    (string)msgMessage.MimeHeader["Src-Folder"],
-                    (string)msgMessage.MimeHeader["Dest-Folder"],
-                    msgMessage.MimeHeader.ContainsKey("Message-Delta") ? int.Parse((string)msgMessage.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture) : 0
+                    mimeActiveEmailNotificationMessage.MimeHeader["Src-Folder"],
+                    mimeActiveEmailNotificationMessage.MimeHeader["Dest-Folder"],
+                    mimeActiveEmailNotificationMessage.MimeHeader.ContainsKey("Message-Delta") ? int.Parse(mimeActiveEmailNotificationMessage.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture) : 0
                 ));
             }
             else if (mime.IndexOf("x-msmsgsinitialemailnotification") >= 0)
             {
+                MimeMessage mimeInitialEmailNotificationMessage = mimeMessage.InnerMessage as MimeMessage;
+
                 OnMailboxStatusReceived(new MailboxStatusEventArgs(
-                    msgMessage.MimeHeader.ContainsKey("Inbox-Unread") ? int.Parse((string)msgMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture) : 0,
-                    msgMessage.MimeHeader.ContainsKey("Folders-Unread") ? int.Parse((string)msgMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture) : 0,
-                    (string)msgMessage.MimeHeader["Inbox-URL"],
-                    (string)msgMessage.MimeHeader["Folders-URL"],
-                    (string)msgMessage.MimeHeader["Post-URL"]
+                    mimeInitialEmailNotificationMessage.MimeHeader.ContainsKey("Inbox-Unread") ? int.Parse(mimeInitialEmailNotificationMessage.MimeHeader["Inbox-Unread"], System.Globalization.CultureInfo.InvariantCulture) : 0,
+                    mimeInitialEmailNotificationMessage.MimeHeader.ContainsKey("Folders-Unread") ? int.Parse(mimeInitialEmailNotificationMessage.MimeHeader["Folders-Unread"], System.Globalization.CultureInfo.InvariantCulture) : 0,
+                    mimeInitialEmailNotificationMessage.MimeHeader["Inbox-URL"],
+                    mimeInitialEmailNotificationMessage.MimeHeader["Folders-URL"],
+                    mimeInitialEmailNotificationMessage.MimeHeader["Post-URL"]
                 ));
             }
             else if (mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0 || mime.IndexOf("x-msmsgsoimnotification") >= 0)
             {
-                message.InnerBody = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(message.InnerBody).Replace("\r\n\r\n", "\r\n"));
-                msgMessage = new MimeMessage(message);
+                MimeMessage innerMimeMessage = mimeMessage.InnerMessage as MimeMessage;
 
 
                 /*
@@ -2436,7 +2457,7 @@ namespace MSNPSharp
                  * </MD>
                  */
 
-                string xmlstr = msgMessage.MimeHeader["Mail-Data"];
+                string xmlstr = innerMimeMessage.MimeHeader["Mail-Data"];
                 try
                 {
                     XmlDocument xdoc = new XmlDocument();
@@ -2471,9 +2492,9 @@ namespace MSNPSharp
                                 OnMailboxStatusReceived(new MailboxStatusEventArgs(
                                         iu,
                                         ou,
-                                        (string)msgMessage.MimeHeader["Inbox-URL"],      //Invalid, I think it should be obsolated.
-                                        (string)msgMessage.MimeHeader["Folders-URL"],    //Invalid, I think it should be obsolated.
-                                        (string)msgMessage.MimeHeader["Post-URL"]
+                                        innerMimeMessage.MimeHeader["Inbox-URL"],
+                                        innerMimeMessage.MimeHeader["Folders-URL"],
+                                        innerMimeMessage.MimeHeader["Post-URL"]
                                     ));
                                 break;
                             }
@@ -2486,7 +2507,7 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
                 }
 
-                OIMService.ProcessOIM(msgMessage, mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0);
+                OIMService.ProcessOIM(innerMimeMessage, mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0);
             }
         }
 
@@ -3365,6 +3386,213 @@ namespace MSNPSharp
             Schedulers.SwitchBoardRequestScheduler.UnRegister(SwitchBoardRequestSchedulerId);
         }
 
+        protected virtual NetworkMessage ParseTextPayloadMessage(NSMessage message)
+        {
+            TextPayloadMessage txtPayLoad = new TextPayloadMessage(string.Empty);
+            txtPayLoad.CreateFromParentMessage(message);
+            return message;
+        }
+
+        protected virtual NetworkMessage ParseMSGMessage(NSMessage message)
+        {
+            MimeMessage mimeMessage = new MimeMessage();
+            mimeMessage.CreateFromParentMessage(message);
+
+            string mime = mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToString();
+
+            if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
+            {
+                //This is profile, the content is nothing.
+            }
+            else 
+            {
+                MimeMessage innerMimeMessage = new MimeMessage(false);
+                innerMimeMessage.CreateFromParentMessage(mimeMessage);
+            }
+
+            return message;
+        }
+
+        protected virtual NetworkMessage ParseUBMMessage(NSMessage message)
+        {
+            MimeMessage mimeMessage = new MimeMessage();
+            mimeMessage.CreateFromParentMessage(message);
+
+            if (mimeMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
+            {
+                switch (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type])
+                {
+                    case "text/x-msmsgscontrol":
+                        {
+                            TextPayloadMessage txtPayload = new TextPayloadMessage(string.Empty);
+                            txtPayload.CreateFromParentMessage(mimeMessage);
+                            break;
+                        }
+                    case "text/x-msnmsgr-datacast":
+                        {
+                            TextPayloadMessage txtPayload = new TextPayloadMessage(string.Empty);
+                            txtPayload.CreateFromParentMessage(mimeMessage);
+
+                            if (txtPayload.Text.IndexOf("ID:") != -1)
+                            {
+                                MimeMessage innerMime = new MimeMessage();
+                                innerMime.CreateFromParentMessage(mimeMessage);
+                            }
+                            break;
+                        }
+
+                }
+
+                if (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
+                {
+                    TextMessage txtMessage = new TextMessage();
+                    txtMessage.CreateFromParentMessage(mimeMessage);
+                }
+            }
+            else
+            {
+
+                TextPayloadMessage txtPayLoad = new TextPayloadMessage(string.Empty);
+                txtPayLoad.CreateFromParentMessage(message);
+            }
+
+            return message;
+        }
+
+        protected virtual NetworkMessage ParseNetworkMessage(NetworkMessage message)
+        {
+            NSMessage nsMessage = (NSMessage)message;
+
+            if (nsMessage.InnerBody != null)
+            {
+                switch (nsMessage.Command)
+                {
+                    case "MSG":
+                        ParseMSGMessage(nsMessage);
+                        break;
+                    case "UBM":
+                        ParseUBMMessage(nsMessage);
+                        break;
+                    default:
+                        ParseTextPayloadMessage(nsMessage);
+                        break;
+                }
+            }
+
+            return nsMessage;
+        }
+
+        protected virtual bool ProcessNetworkMessage(NetworkMessage message)
+        {
+            NSMessage nsMessage = (NSMessage)message;
+            bool isUnknownMessage = false;
+
+            switch (nsMessage.Command)
+            {
+                // Most used CMDs
+                case "MSG":
+                    OnMSGReceived(nsMessage);
+                    break;
+                case "FLN":
+                    OnFLNReceived(nsMessage);
+                    break;
+                case "NLN":
+                    OnNLNReceived(nsMessage);
+                    break;
+                case "QNG":
+                    OnQNGReceived(nsMessage);
+                    break;
+                case "UBX":
+                    OnUBXReceived(nsMessage);
+                    break;
+
+                // Other CMDs
+                case "ADG":
+                    OnADGReceived(nsMessage);
+                    break;
+                case "ADL":
+                    OnADLReceived(nsMessage);
+                    break;
+                case "BLP":
+                    OnBLPReceived(nsMessage);
+                    break;
+                case "CHG":
+                    OnCHGReceived(nsMessage);
+                    break;
+                case "CHL":
+                    OnCHLReceived(nsMessage);
+                    break;
+                case "CVR":
+                    OnCVRReceived(nsMessage);
+                    break;
+                case "FQY":
+                    OnFQYReceived(nsMessage);
+                    break;
+                case "GCF":
+                    OnGCFReceived(nsMessage);
+                    break;
+                case "NOT":
+                    OnNOTReceived(nsMessage);
+                    break;
+                case "OUT":
+                    OnOUTReceived(nsMessage);
+                    break;
+                case "PRP":
+                    OnPRPReceived(nsMessage);
+                    break;
+                case "QRY":
+                    OnQRYReceived(nsMessage);
+                    break;
+                case "RMG":
+                    OnRMGReceived(nsMessage);
+                    break;
+                case "RML":
+                    OnRMLReceived(nsMessage);
+                    break;
+                case "RNG":
+                    OnRNGReceived(nsMessage);
+                    break;
+                case "UBM":
+                    OnUBMReceived(nsMessage);
+                    break;
+                case "UBN":
+                    OnUBNReceived(nsMessage);
+                    break;
+                case "USR":
+                    OnUSRReceived(nsMessage);
+                    break;
+                case "UUN":
+                    OnUUNReceived(nsMessage);
+                    break;
+                case "UUX":
+                    OnUUXReceived(nsMessage);
+                    break;
+                case "VER":
+                    OnVERReceived(nsMessage);
+                    break;
+                case "XFR":
+                    OnXFRReceived(nsMessage);
+                    break;
+                case "SBS":
+                    OnSBSReceived(nsMessage);
+                    break;
+                case "NFY":
+                    OnNFYReceived(nsMessage);
+                    break;
+                case "PUT":
+                    OnPUTReceived(nsMessage);
+                    break;
+                case "SDG":
+                    OnSDGReceived(nsMessage);
+                    break;
+                default:
+                    isUnknownMessage = true;
+                    break;
+            }
+
+            return !isUnknownMessage;
+        }
+
         /// <summary>
         /// Handles message from the processor.
         /// </summary>
@@ -3383,108 +3611,18 @@ namespace MSNPSharp
             {
                 // We expect at least a NSMessage object
                 NSMessage nsMessage = (NSMessage)message;
-                switch (nsMessage.Command)
-                {
-                    // Most used CMDs
-                    case "MSG":
-                        OnMSGReceived(nsMessage);
-                        return;
-                    case "FLN":
-                        OnFLNReceived(nsMessage);
-                        return;
-                    case "NLN":
-                        OnNLNReceived(nsMessage);
-                        return;
-                    case "QNG":
-                        OnQNGReceived(nsMessage);
-                        return;
-                    case "UBX":
-                        OnUBXReceived(nsMessage);
-                        return;
+                bool processed = false;
 
-                    // Other CMDs
-                    case "ADG":
-                        OnADGReceived(nsMessage);
-                        return;
-                    case "ADL":
-                        OnADLReceived(nsMessage);
-                        return;
-                    case "BLP":
-                        OnBLPReceived(nsMessage);
-                        return;
-                    case "CHG":
-                        OnCHGReceived(nsMessage);
-                        return;
-                    case "CHL":
-                        OnCHLReceived(nsMessage);
-                        return;
-                    case "CVR":
-                        OnCVRReceived(nsMessage);
-                        return;
-                    case "FQY":
-                        OnFQYReceived(nsMessage);
-                        return;
-                    case "GCF":
-                        OnGCFReceived(nsMessage);
-                        return;
-                    case "NOT":
-                        OnNOTReceived(nsMessage);
-                        return;
-                    case "OUT":
-                        OnOUTReceived(nsMessage);
-                        return;
-                    case "PRP":
-                        OnPRPReceived(nsMessage);
-                        return;
-                    case "QRY":
-                        OnQRYReceived(nsMessage);
-                        return;
-                    case "RMG":
-                        OnRMGReceived(nsMessage);
-                        return;
-                    case "RML":
-                        OnRMLReceived(nsMessage);
-                        return;
-                    case "RNG":
-                        OnRNGReceived(nsMessage);
-                        return;
-                    case "UBM":
-                        OnUBMReceived(nsMessage);
-                        return;
-                    case "UBN":
-                        OnUBNReceived(nsMessage);
-                        return;
-                    case "USR":
-                        OnUSRReceived(nsMessage);
-                        return;
-                    case "UUN":
-                        OnUUNReceived(nsMessage);
-                        return;
-                    case "UUX":
-                        OnUUXReceived(nsMessage);
-                        return;
-                    case "VER":
-                        OnVERReceived(nsMessage);
-                        return;
-                    case "XFR":
-                        OnXFRReceived(nsMessage);
-                        return;
-                    case "SBS":
-                        OnSBSReceived(nsMessage);
-                        return;
-                    case "NFY":
-                        OnNFYReceived(nsMessage);
-                        return;
-                    case "PUT":
-                        OnPUTReceived(nsMessage);
-                        return;
-                    case "SDG":
-                        OnSDGReceived(nsMessage);
-                        return;
-                }
+                ParseNetworkMessage(message);
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Incoming NS command: " + message.ToDebugString() + "\r\n", GetType().Name);
+
+                processed = ProcessNetworkMessage(message);
+
+                if (processed) return;
 
                 // Check whether it is a numeric error command
-                if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
+                if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9' && processed == false)
                 {
                     MSNError msnError = 0;
                     try

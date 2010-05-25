@@ -214,17 +214,37 @@ namespace MSNPSharp
         {
         }
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        protected internal SBMessageHandler(NSMessageHandler hander)
+        protected virtual void Initialize(NSMessageHandler handler)
         {
-            nsMessageHandler = hander;
+            nsMessageHandler = handler;
             SetNewProcessor();
 
             ResigerHandlersToProcessor(MessageProcessor);
             NSMessageHandler.P2PHandler.AddSwitchboardSession(this);
             NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(ContactOfflineHandler);
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        protected internal SBMessageHandler(NSMessageHandler handler)
+        {
+            Initialize(handler);
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        protected internal SBMessageHandler(NSMessageHandler handler, Contact callingContact, string sessionHash, string sessionId)
+        {
+            Initialize(handler);
+
+            SessionId = sessionId;
+            SessionHash = sessionHash;
+            this.invited = true;
+
+            NSMessageHandler.SetSession(SessionId, SessionHash);
+
         }
 
         #region Public Events
@@ -305,11 +325,13 @@ namespace MSNPSharp
         private Dictionary<string, MimeMessage> multiPacketMessages = new Dictionary<string, MimeMessage>();
         private object syncObject = new object();
         private Queue<Contact> invitationQueue = new Queue<Contact>();
-        private string sessionHash = String.Empty;
+
         protected SocketMessageProcessor messageProcessor = null;
         private NSMessageHandler nsMessageHandler = null;
-        private string sessionId = string.Empty;
+        private Contact transferSessionRemoteOwner = null;
 
+        private string sessionId = string.Empty;
+        private string sessionHash = string.Empty;
         protected bool sessionEstablished = false;
         protected bool invited = false;
         private bool waitingForRing = false;
@@ -357,6 +379,7 @@ namespace MSNPSharp
             {
                 return sessionId;
             }
+
             set
             {
                 sessionId = value;
@@ -373,7 +396,8 @@ namespace MSNPSharp
             {
                 return sessionHash;
             }
-            set
+
+            private set
             {
                 sessionHash = value;
             }
@@ -409,20 +433,6 @@ namespace MSNPSharp
         public virtual bool Invite(Contact contact)
         {
             return Invite(contact, Guid.Empty);
-        }
-
-        /// <summary>
-        /// Called when a switchboard session is created on request of a remote client.
-        /// </summary>
-        /// <param name="sessionHash"></param>
-        /// <param name="sessionId"></param>
-        public void SetInvitation(string sessionHash, string sessionId)
-        {
-            SessionId = sessionId;
-            SessionHash = sessionHash;
-            this.invited = true;
-
-            NSMessageHandler.SetSession(SessionId, SessionHash);
         }
 
         /// <summary>
@@ -479,7 +489,57 @@ namespace MSNPSharp
         /// <param name="message">The message to send.</param>
         public virtual void SendTextMessage(TextMessage message)
         {
-            MessageProcessor.SendMessage(message);
+
+            //First, we have to check whether the content of the message is not to big for one message
+            //There's a maximum of 1600 bytes per message, let's play safe and take 1400 bytes
+            UTF8Encoding encoding = new UTF8Encoding();
+
+            if (encoding.GetByteCount(message.Text) > 1400)
+            {
+                //we'll have to use multi-packets messages
+                Guid guid = Guid.NewGuid();
+                byte[] text = encoding.GetBytes(message.Text);
+                int chunks = Convert.ToInt32(Math.Ceiling((double)text.GetUpperBound(0) / (double)1400));
+                for (int i = 0; i < chunks; i++)
+                {
+                    SBMessage sbMessage = new SBMessage();
+                    sbMessage.Acknowledgement = "N";
+
+                    //Clone the message
+                    TextMessage chunkMessage = (TextMessage)message.Clone();
+
+                    //Get the part of the message that we are going to send
+                    if (text.GetUpperBound(0) - (i * 1400) > 1400)
+                        chunkMessage.Text = encoding.GetString(text, i * 1400, 1400);
+                    else
+                        chunkMessage.Text = encoding.GetString(text, i * 1400, text.GetUpperBound(0) - (i * 1400));
+
+                    MimeMessage msgMessage = WrapMessage(chunkMessage);
+
+                    //Add the correct headers
+                    msgMessage.MimeHeader.Add("Message-ID", "{" + guid.ToString() + "}");
+
+                    if (i == 0)
+                        msgMessage.MimeHeader.Add("Chunks", Convert.ToString(chunks));
+                    else
+                        msgMessage.MimeHeader.Add("Chunk", Convert.ToString(i));
+
+                    sbMessage.InnerMessage = msgMessage;
+
+                    //send it over the network
+                    MessageProcessor.SendMessage(sbMessage);
+                }
+            }
+            else
+            {
+                SBMessage sbMessage = new SBMessage();
+                sbMessage.Acknowledgement = "N";
+
+                sbMessage.InnerMessage = WrapMessage(message);
+
+                // send it over the network
+                MessageProcessor.SendMessage(sbMessage);
+            }
         }
 
         /// <summary>
@@ -504,8 +564,12 @@ namespace MSNPSharp
 
             EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons, icontype);
 
+            SBMessage sbMessage = new SBMessage();
+            sbMessage.Acknowledgement = "N";
+            sbMessage.InnerMessage = WrapMessage(emoticonMessage);
+
             // send it over the network
-            MessageProcessor.SendMessage(emoticonMessage);
+            MessageProcessor.SendMessage(sbMessage);
         }
 
         /// <summary>
@@ -513,7 +577,19 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SendTypingMessage()
         {
-            MessageProcessor.SendMessage(new TypingMessage(NSMessageHandler.ContactList.Owner));
+            SBMessage sbMessage = new SBMessage();
+            sbMessage.Acknowledgement = "U";
+
+            MimeMessage mimeMessage = new MimeMessage();
+            mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
+
+            mimeMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant();
+
+            mimeMessage.InnerMessage = new TextPayloadMessage("\r\n");
+
+            sbMessage.InnerMessage = mimeMessage;
+
+            MessageProcessor.SendMessage(sbMessage);
         }
 
         /// <summary>
@@ -522,7 +598,19 @@ namespace MSNPSharp
         public virtual void SendNudge()
         {
             // send it over the network
-            MessageProcessor.SendMessage(new NudgeMessage());
+            SBMessage sbMessage = new SBMessage();
+
+            MimeMessage mimeMessage = new MimeMessage();
+            mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast";
+
+            MimeMessage innerMimeMessage = new MimeMessage(false);
+            innerMimeMessage.MimeHeader["ID"] = "1";
+
+            mimeMessage.InnerMessage = innerMimeMessage;
+
+            sbMessage.InnerMessage = mimeMessage;
+
+            MessageProcessor.SendMessage(sbMessage);
         }
 
         /// <summary>
@@ -530,8 +618,16 @@ namespace MSNPSharp
         /// </summary>
         public virtual void SendKeepAliveMessage()
         {
-            // send it over the network
-            MessageProcessor.SendMessage(new KeepAliveMessage());
+            SBMessage sbMessage = new SBMessage();
+
+            MimeMessage mimeMessage = new MimeMessage();
+            mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-keepalive";
+
+            mimeMessage.InnerMessage = new TextPayloadMessage("\r\n");
+
+            sbMessage.InnerMessage = mimeMessage;
+
+            MessageProcessor.SendMessage(sbMessage);
         }
 
         #endregion
@@ -586,7 +682,7 @@ namespace MSNPSharp
         protected virtual void OnEmoticonDefinition(MimeMessage message, Contact contact)
         {
             EmoticonMessage emoticonMessage = new EmoticonMessage();
-            emoticonMessage.CreateFromMessage(message);
+            emoticonMessage.CreateFromParentMessage(message);
 
             if (EmoticonDefinitionReceived != null)
             {
@@ -1295,7 +1391,8 @@ namespace MSNPSharp
             //contact.SetName(message.CommandValues[1].ToString());
 
             // get the corresponding SBMSGMessage object
-            MimeMessage sbMSGMessage = new MimeMessage(message);
+            MimeMessage sbMSGMessage = new MimeMessage();
+            sbMSGMessage.CreateFromParentMessage(message);
 
             //first check if we are dealing with multi-packet-messages
             if (sbMSGMessage.MimeHeader.ContainsKey("Message-ID"))
@@ -1349,25 +1446,26 @@ namespace MSNPSharp
                 switch (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture))
                 {
                     case "text/x-msmsgscontrol":
-                        actualMessage = new TypingMessage(message);
+                        actualMessage = new TextPayloadMessage(string.Empty);
                         break;
                     case "text/x-mms-emoticon":
                     case "text/x-mms-animemoticon":
+                        actualMessage = new EmoticonMessage();
+                        break;
                     case "text/x-msnmsgr-datacast":
-                        actualMessage = new DatacastMessage(message);
+                        actualMessage = new MimeMessage();
                         break;
                     default:
                         if (sbMSGMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
                         {
                             actualMessage = new TextMessage();
-                            actualMessage.CreateFromMessage(sbMSGMessage);
-
                         }
                         break;
                 }
 
                 if (actualMessage != null)
                 {
+                    actualMessage.CreateFromParentMessage(sbMSGMessage);
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, message.ToDebugString(), GetType().Name);
                 }
 
@@ -1384,8 +1482,11 @@ namespace MSNPSharp
                         break;
 
                     case "text/x-msnmsgr-datacast":
-                        if (Encoding.UTF8.GetString(sbMSGMessage.InnerBody).Replace("\r\n", "") == "ID: 1")
-                            OnNudgeReceived(contact);
+                        if ((actualMessage as MimeMessage).MimeHeader.ContainsKey("ID"))
+                        {
+                            if ((actualMessage as MimeMessage).MimeHeader["ID"] == "1")
+                                OnNudgeReceived(contact);
+                        }
                         else if (message.CommandValues[2].Equals("1325"))
                             OnWinkReceived(sbMSGMessage, contact);
                         break;
@@ -1424,6 +1525,33 @@ namespace MSNPSharp
                 rosterName.Clear();
             lock (rosterCapacities)
                 rosterCapacities.Clear();
+        }
+
+        private MimeMessage WrapMessage(EmoticonMessage message)
+        {
+            MimeMessage msgParentMessage = new MimeMessage();
+            if (message.EmoticonType == EmoticonType.StaticEmoticon)
+                msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-mms-emoticon";
+            else if (message.EmoticonType == EmoticonType.AnimEmoticon)
+                msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text-/x-mms-animemoticon";
+
+            msgParentMessage.InnerMessage = message;
+
+            return msgParentMessage;
+        }
+
+        private MimeMessage WrapMessage(TextMessage message)
+        {
+            MimeMessage msgParentMessage = new MimeMessage();
+            msgParentMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
+            msgParentMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = message.GetStyleString();
+
+            if (message.CustomNickname != string.Empty)
+                msgParentMessage.MimeHeader[MimeHeaderStrings.P4_Context] = message.CustomNickname;
+
+            msgParentMessage.InnerMessage = message;
+
+            return msgParentMessage;
         }
 
         private void UpdateContactEndPointData(Contact contact, Guid endpointGuid, string caps, bool supportMPOP)
@@ -1474,7 +1602,7 @@ namespace MSNPSharp
 
             if (dump)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "EndPoint ID " + endpointGuid.ToString("B") + " not found in " + contact.ToString() + "new EndPointData added.");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "EndPoint ID " + endpointGuid.ToString("B") + " not found in " + contact.ToString() + " new EndPointData added.");
             }
         }
 
