@@ -718,17 +718,19 @@ namespace MSNPSharp.DataTransfer
             // check whether the switchboard handler is valid. Otherwise request a new session.
             if (sbHandler == null)
             {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                "[OnP2PMessageSessionProcessorInvalid] A " + session.GetType().ToString() + "\r\n" +
+                                " with remote contact " + session.RemoteContact + "\r\n" +
+                                " and local contact " + session.LocalContact + "\r\n" +
+                                " is requesting a new switchboard as its processor...");
+
                 Conversation conversation = messenger.CreateConversation();
                 sbHandler = conversation.Invite(session.RemoteContact);
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
-                    "[OnP2PMessageSessionProcessorInvalid] A " + session.GetType().ToString() + "\r\n" +
-                    " with remote contact " + session.RemoteContact + "\r\n" +
-                    " and local contact " + session.LocalContact + "\r\n" +
-                    " is requesting a new switchboard as its processor...");
 
-                conversation.ContactJoined += delegate
+
+                conversation.ContactJoined += delegate(object conv, ContactConversationEventArgs args)
                 {
-                    if (!session.ProcessorValid)
+                    if ((!session.ProcessorValid) && args.Contact.IsSibling(session.RemoteContact) && args.EndPoint == session.RemoteContactEndPointID)
                     {
                         session.MessageProcessor = conversation.Switchboard.MessageProcessor;
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
