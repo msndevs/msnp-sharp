@@ -37,7 +37,8 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;    
+    using MSNPSharp.DataTransfer;
+    using MSNPSharp.Utilities;
 
     #region ConversationCreatedEvent
 
@@ -115,6 +116,7 @@ namespace MSNPSharp
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
+        private MessageManager messageManager = null;
 
         #endregion
 
@@ -127,6 +129,7 @@ namespace MSNPSharp
             #region Initialize
 
             nsMessageHandler = new NSMessageHandler(this);
+            messageManager = new MessageManager(this);
 
             #endregion
 
@@ -182,6 +185,17 @@ namespace MSNPSharp
         #endregion
 
         #region Properties
+
+        /// <summary>
+        /// Provide a simple way to send and receive messages.
+        /// </summary>
+        public MessageManager MessageManager
+        {
+            get
+            {
+                return messageManager;
+            }
+        }
 
         /// <summary>
         /// The message processor that is used to send and receive nameserver messages.
