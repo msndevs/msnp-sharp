@@ -844,4 +844,119 @@ namespace MSNPSharp
             message = msg;
         }
     }
+
+    /// <summary>
+    /// Used to notify client programmer after the MSN data object transfer completed.
+    /// </summary>
+    public class MSNObjectDataTransferCompletedEventArgs : EventArgs
+    {
+        private MSNObject clientData = null;
+        private bool aborted = false;
+        private Contact remote = null;
+        private Guid remoteEndPointID = Guid.Empty;
+
+        /// <summary>
+        /// Another site associated with this object's transfer.
+        /// </summary>
+        public Contact RemoteContact
+        {
+            get { return remote; }
+        }
+
+        /// <summary>
+        /// The location of remote contact.
+        /// </summary>
+        public Guid RemoteContactEndPointID
+        {
+            get { return remoteEndPointID; }
+        }
+
+        /// <summary>
+        /// Transfer failed.
+        /// </summary>
+        public bool Aborted
+        {
+            get { return aborted; }
+        }
+
+        /// <summary>
+        /// The target msnobject.
+        /// </summary>
+        public MSNObject ClientData
+        {
+            get { return clientData; }
+        }
+
+        protected MSNObjectDataTransferCompletedEventArgs()
+            : base()
+        {
+        }
+
+        public MSNObjectDataTransferCompletedEventArgs(MSNObject clientdata, bool abort, Contact remoteContact, Guid remoteEPID)
+        {
+            if (clientdata == null)
+                throw new ArgumentNullException("clientdata");
+
+            clientData = clientdata;
+            aborted = abort;
+            remote = remoteContact;
+            remoteEndPointID = remoteEPID;
+        }
+    }
+
+    public class ConversationEndEventArgs : EventArgs
+    {
+        private Conversation conversation = null;
+
+        public Conversation Conversation
+        {
+            get { return conversation; }
+        }
+
+        protected ConversationEndEventArgs()
+            : base()
+        {
+        }
+
+        public ConversationEndEventArgs(Conversation convers)
+        {
+            conversation = convers;
+        }
+    }
+
+    /// <summary>
+    /// Used to notify client programmer that the remote owner of a conversation has been changed.
+    /// </summary>
+    public class ConversationRemoteOwnerChangedEventArgs : EventArgs
+    {
+        private Contact oldRemoteOwner = null;
+
+        /// <summary>
+        /// The remote owner of the conversation before change.
+        /// </summary>
+        public Contact OldRemoteOwner
+        {
+            get { return oldRemoteOwner; }
+        }
+
+        private Contact newRemoteOwner = null;
+
+        /// <summary>
+        /// The new remote owner after the old one has left the conversation.
+        /// </summary>
+        public Contact NewRemoteOwner
+        {
+            get { return newRemoteOwner; }
+        }
+
+        private ConversationRemoteOwnerChangedEventArgs()
+        {
+        }
+
+        public ConversationRemoteOwnerChangedEventArgs(Contact oldOwner, Contact newOwner)
+        {
+            oldRemoteOwner = oldOwner;
+            newRemoteOwner = newOwner;
+        }
+    }
 };

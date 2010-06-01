@@ -78,6 +78,8 @@
     <Compile Include="MailEventArgs.cs" />
     <Compile Include="Core\MessagePool.cs" />
     <Compile Include="Core\MessageProcessor.cs" />
+    <Compile Include="MessageManager.cs" />
+    <Compile Include="MessageManagerEventArgs.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="MobileMessage.cs" />
     <Compile Include="Core\MSNMessage.cs" />
@@ -269,9 +271,6 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <None Include="Web References\MSNWS.MSNSecurityTokenService\RequestSecurityTokenResponseType.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-policy.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -417,6 +416,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\MSNPSharp_logo_128.png" />
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\RequestSecurityTokenResponseCollectionType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\RequestSecurityTokenResponseType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\sstc-saml-schema-assertion-1.xsd">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

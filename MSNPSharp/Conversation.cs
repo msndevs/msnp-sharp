@@ -42,62 +42,6 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
 
-    public class MSNObjectDataTransferCompletedEventArgs : EventArgs
-    {
-        private MSNObject clientData;
-        private bool aborted;
-
-        /// <summary>
-        /// Transfer failed.
-        /// </summary>
-        public bool Aborted
-        {
-            get { return aborted; }
-        }
-
-        /// <summary>
-        /// The target msnobject.
-        /// </summary>
-        public MSNObject ClientData
-        {
-            get { return clientData; }
-        }
-
-        protected MSNObjectDataTransferCompletedEventArgs()
-            : base()
-        {
-        }
-
-        public MSNObjectDataTransferCompletedEventArgs(MSNObject clientdata, bool abort)
-        {
-            if (clientdata == null)
-                throw new ArgumentNullException("clientdata");
-
-            clientData = clientdata;
-            aborted = abort;
-        }
-    }
-
-    public class ConversationEndEventArgs : EventArgs
-    {
-        private Conversation conversation = null;
-
-        public Conversation Conversation
-        {
-            get { return conversation; }
-        }
-
-        protected ConversationEndEventArgs()
-            : base()
-        {
-        }
-
-        public ConversationEndEventArgs(Conversation convers)
-        {
-            conversation = convers;
-        }
-    }
-
     internal abstract class MessageObject
     {
         protected object innerObject = null;
@@ -154,6 +98,7 @@ namespace MSNPSharp
 
         private Messenger _messenger = null;
         private SBMessageHandler _switchboard = null;
+
         private bool sbInitialized = false;
         private bool ended = false;
         private bool ending = false;
@@ -177,15 +122,19 @@ namespace MSNPSharp
         private void transferSession_TransferAborted(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
+
+            P2PTransferSession session = sender as P2PTransferSession;
             OnMSNObjectDataTransferCompleted(sender,
-                new MSNObjectDataTransferCompletedEventArgs((sender as P2PTransferSession).ClientData as MSNObject, true));
+                new MSNObjectDataTransferCompletedEventArgs(session.ClientData as MSNObject, true, session.TransferProperties.RemoteContact, session.TransferProperties.RemoteContactEndPointID));
         }
 
         private void transferSession_TransferFinished(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
+
+            P2PTransferSession session = sender as P2PTransferSession;
             OnMSNObjectDataTransferCompleted(sender,
-                new MSNObjectDataTransferCompletedEventArgs((sender as P2PTransferSession).ClientData as MSNObject, false));
+                new MSNObjectDataTransferCompletedEventArgs(session.ClientData as MSNObject, false, session.TransferProperties.RemoteContact, session.TransferProperties.RemoteContactEndPointID));
 
         }
 
@@ -372,7 +321,7 @@ namespace MSNPSharp
         {
             lock (_syncObject)
             {
-                if (_firstContact == null)
+                if (RemoteOwner == null)
                 {
                     _firstContact = firstJoinedContact;
                     return true;
@@ -380,6 +329,25 @@ namespace MSNPSharp
             }
 
             return false;
+        }
+
+        private void SetNextRemoteOwner()
+        {
+            lock (_syncObject)
+            {
+                Contact oldOwner = RemoteOwner;
+
+                foreach (Contact contact in Contacts)
+                {
+                    if (!contact.IsSibling(Messenger.Nameserver.ContactList.Owner))
+                    {
+                        if (!contact.IsSibling(oldOwner))
+                        {
+                            _firstContact = contact;
+                        }
+                    }
+                }
+            }
         }
 
         #endregion
@@ -524,7 +492,7 @@ namespace MSNPSharp
             else
             {
                 //If exists, fire the event.
-                OnMSNObjectDataTransferCompleted(sender, new MSNObjectDataTransferCompletedEventArgs(existing, false));
+                OnMSNObjectDataTransferCompleted(sender, new MSNObjectDataTransferCompletedEventArgs(existing, false, e.Sender, Guid.Empty));
             }
 
 
@@ -541,6 +509,15 @@ namespace MSNPSharp
 
             if (ContactLeft != null)
                 ContactLeft(this, e);
+
+            if (e.Contact.IsSibling(RemoteOwner))
+            {
+                _firstContact = null;
+
+                Contact oldOwner = RemoteOwner;
+                SetNextRemoteOwner();
+                OnRemoteOwnerChanged(new ConversationRemoteOwnerChangedEventArgs(oldOwner, RemoteOwner));
+            }
         }
 
         protected virtual void OnContactJoined(object sender, ContactConversationEventArgs e)
@@ -613,9 +590,9 @@ namespace MSNPSharp
             if (canSendMessage || (!Ended) || (sbInitialized))
                 return this;
 
-            if (_firstContact.Status == PresenceStatus.Offline)
+            if (RemoteOwner.Status == PresenceStatus.Offline)
             {
-                throw new InvalidOperationException("Contact " + _firstContact.Mail + " not online, please send offline message instead.");
+                throw new InvalidOperationException("Contact " + RemoteOwner.Mail + " not online, please send offline message instead.");
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
@@ -631,9 +608,15 @@ namespace MSNPSharp
 
             //This is a very important priciple:
             //If all contacts left, we try to re-invite the first contact ONLY.
-            PendingContactEnqueue(_firstContact);
+            PendingContactEnqueue(RemoteOwner);
 
             return this;
+        }
+
+        protected virtual void OnRemoteOwnerChanged(ConversationRemoteOwnerChangedEventArgs e)
+        {
+            if (RemoteOwnerChanged != null)
+                RemoteOwnerChanged(this, e);
         }
 
 
@@ -703,6 +686,10 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
 
+        /// <summary>
+        /// Occurs after the remote owner left a multiple user conversation.
+        /// </summary>
+        public event EventHandler<ConversationRemoteOwnerChangedEventArgs> RemoteOwnerChanged;
 
         #endregion
 
@@ -872,6 +859,86 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// The remote owner of this conversation.
+        /// </summary>
+        public Contact RemoteOwner
+        {
+            get { return _firstContact; }
+        }
+
+        public bool IsMultipleUserConversation
+        {
+            get
+            {
+                Contact lastContact = null;
+                if (RemoteOwner == null)
+                {
+                    lock (_pendingInviteContacts)
+                    {
+                        foreach (Contact contact in _pendingInviteContacts)
+                        {
+                            if (!contact.IsSibling(Messenger.Nameserver.ContactList.Owner))
+                            {
+                                if (lastContact == null)
+                                {
+                                    lastContact = contact;
+                                    continue;
+                                }
+
+                                if (!lastContact.IsSibling(contact))
+                                    return true;
+                            }
+                        }
+
+                        return false;
+                    }
+                }
+                else
+                {
+                    //Check the pending contacts.
+                    lock (_pendingInviteContacts)
+                    {
+                        foreach (Contact contact in _pendingInviteContacts)
+                        {
+                            if (contact.IsSibling(Messenger.Nameserver.ContactList.Owner) == false && RemoteOwner.IsSibling(contact) == false)
+                            {
+                                if (lastContact == null)
+                                {
+                                    lastContact = contact;
+                                    continue;
+                                }
+
+                                if (!lastContact.IsSibling(contact))
+                                    return true;
+                            }
+                        }
+                    }
+
+                    //Check the invited contacts.
+                    lock (Contacts)
+                    {
+                        foreach (Contact contact in Contacts)
+                        {
+                            if (contact.IsSibling(Messenger.Nameserver.ContactList.Owner) == false && RemoteOwner.IsSibling(contact) == false)
+                            {
+                                if (lastContact == null)
+                                {
+                                    lastContact = contact;
+                                    continue;
+                                }
+
+                                if (!lastContact.IsSibling(contact))
+                                    return true;
+                            }
+                        }
+
+                        return false;
+                    }
+                }
+            }
+        }
+
         #endregion
 
         /// <summary>
@@ -895,7 +962,7 @@ namespace MSNPSharp
         /// Constructor.
         /// </summary>
         /// <param name="parent">The messenger object that requests the conversation.</param>
-        public Conversation(Messenger parent)
+        internal Conversation(Messenger parent)
         {
             _messenger = parent;
             sbInitialized = false;
@@ -967,6 +1034,10 @@ namespace MSNPSharp
             }
             else
             {
+                if (RemoteOwner == null)
+                {
+                    _firstContact = contact;
+                }
 
                 #region Initialize SBMessageHandler and invite.
 
