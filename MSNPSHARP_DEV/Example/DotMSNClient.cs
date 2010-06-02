@@ -16,6 +16,7 @@ namespace MSNPSharpClient
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using MSNPSharp.Utilities;
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -89,9 +90,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
 
             // Receive messages send by MSN contacts.
-            messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(messenger_ConversationCreated);
-            // Receive messages sent from Yahoo! Messenger contacts.
-            messenger.Nameserver.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived);
+            messenger.MessageManager.MessageArrived += new EventHandler<MSNPSharp.Utilities.MessageArrivedEventArgs>(MessageManager_MessageArrived);
 
             // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)
             messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
@@ -156,29 +155,6 @@ namespace MSNPSharpClient
             #endregion
         }
 
-        void Nameserver_CrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
-        {
-            //The message from Yahoo! Messenger is sent through NS server, so it's diffrent from SB conversation.
-            if (InvokeRequired)
-            {
-                Invoke(new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived), new object[] { sender, e });
-            }
-            else
-            {
-                ConversationForm convForm = null;
-                if (YIMMessageForms.ContainsKey(e.From.Mail.ToLowerInvariant()))
-                {
-                    convForm = YIMMessageForms[e.From.Mail.ToLowerInvariant()];
-                }
-                else
-                {
-                    convForm = new ConversationForm(Messenger, e.From);
-                    YIMMessageForms[e.From.Mail.ToLowerInvariant()] = convForm;
-                }
-
-                convForm.OnCrossNetworkMessageReceived(sender, e);
-            }
-        }
 
         public static class ImageIndexes
         {
@@ -613,6 +589,31 @@ namespace MSNPSharpClient
                 "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel))
             {
                 e.IsRead = false;
+            }
+        }
+
+
+        void MessageManager_MessageArrived(object sender, MessageArrivedEventArgs e)
+        {
+            foreach (ConversationForm cform in ConversationForms)
+            {
+                if (cform.ConversationID == Guid.Empty && e.ConversationID != Guid.Empty)
+                {
+                    //Not started or not yet set.
+                    if (Messenger.MessageManager.LogicallyEquals(e.ConversationID, cform.RemoteOwner))
+                    {
+                        //TODO: print message on the form.
+                        cform.OnMessageReceived(sender, e);
+                        return;
+                    }
+                }
+
+                if (cform.ConversationID == e.ConversationID)
+                {
+                    //TODO: print message on the form.
+                    cform.OnMessageReceived(sender, e);
+                    return;
+                }
             }
         }
 
@@ -1125,40 +1126,18 @@ namespace MSNPSharpClient
             SetStatus("Server error received");
         }
 
-        private void messenger_ConversationCreated(object sender, ConversationCreatedEventArgs e)
-        {
-            // use the invoke method to create the form in the main thread, ONLY create the form after a contact joined our conversation.
-            e.Conversation.ContactJoined += new EventHandler<ContactConversationEventArgs>(Conversation_ContactJoined);
-        }
-
-        void Conversation_ContactJoined(object sender, ContactEventArgs e)
-        {
-            //The request is initiated by remote user, so we needn't invite anyone.
-            this.Invoke(new CreateConversationDelegate(CreateConversationForm), new object[] { sender, e.Contact });
-            Conversation convers = sender as Conversation;
-            convers.ContactJoined -= Conversation_ContactJoined; //We don't care any further join event anymore.
-        }
-
         /// <summary>
         /// A delegate passed to Invoke in order to create the conversation form in the thread of the main form.
         /// </summary>
-        private delegate ConversationForm CreateConversationDelegate(Conversation conversation, Contact remote);
+        private delegate ConversationForm CreateConversationDelegate(Contact remote, Guid cid);
 
-        private ConversationForm CreateConversationForm(Conversation conversation, Contact remote)
+        private ConversationForm CreateConversationForm(Contact remote, Guid cid)
         {
-            foreach (ConversationForm cform in ConversationForms)
-            {
-                if (cform.CanAttach(conversation))
-                {
-                    cform.AttachConversation(conversation);
-                    return cform;
-                }
-            }
 
             // create a new conversation. However do not show the window untill a message is received.
             // for example, a conversation will be created when the remote client sends wants to send
             // you a file. You don't want to show the conversation form in that case.
-            ConversationForm conversationForm = new ConversationForm(conversation, Messenger, remote);
+            ConversationForm conversationForm = new ConversationForm(Messenger, remote, cid);
             // do this to create the window handle. Otherwise we are not able to call Invoke() on the
             // conversation form later.
             conversationForm.Handle.ToInt32();
@@ -1450,20 +1429,12 @@ namespace MSNPSharpClient
             {
                 foreach (ConversationForm conv in ConversationForms)
                 {
-                    if (conv.ActiveConversation.HasContact(contact))
+                    if (contact.IsSibling(conv.RemoteOwner))
                     {
                         activeForm = conv;
                         activate = true;
                     }
 
-                }
-            }
-            else
-            {
-                if (YIMMessageForms.ContainsKey(contact.Mail.ToLowerInvariant()))
-                {
-                    activeForm = YIMMessageForms[contact.Mail.ToLowerInvariant()];
-                    activate = true;
                 }
             }
 
@@ -1476,18 +1447,7 @@ namespace MSNPSharpClient
                 return;
             }
 
-            ConversationForm form = null;
-            if (contact.ClientType != ClientType.EmailMember)
-            {
-                Conversation convers = messenger.CreateConversation();
-                convers.Invite(contact);
-                form = CreateConversationForm(convers, contact);
-            }
-            else
-            {
-                form = new ConversationForm(Messenger, contact);
-                YIMMessageForms[contact.Mail.ToLowerInvariant()] = form;
-            }
+            ConversationForm form = CreateConversationForm(contact, Guid.Empty);
 
             form.Show();
         }
