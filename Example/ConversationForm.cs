@@ -16,12 +16,15 @@ namespace MSNPSharpClient
     using MSNPSharp.DataTransfer;
     using System.Threading;
     using MSNPSharp.Core;
+using MSNPSharp.Utilities;
 
     /// <summary>
     /// Summary description for ConversationForm.
     /// </summary>
     public class ConversationForm : System.Windows.Forms.Form
     {
+        #region Windows Form Designer generated code
+
         /// <summary>
         /// Required designer variable.
         /// </summary>
@@ -56,109 +59,6 @@ namespace MSNPSharpClient
         private ColorDialog dlgColor;
 
 
-        private List<Conversation> _conversations = new List<Conversation>(0);
-        private Messenger _messenger = null;
-        private Contact _firstInvitedContact = null;
-        bool isYIM = false;
-
-        /// <summary>
-        /// The conversation object which is associated with the form.
-        /// </summary>
-        public Conversation ActiveConversation
-        {
-            get
-            {
-                return GetActiveConversation();
-            }
-
-        }
-
-        protected ConversationForm()
-        {
-        }
-
-        public ConversationForm(Conversation conversation, Messenger messenger, Contact contact)
-        {
-            InitializeComponent();
-
-            if (contact == null && conversation.Contacts.Count > 0) // Received nudge :(
-            {
-                contact = conversation.Contacts[0];
-            }
-
-            AddEvent(conversation);
-
-            _messenger = messenger;
-            _firstInvitedContact = contact;
-
-        }
-
-        /// <summary>
-        /// For sending and receiving YIM messages.
-        /// </summary>
-        /// <param name="messenger"></param>
-        /// <param name="contact"></param>
-        public ConversationForm(Messenger messenger, Contact contact)
-        {
-            InitializeComponent();
-
-            _firstInvitedContact = contact;
-            _messenger = messenger;
-            isYIM = true;
-
-            btnActivityTest.Enabled = false;
-            btnCustomEmoticon.Enabled = false;
-            btnInviteUsers.Enabled = false;
-            btnSendFiles.Enabled = false;
-        }
-
-        /// <summary>
-        /// Attatch a new conversation to this chatting form
-        /// </summary>
-        /// <param name="convers"></param>
-        public void AttachConversation(Conversation convers)
-        {
-            AddEvent(convers);
-        }
-
-        public bool CanAttach(Conversation newconvers)
-        {
-            if (isYIM) return false;
-
-            return newconvers.HasContact(_firstInvitedContact);
-        }
-
-        void NudgeReceived(object sender, ContactEventArgs e)
-        {
-            if (Visible == false)
-            {
-                Invoke(new EventHandler<EventArgs>(MakeVisible), sender, e);
-            }
-
-            Invoke(new EventHandler<ContactEventArgs>(PrintNudge), sender, e);
-        }
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (components != null)
-                {
-                    components.Dispose();
-                }
-            }
-            base.Dispose(disposing);
-        }
-
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-        }
-
-        #region Windows Form Designer generated code
         /// <summary>
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
@@ -507,90 +407,143 @@ namespace MSNPSharpClient
         }
         #endregion
 
-        private void RemoveEvent(Conversation converseation)
-        {
-            if (converseation != null)
-            {
-                converseation.TextMessageReceived -= TextMessageReceived;
-                converseation.SessionClosed -= SessionClosed;
-                converseation.ContactJoined -= ContactJoined;
-                converseation.ContactLeft -= ContactLeft;
-                converseation.NudgeReceived -= NudgeReceived;
+        private Messenger _messenger = null;
+        private Contact _firstInvitedContact = null;
+        private Guid activeconversationID = Guid.Empty;
 
-                converseation.MSNObjectDataTransferCompleted -= MSNObjectDataTransferCompleted;
+        bool isYIM = false;
+
+        /// <summary>
+        /// The conversation object which is associated with the form.
+        /// </summary>
+        public Conversation ActiveConversation
+        {
+            get
+            {
+                return _messenger.MessageManager.GetConversation(activeconversationID);
+            }
+
+        }
+
+        public Contact RemoteOwner
+        {
+            get
+            {
+                return _firstInvitedContact;
             }
         }
 
-        private void AddEvent(Conversation converse)
+        public Guid ConversationID
         {
-            if (_conversations.Contains(converse))
-                return;
-
-            RemoveEvent(converse);
-
-            converse.TextMessageReceived += new EventHandler<TextMessageEventArgs>(TextMessageReceived);
-            converse.SessionClosed += new EventHandler<EventArgs>(SessionClosed);
-            converse.ContactJoined += new EventHandler<ContactConversationEventArgs>(ContactJoined);
-            converse.ContactLeft += new EventHandler<ContactConversationEventArgs>(ContactLeft);
-            converse.NudgeReceived += new EventHandler<ContactEventArgs>(NudgeReceived);
-
-            converse.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(MSNObjectDataTransferCompleted);
-            //Conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(Conversation_ConversationEnded);
-            _conversations.Add(converse);
-        }
-
-        private Conversation GetActiveConversation()
-        {
-            if (isYIM) throw new InvalidOperationException("This is a YIM conversation.");
-
-            foreach (Conversation conversation in _conversations)
+            get
             {
-                if (!conversation.Ended)
-                    return conversation;
+                return activeconversationID;
             }
 
-            if (_conversations.Count > 0)
-                return _conversations[0];
-
-            Conversation newActiveConversation = _messenger.CreateConversation();
-            newActiveConversation.Invite(_firstInvitedContact);
-            _conversations.Add(newActiveConversation);
-
-            return newActiveConversation;
+            private set
+            {
+                activeconversationID = value;
+            }
         }
 
-        void MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
+        protected ConversationForm()
+        {
+        }
+
+        /// <summary>
+        /// For sending and receiving YIM messages.
+        /// </summary>
+        /// <param name="messenger"></param>
+        /// <param name="contact"></param>
+        public ConversationForm(Messenger messenger, Contact contact, Guid convId)
+        {
+            InitializeComponent();
+
+            _firstInvitedContact = contact;
+            _messenger = messenger;
+            activeconversationID = convId;
+
+            isYIM = (contact.IsMessengerUser && contact.ClientType == ClientType.EmailMember);
+
+            if (isYIM)
+            {
+                btnActivityTest.Enabled = false;
+                btnCustomEmoticon.Enabled = false;
+                btnInviteUsers.Enabled = false;
+                btnSendFiles.Enabled = false;
+            }
+        }
+
+        public void OnMessageReceived(object sender, MessageArrivedEventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<MSNObjectDataTransferCompletedEventArgs>(MSNObjectDataTransferCompleted), sender, e);
-                return;
+                Invoke(new EventHandler<MessageArrivedEventArgs>(OnMessageReceived), new object[] { sender, e });
             }
-
-            Emoticon emo = e.ClientData as Emoticon;
-            if (emo != null)
+            else
             {
-                MemoryStream ms = new MemoryStream();
-                byte[] byt = new byte[e.ClientData.OpenStream().Length];
-                e.ClientData.OpenStream().Seek(0, SeekOrigin.Begin);
-                e.ClientData.OpenStream().Read(byt, 0, byt.Length);
-                ms.Write(byt, 0, byt.Length);
+                switch (e.MessageType)
+                {
+                    case MessageType.Nudge:
+                        MakeVisible(sender, e);
+                        PrintNudge(e.Sender);
+                        break;
+                    case MessageType.TextMessage:
+                        MakeVisible(sender, e);
+                        PrintText(e.Sender, (e as TextMessageArrivedEventArgs).TextMessage);
+                        break;
+                    case MessageType.Emoticon:
+                        {
+                            Emoticon emo = (e as EmoticonArrivedEventArgs).Emoticon;
+                            if (emo != null)
+                            {
+                                MemoryStream ms = new MemoryStream();
+                                byte[] byt = new byte[emo.OpenStream().Length];
+                                emo.OpenStream().Seek(0, SeekOrigin.Begin);
+                                emo.OpenStream().Read(byt, 0, byt.Length);
+                                ms.Write(byt, 0, byt.Length);
 
-                richTextHistory.Emotions[emo.Shortcut] = new Bitmap(Image.FromStream(ms));
+                                richTextHistory.Emotions[emo.Shortcut] = new Bitmap(Image.FromStream(ms));
 
-                ms.Close();
-            }
+                                ms.Close();
+                            }
 
-            while (richTextHistory.HasEmotion)
-            {
-                richTextHistory.InsertEmotion();
+                            while (richTextHistory.HasEmotion)
+                            {
+                                richTextHistory.InsertEmotion();
+                            }
+                        }
+                        break;
+                }
             }
         }
+
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+            }
+            base.Dispose(disposing);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+        }
+
 
         private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             if (!isYIM)
-                if (ActiveConversation.Ended && e.KeyCode != Keys.Return)
+                if (ConversationID == Guid.Empty && e.KeyCode != Keys.Return)
                     return;
 
             if ((e.KeyCode == Keys.Return) && (e.Alt || e.Control || e.Shift))
@@ -598,10 +551,16 @@ namespace MSNPSharpClient
                 return;
             }
 
-            if (!isYIM)
-                ActiveConversation.SendTypingMessage();
-            else
-                _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, NetworkMessageType.Typing);
+            try
+            {
+                if (!isYIM)
+                    _messenger.MessageManager.SendTyping(ConversationID);
+                else
+                    _messenger.MessageManager.SendTyping(_firstInvitedContact);
+            }
+            catch (Exception)
+            {
+            }
 
             if (e.KeyCode == Keys.Return)
             {
@@ -632,43 +591,12 @@ namespace MSNPSharpClient
             Show();
         }
 
-        private void PrintText(object sender, TextMessageEventArgs e)
-        {
-            PrintText(e.Sender, e.Message);
-        }
-
-        private void PrintNudge(object sender, ContactEventArgs e)
-        {
-            PrintNudge(e.Contact);
-        }
-
         private void PrintNudge(Contact sender)
         {
             DisplaySystemMessage(sender.Name + " has sent a nudge!");
             PerformNudge();
         }
 
-        public void OnCrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new EventHandler<CrossNetworkMessageEventArgs>(OnCrossNetworkMessageReceived), new object[] { sender, e });
-            }
-            else
-            {
-                switch (e.MesageType)
-                {
-                    case NetworkMessageType.Nudge:
-                        MakeVisible(sender, e);
-                        PrintNudge(e.From);
-                        break;
-                    case NetworkMessageType.Text:
-                        MakeVisible(sender, e);
-                        PrintText(e.From, e.Message as TextMessage);
-                        break;
-                }
-            }
-        }
 
         public void DisplaySystemMessage(string systemMessage)
         {
@@ -684,67 +612,8 @@ namespace MSNPSharpClient
         }
 
 
-        private void TextMessageReceived(object sender, TextMessageEventArgs e)
-        {
-            if (!Visible)
-            {
-                Invoke(new EventHandler<EventArgs>(MakeVisible), sender, e);
-            }
-
-            Invoke(new EventHandler<TextMessageEventArgs>(PrintText), sender, e);
-        }
-
-        private void SessionClosed(object sender, EventArgs e)
-        {
-            if (!richTextHistory.InvokeRequired)
-            {
-                DisplaySystemMessage("Session was closed");
-            }
-            else
-            {
-                richTextHistory.Invoke(new EventHandler<EventArgs>(SessionClosed), sender, e);
-            }
-        }
-
-        #region These three functions causes reinvite
-
-        private void ContactJoined(object sender, ContactEventArgs e)
-        {
-            if (richTextHistory.InvokeRequired)
-            {
-                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(ContactJoined), sender, e);
-            }
-            else
-            {
-                DisplaySystemMessage(e.Contact.Name + " joined the conversation");
-            }
-        }
-
-        private void ContactLeft(object sender, ContactEventArgs e)
-        {
-            if (richTextHistory.InvokeRequired)
-            {
-                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(ContactLeft), sender, e);
-            }
-            else
-            {
-                DisplaySystemMessage(e.Contact.Name + " left the conversation");
-            }
-        }
-
-
-        #endregion
-
         private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            //Remember to close!
-            foreach (Conversation conv in _conversations)
-            {
-                RemoveEvent(conv);  //Remove event handlers first, then close the conversation.
-                if (!conv.Ended)
-                    conv.End();
-            }
-
             _firstInvitedContact.DisplayImageChanged -= Contact_DisplayImageChanged;
             _firstInvitedContact.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
         }
@@ -977,21 +846,21 @@ namespace MSNPSharpClient
             inputTextBox.Clear();
             inputTextBox.Focus();
 
-            try
+            if (ConversationID != Guid.Empty)
             {
-                if (!isYIM)
-                    ActiveConversation.SendTextMessage(message);
-                else
-                    _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, message);
-
-
+                ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, message);
                 PrintText(_messenger.ContactList.Owner, message);
             }
-            catch (InvalidOperationException)
+            else
             {
-                _messenger.OIMService.SendOIMMessage(_firstInvitedContact, message);
-                PrintText(_messenger.ContactList.Owner, new TextMessage(message.Text + "\r\n(Send as Offline message.)"));
+                ConversationID = _messenger.MessageManager.SendTextMessage(_firstInvitedContact, message);
+
+                if (!isYIM)
+                    PrintText(_messenger.ContactList.Owner, new TextMessage(message.Text + "\r\n(Send as Offline message.)"));
+                else
+                    PrintText(_messenger.ContactList.Owner, message);
             }
+            
         }
 
         private void bMessageInsertEmoticon_Click(object sender, EventArgs e)
@@ -1028,19 +897,20 @@ namespace MSNPSharpClient
 
         private void bMessageSendNudge_Click(object sender, EventArgs e)
         {
-            try
+            if (ConversationID != Guid.Empty)
+            {
+                ConversationID = _messenger.MessageManager.SendNudge(ConversationID);
+                DisplaySystemMessage("You send a nudge.");
+            }
+            else
             {
                 if (!isYIM)
-                    ActiveConversation.SendNudge();
+                    DisplaySystemMessage("Remote contact not online.");
                 else
-                    _messenger.Nameserver.SendCrossNetworkMessage(_firstInvitedContact, NetworkMessageType.Nudge);
-
-                DisplaySystemMessage("You send a nudge.");
-                PerformNudge();
-            }
-            catch (InvalidOperationException)
-            {
-                DisplaySystemMessage("Remote contact not online.");
+                {
+                    ConversationID = _messenger.MessageManager.SendNudge(_firstInvitedContact);
+                    DisplaySystemMessage("You send a nudge.");
+                }
             }
         }
 
@@ -1104,20 +974,17 @@ namespace MSNPSharpClient
                 richTextHistory.Emotions[emotest.Shortcut] = Properties.Resources.inner_emoticon;
             }
 
-            try
+            if (ConversationID != Guid.Empty)
             {
-                ActiveConversation.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
+                ConversationID = _messenger.MessageManager.SendEmoticonDefinitions(ConversationID, emolist, EmoticonType.StaticEmoticon);
                 TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
-                ActiveConversation.SendTextMessage(emotxt);
+                ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, emotxt);
                 DisplaySystemMessage("You send a custom emoticon with text message: Hey, this is a custom emoticon: [test_em].");
             }
-            catch (InvalidOperationException)
+            else
             {
-                DisplaySystemMessage("Remote contact not online, emoticon will not be sent.");
-            }
-            catch (NotSupportedException)
-            {
-                DisplaySystemMessage("Cannot send custom emoticon in this conversation.");
+                if (!isYIM)
+                    DisplaySystemMessage("Remote contact not online, emoticon will not be sent.");
             }
         }
 
