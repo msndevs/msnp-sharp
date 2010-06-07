@@ -198,5 +198,5 @@
 			</extension>
 		</complexContent>
 	</complexType>
-	<element name="AttributeValue" type="anyType"/>
+	<element name="AttributeValue" type="string"/>
 </schema>
