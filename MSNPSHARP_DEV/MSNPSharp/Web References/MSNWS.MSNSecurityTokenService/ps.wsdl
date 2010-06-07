@@ -51,17 +51,17 @@
       <wsdl:input>
         <soap12:header message="ps:SecurityHeader" part="Security" use="literal" />
         <soap12:header message="ps:AuthInfoHeader" part="AuthInfo" use="literal" />
-        <soap12:body use="literal" />
         <soap12:header message="ps:ActionHeader" part="Action" use="literal" />
         <soap12:header message="ps:ToHeader" part="To" use="literal" />
         <soap12:header message="ps:MessageIDHeader" part="MessageID" use="literal" />
+        <soap12:body use="literal" />
       </wsdl:input>
       <wsdl:output>
-        <soap12:body use="literal" />
         <soap12:header message="ps:ppResponseHeader" part="pp" use="literal" />
         <soap12:header message="ps:ActionHeader" part="Action" use="literal" />
         <soap12:header message="ps:ToHeader" part="To" use="literal" />
         <soap12:header message="ps:SecurityHeader" part="Security" use="literal" />
+        <soap12:body use="literal" />
       </wsdl:output>
       <wsdl:fault name="FailedAuthentication">
         <soap12:fault use="literal" name="wsse:FailedAuthentication" namespace="" />
