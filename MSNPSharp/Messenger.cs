@@ -226,6 +226,7 @@ namespace MSNPSharp
             set
             {
                 connectivitySettings = value;
+                NameserverProcessor.ConnectivitySettings = ConnectivitySettings;
             }
         }
 
