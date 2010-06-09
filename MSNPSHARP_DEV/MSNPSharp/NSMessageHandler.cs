@@ -60,7 +60,6 @@ namespace MSNPSharp
 
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private SocketMessageProcessor messageProcessor = null;
-        private ConnectivitySettings connectivitySettings = null;
         private IPEndPoint externalEndPoint = null;
         private P2PHandler p2pHandler = null;
         private Messenger messenger = null;
@@ -256,11 +255,7 @@ namespace MSNPSharp
         {
             get
             {
-                return connectivitySettings;
-            }
-            set
-            {
-                connectivitySettings = value;
+                return (MessageProcessor as NSMessageProcessor).ConnectivitySettings;
             }
         }
 

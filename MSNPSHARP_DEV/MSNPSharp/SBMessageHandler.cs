@@ -830,6 +830,7 @@ namespace MSNPSharp
         protected virtual void SetNewProcessor()
         {
             messageProcessor = new SBMessageProcessor();
+            messageProcessor.ConnectivitySettings = NSMessageHandler.ConnectivitySettings;
 
             // catch the connect event to start sending the USR command upon initiating
             messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
@@ -870,8 +871,12 @@ namespace MSNPSharp
             {
                 foreach (string key in rosterState.Keys)
                 {
-                    if (rosterState[key] != ContactConversationState.Left)
+                    if (rosterState[key] != ContactConversationState.Left && key != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+                    {
+                        // If: There is only one owner without any endpoint id, the switchboard is ended.
+                        // If: There is/are owner(s) with endpoint id(s) and status is/are not left, keep the switch available.
                         return false;
+                    }
                 }
 
                 return true;
