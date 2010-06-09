@@ -416,7 +416,6 @@ namespace MSNPSharp
             NameserverProcessor.RegisterHandler(nsMessageHandler);
             Nameserver.MessageProcessor = nsMessageProcessor;
             Nameserver.Credentials = credentials;
-            Nameserver.ConnectivitySettings = connectivitySettings;
 
             NameserverProcessor.Connect();
         }
