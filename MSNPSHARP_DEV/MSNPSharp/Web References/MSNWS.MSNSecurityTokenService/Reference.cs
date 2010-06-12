@@ -27,12 +27,17 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="SecurityTokenServicePortBinding", Namespace="http://schemas.microsoft.com/Passport/SoapServices/PPCRL")]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(NotUnderstoodType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Fault))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Envelope))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(DerivedKeyTokenType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SecurityContextTokenType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(AttributeDesignatorType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(SignaturePropertiesType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(ManifestType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EndpointReferenceType1))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(ProblemActionType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(errorType))]
     public partial class SecurityTokenService : System.Web.Services.Protocols.SoapHttpClientProtocol {
         
         private SecurityHeaderType securityField;
@@ -48,6 +53,14 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         private ppHeaderType ppField;
         
         private System.Threading.SendOrPostCallback RequestMultipleSecurityTokensOperationCompleted;
+        
+        private AttributedURI actionField;
+        
+        private Relationship relatesToField;
+        
+        private RelatesToType relatesTo1Field;
+        
+        private System.Threading.SendOrPostCallback RequestSecurityTokenOperationCompleted;
         
         private bool useDefaultCredentialsSetExplicitly;
         
@@ -118,6 +131,33 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
             }
         }
         
+        public AttributedURI Action {
+            get {
+                return this.actionField;
+            }
+            set {
+                this.actionField = value;
+            }
+        }
+        
+        public Relationship RelatesTo {
+            get {
+                return this.relatesToField;
+            }
+            set {
+                this.relatesToField = value;
+            }
+        }
+        
+        public RelatesToType RelatesTo1 {
+            get {
+                return this.relatesTo1Field;
+            }
+            set {
+                this.relatesTo1Field = value;
+            }
+        }
+        
         public new string Url {
             get {
                 return base.Url;
@@ -144,6 +184,9 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         
         /// <remarks/>
         public event RequestMultipleSecurityTokensCompletedEventHandler RequestMultipleSecurityTokensCompleted;
+        
+        /// <remarks/>
+        public event RequestSecurityTokenCompletedEventHandler RequestSecurityTokenCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("ActionValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
@@ -183,6 +226,45 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("pp", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ToValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ActionValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.InOut)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("Security")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("Action", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("RelatesTo1", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("RelatesTo", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("AuthInfo")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("MessageID")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("RequestSecurityTokenResponse", Namespace="http://schemas.xmlsoap.org/ws/2005/02/trust")]
+        public RequestSecurityTokenResponseType RequestSecurityToken([System.Xml.Serialization.XmlElementAttribute("RequestSecurityToken", Namespace="http://schemas.xmlsoap.org/ws/2005/02/trust")] RequestSecurityTokenType RequestSecurityToken1) {
+            object[] results = this.Invoke("RequestSecurityToken", new object[] {
+                        RequestSecurityToken1});
+            return ((RequestSecurityTokenResponseType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void RequestSecurityTokenAsync(RequestSecurityTokenType RequestSecurityToken1) {
+            this.RequestSecurityTokenAsync(RequestSecurityToken1, null);
+        }
+        
+        /// <remarks/>
+        public void RequestSecurityTokenAsync(RequestSecurityTokenType RequestSecurityToken1, object userState) {
+            if ((this.RequestSecurityTokenOperationCompleted == null)) {
+                this.RequestSecurityTokenOperationCompleted = new System.Threading.SendOrPostCallback(this.OnRequestSecurityTokenOperationCompleted);
+            }
+            this.InvokeAsync("RequestSecurityToken", new object[] {
+                        RequestSecurityToken1}, this.RequestSecurityTokenOperationCompleted, userState);
+        }
+        
+        private void OnRequestSecurityTokenOperationCompleted(object arg) {
+            if ((this.RequestSecurityTokenCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.RequestSecurityTokenCompleted(this, new RequestSecurityTokenCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -208,7 +290,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.w3.org/2005/08/addressing")]
     [System.Xml.Serialization.XmlRootAttribute(Namespace="http://www.w3.org/2005/08/addressing", IsNullable=false)]
-    public partial class Action : AttributedURIType {
+    public partial class To : AttributedURIType {
     }
     
     /// <remarks/>
@@ -287,7 +369,51 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/soap/envelope/")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
+    public partial class SupportedEnvType {
+        
+        private System.Xml.XmlQualifiedName qnameField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.Xml.XmlQualifiedName qname {
+            get {
+                return this.qnameField;
+            }
+            set {
+                this.qnameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
+    public partial class NotUnderstoodType {
+        
+        private System.Xml.XmlQualifiedName qnameField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.Xml.XmlQualifiedName qname {
+            get {
+                return this.qnameField;
+            }
+            set {
+                this.qnameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
     public partial class detail {
         
         private System.Xml.XmlElement[] anyField;
@@ -322,53 +448,165 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/soap/envelope/")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
+    public partial class reasontext {
+        
+        private string langField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified, Namespace="http://www.w3.org/XML/1998/namespace")]
+        public string lang {
+            get {
+                return this.langField;
+            }
+            set {
+                this.langField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute()]
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
+    public partial class subcode {
+        
+        private System.Xml.XmlQualifiedName valueField;
+        
+        private subcode subcodeField;
+        
+        /// <remarks/>
+        public System.Xml.XmlQualifiedName Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public subcode Subcode {
+            get {
+                return this.subcodeField;
+            }
+            set {
+                this.subcodeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
+    public partial class faultcode {
+        
+        private System.Xml.XmlQualifiedName valueField;
+        
+        private subcode subcodeField;
+        
+        /// <remarks/>
+        public System.Xml.XmlQualifiedName Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public subcode Subcode {
+            get {
+                return this.subcodeField;
+            }
+            set {
+                this.subcodeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
     public partial class Fault {
         
-        private System.Xml.XmlQualifiedName faultcodeField;
+        private faultcode codeField;
         
-        private string faultstringField;
+        private reasontext[] reasonField;
         
-        private string faultactorField;
+        private string nodeField;
+        
+        private string roleField;
         
         private detail detailField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Xml.XmlQualifiedName faultcode {
+        public faultcode Code {
             get {
-                return this.faultcodeField;
+                return this.codeField;
             }
             set {
-                this.faultcodeField = value;
+                this.codeField = value;
             }
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public string faultstring {
+        [System.Xml.Serialization.XmlArrayItemAttribute("Text", IsNullable=false)]
+        public reasontext[] Reason {
             get {
-                return this.faultstringField;
+                return this.reasonField;
             }
             set {
-                this.faultstringField = value;
+                this.reasonField = value;
             }
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, DataType="anyURI")]
-        public string faultactor {
+        [System.Xml.Serialization.XmlElementAttribute(DataType="anyURI")]
+        public string Node {
             get {
-                return this.faultactorField;
+                return this.nodeField;
             }
             set {
-                this.faultactorField = value;
+                this.nodeField = value;
             }
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public detail detail {
+        [System.Xml.Serialization.XmlElementAttribute(DataType="anyURI")]
+        public string Role {
+            get {
+                return this.roleField;
+            }
+            set {
+                this.roleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public detail Detail {
             get {
                 return this.detailField;
             }
@@ -383,7 +621,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/soap/envelope/")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
     public partial class Body {
         
         private System.Xml.XmlElement[] anyField;
@@ -418,7 +656,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/soap/envelope/")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
     public partial class Header {
         
         private System.Xml.XmlElement[] anyField;
@@ -453,14 +691,12 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/soap/envelope/")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2003/05/soap-envelope")]
     public partial class Envelope {
         
         private Header headerField;
         
         private Body bodyField;
-        
-        private System.Xml.XmlElement[] anyField;
         
         private System.Xml.XmlAttribute[] anyAttrField;
         
@@ -485,6 +721,28 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         }
         
         /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2005/02/sc")]
+    public partial class PropertiesType {
+        
+        private System.Xml.XmlElement[] anyField;
+        
+        /// <remarks/>
         [System.Xml.Serialization.XmlAnyElementAttribute()]
         public System.Xml.XmlElement[] Any {
             get {
@@ -492,6 +750,308 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
             }
             set {
                 this.anyField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2005/02/sc")]
+    public partial class DerivedKeyTokenType {
+        
+        private SecurityTokenReferenceType securityTokenReferenceField;
+        
+        private PropertiesType propertiesField;
+        
+        private ulong itemField;
+        
+        private ItemChoiceType itemElementNameField;
+        
+        private ulong lengthField;
+        
+        private bool lengthFieldSpecified;
+        
+        private string labelField;
+        
+        private byte[] nonceField;
+        
+        private string idField;
+        
+        private string algorithmField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" +
+            "")]
+        public SecurityTokenReferenceType SecurityTokenReference {
+            get {
+                return this.securityTokenReferenceField;
+            }
+            set {
+                this.securityTokenReferenceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public PropertiesType Properties {
+            get {
+                return this.propertiesField;
+            }
+            set {
+                this.propertiesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Generation", typeof(ulong))]
+        [System.Xml.Serialization.XmlElementAttribute("Offset", typeof(ulong))]
+        [System.Xml.Serialization.XmlChoiceIdentifierAttribute("ItemElementName")]
+        public ulong Item {
+            get {
+                return this.itemField;
+            }
+            set {
+                this.itemField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public ItemChoiceType ItemElementName {
+            get {
+                return this.itemElementNameField;
+            }
+            set {
+                this.itemElementNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ulong Length {
+            get {
+                return this.lengthField;
+            }
+            set {
+                this.lengthField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool LengthSpecified {
+            get {
+                return this.lengthFieldSpecified;
+            }
+            set {
+                this.lengthFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Label {
+            get {
+                return this.labelField;
+            }
+            set {
+                this.labelField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Nonce {
+            get {
+                return this.nonceField;
+            }
+            set {
+                this.nonceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified, Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xs" +
+            "d", DataType="ID")]
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
+        public string Algorithm {
+            get {
+                return this.algorithmField;
+            }
+            set {
+                this.algorithmField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" +
+        "")]
+    public partial class SecurityTokenReferenceType {
+        
+        private System.Xml.XmlElement anyField;
+        
+        private ReferenceType[] referenceField;
+        
+        private string idField;
+        
+        private string usageField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyElementAttribute()]
+        public System.Xml.XmlElement Any {
+            get {
+                return this.anyField;
+            }
+            set {
+                this.anyField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Reference")]
+        public ReferenceType[] Reference {
+            get {
+                return this.referenceField;
+            }
+            set {
+                this.referenceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Usage {
+            get {
+                return this.usageField;
+            }
+            set {
+                this.usageField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" +
+        "")]
+    public partial class ReferenceType {
+        
+        private string uRIField;
+        
+        private System.Xml.XmlQualifiedName valueTypeField;
+        
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
+        public string URI {
+            get {
+                return this.uRIField;
+            }
+            set {
+                this.uRIField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.Xml.XmlQualifiedName ValueType {
+            get {
+                return this.valueTypeField;
+            }
+            set {
+                this.valueTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2005/02/sc", IncludeInSchema=false)]
+    public enum ItemChoiceType {
+        
+        /// <remarks/>
+        Generation,
+        
+        /// <remarks/>
+        Offset,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2005/02/sc")]
+    public partial class SecurityContextTokenType {
+        
+        private System.Xml.XmlElement[] anyField;
+        
+        private string idField;
+        
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyElementAttribute()]
+        public System.Xml.XmlElement[] Any {
+            get {
+                return this.anyField;
+            }
+            set {
+                this.anyField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified, Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xs" +
+            "d", DataType="ID")]
+        public string Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
             }
         }
         
@@ -656,21 +1216,33 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
     public partial class SignaturePropertyType {
         
-        private System.Xml.XmlNode[] anyField;
+        private System.Xml.XmlElement[] itemsField;
+        
+        private string[] textField;
         
         private string targetField;
         
         private string idField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlTextAttribute()]
         [System.Xml.Serialization.XmlAnyElementAttribute()]
-        public System.Xml.XmlNode[] Any {
+        public System.Xml.XmlElement[] Items {
             get {
-                return this.anyField;
+                return this.itemsField;
             }
             set {
-                this.anyField = value;
+                this.itemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute()]
+        public string[] Text {
+            get {
+                return this.textField;
+            }
+            set {
+                this.textField = value;
             }
         }
         
@@ -861,32 +1433,32 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
     public partial class TransformType {
         
-        private System.Xml.XmlNode[] anyField;
+        private object[] itemsField;
         
-        private string[] xPathField;
+        private string[] textField;
         
         private string algorithmField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlTextAttribute()]
         [System.Xml.Serialization.XmlAnyElementAttribute()]
-        public System.Xml.XmlNode[] Any {
+        [System.Xml.Serialization.XmlElementAttribute("XPath", typeof(string))]
+        public object[] Items {
             get {
-                return this.anyField;
+                return this.itemsField;
             }
             set {
-                this.anyField = value;
+                this.itemsField = value;
             }
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("XPath")]
-        public string[] XPath {
+        [System.Xml.Serialization.XmlTextAttribute()]
+        public string[] Text {
             get {
-                return this.xPathField;
+                return this.textField;
             }
             set {
-                this.xPathField = value;
+                this.textField = value;
             }
         }
         
@@ -1258,110 +1830,53 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
     public partial class KeyInfoType {
         
-        private string[] keyNameField;
+        private object[] itemsField;
         
-        private KeyValueType[] keyValueField;
+        private ItemsChoiceType2[] itemsElementNameField;
         
-        private RetrievalMethodType[] retrievalMethodField;
-        
-        private X509DataType[] x509DataField;
-        
-        private PGPDataType[] pGPDataField;
-        
-        private SPKIDataType[] sPKIDataField;
-        
-        private string[] mgmtDataField;
-        
-        private System.Xml.XmlNode[] anyField;
+        private string[] textField;
         
         private string idField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("KeyName")]
-        public string[] KeyName {
+        [System.Xml.Serialization.XmlAnyElementAttribute()]
+        [System.Xml.Serialization.XmlElementAttribute("KeyName", typeof(string))]
+        [System.Xml.Serialization.XmlElementAttribute("KeyValue", typeof(KeyValueType))]
+        [System.Xml.Serialization.XmlElementAttribute("MgmtData", typeof(string))]
+        [System.Xml.Serialization.XmlElementAttribute("PGPData", typeof(PGPDataType))]
+        [System.Xml.Serialization.XmlElementAttribute("RetrievalMethod", typeof(RetrievalMethodType))]
+        [System.Xml.Serialization.XmlElementAttribute("SPKIData", typeof(SPKIDataType))]
+        [System.Xml.Serialization.XmlElementAttribute("X509Data", typeof(X509DataType))]
+        [System.Xml.Serialization.XmlChoiceIdentifierAttribute("ItemsElementName")]
+        public object[] Items {
             get {
-                return this.keyNameField;
+                return this.itemsField;
             }
             set {
-                this.keyNameField = value;
+                this.itemsField = value;
             }
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("KeyValue")]
-        public KeyValueType[] KeyValue {
+        [System.Xml.Serialization.XmlElementAttribute("ItemsElementName")]
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public ItemsChoiceType2[] ItemsElementName {
             get {
-                return this.keyValueField;
+                return this.itemsElementNameField;
             }
             set {
-                this.keyValueField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("RetrievalMethod")]
-        public RetrievalMethodType[] RetrievalMethod {
-            get {
-                return this.retrievalMethodField;
-            }
-            set {
-                this.retrievalMethodField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("X509Data")]
-        public X509DataType[] X509Data {
-            get {
-                return this.x509DataField;
-            }
-            set {
-                this.x509DataField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("PGPData")]
-        public PGPDataType[] PGPData {
-            get {
-                return this.pGPDataField;
-            }
-            set {
-                this.pGPDataField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("SPKIData")]
-        public SPKIDataType[] SPKIData {
-            get {
-                return this.sPKIDataField;
-            }
-            set {
-                this.sPKIDataField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("MgmtData")]
-        public string[] MgmtData {
-            get {
-                return this.mgmtDataField;
-            }
-            set {
-                this.mgmtDataField = value;
+                this.itemsElementNameField = value;
             }
         }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlTextAttribute()]
-        [System.Xml.Serialization.XmlAnyElementAttribute()]
-        public System.Xml.XmlNode[] Any {
+        public string[] Text {
             get {
-                return this.anyField;
+                return this.textField;
             }
             set {
-                this.anyField = value;
+                this.textField = value;
             }
         }
         
@@ -1385,41 +1900,31 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
     public partial class KeyValueType {
         
-        private DSAKeyValueType dSAKeyValueField;
+        private object itemField;
         
-        private RSAKeyValueType rSAKeyValueField;
-        
-        private System.Xml.XmlNode[] anyField;
+        private string[] textField;
         
         /// <remarks/>
-        public DSAKeyValueType DSAKeyValue {
+        [System.Xml.Serialization.XmlAnyElementAttribute()]
+        [System.Xml.Serialization.XmlElementAttribute("DSAKeyValue", typeof(DSAKeyValueType))]
+        [System.Xml.Serialization.XmlElementAttribute("RSAKeyValue", typeof(RSAKeyValueType))]
+        public object Item {
             get {
-                return this.dSAKeyValueField;
+                return this.itemField;
             }
             set {
-                this.dSAKeyValueField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public RSAKeyValueType RSAKeyValue {
-            get {
-                return this.rSAKeyValueField;
-            }
-            set {
-                this.rSAKeyValueField = value;
+                this.itemField = value;
             }
         }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlTextAttribute()]
-        [System.Xml.Serialization.XmlAnyElementAttribute()]
-        public System.Xml.XmlNode[] Any {
+        public string[] Text {
             get {
-                return this.anyField;
+                return this.textField;
             }
             set {
-                this.anyField = value;
+                this.textField = value;
             }
         }
     }
@@ -1565,6 +2070,62 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
+    public partial class PGPDataType {
+        
+        private object[] itemsField;
+        
+        private ItemsChoiceType1[] itemsElementNameField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyElementAttribute()]
+        [System.Xml.Serialization.XmlElementAttribute("PGPKeyID", typeof(byte[]), DataType="base64Binary")]
+        [System.Xml.Serialization.XmlElementAttribute("PGPKeyPacket", typeof(byte[]), DataType="base64Binary")]
+        [System.Xml.Serialization.XmlChoiceIdentifierAttribute("ItemsElementName")]
+        public object[] Items {
+            get {
+                return this.itemsField;
+            }
+            set {
+                this.itemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("ItemsElementName")]
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public ItemsChoiceType1[] ItemsElementName {
+            get {
+                return this.itemsElementNameField;
+            }
+            set {
+                this.itemsElementNameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#", IncludeInSchema=false)]
+    public enum ItemsChoiceType1 {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlEnumAttribute("##any:")]
+        Item,
+        
+        /// <remarks/>
+        PGPKeyID,
+        
+        /// <remarks/>
+        PGPKeyPacket,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
     public partial class RetrievalMethodType {
         
         private TransformType[] transformsField;
@@ -1613,72 +2174,20 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
-    public partial class X509DataType {
+    public partial class SPKIDataType {
         
-        private X509IssuerSerialType[] x509IssuerSerialField;
-        
-        private byte[][] x509SKIField;
-        
-        private string[] x509SubjectNameField;
-        
-        private byte[][] x509CertificateField;
-        
-        private byte[][] x509CRLField;
+        private byte[][] sPKISexpField;
         
         private System.Xml.XmlElement anyField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("X509IssuerSerial")]
-        public X509IssuerSerialType[] X509IssuerSerial {
+        [System.Xml.Serialization.XmlElementAttribute("SPKISexp", DataType="base64Binary")]
+        public byte[][] SPKISexp {
             get {
-                return this.x509IssuerSerialField;
+                return this.sPKISexpField;
             }
             set {
-                this.x509IssuerSerialField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("X509SKI", DataType="base64Binary")]
-        public byte[][] X509SKI {
-            get {
-                return this.x509SKIField;
-            }
-            set {
-                this.x509SKIField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("X509SubjectName")]
-        public string[] X509SubjectName {
-            get {
-                return this.x509SubjectNameField;
-            }
-            set {
-                this.x509SubjectNameField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("X509Certificate", DataType="base64Binary")]
-        public byte[][] X509Certificate {
-            get {
-                return this.x509CertificateField;
-            }
-            set {
-                this.x509CertificateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("X509CRL", DataType="base64Binary")]
-        public byte[][] X509CRL {
-            get {
-                return this.x509CRLField;
-            }
-            set {
-                this.x509CRLField = value;
+                this.sPKISexpField = value;
             }
         }
         
@@ -1690,6 +2199,48 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
             }
             set {
                 this.anyField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
+    public partial class X509DataType {
+        
+        private object[] itemsField;
+        
+        private ItemsChoiceType[] itemsElementNameField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyElementAttribute()]
+        [System.Xml.Serialization.XmlElementAttribute("X509CRL", typeof(byte[]), DataType="base64Binary")]
+        [System.Xml.Serialization.XmlElementAttribute("X509Certificate", typeof(byte[]), DataType="base64Binary")]
+        [System.Xml.Serialization.XmlElementAttribute("X509IssuerSerial", typeof(X509IssuerSerialType))]
+        [System.Xml.Serialization.XmlElementAttribute("X509SKI", typeof(byte[]), DataType="base64Binary")]
+        [System.Xml.Serialization.XmlElementAttribute("X509SubjectName", typeof(string))]
+        [System.Xml.Serialization.XmlChoiceIdentifierAttribute("ItemsElementName")]
+        public object[] Items {
+            get {
+                return this.itemsField;
+            }
+            set {
+                this.itemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("ItemsElementName")]
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public ItemsChoiceType[] ItemsElementName {
+            get {
+                return this.itemsElementNameField;
+            }
+            set {
+                this.itemsElementNameField = value;
             }
         }
     }
@@ -1731,38 +2282,153 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
     [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#", IncludeInSchema=false)]
+    public enum ItemsChoiceType {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlEnumAttribute("##any:")]
+        Item,
+        
+        /// <remarks/>
+        X509CRL,
+        
+        /// <remarks/>
+        X509Certificate,
+        
+        /// <remarks/>
+        X509IssuerSerial,
+        
+        /// <remarks/>
+        X509SKI,
+        
+        /// <remarks/>
+        X509SubjectName,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#", IncludeInSchema=false)]
+    public enum ItemsChoiceType2 {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlEnumAttribute("##any:")]
+        Item,
+        
+        /// <remarks/>
+        KeyName,
+        
+        /// <remarks/>
+        KeyValue,
+        
+        /// <remarks/>
+        MgmtData,
+        
+        /// <remarks/>
+        PGPData,
+        
+        /// <remarks/>
+        RetrievalMethod,
+        
+        /// <remarks/>
+        SPKIData,
+        
+        /// <remarks/>
+        X509Data,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
-    public partial class PGPDataType {
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing")]
+    public partial class ServiceNameType {
         
-        private byte[] pGPKeyIDField;
+        private string portNameField;
         
-        private byte[] pGPKeyPacketField;
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        private System.Xml.XmlQualifiedName valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="NCName")]
+        public string PortName {
+            get {
+                return this.portNameField;
+            }
+            set {
+                this.portNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute()]
+        public System.Xml.XmlQualifiedName Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing")]
+    public partial class AttributedQName {
+        
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        private System.Xml.XmlQualifiedName valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute()]
+        public System.Xml.XmlQualifiedName Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(TypeName="ReferenceParametersType", Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing")]
+    public partial class ReferenceParametersType1 {
         
         private System.Xml.XmlElement[] anyField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
-        public byte[] PGPKeyID {
-            get {
-                return this.pGPKeyIDField;
-            }
-            set {
-                this.pGPKeyIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
-        public byte[] PGPKeyPacket {
-            get {
-                return this.pGPKeyPacketField;
-            }
-            set {
-                this.pGPKeyPacketField = value;
-            }
-        }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAnyElementAttribute()]
@@ -1781,32 +2447,150 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
-    public partial class SPKIDataType {
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing")]
+    public partial class ReferencePropertiesType {
         
-        private byte[][] sPKISexpField;
-        
-        private System.Xml.XmlElement anyField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("SPKISexp", DataType="base64Binary")]
-        public byte[][] SPKISexp {
-            get {
-                return this.sPKISexpField;
-            }
-            set {
-                this.sPKISexpField = value;
-            }
-        }
+        private System.Xml.XmlElement[] anyField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAnyElementAttribute()]
-        public System.Xml.XmlElement Any {
+        public System.Xml.XmlElement[] Any {
             get {
                 return this.anyField;
             }
             set {
                 this.anyField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(TypeName="EndpointReferenceType", Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing")]
+    public partial class EndpointReferenceType1 {
+        
+        private AttributedURI addressField;
+        
+        private ReferencePropertiesType referencePropertiesField;
+        
+        private ReferenceParametersType1 referenceParametersField;
+        
+        private AttributedQName portTypeField;
+        
+        private ServiceNameType serviceNameField;
+        
+        private System.Xml.XmlElement[] anyField;
+        
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        /// <remarks/>
+        public AttributedURI Address {
+            get {
+                return this.addressField;
+            }
+            set {
+                this.addressField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ReferencePropertiesType ReferenceProperties {
+            get {
+                return this.referencePropertiesField;
+            }
+            set {
+                this.referencePropertiesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ReferenceParametersType1 ReferenceParameters {
+            get {
+                return this.referenceParametersField;
+            }
+            set {
+                this.referenceParametersField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public AttributedQName PortType {
+            get {
+                return this.portTypeField;
+            }
+            set {
+                this.portTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ServiceNameType ServiceName {
+            get {
+                return this.serviceNameField;
+            }
+            set {
+                this.serviceNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyElementAttribute()]
+        public System.Xml.XmlElement[] Any {
+            get {
+                return this.anyField;
+            }
+            set {
+                this.anyField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing")]
+    [System.Xml.Serialization.XmlRootAttribute("Action", Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing", IsNullable=false)]
+    public partial class AttributedURI : System.Web.Services.Protocols.SoapHeader {
+        
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute(DataType="anyURI")]
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
             }
         }
     }
@@ -1854,6 +2638,95 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
             }
             set {
                 this.anyAttrField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.w3.org/2005/08/addressing")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://www.w3.org/2005/08/addressing", IsNullable=false)]
+    public partial class Action : AttributedURIType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault")]
+    public partial class errorType {
+        
+        private uint valueField;
+        
+        private internalerrorType internalerrorField;
+        
+        /// <remarks/>
+        public uint value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public internalerrorType internalerror {
+            get {
+                return this.internalerrorField;
+            }
+            set {
+                this.internalerrorField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault")]
+    public partial class internalerrorType {
+        
+        private uint codeField;
+        
+        private bool codeFieldSpecified;
+        
+        private string textField;
+        
+        /// <remarks/>
+        public uint code {
+            get {
+                return this.codeField;
+            }
+            set {
+                this.codeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool codeSpecified {
+            get {
+                return this.codeFieldSpecified;
+            }
+            set {
+                this.codeFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string text {
+            get {
+                return this.textField;
+            }
+            set {
+                this.textField = value;
             }
         }
     }
@@ -2235,7 +3108,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         private string valueField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
+        [System.Xml.Serialization.XmlAttributeAttribute()]
         public string Id {
             get {
                 return this.idField;
@@ -2275,117 +3148,6 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" +
         "")]
     public partial class BinarySecurityTokenType : EncodedString {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" +
-        "")]
-    public partial class ReferenceType {
-        
-        private string uRIField;
-        
-        private System.Xml.XmlQualifiedName valueTypeField;
-        
-        private System.Xml.XmlAttribute[] anyAttrField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
-        public string URI {
-            get {
-                return this.uRIField;
-            }
-            set {
-                this.uRIField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.Xml.XmlQualifiedName ValueType {
-            get {
-                return this.valueTypeField;
-            }
-            set {
-                this.valueTypeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
-        public System.Xml.XmlAttribute[] AnyAttr {
-            get {
-                return this.anyAttrField;
-            }
-            set {
-                this.anyAttrField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" +
-        "")]
-    public partial class SecurityTokenReferenceType {
-        
-        private System.Xml.XmlElement anyField;
-        
-        private ReferenceType[] referenceField;
-        
-        private string idField;
-        
-        private string usageField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAnyElementAttribute()]
-        public System.Xml.XmlElement Any {
-            get {
-                return this.anyField;
-            }
-            set {
-                this.anyField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Reference")]
-        public ReferenceType[] Reference {
-            get {
-                return this.referenceField;
-            }
-            set {
-                this.referenceField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
-        public string Usage {
-            get {
-                return this.usageField;
-            }
-            set {
-                this.usageField = value;
-            }
-        }
     }
     
     /// <remarks/>
@@ -2517,6 +3279,8 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         
         private BinarySecurityTokenType binarySecurityTokenField;
         
+        private AssertionType assertionField;
+        
         /// <remarks/>
         [System.Xml.Serialization.XmlAnyElementAttribute()]
         public System.Xml.XmlElement Any {
@@ -2547,6 +3311,581 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
             }
             set {
                 this.binarySecurityTokenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+        public AssertionType Assertion {
+            get {
+                return this.assertionField;
+            }
+            set {
+                this.assertionField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class AssertionType {
+        
+        private ConditionsType conditionsField;
+        
+        private object[] adviceField;
+        
+        private StatementAbstractType[] itemsField;
+        
+        private SignatureType signatureField;
+        
+        private string majorVersionField;
+        
+        private string minorVersionField;
+        
+        private string assertionIDField;
+        
+        private string issuerField;
+        
+        private System.DateTime issueInstantField;
+        
+        /// <remarks/>
+        public ConditionsType Conditions {
+            get {
+                return this.conditionsField;
+            }
+            set {
+                this.conditionsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("", typeof(System.Xml.XmlElement), IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Assertion", typeof(AssertionType), IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("AssertionIDReference", typeof(string), DataType="NCName", IsNullable=false)]
+        public object[] Advice {
+            get {
+                return this.adviceField;
+            }
+            set {
+                this.adviceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("AttributeStatement", typeof(AttributeStatementType))]
+        [System.Xml.Serialization.XmlElementAttribute("AuthenticationStatement", typeof(AuthenticationStatementType))]
+        [System.Xml.Serialization.XmlElementAttribute("AuthorizationDecisionStatement", typeof(AuthorizationDecisionStatementType))]
+        [System.Xml.Serialization.XmlElementAttribute("Statement", typeof(StatementAbstractType))]
+        [System.Xml.Serialization.XmlElementAttribute("SubjectStatement", typeof(SubjectStatementAbstractType))]
+        public StatementAbstractType[] Items {
+            get {
+                return this.itemsField;
+            }
+            set {
+                this.itemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
+        public SignatureType Signature {
+            get {
+                return this.signatureField;
+            }
+            set {
+                this.signatureField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="integer")]
+        public string MajorVersion {
+            get {
+                return this.majorVersionField;
+            }
+            set {
+                this.majorVersionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="integer")]
+        public string MinorVersion {
+            get {
+                return this.minorVersionField;
+            }
+            set {
+                this.minorVersionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="ID")]
+        public string AssertionID {
+            get {
+                return this.assertionIDField;
+            }
+            set {
+                this.assertionIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Issuer {
+            get {
+                return this.issuerField;
+            }
+            set {
+                this.issuerField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime IssueInstant {
+            get {
+                return this.issueInstantField;
+            }
+            set {
+                this.issueInstantField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class ConditionsType {
+        
+        private ConditionAbstractType[] itemsField;
+        
+        private System.DateTime notBeforeField;
+        
+        private bool notBeforeFieldSpecified;
+        
+        private System.DateTime notOnOrAfterField;
+        
+        private bool notOnOrAfterFieldSpecified;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("AudienceRestrictionCondition", typeof(AudienceRestrictionConditionType))]
+        [System.Xml.Serialization.XmlElementAttribute("Condition", typeof(ConditionAbstractType))]
+        [System.Xml.Serialization.XmlElementAttribute("DoNotCacheCondition", typeof(DoNotCacheConditionType))]
+        public ConditionAbstractType[] Items {
+            get {
+                return this.itemsField;
+            }
+            set {
+                this.itemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime NotBefore {
+            get {
+                return this.notBeforeField;
+            }
+            set {
+                this.notBeforeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool NotBeforeSpecified {
+            get {
+                return this.notBeforeFieldSpecified;
+            }
+            set {
+                this.notBeforeFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime NotOnOrAfter {
+            get {
+                return this.notOnOrAfterField;
+            }
+            set {
+                this.notOnOrAfterField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool NotOnOrAfterSpecified {
+            get {
+                return this.notOnOrAfterFieldSpecified;
+            }
+            set {
+                this.notOnOrAfterFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class AudienceRestrictionConditionType : ConditionAbstractType {
+        
+        private string[] audienceField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Audience", DataType="anyURI")]
+        public string[] Audience {
+            get {
+                return this.audienceField;
+            }
+            set {
+                this.audienceField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(DoNotCacheConditionType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AudienceRestrictionConditionType))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public abstract partial class ConditionAbstractType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class DoNotCacheConditionType : ConditionAbstractType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class AttributeStatementType : SubjectStatementAbstractType {
+        
+        private AttributeType[] attributeField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Attribute")]
+        public AttributeType[] Attribute {
+            get {
+                return this.attributeField;
+            }
+            set {
+                this.attributeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AttributeStatementType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthorizationDecisionStatementType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthenticationStatementType))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public abstract partial class SubjectStatementAbstractType : StatementAbstractType {
+        
+        private SubjectType subjectField;
+        
+        /// <remarks/>
+        public SubjectType Subject {
+            get {
+                return this.subjectField;
+            }
+            set {
+                this.subjectField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class SubjectType {
+        
+        private object[] itemsField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("NameIdentifier", typeof(NameIdentifierType))]
+        [System.Xml.Serialization.XmlElementAttribute("SubjectConfirmation", typeof(SubjectConfirmationType))]
+        public object[] Items {
+            get {
+                return this.itemsField;
+            }
+            set {
+                this.itemsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class NameIdentifierType {
+        
+        private string nameQualifierField;
+        
+        private string formatField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string NameQualifier {
+            get {
+                return this.nameQualifierField;
+            }
+            set {
+                this.nameQualifierField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
+        public string Format {
+            get {
+                return this.formatField;
+            }
+            set {
+                this.formatField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute()]
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class SubjectConfirmationType {
+        
+        private string[] confirmationMethodField;
+        
+        private object subjectConfirmationDataField;
+        
+        private KeyInfoType keyInfoField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("ConfirmationMethod", DataType="anyURI")]
+        public string[] ConfirmationMethod {
+            get {
+                return this.confirmationMethodField;
+            }
+            set {
+                this.confirmationMethodField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object SubjectConfirmationData {
+            get {
+                return this.subjectConfirmationDataField;
+            }
+            set {
+                this.subjectConfirmationDataField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
+        public KeyInfoType KeyInfo {
+            get {
+                return this.keyInfoField;
+            }
+            set {
+                this.keyInfoField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SubjectStatementAbstractType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AttributeStatementType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthorizationDecisionStatementType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthenticationStatementType))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public abstract partial class StatementAbstractType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class AuthorizationDecisionStatementType : SubjectStatementAbstractType {
+        
+        private ActionType[] actionField;
+        
+        private object[] evidenceField;
+        
+        private string resourceField;
+        
+        private DecisionType decisionField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Action")]
+        public ActionType[] Action {
+            get {
+                return this.actionField;
+            }
+            set {
+                this.actionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("Assertion", typeof(AssertionType), IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("AssertionIDReference", typeof(string), DataType="NCName", IsNullable=false)]
+        public object[] Evidence {
+            get {
+                return this.evidenceField;
+            }
+            set {
+                this.evidenceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
+        public string Resource {
+            get {
+                return this.resourceField;
+            }
+            set {
+                this.resourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public DecisionType Decision {
+            get {
+                return this.decisionField;
+            }
+            set {
+                this.decisionField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public enum DecisionType {
+        
+        /// <remarks/>
+        Permit,
+        
+        /// <remarks/>
+        Deny,
+        
+        /// <remarks/>
+        Indeterminate,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
+    public partial class AuthenticationStatementType : SubjectStatementAbstractType {
+        
+        private SubjectLocalityType subjectLocalityField;
+        
+        private AuthorityBindingType[] authorityBindingField;
+        
+        private string authenticationMethodField;
+        
+        private System.DateTime authenticationInstantField;
+        
+        /// <remarks/>
+        public SubjectLocalityType SubjectLocality {
+            get {
+                return this.subjectLocalityField;
+            }
+            set {
+                this.subjectLocalityField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("AuthorityBinding")]
+        public AuthorityBindingType[] AuthorityBinding {
+            get {
+                return this.authorityBindingField;
+            }
+            set {
+                this.authorityBindingField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
+        public string AuthenticationMethod {
+            get {
+                return this.authenticationMethodField;
+            }
+            set {
+                this.authenticationMethodField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime AuthenticationInstant {
+            get {
+                return this.authenticationInstantField;
+            }
+            set {
+                this.authenticationInstantField = value;
             }
         }
     }
@@ -2604,7 +3943,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         private string valueField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified, DataType="ID")]
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="ID")]
         public string Id {
             get {
                 return this.idField;
@@ -3028,7 +4367,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
+        [System.Xml.Serialization.XmlAttributeAttribute()]
         public string Id {
             get {
                 return this.idField;
@@ -3104,7 +4443,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
+        [System.Xml.Serialization.XmlAttributeAttribute()]
         public string Id {
             get {
                 return this.idField;
@@ -3113,570 +4452,6 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
                 this.idField = value;
             }
         }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class SubjectConfirmationType {
-        
-        private string[] confirmationMethodField;
-        
-        private object subjectConfirmationDataField;
-        
-        private KeyInfoType keyInfoField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("ConfirmationMethod", DataType="anyURI")]
-        public string[] ConfirmationMethod {
-            get {
-                return this.confirmationMethodField;
-            }
-            set {
-                this.confirmationMethodField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public object SubjectConfirmationData {
-            get {
-                return this.subjectConfirmationDataField;
-            }
-            set {
-                this.subjectConfirmationDataField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
-        public KeyInfoType KeyInfo {
-            get {
-                return this.keyInfoField;
-            }
-            set {
-                this.keyInfoField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class NameIdentifierType {
-        
-        private string nameQualifierField;
-        
-        private string formatField;
-        
-        private string valueField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string NameQualifier {
-            get {
-                return this.nameQualifierField;
-            }
-            set {
-                this.nameQualifierField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
-        public string Format {
-            get {
-                return this.formatField;
-            }
-            set {
-                this.formatField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlTextAttribute()]
-        public string Value {
-            get {
-                return this.valueField;
-            }
-            set {
-                this.valueField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class SubjectType {
-        
-        private object[] itemsField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("NameIdentifier", typeof(NameIdentifierType))]
-        [System.Xml.Serialization.XmlElementAttribute("SubjectConfirmation", typeof(SubjectConfirmationType))]
-        public object[] Items {
-            get {
-                return this.itemsField;
-            }
-            set {
-                this.itemsField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SubjectStatementAbstractType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AttributeStatementType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthorizationDecisionStatementType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthenticationStatementType))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public abstract partial class StatementAbstractType {
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AttributeStatementType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthorizationDecisionStatementType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AuthenticationStatementType))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public abstract partial class SubjectStatementAbstractType : StatementAbstractType {
-        
-        private SubjectType subjectField;
-        
-        /// <remarks/>
-        public SubjectType Subject {
-            get {
-                return this.subjectField;
-            }
-            set {
-                this.subjectField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class AttributeStatementType : SubjectStatementAbstractType {
-        
-        private AttributeType[] attributeField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Attribute")]
-        public AttributeType[] Attribute {
-            get {
-                return this.attributeField;
-            }
-            set {
-                this.attributeField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class AuthorizationDecisionStatementType : SubjectStatementAbstractType {
-        
-        private ActionType[] actionField;
-        
-        private object[] evidenceField;
-        
-        private string resourceField;
-        
-        private DecisionType decisionField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Action")]
-        public ActionType[] Action {
-            get {
-                return this.actionField;
-            }
-            set {
-                this.actionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Assertion", typeof(AssertionType), IsNullable=false)]
-        [System.Xml.Serialization.XmlArrayItemAttribute("AssertionIDReference", typeof(string), DataType="NCName", IsNullable=false)]
-        public object[] Evidence {
-            get {
-                return this.evidenceField;
-            }
-            set {
-                this.evidenceField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
-        public string Resource {
-            get {
-                return this.resourceField;
-            }
-            set {
-                this.resourceField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public DecisionType Decision {
-            get {
-                return this.decisionField;
-            }
-            set {
-                this.decisionField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class AssertionType {
-        
-        private ConditionsType conditionsField;
-        
-        private object[] adviceField;
-        
-        private StatementAbstractType[] itemsField;
-        
-        private SignatureType signatureField;
-        
-        private string majorVersionField;
-        
-        private string minorVersionField;
-        
-        private string assertionIDField;
-        
-        private string issuerField;
-        
-        private System.DateTime issueInstantField;
-        
-        /// <remarks/>
-        public ConditionsType Conditions {
-            get {
-                return this.conditionsField;
-            }
-            set {
-                this.conditionsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("", typeof(System.Xml.XmlElement), IsNullable=false)]
-        [System.Xml.Serialization.XmlArrayItemAttribute("Assertion", typeof(AssertionType), IsNullable=false)]
-        [System.Xml.Serialization.XmlArrayItemAttribute("AssertionIDReference", typeof(string), DataType="NCName", IsNullable=false)]
-        public object[] Advice {
-            get {
-                return this.adviceField;
-            }
-            set {
-                this.adviceField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("AttributeStatement", typeof(AttributeStatementType))]
-        [System.Xml.Serialization.XmlElementAttribute("AuthenticationStatement", typeof(AuthenticationStatementType))]
-        [System.Xml.Serialization.XmlElementAttribute("AuthorizationDecisionStatement", typeof(AuthorizationDecisionStatementType))]
-        [System.Xml.Serialization.XmlElementAttribute("Statement", typeof(StatementAbstractType))]
-        [System.Xml.Serialization.XmlElementAttribute("SubjectStatement", typeof(SubjectStatementAbstractType))]
-        public StatementAbstractType[] Items {
-            get {
-                return this.itemsField;
-            }
-            set {
-                this.itemsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Namespace="http://www.w3.org/2000/09/xmldsig#")]
-        public SignatureType Signature {
-            get {
-                return this.signatureField;
-            }
-            set {
-                this.signatureField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(DataType="integer")]
-        public string MajorVersion {
-            get {
-                return this.majorVersionField;
-            }
-            set {
-                this.majorVersionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(DataType="integer")]
-        public string MinorVersion {
-            get {
-                return this.minorVersionField;
-            }
-            set {
-                this.minorVersionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(DataType="ID")]
-        public string AssertionID {
-            get {
-                return this.assertionIDField;
-            }
-            set {
-                this.assertionIDField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string Issuer {
-            get {
-                return this.issuerField;
-            }
-            set {
-                this.issuerField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.DateTime IssueInstant {
-            get {
-                return this.issueInstantField;
-            }
-            set {
-                this.issueInstantField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class ConditionsType {
-        
-        private ConditionAbstractType[] itemsField;
-        
-        private System.DateTime notBeforeField;
-        
-        private bool notBeforeFieldSpecified;
-        
-        private System.DateTime notOnOrAfterField;
-        
-        private bool notOnOrAfterFieldSpecified;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("AudienceRestrictionCondition", typeof(AudienceRestrictionConditionType))]
-        [System.Xml.Serialization.XmlElementAttribute("Condition", typeof(ConditionAbstractType))]
-        [System.Xml.Serialization.XmlElementAttribute("DoNotCacheCondition", typeof(DoNotCacheConditionType))]
-        public ConditionAbstractType[] Items {
-            get {
-                return this.itemsField;
-            }
-            set {
-                this.itemsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.DateTime NotBefore {
-            get {
-                return this.notBeforeField;
-            }
-            set {
-                this.notBeforeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool NotBeforeSpecified {
-            get {
-                return this.notBeforeFieldSpecified;
-            }
-            set {
-                this.notBeforeFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.DateTime NotOnOrAfter {
-            get {
-                return this.notOnOrAfterField;
-            }
-            set {
-                this.notOnOrAfterField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool NotOnOrAfterSpecified {
-            get {
-                return this.notOnOrAfterFieldSpecified;
-            }
-            set {
-                this.notOnOrAfterFieldSpecified = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class AudienceRestrictionConditionType : ConditionAbstractType {
-        
-        private string[] audienceField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Audience", DataType="anyURI")]
-        public string[] Audience {
-            get {
-                return this.audienceField;
-            }
-            set {
-                this.audienceField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(DoNotCacheConditionType))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AudienceRestrictionConditionType))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public abstract partial class ConditionAbstractType {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class DoNotCacheConditionType : ConditionAbstractType {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public partial class AuthenticationStatementType : SubjectStatementAbstractType {
-        
-        private SubjectLocalityType subjectLocalityField;
-        
-        private AuthorityBindingType[] authorityBindingField;
-        
-        private string authenticationMethodField;
-        
-        private System.DateTime authenticationInstantField;
-        
-        /// <remarks/>
-        public SubjectLocalityType SubjectLocality {
-            get {
-                return this.subjectLocalityField;
-            }
-            set {
-                this.subjectLocalityField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("AuthorityBinding")]
-        public AuthorityBindingType[] AuthorityBinding {
-            get {
-                return this.authorityBindingField;
-            }
-            set {
-                this.authorityBindingField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(DataType="anyURI")]
-        public string AuthenticationMethod {
-            get {
-                return this.authenticationMethodField;
-            }
-            set {
-                this.authenticationMethodField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.DateTime AuthenticationInstant {
-            get {
-                return this.authenticationInstantField;
-            }
-            set {
-                this.authenticationInstantField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="urn:oasis:names:tc:SAML:1.0:assertion")]
-    public enum DecisionType {
-        
-        /// <remarks/>
-        Permit,
-        
-        /// <remarks/>
-        Deny,
-        
-        /// <remarks/>
-        Indeterminate,
     }
     
     /// <remarks/>
@@ -3730,7 +4505,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified, DataType="ID")]
+        [System.Xml.Serialization.XmlAttributeAttribute(DataType="ID")]
         public string Id {
             get {
                 return this.idField;
@@ -4014,9 +4789,102 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.w3.org/2005/08/addressing")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://www.w3.org/2005/08/addressing", IsNullable=false)]
-    public partial class To : AttributedURIType {
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.w3.org/2005/08/addressing")]
+    [System.Xml.Serialization.XmlRootAttribute("RelatesTo", Namespace="http://www.w3.org/2005/08/addressing", IsNullable=false)]
+    public partial class RelatesToType : System.Web.Services.Protocols.SoapHeader {
+        
+        private string relationshipTypeField;
+        
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        private string valueField;
+        
+        public RelatesToType() {
+            this.relationshipTypeField = "http://www.w3.org/2005/08/addressing/reply";
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        [System.ComponentModel.DefaultValueAttribute("http://www.w3.org/2005/08/addressing/reply")]
+        public string RelationshipType {
+            get {
+                return this.relationshipTypeField;
+            }
+            set {
+                this.relationshipTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute(DataType="anyURI")]
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing")]
+    [System.Xml.Serialization.XmlRootAttribute("RelatesTo", Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing", IsNullable=false)]
+    public partial class Relationship : System.Web.Services.Protocols.SoapHeader {
+        
+        private System.Xml.XmlQualifiedName relationshipTypeField;
+        
+        private System.Xml.XmlAttribute[] anyAttrField;
+        
+        private string valueField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.Xml.XmlQualifiedName RelationshipType {
+            get {
+                return this.relationshipTypeField;
+            }
+            set {
+                this.relationshipTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAnyAttributeAttribute()]
+        public System.Xml.XmlAttribute[] AnyAttr {
+            get {
+                return this.anyAttrField;
+            }
+            set {
+                this.anyAttrField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlTextAttribute(DataType="anyURI")]
+        public string Value {
+            get {
+                return this.valueField;
+            }
+            set {
+                this.valueField = value;
+            }
+        }
     }
     
     /// <remarks/>
@@ -4098,7 +4966,7 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute(Form=System.Xml.Schema.XmlSchemaForm.Qualified)]
+        [System.Xml.Serialization.XmlAttributeAttribute()]
         public string Id {
             get {
                 return this.idField;
@@ -4131,6 +4999,32 @@ namespace MSNPSharp.MSNWS.MSNSecurityTokenService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((RequestSecurityTokenResponseType[])(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    public delegate void RequestSecurityTokenCompletedEventHandler(object sender, RequestSecurityTokenCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class RequestSecurityTokenCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal RequestSecurityTokenCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public RequestSecurityTokenResponseType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((RequestSecurityTokenResponseType)(this.results[0]));
             }
         }
     }

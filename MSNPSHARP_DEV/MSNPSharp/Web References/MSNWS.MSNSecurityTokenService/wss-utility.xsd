@@ -23,7 +23,7 @@ This global attribute supports annotating arbitrary elements with an ID.
 Convenience attribute group used to simplify this schema.
           </xsd:documentation>
     </xsd:annotation>
-    <xsd:attribute ref="wsu:Id" use="optional" />
+    <xsd:attribute name="Id" type="xsd:ID" use="optional" />
     <xsd:anyAttribute namespace="##other" processContents="lax" />
   </xsd:attributeGroup>
   <xsd:complexType name="AttributedDateTime">

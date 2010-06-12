@@ -53,6 +53,7 @@
     <Compile Include="ContactList.cs" />
     <Compile Include="ContactManager.cs" />
     <Compile Include="Conversation.cs" />
+    <Compile Include="ConversationID.cs" />
     <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="EventArgs.cs" />
     <Compile Include="Core\Factory.cs" />
     <Compile Include="Core\IMessageHandler.cs" />
+    <Compile Include="Framework.cs" />
     <Compile Include="IO\DeltasList.cs" />
     <Compile Include="IO\IO.cs" />
     <Compile Include="IO\MCLSerializer.cs" />
@@ -137,6 +139,7 @@
     <Compile Include="Core\SBMessagePool.cs" />
     <Compile Include="SBMessageProcessor.cs" />
     <Compile Include="Core\MimeMessage.cs" />
+    <Compile Include="SecurityTokenServiceWrapper.cs" />
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
     <Compile Include="StorageService.cs" />
@@ -401,9 +404,6 @@
     <None Include="Web References\MSNWS.MSNABSharingService\ManageWLConnectionResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
-    <None Include="Web References\MSNWS.MSNSecurityTokenService\soap-env.xsd">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Web References\MSNWS.MSNStorageService\CreateDocumentResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
@@ -416,13 +416,25 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\MSNPSharp_logo_128.png" />
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\addressing-04-08.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\RequestSecurityTokenResponseCollectionType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\RequestSecurityTokenResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\soap-env-03-05.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\sstc-saml-schema-assertion-1.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-secureconversation.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\xml.xsd">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
