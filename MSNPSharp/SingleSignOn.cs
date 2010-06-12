@@ -1,6 +1,6 @@
-#region Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+#region Copyright (c) 2002-2010, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
 /*
-Copyright (c) 2002-2009, Bas Geertsema, Xih Solutions
+Copyright (c) 2002-2010, Bas Geertsema, Xih Solutions
 (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
@@ -48,6 +48,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
     using MSNPSharp.IO;
+    using System.Web.Services.Protocols;
 
     [Flags]
     public enum SSOTicketType
@@ -494,12 +495,12 @@ namespace MSNPSharp
 
     public class SingleSignOn
     {
-        private string user;
-        private string pass;
-        private string policy;
-        private int authId;
+        private string user = string.Empty;
+        private string pass = string.Empty;
+        private string policy = string.Empty;
+        private int authId = 0;
         private List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
-        private WebProxy webProxy;
+        private WebProxy webProxy = null;
 
         public WebProxy WebProxy
         {
@@ -591,48 +592,12 @@ namespace MSNPSharp
 
         public void Authenticate(MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
-            SecurityTokenService securService = new SecurityTokenService();
-            // securService.EnableDecompression = true; // Fails on Mono.
-            securService.Timeout = 60000;
-            securService.Proxy = webProxy;
-            securService.AuthInfo = new AuthInfoType();
-            securService.AuthInfo.Id = "PPAuthInfo";
-            securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
-            securService.AuthInfo.BinaryVersion = "5";
-            securService.AuthInfo.Cookies = string.Empty;
-            securService.AuthInfo.UIVersion = "1";
-            securService.AuthInfo.RequestParams = "AQAAAAIAAABsYwQAAAAyMDUy";
+            SecurityTokenService securService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
+            Authenticate(securService, msnticket, async, onSuccess, onError);
+        }
 
-            securService.Security = new SecurityHeaderType();
-            securService.Security.UsernameToken = new UsernameTokenType();
-            securService.Security.UsernameToken.Id = "user";
-            securService.Security.UsernameToken.Username = new AttributedString();
-            securService.Security.UsernameToken.Username.Value = user;
-            securService.Security.UsernameToken.Password = new PasswordString();
-            securService.Security.UsernameToken.Password.Value = pass;
-
-            DateTime now = DateTime.Now.ToUniversalTime();
-            DateTime begin = (new DateTime(1970, 1, 1));   //Already UTC time, no need to convert
-            TimeSpan span = now - begin;
-
-            securService.Security.Timestamp = new TimestampType();
-            securService.Security.Timestamp.Id = "Timestamp";
-            securService.Security.Timestamp.Created = new AttributedDateTime();
-            securService.Security.Timestamp.Created.Value = XmlConvert.ToString(now, "yyyy-MM-ddTHH:mm:ssZ");
-            securService.Security.Timestamp.Expires = new AttributedDateTime();
-            securService.Security.Timestamp.Expires.Value = XmlConvert.ToString(now.AddMinutes(Settings.MSNTicketLifeTime), "yyyy-MM-ddTHH:mm:ssZ");
-
-            securService.MessageID = new AttributedURIType();
-            securService.MessageID.Value = ((int)span.TotalSeconds).ToString();
-
-            securService.ActionValue = new Action();
-            securService.ActionValue.MustUnderstand = true;
-            securService.ActionValue.Value = @"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue";
-
-            securService.ToValue = new To();
-            securService.ToValue.MustUnderstand = true;
-            securService.ToValue.Value = @"HTTPS://login.live.com:443//RST2.srf";  //There are two "/" here
-
+        public void Authenticate(SecurityTokenService securService, MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
+        {
             if (user.Split('@').Length > 1)
             {
                 if (user.Split('@')[1].ToLower(CultureInfo.InvariantCulture) == "msn.com")
@@ -655,8 +620,11 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled)
                     {
+                        
                         if (e.Error != null)
                         {
+                            if (ProcessError(securService, e.Error as SoapException, msnticket, async, onSuccess, onError)) return;
+
                             MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);
                             if (securService.pp != null)
                                 sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
@@ -692,6 +660,8 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
+                    if (ProcessError(securService, ex as SoapException, msnticket, async, onSuccess, onError)) return;
+
                     MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
                     if (securService.pp != null)
                         sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
@@ -701,6 +671,184 @@ namespace MSNPSharp
 
                 GetTickets(result, securService, msnticket);
             }
+        }
+
+        private bool ProcessError(SecurityTokenService secureService, SoapException exception, MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
+        {
+            string errFedDirectLogin = @"Direct login to WLID is not allowed for this federated namespace";
+            if (exception == null) return false;
+            if (secureService.pp == null) return false;
+
+            uint errorCode = uint.Parse(secureService.pp.reqstatus.Remove(0, "0x".Length), NumberStyles.HexNumber);
+
+            if (errorCode == 0x800488ee)
+            {
+                if (exception.Detail.InnerXml.IndexOf(errFedDirectLogin) != -1)
+                {
+                    string fedLoginURL = string.Empty;
+                    string fedAuthURL = string.Empty;
+                    string fedBrandName = string.Empty;
+
+                    foreach (extPropertyType extProperty in secureService.pp.extProperties)
+                    {
+                        switch (extProperty.Name)
+                        {
+                            case "STSAuthURL":    //STS means Security Token Service.
+                                fedLoginURL = extProperty.Value;
+                                break;
+                            case "AuthURL":
+                                fedAuthURL = extProperty.Value;
+                                break;
+                            case "AllowFedUsersWLIDSignIn":   //Is it allow to login by MSN ? Not all feduser can log in with a WLM client.
+                                if (!bool.Parse(extProperty.Value))
+                                    return false;
+                                break;
+                            case "FederationBrandName":
+                                fedBrandName = extProperty.Value;
+                                break;
+                            case "IsFederatedNS":
+                                if (!bool.Parse(extProperty.Value))
+                                    return false;
+                                break;
+                        }
+                    }
+
+                    if (fedLoginURL == string.Empty) return false;
+
+                    Uri fedLoginURI = new Uri(fedLoginURL);
+                    string strFedLoginURI = fedLoginURI.Scheme.ToUpperInvariant() + "://" + fedLoginURI.Host + (fedLoginURI.Scheme.ToLowerInvariant() == "https" ? ":443" : string.Empty) + "/" + fedLoginURI.PathAndQuery;
+                    SecurityTokenService fedSecureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", strFedLoginURI);
+                    fedSecureService.Url = fedLoginURL;
+                    
+                    RequestSecurityTokenType token = new RequestSecurityTokenType();
+                    token.Id = "RST0";
+                    token.RequestType = RequestTypeOpenEnum.httpschemasxmlsoaporgws200502trustIssue;
+
+                    AppliesTo appliesTo = new AppliesTo();
+                    appliesTo.EndpointReference = new EndpointReferenceType();
+                    appliesTo.EndpointReference.Address = new AttributedURIType();
+                    appliesTo.EndpointReference.Address.Value = strFedLoginURI.Remove(0, @"HTTPS://".Length);
+
+                    token.AppliesTo = appliesTo;
+
+                    RequestSecurityTokenResponseType response = null;
+
+                    if (async)
+                    {
+                        //Async request.
+                        fedSecureService.RequestSecurityTokenCompleted += delegate(object sender, RequestSecurityTokenCompletedEventArgs e)
+                        {
+                            if (!e.Cancelled)
+                            {
+                                if (e.Error != null)
+                                {
+                                    MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);
+
+                                    if (onError == null)
+                                    {
+                                        throw sexp;
+                                    }
+                                    else
+                                    {
+                                        onError(this, new ExceptionEventArgs(sexp));
+                                    }
+
+                                    return;
+                                }
+
+                                response = e.Result;
+                                if (response.RequestedSecurityToken == null) return;
+                                if (response.RequestedSecurityToken.Assertion == null) return;
+
+                                AssertionType assertion = response.RequestedSecurityToken.Assertion;
+                                secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
+                                secureService.Security.Assertion = assertion;
+
+                                secureService.Security.Timestamp.Created = response.Lifetime.Created;
+                                secureService.Security.Timestamp.Expires = response.Lifetime.Expires;
+
+                                Authenticate(secureService, msnticket, async, onSuccess, onError);
+                            }
+                        };
+
+                        fedSecureService.RequestSecurityTokenAsync(token, new object());
+                        return true;
+                    }
+                    else
+                    {
+                        //Sync request.
+                        try
+                        {
+                            response = fedSecureService.RequestSecurityToken(token);
+                        }
+                        catch (Exception ex)
+                        {
+                            MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
+
+                            throw sexp;
+                        }
+
+                        if (response.RequestedSecurityToken == null) return false;
+                        if (response.RequestedSecurityToken.Assertion == null) return false;
+
+                        AssertionType assertion = response.RequestedSecurityToken.Assertion;
+                        secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
+                        secureService.Security.Assertion = assertion;
+                        Authenticate(secureService, msnticket, async, onSuccess, onError);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+
+        }
+
+        private SecurityTokenService CreateSecurityTokenService(string actionValue, string toValue)
+        {
+            SecurityTokenService securService = new SecurityTokenServiceWrapper();
+            // securService.EnableDecompression = true; // Fails on Mono.
+            securService.Timeout = 60000;
+            securService.Proxy = webProxy;
+            securService.AuthInfo = new AuthInfoType();
+            securService.AuthInfo.Id = "PPAuthInfo";
+            securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
+            securService.AuthInfo.BinaryVersion = "5";
+            securService.AuthInfo.Cookies = string.Empty;
+            securService.AuthInfo.UIVersion = "1";
+            securService.AuthInfo.RequestParams = "AQAAAAIAAABsYwQAAAAyMDUy";
+
+            securService.Security = new SecurityHeaderType();
+            securService.Security.UsernameToken = new UsernameTokenType();
+            securService.Security.UsernameToken.Id = "user";
+            securService.Security.UsernameToken.Username = new AttributedString();
+            securService.Security.UsernameToken.Username.Value = user;
+            securService.Security.UsernameToken.Password = new PasswordString();
+            securService.Security.UsernameToken.Password.Value = pass;
+
+            DateTime now = DateTime.Now.ToUniversalTime();
+            DateTime begin = (new DateTime(1970, 1, 1));   //Already UTC time, no need to convert
+            TimeSpan span = now - begin;
+
+            securService.Security.Timestamp = new TimestampType();
+            securService.Security.Timestamp.Id = "Timestamp";
+            securService.Security.Timestamp.Created = new AttributedDateTime();
+            securService.Security.Timestamp.Created.Value = XmlConvert.ToString(now, "yyyy-MM-ddTHH:mm:ssZ");
+            securService.Security.Timestamp.Expires = new AttributedDateTime();
+            securService.Security.Timestamp.Expires.Value = XmlConvert.ToString(now.AddMinutes(Settings.MSNTicketLifeTime), "yyyy-MM-ddTHH:mm:ssZ");
+
+            securService.MessageID = new AttributedURIType();
+            securService.MessageID.Value = ((int)span.TotalSeconds).ToString();
+
+            securService.ActionValue = new Action();
+            securService.ActionValue.MustUnderstand = true;
+            securService.ActionValue.Value = actionValue;
+
+            securService.ToValue = new To();
+            securService.ToValue.MustUnderstand = true;
+            securService.ToValue.Value = toValue;
+
+            return securService;
         }
 
         private void GetTickets(RequestSecurityTokenResponseType[] result, SecurityTokenService securService, MSNTicket msnticket)
