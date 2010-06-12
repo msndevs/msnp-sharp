@@ -12,8 +12,8 @@
 			<xsd:any namespace="##other" processContents="lax" minOccurs="0"/>
 			<xsd:element ref="wsse:Reference" minOccurs="0"/>
 		</xsd:sequence>
-		<xsd:attribute ref="wsse:Id"/>
-		<xsd:attribute ref="wsse:Usage"/>
+		<xsd:attribute name="Id" type="xsd:string"/>
+		<xsd:attribute name="Usage" type="xsd:string"/>
 	</xsd:complexType>
 	<xsd:element name="Security" type="wsse:SecurityHeaderType"/>
 	<xsd:complexType name="SecurityHeaderType">
@@ -34,7 +34,7 @@
 	<xsd:complexType name="AttributedString">
 		<xsd:simpleContent>
 			<xsd:extension base="xsd:string">
-				<xsd:attribute ref="wsse:Id"/>
+				<xsd:attribute name="Id" type="xsd:string"/>
 			</xsd:extension>
 		</xsd:simpleContent>
 	</xsd:complexType>
