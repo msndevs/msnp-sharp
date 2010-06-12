@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wst="http://schemas.xmlsoap.org/ws/2005/02/trust" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" elementFormDefault="qualified" targetNamespace="http://schemas.xmlsoap.org/ws/2005/02/trust" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wst="http://schemas.xmlsoap.org/ws/2005/02/trust" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" elementFormDefault="qualified" targetNamespace="http://schemas.xmlsoap.org/ws/2005/02/trust" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:import schemaLocation="ws-secext.xsd" namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" />
   <xs:import schemaLocation="wss-utility.xsd" namespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" />
   <xs:import schemaLocation="ws-policy.xsd" namespace="http://schemas.xmlsoap.org/ws/2004/09/policy" />
   <xs:import schemaLocation="xmldsig-core-schema.xsd" namespace="http://www.w3.org/2000/09/xmldsig#" />
+  <xs:import schemaLocation="sstc-saml-schema-assertion-1.1-cs.xsd" namespace="urn:oasis:names:tc:SAML:1.0:assertion" />
   <xs:element name="RequestSecurityToken" type="wst:RequestSecurityTokenType" />
   <xs:complexType name="RequestSecurityTokenType">
     <xs:sequence>
@@ -13,7 +14,7 @@
       <xs:element minOccurs="0" ref="wsp:PolicyReference" />
       <xs:any minOccurs="0" maxOccurs="unbounded" namespace="" processContents="lax" />
     </xs:sequence>
-    <xs:attribute ref="wst:Id" />
+    <xs:attribute name="Id" type="xs:string" />
   </xs:complexType>
   <xs:element name="TokenType" type="xs:anyURI" />
   <xs:element name="RequestType" type="wst:RequestTypeOpenEnum" />
@@ -89,6 +90,7 @@
       <xs:any namespace="##any" processContents="lax" />
       <xs:element minOccurs="0" name="EncryptedData" type="wst:EncryptedDataType" />
       <xs:element minOccurs="0" ref="wsse:BinarySecurityToken" />
+      <xs:element minOccurs="0" ref="saml:Assertion" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="Lifetime" type="wst:LifetimeType" />

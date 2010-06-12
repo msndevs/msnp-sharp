@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:psf="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault" elementFormDefault="qualified" targetNamespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:env="http://www.w3.org/2003/05/soap-envelope" xmlns:psf="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault" elementFormDefault="qualified" targetNamespace="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="pp" type="psf:ppHeaderType">
     <xs:annotation>
       <xs:documentation>Comment describing your root element</xs:documentation>
@@ -104,4 +104,16 @@
   </xs:complexType>
   <xs:element name="extProperties" type="psf:extPropertyCollectionType" />
   <xs:element name="response" />
+  <xs:complexType name="internalerrorType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="code" type="xs:unsignedInt" />
+      <xs:element minOccurs="0" name="text" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="errorType">
+    <xs:sequence>
+      <xs:element name="value" type="xs:unsignedInt" />
+      <xs:element name="internalerror" type="psf:internalerrorType" />
+    </xs:sequence>
+  </xs:complexType>
 </xs:schema>

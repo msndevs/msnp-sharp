@@ -45,6 +45,7 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
+    using System.Globalization;
 
     #region EventArgs
 
@@ -630,16 +631,20 @@ namespace MSNPSharp
             try
             {
                 TextMessage txtmsgClone = msg.Clone() as TextMessage;
-                MimeMessage msgMessage = new MimeMessage();
-                msgMessage.InnerMessage = txtmsgClone;
-                msgMessage.MimeHeader["Dest-Agent"] = "client";
+                MimeMessage mimeMessage = new MimeMessage();
+
+                mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
+                mimeMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = msg.GetStyleString();
+
+                mimeMessage.InnerMessage = txtmsgClone;
+                mimeMessage.MimeHeader["Dest-Agent"] = "client";
 
                 NSMessage nsMessage = new NSMessage("UUM",
                     new string[] { receiver.Mail, 
                         ((int)receiver.ClientType).ToString(), 
-                        "1" });
+                        ((int)NetworkMessageType.Text).ToString(CultureInfo.InvariantCulture) });
 
-                nsMessage.InnerMessage = msgMessage;
+                nsMessage.InnerMessage = mimeMessage;
 
                 NSMessageHandler.MessageProcessor.SendMessage(nsMessage);
             }

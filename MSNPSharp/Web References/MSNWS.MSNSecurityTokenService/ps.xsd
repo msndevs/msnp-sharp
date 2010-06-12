@@ -6,7 +6,7 @@
     <xs:sequence>
       <xs:element maxOccurs="unbounded" ref="wst:RequestSecurityToken" />
     </xs:sequence>
-    <xs:attribute ref="ps:Id" />
+    <xs:attribute name="Id" type="xs:string" />
   </xs:complexType>
   <xs:element name="AuthInfo" type="ps:AuthInfoType" />
   <xs:complexType name="AuthInfoType">
@@ -17,7 +17,6 @@
       <xs:element name="Cookies" type="xs:string" />
       <xs:element default="AQAAAAIAAABsYwQAAAAyMDUy" name="RequestParams" type="xs:string" />
     </xs:sequence>
-    <xs:attribute ref="ps:Id" />
+    <xs:attribute name="Id" type="xs:string" />
   </xs:complexType>
-  <xs:attribute name="Id" type="xs:string" />
 </xs:schema>
