@@ -258,51 +258,10 @@ namespace MSNPSharp.Framework
 
     }
 
-    internal static class XmlSpecialNamespaces
-    {
-        private static Dictionary<string, string> prefixNamespacePairs = new Dictionary<string, string>();
-        private static bool initialized = false;
-
-        public static string GetPrefix(string ns)
-        {
-            if (ns == null || ns.Length == 0)
-            {
-                return string.Empty;
-            }
-
-            if (!initialized)
-            {
-                prefixNamespacePairs.Add(@"http://schemas.microsoft.com/Passport/SoapServices/PPCRL", @"ps");
-                prefixNamespacePairs.Add(@"http://schemas.microsoft.com/Passport/SoapServices/SOAPFault", @"psf");
-
-                prefixNamespacePairs.Add(@"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", @"wsse");
-                prefixNamespacePairs.Add(@"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", @"wsu");
-
-                prefixNamespacePairs.Add(@"http://schemas.xmlsoap.org/ws/2005/02/trust", @"wst");
-                prefixNamespacePairs.Add(@"http://www.w3.org/2005/08/addressing", @"wsa");
-                prefixNamespacePairs.Add(@"http://schemas.xmlsoap.org/ws/2004/09/policy", @"wsp");
-                prefixNamespacePairs.Add(@"http://schemas.xmlsoap.org/ws/2005/02/sc", @"wsc");
-                prefixNamespacePairs.Add(@"http://schemas.xmlsoap.org/ws/2004/08/addressing", @"a");
-
-                prefixNamespacePairs.Add(@"http://www.w3.org/2001/04/xmlenc#", @"xenc");
-                prefixNamespacePairs.Add(@"http://www.w3.org/2000/09/xmldsig#", @"ds");
-
-                prefixNamespacePairs.Add(@"urn:oasis:names:tc:SAML:1.0:assertion", @"saml");
-                prefixNamespacePairs.Add(@"urn:oasis:names:tc:SAML:1.0:protocol", @"samlp");
-
-                initialized = true;
-            }
-
-            if (prefixNamespacePairs.ContainsKey(ns))
-                return prefixNamespacePairs[ns];
-            return string.Empty;
-        }
-    }
-
 
     public class XmlSpecialNSPrefixTextWriter : XmlTextWriter
     {
-        private enum WriteState
+        private enum XmlWriteState
         {
             None,
             EvelopeWritten,
@@ -310,7 +269,7 @@ namespace MSNPSharp.Framework
             BeginWriteBody
         }
 
-        private WriteState state = WriteState.None;
+        private XmlWriteState state = XmlWriteState.None;
 
         public XmlSpecialNSPrefixTextWriter(TextWriter w)
             : base(w)
@@ -327,45 +286,15 @@ namespace MSNPSharp.Framework
         {
         }
 
-        //public override string LookupPrefix(string ns)
-        //{
-        //    string pref = XmlSpecialNamespaces.GetPrefix(ns);
-
-        //    if (pref.Length == 0)
-        //        return base.LookupPrefix(ns);
-        //    return pref;
-        //}
-
-        //public override void WriteStartAttribute(string prefix, string localName, string ns)
-        //{
-        //    string pref = XmlSpecialNamespaces.GetPrefix(ns);
-
-        //    if (pref.Length > 0)
-        //    {
-        //        if (prefix == "xmlns")
-        //        {
-        //            localName = pref;
-        //        }
-        //        else
-        //        {
-        //            prefix = pref;
-        //        }
-        //    }
-
-        //    Trace.WriteLineIf(MSNPSharp.Settings.TraceSwitch.TraceVerbose, (prefix == null ? "" : pref) + ":" + (localName == null ? "" : localName) + " = " + (ns == null ? "" : ns));
-
-        //    base.WriteStartAttribute(prefix, localName, ns);
-        //}
-
         public override void WriteStartElement(string prefix, string localName, string ns)
         {
             base.WriteStartElement(prefix, localName, ns);
 
-            if (localName == "Envelope" && state == WriteState.None)
+            if (localName == "Envelope" && state == XmlWriteState.None)
             {
-                state = WriteState.EvelopeWritten;
+                state = XmlWriteState.EvelopeWritten;
 
-                if (state == WriteState.EvelopeWritten)
+                if (state == XmlWriteState.EvelopeWritten)
                 {
                     //WriteAttributeString("xmlns", "ps", null, @"http://schemas.microsoft.com/Passport/SoapServices/PPCRL");
                     //WriteAttributeString("xmlns", "psf", null, @"http://schemas.microsoft.com/Passport/SoapServices/SOAPFault");
@@ -379,18 +308,18 @@ namespace MSNPSharp.Framework
 
                     WriteAttributeString("xmlns", "saml", null, @"urn:oasis:names:tc:SAML:1.0:assertion");
 
-                    state = WriteState.SpecialNSWritten;
+                    state = XmlWriteState.SpecialNSWritten;
                 }
             }
 
-            if (localName == "Assertion" && state == WriteState.SpecialNSWritten)
+            if (localName == "Assertion" && state == XmlWriteState.SpecialNSWritten)
             {
                 WriteAttributeString("xmlns", "saml", null, @"urn:oasis:names:tc:SAML:1.0:assertion");
             }
 
-            if (localName == "Body" && state != WriteState.BeginWriteBody)
+            if (localName == "Body" && state != XmlWriteState.BeginWriteBody)
             {
-                state = WriteState.BeginWriteBody;
+                state = XmlWriteState.BeginWriteBody;
             }
         }
     }
