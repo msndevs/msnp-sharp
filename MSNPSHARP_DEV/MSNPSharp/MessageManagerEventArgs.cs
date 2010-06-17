@@ -34,12 +34,12 @@ namespace MSNPSharp.Utilities
 
     public class MessageArrivedEventArgs : EventArgs
     {
-        private Guid conversationID = Guid.Empty;
+        private ConversationID conversationID = null;
 
         /// <summary>
         /// The identifier of a <see cref="Conversation"/> in <see cref="MessageManager"/>.
         /// </summary>
-        public Guid ConversationID
+        public ConversationID ConversationID
         {
             get { return conversationID; }
         }
@@ -65,7 +65,7 @@ namespace MSNPSharp.Utilities
         }
 
 
-        public MessageArrivedEventArgs(Guid conversationId, Contact sender, MessageType type)
+        public MessageArrivedEventArgs(ConversationID conversationId, Contact sender, MessageType type)
         {
             conversationID = conversationId;
             this.sender = sender;
@@ -86,7 +86,7 @@ namespace MSNPSharp.Utilities
         }
 
 
-        public TextMessageArrivedEventArgs(Guid conversationId, Contact sender, TextMessage textMessage)
+        public TextMessageArrivedEventArgs(ConversationID conversationId, Contact sender, TextMessage textMessage)
             :base(conversationId,sender, MessageType.TextMessage)
         {
             this.textMessage = textMessage;
@@ -105,7 +105,7 @@ namespace MSNPSharp.Utilities
             get { return emoticon; }
         }
 
-        public EmoticonArrivedEventArgs(Guid conversationId, Contact sender, Emoticon emoticon)
+        public EmoticonArrivedEventArgs(ConversationID conversationId, Contact sender, Emoticon emoticon)
             : base(conversationId, sender, MessageType.Emoticon)
         {
             this.emoticon = emoticon;

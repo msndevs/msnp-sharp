@@ -62,4 +62,24 @@ namespace MSNPSharp
 
         #endregion
     }
+
+    namespace Utilities
+    {
+        public class ConversationIDComparer : IEqualityComparer<ConversationID>
+        {
+            #region IEqualityComparer<ConversationID> Members
+
+            public bool Equals(ConversationID x, ConversationID y)
+            {
+                return x == y;
+            }
+
+            public int GetHashCode(ConversationID obj)
+            {
+                return obj.GetHashCode();
+            }
+
+            #endregion
+        }
+    }
 }

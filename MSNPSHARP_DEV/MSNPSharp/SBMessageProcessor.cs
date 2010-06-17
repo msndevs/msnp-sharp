@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Text;
 using System.Collections;
 using System.Diagnostics;
 
@@ -38,7 +39,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using System.Text;
+
 
     public class SBMessageProcessor : SocketMessageProcessor
     {
