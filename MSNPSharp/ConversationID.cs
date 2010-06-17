@@ -20,6 +20,14 @@ namespace MSNPSharp.Utilities
             get { return remoteOwner; }
         }
 
+        internal Conversation Conversation
+        {
+            get
+            {
+                return conversation;
+            }
+        }
+
         private object syncObject = new object();
 
         internal void SetConversation(Conversation conv)
@@ -27,9 +35,11 @@ namespace MSNPSharp.Utilities
             conversation = conv;
             if (conversation != null)
             {
-                if (conversation.RemoteOwner == null)
+                if (conversation.RemoteOwner == null && RemoteOwner == null)
                     throw new ArgumentException("Invailid conversation.");
-                remoteOwner = conversation.RemoteOwner;
+
+                if (conversation.RemoteOwner != null)
+                    remoteOwner = conversation.RemoteOwner;
             }
         }
 
@@ -89,6 +99,12 @@ namespace MSNPSharp.Utilities
             hashCode = hashString.GetHashCode();
         }
 
+        /// <summary>
+        /// Whether the two conversation are logically equals.
+        /// </summary>
+        /// <param name="id1"></param>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public static bool operator ==(ConversationID id1, object other)
         {
             if (((object)id1 == null) && other == null)
@@ -140,9 +156,12 @@ namespace MSNPSharp.Utilities
         {
             string remoteOwnerString = (remoteOwner == null ? "null" : remoteOwner.Mail.ToLowerInvariant());
             string conversationString = string.Empty;
-            if (conversation.IsMultipleUserConversation)
+            if (conversation != null)
             {
-                conversationString = conversation.Switchboard.SessionHash;
+                if ((conversation.Type & ConversationType.MutipleUsers) > 0)
+                {
+                    conversationString = conversation.Switchboard.SessionHash;
+                }
             }
             return string.Join(";", new string[] { NetworkType.ToString().ToLowerInvariant(), remoteOwnerString, conversationString });
         }

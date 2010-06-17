@@ -98,8 +98,7 @@ namespace MSNPSharp
 
         private object syncObject = new object();
 
-        [NonSerialized]
-        private NSMessageHandler nsMessageHandler;
+        private NSMessageHandler nsMessageHandler = null;
 
         #endregion
 

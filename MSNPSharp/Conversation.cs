@@ -288,7 +288,7 @@ namespace MSNPSharp
             {
                 if ((bool)param == false)
                 {
-                    Switchboard.Close(false);
+                    Switchboard.Close();
                 }
                 
             }
@@ -331,7 +331,7 @@ namespace MSNPSharp
             return false;
         }
 
-        private void SetNextRemoteOwner()
+        private bool SetNextRemoteOwner()
         {
             lock (_syncObject)
             {
@@ -344,9 +344,12 @@ namespace MSNPSharp
                         if (!contact.IsSibling(oldOwner))
                         {
                             _firstContact = contact;
+                            return true;
                         }
                     }
                 }
+
+                return false;
             }
         }
 
@@ -512,11 +515,11 @@ namespace MSNPSharp
 
             if (e.Contact.IsSibling(RemoteOwner))
             {
-                _firstContact = null;
-
                 Contact oldOwner = RemoteOwner;
-                SetNextRemoteOwner();
-                OnRemoteOwnerChanged(new ConversationRemoteOwnerChangedEventArgs(oldOwner, RemoteOwner));
+                if (SetNextRemoteOwner())
+                {
+                    OnRemoteOwnerChanged(new ConversationRemoteOwnerChangedEventArgs(oldOwner, RemoteOwner));
+                }
             }
         }
 
@@ -865,78 +868,6 @@ namespace MSNPSharp
         public Contact RemoteOwner
         {
             get { return _firstContact; }
-        }
-
-        public bool IsMultipleUserConversation
-        {
-            get
-            {
-                Contact lastContact = null;
-                if (RemoteOwner == null)
-                {
-                    lock (_pendingInviteContacts)
-                    {
-                        foreach (Contact contact in _pendingInviteContacts)
-                        {
-                            if (!contact.IsSibling(Messenger.Nameserver.ContactList.Owner))
-                            {
-                                if (lastContact == null)
-                                {
-                                    lastContact = contact;
-                                    continue;
-                                }
-
-                                if (!lastContact.IsSibling(contact))
-                                    return true;
-                            }
-                        }
-
-                        return false;
-                    }
-                }
-                else
-                {
-                    //Check the pending contacts.
-                    lock (_pendingInviteContacts)
-                    {
-                        foreach (Contact contact in _pendingInviteContacts)
-                        {
-                            if (contact.IsSibling(Messenger.Nameserver.ContactList.Owner) == false && RemoteOwner.IsSibling(contact) == false)
-                            {
-                                if (lastContact == null)
-                                {
-                                    lastContact = contact;
-                                    continue;
-                                }
-
-                                if (!lastContact.IsSibling(contact))
-                                    return true;
-                            }
-                        }
-                    }
-
-                    //Check the invited contacts.
-                    lock (Contacts)
-                    {
-                        foreach (Contact contact in Contacts)
-                        {
-                            if (contact.IsSibling(Messenger.Nameserver.ContactList.Owner) == false && RemoteOwner.IsSibling(contact) == false)
-                            {
-                                if (lastContact == null)
-                                {
-                                    lastContact = contact;
-                                    continue;
-                                }
-
-                                if (!lastContact.IsSibling(contact))
-                                    return true;
-                            }
-                        }
-
-                        return false;
-                    }
-                }
-            }
         }
 
         #endregion

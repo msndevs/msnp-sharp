@@ -18,7 +18,8 @@ namespace MSNPSharp.Utilities
 
         #region Fields and Properties
 
-        private Dictionary<Guid, Conversation> conversations = new Dictionary<Guid, Conversation>(100);
+        private Dictionary<ConversationID, Conversation> conversations = new Dictionary<ConversationID, Conversation>(100, new ConversationIDComparer());
+        private Dictionary<ConversationID, Contact> pendingConversations = new Dictionary<ConversationID, Contact>(100, new ConversationIDComparer());
 
         private Messenger messenger = null;
 
@@ -62,47 +63,37 @@ namespace MSNPSharp.Utilities
 
         private void ConversationCreated(object sender, ConversationCreatedEventArgs e)
         {
-            Conversation conversation = e.Conversation;
-
-            if (!HasConversation(conversation))
-            {
-                if (!AddConversation(GenerateID(), conversation))
-                {
-                    throw new MSNPSharpException("AddConversation failed.");
-                }
-            }
+            AttatchEvents(e.Conversation);
         }
 
         private void ConversationEnded(object sender, ConversationEndEventArgs e)
         {
-            if (!RemoveConversation(GetID(e.Conversation)))
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Remove conversation from MessageManager failed.", GetType().ToString());
-            }
+            DetatchEvents(e.Conversation);
+            RemoveConversation(e.Conversation);
         }
 
 
         private void UserTyping(object sender, ContactEventArgs e)
         {
-            Guid id = ProcessArrivedConversation(sender as Conversation);
+            ConversationID id = ProcessArrivedConversation(sender as Conversation);
             OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, MessageType.UserTyping));
         }
 
         private void TextMessageReceived(object sender, TextMessageEventArgs e)
         {
-            Guid id = ProcessArrivedConversation(sender as Conversation);
+            ConversationID id = ProcessArrivedConversation(sender as Conversation);
             OnMessageArrived(new TextMessageArrivedEventArgs(id, e.Sender, e.Message));
         }
 
         private void NudgeReceived(object sender, ContactEventArgs e)
         {
-            Guid id = ProcessArrivedConversation(sender as Conversation);
+            ConversationID id = ProcessArrivedConversation(sender as Conversation);
             OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, MessageType.Nudge));
         }
 
         private void MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
         {
-            Guid id = ProcessArrivedConversation(sender as Conversation);
+            ConversationID id = ProcessArrivedConversation(sender as Conversation);
             if (e.ClientData is Emoticon)
             {
                 Emoticon emoticon = e.ClientData as Emoticon;
@@ -118,80 +109,51 @@ namespace MSNPSharp.Utilities
                 MessageArrived(this, e);
         }
 
-        private Guid ProcessArrivedConversation(Conversation conversation)
-        {
-            Guid returnId = GetID(conversation);
-            if (returnId == Guid.Empty)
-            {
-                throw new MSNPSharpException("Get conversation Id failed.");
-            }
-
-            bool isMultipleUser = conversation.IsMultipleUserConversation;
-            Conversation originalConversation = GetConversationByDefaultContact(conversation.RemoteOwner, isMultipleUser);
-            Guid returnId2 = GetID(originalConversation);
-
-            if (returnId != returnId2)  //The arrived conversation is an overflow conversation.
-            {
-                //In this case, there is a conversation in manager can logically replace the arrived one.
-                //We do not want to let the upper layer programmer know this overflow,
-                //so return the earlier conversation.
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Overflow conversation detected: Id1: " + returnId.ToString("B") + ", return id: " + returnId2.ToString("B"));
-
-                return returnId2;
-            }
-
-            //If there's no over flow, go ahead.
-            return returnId;
-        }
-
-        private Guid GetID(Conversation conversation)
+        private ConversationID ProcessArrivedConversation(Conversation conversation)
         {
             lock (SyncObject)
             {
-                foreach (Guid id in conversations.Keys)
+                ConversationID id = new ConversationID(conversation);
+                bool created = HasConversation(id);
+                bool pending = IsPendingConversation(id);
+                if (pending)
                 {
-                    if (object.ReferenceEquals(conversations[id], conversation))
+                    if (!created)
                     {
-                        return id;
+                        AddConversation(id, conversation);  //We fix this bug.
+                    }
+
+                    if (created)
+                    {
+                        //What happends?!
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[ProcessArrivedConversation Error]: A conversation is both in pending and created status.");
+                        RemovePendingConversation(id);
                     }
                 }
+
+                if (!pending)
+                {
+                    if (!created)
+                    {
+                        AddConversation(id, conversation);
+                    }
+                }
+
+                return id;
             }
-
-            return Guid.Empty;
         }
 
-        private bool HasConversation(Conversation conversation)
+        private bool HasConversation(ConversationID cId)
         {
-            if (GetID(conversation) == Guid.Empty)
-                return false;
-
-            return true;
+            lock (syncObject)
+                return conversations.ContainsKey(cId);
         }
 
-        /// <summary>
-        /// Generate a <see cref="Guid"/> for a specific <see cref="Conversation"/>.
-        /// </summary>
-        /// <returns></returns>
-        private Guid GenerateID()
+        private bool IsPendingConversation(ConversationID cId)
         {
-            Guid uid = Guid.NewGuid();
-            int randLimit = 100000;
-
             lock (SyncObject)
             {
-                while (conversations.ContainsKey(uid))
-                {
-                    uid = Guid.NewGuid();
-                    randLimit--;
-
-                    if (randLimit == 0)
-                    {
-                        throw new MSNPSharpException("Cannot get a new Switchboard ID for this MessageManager.");
-                    }
-                }
-
-                return uid;
+                return pendingConversations.ContainsKey(cId);
             }
         }
 
@@ -201,31 +163,72 @@ namespace MSNPSharp.Utilities
         /// <param name="id"></param>
         /// <param name="conversation"></param>
         /// <returns>Return true if added successfully, false if the conversation with the specific id already exists.</returns>
-        private bool AddConversation(Guid id, Conversation conversation)
+        private bool AddConversation(ConversationID id, Conversation conversation)
         {
             lock (SyncObject)
             {
-                if (conversations.ContainsKey(id)) return false;
+                if (conversations.ContainsKey(id)) 
+                    return false;
                 conversations[id] = conversation;
-                AttatchEvents(conversation);
                 return true;
             }
         }
 
-        private bool RemoveConversation(Guid id)
+        private void AddPending(ConversationID cId, Contact remoteOwner)
         {
             lock (SyncObject)
             {
-                if (conversations.ContainsKey(id))
+                pendingConversations[cId] = remoteOwner;
+            }
+        }
+
+        private bool RemovePendingConversation(ConversationID cId)
+        {
+            lock (SyncObject)
+            {
+                if (IsPendingConversation(cId))
                 {
-                    DetatchEvents(conversations[id]);
-                    conversations.Remove(id);
+                    pendingConversations.Remove(cId);
                     return true;
                 }
                 else
                 {
                     return false;
                 }
+            }
+        }
+
+        private bool RemoveConversation(ConversationID cId)
+        {
+            lock (SyncObject)
+            {
+                if (conversations.ContainsKey(cId))
+                {
+                    conversations.Remove(cId);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        private bool RemoveConversation(Conversation conversation)
+        {
+            lock (SyncObject)
+            {
+                Dictionary<ConversationID, Conversation> cp = new Dictionary<ConversationID, Conversation>(conversations, new ConversationIDComparer());
+                foreach (ConversationID id in cp.Keys)
+                {
+                    if (object.ReferenceEquals(cp[id], conversation))
+                    {
+                        conversations.Remove(id);
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -379,51 +382,13 @@ namespace MSNPSharp.Utilities
             }
         }
 
-        private Conversation GetConversationByDefaultContact(Contact contact, bool isMultipleUserConversation)
-        {
-            lock (SyncObject)
-            {
-                foreach (Conversation conversation in conversations.Values)
-                {
-                    if (conversation.RemoteOwner.IsSibling(contact))
-                    {
-                        if (conversation.IsMultipleUserConversation == isMultipleUserConversation)
-                        {
-                            return conversation;
-                        }
-                    }
-                }
-
-                return null;
-            }
-        }
-
-        //private Guid CreateNewConversation(Contact remoteOwner)
-        //{
-        //    lock (SyncObject)
-        //    {
-        //        //Guid id = GenerateID();
-        //        //Conversation conversation = new Conversation(Messenger);
-        //        //if (AddConversation(id, conversation))
-        //        //{
-        //        //    conversation.Invite(remoteOwner);
-        //        //    return id;
-        //        //}
-
-        //        //throw new MSNPSharpException("Create conversation failed.");
-        //    }
-
-        //    Conversation conversation = Messenger.CreateConversation();
-        //    conversation.Invite(remoteOwner);
-        //}
-
         /// <summary>
         /// Send a message to a remote contact by all means. This method always send the message through a single chat conversation.
         /// </summary>
         /// <param name="contact"></param>
         /// <param name="messageObject"></param>
         /// <returns>The ID of conversation that send this message</returns>
-        private Guid SendMessage(Contact contact, MessageObject messageObject)
+        private void SendMessage(Contact contact, MessageObject messageObject)
         {
             CheckMessengerStatus();
 
@@ -433,127 +398,250 @@ namespace MSNPSharp.Utilities
             //Process YIM contact.
             if (contact.ClientType == ClientType.EmailMember)
             {
-                return SendYIMMessage(contact, messageObject);
+                SendYIMMessage(contact, messageObject);
+                return;
             }
 
             //Process OIM.
             if (contact.Status == PresenceStatus.Offline)
             {
                 Messenger.Nameserver.OIMService.SendOIMMessage(contact, (messageObject as TextMessageObject).InnerObject as TextMessage);
-                return Guid.Empty;
+                return;
             }
-
-            //We always find the single chat conversation. 
-            //If it does not exists, we will create a new one even if the multiple chat conversation exists.
-            Conversation targetConversation = GetConversationByDefaultContact(contact, false);
-            if (targetConversation == null)
-            {
-                targetConversation = Messenger.CreateConversation();
-                targetConversation.Invite(contact);
-            }
-
-            SendConversationMessage(targetConversation, messageObject);
-
-            return GetID(targetConversation);
         }
 
         /// <summary>
         /// Send a message to the spcific conversation.
         /// </summary>
+        /// <param name="cId"></param>
         /// <param name="messageObject"></param>
-        /// <param name="conversationID"></param>
         /// <returns>Guid.Empty if conversatio has ended or not exists.</returns>
-        private Guid SendMessage(Guid conversationID, MessageObject messageObject)
+        private ConversationID SendMessage(ConversationID cId, MessageObject messageObject)
         {
+            if (cId == null)
+            {
+                throw new ArgumentNullException("cId is null.");
+            }
+
             //If the mesenger is not signed in, this calling will throw an exception.
             CheckMessengerStatus();
 
-            if (conversationID == Guid.Empty)
+            lock (SyncObject)
             {
-                throw new ArgumentException("Invalid conversationID: " + conversationID.ToString("B"));
-            }
+                bool created = HasConversation(cId);
+                bool pending = IsPendingConversation(cId);
+                if (cId.NetworkType != ClientType.EmailMember)
+                {
+                    if (cId.RemoteOwner.Status != PresenceStatus.Offline)
+                    {
+                        if ((!pending) && created)  //Send message through exisiting conversations.
+                        {
+                            SendConversationMessage(GetConversation(cId), messageObject);
+                        }
+                        else
+                        {
 
-            Conversation targetConversation = GetConversation(conversationID);
+                            //In the following case, the conversation object is not actually created.
+                            //However, if the message is user typing, we just do nothing.
+                            if (!(messageObject is UserTypingObject))
+                            {
+                                cId = CreateNewConversation(cId);
+                                CheckContact(cId.RemoteOwner, messageObject);
+                                SendConversationMessage(cId.Conversation, messageObject);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        RemovePendingConversation(cId);
+                        //Verify messenger contact.
+                        CheckContact(cId.RemoteOwner, messageObject);
+                        SendMessage(cId.RemoteOwner, messageObject);
 
-            if (targetConversation != null)  //Send message through exisiting conversations.
-            {
-                SendConversationMessage(targetConversation, messageObject);
-                return GetID(targetConversation);
+                    }
+                }
+
+                if (cId.NetworkType == ClientType.EmailMember) //Yahoo!
+                {
+                    CheckContact(cId.RemoteOwner, messageObject);
+                    SendMessage(cId.RemoteOwner, messageObject);
+                    RemovePendingConversation(cId);
+                }
             }
-            else
-            {
-                return Guid.Empty; //Conversation ended or not exists.
-            }
+            return cId;
+
+        }
+
+        private ConversationID CreateNewConversation(ConversationID pendingId)
+        {
+            bool created = HasConversation(pendingId);
+            bool pending = IsPendingConversation(pendingId);
+            bool otherNetwork = (pendingId.RemoteOwner.ClientType != ClientType.PassportMember);
+
+            if (pending)
+                RemovePendingConversation(pendingId);
+            if (created || otherNetwork)
+                return pendingId;
+
+            pendingId.SetConversation(Messenger.CreateConversation());
+            AddConversation(pendingId, pendingId.Conversation);
+            pendingId.Conversation.Invite(pendingId.RemoteOwner);
+
+            return pendingId;
 
         }
 
         #region Public methods
 
-
-        public Conversation GetConversation(Guid id)
+        /// <summary>
+        /// Get the corresponding conversation from conversation Id.
+        /// </summary>
+        /// <param name="cId"></param>
+        /// <returns>A conversation object will returned if found, null otherwise.</returns>
+        public Conversation GetConversation(ConversationID cId)
         {
             lock (SyncObject)
             {
-                if (conversations.ContainsKey(id))
-                    return conversations[id];
+                if (conversations.ContainsKey(cId))
+                    return conversations[cId];
                 return null;
             }
         }
 
-        public Guid SendTyping(Contact contact)
-        {
-            return SendMessage(contact, new UserTypingObject());
-        }
-
-        public Guid SendTyping(Guid conversationID)
+        public ConversationID SendTyping(ConversationID conversationID)
         {
             return SendMessage(conversationID, new UserTypingObject());
         }
 
-        public Guid SendNudge(Contact contact)
-        {
-            return SendMessage(contact, new NudgeObject());
-        }
-
-        public Guid SendNudge(Guid conversationID)
+        public ConversationID SendNudge(ConversationID conversationID)
         {
             return SendMessage(conversationID, new NudgeObject());
         }
 
-        public Guid SendTextMessage(Contact contact, TextMessage message)
-        {
-            return SendMessage(contact, new TextMessageObject(message));
-        }
 
-        public Guid SendTextMessage(Guid conversationID, TextMessage message)
+        public ConversationID SendTextMessage(ConversationID conversationID, TextMessage message)
         {
             return SendMessage(conversationID, new TextMessageObject(message));
         }
 
-        public Guid SendEmoticonDefinitions(Contact contact, List<Emoticon> emoticons, EmoticonType icontype)
-        {
-            return SendMessage(contact, new EmoticonObject(emoticons, icontype));
-        }
 
-        public Guid SendEmoticonDefinitions(Guid conversationID, List<Emoticon> emoticons, EmoticonType icontype)
+        public ConversationID SendEmoticonDefinitions(ConversationID conversationID, List<Emoticon> emoticons, EmoticonType icontype)
         {
             return SendMessage(conversationID, new EmoticonObject(emoticons, icontype));
         }
 
-        /// <summary>
-        /// Test whether the two single chat conversation is logically equal.
-        /// Two logically equal conversations can replace by each other.
-        /// </summary>
-        /// <param name="activeConversationId"></param>
-        /// <param name="expireConversationRemoteOwner">The remote owner of an Ended conversation.</param>
-        /// <returns></returns>
-        public bool LogicallyEquals(Guid activeConversationId, Contact expireConversationRemoteOwner)
+        public ConversationID GetID(Contact remoteOwner)
         {
-            Conversation activeConversation = GetConversation(activeConversationId);
-            if (activeConversation == null)
-                return false;
+            lock (SyncObject)
+            {
+                ConversationID id = new ConversationID(remoteOwner);
+                bool created = HasConversation(id);
+                bool pending = IsPendingConversation(id);
+                if (created || pending)
+                    return id;
 
-            return activeConversation.RemoteOwner.IsSibling(expireConversationRemoteOwner) && activeConversation.IsMultipleUserConversation == false;
+                AddPending(id, remoteOwner);
+                return id;
+            }
+        }
+
+        /// <summary>
+        /// Invite another user to a conversation.
+        /// </summary>
+        /// <param name="conversationID"></param>
+        /// <param name="remoteContact"></param>
+        /// <returns>The updated conversation Id.</returns>
+        /// <exception cref="InvalidOperationException">The remote contact is not a <see cref="ClientType.PassportMember"/></exception>
+        public ConversationID InviteContactToConversation(ConversationID conversationID, Contact remoteContact)
+        {
+            ConversationID cId = conversationID;
+            if (remoteContact.IsSibling(cId.RemoteOwner))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Connot invite the remote owner into this conversation again.");
+                return cId;
+            }
+
+            if (remoteContact.ClientType != ClientType.PassportMember)
+                throw new InvalidOperationException("The remoteContact: " + remoteContact + " is not a PassportMember.");
+
+            Conversation activeConversation = null;
+            if (HasConversation(cId))
+            {
+                activeConversation = GetConversation(cId);
+            }
+            else
+            {
+                //The conversation object not exist, we need to create one first.
+                //Then invite the remote owner to the newly created conversation.
+                cId = CreateNewConversation(cId);
+                activeConversation = cId.Conversation;
+            }
+
+            if (activeConversation.Ended)  //If conversation exists, but ended.
+            {
+                //We dump the old conversation and start the whole process again.
+                RemoveConversation(activeConversation);
+                RemovePendingConversation(cId);
+                return InviteContactToConversation(cId, remoteContact);
+            }
+
+            activeConversation.Invite(remoteContact);
+
+
+            return cId;
+        }
+
+        /// <summary>
+        /// Invite another user to a conversation.
+        /// </summary>
+        /// <param name="conversationID"></param>
+        /// <param name="contacts"></param>
+        /// <returns>The updated conversation Id.</returns>
+        /// <exception cref="InvalidOperationException">The remote contact is not a <see cref="ClientType.PassportMember"/></exception>
+        public ConversationID InviteContactToConversation(ConversationID conversationID, Contact[] contacts)
+        {
+            ConversationID cId = conversationID;
+            foreach (Contact contact in contacts)
+            {
+                cId = InviteContactToConversation(cId, contact);
+            }
+
+            return cId;
+        }
+
+        /// <summary>
+        /// End the specific conversation and release the resources it used.
+        /// </summary>
+        /// <param name="conversationId"></param>
+        public void EndConversation(ConversationID conversationId)
+        {
+            ConversationID cId = conversationId;
+            bool created = HasConversation(cId);
+            bool pending = IsPendingConversation(cId);
+
+            if (pending)
+                RemovePendingConversation(cId);
+
+            if (created)
+            {
+                if (cId.NetworkType == ClientType.PassportMember)
+                {
+                    Conversation activeConversation = GetConversation(cId);
+                    if (!object.ReferenceEquals(cId.Conversation, activeConversation))
+                    {
+                        //We end as much conversation as possible.
+                        if (cId.Conversation != null)
+                            cId.Conversation.End();
+                    }
+                    if (activeConversation != null)
+                        activeConversation.End();
+
+                    //We do not process any overflow conversation.
+                    //If these overflow conversation have received messages, new conversation id will be created and added into conversation id dictionary.
+                    //else just let them ended and the event habdler attached will be removed.
+                }
+                RemoveConversation(cId);
+            }
         }
 
         #endregion

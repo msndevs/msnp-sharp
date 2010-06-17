@@ -449,10 +449,15 @@ namespace MSNPSharp
             this.invited = false;
         }
 
+        public virtual void Close()
+        {
+            Close(false);
+        }
+
         /// <summary>
         /// Left the conversation then closes the switchboard session by disconnecting from the server. 
         /// </summary>
-        public virtual void Close(bool causeByRemote)
+        protected virtual void Close(bool causeByRemote)
         {
             if (MessageProcessor != null)
             {
@@ -466,13 +471,22 @@ namespace MSNPSharp
                 try
                 {
                     processor.UnregisterHandler(this);
-                    processor.SendMessage(new SBMessage("OUT", new string[] { }));
-                    processor.Disconnect();
+                    if (processor.Connected)
+                    {
+                        processor.SendMessage(new SBMessage("OUT", new string[] { }));
+                        processor.Disconnect();
+                    }
                 }
                 catch (Exception ex)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().ToString());
                 }
+            }
+
+            if (IsSessionEstablished)
+            {
+                sessionEstablished = false;
+                OnSessionClosed();
             }
         }
 
@@ -886,15 +900,21 @@ namespace MSNPSharp
         protected virtual bool Invite(Contact contact, Guid endPoint)
         {
             string fullaccount = contact.Mail.ToLowerInvariant();
+            object status = null;
+
             if (endPoint != Guid.Empty)
             {
                 fullaccount += ";" + endPoint.ToString("B").ToLowerInvariant();
             }
 
-            if (GetRosterProperty(fullaccount, RosterProperties.Status) != null)
+            status = GetRosterProperty(fullaccount, RosterProperties.Status);
+            if (status != null)
             {
-                //Invite repeatly.
-                return false;
+                if (((ContactConversationState)status) != ContactConversationState.Left)
+                {
+                    //Invite repeatly.
+                    return false;
+                }
             }
 
             //Add "this contact"
@@ -1631,12 +1651,9 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            lock (syncObject)
+            if (IsSessionEstablished)  //This means some exception occured and we drop out of the network.
             {
-                if (sessionEstablished)
-                    OnSessionClosed();
-
-                sessionEstablished = false;
+                Close(true);
             }
         }
 
