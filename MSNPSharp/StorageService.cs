@@ -714,9 +714,7 @@ namespace MSNPSharp
             if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile == false)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, create profile skipped.");
-                DisplayImage displayImage = new DisplayImage();
-                displayImage.Image = Properties.Resources.MSNPSharp_logo;  //Set default
-                NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
+                NSMessageHandler.ContactList.Owner.CreateDefaultDisplayImage(null);  //Set default
 
                 return;
             }

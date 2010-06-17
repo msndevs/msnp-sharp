@@ -148,7 +148,12 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return (P2Pv1Header)header;
+                if (header is P2Pv1Header)
+                {
+                    return (P2Pv1Header)header;
+                }
+
+                return null;
             }
         }
 
@@ -156,7 +161,12 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return (P2Pv2Header)header;
+                if (header is P2Pv2Header)
+                {
+                    return (P2Pv2Header)header;
+                }
+
+                return null;
             }
         }
 

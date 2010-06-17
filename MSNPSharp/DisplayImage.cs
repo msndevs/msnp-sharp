@@ -45,12 +45,16 @@ namespace MSNPSharp
     {
         private Image image = null;
         private bool isDefaultImage = false;
-        private Image defaultImage = Properties.Resources.WLXLarge_default.Clone() as Image;
+        private Image defaultImage = Properties.Resources.WLXLarge_default;
         private static string defaultLocation = "MSNPSharpDefault";
 
         public bool IsDefaultImage
         {
-            get { return isDefaultImage; }
+            get 
+            { 
+                return isDefaultImage; 
+            }
+
             internal set
             {
                 isDefaultImage = value;
@@ -58,16 +62,13 @@ namespace MSNPSharp
         }
 
         public DisplayImage()
+            : this(string.Empty, false)
         {
-            ObjectType = MSNObjectType.UserDisplay;
-            Location = "dotmsn.png";
         }
 
         public DisplayImage(string creator)
+            : this(creator, false)
         {
-            ObjectType = MSNObjectType.UserDisplay;
-            Location = "dotmsn.png";
-            Creator = creator;
         }
 
         internal DisplayImage(string creator, bool isDefault)
@@ -77,7 +78,7 @@ namespace MSNPSharp
             if (isDefault)
             {
                 Location = defaultLocation;
-                Image = defaultImage;
+                Image = defaultImage.Clone() as Image;
             }
 
             isDefaultImage = isDefault;

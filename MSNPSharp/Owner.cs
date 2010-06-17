@@ -32,6 +32,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Net;
+using System.Drawing;
 using System.Reflection;
 using System.Collections;
 using System.Diagnostics;
@@ -41,6 +42,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.IO;
     using MSNPSharp.Core;
+
 
     [Serializable]
     public class Owner : Contact
@@ -95,7 +97,7 @@ namespace MSNPSharp
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
             DisplayImage displayImage = new DisplayImage();
-            displayImage.Image = (sms == null) ? Properties.Resources.MSNPSharp_logo : sms.ToImage();
+            displayImage.Image = (sms == null) ? Properties.Resources.MSNPSharp_logo.Clone() as Image : sms.ToImage();
 
             this.DisplayImage = displayImage;
         }
