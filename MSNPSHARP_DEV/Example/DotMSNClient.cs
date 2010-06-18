@@ -595,12 +595,16 @@ namespace MSNPSharpClient
 
         void MessageManager_MessageArrived(object sender, MessageArrivedEventArgs e)
         {
-            foreach (ConversationForm cform in ConversationForms)
+            if (InvokeRequired)
             {
-                if (cform.ConversationID == Guid.Empty && e.ConversationID != Guid.Empty)
+                BeginInvoke(new EventHandler<MessageArrivedEventArgs>(MessageManager_MessageArrived), new object[] { sender, e });
+                return;
+            }
+            else
+            {
+                foreach (ConversationForm cform in ConversationForms)
                 {
-                    //Not started or not yet set.
-                    if (Messenger.MessageManager.LogicallyEquals(e.ConversationID, cform.RemoteOwner))
+                    if (cform.ConversationID == e.ConversationID)
                     {
                         //TODO: print message on the form.
                         cform.OnMessageReceived(sender, e);
@@ -608,12 +612,7 @@ namespace MSNPSharpClient
                     }
                 }
 
-                if (cform.ConversationID == e.ConversationID)
-                {
-                    //TODO: print message on the form.
-                    cform.OnMessageReceived(sender, e);
-                    return;
-                }
+                CreateConversationForm(e.Sender, e.ConversationID).OnMessageReceived(sender, e);
             }
         }
 
@@ -1129,9 +1128,9 @@ namespace MSNPSharpClient
         /// <summary>
         /// A delegate passed to Invoke in order to create the conversation form in the thread of the main form.
         /// </summary>
-        private delegate ConversationForm CreateConversationDelegate(Contact remote, Guid cid);
+        private delegate ConversationForm CreateConversationDelegate(Contact remote, ConversationID cid);
 
-        private ConversationForm CreateConversationForm(Contact remote, Guid cid)
+        private ConversationForm CreateConversationForm(Contact remote, ConversationID cid)
         {
 
             // create a new conversation. However do not show the window untill a message is received.
@@ -1429,12 +1428,11 @@ namespace MSNPSharpClient
             {
                 foreach (ConversationForm conv in ConversationForms)
                 {
-                    if (contact.IsSibling(conv.RemoteOwner))
+                    if (contact.IsSibling(conv.ConversationID.RemoteOwner))
                     {
                         activeForm = conv;
                         activate = true;
                     }
-
                 }
             }
 
@@ -1447,7 +1445,7 @@ namespace MSNPSharpClient
                 return;
             }
 
-            ConversationForm form = CreateConversationForm(contact, Guid.Empty);
+            ConversationForm form = CreateConversationForm(contact, Messenger.MessageManager.GetID(contact));
 
             form.Show();
         }

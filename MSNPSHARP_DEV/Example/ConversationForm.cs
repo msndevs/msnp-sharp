@@ -408,32 +408,12 @@ using MSNPSharp.Utilities;
         #endregion
 
         private Messenger _messenger = null;
-        private Contact _firstInvitedContact = null;
-        private Guid activeconversationID = Guid.Empty;
+        private ConversationID activeconversationID = null;
 
         bool isYIM = false;
 
-        /// <summary>
-        /// The conversation object which is associated with the form.
-        /// </summary>
-        public Conversation ActiveConversation
-        {
-            get
-            {
-                return _messenger.MessageManager.GetConversation(activeconversationID);
-            }
 
-        }
-
-        public Contact RemoteOwner
-        {
-            get
-            {
-                return _firstInvitedContact;
-            }
-        }
-
-        public Guid ConversationID
+        public ConversationID ConversationID
         {
             get
             {
@@ -455,15 +435,14 @@ using MSNPSharp.Utilities;
         /// </summary>
         /// <param name="messenger"></param>
         /// <param name="contact"></param>
-        public ConversationForm(Messenger messenger, Contact contact, Guid convId)
+        public ConversationForm(Messenger messenger, Contact contact, ConversationID convId)
         {
             InitializeComponent();
 
-            _firstInvitedContact = contact;
             _messenger = messenger;
             activeconversationID = convId;
 
-            isYIM = (contact.IsMessengerUser && contact.ClientType == ClientType.EmailMember);
+            isYIM = (ConversationID.NetworkType == ClientType.EmailMember);
 
             if (isYIM)
             {
@@ -542,10 +521,6 @@ using MSNPSharp.Utilities;
 
         private void inputTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            if (!isYIM)
-                if (ConversationID == Guid.Empty && e.KeyCode != Keys.Return)
-                    return;
-
             if ((e.KeyCode == Keys.Return) && (e.Alt || e.Control || e.Shift))
             {
                 return;
@@ -553,10 +528,8 @@ using MSNPSharp.Utilities;
 
             try
             {
-                if (!isYIM)
-                    _messenger.MessageManager.SendTyping(ConversationID);
-                else
-                    _messenger.MessageManager.SendTyping(_firstInvitedContact);
+                _messenger.MessageManager.SendTyping(ConversationID);
+
             }
             catch (Exception)
             {
@@ -614,8 +587,9 @@ using MSNPSharp.Utilities;
 
         private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            _firstInvitedContact.DisplayImageChanged -= Contact_DisplayImageChanged;
-            _firstInvitedContact.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
+            ConversationID.RemoteOwner.DisplayImageChanged -= Contact_DisplayImageChanged;
+            ConversationID.RemoteOwner.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
+            _messenger.MessageManager.EndConversation(activeconversationID);
         }
 
         private void PrintText(Contact c, TextMessage message)
@@ -686,8 +660,8 @@ using MSNPSharp.Utilities;
 
         private void ConversationForm_Load(object sender, EventArgs e)
         {
-            Text = "Conversation with " + _firstInvitedContact.Mail + " - MSNPSharp";
-            Icon = (Icon)((_firstInvitedContact.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
+            Text = "Conversation with " + ConversationID.RemoteOwner.Mail + " - MSNPSharp";
+            Icon = (Icon)((ConversationID.RemoteOwner.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
             displayOwner.Image = _messenger.ContactList.Owner.DisplayImage.Image;
 
             lock (richTextHistory.Emotions)
@@ -728,21 +702,21 @@ using MSNPSharp.Utilities;
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
             if (!isYIM)
-                displayUser.Image = _firstInvitedContact.DisplayImage.Image;
+                displayUser.Image = ConversationID.RemoteOwner.DisplayImage.Image;
             else
                 displayUser.Image = Properties.Resources.YahooMessenger_logo.Clone() as Image;
 
-            _firstInvitedContact.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
-            _firstInvitedContact.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
+            ConversationID.RemoteOwner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
+            ConversationID.RemoteOwner.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
 
             // request the image, if not already available
-            if (_firstInvitedContact.Status != PresenceStatus.Offline)
+            if (ConversationID.RemoteOwner.Status != PresenceStatus.Offline)
             {
-                if (_firstInvitedContact.DisplayImage.IsDefaultImage && isYIM == false)
+                if (ConversationID.RemoteOwner.DisplayImage.IsDefaultImage && isYIM == false)
                 {
                     try
                     {
-                        RequestDisplayImage(_firstInvitedContact, null);
+                        RequestDisplayImage(ConversationID.RemoteOwner, null);
                     }
                     catch (Exception ex)
                     {
@@ -758,17 +732,20 @@ using MSNPSharp.Utilities;
         {
             if (remoteContact.ClientType == ClientType.PassportMember)
             {
-                // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
-                // The MSNSLPHandler makes use of the underlying P2P framework.
-                MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(remoteContact);
-
                 if (updateImage == null)
                     updateImage = remoteContact.DisplayImage;
 
-                // by sending an invitation a P2PTransferSession is automatically created.
-                // the session object takes care of the actual data transfer to the remote client,
-                // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, remoteContact, updateImage);
+                if (!string.IsNullOrEmpty(updateImage.OriginalContext))
+                {
+                    // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
+                    // The MSNSLPHandler makes use of the underlying P2P framework.
+                    MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(remoteContact);
+
+                    // by sending an invitation a P2PTransferSession is automatically created.
+                    // the session object takes care of the actual data transfer to the remote client,
+                    // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
+                    P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, remoteContact, updateImage);
+                }
 
             }
         }
@@ -777,7 +754,7 @@ using MSNPSharp.Utilities;
         {
             try
             {
-                RequestDisplayImage(_firstInvitedContact, e.NewDisplayImage);
+                RequestDisplayImage(ConversationID.RemoteOwner, e.NewDisplayImage);
             }
             catch (Exception ex)
             {
@@ -846,21 +823,11 @@ using MSNPSharp.Utilities;
             inputTextBox.Clear();
             inputTextBox.Focus();
 
-            if (ConversationID != Guid.Empty)
-            {
-                ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, message);
-                PrintText(_messenger.ContactList.Owner, message);
-            }
-            else
-            {
-                ConversationID = _messenger.MessageManager.SendTextMessage(_firstInvitedContact, message);
 
-                if (!isYIM)
-                    PrintText(_messenger.ContactList.Owner, new TextMessage(message.Text + "\r\n(Send as Offline message.)"));
-                else
-                    PrintText(_messenger.ContactList.Owner, message);
-            }
-            
+            ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, message);
+            PrintText(_messenger.ContactList.Owner, message);
+
+
         }
 
         private void bMessageInsertEmoticon_Click(object sender, EventArgs e)
@@ -892,44 +859,49 @@ using MSNPSharp.Utilities;
         private void onlineUsersDropDown_Click(object sender, EventArgs args)
         {
             ToolStripItem item = (ToolStripItem)sender;
-            ActiveConversation.Invite(item.ToolTipText, ClientType.PassportMember);
+            if (_messenger.ContactList.HasContact(item.ToolTipText, ClientType.PassportMember))
+            {
+                activeconversationID = _messenger.MessageManager.InviteContactToConversation(activeconversationID, _messenger.ContactList.GetContact(item.ToolTipText));
+            }
+            else
+            {
+                DisplaySystemMessage("Cannot find PassportMember: " + item.ToolTipText);
+            }
         }
 
         private void bMessageSendNudge_Click(object sender, EventArgs e)
         {
-            if (ConversationID != Guid.Empty)
+            try
             {
                 ConversationID = _messenger.MessageManager.SendNudge(ConversationID);
                 DisplaySystemMessage("You send a nudge.");
             }
-            else
+            catch (Exception)
             {
-                if (!isYIM)
-                    DisplaySystemMessage("Remote contact not online.");
-                else
-                {
-                    ConversationID = _messenger.MessageManager.SendNudge(_firstInvitedContact);
-                    DisplaySystemMessage("You send a nudge.");
-                }
+
+                DisplaySystemMessage("Remote contact not online.");
             }
         }
 
         private void bMessageSendFiles_Click(object sender, EventArgs e)
         {
+            Conversation activeConversation = _messenger.MessageManager.GetConversation(activeconversationID);
+            if (activeConversation == null)
+            {
+                DisplaySystemMessage("All contacts are offline or this contact doesn't support receiving files.");
+                return;
+            }
+
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 List<Contact> contacts = new List<Contact>();
-                foreach (Contact contact in ActiveConversation.Contacts)
+                foreach (Contact contact in activeConversation.Contacts)
                 {
                     if (contact.Online && contact.ClientType == ClientType.PassportMember && 
                         contact.Mail != _messenger.ContactList.Owner.Mail)
                     {
                         contacts.Add(contact);
                     }
-                }
-                if (contacts.Count == 0 && _firstInvitedContact != null && _firstInvitedContact.ClientType == ClientType.PassportMember && _firstInvitedContact.Online)
-                {
-                    contacts.Add(_firstInvitedContact);
                 }
 
                 if (contacts.Count == 0)
@@ -974,14 +946,14 @@ using MSNPSharp.Utilities;
                 richTextHistory.Emotions[emotest.Shortcut] = Properties.Resources.inner_emoticon;
             }
 
-            if (ConversationID != Guid.Empty)
+            try
             {
                 ConversationID = _messenger.MessageManager.SendEmoticonDefinitions(ConversationID, emolist, EmoticonType.StaticEmoticon);
                 TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
                 ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, emotxt);
                 DisplaySystemMessage("You send a custom emoticon with text message: Hey, this is a custom emoticon: [test_em].");
             }
-            else
+            catch (Exception)
             {
                 if (!isYIM)
                     DisplaySystemMessage("Remote contact not online, emoticon will not be sent.");
@@ -1063,8 +1035,8 @@ using MSNPSharp.Utilities;
         {
             String activityID = "7"; //"20521364";        //The activityID of Music Mix activity.
             String activityName = "Activity Test";     //Th name of acticvity
-            MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(_firstInvitedContact);
-            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, _firstInvitedContact, activityID, activityName, @"http://code.google.com/p/msnp-sharp");
+            MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(ConversationID.RemoteOwner);
+            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, ConversationID.RemoteOwner, activityID, activityName, @"http://code.google.com/p/msnp-sharp");
 
             msnslpHandler.TransferSessionClosed += delegate(object s, P2PTransferSessionEventArgs ea)
             {
