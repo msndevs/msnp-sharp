@@ -212,17 +212,21 @@ namespace MSNPSharp
                     if (timerThread.ThreadState == System.Threading.ThreadState.Unstarted ||
                         timerThread.ThreadState == System.Threading.ThreadState.Stopped)
                     {
+                        EnqueueMessage(processor, message, ownerId);
+
                         timerThread = new Thread(new ParameterizedThreadStart(OnTimerCallback));
                         timerThread.Start(DelayTime);
+                        return;
                     }
+
+                    EnqueueMessage(processor, message, ownerId);
                 }
                 else
                 {
                     return;
                 }
             }
-
-            EnqueueMessage(processor, message, ownerId);
+            
         }
 
         public virtual Guid Register(Messenger messenger)
