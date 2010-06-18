@@ -727,8 +727,9 @@ namespace MSNPSharp.DataTransfer
                 Conversation conversation = messenger.CreateConversation();
                 sbHandler = conversation.Invite(session.RemoteContact);
 
-
-                conversation.ContactJoined += delegate(object conv, ContactConversationEventArgs args)
+                //Note: for conversation's ContactJoined event, you will never see different endpoints' joining events.
+                //So we need to listen to the corresponding events from switchboard.
+                sbHandler.ContactJoined += delegate(object conv, ContactConversationEventArgs args)
                 {
                     if ((!session.ProcessorValid) && args.Contact.IsSibling(session.RemoteContact) && args.EndPoint == session.RemoteContactEndPointID)
                     {
