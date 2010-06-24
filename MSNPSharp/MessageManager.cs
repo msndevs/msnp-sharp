@@ -18,8 +18,9 @@ namespace MSNPSharp.Utilities
 
         #region Fields and Properties
 
-        private Dictionary<ConversationID, Conversation> conversations = new Dictionary<ConversationID, Conversation>(100, new ConversationIDComparer());
+        private Dictionary<ConversationID, Conversation> conversationIndex = new Dictionary<ConversationID, Conversation>(100, new ConversationIDComparer());
         private Dictionary<ConversationID, Contact> pendingConversations = new Dictionary<ConversationID, Contact>(100, new ConversationIDComparer());
+        private List<Conversation> conversations = new List<Conversation>(100);
 
         private Messenger messenger = null;
 
@@ -64,12 +65,17 @@ namespace MSNPSharp.Utilities
         private void ConversationCreated(object sender, ConversationCreatedEventArgs e)
         {
             AttatchEvents(e.Conversation);
+            lock (SyncObject)
+                conversations.Add(e.Conversation);
         }
 
         private void ConversationEnded(object sender, ConversationEndEventArgs e)
         {
             DetatchEvents(e.Conversation);
             RemoveConversation(e.Conversation);
+
+            lock (SyncObject)
+                conversations.Remove(e.Conversation);
         }
 
 
@@ -91,7 +97,7 @@ namespace MSNPSharp.Utilities
             OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, MessageType.Nudge));
         }
 
-        private void MSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
+        private void MSNObjectDataTransferCompleted(object sender, ConversationMSNObjectDataTransferCompletedEventArgs e)
         {
             ConversationID id = ProcessArrivedConversation(sender as Conversation);
             if (e.ClientData is Emoticon)
@@ -146,7 +152,7 @@ namespace MSNPSharp.Utilities
         private bool HasConversation(ConversationID cId)
         {
             lock (syncObject)
-                return conversations.ContainsKey(cId);
+                return conversationIndex.ContainsKey(cId);
         }
 
         private bool IsPendingConversation(ConversationID cId)
@@ -167,9 +173,9 @@ namespace MSNPSharp.Utilities
         {
             lock (SyncObject)
             {
-                if (conversations.ContainsKey(id)) 
+                if (conversationIndex.ContainsKey(id)) 
                     return false;
-                conversations[id] = conversation;
+                conversationIndex[id] = conversation;
                 return true;
             }
         }
@@ -202,9 +208,9 @@ namespace MSNPSharp.Utilities
         {
             lock (SyncObject)
             {
-                if (conversations.ContainsKey(cId))
+                if (conversationIndex.ContainsKey(cId))
                 {
-                    conversations.Remove(cId);
+                    conversationIndex.Remove(cId);
                     return true;
                 }
                 else
@@ -218,12 +224,12 @@ namespace MSNPSharp.Utilities
         {
             lock (SyncObject)
             {
-                Dictionary<ConversationID, Conversation> cp = new Dictionary<ConversationID, Conversation>(conversations, new ConversationIDComparer());
+                Dictionary<ConversationID, Conversation> cp = new Dictionary<ConversationID, Conversation>(conversationIndex, new ConversationIDComparer());
                 foreach (ConversationID id in cp.Keys)
                 {
                     if (object.ReferenceEquals(cp[id], conversation))
                     {
-                        conversations.Remove(id);
+                        conversationIndex.Remove(id);
                         return true;
                     }
                 }
@@ -253,7 +259,7 @@ namespace MSNPSharp.Utilities
             conversation.NudgeReceived += new EventHandler<ContactEventArgs>(NudgeReceived);
             conversation.UserTyping += new EventHandler<ContactEventArgs>(UserTyping);
             conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(ConversationEnded);
-            conversation.MSNObjectDataTransferCompleted += new EventHandler<MSNObjectDataTransferCompletedEventArgs>(MSNObjectDataTransferCompleted);
+            conversation.MSNObjectDataTransferCompleted += new EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs>(MSNObjectDataTransferCompleted);
         }
 
 
@@ -502,8 +508,8 @@ namespace MSNPSharp.Utilities
         {
             lock (SyncObject)
             {
-                if (conversations.ContainsKey(cId))
-                    return conversations[cId];
+                if (conversationIndex.ContainsKey(cId))
+                    return conversationIndex[cId];
                 return null;
             }
         }
@@ -626,19 +632,22 @@ namespace MSNPSharp.Utilities
             {
                 if (cId.NetworkType == ClientType.PassportMember)
                 {
-                    Conversation activeConversation = GetConversation(cId);
-                    if (!object.ReferenceEquals(cId.Conversation, activeConversation))
+                    List<Conversation> overflowConversations = new List<Conversation>(10);
+                    lock (SyncObject)
                     {
-                        //We end as much conversation as possible.
-                        if (cId.Conversation != null)
-                            cId.Conversation.End();
+                        foreach (Conversation conversation in conversations)
+                        {
+                            if (cId == new ConversationID(conversation))
+                            {
+                                overflowConversations.Add(conversation);
+                            }
+                        }
                     }
-                    if (activeConversation != null)
-                        activeConversation.End();
 
-                    //We do not process any overflow conversation.
-                    //If these overflow conversation have received messages, new conversation id will be created and added into conversation id dictionary.
-                    //else just let them ended and the event habdler attached will be removed.
+                    foreach (Conversation conversation in overflowConversations)
+                    {
+                        conversation.End();
+                    }
                 }
                 RemoveConversation(cId);
             }
