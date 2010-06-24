@@ -35,6 +35,7 @@ using System;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using MSNPSharp.DataTransfer;
 
     /// <summary>
     /// Used when contact changed its status.
@@ -901,6 +902,30 @@ namespace MSNPSharp
             aborted = abort;
             remote = remoteContact;
             remoteEndPointID = remoteEPID;
+        }
+    }
+
+    public class ConversationMSNObjectDataTransferCompletedEventArgs : MSNObjectDataTransferCompletedEventArgs
+    {
+        private P2PTransferSession transferSession = null;
+
+        public P2PTransferSession TransferSession
+        {
+            get 
+            { 
+                return transferSession; 
+            }
+
+            private set 
+            { 
+                transferSession = value; 
+            }
+        }
+
+        public ConversationMSNObjectDataTransferCompletedEventArgs(P2PTransferSession sender, MSNObjectDataTransferCompletedEventArgs e)
+            : base(e.ClientData, e.Aborted, e.RemoteContact, e.RemoteContactEndPointID)
+        {
+            TransferSession = sender;
         }
     }
 

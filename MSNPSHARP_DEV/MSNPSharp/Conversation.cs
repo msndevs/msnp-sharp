@@ -361,7 +361,7 @@ namespace MSNPSharp
         protected void OnMSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
         {
             if (MSNObjectDataTransferCompleted != null)
-                MSNObjectDataTransferCompleted(sender, e);
+                MSNObjectDataTransferCompleted(this, new ConversationMSNObjectDataTransferCompletedEventArgs(sender as P2PTransferSession, e));
         }
 
 
@@ -700,7 +700,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired when the data transfer for a MSNObject finished or aborted.
         /// </summary>
-        public event EventHandler<MSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
+        public event EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
 
         /// <summary>
         /// Occurs when a new conversation is ended (all contacts in the conversation have left or <see cref="Conversation.End()"/> is called).
