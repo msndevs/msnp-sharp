@@ -875,6 +875,7 @@ using MSNPSharp.Utilities;
             {
                 ConversationID = _messenger.MessageManager.SendNudge(ConversationID);
                 DisplaySystemMessage("You send a nudge.");
+                PerformNudge();
             }
             catch (Exception)
             {
