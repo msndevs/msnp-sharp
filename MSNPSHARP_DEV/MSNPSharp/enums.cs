@@ -1711,4 +1711,37 @@ namespace MSNPSharp
         /// </summary>
         Yahoo
     }
+
+    internal enum ConversationState : int
+    {
+        /// <summary>
+        /// Default state
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// The conversation object created. User not yet been invited.
+        /// </summary>
+        ConversationCreated = 1,
+
+        /// <summary>
+        /// Conversation has sent a request to create a switchboard for it.
+        /// </summary>
+        SwitchboardRequestSent = 2,
+
+        /// <summary>
+        /// One remote user has joined into the conversation. There're two users in the conversation now (including Owner).
+        /// </summary>
+        OneRemoteUserJoined = 3,
+
+        /// <summary>
+        /// The switchboard has ended.
+        /// </summary>
+        SwitchboardEnded = 4,
+
+        /// <summary>
+        /// The conversation already ended.
+        /// </summary>
+        ConversationEnded = 5
+    }
 };

@@ -98,11 +98,9 @@ namespace MSNPSharp
 
         private Messenger _messenger = null;
         private SBMessageHandler _switchboard = null;
-
-        private bool sbInitialized = false;
         private bool ended = false;
         private bool ending = false;
-        private bool canSendMessage = false;
+        private ConversationState conversationState = ConversationState.None;
 
         private bool autoRequestEmoticons = true;
         private bool autoKeepAlive = false;
@@ -171,7 +169,8 @@ namespace MSNPSharp
             {
                 if ((convers.Type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
                 {
-                    if (convers.sbInitialized && !convers.Ended)
+                    if (convers.conversationState >= ConversationState.SwitchboardRequestSent && 
+                        convers.conversationState < ConversationState.SwitchboardEnded)
                     {
                         convers._switchboard.SendKeepAliveMessage();
                     }
@@ -189,6 +188,8 @@ namespace MSNPSharp
 
             //Must call after _switchboard and _yimHandler have been initialized.
             AttachEvents(_switchboard);
+
+            conversationState = ConversationState.ConversationCreated;
         }
 
         private bool IsPendingContact(Contact contact)
@@ -298,7 +299,7 @@ namespace MSNPSharp
                                   + "\r\n  Error Message: " + ex.Message);
             }
 
-            sbInitialized = false;
+            conversationState = ConversationState.SwitchboardEnded;
         }
 
         private Contact GetFirstJoinedContact()
@@ -370,7 +371,7 @@ namespace MSNPSharp
             if (Ended) return;
             Ended = true;
 
-            canSendMessage = false;
+            conversationState = ConversationState.ConversationEnded;
             if (ending)
             {
                 DetachEvents(_switchboard);
@@ -431,7 +432,7 @@ namespace MSNPSharp
         {
             if (sender.GetType() == typeof(SBMessageHandler))
             {
-                sbInitialized = false;
+                conversationState = ConversationState.SwitchboardEnded;
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, sender.GetType().ToString() + " session :" + _switchboard.SessionHash + " closed.");
@@ -542,7 +543,7 @@ namespace MSNPSharp
             lock (_pendingInviteContacts)
                 _pendingInviteContacts.Remove(e.Contact);
 
-            canSendMessage = true;
+            conversationState = ConversationState.OneRemoteUserJoined;
 
             if (!e.Contact.IsSibling(Messenger.ContactList.Owner))
             {
@@ -590,8 +591,11 @@ namespace MSNPSharp
         /// <exception cref="InvalidOperationException">The current conversation is not expired.</exception>
         protected virtual Conversation ReCreate()
         {
-            if (canSendMessage || (!Ended) || (sbInitialized))
+            if (conversationState == ConversationState.OneRemoteUserJoined ||
+                conversationState == ConversationState.SwitchboardRequestSent)
+            {
                 return this;
+            }
 
             if (RemoteOwner.Status == PresenceStatus.Offline)
             {
@@ -602,7 +606,7 @@ namespace MSNPSharp
             {
                 Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
 
-                sbInitialized = true;
+                conversationState = ConversationState.SwitchboardRequestSent;
             }
 
 
@@ -879,14 +883,11 @@ namespace MSNPSharp
         /// <param name="sbHandler">The switchboard to interface to.</param>		
         internal Conversation(Messenger parent, SBMessageHandler sbHandler)
         {
-
             _switchboard = sbHandler;
-            sbInitialized = true;
-
             _type = ConversationType.SwitchBoard;
-
             _messenger = parent;
             IniCommonSettings();
+            conversationState = ConversationState.SwitchboardRequestSent;
         }
 
         /// <summary>
@@ -896,7 +897,6 @@ namespace MSNPSharp
         internal Conversation(Messenger parent)
         {
             _messenger = parent;
-            sbInitialized = false;
 
             _type = ConversationType.None;
             IniCommonSettings();
@@ -975,12 +975,14 @@ namespace MSNPSharp
                 if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
                 {
 
-                    if (!sbInitialized || (sbInitialized && !canSendMessage))
+                    if (conversationState == ConversationState.ConversationCreated ||
+                        conversationState == ConversationState.SwitchboardEnded ||
+                        conversationState == ConversationState.ConversationEnded)
                     {
                         PendingContactEnqueue(contact);  //Enqueue the contact if user send message before it join.
                         Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
 
-                        sbInitialized = true;
+                        conversationState = ConversationState.SwitchboardRequestSent;
                         return _switchboard;
                     }
 
@@ -1021,8 +1023,8 @@ namespace MSNPSharp
 
         private void EndSwitchBoardSession(bool remoteDisconnect)
         {
-
-            if (sbInitialized)
+            if (conversationState >= ConversationState.SwitchboardRequestSent &&
+                conversationState < ConversationState.SwitchboardEnded)
             {
                 Thread endthread = new Thread(new ParameterizedThreadStart(SwitchBoardEnd));  //Avoid blocking the UI thread.
                 endthread.Start(remoteDisconnect);
@@ -1072,7 +1074,7 @@ namespace MSNPSharp
                 ReCreate();
             }
 
-            if (!canSendMessage)
+            if (conversationState != ConversationState.OneRemoteUserJoined)
             {
                 MessageEnqueue(new TextMessageObject(message));
                 return;
@@ -1099,7 +1101,7 @@ namespace MSNPSharp
             }
 
 
-            if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard && canSendMessage)
+            if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard && conversationState == ConversationState.OneRemoteUserJoined)
             {
                 _switchboard.SendTypingMessage();
             }
@@ -1118,7 +1120,7 @@ namespace MSNPSharp
                 ReCreate();
             }
 
-            if (!canSendMessage)
+            if (conversationState != ConversationState.OneRemoteUserJoined)
             {
                 MessageEnqueue(new NudgeObject());
                 return;
@@ -1147,7 +1149,7 @@ namespace MSNPSharp
                 ReCreate();
             }
 
-            if (!canSendMessage)
+            if (conversationState != ConversationState.OneRemoteUserJoined)
             {
                 MessageEnqueue(new EmoticonObject(emoticons, icontype));
                 return;

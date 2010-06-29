@@ -453,12 +453,18 @@ namespace MSNPSharp.Core
             }
         }
 
+        /// <summary>
+        /// Connect to the target through ConnectivitySettins.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Socket already connected.</exception>
         public virtual void Connect()
         {
             if (socket != null && Connected)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Connect() called, but already a socket available.", GetType().Name);
-                return;
+                
+                //If you have to fail, fail noisily and as soon as possible.
+                throw new InvalidOperationException("Socket already connected.");
             }
 
             try

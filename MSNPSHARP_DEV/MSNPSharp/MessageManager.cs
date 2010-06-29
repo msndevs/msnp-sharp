@@ -64,18 +64,17 @@ namespace MSNPSharp.Utilities
 
         private void ConversationCreated(object sender, ConversationCreatedEventArgs e)
         {
+            // We do not listen to ContactJoin event. If a conversation has no text/typing/nudge/emoticon message
+            // arrived, this conversation will only be placed into conversation list.
             AttatchEvents(e.Conversation);
-            lock (SyncObject)
-                conversations.Add(e.Conversation);
+            AddConversationToConversationList(e.Conversation);
         }
 
         private void ConversationEnded(object sender, ConversationEndEventArgs e)
         {
             DetatchEvents(e.Conversation);
-            RemoveConversation(e.Conversation);
-
-            lock (SyncObject)
-                conversations.Remove(e.Conversation);
+            RemoveConversationFromConversationIndex(e.Conversation);
+            RemoveConversationFromConversationList(e.Conversation);
         }
 
 
@@ -126,7 +125,7 @@ namespace MSNPSharp.Utilities
                 {
                     if (!created)
                     {
-                        AddConversation(id, conversation);  //We fix this bug.
+                        AddConversationToConversationIndex(id, conversation);  //We fix this bug.
                     }
 
                     if (created)
@@ -141,7 +140,7 @@ namespace MSNPSharp.Utilities
                 {
                     if (!created)
                     {
-                        AddConversation(id, conversation);
+                        AddConversationToConversationIndex(id, conversation);
                     }
                 }
 
@@ -169,7 +168,7 @@ namespace MSNPSharp.Utilities
         /// <param name="id"></param>
         /// <param name="conversation"></param>
         /// <returns>Return true if added successfully, false if the conversation with the specific id already exists.</returns>
-        private bool AddConversation(ConversationID id, Conversation conversation)
+        private bool AddConversationToConversationIndex(ConversationID id, Conversation conversation)
         {
             lock (SyncObject)
             {
@@ -177,6 +176,16 @@ namespace MSNPSharp.Utilities
                     return false;
                 conversationIndex[id] = conversation;
                 return true;
+            }
+        }
+
+        private void AddConversationToConversationList(Conversation conversation)
+        {
+            lock (SyncObject)
+            {
+                conversations.Add(conversation);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A new conversation has been added into conversation list, " +
+                    "current conversation count: " + conversations.Count + ".");
             }
         }
 
@@ -204,7 +213,7 @@ namespace MSNPSharp.Utilities
             }
         }
 
-        private bool RemoveConversation(ConversationID cId)
+        private bool RemoveConversationFromConversationIndex(ConversationID cId)
         {
             lock (SyncObject)
             {
@@ -220,7 +229,7 @@ namespace MSNPSharp.Utilities
             }
         }
 
-        private bool RemoveConversation(Conversation conversation)
+        private bool RemoveConversationFromConversationIndex(Conversation conversation)
         {
             lock (SyncObject)
             {
@@ -238,6 +247,17 @@ namespace MSNPSharp.Utilities
             }
         }
 
+        private bool RemoveConversationFromConversationList(Conversation conversation)
+        {
+            lock (SyncObject)
+            {
+                bool returnValue = conversations.Remove(conversation);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A conversation has been removed, there is/are " +
+                    conversations.Count + " conversation(s) in conversation list.");
+                return returnValue;
+            }
+        }
+
         private void DetatchEvents(Conversation conversation)
         {
             if (conversation != null)
@@ -252,7 +272,6 @@ namespace MSNPSharp.Utilities
 
         private void AttatchEvents(Conversation conversation)
         {
-
             DetatchEvents(conversation);
 
             conversation.TextMessageReceived += new EventHandler<TextMessageEventArgs>(TextMessageReceived);
@@ -490,7 +509,7 @@ namespace MSNPSharp.Utilities
                 return pendingId;
 
             pendingId.SetConversation(Messenger.CreateConversation());
-            AddConversation(pendingId, pendingId.Conversation);
+            AddConversationToConversationIndex(pendingId, pendingId.Conversation);
             pendingId.Conversation.Invite(pendingId.RemoteOwner);
 
             return pendingId;
@@ -586,7 +605,7 @@ namespace MSNPSharp.Utilities
             if (activeConversation.Ended)  //If conversation exists, but ended.
             {
                 //We dump the old conversation and start the whole process again.
-                RemoveConversation(activeConversation);
+                RemoveConversationFromConversationIndex(activeConversation);
                 RemovePendingConversation(cId);
                 return InviteContactToConversation(cId, remoteContact);
             }
@@ -649,7 +668,7 @@ namespace MSNPSharp.Utilities
                         conversation.End();
                     }
                 }
-                RemoveConversation(cId);
+                RemoveConversationFromConversationIndex(cId);
             }
         }
 

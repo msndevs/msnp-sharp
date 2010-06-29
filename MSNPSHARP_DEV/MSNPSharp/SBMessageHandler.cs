@@ -449,6 +449,14 @@ namespace MSNPSharp
             this.invited = false;
         }
 
+        /// <summary>
+        /// Left the current switchboard conversation.
+        /// </summary>
+        public void Left()
+        {
+            MessageProcessor.SendMessage(new SBMessage("OUT", new string[] { }));
+        }
+
         public virtual void Close()
         {
             Close(false);
@@ -466,20 +474,27 @@ namespace MSNPSharp
                     SendSwitchBoardClosedNotifyToNS();
                 }
 
-                SocketMessageProcessor processor = MessageProcessor as SocketMessageProcessor;
-
                 try
                 {
-                    processor.UnregisterHandler(this);
-                    if (processor.Connected)
+                    SocketMessageProcessor processor = MessageProcessor as SocketMessageProcessor;
+                    if (processor != null)
                     {
-                        processor.SendMessage(new SBMessage("OUT", new string[] { }));
-                        processor.Disconnect();
+                        if (processor.Connected)
+                        {
+                            Left();
+                            processor.Disconnect();
+                        }
+                        
                     }
                 }
                 catch (Exception ex)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().ToString());
+                }
+                finally
+                {
+
+                    MessageProcessor.UnregisterHandler(this);
                 }
             }
 
