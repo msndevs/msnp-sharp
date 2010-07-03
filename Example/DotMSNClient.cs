@@ -865,6 +865,7 @@ namespace MSNPSharpClient
                     }
 
                     Messenger.Disconnect();
+                    comboStatus.SelectedIndex = 0;
                 }
                 else
                 {
