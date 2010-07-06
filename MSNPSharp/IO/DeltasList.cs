@@ -170,38 +170,25 @@ using System.Drawing;
             return true;
         }
 
-        private bool AddImage(string imageKey, byte[] data)
+        private void AddImage(string imageKey, byte[] data)
         {
             if (HasImage(imageKey))
-                return false;
+                return;
 
             lock (UserTileSlots)
                 UserTileSlots[imageKey] = data;
-            return true;
         }
 
-        private bool AddRelationship(string siblingAccount, string imageKey)
+        private void AddRelationship(string siblingAccount, string imageKey)
         {
-            if (HasRelationship(siblingAccount))
-                return false;
-
             lock (UserImageRelationships)
                 UserImageRelationships[siblingAccount.ToLowerInvariant()] = imageKey;
-
-            return true;
         }
 
-        private bool AddImageAndRelationship(string siblingAccount, string imageKey, byte[] data)
+        private void AddImageAndRelationship(string siblingAccount, string imageKey, byte[] data)
         {
             AddImage(imageKey, data);
-
-            if (AddRelationship(siblingAccount, imageKey))
-            {
-                return true;
-            }
-
-
-            return false;
+            AddRelationship(siblingAccount, imageKey);
         }
 
         private bool RemoveImage(string imageKey)
