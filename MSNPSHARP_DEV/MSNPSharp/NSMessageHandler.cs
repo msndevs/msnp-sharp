@@ -1669,8 +1669,10 @@ namespace MSNPSharp
 
                     if (contact != ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
                     {
-                        contact.DisplayImage.ParseContext(HttpUtility.UrlDecode(newDisplayImageContext));
-                        contact.FireDisplayImageContextChangedEvent(contact.DisplayImage);
+                        DisplayImage newDisplayImage = new DisplayImage(contact.Mail);
+                        newDisplayImage.ParseContext(HttpUtility.UrlDecode(newDisplayImageContext));
+
+                        contact.FireDisplayImageContextChangedEvent(newDisplayImage);
                     }
 
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == ClientType.EmailMember)
