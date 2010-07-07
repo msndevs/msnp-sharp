@@ -151,7 +151,7 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         /// <summary>
-        /// Aborts and cleans up all running messagesessions and their transfersessions.
+        /// Aborts and cleans up all running messagesessions, transfersessions and switchboard sessions.
         /// </summary>
         public void Clear()
         {
@@ -165,6 +165,9 @@ namespace MSNPSharp.DataTransfer
 
             lock (MessageSessions)
                 MessageSessions.Clear();
+
+            lock (switchboardSessions)
+                switchboardSessions.Clear();
 
             p2pMessagePool = new P2PMessagePool();
         }
