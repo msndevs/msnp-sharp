@@ -754,7 +754,7 @@ namespace MSNPSharp
             string body = System.Text.Encoding.UTF8.GetString(message.InnerBody);
 
             Wink obj = new Wink();
-            obj.ParseContext(body, false);
+            obj.SetContext(body, false);
 
             if (WinkReceived != null)
                 WinkReceived(this, new WinkEventArgs(contact, obj));

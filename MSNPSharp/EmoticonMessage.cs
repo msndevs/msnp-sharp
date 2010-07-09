@@ -124,7 +124,7 @@ namespace MSNPSharp
             {
                 Emoticon emoticon = new Emoticon();
                 emoticon.Shortcut = values[i].Trim();
-                emoticon.ParseContext(values[i + 1].Trim());
+                emoticon.SetContext(values[i + 1].Trim());
 
                 Emoticons.Add(emoticon);
             }
