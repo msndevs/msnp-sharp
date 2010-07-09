@@ -294,9 +294,9 @@ namespace MSNPSharp
                             {
                                 Exception ex = param as Exception;
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
-                                if (NSMessageHandler.ContactList.Owner.UserTile != null)
+                                if (NSMessageHandler.ContactList.Owner.UserTileURL != null)
                                 {
-                                    SyncUserTile(NSMessageHandler.ContactList.Owner.UserTile.AbsoluteUri, null, null, null);
+                                    SyncUserTile(NSMessageHandler.ContactList.Owner.UserTileURL.AbsoluteUri, null, null, null);
                                 }
                             });
 

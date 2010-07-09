@@ -932,7 +932,7 @@ namespace MSNPSharp.DataTransfer
         {
             // set class variables
             MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
-                remoteContact, MessageSession.RemoteContactEndPointID); ;
+                remoteContact, MessageSession.RemoteContactEndPointID);
             properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
 
 
@@ -942,6 +942,7 @@ namespace MSNPSharp.DataTransfer
 
             Contact remote = MessageSession.RemoteContact;
             string AppID = "1";
+            string msnObjectContext = msnObject.OriginalContext;
 
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
             {
@@ -957,6 +958,10 @@ namespace MSNPSharp.DataTransfer
                 transferSession.MessageFooter = P2PConst.DisplayImageFooter12;
 
                 AppID = transferSession.MessageFooter.ToString();
+                if (string.IsNullOrEmpty(msnObjectContext) && string.IsNullOrEmpty(remoteContact.UserTileLocation) == false)
+                {
+                    msnObjectContext = MSNObject.GetEncodeString(remoteContact.UserTileLocation);
+                }
 
                 transferSession.TransferFinished += delegate(object sender, EventArgs ea)
                 {
@@ -968,14 +973,14 @@ namespace MSNPSharp.DataTransfer
                 };
             }
 
-            if (string.IsNullOrEmpty(msnObject.OriginalContext))
+            if (string.IsNullOrEmpty(msnObjectContext))
             {
                 //This is a default displayImage or any object created by the client programmer.
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[SendInvitation] msnObject does not have OriginalContext.");
                 throw new InvalidOperationException("Parameter msnObject does not have valid OriginalContext property.");
             }
 
-            byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(MSNObject.GetDecodeString(msnObject.OriginalContext));//GetEncodedString());
+            byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(MSNObject.GetDecodeString(msnObjectContext));
 
             string base64Context = Convert.ToBase64String(contextArray, 0, contextArray.Length);
             properties.Context = base64Context;

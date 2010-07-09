@@ -206,7 +206,8 @@ namespace MSNPSharp
     #endregion
 
     /// <summary>
-    /// Handles the messages from the switchboard server.
+    /// Handles the text messages from the switchboard server.<br/>
+    /// Text messages includes the user typing message, plain text messages and nudge messages.
     /// </summary>
     public class SBMessageHandler : IMessageHandler
     {

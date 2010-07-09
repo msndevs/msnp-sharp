@@ -460,9 +460,9 @@ namespace MSNPSharpClient
                     {
                         pbNewsPicture.Image = c.DisplayImage.Image;
                     }
-                    else if (c.UserTile != null)
+                    else if (c.UserTileURL != null)
                     {
-                        pbNewsPicture.LoadAsync(c.UserTile.AbsoluteUri);
+                        pbNewsPicture.LoadAsync(c.UserTileURL.AbsoluteUri);
                     }
                     else
                     {
