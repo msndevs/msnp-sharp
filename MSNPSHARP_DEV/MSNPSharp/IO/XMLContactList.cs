@@ -2232,7 +2232,7 @@ namespace MSNPSharp.IO
             string account = cinfo.passportName;
             string displayName = cinfo.displayName;
             string nickName = GetContactNickName(contactType);
-            Uri userTile = GetUserTileURLFromWindowsLiveNetworkInfo(contactType);
+            Uri userTileURL = GetUserTileURLFromWindowsLiveNetworkInfo(contactType);
             bool isMessengeruser = cinfo.isMessengerUser;
             string lowerId = abId.ToLowerInvariant();
             ReturnState returnValue = ReturnState.ProcessNextContact;
@@ -2310,7 +2310,7 @@ namespace MSNPSharp.IO
                     contact.SetComment(cinfo.comment);
                     contact.SetIsMessengerUser(isMessengeruser);
                     contact.SetMobileAccess(cinfo.isMobileIMEnabled);
-                    contact.UserTile = userTile;
+                    contact.UserTileURL = userTileURL;
                     SetContactPhones(contact, cinfo);
 
                     if (!string.IsNullOrEmpty(nickName) && string.IsNullOrEmpty(contact.NickName))
@@ -2438,7 +2438,7 @@ namespace MSNPSharp.IO
                         owner.SetNickName(nickName);
                     }
 
-                    owner.UserTile = userTile;
+                    owner.UserTileURL = userTileURL;
                     SetContactPhones(owner, cinfo);
 	#endregion
 

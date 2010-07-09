@@ -730,23 +730,20 @@ using MSNPSharp.Utilities;
 
         private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
         {
-            if (remoteContact.ClientType == ClientType.PassportMember)
+            if (remoteContact.ClientType == ClientType.PassportMember && 
+                string.IsNullOrEmpty(remoteContact.UserTileLocation) == false /* True means user does not have display image */)
             {
                 if (updateImage == null)
                     updateImage = remoteContact.DisplayImage;
 
-                if (!string.IsNullOrEmpty(updateImage.OriginalContext))
-                {
-                    // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
-                    // The MSNSLPHandler makes use of the underlying P2P framework.
-                    MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(remoteContact);
+                // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
+                // The MSNSLPHandler makes use of the underlying P2P framework.
+                MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(remoteContact);
 
-                    // by sending an invitation a P2PTransferSession is automatically created.
-                    // the session object takes care of the actual data transfer to the remote client,
-                    // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                    P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, remoteContact, updateImage);
-                }
-
+                // by sending an invitation a P2PTransferSession is automatically created.
+                // the session object takes care of the actual data transfer to the remote client,
+                // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
+                P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, remoteContact, updateImage);
             }
         }
 

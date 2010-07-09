@@ -95,6 +95,7 @@ namespace MSNPSharp
 
         private List<ActivityDetailsType> activities = new List<ActivityDetailsType>(0);
         private Uri userTile = null;
+        private string userTileLocation = string.Empty;
 
         private object syncObject = new object();
 
@@ -200,7 +201,7 @@ namespace MSNPSharp
         /// <summary>
         /// The display image url from the webside.
         /// </summary>
-        public Uri UserTile
+        public Uri UserTileURL
         {
             get
             {
@@ -210,6 +211,24 @@ namespace MSNPSharp
             internal set
             {
                 userTile = value;
+            }
+        }
+
+        /// <summary>
+        /// The displayimage context.
+        /// </summary>
+        public string UserTileLocation
+        {
+            //I create this property because I don't want to play tricks with display image's OriginalContext and Context any more.
+
+            get
+            {
+                return userTileLocation;
+            }
+
+            internal set
+            {
+                userTileLocation = value;
             }
         }
 

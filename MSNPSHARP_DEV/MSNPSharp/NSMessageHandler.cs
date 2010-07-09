@@ -1419,41 +1419,27 @@ namespace MSNPSharp
                 {
                     xmlDoc.Load(new MemoryStream(message.InnerBody));
 
-                    XmlNode friendlyNameNode = xmlDoc.SelectSingleNode(@"//Data/FriendlyName");
-                    if (friendlyNameNode != null)
-                    {
-                        contact.SetName(friendlyNameNode.InnerXml == "" ? contact.Mail : friendlyNameNode.InnerText);
-                    }
+                    // Get Fridenly Name
+                    string friendlyName = GetFriendlyNameFromUBXXmlData(xmlDoc);
+                    contact.SetName(string.IsNullOrEmpty(friendlyName) ? contact.Mail : friendlyName);
 
-                    XmlNodeList endPoints = xmlDoc.GetElementsByTagName("EndpointData");
+                    //Get UserTileLocation
+                    contact.UserTileLocation = GetUserTileLocationFromUBXXmlData(xmlDoc);
+
+                    //Get endpoint data.
+                    bool isPrivateEndPoint = (contact is Owner);
+                    List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(xmlDoc, isPrivateEndPoint);
                     if (endPoints.Count > 0)
                     {
-                        foreach (XmlNode epNode in endPoints)
+                        foreach (EndPointData epData in endPoints)
                         {
-                            Guid epId = new Guid(epNode.Attributes["id"].Value);
-                            string capsString = (epNode["Capabilities"] == null) ? "0:0" : epNode["Capabilities"].InnerText;
-                            ClientCapacities clientCaps = ClientCapacities.None;
-                            ClientCapacitiesEx clientCapsEx = ClientCapacitiesEx.None;
-
-                            string[] capsGroup = capsString.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (capsGroup.Length > 0)
-                            {
-                                clientCaps = (ClientCapacities)uint.Parse(capsGroup[0]);
-                            }
-
-                            if (capsGroup.Length > 1)
-                            {
-                                clientCapsEx = (ClientCapacitiesEx)uint.Parse(capsGroup[1]);
-                            }
-
-                            EndPointData epData = (contact is Owner ? new PrivateEndPointData(epId) : new EndPointData(epId));
-                            epData.ClientCapacities = clientCaps;
-                            epData.ClientCapacitiesEx = clientCapsEx;
-                            contact.EndPointData[epId] = epData;
+                            contact.EndPointData[epData.Id] = epData;
                         }
                     }
 
-                    #region Only for Owner
+                    
+
+                    #region Only for Owner, set private endpoint info.
 
                     XmlNodeList privateEndPoints = xmlDoc.GetElementsByTagName("PrivateEndpointData"); //Only the owner will have this field.
 
@@ -1524,6 +1510,63 @@ namespace MSNPSharp
                 }
             }
            
+        }
+
+        private string GetFriendlyNameFromUBXXmlData(XmlDocument ubxData)
+        {
+            XmlNode friendlyNameNode = ubxData.SelectSingleNode(@"//Data/FriendlyName");
+            if (friendlyNameNode != null)
+            {
+                return string.IsNullOrEmpty(friendlyNameNode.InnerXml) ? string.Empty : friendlyNameNode.InnerText;
+            }
+
+            return string.Empty;
+        }
+
+        private string GetUserTileLocationFromUBXXmlData(XmlDocument ubxData)
+        {
+            XmlNode userTileLocationNode = ubxData.SelectSingleNode(@"//Data/UserTileLocation");
+            if (userTileLocationNode != null)
+            {
+                return string.IsNullOrEmpty(userTileLocationNode.InnerXml) ? string.Empty : userTileLocationNode.InnerText;
+            }
+
+            return string.Empty;
+        }
+
+        private List<EndPointData> GetEndPointDataFromUBXXmlData(XmlDocument ubxData, bool isPrivateEndPoint)
+        {
+            List<EndPointData> endPoints = new List<EndPointData>(0);
+
+            XmlNodeList endPointNodes = ubxData.GetElementsByTagName("EndpointData");
+            if (endPointNodes.Count > 0)
+            {
+                foreach (XmlNode epNode in endPointNodes)
+                {
+                    Guid epId = new Guid(epNode.Attributes["id"].Value);
+                    string capsString = (epNode["Capabilities"] == null) ? "0:0" : epNode["Capabilities"].InnerText;
+                    ClientCapacities clientCaps = ClientCapacities.None;
+                    ClientCapacitiesEx clientCapsEx = ClientCapacitiesEx.None;
+
+                    string[] capsGroup = capsString.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (capsGroup.Length > 0)
+                    {
+                        clientCaps = (ClientCapacities)uint.Parse(capsGroup[0]);
+                    }
+
+                    if (capsGroup.Length > 1)
+                    {
+                        clientCapsEx = (ClientCapacitiesEx)uint.Parse(capsGroup[1]);
+                    }
+
+                    EndPointData epData = (isPrivateEndPoint ? new PrivateEndPointData(epId) : new EndPointData(epId));
+                    epData.ClientCapacities = clientCaps;
+                    epData.ClientCapacitiesEx = clientCapsEx;
+                    endPoints.Add(epData);
+                }
+            }
+
+            return endPoints;
         }
 
         /// <summary>
@@ -1671,6 +1714,7 @@ namespace MSNPSharp
                     {
                         DisplayImage newDisplayImage = new DisplayImage(contact.Mail);
                         newDisplayImage.ParseContext(HttpUtility.UrlDecode(newDisplayImageContext));
+                        contact.UserTileLocation = newDisplayImage.ContextPlain;
 
                         contact.FireDisplayImageContextChangedEvent(newDisplayImage);
                     }
@@ -1678,7 +1722,7 @@ namespace MSNPSharp
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == ClientType.EmailMember)
                     {
                         newDisplayImageContext = message.CommandValues[5].ToString();
-                        contact.UserTile = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
+                        contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
                     }
 
                     PresenceStatus oldStatus = contact.Status;
@@ -1807,7 +1851,7 @@ namespace MSNPSharp
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 3 && type == ClientType.EmailMember)
                     {
                         string newdp = message.CommandValues[2].ToString();
-                        contact.UserTile = new Uri(HttpUtility.UrlDecode(newdp));
+                        contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newdp));
                     }
 
                     PresenceStatus oldStatus = contact.Status;

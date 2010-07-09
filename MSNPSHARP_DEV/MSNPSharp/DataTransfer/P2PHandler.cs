@@ -718,7 +718,7 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            // check whether the switchboard handler is valid. Otherwise request a new session.
+            // check whether the switchboard handler is valid. Otherwise request a new switchboard session.
             if (sbHandler == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,

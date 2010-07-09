@@ -480,7 +480,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public virtual string GetEncodeString(string context)
+        public static string GetEncodeString(string context)
         {
             return MSNHttpUtility.MSNObjectUrlEncode(context);
         }
