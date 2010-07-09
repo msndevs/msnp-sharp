@@ -2683,7 +2683,7 @@ namespace MSNPSharp
                                             // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
                                             if (contact.OnPendingList || contact.OnReverseList)
                                             {
-                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, reverse added fired. Contact is in list: " + contact.Lists.ToString());
+                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
                                                 ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                             }
                                         }
@@ -2722,7 +2722,7 @@ namespace MSNPSharp
                                 if (list == MSNLists.ReverseList)
                                 {
                                     Contact contact = ContactList.GetContact(account, displayName, type);
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, reverse added fired. Contact is in list: " + contact.Lists.ToString());
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
                                     contact.Lists |= MSNLists.ReverseList;
                                     ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                 }
