@@ -293,7 +293,7 @@ namespace MSNPSharp.DataTransfer
                 else if (args.TransferProperties.DataType == DataTransferType.Emoticon)
                 {
                     MSNObject msnObject = new MSNObject();
-                    msnObject.ParseContext(args.TransferProperties.Context);
+                    msnObject.SetContext(args.TransferProperties.Context);
 
                     // send an emoticon
                     foreach (Emoticon emoticon in NSMessageHandler.ContactList.Owner.Emoticons.Values)

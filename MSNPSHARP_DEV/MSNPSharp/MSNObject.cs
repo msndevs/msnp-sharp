@@ -117,7 +117,6 @@ namespace MSNPSharp
     [Serializable()]
     public class MSNObject
     {
-        private string originalContext = string.Empty;
         private string oldHash = string.Empty;
 
         [NonSerialized]
@@ -168,17 +167,6 @@ namespace MSNPSharp
             {
                 creator = value;
                 UpdateInCollection();
-            }
-        }
-
-        /// <summary>
-        /// The original context string that was send by the remote contact
-        /// </summary>
-        public string OriginalContext
-        {
-            get
-            {
-                return originalContext;
             }
         }
 
@@ -355,9 +343,9 @@ namespace MSNPSharp
         /// Parses a context send by the remote contact and set the corresponding class variables. Context input is assumed to be not base64 encoded.
         /// </summary>
         /// <param name="context"></param>
-        public virtual void ParseContext(string context)
+        public virtual void SetContext(string context)
         {
-            ParseContext(context, false);
+            SetContext(context, false);
         }
 
         /// <summary>
@@ -365,9 +353,8 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="context"></param>
         /// <param name="base64Encoded"></param>
-        public virtual void ParseContext(string context, bool base64Encoded)
+        public virtual void SetContext(string context, bool base64Encoded)
         {
-            originalContext = context;
 
             if (base64Encoded)
                 context = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(context));
@@ -517,10 +504,6 @@ namespace MSNPSharp
             get
             {
                 return GetEncodedString();
-            }
-            set
-            {
-                ParseContext(value);
             }
         }
 

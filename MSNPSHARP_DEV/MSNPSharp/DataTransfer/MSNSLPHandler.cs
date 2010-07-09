@@ -942,7 +942,7 @@ namespace MSNPSharp.DataTransfer
 
             Contact remote = MessageSession.RemoteContact;
             string AppID = "1";
-            string msnObjectContext = msnObject.OriginalContext;
+            string msnObjectContext = msnObject.ContextPlain;
 
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
             {
@@ -958,18 +958,25 @@ namespace MSNPSharp.DataTransfer
                 transferSession.MessageFooter = P2PConst.DisplayImageFooter12;
 
                 AppID = transferSession.MessageFooter.ToString();
-                if (string.IsNullOrEmpty(msnObjectContext) && string.IsNullOrEmpty(remoteContact.UserTileLocation) == false)
+                DisplayImage displayImage = msnObject as DisplayImage;
+
+                if (displayImage == null)
+                    throw new ArgumentNullException("msnObject is not a DisplayImage object.");
+
+                if ((string.IsNullOrEmpty(msnObjectContext) && string.IsNullOrEmpty(remoteContact.UserTileLocation) == false) ||
+                    (displayImage.IsDefaultImage && string.IsNullOrEmpty(remoteContact.UserTileLocation) == false))
                 {
-                    msnObjectContext = MSNObject.GetEncodeString(remoteContact.UserTileLocation);
+                    msnObjectContext = remoteContact.UserTileLocation;
+                    displayImage.SetContext(msnObjectContext);
                 }
 
                 transferSession.TransferFinished += delegate(object sender, EventArgs ea)
                 {
-                    DisplayImage image = msnObject as DisplayImage;
-                    image.Image = Image.FromStream(transferSession.DataStream);
-                    image.RetrieveImage();
-                    image.IsDefaultImage = false;
-                    remoteContact.SetDisplayImage(image);
+                    
+                    displayImage.Image = Image.FromStream(transferSession.DataStream);
+                    displayImage.RetrieveImage();
+                    displayImage.IsDefaultImage = false;
+                    remoteContact.SetDisplayImage(displayImage);
                 };
             }
 
@@ -980,7 +987,7 @@ namespace MSNPSharp.DataTransfer
                 throw new InvalidOperationException("Parameter msnObject does not have valid OriginalContext property.");
             }
 
-            byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(MSNObject.GetDecodeString(msnObjectContext));
+            byte[] contextArray = System.Text.Encoding.UTF8.GetBytes(msnObjectContext);
 
             string base64Context = Convert.ToBase64String(contextArray, 0, contextArray.Length);
             properties.Context = base64Context;
@@ -1563,7 +1570,7 @@ namespace MSNPSharp.DataTransfer
                     if (message.BodyValues.ContainsKey("Context"))
                     {
                         MSNObject msnObject = new MSNObject();
-                        msnObject.ParseContext(message.BodyValues["Context"].ToString(), true);
+                        msnObject.SetContext(message.BodyValues["Context"].ToString(), true);
 
                         if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                             properties.DataType = DataTransferType.DisplayImage;
@@ -2022,7 +2029,7 @@ namespace MSNPSharp.DataTransfer
                 {
                     // create a MSNObject based upon the send context
                     invitationArgs.MSNObject = new MSNObject();
-                    invitationArgs.MSNObject.ParseContext(properties.Context, false);
+                    invitationArgs.MSNObject.SetContext(properties.Context, false);
                 }
                 else if (properties.DataType == DataTransferType.Activity)
                 {

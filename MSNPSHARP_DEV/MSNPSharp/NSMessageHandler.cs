@@ -1644,7 +1644,7 @@ namespace MSNPSharp
 
                     if (contact != circle.ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
                     {
-                        contact.DisplayImage.ParseContext(MSNHttpUtility.NSDecode(newDisplayImageContext));
+                        contact.DisplayImage.SetContext(MSNHttpUtility.NSDecode(newDisplayImageContext));
                         contact.FireDisplayImageContextChangedEvent(contact.DisplayImage);
                     }
 
@@ -1713,7 +1713,7 @@ namespace MSNPSharp
                     if (contact != ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
                     {
                         DisplayImage newDisplayImage = new DisplayImage(contact.Mail);
-                        newDisplayImage.ParseContext(HttpUtility.UrlDecode(newDisplayImageContext));
+                        newDisplayImage.SetContext(HttpUtility.UrlDecode(newDisplayImageContext));
                         contact.UserTileLocation = newDisplayImage.ContextPlain;
 
                         contact.FireDisplayImageContextChangedEvent(newDisplayImage);
