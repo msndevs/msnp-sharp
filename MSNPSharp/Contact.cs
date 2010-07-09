@@ -1334,6 +1334,11 @@ namespace MSNPSharp
             return Hash;
         }
 
+        /// <summary>
+        /// Check whether two contacts represent the same user (Have the same passport account).
+        /// </summary>
+        /// <param name="contact"></param>
+        /// <returns></returns>
         public virtual bool IsSibling(Contact contact)
         {
             if (contact == null)

@@ -929,6 +929,9 @@ namespace MSNPSharp
         }
     }
 
+    /// <summary>
+    /// Use to notify a <see cref="Conversation"/> has ended.
+    /// </summary>
     public class ConversationEndEventArgs : EventArgs
     {
         private Conversation conversation = null;
