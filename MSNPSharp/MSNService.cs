@@ -601,7 +601,21 @@ namespace MSNPSharp
                 {
                     if (originalHost != null && originalHost != String.Empty)
                     {
-                        ws.Url = originalUrl.Replace(originalHost, FetchHost(deltas.PreferredHosts[preferredHostKey]));
+                        if (deltas.PreferredHosts.ContainsKey(preferredHostKey))
+                        {
+                            ws.Url = originalUrl.Replace(originalHost, FetchHost(deltas.PreferredHosts[preferredHostKey]));
+                        }
+                        else
+                        {
+                            //This means the redirection URL returns respond content.
+                            lock (deltas.SyncObject)
+                            {
+                                deltas.PreferredHosts[preferredHostKey] = ws.Url;
+                                deltas.Save();
+                            }
+
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "The redirect URL returns correct result, use " + ws.Url + " for " + preferredHostKey);
+                        }
                     }
 
                     // Set cache key
