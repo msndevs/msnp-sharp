@@ -1900,6 +1900,10 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         
         private string dateModifiedField;
         
+        private int versionField;
+        
+        private bool versionFieldSpecified;
+        
         private int flagsField;
         
         private documentBaseType photoField;
@@ -1933,6 +1937,27 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
             }
             set {
                 this.dateModifiedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int Version {
+            get {
+                return this.versionField;
+            }
+            set {
+                this.versionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool VersionSpecified {
+            get {
+                return this.versionFieldSpecified;
+            }
+            set {
+                this.versionFieldSpecified = value;
             }
         }
         
