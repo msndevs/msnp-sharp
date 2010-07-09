@@ -60,7 +60,8 @@ namespace MSNPSharp
         /// <param name="epId">The endpoint Id.</param>
         public EndPointData(Guid epId)
         {
-
+            //OMG.. I forgot this..
+            id = epId;
         }
     }
 
