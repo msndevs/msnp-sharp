@@ -4,33 +4,6 @@ using System.Text;
 
 namespace MSNPSharp.Utilities
 {
-    /// <summary>
-    /// The type of user messages.
-    /// </summary>
-    public enum MessageType
-    {
-        None,
-        /// <summary>
-        /// A plain text message.
-        /// </summary>
-        TextMessage,
-        /// <summary>
-        /// Indicates the remote user is typing.
-        /// </summary>
-        UserTyping,
-        /// <summary>
-        /// The nudge message
-        /// </summary>
-        Nudge,
-        /// <summary>
-        /// The emoticon data.
-        /// </summary>
-        Emoticon,
-        /// <summary>
-        /// The object data.
-        /// </summary>
-        MSNObject
-    }
 
     public class MessageArrivedEventArgs : EventArgs
     {
@@ -54,18 +27,18 @@ namespace MSNPSharp.Utilities
             get { return sender; }
         }
 
-        private MessageType messageType = MessageType.None;
+        private NetworkMessageType messageType = NetworkMessageType.None;
 
         /// <summary>
         /// The type of message received.
         /// </summary>
-        public MessageType MessageType
+        public NetworkMessageType MessageType
         {
             get { return messageType; }
         }
 
 
-        public MessageArrivedEventArgs(ConversationID conversationId, Contact sender, MessageType type)
+        public MessageArrivedEventArgs(ConversationID conversationId, Contact sender, NetworkMessageType type)
         {
             conversationID = conversationId;
             this.sender = sender;
@@ -87,7 +60,7 @@ namespace MSNPSharp.Utilities
 
 
         public TextMessageArrivedEventArgs(ConversationID conversationId, Contact sender, TextMessage textMessage)
-            :base(conversationId,sender, MessageType.TextMessage)
+            : base(conversationId, sender, NetworkMessageType.Text)
         {
             this.textMessage = textMessage;
         }
@@ -106,7 +79,7 @@ namespace MSNPSharp.Utilities
         }
 
         public EmoticonArrivedEventArgs(ConversationID conversationId, Contact sender, Emoticon emoticon)
-            : base(conversationId, sender, MessageType.Emoticon)
+            : base(conversationId, sender, NetworkMessageType.Emoticon)
         {
             this.emoticon = emoticon;
         }

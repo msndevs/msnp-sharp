@@ -898,7 +898,16 @@ namespace MSNPSharp
         /// <summary>
         /// A nudge message
         /// </summary>
-        Nudge = 3
+        Nudge = 3,
+
+        /// <summary>
+        /// The emoticon data.
+        /// </summary>
+        Emoticon,
+        /// <summary>
+        /// The object data.
+        /// </summary>
+        MSNObject
     }
 
     /// <summary>
