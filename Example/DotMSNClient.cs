@@ -92,9 +92,6 @@ namespace MSNPSharpClient
             // Receive messages send by MSN contacts.
             messenger.MessageManager.MessageArrived += new EventHandler<MSNPSharp.Utilities.MessageArrivedEventArgs>(MessageManager_MessageArrived);
 
-            // See if Yahoo contacts send a message
-            messenger.Nameserver.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived);
-
             // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)
             messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
 
@@ -616,30 +613,6 @@ namespace MSNPSharpClient
                 }
 
                 CreateConversationForm(e.Sender, e.ConversationID).OnMessageReceived(sender, e);
-            }
-        }
-
-        void Nameserver_CrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                BeginInvoke(new EventHandler<CrossNetworkMessageEventArgs>(Nameserver_CrossNetworkMessageReceived), new object[] { sender, e });
-                return;
-            }
-            else
-            {
-                ConversationID yahooID = Messenger.MessageManager.GetID(e.From); 
-
-                foreach (ConversationForm cform in ConversationForms)
-                {
-                    if (cform.ConversationID == yahooID)
-                    {
-                        cform.OnCrossNetworkMessageReceived(sender, e);
-                        return;
-                    }
-                }
-
-                CreateConversationForm(e.From, yahooID).OnCrossNetworkMessageReceived(sender, e);
             }
         }
 
