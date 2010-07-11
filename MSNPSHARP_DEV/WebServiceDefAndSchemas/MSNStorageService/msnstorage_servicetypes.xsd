@@ -50,6 +50,7 @@
 					<xsd:sequence>
 						<xsd:element name="ResourceID" type="xsd:string"/>
 						<xsd:element name="DateModified" type="xsd:string"/>
+						<xsd:element name="Version" type="xsd:int" minOccurs="0"/>
 						<xsd:element name="Flags" type="xsd:int"/>
 						<xsd:element name="Photo" type="documentBaseType"/>
 						<xsd:element name="Attachments" minOccurs="0">
