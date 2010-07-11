@@ -638,6 +638,8 @@ namespace MSNPSharpClient
                         return;
                     }
                 }
+
+                CreateConversationForm(e.From, yahooID).OnCrossNetworkMessageReceived(sender, e);
             }
         }
 
