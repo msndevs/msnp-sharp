@@ -30,6 +30,9 @@
       <xsd:element minOccurs="0" name="PreAuthURLPartner" type="xsd:anyURI" />
       <xsd:element name="DocumentStreamType" type="xsd:string" />
       <xsd:element name="WriteMode" type="xsd:string" />
+      <xsd:element name="StreamVersion" type="xsd:int" />
+      <xsd:element name="SHA1Hash" type="xsd:base64Binary" />
+      <xsd:element name="Genie" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="PhotoStream">
@@ -68,7 +71,9 @@
   <xsd:complexType name="documentBaseType">
     <xsd:sequence>
       <xsd:element minOccurs="0" name="ResourceID" type="xsd:string" />
-      <xsd:element name="Name" type="xsd:string" />
+      <xsd:element minOccurs="0" name="Name" type="xsd:string" />
+      <xsd:element name="ItemType" type="xsd:string" />
+      <xsd:element name="DateModified" type="xsd:string" />
       <xsd:element name="DocumentStreams">
         <xsd:complexType>
           <xsd:sequence>
