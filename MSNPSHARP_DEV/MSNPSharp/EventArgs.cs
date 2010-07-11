@@ -795,7 +795,7 @@ namespace MSNPSharp
         /// <summary>
         /// The type of message received. Please refer to <see cref="NetworkMessageType"/>
         /// </summary>
-        public NetworkMessageType MesageType
+        public NetworkMessageType MessageType
         {
             get 
             { 

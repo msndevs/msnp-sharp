@@ -497,6 +497,31 @@ using MSNPSharp.Utilities;
             }
         }
 
+        public void OnCrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<MessageArrivedEventArgs>(OnMessageReceived), new object[] { sender, e });
+            }
+            else
+            {
+                switch (e.MessageType)
+                {
+                    case NetworkMessageType.Nudge :
+                        {
+                            MakeVisible(sender, e);
+                            PrintNudge(e.From);
+                            break;
+                        }
+                    case NetworkMessageType.Text:
+                        {
+                            MakeVisible(sender, e);
+                            PrintText(e.From, e.Message as TextMessage);
+                            break;
+                        }
+                }
+            }
+        }
 
         /// <summary>
         /// Clean up any resources being used.
