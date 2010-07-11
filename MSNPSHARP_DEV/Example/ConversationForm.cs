@@ -463,15 +463,15 @@ using MSNPSharp.Utilities;
             {
                 switch (e.MessageType)
                 {
-                    case MessageType.Nudge:
+                    case NetworkMessageType.Nudge:
                         MakeVisible(sender, e);
                         PrintNudge(e.Sender);
                         break;
-                    case MessageType.TextMessage:
+                    case NetworkMessageType.Text:
                         MakeVisible(sender, e);
                         PrintText(e.Sender, (e as TextMessageArrivedEventArgs).TextMessage);
                         break;
-                    case MessageType.Emoticon:
+                    case NetworkMessageType.Emoticon:
                         {
                             Emoticon emo = (e as EmoticonArrivedEventArgs).Emoticon;
                             if (emo != null)
@@ -493,32 +493,6 @@ using MSNPSharp.Utilities;
                             }
                         }
                         break;
-                }
-            }
-        }
-
-        public void OnCrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new EventHandler<MessageArrivedEventArgs>(OnMessageReceived), new object[] { sender, e });
-            }
-            else
-            {
-                switch (e.MessageType)
-                {
-                    case NetworkMessageType.Nudge :
-                        {
-                            MakeVisible(sender, e);
-                            PrintNudge(e.From);
-                            break;
-                        }
-                    case NetworkMessageType.Text:
-                        {
-                            MakeVisible(sender, e);
-                            PrintText(e.From, e.Message as TextMessage);
-                            break;
-                        }
                 }
             }
         }
