@@ -56,6 +56,7 @@ namespace MSNPSharp.Utilities
         {
             this.messenger = messenger;
             Messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(ConversationCreated);
+            Messenger.Nameserver.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(CrossNetworkMessageReceived);
         }
 
         #endregion
@@ -77,28 +78,44 @@ namespace MSNPSharp.Utilities
             RemoveConversationFromConversationList(e.Conversation);
         }
 
-
-        private void UserTyping(object sender, ContactEventArgs e)
+        private void CrossNetworkMessageReceived(object sender, CrossNetworkMessageEventArgs e)
         {
-            ConversationID id = ProcessArrivedConversation(sender as Conversation);
-            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, MessageType.UserTyping));
+            ConversationID id = ProcessArrivedConversation(new ConversationID(e.From));
+
+            switch (e.MessageType)
+            {
+                case NetworkMessageType.Typing:
+                case NetworkMessageType.Nudge:
+                    OnMessageArrived(new MessageArrivedEventArgs(id, e.From, e.MessageType));
+                    break;
+                case NetworkMessageType.Text:
+                    OnMessageArrived(new TextMessageArrivedEventArgs(id, e.From, e.Message as TextMessage));
+                    break;
+            }
+
         }
 
-        private void TextMessageReceived(object sender, TextMessageEventArgs e)
+        private void PassportMemberUserTyping(object sender, ContactEventArgs e)
         {
-            ConversationID id = ProcessArrivedConversation(sender as Conversation);
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
+            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, NetworkMessageType.Typing));
+        }
+
+        private void PassportMemberTextMessageReceived(object sender, TextMessageEventArgs e)
+        {
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
             OnMessageArrived(new TextMessageArrivedEventArgs(id, e.Sender, e.Message));
         }
 
-        private void NudgeReceived(object sender, ContactEventArgs e)
+        private void PassportMemberNudgeReceived(object sender, ContactEventArgs e)
         {
-            ConversationID id = ProcessArrivedConversation(sender as Conversation);
-            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, MessageType.Nudge));
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
+            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, NetworkMessageType.Nudge));
         }
 
-        private void MSNObjectDataTransferCompleted(object sender, ConversationMSNObjectDataTransferCompletedEventArgs e)
+        private void PassportMemberMSNObjectDataTransferCompleted(object sender, ConversationMSNObjectDataTransferCompletedEventArgs e)
         {
-            ConversationID id = ProcessArrivedConversation(sender as Conversation);
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
             if (e.ClientData is Emoticon)
             {
                 Emoticon emoticon = e.ClientData as Emoticon;
@@ -114,25 +131,24 @@ namespace MSNPSharp.Utilities
                 MessageArrived(this, e);
         }
 
-        private ConversationID ProcessArrivedConversation(Conversation conversation)
+        private ConversationID ProcessArrivedConversation(ConversationID cId)
         {
             lock (SyncObject)
             {
-                ConversationID id = new ConversationID(conversation);
-                bool created = HasConversation(id);
-                bool pending = IsPendingConversation(id);
+                bool created = HasConversation(cId);
+                bool pending = IsPendingConversation(cId);
                 if (pending)
                 {
                     if (!created)
                     {
-                        AddConversationToConversationIndex(id, conversation);  //We fix this bug.
+                        AddConversationToConversationIndex(cId, cId.Conversation);  //We fix this bug.
                     }
 
                     if (created)
                     {
                         //What happends?!
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[ProcessArrivedConversation Error]: A conversation is both in pending and created status.");
-                        RemovePendingConversation(id);
+                        RemovePendingConversation(cId);
                     }
                 }
 
@@ -140,11 +156,11 @@ namespace MSNPSharp.Utilities
                 {
                     if (!created)
                     {
-                        AddConversationToConversationIndex(id, conversation);
+                        AddConversationToConversationIndex(cId, cId.Conversation);
                     }
                 }
 
-                return id;
+                return cId;
             }
         }
 
@@ -262,11 +278,11 @@ namespace MSNPSharp.Utilities
         {
             if (conversation != null)
             {
-                conversation.TextMessageReceived -= TextMessageReceived;
-                conversation.NudgeReceived -= NudgeReceived;
-                conversation.UserTyping -= UserTyping;
+                conversation.TextMessageReceived -= PassportMemberTextMessageReceived;
+                conversation.NudgeReceived -= PassportMemberNudgeReceived;
+                conversation.UserTyping -= PassportMemberUserTyping;
                 conversation.ConversationEnded -= ConversationEnded;
-                conversation.MSNObjectDataTransferCompleted -= MSNObjectDataTransferCompleted;
+                conversation.MSNObjectDataTransferCompleted -= PassportMemberMSNObjectDataTransferCompleted;
             }
         }
 
@@ -274,11 +290,11 @@ namespace MSNPSharp.Utilities
         {
             DetatchEvents(conversation);
 
-            conversation.TextMessageReceived += new EventHandler<TextMessageEventArgs>(TextMessageReceived);
-            conversation.NudgeReceived += new EventHandler<ContactEventArgs>(NudgeReceived);
-            conversation.UserTyping += new EventHandler<ContactEventArgs>(UserTyping);
+            conversation.TextMessageReceived += new EventHandler<TextMessageEventArgs>(PassportMemberTextMessageReceived);
+            conversation.NudgeReceived += new EventHandler<ContactEventArgs>(PassportMemberNudgeReceived);
+            conversation.UserTyping += new EventHandler<ContactEventArgs>(PassportMemberUserTyping);
             conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(ConversationEnded);
-            conversation.MSNObjectDataTransferCompleted += new EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs>(MSNObjectDataTransferCompleted);
+            conversation.MSNObjectDataTransferCompleted += new EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs>(PassportMemberMSNObjectDataTransferCompleted);
         }
 
 
@@ -649,7 +665,7 @@ namespace MSNPSharp.Utilities
 
             if (created)
             {
-                if (cId.NetworkType == ClientType.PassportMember)
+                if (cId.NetworkType == ClientType.PassportMember) //Only passport conversation contains a conversation object. Other conversation, like Yahoo does not.
                 {
                     List<Conversation> overflowConversations = new List<Conversation>(10);
                     lock (SyncObject)
@@ -667,6 +683,10 @@ namespace MSNPSharp.Utilities
                     {
                         conversation.End();
                     }
+                }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A none Passprt Member conversation has been removed from the conversation index");
                 }
                 RemoveConversationFromConversationIndex(cId);
             }
