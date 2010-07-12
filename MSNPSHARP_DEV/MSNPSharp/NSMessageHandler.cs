@@ -1642,10 +1642,13 @@ namespace MSNPSharp
                     contact.EndPointData[Guid.Empty].ClientCapacities = newcaps;
                     contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newcapsex;
 
-                    if (contact != circle.ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
+                    if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
                     {
-                        contact.DisplayImage.SetContext(MSNHttpUtility.NSDecode(newDisplayImageContext));
-                        contact.FireDisplayImageContextChangedEvent(contact.DisplayImage);
+                        if (contact.DisplayImage != newDisplayImageContext)
+                        {
+                            contact.UserTileLocation = newDisplayImageContext;
+                            contact.FireDisplayImageContextChangedEvent(newDisplayImageContext);
+                        }
                     }
 
                     PresenceStatus oldStatus = contact.Status;
@@ -1710,13 +1713,13 @@ namespace MSNPSharp
                     contact.EndPointData[Guid.Empty].ClientCapacities = newcaps;
                     contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newcapsex;
 
-                    if (contact != ContactList.Owner && !String.IsNullOrEmpty(newDisplayImageContext) && newDisplayImageContext != "0")
+                    if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
                     {
-                        DisplayImage newDisplayImage = new DisplayImage(contact.Mail);
-                        newDisplayImage.SetContext(HttpUtility.UrlDecode(newDisplayImageContext));
-                        contact.UserTileLocation = newDisplayImage.ContextPlain;
-
-                        contact.FireDisplayImageContextChangedEvent(newDisplayImage);
+                        if (contact.DisplayImage != newDisplayImageContext)
+                        {
+                            contact.UserTileLocation = newDisplayImageContext;
+                            contact.FireDisplayImageContextChangedEvent(newDisplayImageContext);
+                        }
                     }
 
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == ClientType.EmailMember)

@@ -969,12 +969,12 @@ namespace MSNPSharp
         /// false: No event was fired.<br/>
         /// true: The <see cref="Contact.DisplayImageContextChanged"/> was fired.
         /// </returns>
-        internal bool FireDisplayImageContextChangedEvent(DisplayImage updatedImage)
+        internal bool FireDisplayImageContextChangedEvent(string updatedImageContext)
         {
-            if (updatedImage == null) return false;
-            if (displayImage != null && updatedImage.Sha == displayImage.Sha) return false;
+            if (DisplayImage == updatedImageContext)
+                return false;
 
-            OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(updatedImage, DisplayImageChangedType.UpdateTransmissionRequired));
+            OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
             return true;
         }
 
