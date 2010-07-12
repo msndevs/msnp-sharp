@@ -711,7 +711,7 @@ using MSNPSharp.Utilities;
             // request the image, if not already available
             if (ConversationID.RemoteOwner.Status != PresenceStatus.Offline)
             {
-                if (ConversationID.RemoteOwner.DisplayImage.IsDefaultImage && isYIM == false)
+                if (ConversationID.RemoteOwner.DisplayImage != ConversationID.RemoteOwner.UserTileLocation)
                 {
                     try
                     {
@@ -729,8 +729,7 @@ using MSNPSharp.Utilities;
 
         private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
         {
-            if (remoteContact.ClientType == ClientType.PassportMember && 
-                string.IsNullOrEmpty(remoteContact.UserTileLocation) == false /* True means user does not have display image */)
+            if (remoteContact.ClientType == ClientType.PassportMember && updateImage != remoteContact.UserTileLocation)
             {
                 if (updateImage == null)
                     updateImage = remoteContact.DisplayImage;
