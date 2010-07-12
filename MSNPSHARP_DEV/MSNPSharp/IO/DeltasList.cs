@@ -318,7 +318,7 @@ using System.Drawing;
 
         #region Internal Methods
 
-        internal Image GetImageBySiblingString(string siblingAccount, out string imageKey)
+        internal byte[] GetRawImageDataBySiblingString(string siblingAccount, out string imageKey)
         {
             imageKey = string.Empty;
             if (HasRelationshipAndImage(siblingAccount, out imageKey))
@@ -326,7 +326,7 @@ using System.Drawing;
                 lock (UserTileSlots)
                 {
                     IncreaseVisitCount(imageKey);
-                    return Image.FromStream(new MemoryStream(UserTileSlots[imageKey]));
+                    return UserTileSlots[imageKey];
                 }
 
             }
@@ -334,10 +334,8 @@ using System.Drawing;
             return null;
         }
 
-        internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, Image userTile)
+        internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, byte[] userTile)
         {
-            MemoryStream mem = new MemoryStream();
-            userTile.Save(mem, userTile.RawFormat);
 
             lock (UserTileSlots)
             {
@@ -356,7 +354,7 @@ using System.Drawing;
                     }
                 }
 
-                AddImageAndRelationship(siblingAccount, imageKey, mem.ToArray());
+                AddImageAndRelationship(siblingAccount, imageKey, userTile);
             }
 
             return true;

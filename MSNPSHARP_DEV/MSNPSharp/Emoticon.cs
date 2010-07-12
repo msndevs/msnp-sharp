@@ -56,7 +56,7 @@ namespace MSNPSharp
             Shortcut = shortcut;
         }
 
-        public Emoticon(string creator, Stream input, string location, string shortcut)
+        public Emoticon(string creator, MemoryStream input, string location, string shortcut)
             : base(creator, input, location)
         {
             ObjectType = MSNObjectType.Emoticon;

@@ -33,8 +33,10 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Web;
+using System.Xml;
 using System.Text;
 using System.Collections;
+using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
@@ -150,7 +152,25 @@ namespace MSNPSharp
             set
             {
                 lock (SyncObject)
+                {
+                    if (dataStream != null)
+                        dataStream.Close();
+
                     dataStream = value;
+                    UpdateStream();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Update the size and SHA info after the DataStream property has been changed.
+        /// </summary>
+        protected void UpdateStream()
+        {
+            if (DataStream != null)
+            {
+                Size = (int)DataStream.Length;
+                Sha = GetStreamHash(DataStream);
             }
         }
 
@@ -179,7 +199,8 @@ namespace MSNPSharp
             {
                 return size;
             }
-            set
+
+            private set
             {
                 size = value;
                 UpdateInCollection();
@@ -248,12 +269,8 @@ namespace MSNPSharp
                 this.fileLocation = fileName;
                 this.location = Path.GetRandomFileName();
 
-                // close any current datastreams. One is always created in the constructor
-                if (dataStream != null)
-                    dataStream.Close();
-
                 // and open a new stream
-                dataStream = new PersistentStream(new MemoryStream());
+                PersistentStream persistentStream = new PersistentStream(new MemoryStream());
 
                 // copy the file
                 byte[] buffer = new byte[512];
@@ -261,11 +278,10 @@ namespace MSNPSharp
                 int cnt = 0;
                 while ((cnt = fileStream.Read(buffer, 0, 512)) > 0)
                 {
-                    dataStream.Write(buffer, 0, cnt);
+                    persistentStream.Write(buffer, 0, cnt);
                 }
 
-                this.size = (int)dataStream.Length;
-                this.sha = GetStreamHash(dataStream);
+                DataStream = persistentStream;
 
                 UpdateInCollection();
             }
@@ -419,7 +435,7 @@ namespace MSNPSharp
             this.creator = creator;
             this.size = (int)inputStream.Length;
             this.type = type;
-            this.location = location;// + new Random().Next().ToString();
+            this.location = location;
 
             this.sha = GetStreamHash(inputStream);
 
@@ -536,23 +552,70 @@ namespace MSNPSharp
             return MSNHttpUtility.MSNObjectUrlEncode(GetXmlString());
         }
 
-        public static bool operator == (MSNObject obj1, MSNObject obj2)
+
+        protected virtual bool ContextEqual(string contextPlain)
         {
-            if (((object)obj1) == null && ((object)obj2) == null)
+
+            if (Size == 0 && string.IsNullOrEmpty(contextPlain))
                 return true;
-            if (((object)obj1) == null || ((object)obj2) == null)
+
+            try
+            {
+                XmlDocument msnObjectDocument = new XmlDocument();
+                msnObjectDocument.LoadXml(contextPlain);
+                XmlNode msnObjectNode = msnObjectDocument.SelectSingleNode("msnobj");
+                string sha = msnObjectNode.Attributes["SHA1D"].InnerText;
+                string creator = msnObjectNode.Attributes["Creator"].InnerText;
+                MSNObjectType type = (MSNObjectType)int.Parse(msnObjectNode.Attributes["Type"].InnerText);
+
+                return (Sha == sha && Creator == creator && type == ObjectType);
+
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "MSNObject compare error: context " +
+                    contextPlain + " is not a valid context for MSNObject.\r\n  Error description: " +
+                    ex.Message + "\r\n  Stack Trace: " + ex.StackTrace);
                 return false;
-            return obj1.GetHashCode() == obj2.GetHashCode();
+            }
+
         }
 
-        public static bool operator != (MSNObject obj1, MSNObject obj2)
+
+        protected virtual bool MSNObjectEqual(MSNObject obj2)
         {
-            return !(obj1 == obj2);
+            if ((object)obj2 == null)
+                return false;
+            return GetHashCode() == obj2.GetHashCode();
+        }
+
+
+        public static bool operator ==(MSNObject msnObject, object compareTarget)
+        {
+            if ((object)msnObject == null && compareTarget == null)
+                return true;
+            if ((object)msnObject == null || compareTarget == null)
+                return false;
+            return msnObject.Equals(compareTarget);
+        }
+
+        public static bool operator !=(MSNObject msnObject, object compareTarget)
+        {
+            return !(msnObject == compareTarget);
         }
 
         public override bool Equals(object obj)
         {
-            return GetHashCode() == obj.GetHashCode();
+            if (object.ReferenceEquals(this, obj))
+                return true;
+
+            if (obj == null || obj is MSNObject)
+                return MSNObjectEqual(obj as MSNObject);
+
+            if (obj is string)
+                return ContextEqual(obj.ToString());
+
+            return false;
         }
 
         public override int GetHashCode()
