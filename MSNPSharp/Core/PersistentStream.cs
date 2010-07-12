@@ -45,7 +45,7 @@ namespace MSNPSharp.Core
     {
         /// <summary>
         /// </summary>
-        Stream innerStream = null;
+        private Stream innerStream = null;
 
         #region Stream overrides
         /// <summary>

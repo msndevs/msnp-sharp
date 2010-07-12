@@ -942,6 +942,7 @@ namespace MSNPSharp.DataTransfer
 
             Contact remote = MessageSession.RemoteContact;
             string AppID = "1";
+
             string msnObjectContext = msnObject.ContextPlain;
 
             if (msnObject.ObjectType == MSNObjectType.Emoticon)
@@ -954,6 +955,12 @@ namespace MSNPSharp.DataTransfer
             }
             else if (msnObject.ObjectType == MSNObjectType.UserDisplay)
             {
+                if (remoteContact.DisplayImage == remoteContact.UserTileLocation)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "The current display image of remote contact: " + remoteContact + "is the same with it's displayImage context, invitation will not be processed.");
+                    return null;  //If the display image is the same as current user tile string, do not process the invitation.
+                }
+
                 properties.DataType = DataTransferType.DisplayImage;
                 transferSession.MessageFooter = P2PConst.DisplayImageFooter12;
 
@@ -963,20 +970,15 @@ namespace MSNPSharp.DataTransfer
                 if (displayImage == null)
                     throw new ArgumentNullException("msnObject is not a DisplayImage object.");
 
-                if ((string.IsNullOrEmpty(msnObjectContext) && string.IsNullOrEmpty(remoteContact.UserTileLocation) == false) ||
-                    (displayImage.IsDefaultImage && string.IsNullOrEmpty(remoteContact.UserTileLocation) == false))
-                {
-                    msnObjectContext = remoteContact.UserTileLocation;
-                    displayImage.SetContext(msnObjectContext);
-                }
+                msnObjectContext = remoteContact.UserTileLocation;
+
 
                 transferSession.TransferFinished += delegate(object sender, EventArgs ea)
                 {
-                    
-                    displayImage.Image = Image.FromStream(transferSession.DataStream);
-                    displayImage.RetrieveImage();
-                    displayImage.IsDefaultImage = false;
-                    remoteContact.SetDisplayImage(displayImage);
+                    //User display image is a special case, we use the default DataStream of a TransferSession.
+                    //After the transfer finished, we create a new display image and fire the DisplayImageChanged event.
+                    DisplayImage newDisplayImage = new DisplayImage(remoteContact.Mail.ToLowerInvariant(), transferSession.DataStream as MemoryStream);
+                    remoteContact.SetDisplayImageAndFireDisplayImageChangedEvent(newDisplayImage);
                 };
             }
 

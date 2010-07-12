@@ -260,9 +260,8 @@ namespace MSNPSharp
                 {
                     if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL)
                     {
-                        System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
-                        DisplayImage newDisplayImage = new DisplayImage();
-                        newDisplayImage.Image = fileImage;
+
+                        DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
 
                         NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
                     }
@@ -358,8 +357,8 @@ namespace MSNPSharp
             photoStream.Data = photoData;
             createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
 
-            DisplayImage displayImage = new DisplayImage();
-            displayImage.Image = Image.FromStream(new MemoryStream(photoData));
+            DisplayImage displayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), new MemoryStream(photoData));
+
             NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
 
             try
@@ -926,9 +925,7 @@ namespace MSNPSharp
                         }
                         stream.Close();
 
-                        System.Drawing.Image fileImage = System.Drawing.Image.FromStream(ms);
-                        DisplayImage newDisplayImage = new DisplayImage();
-                        newDisplayImage.Image = fileImage;
+                        DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), ms);
 
                         NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
                         if (callBackHandler != null)
@@ -1082,9 +1079,7 @@ namespace MSNPSharp
                 photo.Save(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage, photo.RawFormat);
                 NSMessageHandler.ContactService.Deltas.Save(true);
 
-                Image fileImage = Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);  //Make a copy.
-                DisplayImage newDisplayImage = new DisplayImage();
-                newDisplayImage.Image = fileImage;
+                DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
 
                 NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
 

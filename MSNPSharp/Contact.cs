@@ -481,6 +481,7 @@ namespace MSNPSharp
                 return displayImage;
             }
 
+            //Calling this will not fire DisplayImageChanged event.
             internal set
             {
                 if (displayImage != value)
@@ -985,23 +986,16 @@ namespace MSNPSharp
         /// false: No event was fired.<br/>
         /// true: The <see cref="Contact.DisplayImageChanged"/> event was fired.
         /// </returns>
-        internal bool SetDisplayImage(DisplayImage image)
+        internal bool SetDisplayImageAndFireDisplayImageChangedEvent(DisplayImage image)
         {
             if (image == null) return false;
 
-            if (displayImage != null && displayImage.Sha == image.Sha &&
-              ((displayImage.Image == null) ^ (image.Image == null)) == false &&
-              !object.ReferenceEquals(displayImage, image))
-            {
-                //We think that SHA and the image are the same. return.
-                return false ;
-            }
 
             DisplayImageChangedEventArgs displayImageChangedArg = null;
-            if ((displayImage != null && displayImage.Sha != image.Sha && displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. default Image -> new Image
-                (displayImage != null && displayImage.Sha != image.Sha && !displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. old Image -> new Image.
-                (displayImage != null && object.ReferenceEquals(displayImage, image) && displayImage.Image != null) ||              //Transmission completed. old Image -> updated old Image.
-                (displayImage == null))
+            //if ((displayImage != null && displayImage.Sha != image.Sha && displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. default Image -> new Image
+            //    (displayImage != null && displayImage.Sha != image.Sha && !displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. old Image -> new Image.
+            //    (displayImage != null && object.ReferenceEquals(displayImage, image) && displayImage.Image != null) ||              //Transmission completed. old Image -> updated old Image.
+            //    (displayImage == null))
             {
 
                 displayImageChangedArg = new DisplayImageChangedEventArgs(image, DisplayImageChangedType.TransmissionCompleted, false);
@@ -1105,12 +1099,10 @@ namespace MSNPSharp
                 return;
 
             string Sha = string.Empty;
-            Image img = NSMessageHandler.ContactService.Deltas.GetImageBySiblingString(SiblingString, out Sha);
-            if (img != null)
+            byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha);
+            if (rawImageData != null)
             {
-                MemoryStream mem = new MemoryStream();
-                img.Save(mem, img.RawFormat);
-                displayImage = new DisplayImage(Mail, mem, "MSNPSharp");
+                displayImage = new DisplayImage(Mail, new MemoryStream(rawImageData));
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s displayimage restored.\r\n " +
                     "Old SHA:     " + Sha + "\r\n " +
                     "Current SHA: " + displayImage.Sha + "\r\n");
@@ -1125,7 +1117,7 @@ namespace MSNPSharp
             if (dispImage.Image == null || string.IsNullOrEmpty(dispImage.Sha))
                 return;
 
-            if (NSMessageHandler.ContactService.Deltas.SaveImageAndRelationship(SiblingString, dispImage.Sha, dispImage.Image))
+            if (NSMessageHandler.ContactService.Deltas.SaveImageAndRelationship(SiblingString, dispImage.Sha, dispImage.GetRawData()))
             {
                 NSMessageHandler.ContactService.Deltas.Save(true);
             }

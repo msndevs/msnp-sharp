@@ -42,6 +42,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.IO;
     using MSNPSharp.Core;
+    using System.IO;
 
 
     [Serializable]
@@ -96,8 +97,14 @@ namespace MSNPSharp
 
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
-            DisplayImage displayImage = new DisplayImage();
-            displayImage.Image = (sms == null) ? Properties.Resources.MSNPSharp_logo.Clone() as Image : sms.ToImage();
+            if (sms == null)
+            {
+                sms = new SerializableMemoryStream();
+                Image msnpsharpDefaultImage = Properties.Resources.MSNPSharp_logo.Clone() as Image;
+                msnpsharpDefaultImage.Save(sms, msnpsharpDefaultImage.RawFormat);
+            }
+
+            DisplayImage displayImage = new DisplayImage(Mail.ToLowerInvariant(), sms);
 
             this.DisplayImage = displayImage;
         }
@@ -268,7 +275,7 @@ namespace MSNPSharp
                         MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
                     }
 
-                    SetDisplayImage(value);
+                    SetDisplayImageAndFireDisplayImageChangedEvent(value);
                     value.Creator = Mail;
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);

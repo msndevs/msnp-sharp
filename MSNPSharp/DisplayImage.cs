@@ -78,7 +78,9 @@ namespace MSNPSharp
             if (isDefault)
             {
                 Location = defaultLocation;
-                Image = defaultImage.Clone() as Image;
+                PersistentStream stream = new PersistentStream(new MemoryStream());
+                (defaultImage.Clone() as Image).Save(stream, defaultImage.RawFormat);
+                DataStream = stream;
             }
 
             isDefaultImage = isDefault;
@@ -87,10 +89,15 @@ namespace MSNPSharp
             RetrieveImage();
         }
 
-        public DisplayImage(string creator, Stream input, string location)
-            : base(creator, input, MSNObjectType.UserDisplay, location)
+        public DisplayImage(string creator, MemoryStream input, string location)
+            : base(creator, new MemoryStream(input.ToArray()), MSNObjectType.UserDisplay, location)
         {
             RetrieveImage();
+        }
+
+        public DisplayImage(string creator, MemoryStream input)
+            : this(creator, input, defaultLocation)
+        {
         }
 
         public static DisplayImage CreateDefaultImage(string creator)
@@ -103,27 +110,19 @@ namespace MSNPSharp
             get
             {
                 lock (SyncObject)
-                    return image == null ? null : image.Clone() as Image;
-            }
-            set
-            {
-                lock (SyncObject)
                 {
-                    image = value;
-                    UpdateStream();
+                    if (DataStream != null)
+                        RetrieveImage();
+
+                    return image == null ? null : image.Clone() as Image;
                 }
             }
         }
 
-        private void UpdateStream()
-        {
-            image.Save(DataStream, image.RawFormat);
-            Size = (int)DataStream.Length;
-            Sha = GetStreamHash(DataStream);
-        }
-
         public void RetrieveImage()
         {
+            UpdateStream();
+
             Stream input = DataStream;
 
             if (input != null)
@@ -140,6 +139,39 @@ namespace MSNPSharp
                     input.Position = 0;
                 }
             }
+        }
+
+        /// <summary>
+        /// Get the raw stream data for saving.
+        /// </summary>
+        /// <returns></returns>
+        internal byte[] GetRawData()
+        {
+            if (IsDefaultImage)
+                return null;
+
+            if (DataStream == null)
+                return null;
+
+            if (OpenStream().CanRead)
+            {
+                byte[] data = new byte[Size];
+                DataStream.Seek(0, SeekOrigin.Begin);
+                DataStream.Read(data, 0, Size);
+                DataStream.Close();
+                return data;
+            }
+
+            DataStream.Close();
+            return null;
+        }
+
+        protected override bool ContextEqual(string contextPlain)
+        {
+            if (IsDefaultImage && string.IsNullOrEmpty(contextPlain))
+                return true;
+
+            return base.ContextEqual(contextPlain);
         }
     }
 };
