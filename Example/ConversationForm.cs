@@ -749,7 +749,7 @@ using MSNPSharp.Utilities;
         {
             try
             {
-                RequestDisplayImage(ConversationID.RemoteOwner, e.NewDisplayImage);
+                RequestDisplayImage(ConversationID.RemoteOwner, null);
             }
             catch (Exception ex)
             {

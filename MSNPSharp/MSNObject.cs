@@ -576,7 +576,7 @@ namespace MSNPSharp
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "MSNObject compare error: context " +
                     contextPlain + " is not a valid context for MSNObject.\r\n  Error description: " +
                     ex.Message + "\r\n  Stack Trace: " + ex.StackTrace);
-                return false;
+                return true;
             }
 
         }
@@ -613,7 +613,7 @@ namespace MSNPSharp
                 return MSNObjectEqual(obj as MSNObject);
 
             if (obj is string)
-                return ContextEqual(obj.ToString());
+                return ContextEqual(GetDecodeString(obj.ToString()));
 
             return false;
         }
