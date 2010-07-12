@@ -228,7 +228,7 @@ namespace MSNPSharp
 
             internal set
             {
-                userTileLocation = value;
+                userTileLocation = MSNObject.GetDecodeString(value);
             }
         }
 
@@ -964,7 +964,7 @@ namespace MSNPSharp
         /// <summary>
         /// This method will lead to fire <see cref="Contact.DisplayImageContextChanged"/> event if the DisplayImage.Sha has been changed.
         /// </summary>
-        /// <param name="updatedImage"></param>
+        /// <param name="updatedImageContext"></param>
         /// <returns>
         /// false: No event was fired.<br/>
         /// true: The <see cref="Contact.DisplayImageContextChanged"/> was fired.
