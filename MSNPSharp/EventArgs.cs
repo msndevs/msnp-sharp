@@ -827,6 +827,10 @@ namespace MSNPSharp
                     {
                         case ClientType.EmailMember:
                             return NetworkType.Yahoo;
+
+                        case ClientType.PhoneMember:
+                            return NetworkType.Mobile;
+
                         default:
                             return NetworkType.WindowsLive;
                     }
@@ -836,7 +840,13 @@ namespace MSNPSharp
             }
         }
 
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="sender">The message sender</param>
+        /// <param name="receiver">The message receiver</param>
+        /// <param name="type">Message type, cast from <see cref="NetworkMessageType"/></param>
+        /// <param name="msg">The message body</param>
         public CrossNetworkMessageEventArgs(Contact sender, Contact receiver, int type, NetworkMessage msg)
         {
             from = sender;

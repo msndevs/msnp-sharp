@@ -505,7 +505,7 @@ namespace MSNPSharp
         /// <summary>
         /// Occurs when we receive a mobile message.
         /// </summary>
-        public event EventHandler<TextMessageEventArgs> MobileMessageReceived;
+        public event EventHandler<CrossNetworkMessageEventArgs> MobileMessageReceived;
 
         /// <summary>
         /// Occurs when a circle member is typing.
@@ -627,7 +627,7 @@ namespace MSNPSharp
                 mimeMessage.InnerMessage = txtMsg;
                 mimeMessage.MimeHeader["Dest-Agent"] = "mobile";
 
-                NSMessage nsMessage = new NSMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), "1" });
+                NSMessage nsMessage = new NSMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), ((int)NetworkMessageType.Text).ToString() });
 
                 nsMessage.InnerMessage = mimeMessage;
                 MessageProcessor.SendMessage(nsMessage);
@@ -2242,6 +2242,10 @@ namespace MSNPSharp
             int receiverType = 0;
             int.TryParse(message.CommandValues[3].ToString(), out receiverType);
 
+            int messageType = 0;
+            int.TryParse(message.CommandValues[4].ToString(), out messageType);
+            NetworkMessageType networkMessageType = (NetworkMessageType)messageType;
+
             if (!(receiverType == (int)ContactList.Owner.ClientType && 
                 receiver.ToLowerInvariant() == ContactList.Owner.Mail.ToLowerInvariant()))
             {
@@ -2266,8 +2270,25 @@ namespace MSNPSharp
 
             MimeMessage mimeMessage = message.InnerMessage as MimeMessage;
 
+
+            #region Mobile Message
+
+            if (senderType == (int)ClientType.PhoneMember)
+            {
+                switch (networkMessageType)
+                {
+                    case NetworkMessageType.Text:
+                        OnMobileMessageReceived(new CrossNetworkMessageEventArgs(from, to, messageType, mimeMessage.InnerMessage as TextMessage));
+                        break;
+                }
+                return;
+            }
+
+            #endregion
+
             if (mimeMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
             {
+
                 switch (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type])
                 {
                     case "text/x-msmsgscontrol":
@@ -2599,7 +2620,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>Called when the owner has received a mobile message.</remarks>
         /// <param name="e"></param>
-        protected virtual void OnMobileMessageReceived(TextMessageEventArgs e)
+        protected virtual void OnMobileMessageReceived(CrossNetworkMessageEventArgs e)
         {
             if (MobileMessageReceived != null)
             {

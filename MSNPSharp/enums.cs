@@ -1718,7 +1718,11 @@ namespace MSNPSharp
         /// <summary>
         /// Yahoo Messenger Network.
         /// </summary>
-        Yahoo
+        Yahoo,
+        /// <summary>
+        /// MSN mobile network.
+        /// </summary>
+        Mobile
     }
 
     internal enum ConversationState : int
