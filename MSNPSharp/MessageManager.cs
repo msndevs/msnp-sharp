@@ -57,6 +57,7 @@ namespace MSNPSharp.Utilities
             this.messenger = messenger;
             Messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(ConversationCreated);
             Messenger.Nameserver.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(CrossNetworkMessageReceived);
+            Messenger.Nameserver.MobileMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(CrossNetworkMessageReceived);
         }
 
         #endregion
@@ -329,6 +330,11 @@ namespace MSNPSharp.Utilities
                 throw new NotSupportedException("A Yahoo Messenger contact cannot receive custom emoticon.");
             }
 
+            if ((messengerContact.ClientType == ClientType.PhoneMember || messengerContact.MobileAccess) && (messageObject is EmoticonObject || messageObject is NudgeObject || messageObject is UserTypingObject))
+            {
+                throw new NotSupportedException("A Phone Contact cannot receive " + messageObject.GetType().ToString() + " messages.");
+            }
+
             if (messengerContact.Status == PresenceStatus.Offline && (messageObject is TextMessageObject) == false)
             {
                 throw new NotSupportedException("The specific message cannot send to an offline contact: " + messengerContact);
@@ -342,7 +348,7 @@ namespace MSNPSharp.Utilities
         /// <param name="messageObject"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException">Throw when sending a custom emoticon to a Yahoo Messenger contact.</exception>
-        private Guid SendYIMMessage(Contact yimContact, MessageObject messageObject)
+        private void SendYIMMessage(Contact yimContact, MessageObject messageObject)
         {
             if (yimContact.IsMessengerUser && yimContact.ClientType == ClientType.EmailMember)
             {
@@ -381,7 +387,40 @@ namespace MSNPSharp.Utilities
                 throw new InvalidOperationException("Cannot send message to email contact: " + yimContact);
             }
 
-            return Guid.Empty;
+        }
+
+        /// <summary>
+        /// Send a cross network message to Mobile Messenger.
+        /// </summary>
+        /// <param name="mobileContact"></param>
+        /// <param name="messageObject"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">Throw when sending a custom emoticon to a Yahoo Messenger contact.</exception>
+        private void SendMobileMessage(Contact mobileContact, MessageObject messageObject)
+        {
+            if (mobileContact.ClientType == ClientType.PhoneMember || mobileContact.MobileAccess)
+            {
+                if (messageObject is EmoticonObject || messageObject is NudgeObject || messageObject is TextMessageObject)
+                {
+                    throw new InvalidOperationException("Cannot send a " + messageObject.GetType().ToString() + " to a Phone Contact.");
+                }
+
+                try
+                {
+                    Messenger.Nameserver.SendMobileMessage(mobileContact, (messageObject.InnerObject as TextMessage).Text);
+
+                }
+
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot send message to Phone Contact: " + mobileContact);
+            }
+
         }
 
         /// <summary>
@@ -441,6 +480,11 @@ namespace MSNPSharp.Utilities
             {
                 SendYIMMessage(contact, messageObject);
                 return;
+            }
+
+            if (contact.ClientType == ClientType.PhoneMember)
+            {
+                SendMobileMessage(contact, messageObject);
             }
 
             //Process OIM.
@@ -701,6 +745,8 @@ namespace MSNPSharp.Utilities
             if (Messenger != null)
             {
                 Messenger.ConversationCreated -= ConversationCreated;
+                Messenger.Nameserver.CrossNetworkMessageReceived -= CrossNetworkMessageReceived;
+                Messenger.Nameserver.MobileMessageReceived -= CrossNetworkMessageReceived;
             }
 
         }
