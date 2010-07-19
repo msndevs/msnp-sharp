@@ -141,16 +141,16 @@ namespace MSNPSharpClient
             #endregion
             
 
-            messenger.WhatsUpService.GetWhatsUpCompleted += WhatsUpService_GetWhatsUpCompleted;
+            messenger.WhatsUpService.GetWhatsUpCompleted += new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted);
 
             #region Webservice Error handler
 
             // Handle Service Operation Errors
             //In most cases, these error are not so important.
-            messenger.ContactService.ServiceOperationFailed += ServiceOperationFailed;
-            messenger.OIMService.ServiceOperationFailed += ServiceOperationFailed;
-            messenger.StorageService.ServiceOperationFailed += ServiceOperationFailed;
-            messenger.WhatsUpService.ServiceOperationFailed += ServiceOperationFailed; 
+            messenger.ContactService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
+            messenger.OIMService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
+            messenger.StorageService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
+            messenger.WhatsUpService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed); 
 
             #endregion
         }
