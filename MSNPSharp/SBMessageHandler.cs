@@ -33,6 +33,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Web;
 using System.Text;
+using System.Threading;
 using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
@@ -41,7 +42,6 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.DataTransfer;
-    using System.Threading;
 
     #region Event argument classes
     /// <summary>

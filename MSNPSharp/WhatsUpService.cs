@@ -43,8 +43,8 @@ namespace MSNPSharp
 
     public class GetWhatsUpCompletedEventArgs : EventArgs
     {
-        private Exception error;
-        private GetContactsRecentActivityResultType response;
+        private Exception error = null;
+        private GetContactsRecentActivityResultType response = null;
 
         /// <summary>
         /// InnerException
