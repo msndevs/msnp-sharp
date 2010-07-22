@@ -372,6 +372,11 @@ namespace MSNPSharp
             {
                 return sessionEstablished;
             }
+
+            private set
+            {
+                sessionEstablished = value;
+            }
         }
 
         protected string SessionId
@@ -501,7 +506,6 @@ namespace MSNPSharp
 
             if (IsSessionEstablished)
             {
-                sessionEstablished = false;
                 OnSessionClosed();
             }
         }
@@ -782,6 +786,7 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnSessionClosed()
         {
+            IsSessionEstablished = false;
             ClearAll();  //Session closed, force all contact left this conversation.
 
             if (SessionClosed != null)
@@ -793,7 +798,7 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void OnSessionEstablished()
         {
-            sessionEstablished = true;
+            IsSessionEstablished = true;
             if (SessionEstablished != null)
                 SessionEstablished(this, new EventArgs());
 

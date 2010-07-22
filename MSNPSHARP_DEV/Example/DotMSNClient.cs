@@ -27,7 +27,6 @@ namespace MSNPSharpClient
         private Messenger messenger = new Messenger();
         private List<ConversationForm> convforms = new List<ConversationForm>(0);
         private TraceForm traceform = new TraceForm();
-        private Dictionary<string, ConversationForm> YIMMessageForms = new Dictionary<string, ConversationForm>(0);
 
         public List<ConversationForm> ConversationForms
         {
@@ -1064,8 +1063,6 @@ namespace MSNPSharpClient
             {
                 convForm.Close();
             }
-
-            YIMMessageForms.Clear();
         }
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
