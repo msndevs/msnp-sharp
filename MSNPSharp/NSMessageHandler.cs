@@ -1583,8 +1583,8 @@ namespace MSNPSharp
         {
             PresenceStatus newstatus = ParseStatus(message.CommandValues[0].ToString());
 
-            ClientType type;
-            string account;
+            ClientType type = ClientType.None;
+            string account = string.Empty;
             string fullaccount = message.CommandValues[1].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
             Contact contact = null;
             Circle circle = null;
@@ -1753,8 +1753,8 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-            ClientType type;
-            string account;
+            ClientType type = ClientType.None;
+            string account = string.Empty;
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
             Contact contact = null;
             Circle circle = null;
