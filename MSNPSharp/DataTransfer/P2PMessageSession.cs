@@ -223,7 +223,7 @@ namespace MSNPSharp.DataTransfer
 
         private void CreateMasterSession()
         {
-            masterSession = new MSNSLPHandler(Version, NSMessageHandler.P2PInvitationSchedulerId);
+            masterSession = new MSNSLPHandler(Version, NSMessageHandler.P2PInvitationSchedulerId, NSMessageHandler.ContactList.Owner.ClientIP);
             masterSession.MessageProcessor = this;
         }
 
