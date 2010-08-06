@@ -816,7 +816,8 @@ namespace MSNPSharp.DataTransfer
             {
                 return externalEndPoint;
             }
-            set
+
+            private set
             {
                 externalEndPoint = value;
             }
@@ -873,10 +874,11 @@ namespace MSNPSharp.DataTransfer
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
         }
 
-        public MSNSLPHandler(P2PVersion ver, Guid invitationSchedulerId)
+        public MSNSLPHandler(P2PVersion ver, Guid invitationSchedulerId, IPAddress externalAddress)
         {
             version = ver;
             schedulerID = invitationSchedulerId;
+            ExternalEndPoint = new IPEndPoint(externalAddress, 0);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                 "Constructing object, version = " + ver.ToString() + "\r\n" +

@@ -1409,9 +1409,7 @@ namespace MSNPSharp
                 }
             }
 
-            if (message.InnerBody != null && 
-                type == ClientType.PassportMember &&
-                contact != null)
+            if (message.InnerBody != null && contact != null)
             {
                 contact.SetPersonalMessage(new PersonalMessage(message));
                 XmlDocument xmlDoc = new XmlDocument();
