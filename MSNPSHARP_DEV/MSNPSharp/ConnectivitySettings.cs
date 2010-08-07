@@ -92,16 +92,30 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="x"></param>
         public ConnectivitySettings(ConnectivitySettings x)
+            : this(x.LocalHost, x.LocalPort, x.Host, x.Port, x.ProxyHost, x.Port, x.ProxyUsername, x.ProxyPassword, x.ProxyType, x.WebProxy)
         {
-            host = x.host;
-            port = x.port;
-            proxyHost = x.proxyHost;
-            proxyPassword = x.proxyPassword;
-            proxyPort = x.proxyPort;
-            proxyType = x.proxyType;
-            proxyUsername = x.proxyUsername;
-            webProxy = x.webProxy;
         }
+
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        public ConnectivitySettings(IPEndPoint remoteEndPoint)
+            : this(remoteEndPoint.Address.ToString(), remoteEndPoint.Port)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="localEndPoint">Local endpoint you want to bind to.</param>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        public ConnectivitySettings(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint)
+            : this(localEndPoint.Address.ToString(), localEndPoint.Port, remoteEndPoint.Address.ToString(), remoteEndPoint.Port)
+        {
+        }
+
 
         /// <summary>
         /// Constructs a ConnectivitySettings with custom host and port.
@@ -109,10 +123,43 @@ namespace MSNPSharp
         /// <param name="host">Host of messenger server. Standard is messenger.hotmail.com</param>
         /// <param name="port">Port of messenger server. Standard is 1863</param>
         public ConnectivitySettings(string host, int port)
+            : this(host, port, string.Empty, 0, string.Empty, string.Empty, ProxyType.None, null)
         {
-            this.host = host;
-            this.port = port;
         }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings with custom host and port.
+        /// </summary>
+        /// <param name="localHost">The local address you want to bind to.</param>
+        /// <param name="localPort">The local port you want to bind to.</param>
+        /// <param name="host">Host of messenger server. Standard is messenger.hotmail.com</param>
+        /// <param name="port">Port of messenger server. Standard is 1863</param>
+        public ConnectivitySettings(string localHost, int localPort, string host, int port)
+            : this(localHost, localPort, host, port, string.Empty, 0, string.Empty, string.Empty, ProxyType.None, null)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
+        public ConnectivitySettings(IPEndPoint remoteEndPoint, WebProxy webProxy)
+            : this(remoteEndPoint.Address.ToString(), remoteEndPoint.Port, webProxy)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="localEndPoint">Local endpoint you want to bind to.</param>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
+        public ConnectivitySettings(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint, WebProxy webProxy)
+            : this(localEndPoint.Address.ToString(), localEndPoint.Port, remoteEndPoint.Address.ToString(), remoteEndPoint.Port, webProxy)
+        {
+        }
+
 
         /// <summary>
         /// Constructs a ConnectivitySettings which uses a Web proxy for all HTTP connections made.
@@ -121,10 +168,50 @@ namespace MSNPSharp
         /// <param name="port">Port of messenger server. Standard is 1863</param>
         /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
         public ConnectivitySettings(string host, int port, WebProxy webProxy)
+            : this(host, port, string.Empty, 0, string.Empty, string.Empty, ProxyType.None, webProxy)
         {
-            this.host = host;
-            this.port = port;
-            this.webProxy = webProxy;
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a Web proxy for all HTTP connections made.
+        /// </summary>
+        /// <param name="localHost">The local address you want to bind to.</param>
+        /// <param name="localPort">The local port you want to bind to.</param>
+        /// <param name="host">Host of messenger server. Standard is messenger.hotmail.com</param>
+        /// <param name="port">Port of messenger server. Standard is 1863</param>
+        /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
+        public ConnectivitySettings(string localHost, int localPort, string host, int port, WebProxy webProxy)
+            : this(localHost, localPort, host, port, string.Empty, 0, string.Empty, string.Empty, ProxyType.None, webProxy)
+        {
+        }
+
+
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        /// <param name="proxyEndPoint">Host endpoint of the proxy server</param>
+        /// <param name="proxyUsername">Username, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyPassword">Password, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
+        public ConnectivitySettings(IPEndPoint remoteEndPoint, IPEndPoint proxyEndPoint, string proxyUsername, string proxyPassword, ProxyType proxyType)
+            : this(remoteEndPoint.Address.ToString(), remoteEndPoint.Port, proxyEndPoint.Address.ToString(), proxyEndPoint.Port, proxyUsername, proxyPassword, proxyType, null)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="localEndPoint">Local endpoint you want to bind to.</param>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        /// <param name="proxyEndPoint">Host endpoint of the proxy server</param>
+        /// <param name="proxyUsername">Username, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyPassword">Password, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
+        public ConnectivitySettings(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint, IPEndPoint proxyEndPoint, string proxyUsername, string proxyPassword, ProxyType proxyType)
+            : this(localEndPoint, remoteEndPoint, proxyUsername, proxyPassword, proxyType, null)
+        {
         }
 
         /// <summary>
@@ -138,14 +225,56 @@ namespace MSNPSharp
         /// <param name="proxyPassword">Password, if any, used when accessing the proxyserver</param>
         /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
         public ConnectivitySettings(string host, int port, string proxyHost, int proxyPort, string proxyUsername, string proxyPassword, ProxyType proxyType)
+            : this(host, port, proxyHost, proxyPort, proxyUsername, proxyPassword, proxyType, null)
         {
-            this.host = host;
-            this.port = port;
-            this.proxyHost = proxyHost;
-            this.proxyPort = proxyPort;
-            this.proxyUsername = proxyUsername;
-            this.proxyPassword = proxyPassword;
-            this.proxyType = proxyType;
+
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="localHost">The local address you want to bind to.</param>
+        /// <param name="localPort">The local port you want to bind to.</param>
+        /// <param name="host">Host of messenger server. Standard is messenger.hotmail.com</param>
+        /// <param name="port">Port of messenger server. Standard is 1863</param>
+        /// <param name="proxyHost">Host of the proxy server</param>
+        /// <param name="proxyPort">Port of the proxy server</param>
+        /// <param name="proxyUsername">Username, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyPassword">Password, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
+        public ConnectivitySettings(string localHost, int localPort, string host, int port, string proxyHost, int proxyPort, string proxyUsername, string proxyPassword, ProxyType proxyType)
+            : this(localHost, localPort, host, port, proxyHost, proxyPort, proxyUsername, proxyPassword, proxyType, null)
+        {
+        }
+
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        /// <param name="proxyEndPoint">Host endpoint of the proxy server</param>
+        /// <param name="proxyUsername">Username, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyPassword">Password, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
+        /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
+        public ConnectivitySettings(IPEndPoint remoteEndPoint, IPEndPoint proxyEndPoint, string proxyUsername, string proxyPassword, ProxyType proxyType, WebProxy webProxy)
+            : this(remoteEndPoint.Address.ToString(), remoteEndPoint.Port, proxyEndPoint.Address.ToString(), proxyEndPoint.Port, proxyUsername, proxyPassword, proxyType, webProxy)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="localEndPoint">Local endpoint you want to bind to.</param>
+        /// <param name="remoteEndPoint">Host endpoint of messenger server. Standard is messenger.hotmail.com:1863</param>
+        /// <param name="proxyEndPoint">Host endpoint of the proxy server</param>
+        /// <param name="proxyUsername">Username, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyPassword">Password, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
+        /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
+        public ConnectivitySettings(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint, IPEndPoint proxyEndPoint, string proxyUsername, string proxyPassword, ProxyType proxyType, WebProxy webProxy)
+            : this(localEndPoint.Address.ToString(), localEndPoint.Port, remoteEndPoint.Address.ToString(), remoteEndPoint.Port, proxyEndPoint.Address.ToString(), proxyEndPoint.Port, proxyUsername, proxyPassword, proxyType, webProxy)
+        {
         }
 
         /// <summary>
@@ -160,7 +289,27 @@ namespace MSNPSharp
         /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
         /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
         public ConnectivitySettings(string host, int port, string proxyHost, int proxyPort, string proxyUsername, string proxyPassword, ProxyType proxyType, WebProxy webProxy)
+            :this(string.Empty, 0, host, port, proxyHost, proxyPort, proxyUsername, proxyPassword, proxyType, webProxy)
         {
+        }
+
+        /// <summary>
+        /// Constructs a ConnectivitySettings which uses a socks proxy in all direct TCP communications with the messenger servers. HTTP resources are accessed via the supplied WebProxy.
+        /// </summary>
+        /// <param name="localHost">The local address you want to bind to.</param>
+        /// <param name="localPort">The local port you want to bind to.</param>
+        /// <param name="host">Host of messenger server. Standard is messenger.hotmail.com</param>
+        /// <param name="port">Port of messenger server. Standard is 1863</param>
+        /// <param name="proxyHost">Host of the proxy server</param>
+        /// <param name="proxyPort">Port of the proxy server</param>
+        /// <param name="proxyUsername">Username, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyPassword">Password, if any, used when accessing the proxyserver</param>
+        /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
+        /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
+        public ConnectivitySettings(string localHost, int localPort, string host, int port, string proxyHost, int proxyPort, string proxyUsername, string proxyPassword, ProxyType proxyType, WebProxy webProxy)
+        {
+            this.localHost = localHost;
+            this.localPort = localPort;
             this.host = host;
             this.port = port;
             this.proxyHost = proxyHost;
@@ -177,12 +326,14 @@ namespace MSNPSharp
 
         private string host = "messenger.hotmail.com";
         private int port = 1863;
-        private string proxyHost = String.Empty;
-        private int proxyPort;
-        private string proxyUsername = String.Empty;
-        private string proxyPassword = String.Empty;
+        private string localHost = string.Empty;
+        private int localPort = 0;
+        private string proxyHost = string.Empty;
+        private int proxyPort = 0;
+        private string proxyUsername = string.Empty;
+        private string proxyPassword = string.Empty;
         private ProxyType proxyType = ProxyType.None;
-        private WebProxy webProxy;
+        private WebProxy webProxy = null;
 
         #endregion
 
@@ -202,6 +353,7 @@ namespace MSNPSharp
                 host = value;
             }
         }
+
         /// <summary>
         /// Port of the MSN server. Default is 1863.
         /// </summary>
@@ -214,6 +366,36 @@ namespace MSNPSharp
             set
             {
                 port = value;
+            }
+        }
+
+        /// <summary>
+        /// The local ip you want to bind.
+        /// </summary>
+        public string LocalHost
+        {
+            get 
+            { 
+                return localHost; 
+            }
+            set 
+            { 
+                localHost = value; 
+            }
+        }
+
+        /// <summary>
+        /// The local port you want to bind, default is 0 (which means the system will assign it automatically).
+        /// </summary>
+        public int LocalPort
+        {
+            get 
+            { 
+                return localPort; 
+            }
+            set 
+            { 
+                localPort = value; 
             }
         }
 
