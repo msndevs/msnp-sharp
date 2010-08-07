@@ -148,6 +148,8 @@ namespace MSNPSharp.Core
             LingerOption lingerOption = new LingerOption(true, 2);
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lingerOption);
 
+            socket.Bind(new IPEndPoint(ConnectivitySettings.LocalHost == string.Empty ? IPAddress.Any : IPAddress.Parse(ConnectivitySettings.LocalHost), ConnectivitySettings.LocalPort));
+
             return socket;
         }
 
