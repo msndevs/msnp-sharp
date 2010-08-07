@@ -113,7 +113,7 @@ namespace MSNPSharp
 
         private NSMessageProcessor nsMessageProcessor = new NSMessageProcessor();
         private NSMessageHandler nsMessageHandler = null;
-        private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
+        private ConnectivitySettings connectivitySettings = new ConnectivitySettings();  //If you have local IP for binding, please use other constructors and set it here.
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
         private MessageManager messageManager = null;
