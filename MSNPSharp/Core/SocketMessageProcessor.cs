@@ -46,22 +46,22 @@ namespace MSNPSharp.Core
 
     public class SocketMessageProcessor : IMessageProcessor
     {
-        ConnectivitySettings connectivitySettings = new ConnectivitySettings();
-        byte[] socketBuffer = new byte[1500];
-        bool hasFiredDisconnectEvent = false;
-        IPEndPoint proxyEndPoint = null;
-        ProxySocket socket = null;
-        MessagePool messagePool = null;
-        List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
+        private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
+        private byte[] socketBuffer = new byte[1500];
+        private bool hasFiredDisconnectEvent = false;
+        private IPEndPoint proxyEndPoint = null;
+        private ProxySocket socket = null;
+        private MessagePool messagePool = null;
+        private List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
 
         public event EventHandler<EventArgs> ConnectionEstablished;
         public event EventHandler<EventArgs> ConnectionClosed;
         public event EventHandler<ExceptionEventArgs> ConnectingException;
         public event EventHandler<ExceptionEventArgs> ConnectionException;
 
-        public SocketMessageProcessor()
+        public SocketMessageProcessor(ConnectivitySettings connectivitySettings)
         {
-
+            ConnectivitySettings = connectivitySettings;
         }
 
         protected IPEndPoint ProxyEndPoint
@@ -343,8 +343,16 @@ namespace MSNPSharp.Core
             {
                 return connectivitySettings;
             }
+
             set
             {
+                if (Connected)
+                {
+                    string errorString = "Cannot set the ConnectivitySettings property of a connected " + GetType().ToString() + ".";
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, errorString);
+                    throw new InvalidOperationException(errorString);
+                }
+
                 connectivitySettings = value;
             }
         }

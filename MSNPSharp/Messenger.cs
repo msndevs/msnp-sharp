@@ -111,7 +111,7 @@ namespace MSNPSharp
     {
         #region Members
 
-        private NSMessageProcessor nsMessageProcessor = new NSMessageProcessor();
+        private NSMessageProcessor nsMessageProcessor = null;
         private NSMessageHandler nsMessageHandler = null;
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();  //If you have local IP for binding, please use other constructors and set it here.
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
@@ -128,6 +128,7 @@ namespace MSNPSharp
         {
             #region Initialize
 
+            nsMessageProcessor = new NSMessageProcessor(new ConnectivitySettings());
             nsMessageHandler = new NSMessageHandler(this);
             messageManager = new MessageManager(this);
 

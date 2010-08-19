@@ -457,7 +457,7 @@ namespace MSNPSharp.DataTransfer
 
 
 
-                if (supportMPOP && /* supportP2Pv2 && */ supportMSNC10) //It seems that supportP2Pv2 is not a consideration.
+                if (supportMPOP /*&&  supportP2Pv2 &&  supportMSNC10 */) //It seems that supportP2Pv2 is not a consideration.
                     result = P2PVersion.P2PV2;
                 else
                     result = P2PVersion.P2PV1;
