@@ -864,8 +864,7 @@ namespace MSNPSharp
 
         protected virtual void SetNewProcessor()
         {
-            messageProcessor = new SBMessageProcessor();
-            messageProcessor.ConnectivitySettings = NSMessageHandler.ConnectivitySettings;
+            messageProcessor = new SBMessageProcessor(NSMessageHandler.ConnectivitySettings);
 
             // catch the connect event to start sending the USR command upon initiating
             messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;

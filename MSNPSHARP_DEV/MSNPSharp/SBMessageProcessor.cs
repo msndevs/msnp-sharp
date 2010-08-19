@@ -47,7 +47,8 @@ namespace MSNPSharp
 
         public event EventHandler<ExceptionEventArgs> HandlerException;
 
-        protected internal SBMessageProcessor()
+        protected internal SBMessageProcessor(ConnectivitySettings connectivitySettings)
+            : base(connectivitySettings)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
 

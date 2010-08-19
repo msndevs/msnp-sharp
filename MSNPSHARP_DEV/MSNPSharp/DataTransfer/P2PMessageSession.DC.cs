@@ -209,10 +209,7 @@ namespace MSNPSharp.DataTransfer
         public IMessageProcessor CreateDirectConnection(string host, int port)
         {
             // create the P2P Direct processor to handle the file data
-            P2PDirectProcessor processor = new P2PDirectProcessor();
-            processor.ConnectivitySettings = new ConnectivitySettings();
-            processor.ConnectivitySettings.Host = host;
-            processor.ConnectivitySettings.Port = port;
+            P2PDirectProcessor processor = new P2PDirectProcessor(new ConnectivitySettings(host, port));
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
 
@@ -233,7 +230,10 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public IMessageProcessor ListenForDirectConnection(IPAddress host, int port)
         {
-            P2PDirectProcessor processor = new P2PDirectProcessor();
+            P2PDirectProcessor processor = new P2PDirectProcessor(
+                new ConnectivitySettings(
+                new IPEndPoint(IPAddress.Parse(NSMessageHandler.ConnectivitySettings.LocalHost), NSMessageHandler.ConnectivitySettings.LocalPort),
+                new IPEndPoint(IPAddress.Parse(NSMessageHandler.ConnectivitySettings.Host), NSMessageHandler.ConnectivitySettings.Port)));
 
             // we want this session to listen to incoming messages
             processor.RegisterHandler(this);

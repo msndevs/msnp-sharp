@@ -96,7 +96,8 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PDirectProcessor()
+        public P2PDirectProcessor(ConnectivitySettings connectivitySettings)
+            : base(connectivitySettings)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
 
