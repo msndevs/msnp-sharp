@@ -149,8 +149,10 @@ namespace MSNPSharp.Utilities
                     {
                         //What happends?!
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[ProcessArrivedConversation Error]: A conversation is both in pending and created status.");
-                        RemovePendingConversation(cId);
+                        
                     }
+
+                    RemovePendingConversation(cId);
                 }
 
                 if (!pending)
