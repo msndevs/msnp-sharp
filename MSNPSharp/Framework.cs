@@ -7,14 +7,14 @@ using System.Threading;
 using System.Net;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Xml;
 using System.Xml.Serialization;
+using System.Diagnostics;
 using System.Collections;
 
 namespace MSNPSharp.Framework
 {
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
-    using System.Xml;
-    using System.Diagnostics;
 
     internal class ContentType
     {

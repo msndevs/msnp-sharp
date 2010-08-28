@@ -6,6 +6,8 @@ using System.Xml;
 using System.IO;
 using System.Globalization;
 using System.Net.Cache;
+using System.Web.Services;
+using System.Security.Permissions;
 using System.Web.Services.Protocols;
 
 namespace MSNPSharp
@@ -14,7 +16,18 @@ namespace MSNPSharp
     using MSNPSharp.Framework;
 
 
-
+    [System.Web.Services.WebServiceBindingAttribute(Name = "SecurityTokenServicePortBinding", Namespace = "http://schemas.microsoft.com/Passport/SoapServices/PPCRL")]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(NotUnderstoodType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Fault))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Envelope))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(DerivedKeyTokenType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SecurityContextTokenType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AttributeDesignatorType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SignaturePropertiesType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ManifestType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EndpointReferenceType1))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ProblemActionType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(errorType))]
     public sealed class SecurityTokenServiceWrapper : SecurityTokenService
     {
 
@@ -38,7 +51,8 @@ namespace MSNPSharp
             return response;
         }
 
-        protected override XmlReader GetReaderForMessage(System.Web.Services.Protocols.SoapClientMessage message, int bufferSize)
+        [PermissionSet(SecurityAction.InheritanceDemand, Name = "FullTrust")]
+        protected override XmlReader GetReaderForMessage(SoapClientMessage message, int bufferSize)
         {
             string xmlMatchSchema = "<?xml";
             string xmlSchema = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>";
@@ -46,54 +60,62 @@ namespace MSNPSharp
             Stream messageStream = message.Stream;
             byte[] schemaArray = new byte[schemaLength];
 
-            long originalPosition = messageStream.Position;
-
-            messageStream.Seek(0, SeekOrigin.Begin);
-            int bytesRead = messageStream.Read(schemaArray, 0, schemaArray.Length);
-
-            string readSchema = Encoding.UTF8.GetString(schemaArray);
-            if (readSchema.ToLowerInvariant() != xmlMatchSchema.ToLowerInvariant())
+            if (messageStream.CanSeek)
             {
+                long originalPosition = messageStream.Position;
+
                 messageStream.Seek(0, SeekOrigin.Begin);
-                byte[] content = new byte[messageStream.Length];
-                messageStream.Read(content, 0, content.Length);
-                messageStream.Seek(0, SeekOrigin.Begin);
+                int bytesRead = messageStream.Read(schemaArray, 0, schemaArray.Length);
 
-                string strContent = Encoding.UTF8.GetString(content);
-
-                MemoryStream newMemStream = new MemoryStream();
-                newMemStream.Seek(0, SeekOrigin.Begin);
-                newMemStream.Write(Encoding.UTF8.GetBytes(xmlSchema), 0, Encoding.UTF8.GetByteCount(xmlSchema));
-                newMemStream.Write(content, 0, content.Length);
-                newMemStream.Seek(0, SeekOrigin.Begin);
-
-                XmlTextReader reader = null;
-                Encoding encoding = (message.SoapVersion == SoapProtocolVersion.Soap12) ? RequestResponseUtils.GetEncoding2(message.ContentType) : RequestResponseUtils.GetEncoding(message.ContentType);
-                if (bufferSize < 0x200)
+                string readSchema = Encoding.UTF8.GetString(schemaArray);
+                if (readSchema.ToLowerInvariant() != xmlMatchSchema.ToLowerInvariant())
                 {
-                    bufferSize = 0x200;
-                }
+                    messageStream.Seek(0, SeekOrigin.Begin);
+                    byte[] content = new byte[messageStream.Length];
+                    messageStream.Read(content, 0, content.Length);
+                    messageStream.Seek(0, SeekOrigin.Begin);
 
-                if (encoding != null)
-                {
-                    reader = new XmlTextReader(new StreamReader(message.Stream, encoding, true, bufferSize));
+                    string strContent = Encoding.UTF8.GetString(content);
+
+                    MemoryStream newMemStream = new MemoryStream();
+                    newMemStream.Seek(0, SeekOrigin.Begin);
+                    newMemStream.Write(Encoding.UTF8.GetBytes(xmlSchema), 0, Encoding.UTF8.GetByteCount(xmlSchema));
+                    newMemStream.Write(content, 0, content.Length);
+                    newMemStream.Seek(0, SeekOrigin.Begin);
+
+                    XmlTextReader reader = null;
+                    Encoding encoding = (message.SoapVersion == SoapProtocolVersion.Soap12) ? RequestResponseUtils.GetEncoding2(message.ContentType) : RequestResponseUtils.GetEncoding(message.ContentType);
+                    if (bufferSize < 0x200)
+                    {
+                        bufferSize = 0x200;
+                    }
+
+                    if (encoding != null)
+                    {
+                        reader = new XmlTextReader(new StreamReader(message.Stream, encoding, true, bufferSize));
+                    }
+                    else
+                    {
+                        reader = new XmlTextReader(message.Stream);
+                    }
+                    reader.ProhibitDtd = true;
+                    reader.Normalization = true;
+                    reader.XmlResolver = null;
+                    return reader;
                 }
                 else
                 {
-                    reader = new XmlTextReader(message.Stream);
+                    messageStream.Seek(originalPosition, SeekOrigin.Begin);
+                    return base.GetReaderForMessage(message, bufferSize);
                 }
-                reader.ProhibitDtd = true;
-                reader.Normalization = true;
-                reader.XmlResolver = null;
-                return reader;
             }
             else
             {
-                messageStream.Seek(originalPosition, SeekOrigin.Begin);
                 return base.GetReaderForMessage(message, bufferSize);
             }
         }
 
+        [PermissionSet(SecurityAction.InheritanceDemand, Name = "FullTrust")]
         protected override XmlWriter GetWriterForMessage(SoapClientMessage message, int bufferSize)
         {
             if (bufferSize < 0x200)
