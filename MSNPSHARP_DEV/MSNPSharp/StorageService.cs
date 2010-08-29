@@ -484,7 +484,7 @@ namespace MSNPSharp
 
         private bool UpdatePhotoDocumentSync(PartnerScenario scenario, string photoName, string documentResourceId, byte[] photoData)
         {
-            if (string.IsNullOrEmpty(photoName) || string.IsNullOrEmpty(documentResourceId) || photoData == null)
+            if (string.IsNullOrEmpty(documentResourceId) || photoData == null)
                 return false;
 
             MsnServiceState serviceState = new MsnServiceState(scenario, "UpdateDocument", false);
@@ -492,7 +492,13 @@ namespace MSNPSharp
 
             UpdateDocumentRequestType request = new UpdateDocumentRequestType();
             request.document = new Photo();
-            request.document.Name = photoName;
+
+            if (!string.IsNullOrEmpty(photoName))
+            {
+                request.document.Name = photoName;
+            }
+
+
             request.document.ResourceID = documentResourceId;
             request.document.DocumentStreams = new PhotoStream[] { new PhotoStream() };
             request.document.DocumentStreams[0].DataSize = 0;
