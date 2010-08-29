@@ -7,6 +7,7 @@ using System.IO;
 using System.Globalization;
 using System.Net.Cache;
 using System.Web.Services;
+using System.Diagnostics;
 using System.Security.Permissions;
 using System.Web.Services.Protocols;
 
@@ -111,6 +112,7 @@ namespace MSNPSharp
             }
             else
             {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Unseekable stream returned with message, maybe the connection has terminated. Stream type: " + message.Stream.GetType().ToString());
                 return base.GetReaderForMessage(message, bufferSize);
             }
         }
