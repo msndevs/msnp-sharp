@@ -362,12 +362,12 @@ namespace MSNPSharp.Framework
                 "Œï-Epsilon", "Œñ-Zeta", "Œó-Eta", "Œò-Theta", "Œô-Iota", "Œö-Kappa", "Œõ-Lambda", "Œú-Mu", "Œù-Nu", "Œû-Xi", "Œü-Omicron", "Œ†-Pi", "Œ°-Rho", "Œ£-Sigma", "Œ§-Tau", "Œ•-Upsilon", 
                 "Œ¶-Phi", "Œß-Chi", "Œ®-Psi", "Œ©-Omega", "Œ±-alpha", "Œ≤-beta", "Œ≥-gamma", "Œ¥-delta", "Œµ-epsilon", "Œ∂-zeta", "Œ∑-eta", "Œ∏-theta", "Œπ-iota", "Œ∫-kappa", "Œª-lambda", "Œº-mu", 
                 "ŒΩ-nu", "Œæ-xi", "Œø-omicron", "œÄ-pi", "œÅ-rho", "œÇ-sigmaf", "œÉ-sigma", "œÑ-tau", "œÖ-upsilon", "œÜ-phi", "œá-chi", "œà-psi", "œâ-omega", "œë-thetasym", "œí-upsih", "œñ-piv", 
-                "‚ÄÇ-ensp", "‚ÄÉ-emsp", "‚Äâ-thinsp", "‚Äå-zwnj", "‚Äç-zwj", "‚Äé-lrm", "‚Äè-rlm", "‚Äì-ndash", "‚Äî-mdash", "‚Äò-lsquo", "‚Äô-rsquo", "‚Äö-sbquo", "‚Äú-ldquo", "‚Äù-rdquo", "‚Äû-bdquo", "‚Ä†-dagger", 
-                "‚Ä°-Dagger", "‚Ä¢-bull", "‚Ä¶-hellip", "‚Ä∞-permil", "‚Ä≤-prime", "‚Ä≥-Prime", "‚Äπ-lsaquo", "‚Ä∫-rsaquo", "‚Äæ-oline", "‚ÅÑ-frasl", "‚Ç¨-euro", "‚Ñë-image", "‚Ñò-weierp", "‚Ñú-real", "‚Ñ¢-trade", "‚Ñµ-alefsym", 
-                "‚Üê-larr", "‚Üë-uarr", "‚Üí-rarr", "‚Üì-darr", "‚Üî-harr", "‚Üµ-crarr", "‚áê-lArr", "‚áë-uArr", "‚áí-rArr", "‚áì-dArr", "‚áî-hArr", "‚àÄ-forall", "‚àÇ-part", "‚àÉ-exist", "‚àÖ-empty", "‚àá-nabla", 
-                "‚àà-isin", "‚àâ-notin", "‚àã-ni", "‚àè-prod", "‚àë-sum", "‚àí-minus", "‚àó-lowast", "‚àö-radic", "‚àù-prop", "‚àû-infin", "‚à†-ang", "‚àß-and", "‚à®-or", "‚à©-cap", "‚à™-cup", "‚à´-int", 
-                "‚à¥-there4", "‚àº-sim", "‚âÖ-cong", "‚âà-asymp", "‚â†-ne", "‚â°-equiv", "‚â§-le", "‚â•-ge", "‚äÇ-sub", "‚äÉ-sup", "‚äÑ-nsub", "‚äÜ-sube", "‚äá-supe", "‚äï-oplus", "‚äó-otimes", "‚ä•-perp", 
-                "‚ãÖ-sdot", "‚åà-lceil", "‚åâ-rceil", "‚åä-lfloor", "‚åã-rfloor", "‚å©-lang", "‚å™-rang", "‚óä-loz", "‚ô†-spades", "‚ô£-clubs", "‚ô•-hearts", "‚ô¶-diams"
+                "‚Ä?ensp", "‚Ä?emsp", "‚Ä?thinsp", "‚Ä?zwnj", "‚Ä?zwj", "‚Ä?lrm", "‚Ä?rlm", "‚Ä?ndash", "‚Ä?mdash", "‚Ä?lsquo", "‚Ä?rsquo", "‚Ä?sbquo", "‚Ä?ldquo", "‚Ä?rdquo", "‚Ä?bdquo", "‚Ä?dagger", 
+                "‚Ä?Dagger", "‚Ä?bull", "‚Ä?hellip", "‚Ä?permil", "‚Ä?prime", "‚Ä?Prime", "‚Ä?lsaquo", "‚Ä?rsaquo", "‚Ä?oline", "‚Å?frasl", "‚Ç?euro", "‚Ñ?image", "‚Ñ?weierp", "‚Ñ?real", "‚Ñ?trade", "‚Ñ?alefsym", 
+                "‚Ü?larr", "‚Ü?uarr", "‚Ü?rarr", "‚Ü?darr", "‚Ü?harr", "‚Ü?crarr", "‚á?lArr", "‚á?uArr", "‚á?rArr", "‚á?dArr", "‚á?hArr", "‚àÄ-forall", "‚à?part", "‚à?exist", "‚à?empty", "‚à?nabla", 
+                "‚à?isin", "‚à?notin", "‚à?ni", "‚à?prod", "‚à?sum", "‚à?minus", "‚à?lowast", "‚à?radic", "‚à?prop", "‚à?infin", "‚à?ang", "‚à?and", "‚à?or", "‚à?cap", "‚à?cup", "‚à?int", 
+                "‚à?there4", "‚à?sim", "‚â?cong", "‚â?asymp", "‚â?ne", "‚â?equiv", "‚â?le", "‚â?ge", "‚ä?sub", "‚ä?sup", "‚ä?nsub", "‚ä?sube", "‚ä?supe", "‚ä?oplus", "‚ä?otimes", "‚ä?perp", 
+                "‚ã?sdot", "‚å?lceil", "‚å?rceil", "‚å?lfloor", "‚å?rfloor", "‚å?lang", "‚å?rang", "‚ó?loz", "‚ô?spades", "‚ô?clubs", "‚ô?hearts", "‚ô?diams"
              };
                 private static Hashtable _entitiesLookupTable;
                 private static object _lookupLockObject = new object();
@@ -445,7 +445,7 @@ namespace MSNPSharp.Framework
 
     public class XmlSpecialNSPrefixTextWriter : XmlTextWriter
     {
-        private enum WriteState
+        private enum XmlWriteState
         {
             None,
             EvelopeWritten,
@@ -453,7 +453,7 @@ namespace MSNPSharp.Framework
             BeginWriteBody
         }
 
-        private WriteState state = WriteState.None;
+        private XmlWriteState state = XmlWriteState.None;
 
         public XmlSpecialNSPrefixTextWriter(TextWriter w)
             : base(w)
@@ -504,11 +504,11 @@ namespace MSNPSharp.Framework
         {
             base.WriteStartElement(prefix, localName, ns);
 
-            if (localName == "Envelope" && state == WriteState.None)
+            if (localName == "Envelope" && state == XmlWriteState.None)
             {
-                state = WriteState.EvelopeWritten;
+                state = XmlWriteState.EvelopeWritten;
 
-                if (state == WriteState.EvelopeWritten)
+                if (state == XmlWriteState.EvelopeWritten)
                 {
                     //WriteAttributeString("xmlns", "ps", null, @"http://schemas.microsoft.com/Passport/SoapServices/PPCRL");
                     //WriteAttributeString("xmlns", "psf", null, @"http://schemas.microsoft.com/Passport/SoapServices/SOAPFault");
@@ -522,18 +522,18 @@ namespace MSNPSharp.Framework
 
                     WriteAttributeString("xmlns", "saml", null, @"urn:oasis:names:tc:SAML:1.0:assertion");
 
-                    state = WriteState.SpecialNSWritten;
+                    state = XmlWriteState.SpecialNSWritten;
                 }
             }
 
-            if (localName == "Assertion" && state == WriteState.SpecialNSWritten)
+            if (localName == "Assertion" && state == XmlWriteState.SpecialNSWritten)
             {
                 WriteAttributeString("xmlns", "saml", null, @"urn:oasis:names:tc:SAML:1.0:assertion");
             }
 
-            if (localName == "Body" && state != WriteState.BeginWriteBody)
+            if (localName == "Body" && state != XmlWriteState.BeginWriteBody)
             {
-                state = WriteState.BeginWriteBody;
+                state = XmlWriteState.BeginWriteBody;
             }
         }
     }
