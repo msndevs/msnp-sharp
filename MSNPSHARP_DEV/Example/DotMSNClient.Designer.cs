@@ -379,7 +379,7 @@ namespace MSNPSharpClient
             this.displayImageBox.Location = new System.Drawing.Point(213, 0);
             this.displayImageBox.Name = "displayImageBox";
             this.displayImageBox.Size = new System.Drawing.Size(77, 77);
-            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.displayImageBox.TabIndex = 2;
             this.displayImageBox.TabStop = false;
             this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Click to change the photo");
