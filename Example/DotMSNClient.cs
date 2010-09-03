@@ -1020,6 +1020,7 @@ namespace MSNPSharpClient
 
             propertyGrid.SelectedObject = Messenger.ContactList.Owner;
             displayImageBox.Image = Messenger.ContactList.Owner.DisplayImage.Image;
+            displayImageBox.SizeMode = PictureBoxSizeMode.Zoom;
 
             Invoke(new EventHandler<EventArgs>(UpdateContactlist), sender, e);
         }
@@ -1042,6 +1043,8 @@ namespace MSNPSharpClient
             tmrNews.Enabled = false;
 
             displayImageBox.Image = null;
+            displayImageBox.SizeMode = PictureBoxSizeMode.CenterImage;
+
             loginButton.Tag = 0;
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
