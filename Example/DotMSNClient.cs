@@ -489,6 +489,7 @@ namespace MSNPSharpClient
                 return;
             }
 
+            displayImageBox.SizeMode = PictureBoxSizeMode.Zoom;
             displayImageBox.Image = messenger.Owner.DisplayImage.Image;
         }
         
@@ -683,6 +684,7 @@ namespace MSNPSharpClient
                             SortByGroup(null);
 
                         displayImageBox.Image = null;
+                        displayImageBox.SizeMode = PictureBoxSizeMode.CenterImage;
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = false;
@@ -703,6 +705,7 @@ namespace MSNPSharpClient
                             SortByGroup(null);
 
                         displayImageBox.Image = null;
+                        displayImageBox.SizeMode = PictureBoxSizeMode.CenterImage;
                         loginButton.Tag = 0;
                         loginButton.Text = "> Sign in";
                         pnlNameAndPM.Visible = true;
@@ -965,6 +968,7 @@ namespace MSNPSharpClient
             tmrNews.Enabled = false;
 
             displayImageBox.Image = null;
+            displayImageBox.SizeMode = PictureBoxSizeMode.CenterImage;
             loginButton.Tag = 0;
             loginButton.Text = "> Sign in";
             pnlNameAndPM.Visible = false;
