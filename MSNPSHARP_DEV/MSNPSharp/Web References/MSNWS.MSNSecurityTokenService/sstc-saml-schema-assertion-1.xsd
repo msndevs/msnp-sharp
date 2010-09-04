@@ -27,13 +27,13 @@
     <sequence>
       <element minOccurs="0" ref="saml:Conditions" />
       <element minOccurs="0" ref="saml:Advice" />
-      <choice maxOccurs="unbounded">
-        <element ref="saml:Statement" />
-        <element ref="saml:SubjectStatement" />
-        <element ref="saml:AuthenticationStatement" />
-        <element ref="saml:AuthorizationDecisionStatement" />
-        <element ref="saml:AttributeStatement" />
-      </choice>
+      <sequence maxOccurs="unbounded">
+        <element minOccurs="0" ref="saml:Statement" />
+        <element minOccurs="0" ref="saml:SubjectStatement" />
+        <element minOccurs="0" ref="saml:AuthenticationStatement" />
+        <element minOccurs="0" ref="saml:AuthorizationDecisionStatement" />
+        <element minOccurs="0" ref="saml:AttributeStatement" />
+      </sequence>
       <element minOccurs="0" ref="ds:Signature" />
     </sequence>
     <attribute name="MajorVersion" type="integer" use="required" />
@@ -44,11 +44,11 @@
   </complexType>
   <element name="Conditions" type="saml:ConditionsType" />
   <complexType name="ConditionsType">
-    <choice minOccurs="0" maxOccurs="unbounded">
-      <element ref="saml:AudienceRestrictionCondition" />
-      <element ref="saml:DoNotCacheCondition" />
-      <element ref="saml:Condition" />
-    </choice>
+    <sequence minOccurs="0" maxOccurs="unbounded">
+      <element minOccurs="0" ref="saml:AudienceRestrictionCondition" />
+      <element minOccurs="0" ref="saml:DoNotCacheCondition" />
+      <element minOccurs="0" ref="saml:Condition" />
+    </sequence>
     <attribute name="NotBefore" type="dateTime" use="optional" />
     <attribute name="NotOnOrAfter" type="dateTime" use="optional" />
   </complexType>
@@ -73,11 +73,11 @@
   </complexType>
   <element name="Advice" type="saml:AdviceType" />
   <complexType name="AdviceType">
-    <choice minOccurs="0" maxOccurs="unbounded">
-      <element ref="saml:AssertionIDReference" />
-      <element ref="saml:Assertion" />
-      <any namespace="##other" processContents="lax" />
-    </choice>
+    <sequence minOccurs="0" maxOccurs="unbounded">
+      <element minOccurs="0" ref="saml:AssertionIDReference" />
+      <element minOccurs="0" ref="saml:Assertion" />
+      <any minOccurs="0" namespace="##other" processContents="lax" />
+    </sequence>
   </complexType>
   <element name="Statement" type="saml:StatementAbstractType" />
   <complexType name="StatementAbstractType" abstract="true" />
@@ -93,13 +93,12 @@
   </complexType>
   <element name="Subject" type="saml:SubjectType" />
   <complexType name="SubjectType">
-    <choice>
+    <sequence>
       <sequence>
-        <element ref="saml:NameIdentifier" />
+        <element minOccurs="0" ref="saml:NameIdentifier" />
         <element minOccurs="0" ref="saml:SubjectConfirmation" />
       </sequence>
-      <element ref="saml:SubjectConfirmation" />
-    </choice>
+    </sequence>
   </complexType>
   <element name="NameIdentifier" type="saml:NameIdentifierType" />
   <complexType name="NameIdentifierType">
@@ -167,10 +166,10 @@
   </complexType>
   <element name="Evidence" type="saml:EvidenceType" />
   <complexType name="EvidenceType">
-    <choice maxOccurs="unbounded">
-      <element ref="saml:AssertionIDReference" />
-      <element ref="saml:Assertion" />
-    </choice>
+    <sequence maxOccurs="unbounded">
+      <element minOccurs="0" ref="saml:AssertionIDReference" />
+      <element minOccurs="0" ref="saml:Assertion" />
+    </sequence>
   </complexType>
   <element name="AttributeStatement" type="saml:AttributeStatementType" />
   <complexType name="AttributeStatementType">
