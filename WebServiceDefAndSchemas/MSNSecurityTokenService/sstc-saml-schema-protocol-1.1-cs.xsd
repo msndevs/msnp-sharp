@@ -30,15 +30,15 @@
 	<complexType name="RequestType">
 		<complexContent>
 			<extension base="samlp:RequestAbstractType">
-				<choice>
-					<element ref="samlp:Query"/>
-					<element ref="samlp:SubjectQuery"/>
-					<element ref="samlp:AuthenticationQuery"/>
-					<element ref="samlp:AttributeQuery"/>
-					<element ref="samlp:AuthorizationDecisionQuery"/>
-					<element ref="saml:AssertionIDReference" maxOccurs="unbounded"/>
-					<element ref="samlp:AssertionArtifact" maxOccurs="unbounded"/>
-				</choice>
+				<sequence>
+					<element minOccurs="0" ref="samlp:Query"/>
+					<element minOccurs="0" ref="samlp:SubjectQuery"/>
+					<element minOccurs="0" ref="samlp:AuthenticationQuery"/>
+					<element minOccurs="0" ref="samlp:AttributeQuery"/>
+					<element minOccurs="0" ref="samlp:AuthorizationDecisionQuery"/>
+					<element minOccurs="0" ref="saml:AssertionIDReference" maxOccurs="unbounded"/>
+					<element minOccurs="0" ref="samlp:AssertionArtifact" maxOccurs="unbounded"/>
+				</sequence>
 			</extension>
 		</complexContent>
 	</complexType>
