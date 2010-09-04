@@ -274,9 +274,6 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-policy.xsd">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-secext.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -429,6 +426,9 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\sstc-saml-schema-assertion-1.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-policy.xsd">
       <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\ws-secureconversation.xsd">
