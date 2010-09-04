@@ -74,10 +74,10 @@ No other rights are granted by implication, estoppel or otherwise.
 			<xs:element ref="wsse:SecurityTokenReference" minOccurs="0"/>
 			<xs:element name="Properties" type="wsc:PropertiesType" minOccurs="0"/>
 			<xs:sequence minOccurs="0">
-				<xs:choice>
-					<xs:element name="Generation" type="xs:unsignedLong"/>
-					<xs:element name="Offset" type="xs:unsignedLong"/>
-				</xs:choice>
+				<xs:sequence>
+					<xs:element minOccurs="0" name="Generation" type="xs:unsignedLong"/>
+					<xs:element minOccurs="0" name="Offset" type="xs:unsignedLong"/>
+				</xs:sequence>
 				<xs:element name="Length" type="xs:unsignedLong" minOccurs="0"/>
 			</xs:sequence>
 			<xs:element ref="wsc:Label" minOccurs="0"/>
