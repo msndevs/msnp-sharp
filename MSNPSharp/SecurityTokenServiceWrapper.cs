@@ -31,6 +31,10 @@ namespace MSNPSharp
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(errorType))]
     public sealed class SecurityTokenServiceWrapper : SecurityTokenService
     {
+        public SecurityTokenServiceWrapper()
+            : base()
+        {
+        }
 
         protected override WebResponse GetWebResponse(WebRequest request)
         {
