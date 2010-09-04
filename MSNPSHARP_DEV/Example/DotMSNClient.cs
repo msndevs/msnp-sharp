@@ -533,7 +533,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged), sender, e);
+                BeginInvoke(new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged), sender, e);
                 return;
             }
 
@@ -999,7 +999,7 @@ namespace MSNPSharpClient
 
             if (InvokeRequired)
             {
-                Invoke(new EventHandler(Nameserver_SignedIn), sender, e);
+                BeginInvoke(new EventHandler(Nameserver_SignedIn), sender, e);
                 return;
             }
 
@@ -1022,7 +1022,7 @@ namespace MSNPSharpClient
             displayImageBox.Image = Messenger.ContactList.Owner.DisplayImage.Image;
             displayImageBox.SizeMode = PictureBoxSizeMode.Zoom;
 
-            Invoke(new EventHandler<EventArgs>(UpdateContactlist), sender, e);
+            UpdateContactlist(sender, e);
         }
 
         private void Nameserver_SignedOff(object sender, SignedOffEventArgs e)
