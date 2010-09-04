@@ -408,6 +408,9 @@ namespace MSNPSharp.DataTransfer
                 if (value != null && object.ReferenceEquals(MessageProcessor, value))
                     return;
 
+                if (value == null && MessageProcessor == null)
+                    return;
+
                 if (value == null && MessageProcessor != null)
                 {
                     MessageProcessor.UnregisterHandler(this);
