@@ -1087,14 +1087,30 @@ namespace MSNPSharpClient
 
         private void NameserverProcessor_ConnectingException(object sender, ExceptionEventArgs e)
         {
-            MessageBox.Show(e.Exception.ToString(), "Connecting exception");
-            SetStatus("Connecting failed");
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred), new object[] { sender, e });
+            }
+            else
+            {
+                MessageBox.Show(e.Exception.ToString(), "Connecting exception");
+                SetStatus("Connecting failed");
+            }
         }
 
         private void Nameserver_AuthenticationError(object sender, ExceptionEventArgs e)
         {
-            MessageBox.Show("Authentication failed, check your account or password.", e.Exception.InnerException.Message);
-            SetStatus("Authentication failed");
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred), new object[] { sender, e });
+            }
+            else
+            {
+                MessageBox.Show("Authentication failed, check your account or password.\r\n Error detail:\r\n " + e.Exception.InnerException.Message + "\r\n"
+                    + " StackTrace:\r\n " + e.Exception.InnerException.StackTrace
+                    , "Authentication Error");
+                SetStatus("Authentication failed");
+            }
         }
 
         /// <summary>
