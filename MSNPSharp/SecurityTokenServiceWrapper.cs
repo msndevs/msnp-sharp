@@ -61,7 +61,7 @@ namespace MSNPSharp
             Stream messageStream = message.Stream;
             byte[] schemaArray = new byte[schemaLength];
 
-            if (!messageStream.CanSeek)
+            if (messageStream.CanSeek)
             {
                 long originalPosition = messageStream.Position;
 
