@@ -31,6 +31,10 @@ namespace MSNPSharp
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(errorType))]
     public sealed class SecurityTokenServiceWrapper : SecurityTokenService
     {
+        public SecurityTokenServiceWrapper()
+            : base()
+        {
+        }
 
         protected override WebResponse GetWebResponse(WebRequest request)
         {
@@ -44,7 +48,6 @@ namespace MSNPSharp
         protected override WebResponse GetWebResponse(WebRequest request, IAsyncResult result)
         {
             request.ContentType = ContentType.ApplicationSoap;
-            (request as HttpWebRequest).Expect = null;
 
             WebResponse response = base.GetWebResponse(request, result);
             if (!ContentType.IsSoap(response.ContentType))
