@@ -87,7 +87,7 @@
     <Compile Include="Core\MSNMessage.cs" />
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
-    <Compile Include="MSNService.cs" />
+    <Compile Include="MSNWebServices\MSNService.cs" />
     <Compile Include="DataTransfer\MSNSLPHandler.cs" />
     <Compile Include="DataTransfer\MSNSLPMessage.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
@@ -99,7 +99,7 @@
     <Compile Include="Core\NSMessage.cs" />
     <Compile Include="Core\NSMessagePool.cs" />
     <Compile Include="NSMessageProcessor.cs" />
-    <Compile Include="OIMService.cs" />
+    <Compile Include="MSNWebServices\OIMService.cs" />
     <Compile Include="Owner.cs" />
     <Compile Include="DataTransfer\P2PDCPool.cs" />
     <Compile Include="DataTransfer\P2PDirectProcessor.cs" />
@@ -139,14 +139,15 @@
     <Compile Include="Core\SBMessagePool.cs" />
     <Compile Include="SBMessageProcessor.cs" />
     <Compile Include="Core\MimeMessage.cs" />
-    <Compile Include="SecurityTokenServiceWrapper.cs" />
+    <Compile Include="MSNWebServices\SecurityTokenServiceWrapper.cs">
+    </Compile>
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
-    <Compile Include="StorageService.cs" />
+    <Compile Include="MSNWebServices\StorageService.cs" />
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
-    <Compile Include="ContactService.cs" />
+    <Compile Include="MSNWebServices\ContactService.cs" />
     <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -172,7 +173,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
-    <Compile Include="WhatsUpService.cs" />
+    <Compile Include="MSNWebServices\WhatsUpService.cs" />
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
   </ItemGroup>
