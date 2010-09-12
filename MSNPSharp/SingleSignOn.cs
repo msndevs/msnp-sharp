@@ -42,13 +42,14 @@ using System.Xml.Serialization;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Authentication;
+using System.Web.Services.Protocols;
 using System.Security.Cryptography.X509Certificates;
 
 namespace MSNPSharp
 {
     using MSNPSharp.MSNWS.MSNSecurityTokenService;
     using MSNPSharp.IO;
-    using System.Web.Services.Protocols;
+    using MSNPSharp.Services;
 
     [Flags]
     public enum SSOTicketType
@@ -406,10 +407,7 @@ namespace MSNPSharp
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Request new tickets: " + expiredtickets, "SingleSignOnManager");
 
-                    SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, policy);
-                    if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-                        sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
-
+                    SingleSignOn sso = new SingleSignOn(nsMessageHandler, policy);
                     sso.AddAuths(expiredtickets);
 
                     if (onSuccess == null && onError == null)
@@ -467,9 +465,7 @@ namespace MSNPSharp
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Re-new ticket: " + renew, "SingleSignOnManager");
 
-                    SingleSignOn sso = new SingleSignOn(nsMessageHandler.Credentials.Account, nsMessageHandler.Credentials.Password, ticket.Policy);
-                    if (nsMessageHandler.ConnectivitySettings != null && nsMessageHandler.ConnectivitySettings.WebProxy != null)
-                        sso.WebProxy = nsMessageHandler.ConnectivitySettings.WebProxy;
+                    SingleSignOn sso = new SingleSignOn(nsMessageHandler, ticket.Policy);
 
                     sso.AddAuths(renew);
 
@@ -500,25 +496,45 @@ namespace MSNPSharp
         private string policy = string.Empty;
         private int authId = 0;
         private List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
-        private WebProxy webProxy = null;
+        private NSMessageHandler nsMessageHandler = null;
 
-        public WebProxy WebProxy
+        private NSMessageHandler NSMessageHandler
+        {
+            get { return nsMessageHandler; }
+            set
+            {
+                nsMessageHandler = value;
+            }
+        }
+
+        private WebProxy WebProxy
         {
             get
             {
-                return webProxy;
-            }
-            set
-            {
-                webProxy = value;
+                return NSMessageHandler == null ? null : NSMessageHandler.ConnectivitySettings.WebProxy;
             }
         }
+
+        private IPEndPoint LocalEndPoint
+        {
+            get
+            {
+                return NSMessageHandler == null ? null : new IPEndPoint(String.IsNullOrEmpty(NSMessageHandler.ConnectivitySettings.LocalHost) ? IPAddress.Any : IPAddress.Parse(NSMessageHandler.ConnectivitySettings.LocalHost), NSMessageHandler.ConnectivitySettings.LocalPort);
+            }
+        }
+
 
         public SingleSignOn(string username, string password, string policy)
         {
             this.user = username;
             this.pass = password;
             this.policy = policy;
+        }
+
+        public SingleSignOn(NSMessageHandler nsHandler, string policy)
+            : this(nsHandler.Credentials.Account, nsHandler.Credentials.Password, policy)
+        {
+            NSMessageHandler = nsHandler;
         }
 
         public void AuthenticationAdd(string domain, string policyref)
@@ -806,10 +822,9 @@ namespace MSNPSharp
 
         private SecurityTokenService CreateSecurityTokenService(string actionValue, string toValue)
         {
-            SecurityTokenService securService = new SecurityTokenServiceWrapper();
-            // securService.EnableDecompression = true; // Fails on Mono.
+            SecurityTokenService securService = new SecurityTokenServiceWrapper(LocalEndPoint);
             securService.Timeout = 60000;
-            securService.Proxy = webProxy;
+            securService.Proxy = WebProxy;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
             securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
