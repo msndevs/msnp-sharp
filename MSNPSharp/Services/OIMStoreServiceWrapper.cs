@@ -8,6 +8,7 @@ namespace MSNPSharp.Services
 {
     using MSNPSharp.MSNWS.MSNOIMStoreService;
 
+    [System.Web.Services.WebServiceBindingAttribute(Name = "OIMBinding", Namespace = "http://messenger.msn.com/ws/2004/09/oim/")]
     internal sealed class OIMStoreServiceWrapper : OIMStoreService
     {
         private IPEndPoint localEndPoint = null;
