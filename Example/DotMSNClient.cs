@@ -977,23 +977,47 @@ namespace MSNPSharpClient
 
         private void Nameserver_ExceptionOccurred(object sender, ExceptionEventArgs e)
         {
-            // ignore the unauthorized exception, since we're handling that error in another method.
-            if (e.Exception is UnauthorizedException)
-                return;
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred), new object[] { sender, e });
+            }
+            else
+            {
 
-            MessageBox.Show(e.Exception.ToString(), "Nameserver exception");
+                // ignore the unauthorized exception, since we're handling that error in another method.
+                if (e.Exception is UnauthorizedException)
+                    return;
+
+                MessageBox.Show(e.Exception.ToString(), "Nameserver exception");
+            }
         }
 
         private void NameserverProcessor_ConnectingException(object sender, ExceptionEventArgs e)
         {
-            MessageBox.Show(e.Exception.ToString(), "Connecting exception");
-            SetStatus("Connecting failed");
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred), new object[] { sender, e });
+            }
+            else
+            {
+                MessageBox.Show(e.Exception.ToString(), "Connecting exception");
+                SetStatus("Connecting failed");
+            }
         }
 
         private void Nameserver_AuthenticationError(object sender, ExceptionEventArgs e)
         {
-            MessageBox.Show("Authentication failed, check your account or password.", e.Exception.InnerException.Message);
-            SetStatus("Authentication failed");
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred), new object[] { sender, e });
+            }
+            else
+            {
+                MessageBox.Show("Authentication failed, check your account or password.\r\n Error detail:\r\n " + e.Exception.InnerException.Message + "\r\n"
+                    + " StackTrace:\r\n " + e.Exception.InnerException.StackTrace
+                    , "Authentication Error");
+                SetStatus("Authentication failed");
+            }
         }
 
         /// <summary>
@@ -1020,9 +1044,16 @@ namespace MSNPSharpClient
         /// <param name="e"></param>
         private void Nameserver_ServerErrorReceived(object sender, MSNErrorEventArgs e)
         {
-            // when the MSN server sends an error code we want to be notified.
-            MessageBox.Show(e.MSNError.ToString(), "Server error received");
-            SetStatus("Server error received");
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived), new object[] { sender, e });
+            }
+            else
+            {
+                // when the MSN server sends an error code we want to be notified.
+                MessageBox.Show(e.MSNError.ToString(), "Server error received");
+                SetStatus("Server error received");
+            }
         }
 
         /// <summary>
