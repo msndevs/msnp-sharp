@@ -8,6 +8,7 @@ namespace MSNPSharp.Services
 {
     using MSNPSharp.MSNWS.MSNRSIService;
 
+    [System.Web.Services.WebServiceBindingAttribute(Name = "RSIBinding", Namespace = "http://www.hotmail.msn.com/ws/2004/09/oim/rsi")]
     internal sealed class RSIServiceWrapper : RSIService
     {
         private IPEndPoint localEndPoint = null;

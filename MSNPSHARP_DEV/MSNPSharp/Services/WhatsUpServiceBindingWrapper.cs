@@ -8,6 +8,7 @@ namespace MSNPSharp.Services
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
 
+    [System.Web.Services.WebServiceBindingAttribute(Name = "WhatsUpServiceBinding", Namespace = "http://www.msn.com/webservices/AddressBook")]
     internal sealed class WhatsUpServiceBindingWrapper : WhatsUpServiceBinding
     {
         private IPEndPoint localEndPoint = null;

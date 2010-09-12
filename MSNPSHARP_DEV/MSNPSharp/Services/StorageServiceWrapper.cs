@@ -8,6 +8,7 @@ namespace MSNPSharp.Services
 {
     using MSNPSharp.MSNWS.MSNStorageService;
 
+    [System.Web.Services.WebServiceBindingAttribute(Name = "StorageServiceBinding", Namespace = "http://www.msn.com/webservices/storage/2008")]
     internal sealed class StorageServiceWrapper: StorageService
     {
         private IPEndPoint localEndPoint = null;
