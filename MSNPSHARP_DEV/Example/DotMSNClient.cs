@@ -1137,9 +1137,16 @@ namespace MSNPSharpClient
         /// <param name="e"></param>
         private void Nameserver_ServerErrorReceived(object sender, MSNErrorEventArgs e)
         {
-            // when the MSN server sends an error code we want to be notified.
-            MessageBox.Show(e.MSNError.ToString(), "Server error received");
-            SetStatus("Server error received");
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived), new object[] { sender, e });
+            }
+            else
+            {
+                // when the MSN server sends an error code we want to be notified.
+                MessageBox.Show(e.MSNError.ToString(), "Server error received");
+                SetStatus("Server error received");
+            }
         }
 
         /// <summary>
