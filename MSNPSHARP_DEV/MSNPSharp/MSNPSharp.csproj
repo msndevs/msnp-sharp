@@ -87,7 +87,8 @@
     <Compile Include="Core\MSNMessage.cs" />
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
-    <Compile Include="MSNWebServices\MSNService.cs" />
+    <Compile Include="Services\ABServiceBindingWarpper.cs" />
+    <Compile Include="Services\MSNService.cs" />
     <Compile Include="DataTransfer\MSNSLPHandler.cs" />
     <Compile Include="DataTransfer\MSNSLPMessage.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
@@ -99,7 +100,7 @@
     <Compile Include="Core\NSMessage.cs" />
     <Compile Include="Core\NSMessagePool.cs" />
     <Compile Include="NSMessageProcessor.cs" />
-    <Compile Include="MSNWebServices\OIMService.cs" />
+    <Compile Include="Services\OIMService.cs" />
     <Compile Include="Owner.cs" />
     <Compile Include="DataTransfer\P2PDCPool.cs" />
     <Compile Include="DataTransfer\P2PDirectProcessor.cs" />
@@ -139,15 +140,20 @@
     <Compile Include="Core\SBMessagePool.cs" />
     <Compile Include="SBMessageProcessor.cs" />
     <Compile Include="Core\MimeMessage.cs" />
-    <Compile Include="MSNWebServices\SecurityTokenServiceWrapper.cs">
+    <Compile Include="Services\OIMStoreServiceWrapper.cs" />
+    <Compile Include="Services\RSIServiceWrapper.cs" />
+    <Compile Include="Services\SecurityTokenServiceWrapper.cs">
     </Compile>
+    <Compile Include="Services\SharingServiceBindingWrapper.cs" />
+    <Compile Include="Services\StorageServiceWrapper.cs" />
+    <Compile Include="Services\WhatsUpServiceBindingWrapper.cs" />
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
-    <Compile Include="MSNWebServices\StorageService.cs" />
+    <Compile Include="Services\StorageService.cs" />
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
-    <Compile Include="MSNWebServices\ContactService.cs" />
+    <Compile Include="Services\ContactService.cs" />
     <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -173,7 +179,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
-    <Compile Include="MSNWebServices\WhatsUpService.cs" />
+    <Compile Include="Services\WhatsUpService.cs" />
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
   </ItemGroup>
