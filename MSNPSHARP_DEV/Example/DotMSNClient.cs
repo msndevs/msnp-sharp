@@ -339,7 +339,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<EventArgs>(RefreshCircleList), sender, e);
+                BeginInvoke(new EventHandler<EventArgs>(RefreshCircleList), new object[] { sender, e });
                 return;
             }
 
@@ -382,7 +382,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted), sender, e);
+                BeginInvoke(new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted), new object[] { sender, e });
                 return;
             }
 
@@ -517,7 +517,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<EventArgs>(Owner_PersonalMessageChanged), sender, e);
+                BeginInvoke(new EventHandler<EventArgs>(Owner_PersonalMessageChanged), new object[] { sender, e });
                 return;
             }
 
@@ -533,7 +533,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged), sender, e);
+                displayImageBox.BeginInvoke(new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged), new object[] { sender, e });
                 return;
             }
 
@@ -554,11 +554,11 @@ namespace MSNPSharpClient
 
         void Nameserver_ContactOnline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), sender, e);
+            BeginInvoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), new object[] { sender, e });
         }
         void Nameserver_ContactOffline(object sender, ContactEventArgs e)
         {
-            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), sender, e);
+            Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), new object[] { sender, e });
         }
 
         void ContactOnlineOffline(object sender, ContactEventArgs e)
@@ -798,7 +798,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged), sender, e);
+                BeginInvoke(new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged), new object[] { sender, e });
                 return;
             }
 
@@ -954,7 +954,7 @@ namespace MSNPSharpClient
         {
             if (comboPlaces.InvokeRequired)
             {
-                comboPlaces.Invoke(new EventHandler(Owner_PlacesChanged), sender, e);
+                comboPlaces.BeginInvoke(new EventHandler(Owner_PlacesChanged), new object[] { sender, e });
                 return;
             }
 
