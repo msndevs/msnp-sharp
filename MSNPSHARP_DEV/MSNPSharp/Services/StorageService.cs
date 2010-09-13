@@ -39,6 +39,7 @@ using System.Drawing;
 using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net.Sockets;
 using System.Collections.Generic;
 
 namespace MSNPSharp
@@ -47,6 +48,7 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.MSNWS.MSNStorageService;
     using MSNPSharp.Core;
+    using MSNPSharp.Services;
 
     /// <summary>
     /// Provide webservice operations for Storage Service
@@ -917,6 +919,8 @@ namespace MSNPSharp
                 HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
                 fwr.Proxy = WebProxy;
                 fwr.Timeout = 30000;
+                fwr.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint(new IPEndPointCallback(new IPEndPoint(String.IsNullOrEmpty(NSMessageHandler.ConnectivitySettings.LocalHost) ? IPAddress.Any : IPAddress.Parse(NSMessageHandler.ConnectivitySettings.LocalHost), NSMessageHandler.ConnectivitySettings.LocalPort)).BindIPEndPointCallback);
+
                 fwr.BeginGetResponse(delegate(IAsyncResult result)
                 {
                     try

@@ -38,38 +38,36 @@ using System.Net.Sockets;
 
 namespace MSNPSharp.Services
 {
-    using MSNPSharp.MSNWS.MSNOIMStoreService;
-
-    [System.Web.Services.WebServiceBindingAttribute(Name = "OIMBinding", Namespace = "http://messenger.msn.com/ws/2004/09/oim/")]
-    internal sealed class OIMStoreServiceWrapper : OIMStoreService
+    internal class IPEndPointCallback
     {
         private IPEndPoint localEndPoint = null;
 
-        public OIMStoreServiceWrapper()
-            : base()
-        {
-        }
-
-        public OIMStoreServiceWrapper(IPEndPoint localEndPoint)
-            : base()
+        public IPEndPointCallback(IPEndPoint localEndPoint)
         {
             this.localEndPoint = localEndPoint;
         }
 
-
-        protected override WebRequest GetWebRequest(Uri uri)
+        public IPEndPoint BindIPEndPointCallback(ServicePoint servicePoint, IPEndPoint remoteEndPoint, int retryCount)
         {
-            WebRequest request = base.GetWebRequest(uri);
-            if (request is HttpWebRequest)
+            if (localEndPoint != null && (localEndPoint.Address == IPAddress.IPv6Any) && remoteEndPoint.AddressFamily == AddressFamily.InterNetwork)
+                localEndPoint.Address = IPAddress.Any;
+
+            if (localEndPoint != null && (localEndPoint.Address == IPAddress.Any) && remoteEndPoint.AddressFamily == AddressFamily.InterNetworkV6)
+                localEndPoint.Address = IPAddress.IPv6Any;
+
+            if (remoteEndPoint.AddressFamily == AddressFamily.InterNetwork)
             {
-                (request as HttpWebRequest).ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
+                if (localEndPoint == null)
+                    return new IPEndPoint(IPAddress.Any, 0);
+                return localEndPoint;
             }
+            else
+            {
+                if (localEndPoint == null)
+                    return new IPEndPoint(IPAddress.IPv6Any, 0);
 
-            return request;
+                return localEndPoint;
+            }
         }
-
-
-        
     }
 }
-
