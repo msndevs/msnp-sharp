@@ -524,7 +524,7 @@ namespace MSNPSharp
                     catch (Exception ex)
                     {
                         bool getHost = false;
-                        if (ex.InnerException is WebException)
+                        if (ex.InnerException is WebException && ex.InnerException != null)
                         {
                             WebException webException = ex.InnerException as WebException;
                             HttpWebResponse webResponse = webException.Response as HttpWebResponse;
