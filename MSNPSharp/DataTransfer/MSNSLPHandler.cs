@@ -34,7 +34,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Threading;
+using System.Timers;
 using System.Collections;
 using System.Diagnostics;
 using System.Net.Sockets;
@@ -1431,7 +1431,7 @@ namespace MSNPSharp.DataTransfer
             if (transferSession != null)
             {
                 transferSession.SendMessage(CreateClosingMessage(transferSession.TransferProperties));
-                Thread.Sleep(300);
+                System.Threading.Thread.Sleep(300);
                 transferSession.AbortTransfer();
             }
             else
@@ -1828,8 +1828,10 @@ namespace MSNPSharp.DataTransfer
         public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
             P2PMessage p2pMessage = message as P2PMessage;
-
             Debug.Assert(p2pMessage != null, "Message is not a P2P message in MSNSLP handler", "");
+
+            SLPMessage slpMessage = SLPMessage.Parse(p2pMessage.InnerBody);
+
 
             if (p2pMessage.Version == P2PVersion.P2PV1)
             {
@@ -1837,7 +1839,6 @@ namespace MSNPSharp.DataTransfer
                     p2pMessage.V1Header.Flags != P2PFlag.Acknowledgement && p2pMessage.V1Header.MessageSize > 0))
                 {
                     //We don't process any p2p message because this is a SIP message handler.
-                    //Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv1 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
                     return;
                 }
             }
@@ -1847,14 +1848,12 @@ namespace MSNPSharp.DataTransfer
                 if (!(p2pMessage.V2Header.SessionId == 0 &&
                     p2pMessage.V2Header.MessageSize > 0 && p2pMessage.V2Header.TFCombination == TFCombination.First))
                 {
-                    //Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "P2Pv2 Message incoming:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
                     return;
                 }
 
             }
 
-            SLPMessage slpMessage = SLPMessage.Parse(p2pMessage.InnerBody);
-
+            
             if (slpMessage != null)
             {
                 // call the methods belonging to the content-type to handle the message
@@ -1924,6 +1923,8 @@ namespace MSNPSharp.DataTransfer
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
             SLPStatusMessage slpStatus = message as SLPStatusMessage;
 
+            #region SLP Status Response (Response for receive file request, accept activity request and send display image request.)
+
             if (slpStatus != null)
             {
                 if (slpStatus.CSeq == 1 && slpStatus.Code == 603)
@@ -1950,33 +1951,58 @@ namespace MSNPSharp.DataTransfer
                     }
 
 
-                    if (properties.DataType == DataTransferType.File)
-                    {
-                        if (Version == P2PVersion.P2PV1)
-                        {
-                            // ok we can receive the OK message. we can now send the invitation to setup a transfer connection
-                            if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
-                                SendDCInvitation(properties);
+                    #region File and Activity are invitor send
 
-                            session.StartDataTransfer(true);
-                        }
-                        else
-                        {
-                            session.StartDataTransfer(false);
-                        }          
-                    }
-
-                    if (properties.DataType == DataTransferType.Activity)
+                    int waitCounter = 0;
+                    Timer timer = new Timer(1000);
+                    timer.Elapsed += delegate(object sender, ElapsedEventArgs e)
                     {
-                        if (session.DataStream != null && session.IsSender)
+                        if (waitCounter < 5)
                         {
-                            session.StartDataTransfer(false);
+                            waitCounter++;
+                            return;
                         }
-                    }
+
+                        switch (properties.DataType)
+                        {
+                            case DataTransferType.File:
+                                if (Version == P2PVersion.P2PV1)
+                                {
+                                    // ok we can receive the OK message. we can now send the invitation to setup a transfer connection
+                                    if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
+                                        SendDCInvitation(properties);
+
+                                    session.StartDataTransfer(true);
+                                }
+                                else
+                                {
+                                    session.StartDataTransfer(false);
+                                }
+                                break;
+
+                            case DataTransferType.Activity:
+                                if (session.DataStream != null && session.IsSender)
+                                {
+                                    session.StartDataTransfer(false);
+                                }
+                                break;
+                        }
+
+                        timer.Stop();
+                        timer = null;
+                    };
+
+                    timer.Start();
+                    #endregion
+
 
                 }
                 return;
-            }
+            } 
+
+            #endregion
+
+            #region SLP INVITE (Request for file receiving and send display image)
 
             SLPRequestMessage slpMessage = message as SLPRequestMessage;
 
@@ -2058,7 +2084,10 @@ namespace MSNPSharp.DataTransfer
 
                     AcceptTransfer(invitationArgs);
                 }
-            }
+            } 
+
+            #endregion
+
         }
 
         /// <summary>
@@ -2105,14 +2134,13 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Called when the remote client sends a file and sends us it's direct-connect capabilities.
+        /// Called when the remote client sends us it's direct-connect capabilities.
         /// A reply will be send with the local client's connectivity.
         /// </summary>
         /// <param name="p2pMessage"></param>
         protected virtual void OnDCRequest(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-
            // let's listen
             
 
