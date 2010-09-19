@@ -1957,7 +1957,7 @@ namespace MSNPSharp.DataTransfer
                     Timer timer = new Timer(1000);
                     timer.Elapsed += delegate(object sender, ElapsedEventArgs e)
                     {
-                        if (waitCounter < 5)
+                        if (waitCounter < 3)
                         {
                             waitCounter++;
                             return;
