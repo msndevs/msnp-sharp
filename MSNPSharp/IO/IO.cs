@@ -195,12 +195,15 @@ namespace MSNPSharp.IO
         /// Save the file and set its hidden attribute to true
         /// </summary>
         /// <param name="filename"></param>
-        public void SaveAndHide(string filename)
+        public void Save(string filename, bool saveToHiddenFile)
         {
             WriteAllBytes(filename, FillFileStruct(xmlData));
-            lock (this)
+            if (saveToHiddenFile)
             {
-                File.SetAttributes(filename, FileAttributes.Hidden);
+                lock (this)
+                {
+                    File.SetAttributes(filename, FileAttributes.Hidden);
+                }
             }
         }
 
@@ -209,7 +212,7 @@ namespace MSNPSharp.IO
         /// </summary>
         public void SaveAndHide()
         {
-            SaveAndHide(fileName);
+            Save(fileName, true);
         }
 
         #endregion
