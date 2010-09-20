@@ -56,8 +56,11 @@ namespace MSNPSharpClient
             // You can set proxy settings here
             // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
 
-
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
+
+            //Set the p2p invitation interval in the whole invitation request queue (in ms)
+            Schedulers.P2PInvitationScheduler.DelayTime = 5000;
+            Schedulers.SwitchBoardRequestScheduler.DelayTime = 1000;
 
             if (Settings.IsMono) //I am running on Mono.
             {

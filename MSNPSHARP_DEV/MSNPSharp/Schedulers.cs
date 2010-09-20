@@ -44,7 +44,7 @@ namespace MSNPSharp
     /// <summary>
     /// The queue object for scheduler.
     /// </summary>
-    internal class SchedulerQueueObject
+    public class SchedulerQueueObject
     {
         IMessageProcessor messageProcessor = null;
         NetworkMessage message = null;
@@ -99,11 +99,12 @@ namespace MSNPSharp
     /// <summary>
     /// Base form of a message scheduler.
     /// </summary>
-    internal interface IScheduler
+    public interface IScheduler
     {
         int DelayTime
         {
             get;
+            set;
         }
 
         void Enqueue(IMessageProcessor processor, NetworkMessage message, Guid ownerId);
@@ -114,7 +115,7 @@ namespace MSNPSharp
     /// <summary>
     /// Delay sending the p2p invitation messages, avoid p2p data transfer request a new conversation.
     /// </summary>
-    internal class Scheduler : IScheduler
+    public class Scheduler : IScheduler
     {
         protected object syncObject = new object();
         private int delayTime = 5000; //In ms.
@@ -122,9 +123,20 @@ namespace MSNPSharp
         protected Queue<SchedulerQueueObject> messageQueue = new Queue<SchedulerQueueObject>();
         protected Dictionary<Guid, Messenger> messengerList = new Dictionary<Guid, Messenger>(0);
 
+        /// <summary>
+        /// The sending interval for messages in message queue .
+        /// </summary>
         public int DelayTime
         {
-            get { return delayTime; }
+            get 
+            { 
+                return delayTime;
+            }
+
+            set
+            {
+                delayTime = value;
+            }
         }
 
         #region Private method
@@ -266,7 +278,7 @@ namespace MSNPSharp
     /// <summary>
     /// The <see cref="Scheduler"/> for switchboard request. The scheduler will only send one request every second.
     /// </summary>
-    internal class SwitchBoardRequestScheduler : Scheduler
+    public class SwitchBoardRequestScheduler : Scheduler
     {
         public SwitchBoardRequestScheduler(int delay)
             : base(delay)
@@ -309,12 +321,12 @@ namespace MSNPSharp
         }
     }
 
-    internal static class Schedulers
+    public static class Schedulers
     {
         private static Scheduler p2pInvitationScheduler = new Scheduler(5000);
         private static Scheduler sbRequestScheduler = new SwitchBoardRequestScheduler(1000);
 
-        internal static Scheduler SwitchBoardRequestScheduler
+        public static Scheduler SwitchBoardRequestScheduler
         {
             get 
             { 
@@ -322,7 +334,7 @@ namespace MSNPSharp
             }
         }
 
-        internal static Scheduler P2PInvitationScheduler
+        public static Scheduler P2PInvitationScheduler
         {
             get 
             { 
