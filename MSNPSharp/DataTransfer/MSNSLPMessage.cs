@@ -170,6 +170,7 @@ namespace MSNPSharp.DataTransfer
             {
                 return To.Replace("<msnmsgr:", String.Empty).Replace(">", String.Empty);
             }
+
             internal set
             {
                 mimeHeaders[MimeHeaderStrings.To] = String.Format("<msnmsgr:{0}>", value);
