@@ -905,7 +905,9 @@ namespace MSNPSharp
             {
                 foreach (string key in rosterState.Keys)
                 {
-                    if (rosterState[key] != ContactConversationState.Left && key != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+                    if (rosterState[key] != ContactConversationState.Left && 
+                        NSMessageHandler.ContactList.Owner != null &&
+                        key != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
                     {
                         // If: There is only one owner without any endpoint id, the switchboard is ended.
                         // If: There is/are owner(s) with endpoint id(s) and status is/are not left, keep the switch available.
@@ -1172,7 +1174,7 @@ namespace MSNPSharp
                 endPointId = new Guid(accountGuid[1]);
             }
 
-            if (account == NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+            if (NSMessageHandler.ContactList.Owner != null && account == NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
             {
                 if (IsAllContactsInRosterLeft())
                 {

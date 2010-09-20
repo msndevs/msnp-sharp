@@ -1957,7 +1957,7 @@ namespace MSNPSharp.DataTransfer
                     Timer timer = new Timer(1000);
                     timer.Elapsed += delegate(object sender, ElapsedEventArgs e)
                     {
-                        if (waitCounter < 3)
+                        if (waitCounter < 6)
                         {
                             waitCounter++;
                             return;
@@ -2147,19 +2147,25 @@ namespace MSNPSharp.DataTransfer
            // Find host by name
             IPAddress iphostentry = LocalEndPoint.Address;
 
-            MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
+            SLPStatusMessage slpMessage = new SLPStatusMessage(message.ToMail, 200, "OK");
+            Guid nonce = Guid.Empty;
+            string nonceFieldName = "Nonce";
 
-            if (properties == null)
-                return;
-
-            SLPStatusMessage slpMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 200, "OK");
-            properties.Nonce = Guid.NewGuid();
+            if (message.BodyValues.ContainsKey("Nonce"))
+            {
+                nonce = HashedNonceGenerator.HashNonce(new Guid(message.BodyValues["Nonce"].Value));
+            }
+            else if (message.BodyValues.ContainsKey("Hashed-Nonce"))
+            {
+                nonce = HashedNonceGenerator.HashNonce(new Guid(message.BodyValues["Hashed-Nonce"].Value));
+                nonceFieldName = "Hashed-Nonce";
+            }
 
 
             if (!iphostentry.Equals(ExternalEndPoint.Address))
             {
                 slpMessage.BodyValues["Listening"] = "false";
-                slpMessage.BodyValues["Nonce"] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             }
             else
             {
@@ -2167,7 +2173,7 @@ namespace MSNPSharp.DataTransfer
 
                 MessageSession.ListenForDirectConnection(iphostentry, port);
                 slpMessage.BodyValues["Listening"] = "true";
-                slpMessage.BodyValues["Nonce"] = properties.Nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
                 slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.ToString();
                 slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
@@ -2182,42 +2188,36 @@ namespace MSNPSharp.DataTransfer
             }
 
 
-            slpMessage.ToMail = properties.RemoteContactEPIDString;
-            slpMessage.FromMail = properties.LocalContactEPIDString;
-            slpMessage.Branch = properties.LastBranch;
+            slpMessage.ToMail = message.FromMail;
+            slpMessage.FromMail = message.ToMail;
+            slpMessage.Branch = message.Branch;
             slpMessage.CSeq = 1;
-            slpMessage.CallId = properties.CallId;
+            slpMessage.CallId = message.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
-            slpMessage.BodyValues["Bridge"] = "TCPv1";
+
+            if (Version == P2PVersion.P2PV1)
+                slpMessage.BodyValues["Bridge"] = "TCPv1";
+            else
+                slpMessage.BodyValues["Bridge"] = "SBBridge";
             
 
 
 
             P2PMessage p2pReplyMessage = new P2PMessage(Version);
             p2pReplyMessage.InnerMessage = slpMessage;
-            P2PTransferSession transferSession = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
-            
+
             if (Version == P2PVersion.P2PV2)
             {
                 p2pReplyMessage.V2Header.TFCombination = TFCombination.First;
-                if (transferSession != null)
-                {
-                    p2pReplyMessage.V2Header.PackageNumber = transferSession.GetNextSLPStatusDataPacketNumber();
-                }
-                else
-                {
-                    p2pReplyMessage.V2Header.PackageNumber = P2PTransferSession.GetNextSLPStatusDataPacketNumber(p2pMessage.V2Header.PackageNumber);
-                }
+                p2pReplyMessage.V2Header.PackageNumber = P2PTransferSession.GetNextSLPStatusDataPacketNumber(p2pMessage.V2Header.PackageNumber);
             }
 
-
-            
 
             if (Version == P2PVersion.P2PV1)
             {
                 P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1);
-                hsMessage.Guid = properties.Nonce;
+                hsMessage.Guid = nonce;
                 MessageSession.HandshakeMessage = hsMessage;
             }
 
