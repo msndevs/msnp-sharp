@@ -87,7 +87,7 @@
     <Compile Include="Core\MSNMessage.cs" />
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
-    <Compile Include="Services\ABServiceBindingWarpper.cs" />
+    <Compile Include="Services\ABServiceBindingWrapper.cs" />
     <Compile Include="Services\IPEndPointCallback.cs" />
     <Compile Include="Services\MSNService.cs" />
     <Compile Include="DataTransfer\MSNSLPHandler.cs" />
