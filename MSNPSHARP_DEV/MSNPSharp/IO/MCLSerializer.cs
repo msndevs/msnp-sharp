@@ -177,10 +177,10 @@ namespace MSNPSharp.IO
         /// <param name="filename"></param>
         public virtual void Save(string filename)
         {
-            SaveToHiddenMCL(filename);
+            SaveToMCL(filename, false);
         }
 
-        private void SaveToHiddenMCL(string filename)
+        private void SaveToMCL(string filename, bool saveToHiddenFile)
         {
             DateTime beginTime = DateTime.Now;
             if (!Settings.NoSave)
@@ -195,7 +195,7 @@ namespace MSNPSharp.IO
 
                 MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, NSMessageHandler.Credentials.Password, UseCache);
                 file.Content = ms.ToArray();
-                file.SaveAndHide(filename);
+                file.Save(filename, saveToHiddenFile);
                 ms.Close();
             }
 
