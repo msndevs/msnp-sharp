@@ -693,7 +693,7 @@ namespace MSNPSharpClient
             this.Controls.Add(this.OwnerPanel);
             this.Controls.Add(this.pictureBox);
             this.Name = "ClientForm";
-            this.Text = "MSNPSharp Example Client (v3.0.2 - r1435)";
+            this.Text = "MSNPSharp Example Client (v3.0.3 - r1717)";
             this.Load += new System.EventHandler(this.ClientForm_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(ClientForm_FormClosing);
             this.ListPanel.ResumeLayout(false);
