@@ -1917,6 +1917,19 @@ namespace MSNPSharp
                             SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
                             if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
                             {
+                                string account = message.CommandValues[0].ToString();
+                                if (account.Contains(";"))
+                                    account = account.Split(';')[0];
+
+                                if (ContactList.HasContact(account, ClientType.PassportMember))
+                                {
+                                    Contact sender = ContactList.GetContact(account, ClientType.PassportMember);
+                                    if (sender.Status == PresenceStatus.Hidden || sender.Status == PresenceStatus.Offline)
+                                    {
+                                        //If not return, we will get a 217 error (User not online).
+                                        return;
+                                    }
+                                }
                                 SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.FromMail, 200, "OK");
                                 slpResponseMessage.FromMail = slpMessage.ToMail;
                                 slpResponseMessage.Via = slpMessage.Via;
