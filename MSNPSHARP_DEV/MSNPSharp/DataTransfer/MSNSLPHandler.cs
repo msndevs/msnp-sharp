@@ -1081,7 +1081,7 @@ namespace MSNPSharp.DataTransfer
         /// String remoteAccount = @"remoteUser@hotmail.com";
         /// 
         /// String activityID = "20521364";        //The activityID of Music Mix activity.
-        /// String activityName = "Music Mix";     //Th name of acticvity
+        /// String activityName = "Music Mix";     //The name of acticvity
         /// 
         /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.ContactList.Owner.Mail, remoteAccount);
         /// MSNSLPHandler slpHandler =  session.GetHandler(typeof(MSNSLPHandler)) as MSNSLPHandler ;
@@ -1091,11 +1091,66 @@ namespace MSNPSharp.DataTransfer
         public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string applicationID, string activityName)
         {
             // set class variables
-            return SendInvitation(localContact, remoteContact, applicationID, activityName, string.Empty);
+            return SendInvitation(localContact, remoteContact, applicationID, activityName, string.Empty, 0);
         }
 
+        /// <summary>
+        /// Sends the remote contact a invitation for the activity. The invitation message is send over the current MessageProcessor.
+        /// </summary>
+        /// <param name="localContact"></param>
+        /// <param name="remoteContact"></param>
+        /// <param name="applicationID">The ID of activity, that was register by Microsoft.</param>
+        /// <param name="activityName">The name of Activity.</param>
+        /// <param name="activityData">The parameter string that want to send to the activity window.</param>
+        /// <returns></returns>
+        /// <example>
+        /// <code language="C#">
+        /// //An example that invites a remote user to attend the "Music Mix" activity.
+        /// 
+        /// String remoteAccount = @"remoteUser@hotmail.com";
+        /// 
+        /// String activityID = "20521364";        //The activityID of Music Mix activity.
+        /// String activityName = "Music Mix";     //The name of acticvity
+        /// String userName = "Pang Wu";           //The parameter send to the client's activity window.
+        /// 
+        /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.ContactList.Owner.Mail, remoteAccount);
+        /// MSNSLPHandler slpHandler =  session.GetHandler(typeof(MSNSLPHandler)) as MSNSLPHandler ;
+        /// slpHandler.SendInvitation(Conversation.Messenger.ContactList.Owner.Mail, remoteaccount, activityID, activityName, activityData);
+        /// </code>
+        /// </example>
         public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string applicationID, string activityName, string activityData)
         {
+            return SendInvitation(localContact, remoteContact, applicationID, activityName, activityData, 6000);
+        }
+
+        /// <summary>
+        /// Sends the remote contact a invitation for the activity. The invitation message is send over the current MessageProcessor.
+        /// </summary>
+        /// <param name="localContact"></param>
+        /// <param name="remoteContact"></param>
+        /// <param name="applicationID">The ID of activity, that was register by Microsoft.</param>
+        /// <param name="activityName">The name of Activity.</param>
+        /// <param name="activityData">The parameter string that want to send to the activity window.</param>
+        /// <param name="directConnectionExpireInterval">How long should the library wait (in ms.) to send out the activityData after the use accepted the invitation.</param>
+        /// <returns></returns>
+        /// <example>
+        /// <code language="C#">
+        /// //An example that invites a remote user to attend the "Music Mix" activity.
+        /// 
+        /// String remoteAccount = @"remoteUser@hotmail.com";
+        /// 
+        /// String activityID = "20521364";        //The activityID of Music Mix activity.
+        /// String activityName = "Music Mix";     //The name of acticvity
+        /// String activityData = "Pang Wu";           //The parameter send to the client's activity window.
+        /// 
+        /// P2PMessageSession session =  Conversation.Messenger.P2PHandler.GetSession(Conversation.Messenger.ContactList.Owner.Mail, remoteAccount);
+        /// MSNSLPHandler slpHandler =  session.GetHandler(typeof(MSNSLPHandler)) as MSNSLPHandler ;
+        /// slpHandler.SendInvitation(Conversation.Messenger.ContactList.Owner.Mail, remoteaccount, activityID, activityName, activityData, 5000);
+        /// </code>
+        /// </example>
+        public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string applicationID, string activityName, string activityData, int directConnectionExpireInterval)
+        {
+            this.directConnectionExpireInterval = directConnectionExpireInterval;
 
             // set class variables
             MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
@@ -1744,6 +1799,8 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         private Dictionary<Guid, MSNSLPTransferProperties> transferProperties = new Dictionary<Guid, MSNSLPTransferProperties>();
 
+        private int directConnectionExpireInterval = 6;
+
         /// <summary>
         /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
         /// </summary>
@@ -1957,7 +2014,7 @@ namespace MSNPSharp.DataTransfer
                     Timer timer = new Timer(1000);
                     timer.Elapsed += delegate(object sender, ElapsedEventArgs e)
                     {
-                        if (waitCounter < 6)
+                        if (waitCounter < directConnectionExpireInterval / 1000)
                         {
                             waitCounter++;
                             return;
