@@ -195,6 +195,7 @@ namespace MSNPSharp.IO
         /// Save the file and set its hidden attribute to true
         /// </summary>
         /// <param name="filename"></param>
+        /// <param name="saveToHiddenFile"></param>
         public void Save(string filename, bool saveToHiddenFile)
         {
             WriteAllBytes(filename, FillFileStruct(xmlData));

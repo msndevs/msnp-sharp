@@ -57,14 +57,14 @@ namespace MSNPSharp
 
 
         internal CircleInviter(ContactType inviter, string inviterMessage)
-            :base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, ClientType.PassportMember, null)
+            :base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, ClientType.PassportMember, inviter.contactInfo.CID, null)
         {
             if (inviterMessage != null)
                 message = inviterMessage;
         }
 
         internal CircleInviter(string inviterEmail, string inviterName, string inviterMessage)
-            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviterEmail, ClientType.PassportMember, null)
+            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviterEmail, ClientType.PassportMember, 0, null)
         {
             if (inviterMessage != null)
                 message = inviterMessage;
@@ -121,7 +121,7 @@ namespace MSNPSharp
         /// <param name="circleInfo"></param>
         /// <param name="handler"></param>
         public Circle(ContactType me, ContactType hidden, CircleInverseInfoType circleInfo, NSMessageHandler handler)
-            : base(circleInfo.Content.Handle.Id.ToLowerInvariant(), circleInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleInfo.Content.Info.HostedDomain.ToLowerInvariant(), ClientType.CircleMember, handler)
+            : base(circleInfo.Content.Handle.Id.ToLowerInvariant(), circleInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleInfo.Content.Info.HostedDomain.ToLowerInvariant(), ClientType.CircleMember, me.contactInfo.CID, handler)
         {
             hostDomain = circleInfo.Content.Info.HostedDomain.ToLowerInvariant();
             hiddenRepresentative = hidden;
@@ -141,9 +141,7 @@ namespace MSNPSharp
                     CID = hidden.contactInfo.CID;
             }
 
-            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, NSMessageHandler), NSMessageHandler);
-            contactList.Owner.CID = me.contactInfo.CID;
-
+            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), NSMessageHandler);
             Initialize();
         }
 

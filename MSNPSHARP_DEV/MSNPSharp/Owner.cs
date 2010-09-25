@@ -61,19 +61,20 @@ namespace MSNPSharp
         private NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
         private RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
 
-        public Owner(string abId, string account, NSMessageHandler handler)
-            : base(abId, account, ClientType.PassportMember, handler)
+        public Owner(string abId, string account, long cid, NSMessageHandler handler)
+            : base(abId, account, ClientType.PassportMember, cid, handler)
         {
         }
 
-        public Owner(Guid abId, string account, NSMessageHandler handler)
-            : base(abId, account, ClientType.PassportMember, handler)
+        public Owner(Guid abId, string account, long cid, NSMessageHandler handler)
+            : base(abId, account, ClientType.PassportMember, cid, handler)
         {
         }
 
-        protected override void Initialized(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
+        protected override void Initialized(Guid abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
         {
-            base.Initialized(abId, account, cliType, handler);
+            base.Initialized(abId, account, cliType, cid, handler);
+
             EndPointData.Clear();
             EndPointData.Add(Guid.Empty, new PrivateEndPointData(Guid.Empty));
             EndPointData.Add(NSMessageHandler.MachineGuid, new PrivateEndPointData(NSMessageHandler.MachineGuid));

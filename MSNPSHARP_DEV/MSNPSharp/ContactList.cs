@@ -350,7 +350,7 @@ namespace MSNPSharp
                 return this[hash];
             }
 
-            Contact tmpContact = new Contact(AddressBookId, account, type, nsMessageHandler);
+            Contact tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
 
             lock (SyncRoot)
                 Add(hash, tmpContact);

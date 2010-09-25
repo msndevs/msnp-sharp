@@ -55,7 +55,7 @@ namespace MSNPSharp
 
         protected Guid guid = Guid.Empty;
         protected Guid addressBookId = Guid.Empty;
-        private long cid = 0;
+        private long cId = 0;
         private string mail = string.Empty;
         private string name = string.Empty;
         private string nickName = string.Empty;
@@ -107,24 +107,27 @@ namespace MSNPSharp
         {
         }
 
-        protected internal Contact(string abId, string account, ClientType cliType, NSMessageHandler handler)
+        protected internal Contact(string abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
         {
-            Initialized(new Guid(abId), account, cliType, handler);
+            Initialized(new Guid(abId), account, cliType, cid, handler);
         }
 
-        protected internal Contact(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
+        protected internal Contact(Guid abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
         {
-            Initialized(abId, account, cliType, handler);
+            Initialized(abId, account, cliType, cid, handler);
         }
 
-        protected virtual void Initialized(Guid abId, string account, ClientType cliType, NSMessageHandler handler)
+        protected virtual void Initialized(Guid abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
         {
-            if (hasInitialized) return;
+            if (hasInitialized)
+                return;
 
             NSMessageHandler = handler;
             addressBookId = abId;
             mail = account.ToLowerInvariant();
             clientType = cliType;
+            cId = cid;
+
             SetName(account);
             siblingString = ClientType.ToString() + ":" + account.ToLowerInvariant();
             hash = MakeHash(Mail, ClientType, AddressBookId);
@@ -285,12 +288,11 @@ namespace MSNPSharp
         {
             get
             {
-                return cid;
+                return cId;
             }
-
             internal set
             {
-                cid = value;
+                cId = value;
             }
         }
 

@@ -1197,10 +1197,11 @@ namespace MSNPSharp
             }
             else if ((string)message.CommandValues[0] == "OK")
             {
-                // we sucesfully logged in, set the owner's name
+                // we sucesfully logged in
                 if (ContactList.Owner == null)
                 {
-                    ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), this));
+                    // set the owner's name and CID
+                    ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnticket.OwnerCID, this));
                 }
                 ContactList.Owner.PassportVerified = message.CommandValues[2].Equals("1");
             }
