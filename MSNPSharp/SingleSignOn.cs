@@ -80,6 +80,7 @@ namespace MSNPSharp
         private string policy = "MBI_KEY_OLD";
         private string mainBrandID = "MSFT";
         private string oimLockKey = String.Empty;
+        private long ownerCID = 0;
 
         [NonSerialized]
         private SerializableDictionary<SSOTicketType, SSOTicket> ssoTickets = new SerializableDictionary<SSOTicketType, SSOTicket>();
@@ -184,6 +185,18 @@ namespace MSNPSharp
             set
             {
                 oimLockKey = value;
+            }
+        }
+
+        public long OwnerCID
+        {
+            get
+            {
+                return ownerCID;
+            }
+            set
+            {
+                ownerCID = value;
             }
         }
 
@@ -868,14 +881,30 @@ namespace MSNPSharp
 
         private void GetTickets(RequestSecurityTokenResponseType[] result, SecurityTokenService securService, MSNTicket msnticket)
         {
-            if (securService.pp != null && securService.pp.credProperties != null)
+            if (securService.pp != null)
             {
-                foreach (credPropertyType credproperty in securService.pp.credProperties)
+                if (securService.pp.credProperties != null)
                 {
-                    if (credproperty.Name == "MainBrandID")
+                    foreach (credPropertyType credproperty in securService.pp.credProperties)
                     {
-                        msnticket.MainBrandID = credproperty.Value;
-                        break;
+                        if (credproperty.Name == "MainBrandID")
+                        {
+                            msnticket.MainBrandID = credproperty.Value;
+                        }
+                        if (credproperty.Name == "CID" && !String.IsNullOrEmpty(credproperty.Value))
+                        {
+                            msnticket.OwnerCID = long.Parse(credproperty.Value, NumberStyles.HexNumber);
+                        }
+                    }
+                }
+                if (securService.pp.extProperties != null)
+                {
+                    foreach (extPropertyType extproperty in securService.pp.extProperties)
+                    {
+                        if (extproperty.Name == "CID" && !String.IsNullOrEmpty(extproperty.Value))
+                        {
+                            msnticket.OwnerCID = long.Parse(extproperty.Value, NumberStyles.HexNumber);
+                        }
                     }
                 }
             }
