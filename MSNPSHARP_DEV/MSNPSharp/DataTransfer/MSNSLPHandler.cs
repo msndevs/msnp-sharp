@@ -1799,7 +1799,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         private Dictionary<Guid, MSNSLPTransferProperties> transferProperties = new Dictionary<Guid, MSNSLPTransferProperties>();
 
-        private int directConnectionExpireInterval = 6;
+        private int directConnectionExpireInterval = 6000;
 
         /// <summary>
         /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
