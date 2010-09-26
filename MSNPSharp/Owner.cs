@@ -76,8 +76,8 @@ namespace MSNPSharp
             base.Initialized(abId, account, cliType, cid, handler);
 
             EndPointData.Clear();
-            EndPointData.Add(Guid.Empty, new PrivateEndPointData(Guid.Empty));
-            EndPointData.Add(NSMessageHandler.MachineGuid, new PrivateEndPointData(NSMessageHandler.MachineGuid));
+            EndPointData.Add(Guid.Empty, new PrivateEndPointData(account, Guid.Empty));
+            EndPointData.Add(NSMessageHandler.MachineGuid, new PrivateEndPointData(account, NSMessageHandler.MachineGuid));
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace MSNPSharp
                     case PlaceChangedReason.SignedIn:
                         if (!EndPointData.ContainsKey(epId))
                         {
-                            PrivateEndPointData newEndPoint = new PrivateEndPointData(epId);
+                            PrivateEndPointData newEndPoint = new PrivateEndPointData(Mail, epId);
                             newEndPoint.Name = placeName;
                             EndPointData[epId] = newEndPoint;
                             triggerEvent = true;

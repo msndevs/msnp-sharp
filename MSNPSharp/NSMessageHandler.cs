@@ -1427,7 +1427,7 @@ namespace MSNPSharp
 
                     //Get endpoint data.
                     bool isPrivateEndPoint = (contact is Owner);
-                    List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(xmlDoc, isPrivateEndPoint);
+                    List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(contact.Mail, xmlDoc, isPrivateEndPoint);
                     if (endPoints.Count > 0)
                     {
                         foreach (EndPointData epData in endPoints)
@@ -1450,7 +1450,7 @@ namespace MSNPSharp
                         foreach (XmlNode pepdNode in privateEndPoints)
                         {
                             Guid id = new Guid(pepdNode.Attributes["id"].Value);
-                            PrivateEndPointData privateEndPoint = (contact.EndPointData.ContainsKey(id) ? (contact.EndPointData[id] as PrivateEndPointData) : new PrivateEndPointData(id));
+                            PrivateEndPointData privateEndPoint = (contact.EndPointData.ContainsKey(id) ? (contact.EndPointData[id] as PrivateEndPointData) : new PrivateEndPointData(contact.Mail, id));
                             privateEndPoint.Name = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
                             privateEndPoint.Idle = (pepdNode["Idle"] == null) ? false : bool.Parse(pepdNode["Idle"].InnerText);
                             privateEndPoint.ClientType = (pepdNode["ClientType"] == null) ? "1" : pepdNode["ClientType"].InnerText;
@@ -1533,7 +1533,7 @@ namespace MSNPSharp
             return string.Empty;
         }
 
-        private List<EndPointData> GetEndPointDataFromUBXXmlData(XmlDocument ubxData, bool isPrivateEndPoint)
+        private List<EndPointData> GetEndPointDataFromUBXXmlData(string endpointAccount, XmlDocument ubxData, bool isPrivateEndPoint)
         {
             List<EndPointData> endPoints = new List<EndPointData>(0);
 
@@ -1558,7 +1558,7 @@ namespace MSNPSharp
                         clientCapsEx = (ClientCapacitiesEx)uint.Parse(capsGroup[1]);
                     }
 
-                    EndPointData epData = (isPrivateEndPoint ? new PrivateEndPointData(epId) : new EndPointData(epId));
+                    EndPointData epData = (isPrivateEndPoint ? new PrivateEndPointData(endpointAccount, epId) : new EndPointData(endpointAccount, epId));
                     epData.ClientCapacities = clientCaps;
                     epData.ClientCapacitiesEx = clientCapsEx;
                     endPoints.Add(epData);
