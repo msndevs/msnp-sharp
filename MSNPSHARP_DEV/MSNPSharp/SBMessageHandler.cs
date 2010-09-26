@@ -487,6 +487,8 @@ namespace MSNPSharp
                     {
                         if (processor.Connected)
                         {
+
+                            //We want to left the conversation, say "OUT" to SB.
                             Left();
                             processor.Disconnect();
                         }
@@ -905,9 +907,9 @@ namespace MSNPSharp
             {
                 foreach (string key in rosterState.Keys)
                 {
-                    if (rosterState[key] != ContactConversationState.Left && 
+                    if (rosterState[key] != ContactConversationState.Left &&
                         NSMessageHandler.ContactList.Owner != null &&
-                        key != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+                        EndPointData.GetAccountFromUniqueEPIDString(key) != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
                     {
                         // If: There is only one owner without any endpoint id, the switchboard is ended.
                         // If: There is/are owner(s) with endpoint id(s) and status is/are not left, keep the switch available.
@@ -1051,7 +1053,7 @@ namespace MSNPSharp
                 {
                     if (NSMessageHandler.ContactList.Owner != null)
                     {
-                        if (key.Split(';')[0] != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+                        if (EndPointData.GetAccountFromUniqueEPIDString(key) != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
                         {
                             count++;
                         }
@@ -1072,7 +1074,7 @@ namespace MSNPSharp
                 {
                     if (NSMessageHandler.ContactList.Owner != null)
                     {
-                        uniqueUsers[key.Split(';')[0]] = string.Empty;
+                        uniqueUsers[EndPointData.GetAccountFromUniqueEPIDString(key)] = string.Empty;
                     }
                 }
 
@@ -1105,10 +1107,10 @@ namespace MSNPSharp
             }
         }
 
-        internal bool HasContact(string account)
+        internal bool HasContact(string uniqueEndPointIDString)
         {
             lock (rosterState)
-                return rosterState.ContainsKey(account.ToLowerInvariant());
+                return rosterState.ContainsKey(uniqueEndPointIDString.ToLowerInvariant());
         }
 
         internal bool HasContact(string account, Guid place)
@@ -1609,7 +1611,7 @@ namespace MSNPSharp
             {
                 if (!contact.EndPointData.ContainsKey(endpointGuid))
                 {
-                    EndPointData epData = new EndPointData(endpointGuid);
+                    EndPointData epData = new EndPointData(contact.Mail, endpointGuid);
                     epData.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
                     epData.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
                     contact.EndPointData[endpointGuid] = epData;
@@ -1631,7 +1633,7 @@ namespace MSNPSharp
             {
                 if (!contact.EndPointData.ContainsKey(endpointGuid))
                 {
-                    EndPointData epData = new EndPointData(endpointGuid);
+                    EndPointData epData = new EndPointData(contact.Mail, endpointGuid);
                     epData.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
                     contact.EndPointData[endpointGuid] = epData;
                     dump = true;

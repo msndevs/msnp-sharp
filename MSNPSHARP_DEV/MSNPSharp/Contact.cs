@@ -131,7 +131,7 @@ namespace MSNPSharp
             SetName(account);
             siblingString = ClientType.ToString() + ":" + account.ToLowerInvariant();
             hash = MakeHash(Mail, ClientType, AddressBookId);
-            EndPointData[Guid.Empty] = new EndPointData(Guid.Empty);
+            EndPointData[Guid.Empty] = new EndPointData(account, Guid.Empty);
 
             if (NSMessageHandler != null)
             {

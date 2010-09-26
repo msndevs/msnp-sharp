@@ -1021,6 +1021,12 @@ namespace MSNPSharp
             EndSwitchBoardSession(false);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="remoteDisconnect">
+        /// If all the contacts left the conversation, this should be true.
+        /// if the current user want to left, this should set to false.</param>
         private void EndSwitchBoardSession(bool remoteDisconnect)
         {
             if (conversationState >= ConversationState.SwitchboardRequestSent &&

@@ -8,15 +8,14 @@ using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Diagnostics;
-
+using System.Threading;
 
 namespace MSNPSharpClient
 {
     using MSNPSharp;
     using MSNPSharp.DataTransfer;
-    using System.Threading;
     using MSNPSharp.Core;
-using MSNPSharp.Utilities;
+    using MSNPSharp.Utilities;
 
     /// <summary>
     /// Summary description for ConversationForm.

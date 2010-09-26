@@ -540,11 +540,13 @@ namespace MSNPSharp.Utilities
                     }
                     else
                     {
-                        RemovePendingConversation(cId);
-                        //Verify messenger contact.
-                        CheckContact(cId.RemoteOwner, messageObject);
-                        SendMessage(cId.RemoteOwner, messageObject);
-
+                        if (!(messageObject is UserTypingObject))  //You cannot send typing messages as OIM messages.
+                        {
+                            RemovePendingConversation(cId);
+                            //Verify messenger contact.
+                            CheckContact(cId.RemoteOwner, messageObject);
+                            SendMessage(cId.RemoteOwner, messageObject);
+                        }
                     }
                 }
 
