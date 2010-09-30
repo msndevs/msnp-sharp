@@ -47,7 +47,7 @@ namespace MSNPSharp.DataTransfer
     /// </summary>
     public class P2PDirectProcessor : SocketMessageProcessor
     {
-        private Timer socketExpireTimer = new Timer(5000);
+        private Timer socketExpireTimer = new Timer(12000);
         private ProxySocket socketListener = null;
 
         private void socketExpireTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -56,7 +56,7 @@ namespace MSNPSharp.DataTransfer
             {
                 try
                 {
-                    socketListener.Shutdown(SocketShutdown.Both);
+                    socketListener.Close();
                 }
                 catch (Exception ex)
                 {
@@ -64,31 +64,31 @@ namespace MSNPSharp.DataTransfer
                 }
                 finally
                 {
-                    socketListener.Close();
+                    socketListener = null;
                 }
+            }
 
-                // clean up the socket properly
-                if (dcSocket == null || !IsSocketConnected(dcSocket))
+            // clean up the socket properly
+            if (dcSocket == null || !IsSocketConnected(dcSocket))
+            {
+                base.Disconnect();
+
+                if (dcSocket != null)
                 {
-                    base.Disconnect();
-
-                    if (dcSocket != null)
+                    try
                     {
-                        try
-                        {
-                            dcSocket.Shutdown(SocketShutdown.Both);
-                        }
-                        catch (Exception dcex)
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, dcex.Message);
-                        }
-                        finally
-                        {
-                            dcSocket.Close();
-                        }
-
-                        dcSocket = null;
+                        dcSocket.Shutdown(SocketShutdown.Both);
                     }
+                    catch (Exception dcex)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, dcex.Message);
+                    }
+                    finally
+                    {
+                        dcSocket.Close();
+                    }
+
+                    dcSocket = null;
                 }
             }
         }
@@ -111,8 +111,11 @@ namespace MSNPSharp.DataTransfer
         {
             ProxySocket socket = GetPreparedSocket();
 
-            // begin waiting for the incoming connection			
-            socket.Bind(new IPEndPoint(address, port));
+            // begin waiting for the incoming connection
+            if (!socket.IsBound)
+            {
+                socket.Bind(new IPEndPoint(address, port));
+            }
 
             socket.Listen(100);
 

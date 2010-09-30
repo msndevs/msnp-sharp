@@ -2163,31 +2163,77 @@ namespace MSNPSharp.DataTransfer
                 if (Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC].AddressFamily == AddressFamily.InterNetwork)
                 {
                     iphostentry.AddressList[0] = Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC];
-
                     break;
                 }
             }
 
-            for (int p = 1119; p <= IPEndPoint.MaxPort; p++)
+            int portAvail = 0;
+
+            if (Settings.PublicPortPriority == PublicPortPriority.First)
+            {
+                portAvail = TryPublicPorts(iphostentry.AddressList[0]);
+
+                if (portAvail != 0)
+                {
+                    return portAvail;
+                }
+            }
+
+            if (portAvail == 0)
+            {
+                for (int p = 1119; p <= IPEndPoint.MaxPort; p++)
+                {
+                    Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    try
+                    {
+                        s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                        s.Bind(new IPEndPoint(iphostentry.AddressList[0], p));
+                        //s.Bind(new IPEndPoint(IPAddress.Any, p));
+                        s.Close();
+                        return p;
+                    }
+                    catch (SocketException ex)
+                    {
+                        if (ex.ErrorCode == 10048 /*Address already in use*/ ||
+                            ex.ErrorCode == 10013 /*Permission denied*/)
+                            continue;
+                        else
+                            continue; // throw;
+                    }
+                }
+            }
+
+            if (portAvail == 0 &&
+                Settings.PublicPortPriority == PublicPortPriority.Last)
+            {
+                portAvail = TryPublicPorts(iphostentry.AddressList[0]);
+
+                if (portAvail != 0)
+                {
+                    return portAvail;
+                }
+            }
+
+            throw new SocketException(10048);
+        }
+
+        private int TryPublicPorts(IPAddress localIP)
+        {
+            foreach (int p in Settings.PublicPorts)
             {
                 Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 try
                 {
-                    s.Bind(new IPEndPoint(iphostentry.AddressList[0], p));
-                    //s.Bind(new IPEndPoint(IPAddress.Any, p));
+                    s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                    s.Bind(new IPEndPoint(localIP, p));
                     s.Close();
                     return p;
                 }
-                catch (SocketException ex)
+                catch (SocketException)
                 {
-                    // EADDRINUSE?
-                    if (ex.ErrorCode == 10048)
-                        continue;
-                    else
-                        throw;
                 }
             }
-            throw new SocketException(10048);
+            return 0;
         }
 
         /// <summary>
