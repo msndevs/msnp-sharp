@@ -99,6 +99,7 @@ namespace MSNPSharp
         /// <summary>
         /// Constructor.
         /// </summary>
+        /// <param name="account"></param>
         /// <param name="epId">The endpoint Id.</param>
         public EndPointData(string account, Guid epId)
         {

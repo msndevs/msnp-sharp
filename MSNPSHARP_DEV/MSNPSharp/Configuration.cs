@@ -39,6 +39,14 @@ namespace MSNPSharp
     using MSNPSharp.IO;
     using MSNPSharp.Core;
 
+    [Serializable]
+    public enum PublicPortPriority
+    {
+        None = 0,
+        First = 1,
+        Last = 9
+    }
+
     /// <summary>
     /// General configuration options.
     /// </summary>
@@ -49,6 +57,21 @@ namespace MSNPSharp
         /// Defines the verbosity of the trace messages.
         /// </summary>
         public static TraceSwitch TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
+
+        /// <summary>
+        /// Ports for DC to try bind. These ports aren't firewalled by ISS.
+        /// </summary>
+        public static readonly ushort[] PublicPorts = new ushort[]
+        {
+            80,  // http
+            21,  // ftp
+            25,  // smtp
+            110, // pop3
+            443, // https
+            8080 // webcache
+        };
+
+
 
         /// <summary>
         /// Constructor.
@@ -66,6 +89,7 @@ namespace MSNPSharp
             enableGzipCompressionForWebServices = (isMono == false);
         }
 
+        private static PublicPortPriority publicPortPriority = PublicPortPriority.First;
         private static string savepath = Path.GetFullPath(".");
         private static bool enableGzipCompressionForWebServices;
         private static MclSerialization serializationType;
@@ -73,6 +97,18 @@ namespace MSNPSharp
         private static int msnTicketLifeTime = 20;
         private static bool noSave;
         private static bool isMono;
+
+        public static PublicPortPriority PublicPortPriority
+        {
+            get
+            {
+                return publicPortPriority;
+            }
+            set
+            {
+                publicPortPriority = value;
+            }
+        }
 
         /// <summary>
         /// Indicates whether the runtime framework is currently mono or not.

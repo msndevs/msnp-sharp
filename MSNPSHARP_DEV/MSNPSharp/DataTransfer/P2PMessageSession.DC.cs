@@ -230,10 +230,20 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public IMessageProcessor ListenForDirectConnection(IPAddress host, int port)
         {
-            P2PDirectProcessor processor = new P2PDirectProcessor(
-                new ConnectivitySettings(
-                new IPEndPoint(IPAddress.Parse(NSMessageHandler.ConnectivitySettings.LocalHost), NSMessageHandler.ConnectivitySettings.LocalPort),
-                new IPEndPoint(IPAddress.Parse(NSMessageHandler.ConnectivitySettings.Host), NSMessageHandler.ConnectivitySettings.Port)));
+            ConnectivitySettings cs = new ConnectivitySettings();
+            if (NSMessageHandler.ConnectivitySettings.LocalHost == string.Empty)
+            {
+                cs.LocalHost = host.ToString();
+                cs.LocalPort = port;
+            }
+            else
+            {
+                cs.LocalHost = NSMessageHandler.ConnectivitySettings.LocalHost;
+                cs.LocalPort = NSMessageHandler.ConnectivitySettings.LocalPort;
+            }
+            
+
+            P2PDirectProcessor processor = new P2PDirectProcessor(cs);
 
             // we want this session to listen to incoming messages
             processor.RegisterHandler(this);

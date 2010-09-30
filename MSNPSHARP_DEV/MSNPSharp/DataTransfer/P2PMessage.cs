@@ -499,7 +499,7 @@ namespace MSNPSharp.DataTransfer
                 InnerBody = new byte[0];
             }
 
-            if ((data.Length - headerAndBodyHeaderLen + innerBodyLen) >= 4)
+            if ((data.Length - (headerAndBodyHeaderLen + innerBodyLen)) >= 4)
             {
                 footer = BitUtility.ToBigEndian(reader.ReadUInt32());
             }
