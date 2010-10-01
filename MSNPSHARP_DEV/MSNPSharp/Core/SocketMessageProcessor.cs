@@ -44,7 +44,7 @@ namespace MSNPSharp.Core
 {
     using MSNPSharp;
 
-    public class SocketMessageProcessor : IMessageProcessor
+    public abstract class SocketMessageProcessor : IMessageProcessor, IDisposable
     {
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private byte[] socketBuffer = new byte[1500];
@@ -62,6 +62,11 @@ namespace MSNPSharp.Core
         public SocketMessageProcessor(ConnectivitySettings connectivitySettings)
         {
             ConnectivitySettings = connectivitySettings;
+        }
+
+        ~SocketMessageProcessor()
+        {
+            Dispose(false);
         }
 
         protected IPEndPoint ProxyEndPoint
@@ -88,7 +93,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        protected virtual ProxySocket GetPreparedSocket()
+        protected virtual ProxySocket GetPreparedSocket(IPAddress address, int port)
         {
             //Creates the Socket for sending data over TCP.
             ProxySocket socket = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -150,7 +155,7 @@ namespace MSNPSharp.Core
 
             try
             {
-                socket.Bind(new IPEndPoint(ConnectivitySettings.LocalHost == string.Empty ? IPAddress.Any : IPAddress.Parse(ConnectivitySettings.LocalHost), ConnectivitySettings.LocalPort));
+                socket.Bind(new IPEndPoint(address, port));
             }
             catch (SocketException ex)
             {
@@ -208,11 +213,6 @@ namespace MSNPSharp.Core
             {
                 throw new MSNPSharpException("Error while sending network message. See the inner exception for more details.", e);
             }
-        }
-
-        protected virtual void OnMessageReceived(byte[] data)
-        {
-            // do nothing since this is a base class
         }
 
         protected virtual void EndReceiveCallback(IAsyncResult ar)
@@ -368,7 +368,8 @@ namespace MSNPSharp.Core
         {
             get
             {
-                if (socket == null) return false;
+                if (socket == null)
+                    return false;
 
                 lock (socket)
                 {
@@ -393,7 +394,7 @@ namespace MSNPSharp.Core
 
                 bool disposed = false;
                 bool blocking = socket.Blocking;
-                
+
                 try
                 {
                     socket.Blocking = false;
@@ -479,15 +480,15 @@ namespace MSNPSharp.Core
             if (socket != null && Connected)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Connect() called, but already a socket available.", GetType().Name);
-                
-                //If you have to fail, fail noisily and as soon as possible.
+
+                // If you have to fail, fail noisily and as soon as possible.
                 throw new InvalidOperationException("Socket already connected.");
             }
 
             try
             {
-                // create a socket
-                socket = GetPreparedSocket(); //
+                // Create a socket
+                socket = GetPreparedSocket((ConnectivitySettings.LocalHost == string.Empty) ? IPAddress.Any : IPAddress.Parse(ConnectivitySettings.LocalHost), ConnectivitySettings.LocalPort);
 
                 IPAddress hostIP = null;
 
@@ -516,18 +517,46 @@ namespace MSNPSharp.Core
         public virtual void Disconnect()
         {
             // clean up the socket properly
-            if (socket != null && Connected)
+            if (socket != null)
             {
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
+                try
+                {
+                    if (Connected)
+                    {
+                        socket.Shutdown(SocketShutdown.Both);
+                    }
+                }
+                catch (Exception)
+                {
+                }
+                finally
+                {
+                    socket.Close();
+                }
+
                 socket = null;
                 //We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on.
             }
         }
 
-        public virtual void SendMessage(NetworkMessage message)
+        public abstract void SendMessage(NetworkMessage message);
+        protected abstract void OnMessageReceived(byte[] data);
+
+        protected virtual void Dispose(bool disposing)
         {
-            throw new NotImplementedException("SendMessage() on the base class SocketMessageProcessor is invalid.");
+            if (disposing)
+            {
+                // Dispose managed resources
+                Disconnect();
+            }
+
+            // Free native resources
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 };

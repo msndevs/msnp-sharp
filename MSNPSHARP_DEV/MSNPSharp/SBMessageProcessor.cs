@@ -70,9 +70,8 @@ namespace MSNPSharp
 
         protected int IncreaseTransactionID()
         {
-            transactionID++;
-            return transactionID;
-        }        
+            return ++transactionID;
+        }
 
         protected override void OnMessageReceived(byte[] data)
         {
@@ -143,18 +142,18 @@ namespace MSNPSharp
 
         public override void SendMessage(NetworkMessage message)
         {
-            if (!(message is SBMessage))
+            SBMessage sbMessage = message as SBMessage;
+
+            if (sbMessage == null)
             {
                 throw new MSNPSharpException("Cannot use " + GetType().ToString() + " to deliver a " + message.GetType().ToString() + " message.");
             }
 
-            DeliverToNetwork(message as SBMessage);
-
+            DeliverToNetwork(sbMessage);
         }
 
         public override void Disconnect()
         {
-
             base.Disconnect();
         }
     }

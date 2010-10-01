@@ -31,17 +31,17 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Text;
 using System.Collections;
 using System.Diagnostics;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using System.Text;
 
     public class NSMessageProcessor : SocketMessageProcessor
     {
-        int transactionID = 0;
+        private int transactionID = 0;
 
         public event EventHandler<ExceptionEventArgs> HandlerException;
 
@@ -57,7 +57,6 @@ namespace MSNPSharp
             {
                 return transactionID;
             }
-
             private set
             {
                 transactionID = value;
@@ -83,9 +82,6 @@ namespace MSNPSharp
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
             message.ParseBytes(data);
-
-            string compareDebugString = Encoding.UTF8.GetString(data);
-
             DispatchMessage(message);
         }
 
@@ -96,23 +92,23 @@ namespace MSNPSharp
 
         public virtual void SendMessage(NetworkMessage message, int transactionID)
         {
-            if (!(message is NSMessage))
+            NSMessage nsMessage = message as NSMessage;
+
+            if (nsMessage == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                     "Cannot use this Message Processor to send a " + message.GetType().ToString() + " message.",
                     GetType().Name);
-
                 return;
             }
 
-            NSMessage nsMessage = message as NSMessage;
             nsMessage.TransactionID = transactionID;
-            message.PrepareMessage();
+            nsMessage.PrepareMessage();
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString() + "\r\n", GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + nsMessage.ToDebugString() + "\r\n", GetType().Name);
 
             // convert to bytes and send it over the socket
-            SendSocketData(message.GetBytes());
+            SendSocketData(nsMessage.GetBytes());
         }
 
         public override void Disconnect()
