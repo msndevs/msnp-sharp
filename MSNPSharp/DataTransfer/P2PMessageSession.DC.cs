@@ -64,7 +64,7 @@ namespace MSNPSharp.DataTransfer
         private bool directConnectionAttempt;
         private bool directConnected;
 
-        
+
 
         /// <summary>
         /// Tracked to know when an acknowledgement for the handshake is received.
@@ -87,7 +87,7 @@ namespace MSNPSharp.DataTransfer
             {
                 handshakeMessage = value;
             }
-        }        
+        }
 
         /// <summary>
         /// Defines whether a direct connection handshake is automatically send to the remote client, or replied with an acknowledgement.
@@ -209,7 +209,7 @@ namespace MSNPSharp.DataTransfer
         public IMessageProcessor CreateDirectConnection(string host, int port)
         {
             // create the P2P Direct processor to handle the file data
-            P2PDirectProcessor processor = new P2PDirectProcessor(new ConnectivitySettings(host, port));
+            P2PDirectProcessor processor = new P2PDirectProcessor(new ConnectivitySettings(host, port), Version);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
 
@@ -241,9 +241,8 @@ namespace MSNPSharp.DataTransfer
                 cs.LocalHost = NSMessageHandler.ConnectivitySettings.LocalHost;
                 cs.LocalPort = NSMessageHandler.ConnectivitySettings.LocalPort;
             }
-            
 
-            P2PDirectProcessor processor = new P2PDirectProcessor(cs);
+            P2PDirectProcessor processor = new P2PDirectProcessor(cs, Version);
 
             // we want this session to listen to incoming messages
             processor.RegisterHandler(this);
@@ -252,7 +251,7 @@ namespace MSNPSharp.DataTransfer
             AddPendingProcessor(processor);
 
             // start to listen
-            processor.Listen(host, port);
+            processor.Listen(IPAddress.Parse(cs.LocalHost), cs.LocalPort);
 
             return processor;
         }
@@ -301,7 +300,7 @@ namespace MSNPSharp.DataTransfer
             smp.SendMessage(HandshakeMessage);
         }
 
-        
+
 
         /// <summary>
         /// Sets the message processor back to the switchboard message processor.

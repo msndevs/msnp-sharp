@@ -87,7 +87,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public uint AppID
         {
-            get { return appID; }
+            get
+            {
+                return appID;
+            }
         }
 
         private string activityName = string.Empty;
@@ -97,7 +100,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public string ActivityName
         {
-            get { return activityName; }
+            get
+            {
+                return activityName;
+            }
         }
 
         protected ActivityInfo()
@@ -159,9 +165,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PVersion TransferStackVersion
         {
-            get 
-            { 
-                return transferStackVersion; 
+            get
+            {
+                return transferStackVersion;
             }
         }
 
@@ -186,14 +192,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         internal SessionCloseState SessionCloseState
         {
-            get 
-            { 
-                return (SessionCloseState)sessionCloseState; 
+            get
+            {
+                return (SessionCloseState)sessionCloseState;
             }
 
-            set 
-            { 
-                sessionCloseState = (int)value; 
+            set
+            {
+                sessionCloseState = (int)value;
             }
         }
 
@@ -394,7 +400,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public Guid LocalContactEndPointID
         {
-            get { return localContactEndPointID; }
+            get
+            {
+                return localContactEndPointID;
+            }
         }
 
         private Guid remoteContactEndPointID = Guid.Empty;
@@ -404,7 +413,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public Guid RemoteContactEndPointID
         {
-            get { return remoteContactEndPointID; }
+            get
+            {
+                return remoteContactEndPointID;
+            }
         }
 
         private Contact localContact = null;
@@ -414,7 +426,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public Contact LocalContact
         {
-            get { return localContact; }
+            get
+            {
+                return localContact;
+            }
         }
 
         private Contact remoteContact = null;
@@ -424,7 +439,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public Contact RemoteContact
         {
-            get { return remoteContact; }
+            get
+            {
+                return remoteContact;
+            }
         }
 
         internal static P2PVersion JudgeP2PStackVersion(Contact local, Guid localEPID, Contact remote, Guid remoteEPID, bool dumpJudgeProcedure)
@@ -508,7 +526,7 @@ namespace MSNPSharp.DataTransfer
 
         }
 
-        
+
     }
 
     /// <summary>
@@ -641,8 +659,14 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public ActivityInfo Activity
         {
-            get { return activity; }
-            set { activity = value; }
+            get
+            {
+                return activity;
+            }
+            set
+            {
+                activity = value;
+            }
         }
 
         /// <summary>
@@ -857,7 +881,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected Guid SchedulerID
         {
-            get { return schedulerID; }
+            get
+            {
+                return schedulerID;
+            }
         }
 
 
@@ -882,7 +909,7 @@ namespace MSNPSharp.DataTransfer
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                 "Constructing object, version = " + ver.ToString() + "\r\n" +
-                "A new " + GetType().Name + " created, with scheduler id = " 
+                "A new " + GetType().Name + " created, with scheduler id = "
                 + SchedulerID.ToString("B")
                 , GetType().Name);
         }
@@ -897,7 +924,10 @@ namespace MSNPSharp.DataTransfer
 
         public P2PVersion Version
         {
-            get { return version; }
+            get
+            {
+                return version;
+            }
         }
 
         /// <summary>
@@ -933,14 +963,17 @@ namespace MSNPSharp.DataTransfer
         public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, MSNObject msnObject)
         {
             // set class variables
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID,
                 remoteContact, MessageSession.RemoteContactEndPointID);
             properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
 
 
             P2PMessage p2pMessage = new P2PMessage(Version);
             P2PTransferSession transferSession = new P2PTransferSession(p2pMessage.Version, properties, MessageSession);
-            transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
+            transferSession.TransferFinished += delegate
+            {
+                transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
+            };
 
             Contact remote = MessageSession.RemoteContact;
             string AppID = "1";
@@ -1055,7 +1088,7 @@ namespace MSNPSharp.DataTransfer
             lock (transferProperties)
                 transferProperties[properties.CallId] = properties;
 
- 
+
             transferSession.IsSender = false;
 
             OnTransferSessionCreated(transferSession);
@@ -1153,7 +1186,7 @@ namespace MSNPSharp.DataTransfer
             this.directConnectionExpireInterval = directConnectionExpireInterval;
 
             // set class variables
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID,
                 remoteContact, MessageSession.RemoteContactEndPointID);
             properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
 
@@ -1223,7 +1256,8 @@ namespace MSNPSharp.DataTransfer
 
                 MemoryStream urlDataStream = new MemoryStream();
 
-                byte[] header = null; ;
+                byte[] header = null;
+                ;
 
                 if (Version == P2PVersion.P2PV1)
                 {
@@ -1246,7 +1280,10 @@ namespace MSNPSharp.DataTransfer
             }
 
             transferSession.MessageFlag = (uint)P2PFlag.Normal;
-            transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
+            transferSession.TransferFinished += delegate
+            {
+                transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
+            };
 
 
             OnTransferSessionCreated(transferSession);
@@ -1269,8 +1306,9 @@ namespace MSNPSharp.DataTransfer
             //16-19: I don't know or need it so...
             //20-540: location I use to get the file name
             // set class variables
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID, 
-                remoteContact, MessageSession.RemoteContactEndPointID); ;
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID,
+                remoteContact, MessageSession.RemoteContactEndPointID);
+            ;
             do
             {
                 properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
@@ -1362,12 +1400,15 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
             }
 
-            
-            
+
+
             transferSession.MessageFlag = (uint)P2PFlag.FileData;
             transferSession.MessageFooter = P2PConst.FileTransFooter2;
-            
-            transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
+
+            transferSession.TransferFinished += delegate
+            {
+                transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
+            };
             // set the data stream to read from
             transferSession.DataStream = file;
             transferSession.IsSender = true;
@@ -1754,7 +1795,7 @@ namespace MSNPSharp.DataTransfer
             return newMessage;
         }
 
-        
+
 
 
         /// <summary>
@@ -1839,7 +1880,7 @@ namespace MSNPSharp.DataTransfer
             Contact remote = MessageSession.RemoteContact;
 
             MSNSLPTransferProperties properties = transferSession.TransferProperties;
-            
+
 
             if (properties.RemoteInvited == false)
             {
@@ -1856,7 +1897,7 @@ namespace MSNPSharp.DataTransfer
                 RemoveTransferSession(transferSession);
             }
 
-            
+
         }
 
 
@@ -1892,7 +1933,7 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV1)
             {
-                if (!(p2pMessage.Footer == 0 && p2pMessage.V1Header.SessionId == 0 && 
+                if (!(p2pMessage.Footer == 0 && p2pMessage.V1Header.SessionId == 0 &&
                     p2pMessage.V1Header.Flags != P2PFlag.Acknowledgement && p2pMessage.V1Header.MessageSize > 0))
                 {
                     //We don't process any p2p message because this is a SIP message handler.
@@ -1910,7 +1951,7 @@ namespace MSNPSharp.DataTransfer
 
             }
 
-            
+
             if (slpMessage != null)
             {
                 // call the methods belonging to the content-type to handle the message
@@ -2055,7 +2096,7 @@ namespace MSNPSharp.DataTransfer
 
                 }
                 return;
-            } 
+            }
 
             #endregion
 
@@ -2070,7 +2111,10 @@ namespace MSNPSharp.DataTransfer
 
                 // create a p2p transfer
                 P2PTransferSession transferSession = new P2PTransferSession(Version, properties, MessageSession);
-                transferSession.TransferFinished += delegate { transferSession.SendDisconnectMessage(CreateClosingMessage(properties)); };
+                transferSession.TransferFinished += delegate
+                {
+                    transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
+                };
 
                 if (Version == P2PVersion.P2PV2)
                 {
@@ -2141,7 +2185,7 @@ namespace MSNPSharp.DataTransfer
 
                     AcceptTransfer(invitationArgs);
                 }
-            } 
+            }
 
             #endregion
 
@@ -2152,26 +2196,13 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         /// <remarks>Throws an SocketException when no ports can be found.</remarks>
         /// <returns></returns>
-        protected virtual int GetNextDirectConnectionPort()
+        protected virtual int GetNextDirectConnectionPort(IPAddress ipAddress)
         {
-            // Find host by name
-            IPHostEntry iphostentry = new IPHostEntry();
-            iphostentry.AddressList = new IPAddress[1];
-            int IPC = 0;
-            for (IPC = 0; IPC < Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.Length; IPC++)
-            {
-                if (Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC].AddressFamily == AddressFamily.InterNetwork)
-                {
-                    iphostentry.AddressList[0] = Dns.GetHostEntry(Dns.GetHostName()).AddressList[IPC];
-                    break;
-                }
-            }
-
             int portAvail = 0;
 
             if (Settings.PublicPortPriority == PublicPortPriority.First)
             {
-                portAvail = TryPublicPorts(iphostentry.AddressList[0]);
+                portAvail = TryPublicPorts(ipAddress);
 
                 if (portAvail != 0)
                 {
@@ -2187,7 +2218,7 @@ namespace MSNPSharp.DataTransfer
                     try
                     {
                         s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                        s.Bind(new IPEndPoint(iphostentry.AddressList[0], p));
+                        s.Bind(new IPEndPoint(ipAddress, p));
                         //s.Bind(new IPEndPoint(IPAddress.Any, p));
                         s.Close();
                         return p;
@@ -2206,7 +2237,7 @@ namespace MSNPSharp.DataTransfer
             if (portAvail == 0 &&
                 Settings.PublicPortPriority == PublicPortPriority.Last)
             {
-                portAvail = TryPublicPorts(iphostentry.AddressList[0]);
+                portAvail = TryPublicPorts(ipAddress);
 
                 if (portAvail != 0)
                 {
@@ -2244,12 +2275,6 @@ namespace MSNPSharp.DataTransfer
         protected virtual void OnDCRequest(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-           // let's listen
-            
-
-           // Find host by name
-            IPAddress iphostentry = LocalEndPoint.Address;
-
             SLPStatusMessage slpMessage = new SLPStatusMessage(message.ToMail, 200, "OK");
             Guid nonce = Guid.Empty;
             string nonceFieldName = "Nonce";
@@ -2264,26 +2289,30 @@ namespace MSNPSharp.DataTransfer
                 nonceFieldName = "Hashed-Nonce";
             }
 
+            // Find host by name
+            IPAddress ipAddress = LocalEndPoint.Address;
 
-            if (!iphostentry.Equals(ExternalEndPoint.Address))
+            if (!ipAddress.Equals(ExternalEndPoint.Address))
             {
                 slpMessage.BodyValues["Listening"] = "false";
                 slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             }
             else
             {
-                int port = GetNextDirectConnectionPort();
+                // Let's listen
+                int port = GetNextDirectConnectionPort(ipAddress);
 
-                MessageSession.ListenForDirectConnection(iphostentry, port);
+
+                MessageSession.ListenForDirectConnection(ipAddress, port);
                 slpMessage.BodyValues["Listening"] = "true";
                 slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
-                slpMessage.BodyValues["IPv4Internal-Addrs"] = iphostentry.ToString();
+                slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
                 slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
 
                 // check if client is behind firewall (NAT-ted)
                 // if so, send the public ip also the client, so it can try to connect to that ip
-                if (ExternalEndPoint != null && ExternalEndPoint.Address != iphostentry)
+                if (ExternalEndPoint != null && ExternalEndPoint.Address != ipAddress)
                 {
                     slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
                     slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -2303,7 +2332,7 @@ namespace MSNPSharp.DataTransfer
                 slpMessage.BodyValues["Bridge"] = "TCPv1";
             else
                 slpMessage.BodyValues["Bridge"] = "SBBridge";
-            
+
 
 
 

@@ -45,63 +45,40 @@ namespace MSNPSharp.DataTransfer
     /// <summary>
     /// Handles the direct connections in P2P sessions.
     /// </summary>
-    public class P2PDirectProcessor : SocketMessageProcessor
+    public class P2PDirectProcessor : SocketMessageProcessor, IDisposable
     {
         private Timer socketExpireTimer = new Timer(12000);
         private ProxySocket socketListener = null;
+        private Socket dcSocket = null;
+        private bool isListener = false;
+        P2PVersion version = P2PVersion.P2PV1;
 
         private void socketExpireTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (socketListener != null)
-            {
-                try
-                {
-                    socketListener.Close();
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().ToString() + " Error: " + ex.Message);
-                }
-                finally
-                {
-                    socketListener = null;
-                }
-            }
+            socketExpireTimer.Elapsed -= socketExpireTimer_Elapsed;
 
-            // clean up the socket properly
-            if (dcSocket == null || !IsSocketConnected(dcSocket))
-            {
-                base.Disconnect();
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                "I was waiting for " + (socketExpireTimer.Interval/1000) + " seconds, but no one has connected!", GetType().Name);
 
-                if (dcSocket != null)
-                {
-                    try
-                    {
-                        dcSocket.Shutdown(SocketShutdown.Both);
-                    }
-                    catch (Exception dcex)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, dcex.Message);
-                    }
-                    finally
-                    {
-                        dcSocket.Close();
-                    }
-
-                    dcSocket = null;
-                }
-            }
+            Dispose();
         }
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PDirectProcessor(ConnectivitySettings connectivitySettings)
+        public P2PDirectProcessor(ConnectivitySettings connectivitySettings, P2PVersion p2pVersion)
             : base(connectivitySettings)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
+
+            this.version = p2pVersion;
 
             MessagePool = new P2PDCPool();
+        }
+
+        ~P2PDirectProcessor()
+        {
+            Dispose(false);
         }
 
         /// <summary>
@@ -109,15 +86,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void Listen(IPAddress address, int port)
         {
-            ProxySocket socket = GetPreparedSocket();
+            ProxySocket socket = GetPreparedSocket(address, port);
 
-            // begin waiting for the incoming connection
-            if (!socket.IsBound)
-            {
-                socket.Bind(new IPEndPoint(address, port));
-            }
-
-            socket.Listen(100);
+            // Begin waiting for the incoming connection
+            socket.Listen(1);
 
             // set this value so we know whether to send a handshake message or not later in the process
             isListener = true;
@@ -125,15 +97,9 @@ namespace MSNPSharp.DataTransfer
 
             socketExpireTimer.Elapsed += new ElapsedEventHandler(socketExpireTimer_Elapsed);
             socketExpireTimer.AutoReset = false;
-            socketExpireTimer.Enabled = true;
-
+            socketExpireTimer.Enabled = true; // After accepted, DISABLE timer.
             socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
         }
-
-        /// <summary>
-        /// Returns whether this processor was initiated as listening (true) or connecting (false).
-        /// </summary>
-        private bool isListener;
 
         /// <summary>
         /// Returns whether this processor was initiated as listening (true) or connecting (false).
@@ -161,7 +127,11 @@ namespace MSNPSharp.DataTransfer
             {
                 dcSocket = listenSocket.EndAccept(ar);
 
-                // begin accepting messages
+                // Disable timer. Otherwise, data transfer will be broken after 12 secs.
+                // Huge datas can't transmit within 12 secs :) 
+                socketExpireTimer.Enabled = false;
+
+                // Begin accepting messages
                 BeginDataReceive(dcSocket);
 
                 OnConnected();
@@ -172,7 +142,6 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        private Socket dcSocket;
 
         /// <summary>
         /// Closes the socket connection.
@@ -181,11 +150,36 @@ namespace MSNPSharp.DataTransfer
         {
             base.Disconnect();
 
-            // clean up the socket properly
-            if (dcSocket != null && IsSocketConnected(dcSocket))
+            if (socketListener != null)
             {
-                dcSocket.Shutdown(SocketShutdown.Both);
-                dcSocket.Close();
+                try
+                {
+                    socketListener.Close();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().ToString() + " Error: " + ex.Message);
+                }
+
+                socketListener = null;
+            }
+
+            // clean up the socket properly
+            if (dcSocket != null)
+            {
+                try
+                {
+                    dcSocket.Shutdown(SocketShutdown.Both);
+                }
+                catch (Exception dcex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, dcex.Message);
+                }
+                finally
+                {
+                    dcSocket.Close();
+                }
+
                 dcSocket = null;
             }
         }
@@ -203,7 +197,7 @@ namespace MSNPSharp.DataTransfer
                 return;
 
             // convert to a p2pdc message
-            P2PDCMessage dcMessage = new P2PDCMessage(P2PVersion.P2PV1);
+            P2PDCMessage dcMessage = new P2PDCMessage(version);
             dcMessage.ParseBytes(data);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, dcMessage.ToDebugString(), "P2PDirect In");
@@ -224,23 +218,40 @@ namespace MSNPSharp.DataTransfer
         public override void SendMessage(NetworkMessage message)
         {
             // if it is a regular message convert it
-            if ((message is P2PDCMessage) == false)
+            P2PDCMessage p2pMessage = message as P2PDCMessage;
+            if (p2pMessage == null)
             {
-                message = new P2PDCMessage((P2PMessage)message);
+                p2pMessage = new P2PDCMessage((P2PMessage)message);
             }
-            // otherwise we just assume it is a P2PDCMessage
+
 
             // prepare the message
-            message.PrepareMessage();
+            p2pMessage.PrepareMessage();
 
             // this is very bloated!
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + message.ToDebugString(), GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
 
             if (dcSocket != null)
-                SendSocketData(dcSocket, message.GetBytes());
+                SendSocketData(dcSocket, p2pMessage.GetBytes());
             else
-                SendSocketData(message.GetBytes());
+                SendSocketData(p2pMessage.GetBytes());
         }
 
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Disconnect();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        public new void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 };
