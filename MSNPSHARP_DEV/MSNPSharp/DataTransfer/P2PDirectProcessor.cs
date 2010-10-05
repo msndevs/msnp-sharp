@@ -32,6 +32,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Net;
+using System.Text;
 using System.Net.Sockets;
 using System.Diagnostics;
 using System.Timers;
@@ -41,17 +42,20 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp.Core;
 
-
     /// <summary>
     /// Handles the direct connections in P2P sessions.
     /// </summary>
     public class P2PDirectProcessor : SocketMessageProcessor, IDisposable
     {
+        private P2PVersion version = P2PVersion.P2PV1;
+        private Guid authNonce = Guid.Empty;
+        private bool isAuthNonceHashed = false;
         private Timer socketExpireTimer = new Timer(12000);
         private ProxySocket socketListener = null;
         private Socket dcSocket = null;
         private bool isListener = false;
-        P2PVersion version = P2PVersion.P2PV1;
+        private bool fooHandled = false;
+        private bool authenticated = false;
 
         private void socketExpireTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -66,14 +70,15 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PDirectProcessor(ConnectivitySettings connectivitySettings, P2PVersion p2pVersion)
+        public P2PDirectProcessor(ConnectivitySettings connectivitySettings, P2PVersion p2pVersion, Guid authNonce, bool isHashedNonce)
             : base(connectivitySettings)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
 
             this.version = p2pVersion;
-
-            MessagePool = new P2PDCPool();
+            this.authNonce = authNonce;
+            this.isAuthNonceHashed = isHashedNonce;
+            this.MessagePool = new P2PDCPool();
         }
 
         ~P2PDirectProcessor()
@@ -198,11 +203,54 @@ namespace MSNPSharp.DataTransfer
         /// <param name="data"></param>
         protected override void OnMessageReceived(byte[] data)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "analyzing message", "P2PDirect In");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "analyzing message", GetType().Name);
 
-            // check if it is the 'foo' message
-            if (data.Length == 4)
+            // Foo state
+            if (!fooHandled)
+            {
+                string initialData = Encoding.ASCII.GetString(data);
+
+                if (data.Length == 4 && initialData == "foo\0")
+                {
+                    fooHandled = true;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "foo0 handled", GetType().Name);
+                }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "foo0 expected, but it was: " + initialData, GetType().Name);
+                    Dispose();
+                }
+
                 return;
+            }
+
+
+            // Auth state
+            if (!authenticated)
+            {
+                P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(version, data);
+                Guid incomingGuid = hm.Guid;
+
+                if (isAuthNonceHashed)
+                {
+                    incomingGuid = HashedNonceGenerator.HashNonce(incomingGuid);
+                    isAuthNonceHashed = false;
+                }
+
+                if (authNonce == incomingGuid)
+                {
+                    authenticated = true;
+                    // *****************OnHandshakeCompleted(this, new P2PMessageEventArgs(hm));
+                }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                        String.Format("Received nonce is {0}, expected {1}", incomingGuid, authNonce), GetType().Name);
+
+                    Dispose();
+                }
+                return;
+            }
 
             // convert to a p2pdc message
             P2PDCMessage dcMessage = new P2PDCMessage(version);
