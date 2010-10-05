@@ -58,7 +58,7 @@ namespace MSNPSharp.DataTransfer
             socketExpireTimer.Elapsed -= socketExpireTimer_Elapsed;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                "I was waiting for " + (socketExpireTimer.Interval/1000) + " seconds, but no one has connected!", GetType().Name);
+                "I was waiting for " + (socketExpireTimer.Interval / 1000) + " seconds, but no one has connected!", GetType().Name);
 
             Dispose();
         }
@@ -82,6 +82,21 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Returns whether this processor was initiated as listening (true) or connecting (false).
+        /// </summary>
+        public bool IsListener
+        {
+            get
+            {
+                return isListener;
+            }
+            set
+            {
+                isListener = value;
+            }
+        }
+
+        /// <summary>
         /// Starts listening at the specified port in the connectivity settings.
         /// </summary>
         public void Listen(IPAddress address, int port)
@@ -101,18 +116,20 @@ namespace MSNPSharp.DataTransfer
             socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
         }
 
-        /// <summary>
-        /// Returns whether this processor was initiated as listening (true) or connecting (false).
-        /// </summary>
-        public bool IsListener
+        private void StopListening()
         {
-            get
+            if (socketListener != null)
             {
-                return isListener;
-            }
-            set
-            {
-                isListener = value;
+                try
+                {
+                    socketListener.Close();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().ToString() + " Error: " + ex.Message);
+                }
+
+                socketListener = null;
             }
         }
 
@@ -130,6 +147,9 @@ namespace MSNPSharp.DataTransfer
                 // Disable timer. Otherwise, data transfer will be broken after 12 secs.
                 // Huge datas can't transmit within 12 secs :) 
                 socketExpireTimer.Enabled = false;
+
+                // Stop listening
+                StopListening();
 
                 // Begin accepting messages
                 BeginDataReceive(dcSocket);
@@ -150,19 +170,7 @@ namespace MSNPSharp.DataTransfer
         {
             base.Disconnect();
 
-            if (socketListener != null)
-            {
-                try
-                {
-                    socketListener.Close();
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, GetType().ToString() + " Error: " + ex.Message);
-                }
-
-                socketListener = null;
-            }
+            StopListening();
 
             // clean up the socket properly
             if (dcSocket != null)
