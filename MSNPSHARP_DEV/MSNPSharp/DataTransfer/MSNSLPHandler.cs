@@ -2061,6 +2061,9 @@ namespace MSNPSharp.DataTransfer
                             return;
                         }
 
+                        timer.Stop();
+                        timer = null;
+
                         switch (properties.DataType)
                         {
                             case DataTransferType.File:
@@ -2085,9 +2088,6 @@ namespace MSNPSharp.DataTransfer
                                 }
                                 break;
                         }
-
-                        timer.Stop();
-                        timer = null;
                     };
 
                     timer.Start();

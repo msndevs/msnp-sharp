@@ -989,6 +989,8 @@ namespace MSNPSharp.DataTransfer
                         }
 
                         SendMessage(p2pDataMessage);
+
+                        System.Threading.Thread.Sleep(300);
                     }
                 }
             }
