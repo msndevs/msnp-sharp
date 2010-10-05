@@ -1590,7 +1590,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual P2PDCHandshakeMessage CreateHandshakeMessage(MSNSLPTransferProperties properties)
         {
-            P2PDCHandshakeMessage dcMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1); // v!
+            P2PDCHandshakeMessage dcMessage = new P2PDCHandshakeMessage(properties.TransferStackVersion);
             dcMessage.Header.SessionId = 0;
 
             System.Diagnostics.Debug.Assert(properties.Nonce != Guid.Empty, "Direct connection established, but no Nonce GUID is available.");
@@ -2278,16 +2278,20 @@ namespace MSNPSharp.DataTransfer
             SLPStatusMessage slpMessage = new SLPStatusMessage(message.ToMail, 200, "OK");
             Guid nonce = Guid.Empty;
             string nonceFieldName = "Nonce";
+            bool hashed = false;
 
             if (message.BodyValues.ContainsKey("Nonce"))
             {
-                nonce = HashedNonceGenerator.HashNonce(new Guid(message.BodyValues["Nonce"].Value));
+                nonce = new Guid(message.BodyValues["Nonce"].Value);
             }
             else if (message.BodyValues.ContainsKey("Hashed-Nonce"))
             {
-                nonce = HashedNonceGenerator.HashNonce(new Guid(message.BodyValues["Hashed-Nonce"].Value));
+                nonce = new Guid(message.BodyValues["Hashed-Nonce"].Value);
                 nonceFieldName = "Hashed-Nonce";
+                hashed = true;
             }
+
+            // Properties . ishashed *************
 
             // Find host by name
             IPAddress ipAddress = LocalEndPoint.Address;
@@ -2303,7 +2307,7 @@ namespace MSNPSharp.DataTransfer
                 int port = GetNextDirectConnectionPort(ipAddress);
 
 
-                MessageSession.ListenForDirectConnection(ipAddress, port);
+                MessageSession.ListenForDirectConnection(ipAddress, port, nonce, hashed);
                 slpMessage.BodyValues["Listening"] = "true";
                 slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
                 slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
@@ -2328,10 +2332,8 @@ namespace MSNPSharp.DataTransfer
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
 
-            if (Version == P2PVersion.P2PV1)
-                slpMessage.BodyValues["Bridge"] = "TCPv1";
-            else
-                slpMessage.BodyValues["Bridge"] = "SBBridge";
+            slpMessage.BodyValues["Bridge"] = "TCPv1 SBBridge";
+
 
 
 
@@ -2384,14 +2386,28 @@ namespace MSNPSharp.DataTransfer
                     // let the message session connect
                     MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
 
-                    properties.Nonce = new Guid(bodyValues["Nonce"].ToString());
+
+                    Guid nonce = Guid.Empty;
+                    bool hashed = false;
+
+                    if (bodyValues.ContainsKey("Nonce"))
+                    {
+                        nonce = new Guid(bodyValues["Nonce"].Value);
+                    }
+                    else if (bodyValues.ContainsKey("Hashed-Nonce"))
+                    {
+                        nonce = new Guid(bodyValues["Hashed-Nonce"].Value);
+                        hashed = true;
+                    }
+
+                    properties.Nonce = nonce;
 
                     // create the handshake message to send upon connection                    
-                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1); // v!
+                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(p2pMessage.Version); // v!
                     hsMessage.Guid = properties.Nonce;
                     MessageSession.HandshakeMessage = hsMessage;
 
-                    MessageSession.CreateDirectConnection(settings.Host, settings.Port);
+                    MessageSession.CreateDirectConnection(settings.Host, settings.Port, nonce, hashed);
                 }
             }
         }

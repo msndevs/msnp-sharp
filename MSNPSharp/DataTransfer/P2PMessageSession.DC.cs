@@ -203,13 +203,11 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Creates a direct connection with the remote client.
         /// </summary>
-        /// <param name="host"></param>
-        /// <param name="port"></param>
         /// <returns></returns>
-        public IMessageProcessor CreateDirectConnection(string host, int port)
+        public IMessageProcessor CreateDirectConnection(string host, int port, Guid nonce, bool hashed)
         {
             // create the P2P Direct processor to handle the file data
-            P2PDirectProcessor processor = new P2PDirectProcessor(new ConnectivitySettings(host, port), Version);
+            P2PDirectProcessor processor = new P2PDirectProcessor(new ConnectivitySettings(host, port), Version, nonce, hashed);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
 
@@ -225,10 +223,8 @@ namespace MSNPSharp.DataTransfer
         /// Setups a P2PDirectProcessor to listen for incoming connections.
         /// After a connection has been established the P2PDirectProcessor will become the main MessageProcessor to send messages.
         /// </summary>
-        /// <param name="host"></param>
-        /// <param name="port"></param>
         /// <returns></returns>
-        public IMessageProcessor ListenForDirectConnection(IPAddress host, int port)
+        public IMessageProcessor ListenForDirectConnection(IPAddress host, int port, Guid nonce, bool hashed)
         {
             ConnectivitySettings cs = new ConnectivitySettings();
             if (NSMessageHandler.ConnectivitySettings.LocalHost == string.Empty)
@@ -242,7 +238,7 @@ namespace MSNPSharp.DataTransfer
                 cs.LocalPort = NSMessageHandler.ConnectivitySettings.LocalPort;
             }
 
-            P2PDirectProcessor processor = new P2PDirectProcessor(cs, Version);
+            P2PDirectProcessor processor = new P2PDirectProcessor(cs, Version, nonce, hashed);
 
             // we want this session to listen to incoming messages
             processor.RegisterHandler(this);

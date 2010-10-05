@@ -661,15 +661,14 @@ namespace MSNPSharp.DataTransfer
                 V2Header.OperationCode = (byte)OperationCode.None;
         }
 
-        /// <summary>
-        /// Copy constructor. Creates a shallow copy of the properties of the P2PMessage.
-        /// </summary>
-        /// <param name="message"></param>
-        public P2PDCHandshakeMessage(P2PMessage message)
-            : base(message)
+        public P2PDCHandshakeMessage(P2PVersion ver, byte[] data)
+            : this(ver)
         {
-            if (message.Version == P2PVersion.P2PV1)
+            if (ver == P2PVersion.P2PV1)
             {
+                P2PMessage message = new P2PMessage(ver);
+                message.ParseBytes(data);
+
                 Guid = new Guid(
                     (int)message.V1Header.AckSessionId,
 
@@ -683,11 +682,18 @@ namespace MSNPSharp.DataTransfer
                     (byte)((message.V1Header.AckTotalSize & 0x000000FF00000000) >> 32),
                     (byte)((message.V1Header.AckTotalSize & 0x0000FF0000000000) >> 40),
                     (byte)((message.V1Header.AckTotalSize & 0x00FF000000000000) >> 48),
-                    (byte)((message.V1Header.AckTotalSize & 0xFF00000000000000) >> 56));
+                    (byte)((message.V1Header.AckTotalSize & 0xFF00000000000000) >> 56)
+                );
             }
-            else if (message.Version == P2PVersion.P2PV2)
+            else if (ver == P2PVersion.P2PV2)
             {
-                throw new NotSupportedException("Not support direct connection in p2pv2.");
+                Int32 a = BitUtility.ToInt32(data, 0, BitConverter.IsLittleEndian);
+                Int16 b = BitUtility.ToInt16(data, 4, BitConverter.IsLittleEndian);
+                Int16 c = BitUtility.ToInt16(data, 6, BitConverter.IsLittleEndian);
+                byte d = data[8], e = data[9], f = data[10], g = data[11];
+                byte h = data[12], i = data[13], j = data[14], k = data[15];
+
+                Guid = new Guid(a, b, c, d, e, f, g, h, i, j, k);
             }
         }
 
@@ -698,7 +704,7 @@ namespace MSNPSharp.DataTransfer
         public override P2PMessage CreateAcknowledgement()
         {
             // create a copy of this message
-            P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this);
+            P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this.Version, this.GetBytes());
 
             // set the identifier to 0 to set our own local identifier
             ackMessage.Header.Identifier = 0;
@@ -727,18 +733,37 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public override byte[] GetBytes()
         {
-            // Get the bytes for the handshake
-            byte[] handshakeMessage = base.GetBytes(); // Calls P2PDCMessage.GetBytes();
-
-            byte[] totalMessage = new byte[handshakeMessage.Length + 8];
             byte[] fooMessage = new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 };
-            byte[] guidMessage = guid.ToByteArray();
 
-            Array.Copy(fooMessage, 0, totalMessage, 0, 8);
-            Array.Copy(handshakeMessage, 0, totalMessage, 8, handshakeMessage.Length);
-            Array.Copy(guidMessage, 0, totalMessage, totalMessage.Length - 16, 16);
+            // Get the bytes for the handshake
+            if (Version == P2PVersion.P2PV1)
+            {
+                byte[] handshakeMessage = base.GetBytes(); // Calls P2PDCMessage.GetBytes();
 
-            return totalMessage;
+                byte[] totalMessage = new byte[handshakeMessage.Length + 8];
+                
+                byte[] guidMessage = guid.ToByteArray();
+
+                Array.Copy(fooMessage, 0, totalMessage, 0, 8);
+                Array.Copy(handshakeMessage, 0, totalMessage, 8, handshakeMessage.Length);
+                Array.Copy(guidMessage, 0, totalMessage, totalMessage.Length - 16, 16);
+
+                return totalMessage;
+            }
+
+            // 4 0 0 0 f o o \0 16 0 0 0 GUID
+            byte[] totalMessage2 = new byte[28];
+
+            byte[] firstMessage = new byte[] { 0x04, 0x00, 0x00, 0x00, // 4 0 0 0
+                                        (byte)'f', (byte)'o',(byte)'o', 0x00,
+                                        0x10, 0x00, 0x00, 0x00 // 16 0 0 0
+            };
+
+            byte[] guidData = Guid.ToByteArray();
+            Array.Copy(fooMessage, 0, firstMessage, 0, firstMessage.Length);
+            Array.Copy(guidData, 0, totalMessage2, totalMessage2.Length, guidData.Length);
+
+            return totalMessage2;
         }
 
         public override string ToString()
