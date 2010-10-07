@@ -1472,7 +1472,11 @@ namespace MSNPSharpClient
                 return;
             }
 
-            ConversationForm form = CreateConversationForm(contact, Messenger.MessageManager.GetID(contact));
+            //Get the conversation identifier, then you can use:
+            // conversationIdentifier = _messenger.MessageManager.SendTextMessage(ConversationID, message);
+            //To send a message.
+            ConversationID conversationIdentifier = Messenger.MessageManager.GetID(contact);
+            ConversationForm form = CreateConversationForm(contact, conversationIdentifier);
 
             form.Show();
         }
