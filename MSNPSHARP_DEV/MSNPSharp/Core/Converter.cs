@@ -38,6 +38,8 @@ using System.Security.Cryptography;
 
 namespace MSNPSharp.Core
 {
+    using MSNPSharp.DataTransfer;
+
     internal enum EscapeType
     {
         EscapeAll,
@@ -407,34 +409,50 @@ namespace MSNPSharp.Core
                 // Returns 20 bytes
                 byte[] hash = sha1.ComputeHash(nonce.ToByteArray());
 
-                // Generate the hash from the first 16 bytes
-                Int32 a = BitUtility.ToInt32(hash, 0, BitConverter.IsLittleEndian);
-
-                    //(UInt32)
-                    //(((UInt32)(hash[3]) << 24) +
-                    //((UInt32)(hash[2]) << 16) +
-                    //((UInt32)(hash[1]) << 8) +
-                    //(UInt32)(hash[0]));
-
-                Int16 b = BitUtility.ToInt16(hash, 4, BitConverter.IsLittleEndian);
-                    
-                    //(UInt16)
-                    //(((UInt16)(hash[5]) << 8) +
-                    //((UInt16)(hash[4])));
-
-                Int16 c = BitUtility.ToInt16(hash, 6, BitConverter.IsLittleEndian);
-                    
-                    //(UInt16)
-                    //(((UInt16)(hash[7]) << 8) +
-                    //((UInt16)(hash[6])));
-
-                byte d = hash[8], e = hash[9], f = hash[10], g = hash[11];
-                byte h = hash[12], i = hash[13], j = hash[14], k = hash[15];
-
-                handshakeNonce = new Guid(a, b, c, d, e, f, g, h, i, j, k);
+                handshakeNonce = CreateGuidFromData(P2PVersion.P2PV2, hash);
             }
 
             return handshakeNonce;
+        }
+
+
+        public static Guid CreateGuidFromData(P2PVersion ver, byte[] data)
+        {
+            Guid ret = Guid.Empty;
+
+            if (ver == P2PVersion.P2PV1)
+            {
+                P2PMessage message = new P2PMessage(ver);
+                message.ParseBytes(data);
+
+                ret = new Guid(
+                    (int)message.V1Header.AckSessionId,
+
+                    (short)(message.Header.AckIdentifier & 0x0000FFFF),
+                    (short)((message.Header.AckIdentifier & 0xFFFF0000) >> 16),
+
+                    (byte)((message.V1Header.AckTotalSize & 0x00000000000000FF)),
+                    (byte)((message.V1Header.AckTotalSize & 0x000000000000FF00) >> 8),
+                    (byte)((message.V1Header.AckTotalSize & 0x0000000000FF0000) >> 16),
+                    (byte)((message.V1Header.AckTotalSize & 0x00000000FF000000) >> 24),
+                    (byte)((message.V1Header.AckTotalSize & 0x000000FF00000000) >> 32),
+                    (byte)((message.V1Header.AckTotalSize & 0x0000FF0000000000) >> 40),
+                    (byte)((message.V1Header.AckTotalSize & 0x00FF000000000000) >> 48),
+                    (byte)((message.V1Header.AckTotalSize & 0xFF00000000000000) >> 56)
+                );
+            }
+            else if (ver == P2PVersion.P2PV2)
+            {
+                Int32 a = BitUtility.ToInt32(data, 0, BitConverter.IsLittleEndian);
+                Int16 b = BitUtility.ToInt16(data, 4, BitConverter.IsLittleEndian);
+                Int16 c = BitUtility.ToInt16(data, 6, BitConverter.IsLittleEndian);
+                byte d = data[8], e = data[9], f = data[10], g = data[11];
+                byte h = data[12], i = data[13], j = data[14], k = data[15];
+
+                ret = new Guid(a, b, c, d, e, f, g, h, i, j, k);
+            }
+
+            return ret;
         }
     }
 };

@@ -42,11 +42,34 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp.Core;
 
+
+    [Serializable]
+    public class P2PHandshakeMessageEventArgs : EventArgs
+    {
+        private P2PDCHandshakeMessage handshakeMessage = null;
+
+        public P2PDCHandshakeMessage HandshakeMessage
+        {
+            get
+            {
+                return handshakeMessage;
+            }
+        }
+
+        public P2PHandshakeMessageEventArgs(P2PDCHandshakeMessage handshakeMessage)
+        {
+            this.handshakeMessage = handshakeMessage;
+        }
+    }
+
     /// <summary>
     /// Handles the direct connections in P2P sessions.
     /// </summary>
     public class P2PDirectProcessor : SocketMessageProcessor, IDisposable
     {
+        public event EventHandler<P2PHandshakeMessageEventArgs> HandshakeCompleted;
+
+
         private P2PVersion version = P2PVersion.P2PV1;
         private Guid authNonce = Guid.Empty;
         private bool isAuthNonceHashed = false;
@@ -197,6 +220,17 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+
+        protected override void OnConnected()
+        {
+            if (!IsListener)
+            {
+                // Send foo0: datalen + data
+                SendSocketData(new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 });
+            }
+            base.OnConnected();
+        }
+
         /// <summary>
         /// Discards the foo message and sends the message to all handlers as a P2PDCMessage object.
         /// </summary>
@@ -228,7 +262,9 @@ namespace MSNPSharp.DataTransfer
             // Auth state
             if (!authenticated)
             {
-                P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(version, data);
+                P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(version);
+                hm.ParseBytes(data);
+
                 Guid incomingGuid = hm.Guid;
 
                 if (isAuthNonceHashed)
@@ -240,7 +276,10 @@ namespace MSNPSharp.DataTransfer
                 if (authNonce == incomingGuid)
                 {
                     authenticated = true;
-                    // *****************OnHandshakeCompleted(this, new P2PMessageEventArgs(hm));
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "auth key:" + authNonce, GetType().Name);
+
+                    OnHandshakeCompleted(new P2PHandshakeMessageEventArgs(hm));
                 }
                 else
                 {
@@ -252,11 +291,11 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            // convert to a p2pdc message
+            // Data state: convert to a p2pdc message
             P2PDCMessage dcMessage = new P2PDCMessage(version);
             dcMessage.ParseBytes(data);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, dcMessage.ToDebugString(), "P2PDirect In");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, dcMessage.ToDebugString(), GetType().Name);
 
             lock (MessageHandlers)
             {
@@ -293,6 +332,11 @@ namespace MSNPSharp.DataTransfer
                 SendSocketData(p2pMessage.GetBytes());
         }
 
+        protected virtual void OnHandshakeCompleted(P2PHandshakeMessageEventArgs e)
+        {
+            if (HandshakeCompleted != null)
+                HandshakeCompleted(this, e);
+        }
 
         protected override void Dispose(bool disposing)
         {

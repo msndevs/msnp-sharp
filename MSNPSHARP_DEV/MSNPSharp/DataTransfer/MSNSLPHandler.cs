@@ -2403,7 +2403,7 @@ namespace MSNPSharp.DataTransfer
                     properties.Nonce = nonce;
 
                     // create the handshake message to send upon connection                    
-                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(p2pMessage.Version); // v!
+                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(p2pMessage.Version);
                     hsMessage.Guid = properties.Nonce;
                     MessageSession.HandshakeMessage = hsMessage;
 
