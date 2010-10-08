@@ -223,12 +223,21 @@ namespace MSNPSharp.DataTransfer
 
         protected override void OnConnected()
         {
-            if (!IsListener)
+            if (!IsListener && !fooHandled)
             {
                 // Send foo0: datalen + data
                 SendSocketData(new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 });
+                fooHandled = true;
             }
             base.OnConnected();
+        }
+
+        protected override void OnDisconnected()
+        {
+            fooHandled = false;
+            authenticated = false;
+
+            base.OnDisconnected();
         }
 
         /// <summary>
