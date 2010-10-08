@@ -1485,7 +1485,7 @@ namespace MSNPSharpClient
         {
             Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
             this.propertyGrid.SelectedObject = selectedContact;
-            messenger.OIMService.SendOIMMessage(selectedContact, new TextMessage("MSNP offline message"));
+            messenger.OIMService.SendOIMMessage(selectedContact, new TextMessage("MSNPSharp offline message test."));
 
         }
 
