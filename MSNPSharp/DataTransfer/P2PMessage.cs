@@ -40,7 +40,7 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp;
     using MSNPSharp.Core;
 
-   
+
 
     #region P2PMessage
 
@@ -399,7 +399,7 @@ namespace MSNPSharp.DataTransfer
             return "[P2PMessage]\r\n" +
                 header.ToString() +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "FOOTER              : {1:x} ({1})\r\n", Footer.ToString(System.Globalization.CultureInfo.InvariantCulture), Footer) +
-                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n", 
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "DATA                : {0}\r\n",
                 ((InnerMessage != null) ? InnerMessage.ToString() : String.Format("Binary data: {0:D} bytes", InnerBody.Length)));
         }
 
@@ -636,80 +636,16 @@ namespace MSNPSharp.DataTransfer
     #region P2PDCHandshakeMessage
 
     /// <summary>
-    /// A P2P Message which is send in a direct-connection. (P2Pv1?)
+    /// A P2P Message which is send in a direct-connection.
     /// </summary>
-    /// <remarks>The innerbody contents are used as message contents (data).
-    /// The InnerMessage object is ignored.
+    /// <remarks>
+    /// The InnerBody is 0 length byte.
+    /// The InnerMessage is null.
     /// </remarks>
     [Serializable]
     public class P2PDCHandshakeMessage : P2PDCMessage
     {
         private Guid guid;
-
-        /// <summary>
-        /// Basic constructor
-        /// </summary>
-        /// <remarks>
-        /// Defaults the Flags property to 0x100
-        /// </remarks>
-        public P2PDCHandshakeMessage(P2PVersion ver)
-            : base(ver)
-        {
-            if (ver == P2PVersion.P2PV1)
-                V1Header.Flags = P2PFlag.DirectHandshake;
-            else if (ver == P2PVersion.P2PV2)
-                V2Header.OperationCode = (byte)OperationCode.None;
-        }
-
-        public P2PDCHandshakeMessage(P2PVersion ver, byte[] data)
-            : this(ver)
-        {
-            if (ver == P2PVersion.P2PV1)
-            {
-                P2PMessage message = new P2PMessage(ver);
-                message.ParseBytes(data);
-
-                Guid = new Guid(
-                    (int)message.V1Header.AckSessionId,
-
-                    (short)(message.Header.AckIdentifier & 0x0000FFFF),
-                    (short)((message.Header.AckIdentifier & 0xFFFF0000) >> 16),
-
-                    (byte)((message.V1Header.AckTotalSize & 0x00000000000000FF)),
-                    (byte)((message.V1Header.AckTotalSize & 0x000000000000FF00) >> 8),
-                    (byte)((message.V1Header.AckTotalSize & 0x0000000000FF0000) >> 16),
-                    (byte)((message.V1Header.AckTotalSize & 0x00000000FF000000) >> 24),
-                    (byte)((message.V1Header.AckTotalSize & 0x000000FF00000000) >> 32),
-                    (byte)((message.V1Header.AckTotalSize & 0x0000FF0000000000) >> 40),
-                    (byte)((message.V1Header.AckTotalSize & 0x00FF000000000000) >> 48),
-                    (byte)((message.V1Header.AckTotalSize & 0xFF00000000000000) >> 56)
-                );
-            }
-            else if (ver == P2PVersion.P2PV2)
-            {
-                Int32 a = BitUtility.ToInt32(data, 0, BitConverter.IsLittleEndian);
-                Int16 b = BitUtility.ToInt16(data, 4, BitConverter.IsLittleEndian);
-                Int16 c = BitUtility.ToInt16(data, 6, BitConverter.IsLittleEndian);
-                byte d = data[8], e = data[9], f = data[10], g = data[11];
-                byte h = data[12], i = data[13], j = data[14], k = data[15];
-
-                Guid = new Guid(a, b, c, d, e, f, g, h, i, j, k);
-            }
-        }
-
-        /// <summary>
-        /// Creates an acknowledgement message to a handshake message. This will only set the flag to 0 and
-        /// </summary>
-        /// <returns></returns>
-        public override P2PMessage CreateAcknowledgement()
-        {
-            // create a copy of this message
-            P2PDCHandshakeMessage ackMessage = new P2PDCHandshakeMessage(this.Version, this.GetBytes());
-
-            // set the identifier to 0 to set our own local identifier
-            ackMessage.Header.Identifier = 0;
-            return ackMessage;
-        }
 
         /// <summary>
         /// The Guid to use in the handshake message.
@@ -726,51 +662,103 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        /// <summary>
+        /// Defaults the Flags property to 0x100.
+        /// </summary>
+        public P2PDCHandshakeMessage(P2PVersion ver)
+            : base(ver)
+        {
+            if (ver == P2PVersion.P2PV1)
+                V1Header.Flags = P2PFlag.DirectHandshake;
+
+            InnerBody = new byte[0];
+        }
 
         /// <summary>
-        /// Foo+HandshakeMessage+Guid. Writes no footer.
+        /// Creates an acknowledgement message to a handshake message. This will only set the flag to 0.
+        /// </summary>
+        /// <returns></returns>
+        public override P2PMessage CreateAcknowledgement()
+        {
+            // re-create a copy of this message, it is just the same copy!
+            P2PDCMessage ackMessage = new P2PDCMessage(this);
+
+            // set the identifier to 0 to set our own local identifier
+            ackMessage.Header.Identifier = 0;
+            return ackMessage;
+        }
+
+
+        public override void ParseBytes(byte[] data)
+        {
+            if (Version == P2PVersion.P2PV1)
+            {
+                base.ParseBytes(data);
+
+                P2Pv1Header head = this.V1Header;
+
+                Guid = new Guid(
+                    (int)head.AckSessionId,
+
+                    (short)(head.AckIdentifier & 0x0000FFFF),
+                    (short)((head.AckIdentifier & 0xFFFF0000) >> 16),
+
+                    (byte)((head.AckTotalSize & 0x00000000000000FF)),
+                    (byte)((head.AckTotalSize & 0x000000000000FF00) >> 8),
+                    (byte)((head.AckTotalSize & 0x0000000000FF0000) >> 16),
+                    (byte)((head.AckTotalSize & 0x00000000FF000000) >> 24),
+                    (byte)((head.AckTotalSize & 0x000000FF00000000) >> 32),
+                    (byte)((head.AckTotalSize & 0x0000FF0000000000) >> 40),
+                    (byte)((head.AckTotalSize & 0x00FF000000000000) >> 48),
+                    (byte)((head.AckTotalSize & 0xFF00000000000000) >> 56)
+                );
+            }
+            else
+            {
+                // Don't call base.ParseBytes(); Data is 16 bytes for v2.
+                Guid = HashedNonceGenerator.CreateGuidFromData(Version, data);
+            }
+
+            InnerBody = new byte[0];
+        }
+
+        /// <summary>
+        /// Writes no footer.
         /// </summary>
         /// <returns></returns>
         public override byte[] GetBytes()
         {
-            byte[] fooMessage = new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 };
+            InnerBody = new byte[0];
 
-            // Get the bytes for the handshake
+            byte[] guidData = guid.ToByteArray();
+
             if (Version == P2PVersion.P2PV1)
             {
                 byte[] handshakeMessage = base.GetBytes(); // Calls P2PDCMessage.GetBytes();
 
-                byte[] totalMessage = new byte[handshakeMessage.Length + 8];
-                
-                byte[] guidMessage = guid.ToByteArray();
+                Array.Copy(guidData, 0, handshakeMessage, handshakeMessage.Length - guidData.Length, guidData.Length);
 
-                Array.Copy(fooMessage, 0, totalMessage, 0, 8);
-                Array.Copy(handshakeMessage, 0, totalMessage, 8, handshakeMessage.Length);
-                Array.Copy(guidMessage, 0, totalMessage, totalMessage.Length - 16, 16);
+                return handshakeMessage;
+            }
+            else
+            {
+                // UINT(LE) + GUID, Don't call base.GetBytes(); Because this is 20 bytes for v2.
+                byte[] totalMessage = new byte[4 + 16];
+                byte[] packetSize = BitUtility.GetBytes((UInt32)16, true);
+
+                Array.Copy(packetSize, 0, totalMessage, 0, packetSize.Length);
+                Array.Copy(guidData, 0, totalMessage, packetSize.Length, guidData.Length);
 
                 return totalMessage;
             }
-
-            // 4 0 0 0 f o o \0 16 0 0 0 GUID
-            byte[] totalMessage2 = new byte[28];
-
-            byte[] firstMessage = new byte[] { 0x04, 0x00, 0x00, 0x00, // 4 0 0 0
-                                        (byte)'f', (byte)'o',(byte)'o', 0x00,
-                                        0x10, 0x00, 0x00, 0x00 // 16 0 0 0
-            };
-
-            byte[] guidData = Guid.ToByteArray();
-            Array.Copy(fooMessage, 0, firstMessage, 0, firstMessage.Length);
-            Array.Copy(guidData, 0, totalMessage2, totalMessage2.Length, guidData.Length);
-
-            return totalMessage2;
         }
 
         public override string ToString()
         {
             return "[P2PDCHandshakeMessage]\r\n" +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "Guid         : {0}\r\n", this.Guid.ToString()) +
-                base.ToString();
+                (Version == P2PVersion.P2PV1 ? base.ToString() : String.Empty);
+
         }
     }
 

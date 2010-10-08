@@ -163,6 +163,7 @@ namespace MSNPSharp.DataTransfer
             processor.ConnectionEstablished += new EventHandler<EventArgs>(OnDirectProcessorConnected);
             processor.ConnectionClosed += new EventHandler<EventArgs>(OnDirectProcessorDisconnected);
             processor.ConnectingException += new EventHandler<ExceptionEventArgs>(OnDirectProcessorException);
+            processor.HandshakeCompleted += new EventHandler<P2PHandshakeMessageEventArgs>(OnDirectProcessorHandshakeCompleted);
 
             lock (pendingProcessors)
             {
@@ -318,7 +319,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-
+        //************************
 
         /// <summary>
         /// Sets the current message processor to the processor which has just connected succesfully.
@@ -339,6 +340,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        //************************
         /// <summary>
         /// Cleans up the direct connection.
         /// </summary>
@@ -348,6 +350,8 @@ namespace MSNPSharp.DataTransfer
         {
             CleanUpDirectConnection();
         }
+
+        //***********
 
         /// <summary>
         /// Called when the direct processor could not connect. It will start the data transfer over the switchboard session.
@@ -366,15 +370,43 @@ namespace MSNPSharp.DataTransfer
                 DirectConnectionFailed(this, new EventArgs());
         }
 
+        //*************
+
         /// <summary>
         /// Occurs when an acknowledgement to a send handshake has been received, or a handshake is received.
         /// This will start the data transfer, provided the local client is the sender.
         /// </summary>
-        protected virtual void OnHandshakeCompleted(P2PDirectProcessor processor)
+        protected virtual void OnDirectProcessorHandshakeCompleted(object sender, P2PHandshakeMessageEventArgs e)
         {
+            P2PDCHandshakeMessage p2pMessage = e.HandshakeMessage;
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Handshake accepted", GetType().Name);
 
-            UsePendingProcessor(processor);
+            if (p2pMessage.Version == P2PVersion.P2PV1 && p2pMessage.V1Header.Flags == P2PFlag.DirectHandshake)
+            {
+                // Check whether it is an acknowledgement to data preparation message
+                if (DCHandshakeAck != 0)
+                {
+                    UsePendingProcessor((P2PDirectProcessor)sender);
+                    return;
+                }
+
+                // check if it's a direct connection handshake
+                if (AutoHandshake)
+                {
+                    // create a handshake message based on the incoming p2p message and send it
+                    ((P2PDirectProcessor)sender).SendMessage(p2pMessage.CreateAcknowledgement());
+
+                    UsePendingProcessor((P2PDirectProcessor)sender);
+                    return;
+                }
+            }
+
+            if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                UsePendingProcessor((P2PDirectProcessor)sender);
+            }
+            
         }
 
 

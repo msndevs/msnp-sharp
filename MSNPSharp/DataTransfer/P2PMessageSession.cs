@@ -453,24 +453,7 @@ namespace MSNPSharp.DataTransfer
                 // Keep track of the remote identifier
                 RemoteIdentifier = p2pMessage.Header.Identifier;
 
-                // Check whether it is an acknowledgement to data preparation message
-                if (p2pMessage.V1Header.Flags == P2PFlag.DirectHandshake && DCHandshakeAck != 0)
-                {
-                    OnHandshakeCompleted((P2PDirectProcessor)sender);
-                    return;
-                }
-
-                // check if it's a direct connection handshake
-                if (p2pMessage.V1Header.Flags == P2PFlag.DirectHandshake && AutoHandshake == true)
-                {
-                    // create a handshake message based on the incoming p2p message and send it
-                    P2PDCHandshakeMessage dcHsMessage = new P2PDCHandshakeMessage(
-                        p2pMessage.Version, p2pMessage.GetBytes());
-
-                    sender.SendMessage(dcHsMessage.CreateAcknowledgement());
-                    OnHandshakeCompleted((P2PDirectProcessor)sender);
-                    return;
-                }
+               
 
                 if (p2pMessage.V1Header.Flags == P2PFlag.Error)
                 {
