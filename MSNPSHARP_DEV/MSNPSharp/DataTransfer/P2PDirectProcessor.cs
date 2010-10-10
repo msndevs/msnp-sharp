@@ -271,8 +271,42 @@ namespace MSNPSharp.DataTransfer
             // Auth state
             if (!authenticated)
             {
+                P2PVersion authVersion = P2PVersion.P2PV1;
+
+                if (data.Length == 48)
+                {
+                    authVersion = P2PVersion.P2PV1;
+                }
+                else if (data.Length == 16)
+                {
+                    authVersion = P2PVersion.P2PV2;
+                }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                        "Invalid handshake length, the data was: " + Encoding.ASCII.GetString(data), GetType().Name);
+                    Dispose();
+                    return;
+                }
+
+                if (authVersion != this.version)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                        String.Format("Received version is {0}, expected {1}", authVersion, this.version), GetType().Name);
+                    Dispose();
+                    return;
+                }
+
                 P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(version);
                 hm.ParseBytes(data);
+
+                if (hm.Version == P2PVersion.P2PV1 && (P2PFlag.DirectHandshake != (hm.V1Header.Flags & P2PFlag.DirectHandshake)))
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                       "Handshake flag not set for v1, the flag was: " + hm.V1Header.Flags, GetType().Name);
+                    Dispose();
+                    return;
+                }
 
                 Guid incomingGuid = hm.Guid;
 
@@ -282,11 +316,23 @@ namespace MSNPSharp.DataTransfer
                     isAuthNonceHashed = false;
                 }
 
+                if (!IsListener)
+                {
+                    authenticated = true;
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                        String.Format("[DC --> CONNECT] AUTH OK; Received ack: {0}", hm.Guid), GetType().Name);
+
+                    OnHandshakeCompleted(new P2PHandshakeMessageEventArgs(hm));
+                    return;
+                }
+
                 if (authNonce == incomingGuid)
                 {
                     authenticated = true;
 
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "auth key:" + authNonce, GetType().Name);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                        String.Format("[DC <-- LISTEN] AUTH OK; Received nonce: {0}, hashed {1}", hm.Guid, incomingGuid), GetType().Name);
 
                     OnHandshakeCompleted(new P2PHandshakeMessageEventArgs(hm));
                 }
