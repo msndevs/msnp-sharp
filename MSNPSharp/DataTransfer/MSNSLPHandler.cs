@@ -1716,16 +1716,6 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void SendDCInvitation(MSNSLPTransferProperties transferProperties)
         {
-            if (Version == P2PVersion.P2PV2)  //In p2pv2 our library don't support any direct connection.
-                return;
-
-            //0-7: location of the FT preview
-            //8-15: file size
-            //16-19: I don't know or need it so...
-            //20-540: location I use to get the file name
-            // set class variables
-
-
             // create a new branch, but keep the same callid as the first invitation
             transferProperties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
 
@@ -1770,8 +1760,27 @@ namespace MSNPSharp.DataTransfer
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
 
-            P2PMessage p2pMessage = new P2PMessage(P2PVersion.P2PV1);
+            P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
+
+            if (Version == P2PVersion.P2PV2)
+            {
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
+
+                if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > 1202)
+                {
+                    p2pMessage.V2Header.PackageNumber = (ushort)((p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength) / 1202 + 1);
+                }
+                else
+                {
+                    p2pMessage.V2Header.PackageNumber = 0;
+                }
+                
+            }
+
+            /////P2PTransferSession.GetNextSLPRequestDataPacketNumber();
+
+            //*************************
 
             MessageProcessor.SendMessage(p2pMessage);
         }
@@ -1840,7 +1849,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         private Dictionary<Guid, MSNSLPTransferProperties> transferProperties = new Dictionary<Guid, MSNSLPTransferProperties>();
 
-        private int directConnectionExpireInterval = 6000;
+        private int directConnectionExpireInterval = 12000;
 
         /// <summary>
         /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
@@ -2067,18 +2076,14 @@ namespace MSNPSharp.DataTransfer
                         switch (properties.DataType)
                         {
                             case DataTransferType.File:
-                                if (Version == P2PVersion.P2PV1)
-                                {
-                                    // ok we can receive the OK message. we can now send the invitation to setup a transfer connection
-                                    if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
-                                        SendDCInvitation(properties);
 
-                                    session.StartDataTransfer(true);
-                                }
-                                else
-                                {
-                                    session.StartDataTransfer(false);
-                                }
+                                // We can receive the OK message.
+                                // We can now send the invitation to setup a transfer connection
+                                if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
+                                    SendDCInvitation(properties);
+
+                                session.StartDataTransfer(true);
+
                                 break;
 
                             case DataTransferType.Activity:
@@ -2212,7 +2217,10 @@ namespace MSNPSharp.DataTransfer
 
             if (portAvail == 0)
             {
-                for (int p = 1119; p <= IPEndPoint.MaxPort; p++)
+                // Don't try all ports
+                for (int p = 1119, maxTry = 100;
+                    p <= IPEndPoint.MaxPort && maxTry < 1;
+                    p++, maxTry--)
                 {
                     Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     try
@@ -2225,11 +2233,17 @@ namespace MSNPSharp.DataTransfer
                     }
                     catch (SocketException ex)
                     {
+                        // Permission denied
                         if (ex.ErrorCode == 10048 /*Address already in use*/ ||
                             ex.ErrorCode == 10013 /*Permission denied*/)
-                            continue;
-                        else
-                            continue; // throw;
+                        {
+                            p += 100;
+                        }
+                        continue; // throw;
+                    }
+                    catch (System.Security.SecurityException)
+                    {
+                        break;
                     }
                 }
             }
@@ -2334,10 +2348,6 @@ namespace MSNPSharp.DataTransfer
 
             slpMessage.BodyValues["Bridge"] = "TCPv1 SBBridge";
 
-
-
-
-
             P2PMessage p2pReplyMessage = new P2PMessage(Version);
             p2pReplyMessage.InnerMessage = slpMessage;
 
@@ -2347,14 +2357,9 @@ namespace MSNPSharp.DataTransfer
                 p2pReplyMessage.V2Header.PackageNumber = P2PTransferSession.GetNextSLPStatusDataPacketNumber(p2pMessage.V2Header.PackageNumber);
             }
 
-
-            if (Version == P2PVersion.P2PV1)
-            {
-                P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(P2PVersion.P2PV1);
-                hsMessage.Guid = nonce;
-                MessageSession.HandshakeMessage = hsMessage;
-            }
-
+            P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(Version);
+            hsMessage.Guid = nonce;
+            MessageSession.HandshakeMessage = hsMessage;
 
             // and notify the remote client that he can connect
             MessageProcessor.SendMessage(p2pReplyMessage);

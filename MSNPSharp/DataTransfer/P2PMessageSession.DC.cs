@@ -69,7 +69,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Tracked to know when an acknowledgement for the handshake is received.
         /// </summary>
-        private uint DCHandshakeAck;
+        private uint DCHandshakeAckV1;
 
         /// <summary>
         /// The handshake message to send to the receiving client when a direct connection has been established
@@ -286,11 +286,14 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
-            IncreaseLocalIdentifier();
-            HandshakeMessage.Header.Identifier = LocalIdentifier;
+            if (HandshakeMessage.Version == P2PVersion.P2PV1)
+            {
+                IncreaseLocalIdentifier();
+                HandshakeMessage.Header.Identifier = LocalIdentifier;
 
-            HandshakeMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
-            DCHandshakeAck = HandshakeMessage.V1Header.AckSessionId;
+                HandshakeMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                DCHandshakeAckV1 = HandshakeMessage.V1Header.AckSessionId;
+            }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
 
@@ -328,15 +331,14 @@ namespace MSNPSharp.DataTransfer
         /// <param name="e"></param>
         private void OnDirectProcessorConnected(object sender, EventArgs e)
         {
-            //DCHandshakeProcessor = (IMessageProcessor)sender;
             P2PDirectProcessor p2pdp = (P2PDirectProcessor)sender;
 
-            if (p2pdp.IsListener == false)
+            if (p2pdp.IsListener == false &&
+                AutoHandshake &&
+                HandshakeMessage != null)
             {
-                if (AutoHandshake == true && HandshakeMessage != null)
-                {
-                    SendHandshakeMessage(p2pdp);
-                }
+                SendHandshakeMessage(p2pdp);
+
             }
         }
 
@@ -385,7 +387,7 @@ namespace MSNPSharp.DataTransfer
             if (p2pMessage.Version == P2PVersion.P2PV1 && p2pMessage.V1Header.Flags == P2PFlag.DirectHandshake)
             {
                 // Check whether it is an acknowledgement to data preparation message
-                if (DCHandshakeAck != 0)
+                if (DCHandshakeAckV1 != 0)
                 {
                     UsePendingProcessor((P2PDirectProcessor)sender);
                     return;
@@ -404,11 +406,12 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
-                UsePendingProcessor((P2PDirectProcessor)sender);
+                if (AutoHandshake)
+                {
+                    ((P2PDirectProcessor)sender).SendMessage(HandshakeMessage);
+                    UsePendingProcessor((P2PDirectProcessor)sender);
+                }
             }
-            
         }
-
-
     }
 };

@@ -506,23 +506,31 @@ namespace MSNPSharp.DataTransfer
                                 DataStream.Seek((long)p2pMessage.V1Header.Offset, SeekOrigin.Begin);
                                 DataStream.Write(p2pMessage.InnerBody, 0, p2pMessage.InnerBody.Length);
 
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
-                                    "Data received, " + (p2pMessage.V1Header.Offset + (ulong)p2pMessage.Header.MessageSize).ToString() + 
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                    "Data received, " + (p2pMessage.V1Header.Offset + (ulong)p2pMessage.Header.MessageSize).ToString() +
                                     " of " + p2pMessage.Header.TotalSize);
                             }
                             // check for end of file transfer
                             if (p2pMessage.V1Header.Offset + p2pMessage.Header.MessageSize == p2pMessage.Header.TotalSize)
                             {
-                                P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                                ack.Header.SessionId = p2pMessage.Header.SessionId;
-
-                                SendMessage(ack);
-
+                                // Close data stream before sending ack
                                 if (AutoCloseStream)
                                     DataStream.Close();
 
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
-                                    "All data for transfer session " + TransferProperties.SessionId + 
+                                P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                                try
+                                {
+                                    ack.Header.SessionId = p2pMessage.Header.SessionId;
+                                    SendMessage(ack);
+                                }
+                                catch (Exception)
+                                {
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                                    "ACK couldn't be sent, closed remotely after last packet? The ACK was: " + ack.ToDebugString(), GetType().Name);
+                                }
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                    "All data for transfer session " + TransferProperties.SessionId +
                                     " have been received, trigger OnTransferFinished event.");
                                 OnTransferFinished();
                             }
