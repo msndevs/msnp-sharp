@@ -657,6 +657,8 @@
 				<xsd:sequence>
 					<xsd:element name="Id" type="xsd:string"/>
 					<xsd:element name="NameHint" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="LastNameHint" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="IsFavorite" type="xsd:boolean" minOccurs="0"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
@@ -670,9 +672,26 @@
 			</xsd:extension>
 		</xsd:complexContent>
 	</xsd:complexType>
+	<xsd:complexType name="SafeLinkDetailsType">
+		<xsd:sequence>
+			<xsd:element name="Offset" type="xsd:integer"/>
+			<xsd:element name="Length" type="xsd:integer"/>
+			<xsd:element name="SafeUrl" type="xsd:anyURI"/>
+		</xsd:sequence>
+	</xsd:complexType>
 	<xsd:complexType name="TextTemplateVariable">
 		<xsd:complexContent>
-			<xsd:extension base="msnab:SimpleTemplateVariableBaseType"/>
+			<xsd:extension base="msnab:SimpleTemplateVariableBaseType">
+				<xsd:sequence>
+					<xsd:element name="SafeLinks" minOccurs="0">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="SafeLinkDetails" type="msnab:SafeLinkDetailsType"/>
+							</xsd:sequence>
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
 		</xsd:complexContent>
 	</xsd:complexType>
 	<xsd:complexType name="HlinkTemplateVariable">
@@ -687,6 +706,7 @@
 							</xsd:sequence>
 						</xsd:complexType>
 					</xsd:element>
+					<xsd:element name="ValueAsSafeLink" type="xsd:anyURI" minOccurs="0"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
@@ -718,9 +738,18 @@
 							</xsd:sequence>
 						</xsd:complexType>
 					</xsd:element>
+					<xsd:element name="HrefAsSafeLink" type="xsd:anyURI" minOccurs="0"/>
+					<xsd:element name="AltText" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="TargetMediaType" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="TargetMediaSource" type="xsd:string" minOccurs="0"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="RelevanceInfoType">
+		<xsd:sequence>
+			<xsd:element name="TimeWeightedScore" type="xsd:double"/>
+		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ActivityDetailsType">
 		<xsd:sequence>
@@ -736,6 +765,10 @@
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="ActivityID" type="xsd:ID" minOccurs="0"/>
+			<xsd:element name="CanPublishComments" type="xsd:boolean" minOccurs="0"/>
+			<xsd:element name="VisibilityHint" type="xsd:integer" minOccurs="0"/>
+			<xsd:element name="RelevanceInfo" type="msnab:RelevanceInfoType" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="RecentActivityTemplateType">
@@ -878,6 +911,11 @@
 			<xsd:element name="CreatorPassportName" type="xsd:string"/>
 			<xsd:element name="CircleAttributes" type="msnab:CircleAttributesType"/>
 			<xsd:element name="MessengerApplicationServiceCreated" type="xsd:boolean" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="locale">
+		<xsd:sequence>
+			<xsd:element name="string" type="xsd:string" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 </xsd:schema>
