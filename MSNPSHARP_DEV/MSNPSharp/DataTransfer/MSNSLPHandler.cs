@@ -221,10 +221,84 @@ namespace MSNPSharp.DataTransfer
 
         #endregion
 
-        #region Properties
+        #region Members
+
+        private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
+        private IPEndPoint externalEndPoint = null;
+        private P2PVersion version = P2PVersion.P2PV1;
+        private int directConnectionExpireInterval = 6000;
+        private IMessageProcessor messageProcessor = null;
+        private Guid schedulerID = Guid.Empty;
+
         /// <summary>
+        /// A dictionary containing MSNSLPTransferProperties objects. Indexed by CallId;
         /// </summary>
-        private IMessageProcessor messageProcessor;
+        private Dictionary<Guid, MSNSLPTransferProperties> transferProperties =
+            new Dictionary<Guid, MSNSLPTransferProperties>(4);
+
+        #endregion
+
+        #region Constructors & Destructors
+
+        protected MSNSLPHandler()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
+        }
+
+        public MSNSLPHandler(P2PVersion ver, Guid invitationSchedulerId, IPAddress externalAddress)
+        {
+            version = ver;
+            schedulerID = invitationSchedulerId;
+            ExternalEndPoint = new IPEndPoint(externalAddress, 0);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                String.Format("Constructing object, version = {0}\r\n" +
+                "A new {1} created, with scheduler id = {2}",
+                Version, GetType().Name, SchedulerID.ToString("B")), GetType().Name);
+        }
+
+        /// <summary>
+        /// Destructor calls Dispose(false)
+        /// </summary>
+        ~MSNSLPHandler()
+        {
+            Dispose(false);
+        }
+
+        /// <summary>
+        /// Closes all sessions. Dispose() calls Dispose(true)
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Free managed resources
+                CloseAllSessions();
+            }
+
+            // Free native resources if there are any.
+        }
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// P2P version
+        /// </summary>
+        public P2PVersion Version
+        {
+            get
+            {
+                return version;
+            }
+        }
 
         /// <summary>
         /// The message processor to send outgoing p2p messages to.
@@ -258,33 +332,20 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// The message session to send message to. This is simply the MessageProcessor property,
+        /// but explicitly casted as a P2PMessageSession.
         /// </summary>
-        private IPEndPoint externalEndPoint;
-
-        /// <summary>
-        /// The client end-point as perceived by the server. This can differ from the actual local endpoint through the use of routers.
-        /// This value is used to determine how to set-up a direct connection.
-        /// </summary>
-        public IPEndPoint ExternalEndPoint
+        public P2PMessageSession MessageSession
         {
             get
             {
-                return externalEndPoint;
-            }
-
-            private set
-            {
-                externalEndPoint = value;
+                return (P2PMessageSession)MessageProcessor;
             }
         }
 
         /// <summary>
-        /// </summary>
-        private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
-
-        /// <summary>
-        /// The client's local end-point. This can differ from the external endpoint through the use of routers.
-        /// This value is used to determine how to set-up a direct connection.
+        /// The client's local end-point. This can differ from the external endpoint through the use of
+        /// routers. This value is used to determine how to set-up a direct connection.
         /// </summary>
         public IPEndPoint LocalEndPoint
         {
@@ -305,7 +366,22 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        private Guid schedulerID = Guid.Empty;
+        /// <summary>
+        /// The client end-point as perceived by the server. This can differ from the actual local endpoint
+        /// through the use of routers. This value is used to determine how to set-up a direct connection.
+        /// </summary>
+        public IPEndPoint ExternalEndPoint
+        {
+            get
+            {
+                return externalEndPoint;
+            }
+
+            private set
+            {
+                externalEndPoint = value;
+            }
+        }
 
         /// <summary>
         /// The P2P invitation scheduler guid.
@@ -318,62 +394,11 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-
-
         #endregion
 
-        #region Public
+        #region SendInvitation
 
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        protected MSNSLPHandler()
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
-        }
-
-        public MSNSLPHandler(P2PVersion ver, Guid invitationSchedulerId, IPAddress externalAddress)
-        {
-            version = ver;
-            schedulerID = invitationSchedulerId;
-            ExternalEndPoint = new IPEndPoint(externalAddress, 0);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                "Constructing object, version = " + ver.ToString() + "\r\n" +
-                "A new " + GetType().Name + " created, with scheduler id = "
-                + SchedulerID.ToString("B")
-                , GetType().Name);
-        }
-
-        ~MSNSLPHandler()
-        {
-            // Finalizer calls Dispose(false)
-            Dispose(false);
-        }
-
-        private P2PVersion version = P2PVersion.P2PV1;
-
-        public P2PVersion Version
-        {
-            get
-            {
-                return version;
-            }
-        }
-
-        /// <summary>
-        /// The message session to send message to. This is simply the MessageProcessor property, but explicitly casted as a P2PMessageSession.
-        /// </summary>
-        public P2PMessageSession MessageSession
-        {
-            get
-            {
-                return (P2PMessageSession)MessageProcessor;
-            }
-        }
-
-
-        
+        #region MSNObject
 
         /// <summary>
         /// Sends the remote contact a request for the given context. The invitation message is send over the current MessageProcessor.
@@ -390,7 +415,7 @@ namespace MSNPSharp.DataTransfer
             P2PTransferSession transferSession = new P2PTransferSession(p2pMessage.Version, properties, MessageSession);
             transferSession.TransferFinished += delegate
             {
-                transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
+                transferSession.SendDisconnectMessage(SLPRequestMessage.CreateClosingMessage(properties));
             };
 
             Contact remote = MessageSession.RemoteContact;
@@ -500,8 +525,6 @@ namespace MSNPSharp.DataTransfer
 
             }
 
-
-
             // store the transferproperties
             lock (transferProperties)
                 transferProperties[properties.CallId] = properties;
@@ -516,6 +539,10 @@ namespace MSNPSharp.DataTransfer
 
             return transferSession;
         }
+
+        #endregion
+
+        #region Activity
 
         /// <summary>
         /// Sends the remote contact a invitation for the activity. The invitation message is send over the current MessageProcessor.
@@ -700,7 +727,7 @@ namespace MSNPSharp.DataTransfer
             transferSession.MessageFlag = (uint)P2PFlag.Normal;
             transferSession.TransferFinished += delegate
             {
-                transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
+                transferSession.SendDisconnectMessage(SLPRequestMessage.CreateClosingMessage(properties));
             };
 
 
@@ -709,6 +736,10 @@ namespace MSNPSharp.DataTransfer
 
             return transferSession;
         }
+
+        #endregion
+
+        #region File
 
         /// <summary>
         /// Sends the remote contact a request for the filetransfer. The invitation message is send over the current MessageProcessor.
@@ -719,26 +750,26 @@ namespace MSNPSharp.DataTransfer
         /// <param name="file"></param>
         public P2PTransferSession SendInvitation(Contact localContact, Contact remoteContact, string filename, Stream file)
         {
-            //0-7: location of the FT preview
-            //8-15: file size
-            //16-19: I don't know or need it so...
-            //20-540: location I use to get the file name
-            // set class variables
-            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(localContact, MessageSession.LocalContactEndPointID,
-                remoteContact, MessageSession.RemoteContactEndPointID);
-            ;
+
+            MSNSLPTransferProperties properties = new MSNSLPTransferProperties(
+                localContact, MessageSession.LocalContactEndPointID, remoteContact, MessageSession.RemoteContactEndPointID);
+
             do
             {
                 properties.SessionId = (uint)(new Random().Next(50000, int.MaxValue));
             }
             while (MessageSession.GetTransferSession(properties.SessionId) != null);
 
-
             properties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
             properties.CallId = Guid.NewGuid();
 
             properties.DataType = DataTransferType.File;
 
+            //0-7: location of the FT preview
+            //8-15: file size
+            //16-19: I don't know or need it so...
+            //20-540: location I use to get the file name
+            // set class variables
             // size: location (8) + file size (8) + unknown (4) + filename (236) = 256
 
             // create a new bytearray to build up the context
@@ -794,9 +825,6 @@ namespace MSNPSharp.DataTransfer
             P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
 
-            // set the size, it could be more than 1202 bytes. This will make sure it is split in multiple messages by the processor.
-            //p2pMessage.MessageSize = (uint)slpMessage.GetBytes().Length;
-
             // create a transfer session to handle the actual data transfer
             P2PTransferSession transferSession = new P2PTransferSession(Version, properties, MessageSession);
 
@@ -818,15 +846,14 @@ namespace MSNPSharp.DataTransfer
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
             }
 
-
-
             transferSession.MessageFlag = (uint)P2PFlag.FileData;
             transferSession.MessageFooter = P2PConst.FileTransFooter2;
 
             transferSession.TransferFinished += delegate
             {
-                transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
+                transferSession.SendDisconnectMessage(SLPRequestMessage.CreateClosingMessage(properties));
             };
+
             // set the data stream to read from
             transferSession.DataStream = file;
             transferSession.IsSender = true;
@@ -838,6 +865,12 @@ namespace MSNPSharp.DataTransfer
             return transferSession;
         }
 
+        #endregion
+
+        #endregion
+
+        #region Accept/Reject Transfer
+
         /// <summary>
         /// The client programmer should call this if he wants to reject the transfer
         /// </summary>
@@ -845,8 +878,8 @@ namespace MSNPSharp.DataTransfer
         {
             if (invitationArgs.TransferSession != null)
             {
-                invitationArgs.TransferSession.SendMessage(CreateDeclineMessage(invitationArgs.TransferProperties));
-                invitationArgs.TransferSession.SendMessage(CreateClosingMessage(invitationArgs.TransferProperties));
+                invitationArgs.TransferSession.SendMessage(SLPStatusMessage.CreateDeclineMessage(invitationArgs.TransferProperties));
+                invitationArgs.TransferSession.SendMessage(SLPRequestMessage.CreateClosingMessage(invitationArgs.TransferProperties));
 
             }
             else
@@ -854,7 +887,6 @@ namespace MSNPSharp.DataTransfer
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[RejectTransfer Error] No transfer session attached.");
             }
         }
-
 
         /// <summary>
         /// The client programmer should call this if he wants to accept the transfer
@@ -913,7 +945,29 @@ namespace MSNPSharp.DataTransfer
             }
 
             OnTransferSessionCreated(transferSession);
-            transferSession.AcceptInviation(CreateAcceptanceMessage(properties));
+            transferSession.AcceptInviation(SLPStatusMessage.CreateAcceptanceMessage(properties));
+        }
+
+        #endregion
+
+        #region CloseSession & CloseAllSessions
+
+        /// <summary>
+        /// Close the specified session
+        /// </summary>
+        /// <param name="transferSession">Session to close</param>
+        public void CloseSession(P2PTransferSession transferSession)
+        {
+            if (transferSession != null)
+            {
+                transferSession.SendMessage(SLPRequestMessage.CreateClosingMessage(transferSession.TransferProperties));
+                System.Threading.Thread.Sleep(300);
+                transferSession.AbortTransfer();
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[CloseSessions Error] No transfer session attached on transfer layer.");
+            }
         }
 
         /// <summary>
@@ -936,50 +990,9 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// Close the specified session
-        /// </summary>
-        /// <param name="transferSession">Session to close</param>
-        public void CloseSession(P2PTransferSession transferSession)
-        {
-            if (transferSession != null)
-            {
-                transferSession.SendMessage(CreateClosingMessage(transferSession.TransferProperties));
-                System.Threading.Thread.Sleep(300);
-                transferSession.AbortTransfer();
-            }
-            else
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[CloseSessions Error] No transfer session attached on transfer layer.");
-            }
-        }
-
         #endregion
 
-        #region Protected
-
-        /// <summary>
-        /// Fires the TransferSessionCreated event and registers event handlers.
-        /// </summary>
-        /// <param name="session"></param>
-        protected virtual void OnTransferSessionCreated(P2PTransferSession session)
-        {
-            session.TransferFinished += new EventHandler<EventArgs>(MSNSLPHandler_TransferFinished);
-            session.TransferAborted += new EventHandler<EventArgs>(MSNSLPHandler_TransferAborted);
-
-            if (TransferSessionCreated != null)
-                TransferSessionCreated(this, new P2PTransferSessionEventArgs(session));
-        }
-
-        /// <summary>
-        /// Fires the TransferSessionClosed event.
-        /// </summary>
-        /// <param name="session"></param>
-        protected virtual void OnTransferSessionClosed(P2PTransferSession session)
-        {
-            if (TransferSessionClosed != null)
-                TransferSessionClosed(this, new P2PTransferSessionEventArgs(session));
-        }
+        #region Event Handlers
 
         /// <summary>
         /// Fires the TransferInvitationReceived event.
@@ -992,6 +1005,69 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Fires the TransferSessionClosed event.
+        /// </summary>
+        protected virtual void OnTransferSessionClosed(P2PTransferSession session)
+        {
+            if (TransferSessionClosed != null)
+                TransferSessionClosed(this, new P2PTransferSessionEventArgs(session));
+        }
+
+        /// <summary>
+        /// Fires the TransferSessionCreated event and registers event handlers.
+        /// </summary>
+        protected virtual void OnTransferSessionCreated(P2PTransferSession session)
+        {
+            session.TransferFinished += new EventHandler<EventArgs>(MSNSLPHandler_TransferFinished);
+            session.TransferAborted += new EventHandler<EventArgs>(MSNSLPHandler_TransferAborted);
+
+            if (TransferSessionCreated != null)
+                TransferSessionCreated(this, new P2PTransferSessionEventArgs(session));
+        }
+
+        /// <summary>
+        /// Cleans up the transfer session.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MSNSLPHandler_TransferAborted(object sender, EventArgs e)
+        {
+            P2PTransferSession session = (P2PTransferSession)sender;
+            RemoveTransferSession(session);
+        }
+
+        /// <summary>
+        /// Closes the datastream and sends the closing message, if the local client is the receiver. 
+        /// Afterwards the associated <see cref="P2PTransferSession"/> object is removed from the class's
+        /// <see cref="P2PMessageSession"/> object.
+        /// </summary>
+        private void MSNSLPHandler_TransferFinished(object sender, EventArgs e)
+        {
+            P2PTransferSession transferSession = (P2PTransferSession)sender;
+            Contact remote = MessageSession.RemoteContact;
+            MSNSLPTransferProperties properties = transferSession.TransferProperties;
+
+            if (properties.RemoteInvited == false)
+            {
+                if (Version == P2PVersion.P2PV1)
+                {
+                    // we are the receiver. send close message back
+                    P2PMessage p2pMessage = new P2PMessage(transferSession.Version);
+                    p2pMessage.InnerMessage = SLPRequestMessage.CreateClosingMessage(properties);
+                    p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
+                    MessageProcessor.SendMessage(p2pMessage);
+                }
+
+                // close it
+                RemoveTransferSession(transferSession);
+            }
+        }
+
+        #endregion
+
+        #region Helpers
+
+        /// <summary>
         /// Returns the MSNSLPTransferProperties object associated with the specified call id.
         /// </summary>
         /// <param name="callId"></param>
@@ -1002,71 +1078,42 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Creates the handshake message to send in a direct connection.
+        /// Closes the session's datastream and removes the transfer sessions from the class' <see cref="P2PMessageSession"/> object (MessageProcessor property).
         /// </summary>
-        /// <param name="properties"></param>
-        /// <returns></returns>
-        protected virtual P2PDCHandshakeMessage CreateHandshakeMessage(MSNSLPTransferProperties properties)
+        /// <param name="session"></param>
+        protected virtual void RemoveTransferSession(P2PTransferSession session)
         {
-            P2PDCHandshakeMessage dcMessage = new P2PDCHandshakeMessage(properties.TransferStackVersion);
-            dcMessage.Header.SessionId = 0;
+            // remove the session
+            OnTransferSessionClosed(session);
 
-            System.Diagnostics.Debug.Assert(properties.Nonce != Guid.Empty, "Direct connection established, but no Nonce GUID is available.");
-            System.Diagnostics.Debug.Assert(properties.SessionId != 0, "Direct connection established, but no session id is available.");
+            if (session.AutoCloseStream)
+                session.DataStream.Close();
 
-            // set the guid to use in the handshake message
-            dcMessage.Guid = properties.Nonce;
-
-            return dcMessage;
+            MessageSession.RemoveTransferSession(session);
         }
 
-
         /// <summary>
-        /// Creates a message which is send directly after the last data message.
+        /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
         /// </summary>
+        /// <remarks>The context must be a plain string, no base-64 decoding will be done</remarks>
+        /// <param name="context"></param>
         /// <returns></returns>
-        protected virtual SLPRequestMessage CreateClosingMessage(MSNSLPTransferProperties transferProperties)
+        private static string ExtractChecksum(string context)
         {
-            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, MSNSLPRequestMethod.BYE);
-            slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
-            slpMessage.FromMail = transferProperties.LocalContactEPIDString;
-
-            slpMessage.Branch = transferProperties.LastBranch;
-            slpMessage.CSeq = 0;
-            slpMessage.CallId = transferProperties.CallId;
-            slpMessage.MaxForwards = 0;
-            slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
-
-            slpMessage.BodyValues["SessionID"] = transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-            if (transferProperties.DataType == DataTransferType.Activity)
+            Regex shaRe = new Regex("SHA1C=\"([^\"]+)\"");
+            Match match = shaRe.Match(context);
+            if (match.Success)
             {
-                slpMessage.BodyValues["Context"] = "dAMAgQ==";
-
+                return match.Groups[1].Value;
             }
-
-            return slpMessage;
-        }
-
-
-        /// <summary>
-        /// Creates an 500 internal error message.
-        /// </summary>
-        /// <param name="transferProperties"></param>
-        /// <returns></returns>
-        protected virtual SLPStatusMessage CreateInternalErrorMessage(MSNSLPTransferProperties transferProperties)
-        {
-            SLPStatusMessage slpMessage = new SLPStatusMessage(transferProperties.RemoteContactEPIDString, 500, "Internal Error");
-            slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
-            slpMessage.FromMail = transferProperties.LocalContactEPIDString;
-            slpMessage.Branch = transferProperties.LastBranch;
-            slpMessage.CSeq = transferProperties.LastCSeq;
-            slpMessage.CallId = transferProperties.CallId;
-            slpMessage.MaxForwards = 0;
-            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            slpMessage.BodyValues["SessionID"] = transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            slpMessage.BodyValues["SChannelState"] = "0";
-            return slpMessage;
+            else
+            {
+                shaRe = new Regex("SHA1D=\"([^\"]+)\"");
+                match = shaRe.Match(context);
+                if (match.Success)
+                    return match.Groups[1].Value;
+            }
+            throw new MSNPSharpException("SHA field could not be extracted from the specified context: " + context);
         }
 
         /// <summary>
@@ -1127,7 +1174,6 @@ namespace MSNPSharp.DataTransfer
 
             return properties;
         }
-
 
         /// <summary>
         /// Sends the invitation request for a direct connection
@@ -1228,415 +1274,6 @@ UPnPNat: true
         }
 
 
-        /// <summary>
-        /// Creates a 200 OK message. This is called by the handler after the client-programmer
-        /// has accepted the invitation.
-        /// </summary>
-        /// <returns></returns>
-        protected static SLPStatusMessage CreateAcceptanceMessage(MSNSLPTransferProperties properties)
-        {
-            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 200, "OK");
-            newMessage.ToMail = properties.RemoteContactEPIDString;
-            newMessage.FromMail = properties.LocalContactEPIDString;
-            newMessage.Branch = properties.LastBranch;
-            newMessage.CSeq = 1;
-            newMessage.CallId = properties.CallId;
-            newMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            newMessage.BodyValues["SessionID"] = properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            return newMessage;
-        }
-
-
-
-
-        /// <summary>
-        /// Creates a 603 Decline message.
-        /// </summary>
-        /// <returns></returns>
-        protected static SLPStatusMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
-        {
-            // create 603 Decline message
-            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 603, "Decline");
-            newMessage.ToMail = properties.RemoteContactEPIDString;
-            newMessage.FromMail = properties.LocalContactEPIDString;
-            newMessage.Branch = properties.LastBranch;
-            newMessage.CSeq = 1;
-            newMessage.CallId = properties.CallId;
-            newMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-            newMessage.BodyValues["SessionID"] = properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            return newMessage;
-        }
-
-
-        /// <summary>
-        /// Closes the session's datastream and removes the transfer sessions from the class' <see cref="P2PMessageSession"/> object (MessageProcessor property).
-        /// </summary>
-        /// <param name="session"></param>
-        protected virtual void RemoveTransferSession(P2PTransferSession session)
-        {
-            // remove the session
-            OnTransferSessionClosed(session);
-            if (session.AutoCloseStream)
-                session.DataStream.Close();
-
-            MessageSession.RemoveTransferSession(session);
-        }
-
-        #endregion
-
-        #region Private
-
-        /// <summary>
-        /// A dictionary containing MSNSLPTransferProperties objects. Indexed by CallId;
-        /// </summary>
-        private Dictionary<Guid, MSNSLPTransferProperties> transferProperties = new Dictionary<Guid, MSNSLPTransferProperties>();
-
-        private int directConnectionExpireInterval = 6000;
-
-        /// <summary>
-        /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
-        /// </summary>
-        /// <remarks>The context must be a plain string, no base-64 decoding will be done</remarks>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        private static string ExtractChecksum(string context)
-        {
-            Regex shaRe = new Regex("SHA1C=\"([^\"]+)\"");
-            Match match = shaRe.Match(context);
-            if (match.Success)
-            {
-                return match.Groups[1].Value;
-            }
-            else
-            {
-                shaRe = new Regex("SHA1D=\"([^\"]+)\"");
-                match = shaRe.Match(context);
-                if (match.Success)
-                    return match.Groups[1].Value;
-            }
-            throw new MSNPSharpException("SHA field could not be extracted from the specified context: " + context);
-        }
-
-
-
-        /// <summary>
-        /// Closes the datastream and sends the closing message, if the local client is the receiver. 
-        /// Afterwards the associated <see cref="P2PTransferSession"/> object is removed from the class's <see cref="P2PMessageSession"/> object.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MSNSLPHandler_TransferFinished(object sender, EventArgs e)
-        {
-            P2PTransferSession transferSession = (P2PTransferSession)sender;
-            Contact remote = MessageSession.RemoteContact;
-
-            MSNSLPTransferProperties properties = transferSession.TransferProperties;
-
-
-            if (properties.RemoteInvited == false)
-            {
-                if (Version == P2PVersion.P2PV1)
-                {
-                    // we are the receiver. send close message back
-                    P2PMessage p2pMessage = new P2PMessage(transferSession.Version);
-                    p2pMessage.InnerMessage = CreateClosingMessage(properties);
-                    p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
-                    MessageProcessor.SendMessage(p2pMessage);
-                }
-
-                // close it
-                RemoveTransferSession(transferSession);
-            }
-
-
-        }
-
-
-        /// <summary>
-        /// Cleans up the transfer session.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MSNSLPHandler_TransferAborted(object sender, EventArgs e)
-        {
-            P2PTransferSession session = (P2PTransferSession)sender;
-
-            RemoveTransferSession(session);
-        }
-
-        #endregion
-
-        #region IMessageHandler Members
-
-
-        /// <summary>
-        /// Handles incoming P2P Messages by extracting the inner contents and converting it to a SLP Message.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="message"></param>
-        public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
-        {
-            P2PMessage p2pMessage = message as P2PMessage;
-            Debug.Assert(p2pMessage != null, "Message is not a P2P message in MSNSLP handler", "");
-
-            SLPMessage slpMessage = SLPMessage.Parse(p2pMessage.InnerBody);
-
-
-            if (p2pMessage.Version == P2PVersion.P2PV1)
-            {
-                if (!(p2pMessage.Footer == 0 && p2pMessage.V1Header.SessionId == 0 &&
-                    p2pMessage.V1Header.Flags != P2PFlag.Acknowledgement && p2pMessage.V1Header.MessageSize > 0))
-                {
-                    //We don't process any p2p message because this is a SIP message handler.
-                    return;
-                }
-            }
-
-            if (p2pMessage.Version == P2PVersion.P2PV2)
-            {
-                if (!(p2pMessage.V2Header.SessionId == 0 &&
-                    p2pMessage.V2Header.MessageSize > 0 && p2pMessage.V2Header.TFCombination == TFCombination.First))
-                {
-                    return;
-                }
-
-            }
-
-
-            if (slpMessage != null)
-            {
-                // call the methods belonging to the content-type to handle the message
-                switch (slpMessage.ContentType)
-                {
-                    case "application/x-msnmsgr-sessionreqbody":
-                        OnSessionRequest(p2pMessage);
-                        break;
-                    case "application/x-msnmsgr-transreqbody":
-                        OnDCRequest(p2pMessage);
-                        break;
-                    case "application/x-msnmsgr-transrespbody":
-                        OnDCResponse(p2pMessage);
-                        break;
-                    case "application/x-msnmsgr-sessionclosebody":
-                        OnSessionCloseRequest(p2pMessage);
-                        break;
-                    default:
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Content-type not supported: " + slpMessage.ContentType, GetType().Name);
-                            break;
-                        }
-                }
-            }
-        }
-
-
-        #endregion
-
-        #region Protected message handling methods
-
-        /// <summary>
-        /// Called when a remote client closes a session.
-        /// </summary>
-        protected virtual void OnSessionCloseRequest(P2PMessage p2pMessage)
-        {
-            SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-
-            Guid callGuid = message.CallId;
-            MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
-
-            if (properties != null) // Closed before or never accepted?
-            {
-                properties.SessionCloseState--;
-                P2PTransferSession session = MessageSession.GetTransferSession(properties.SessionId);
-
-                if (session == null)
-                    return;
-
-                // remove the resources
-                RemoveTransferSession(session);
-                // and close the connection
-                if (session.MessageSession.DirectConnected)
-                    session.MessageSession.CloseDirectConnection();
-            }
-            else
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Warning: a session with the call-id " + callGuid + " not exists.", GetType().Name);
-            }
-        }
-
-        /// <summary>
-        /// Called when a remote client request a session
-        /// </summary>
-        protected virtual void OnSessionRequest(P2PMessage p2pMessage)
-        {
-            SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-            SLPStatusMessage slpStatus = message as SLPStatusMessage;
-
-            #region SLP Status Response (Response for receive file request, accept activity request and send display image request.)
-
-            if (slpStatus != null)
-            {
-                if (slpStatus.CSeq == 1 && slpStatus.Code == 603)
-                {
-                    OnSessionCloseRequest(p2pMessage);
-                }
-                else if (slpStatus.CSeq == 1 && slpStatus.Code == 200)
-                {
-                    Guid callGuid = message.CallId;
-                    MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
-
-                    if (properties == null)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Cannot find request transfer property, Guid: " + callGuid.ToString("B"));
-                        return;
-                    }
-
-                    P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
-
-                    if (session == null)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Cannot find request transfer session, SessionId: " + properties.SessionId.ToString());
-                        return;
-                    }
-
-
-                    #region File and Activity are invitor send
-
-                    int waitCounter = 0;
-                    Timer timer = new Timer(1000);
-                    timer.Elapsed += delegate(object sender, ElapsedEventArgs e)
-                    {
-                        if (waitCounter < directConnectionExpireInterval / 1000)
-                        {
-                            waitCounter++;
-                            return;
-                        }
-
-                        timer.Stop();
-                        timer = null;
-
-                        switch (properties.DataType)
-                        {
-                            case DataTransferType.File:
-
-                                // We can receive the OK message.
-                                // We can now send the invitation to setup a transfer connection
-                                if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
-                                    SendDCInvitation(properties);
-
-                                session.StartDataTransfer(true);
-
-                                break;
-
-                            case DataTransferType.Activity:
-                                if (session.DataStream != null && session.IsSender)
-                                {
-                                    session.StartDataTransfer(false);
-                                }
-                                break;
-                        }
-                    };
-
-                    timer.Start();
-                    #endregion
-
-
-                }
-                return;
-            }
-
-            #endregion
-
-            #region SLP INVITE (Request for file receiving and send display image)
-
-            SLPRequestMessage slpMessage = message as SLPRequestMessage;
-
-            if (slpMessage.Method == "INVITE")
-            {
-                // create a properties object and add it to the transfer collection
-                MSNSLPTransferProperties properties = ParseInvitationMessage(message);
-
-                // create a p2p transfer
-                P2PTransferSession transferSession = new P2PTransferSession(Version, properties, MessageSession);
-                transferSession.TransferFinished += delegate
-                {
-                    transferSession.SendDisconnectMessage(CreateClosingMessage(properties));
-                };
-
-                if (Version == P2PVersion.P2PV2)
-                {
-                    transferSession.DataPacketNumber = p2pMessage.V2Header.PackageNumber;
-                }
-
-                // hold a reference to this argument object because we need the accept property later
-                MSNSLPInvitationEventArgs invitationArgs =
-                    new MSNSLPInvitationEventArgs(properties, message, transferSession, this);
-
-                if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
-                {
-
-                    transferSession.SendMessage(CreateInternalErrorMessage(properties));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
-                        properties.DataTypeGuid + ". 500 INTERNAL ERROR send.", GetType().ToString());
-                    return;
-                }
-
-                if (properties.DataType == DataTransferType.File)
-                {
-                    // set the filetransfer values in the EventArgs object.
-                    // see the SendInvitation(..) method for more info about the layout of the context string
-                    MemoryStream memStream = new MemoryStream(Convert.FromBase64String(message.BodyValues["Context"].ToString()));
-                    BinaryReader reader = new BinaryReader(memStream);
-                    reader.ReadInt32(); // previewDataLength, 4
-                    reader.ReadInt32(); // first flag, 4
-                    invitationArgs.FileSize = reader.ReadInt64(); // 8
-                    reader.ReadInt32(); // 2nd flag, 4
-
-                    MemoryStream filenameStream = new MemoryStream();
-                    byte val = 0;
-                    while (reader.BaseStream.Position < reader.BaseStream.Length - 2 &&
-                            (val = reader.ReadByte()) > 0)
-                    {
-                        filenameStream.WriteByte(val);
-                        filenameStream.WriteByte(reader.ReadByte());
-                    }
-                    invitationArgs.Filename = System.Text.UnicodeEncoding.Unicode.GetString(filenameStream.ToArray());
-                }
-                else if (properties.DataType == DataTransferType.DisplayImage ||
-                    properties.DataType == DataTransferType.Emoticon)
-                {
-                    // create a MSNObject based upon the send context
-                    invitationArgs.MSNObject = new MSNObject();
-                    invitationArgs.MSNObject.SetContext(properties.Context, false);
-                }
-                else if (properties.DataType == DataTransferType.Activity)
-                {
-                    if (message.BodyValues.ContainsKey("Context"))
-                    {
-                        string activityContextString = message.BodyValues["Context"].Value;
-                        ActivityInfo info = new ActivityInfo(activityContextString);
-                        invitationArgs.Activity = info;
-                    }
-                }
-
-                OnTransferInvitationReceived(invitationArgs);
-
-                if (!invitationArgs.DelayProcess)
-                {
-                    // check whether the client programmer wants to accept or reject this message
-                    if (invitationArgs.Accept == false)
-                    {
-                        RejectTransfer(invitationArgs);
-                        return;
-                    }
-
-                    AcceptTransfer(invitationArgs);
-                }
-            }
-
-            #endregion
-
-        }
 
         /// <summary>
         /// Returns a port number which can be used to listen for a new direct connection.
@@ -1720,6 +1357,73 @@ UPnPNat: true
             }
             return 0;
         }
+
+        #endregion
+
+        #region Message handling methods
+
+        #region HandleMessage
+
+        /// <summary>
+        /// Handles incoming P2P Messages by extracting the inner contents and converting it to a SLP Message.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="message"></param>
+        public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
+        {
+            P2PMessage p2pMessage = message as P2PMessage;
+            Debug.Assert(p2pMessage != null, "Message is not a P2P message in MSNSLP handler", GetType().Name);
+
+            SLPMessage slpMessage = SLPMessage.Parse(p2pMessage.InnerBody);
+
+            if (p2pMessage.Version == P2PVersion.P2PV1)
+            {
+                if (!(p2pMessage.Footer == 0 && p2pMessage.V1Header.SessionId == 0 &&
+                    p2pMessage.V1Header.Flags != P2PFlag.Acknowledgement && p2pMessage.V1Header.MessageSize > 0))
+                {
+                    // We don't process any p2p message because this is a SIP message handler.
+                    return;
+                }
+            }
+            else if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                if (!(p2pMessage.V2Header.SessionId == 0 &&
+                    p2pMessage.V2Header.MessageSize > 0 && p2pMessage.V2Header.TFCombination == TFCombination.First))
+                {
+                    // We don't process any p2p message because this is a SIP message handler.
+                    return;
+                }
+            }
+
+            if (slpMessage != null)
+            {
+                // Call the methods belonging to the content-type to handle the message
+                switch (slpMessage.ContentType)
+                {
+                    case "application/x-msnmsgr-sessionreqbody":
+                        OnSessionRequest(p2pMessage);
+                        break;
+                    case "application/x-msnmsgr-transreqbody":
+                        OnDCRequest(p2pMessage);
+                        break;
+                    case "application/x-msnmsgr-transrespbody":
+                        OnDCResponse(p2pMessage);
+                        break;
+                    case "application/x-msnmsgr-sessionclosebody":
+                        OnSessionCloseRequest(p2pMessage);
+                        break;
+                    default:
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Content-type not supported: " + slpMessage.ContentType, GetType().Name);
+                            break;
+                        }
+                }
+            }
+        }
+
+        #endregion
+
+        #region OnDCRequest
 
         /// <summary>
         /// Called when the remote client sends us it's direct-connect capabilities.
@@ -1817,6 +1521,9 @@ UPnPNat: true
             MessageProcessor.SendMessage(p2pReplyMessage);
         }
 
+        #endregion
+
+        #region OnDCResponse
 
         /// <summary>
         /// Called when the remote client send us it's direct-connect capabilities
@@ -1895,32 +1602,218 @@ UPnPNat: true
             }
         }
 
+        #endregion
+
+        #region OnSessionRequest
+        /// <summary>
+        /// Called when a remote client request a session
+        /// </summary>
+        protected virtual void OnSessionRequest(P2PMessage p2pMessage)
+        {
+            SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
+            SLPStatusMessage slpStatus = message as SLPStatusMessage;
+
+            #region SLP Status Response (Response for receive file request, accept activity request and send display image request.)
+
+            if (slpStatus != null)
+            {
+                if (slpStatus.CSeq == 1 && slpStatus.Code == 603)
+                {
+                    OnSessionCloseRequest(p2pMessage);
+                }
+                else if (slpStatus.CSeq == 1 && slpStatus.Code == 200)
+                {
+                    Guid callGuid = message.CallId;
+                    MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
+
+                    if (properties == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Cannot find request transfer property, Guid: " + callGuid.ToString("B"));
+                        return;
+                    }
+
+                    P2PTransferSession session = ((P2PMessageSession)MessageProcessor).GetTransferSession(properties.SessionId);
+
+                    if (session == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Cannot find request transfer session, SessionId: " + properties.SessionId.ToString());
+                        return;
+                    }
+
+
+                    #region File and Activity are invitor send
+
+                    int waitCounter = 0;
+                    Timer timer = new Timer(1000);
+                    timer.Elapsed += delegate(object sender, ElapsedEventArgs e)
+                    {
+                        if (waitCounter < directConnectionExpireInterval / 1000)
+                        {
+                            waitCounter++;
+                            return;
+                        }
+
+                        timer.Stop();
+                        timer = null;
+
+                        switch (properties.DataType)
+                        {
+                            case DataTransferType.File:
+
+                                // We can receive the OK message.
+                                // We can now send the invitation to setup a transfer connection
+                                if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
+                                    SendDCInvitation(properties);
+
+                                session.StartDataTransfer(true);
+
+                                break;
+
+                            case DataTransferType.Activity:
+                                if (session.DataStream != null && session.IsSender)
+                                {
+                                    session.StartDataTransfer(false);
+                                }
+                                break;
+                        }
+                    };
+
+                    timer.Start();
+                    #endregion
+
+
+                }
+                return;
+            }
+
+            #endregion
+
+            #region SLP INVITE (Request for file receiving and send display image)
+
+            SLPRequestMessage slpMessage = message as SLPRequestMessage;
+
+            if (slpMessage.Method == "INVITE")
+            {
+                // create a properties object and add it to the transfer collection
+                MSNSLPTransferProperties properties = ParseInvitationMessage(message);
+
+                // create a p2p transfer
+                P2PTransferSession transferSession = new P2PTransferSession(Version, properties, MessageSession);
+                transferSession.TransferFinished += delegate
+                {
+                    transferSession.SendDisconnectMessage(SLPRequestMessage.CreateClosingMessage(properties));
+                };
+
+                if (Version == P2PVersion.P2PV2)
+                {
+                    transferSession.DataPacketNumber = p2pMessage.V2Header.PackageNumber;
+                }
+
+                // hold a reference to this argument object because we need the accept property later
+                MSNSLPInvitationEventArgs invitationArgs =
+                    new MSNSLPInvitationEventArgs(properties, message, transferSession, this);
+
+                if (properties.DataType == DataTransferType.Unknown)  // If type is unknown, we reply an internal error.
+                {
+
+                    transferSession.SendMessage(SLPStatusMessage.CreateInternalErrorMessage(properties));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Unknown p2p datatype received: " +
+                        properties.DataTypeGuid + ". 500 INTERNAL ERROR send.", GetType().ToString());
+                    return;
+                }
+
+                if (properties.DataType == DataTransferType.File)
+                {
+                    // set the filetransfer values in the EventArgs object.
+                    // see the SendInvitation(..) method for more info about the layout of the context string
+                    MemoryStream memStream = new MemoryStream(Convert.FromBase64String(message.BodyValues["Context"].ToString()));
+                    BinaryReader reader = new BinaryReader(memStream);
+                    reader.ReadInt32(); // previewDataLength, 4
+                    reader.ReadInt32(); // first flag, 4
+                    invitationArgs.FileSize = reader.ReadInt64(); // 8
+                    reader.ReadInt32(); // 2nd flag, 4
+
+                    MemoryStream filenameStream = new MemoryStream();
+                    byte val = 0;
+                    while (reader.BaseStream.Position < reader.BaseStream.Length - 2 &&
+                            (val = reader.ReadByte()) > 0)
+                    {
+                        filenameStream.WriteByte(val);
+                        filenameStream.WriteByte(reader.ReadByte());
+                    }
+                    invitationArgs.Filename = System.Text.UnicodeEncoding.Unicode.GetString(filenameStream.ToArray());
+                }
+                else if (properties.DataType == DataTransferType.DisplayImage ||
+                    properties.DataType == DataTransferType.Emoticon)
+                {
+                    // create a MSNObject based upon the send context
+                    invitationArgs.MSNObject = new MSNObject();
+                    invitationArgs.MSNObject.SetContext(properties.Context, false);
+                }
+                else if (properties.DataType == DataTransferType.Activity)
+                {
+                    if (message.BodyValues.ContainsKey("Context"))
+                    {
+                        string activityContextString = message.BodyValues["Context"].Value;
+                        ActivityInfo info = new ActivityInfo(activityContextString);
+                        invitationArgs.Activity = info;
+                    }
+                }
+
+                OnTransferInvitationReceived(invitationArgs);
+
+                if (!invitationArgs.DelayProcess)
+                {
+                    // check whether the client programmer wants to accept or reject this message
+                    if (invitationArgs.Accept == false)
+                    {
+                        RejectTransfer(invitationArgs);
+                        return;
+                    }
+
+                    AcceptTransfer(invitationArgs);
+                }
+            }
+
+            #endregion
+
+        }
 
         #endregion
 
-        #region IDisposable Members
+        #region OnSessionCloseRequest
 
         /// <summary>
-        /// Closes all sessions. Dispose() calls Dispose(true)
+        /// Called when a remote client closes a session.
         /// </summary>
-        public void Dispose()
+        protected virtual void OnSessionCloseRequest(P2PMessage p2pMessage)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
+            Guid callGuid = message.CallId;
+            MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
+
+            if (properties != null) // Closed before or never accepted?
             {
-                // Free managed resources
-                CloseAllSessions();
-            }
+                properties.SessionCloseState--;
+                P2PTransferSession session = MessageSession.GetTransferSession(properties.SessionId);
 
-            // Free native resources if there are any.
+                if (session == null)
+                    return;
+
+                // remove the resources
+                RemoveTransferSession(session);
+                // and close the connection
+                if (session.MessageSession.DirectConnected)
+                    session.MessageSession.CloseDirectConnection();
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Warning: a session with the call-id " + callGuid + " not exists.", GetType().Name);
+            }
         }
 
-
+        #endregion
 
         #endregion
     }

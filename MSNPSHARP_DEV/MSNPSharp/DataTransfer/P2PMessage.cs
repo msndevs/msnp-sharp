@@ -33,14 +33,13 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Text;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
-
-
 
     #region P2PMessage
 
@@ -675,6 +674,26 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Creates the handshake message to send in a direct connection.
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <returns></returns>
+        public P2PDCHandshakeMessage CreateHandshakeMessage(MSNSLPTransferProperties properties)
+        {
+            P2PDCHandshakeMessage dcMessage = new P2PDCHandshakeMessage(properties.TransferStackVersion);
+            dcMessage.Header.SessionId = 0;
+
+            Debug.Assert(properties.Nonce != Guid.Empty, "Direct connection established, but no Nonce GUID is available.");
+            Debug.Assert(properties.SessionId != 0, "Direct connection established, but no session id is available.");
+
+            // set the guid to use in the handshake message
+            dcMessage.Guid = properties.Nonce;
+
+            return dcMessage;
+        }
+
+
+        /// <summary>
         /// Creates an acknowledgement message to a handshake message. This will only set the flag to 0.
         /// </summary>
         /// <returns></returns>
@@ -763,5 +782,4 @@ namespace MSNPSharp.DataTransfer
     }
 
     #endregion
-
 };
