@@ -407,6 +407,36 @@ namespace MSNPSharp.DataTransfer
             : base(data)
         {
         }
+
+
+        /// <summary>
+        /// Creates a message which is send directly after the last data message.
+        /// </summary>
+        /// <returns></returns>
+        public static SLPRequestMessage CreateClosingMessage(MSNSLPTransferProperties transferProperties)
+        {
+            SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, MSNSLPRequestMethod.BYE);
+            slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
+            slpMessage.FromMail = transferProperties.LocalContactEPIDString;
+
+            slpMessage.Branch = transferProperties.LastBranch;
+            slpMessage.CSeq = 0;
+            slpMessage.CallId = transferProperties.CallId;
+            slpMessage.MaxForwards = 0;
+            slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
+
+            slpMessage.BodyValues["SessionID"] = transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            if (transferProperties.DataType == DataTransferType.Activity)
+            {
+                slpMessage.BodyValues["Context"] = "dAMAgQ==";
+
+            }
+
+            return slpMessage;
+        }
+
+
     }
 
     /// <summary>
@@ -486,6 +516,62 @@ namespace MSNPSharp.DataTransfer
         public SLPStatusMessage(byte[] data)
             : base(data)
         {
+        }
+
+
+        /// <summary>
+        /// Creates an 500 internal error message.
+        /// </summary>
+        /// <param name="transferProperties"></param>
+        /// <returns></returns>
+        public static SLPStatusMessage CreateInternalErrorMessage(MSNSLPTransferProperties transferProperties)
+        {
+            SLPStatusMessage slpMessage = new SLPStatusMessage(transferProperties.RemoteContactEPIDString, 500, "Internal Error");
+            slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
+            slpMessage.FromMail = transferProperties.LocalContactEPIDString;
+            slpMessage.Branch = transferProperties.LastBranch;
+            slpMessage.CSeq = transferProperties.LastCSeq;
+            slpMessage.CallId = transferProperties.CallId;
+            slpMessage.MaxForwards = 0;
+            slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+            slpMessage.BodyValues["SessionID"] = transferProperties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["SChannelState"] = "0";
+            return slpMessage;
+        }
+
+        /// <summary>
+        /// Creates a 200 OK message. This is called by the handler after the client-programmer
+        /// has accepted the invitation.
+        /// </summary>
+        /// <returns></returns>
+        public static SLPStatusMessage CreateAcceptanceMessage(MSNSLPTransferProperties properties)
+        {
+            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 200, "OK");
+            newMessage.ToMail = properties.RemoteContactEPIDString;
+            newMessage.FromMail = properties.LocalContactEPIDString;
+            newMessage.Branch = properties.LastBranch;
+            newMessage.CSeq = 1;
+            newMessage.CallId = properties.CallId;
+            newMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+            newMessage.BodyValues["SessionID"] = properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return newMessage;
+        }
+
+        /// <summary>
+        /// Creates a 603 Decline message.
+        /// </summary>
+        /// <returns></returns>
+        public static SLPStatusMessage CreateDeclineMessage(MSNSLPTransferProperties properties)
+        {
+            SLPStatusMessage newMessage = new SLPStatusMessage(properties.RemoteContactEPIDString, 603, "Decline");
+            newMessage.ToMail = properties.RemoteContactEPIDString;
+            newMessage.FromMail = properties.LocalContactEPIDString;
+            newMessage.Branch = properties.LastBranch;
+            newMessage.CSeq = 1;
+            newMessage.CallId = properties.CallId;
+            newMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+            newMessage.BodyValues["SessionID"] = properties.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return newMessage;
         }
     }
 };
