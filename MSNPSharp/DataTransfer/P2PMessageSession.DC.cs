@@ -197,6 +197,8 @@ namespace MSNPSharp.DataTransfer
                 MessageProcessor = processor;
             }
 
+            /// ******************* WAIT **************
+
             if (DirectConnectionEstablished != null)
                 DirectConnectionEstablished(this, new EventArgs());
         }
@@ -293,6 +295,12 @@ namespace MSNPSharp.DataTransfer
 
                 HandshakeMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
                 DCHandshakeAckV1 = HandshakeMessage.V1Header.AckSessionId;
+            }
+
+            if (HandshakeMessage.Version == P2PVersion.P2PV2)
+            {
+                //HandshakeMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
+                //HandshakeMessage.Header.Identifier = LocalIdentifier;
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " + HandshakeMessage.ToDebugString(), GetType().Name);
@@ -397,7 +405,7 @@ namespace MSNPSharp.DataTransfer
                 if (AutoHandshake)
                 {
                     // create a handshake message based on the incoming p2p message and send it
-                    ((P2PDirectProcessor)sender).SendMessage(p2pMessage.CreateAcknowledgement());
+                    ((P2PDirectProcessor)sender).SendMessage(p2pMessage);
 
                     UsePendingProcessor((P2PDirectProcessor)sender);
                     return;
