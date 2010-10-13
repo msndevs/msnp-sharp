@@ -71,8 +71,8 @@ namespace MSNPSharp.DataTransfer
 
 
         private P2PVersion version = P2PVersion.P2PV1;
-        private Guid authNonce = Guid.Empty;
-        private bool isAuthNonceHashed = false;
+        private Guid nonce = Guid.Empty;
+        private bool needHash = false;
         private Timer socketExpireTimer = new Timer(12000);
         private ProxySocket socketListener = null;
         private Socket dcSocket = null;
@@ -93,14 +93,14 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Constructor.
         /// </summary>
-        public P2PDirectProcessor(ConnectivitySettings connectivitySettings, P2PVersion p2pVersion, Guid authNonce, bool isHashedNonce)
+        public P2PDirectProcessor(ConnectivitySettings connectivitySettings, P2PVersion p2pVersion, Guid authNonce, bool isNeedHash)
             : base(connectivitySettings)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
 
             this.version = p2pVersion;
-            this.authNonce = authNonce;
-            this.isAuthNonceHashed = isHashedNonce;
+            this.nonce = authNonce;
+            this.needHash = isNeedHash;
             this.MessagePool = new P2PDCPool();
         }
 
@@ -300,6 +300,8 @@ namespace MSNPSharp.DataTransfer
                 P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(version);
                 hm.ParseBytes(data);
 
+                Guid incomingGuid = hm.Guid;
+
                 if (hm.Version == P2PVersion.P2PV1 && (P2PFlag.DirectHandshake != (hm.V1Header.Flags & P2PFlag.DirectHandshake)))
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
@@ -308,17 +310,19 @@ namespace MSNPSharp.DataTransfer
                     return;
                 }
 
-                Guid incomingGuid = hm.Guid;
-
-                if (isAuthNonceHashed)
+                if (IsListener && needHash)
                 {
                     incomingGuid = HashedNonceGenerator.HashNonce(incomingGuid);
-                    isAuthNonceHashed = false;
                 }
+
+                
 
                 if (!IsListener)
                 {
                     authenticated = true;
+
+                    hm = new P2PDCHandshakeMessage(version);
+                    hm.Guid = this.nonce;                   
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                         String.Format("[DC --> CONNECT] AUTH OK; Received ack: {0}", hm.Guid), GetType().Name);
@@ -327,7 +331,7 @@ namespace MSNPSharp.DataTransfer
                     return;
                 }
 
-                if (authNonce == incomingGuid)
+                if (nonce == incomingGuid)
                 {
                     authenticated = true;
 
@@ -339,7 +343,7 @@ namespace MSNPSharp.DataTransfer
                 else
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                        String.Format("Received nonce is {0}, expected {1}", incomingGuid, authNonce), GetType().Name);
+                        String.Format("Received nonce is {0}, expected {1}", incomingGuid, nonce), GetType().Name);
 
                     Dispose();
                 }

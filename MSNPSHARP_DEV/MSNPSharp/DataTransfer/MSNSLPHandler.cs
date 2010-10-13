@@ -35,6 +35,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Timers;
+using System.Drawing;
 using System.Collections;
 using System.Diagnostics;
 using System.Net.Sockets;
@@ -46,7 +47,8 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
-    using System.Drawing;
+
+    #region DataTransferType
 
     /// <summary>
     /// Defines the type of datatransfer for a MSNSLPHandler
@@ -74,6 +76,10 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         Activity
     }
+
+    #endregion
+
+    #region ActivityInfo
 
     /// <summary>
     /// Holds the property of activity such as AppID and activity name.
@@ -138,396 +144,9 @@ namespace MSNPSharp.DataTransfer
 
     }
 
-    /// <summary>
-    /// Holds all properties for a single data transfer.
-    /// </summary>
-    [Serializable()]
-    public class MSNSLPTransferProperties
-    {
-        protected MSNSLPTransferProperties()
-        {
-        }
+    #endregion
 
-        public MSNSLPTransferProperties(Contact local, Guid localEndPointID, Contact remote, Guid remoteEndPointID)
-        {
-            remoteContact = remote;
-            localContact = local;
-            localContactEndPointID = localEndPointID;
-            remoteContactEndPointID = remoteEndPointID;
-
-            transferStackVersion = JudgeP2PStackVersion(local, localContactEndPointID, remote, remoteContactEndPointID, false);
-        }
-
-        private P2PVersion transferStackVersion = P2PVersion.P2PV1;
-
-        /// <summary>
-        /// The transfer stack that transfer layer (P2PMessageSession) used for this data transfer.
-        /// </summary>
-        public P2PVersion TransferStackVersion
-        {
-            get
-            {
-                return transferStackVersion;
-            }
-        }
-
-        private string dataTypeGuid = string.Empty;
-
-        internal string DataTypeGuid
-        {
-            get
-            {
-                return dataTypeGuid;
-            }
-            set
-            {
-                dataTypeGuid = value;
-            }
-        }
-
-        private int sessionCloseState = (int)SessionCloseState.None;
-
-        /// <summary>
-        /// Indicates whether we should remove this transfer session from its transferlayer (P2PMessageSession).
-        /// </summary>
-        internal SessionCloseState SessionCloseState
-        {
-            get
-            {
-                return (SessionCloseState)sessionCloseState;
-            }
-
-            set
-            {
-                sessionCloseState = (int)value;
-            }
-        }
-
-        /// <summary>
-        /// The kind of data that will be transferred
-        /// </summary>
-        public DataTransferType DataType
-        {
-            get
-            {
-                return dataType;
-            }
-            set
-            {
-                dataType = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private DataTransferType dataType = DataTransferType.Unknown;
-
-        /// <summary>
-        /// </summary>
-        private bool remoteInvited = false;
-
-        /// <summary>
-        /// Defines whether the remote client has invited the transfer (true) or the local client has initiated the transfer (false).
-        /// </summary>
-        public bool RemoteInvited
-        {
-            get
-            {
-                return remoteInvited;
-            }
-            set
-            {
-                remoteInvited = value;
-            }
-        }
-
-        /// <summary>
-        /// The GUID used in the handshake message for direct connections
-        /// </summary>
-        public Guid Nonce
-        {
-            get
-            {
-                return nonce;
-            }
-            set
-            {
-                nonce = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private Guid nonce = Guid.Empty;
-
-        /// <summary>
-        /// The branch last received in the message session
-        /// </summary>
-        public string LastBranch
-        {
-            get
-            {
-                return lastBranch;
-            }
-            set
-            {
-                lastBranch = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private string lastBranch = Guid.Empty.ToString("B").ToUpper(CultureInfo.InvariantCulture);
-
-        /// <summary>
-        /// The unique call id for this transfer
-        /// </summary>
-        public Guid CallId
-        {
-            get
-            {
-                return callId;
-            }
-            set
-            {
-                callId = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private Guid callId = Guid.Empty;
-
-        /// <summary>
-        /// The unique session id for the transfer
-        /// </summary>
-        public uint SessionId
-        {
-            get
-            {
-                return sessionId;
-            }
-            set
-            {
-                sessionId = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private uint sessionId = 0;
-
-        /// <summary>
-        /// The total length of the data, in bytes
-        /// </summary>
-        public uint DataSize
-        {
-            get
-            {
-                return dataSize;
-            }
-            set
-            {
-                dataSize = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private uint dataSize = 0;
-
-        /// <summary>
-        /// The context send in the invitation. This informs the client about the type of transfer, filename, file-hash, msn object settings, etc.
-        /// </summary>
-        public string Context
-        {
-            get
-            {
-                return context;
-            }
-            set
-            {
-                context = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private string context = "";
-
-        /// <summary>
-        /// The checksum of the fields used in the context
-        /// </summary>
-        public string Checksum
-        {
-            get
-            {
-                return checksum;
-            }
-            set
-            {
-                checksum = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private string checksum = "";
-
-        /// <summary>
-        /// CSeq identifier
-        /// </summary>
-        public int LastCSeq
-        {
-            get
-            {
-                return lastCSeq;
-            }
-            set
-            {
-                lastCSeq = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private int lastCSeq = 0;
-
-        private Guid localContactEndPointID = Guid.Empty;
-
-        /// <summary>
-        /// The <see cref="EndPointData"/> id of local contact that involved in the transfer.
-        /// </summary>
-        public Guid LocalContactEndPointID
-        {
-            get
-            {
-                return localContactEndPointID;
-            }
-        }
-
-        private Guid remoteContactEndPointID = Guid.Empty;
-
-        /// <summary>
-        /// The <see cref="EndPointData"/> id of remote contact that involved in the transfer.
-        /// </summary>
-        public Guid RemoteContactEndPointID
-        {
-            get
-            {
-                return remoteContactEndPointID;
-            }
-        }
-
-        private Contact localContact = null;
-
-        /// <summary>
-        /// The the local contact in the transfer session.
-        /// </summary>
-        public Contact LocalContact
-        {
-            get
-            {
-                return localContact;
-            }
-        }
-
-        private Contact remoteContact = null;
-
-        /// <summary>
-        /// The the remote contact in the transfer session.
-        /// </summary>
-        public Contact RemoteContact
-        {
-            get
-            {
-                return remoteContact;
-            }
-        }
-
-        internal static P2PVersion JudgeP2PStackVersion(Contact local, Guid localEPID, Contact remote, Guid remoteEPID, bool dumpJudgeProcedure)
-        {
-            P2PVersion result = P2PVersion.P2PV1;
-
-            if (!local.EndPointData.ContainsKey(localEPID))
-            {
-                string errorMessage = "Invalid parameter localEndPointID, EndPointData with id = " +
-                    localEPID.ToString("B") + " not exists in contact: " + local;
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError && dumpJudgeProcedure, "[JudgeP2PStackVersion] " + errorMessage);
-
-            }
-
-            if (!remote.EndPointData.ContainsKey(remoteEPID))
-            {
-                string errorMessage = "Invalid parameter remoteEndPointID, EndPointData with id = " +
-                    remoteEPID.ToString("B") + " not exists in contact: " + remote;
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError && dumpJudgeProcedure, "[JudgeP2PStackVersion] " + errorMessage);
-            }
-
-            bool supportMPOP = (localEPID != Guid.Empty && remoteEPID != Guid.Empty);
-
-            if (local.EndPointData.ContainsKey(localEPID) && remote.EndPointData.ContainsKey(remoteEPID))
-            {
-                bool supportMSNC10 = ((local.EndPointData[localEPID].ClientCapacities & ClientCapacities.CanHandleMSNC10) > 0 &&
-                                      (remote.EndPointData[remoteEPID].ClientCapacities & ClientCapacities.CanHandleMSNC10) > 0);
-                bool supportP2Pv2 = ((local.EndPointData[localEPID].ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
-                                     (remote.EndPointData[remoteEPID].ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0);
-
-
-
-                if (supportMPOP /*&&  supportP2Pv2 &&  supportMSNC10 */) //It seems that supportP2Pv2 is not a consideration.
-                    result = P2PVersion.P2PV2;
-                else
-                    result = P2PVersion.P2PV1;
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && dumpJudgeProcedure,
-                    "Version Triggers: supportMPOP = " + supportMPOP + ", supportMSNC10 = " + supportMSNC10 + ", supportP2Pv2 = " + supportP2Pv2 + ", Result = " + result);
-            }
-            else
-            {
-
-                if (localEPID != Guid.Empty && remoteEPID != Guid.Empty)
-                {
-                    result = P2PVersion.P2PV2;
-                }
-
-                result = P2PVersion.P2PV1;
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError && dumpJudgeProcedure, "[JudgeP2PStackVersion] Judge only based on EPIDs, result:" + result);
-            }
-
-            return result;
-        }
-
-        internal string LocalContactEPIDString
-        {
-            get
-            {
-                if (TransferStackVersion == P2PVersion.P2PV1)
-                {
-                    return LocalContact.Mail.ToLowerInvariant();
-                }
-
-                return LocalContact.Mail.ToLowerInvariant() + ";" + LocalContactEndPointID.ToString("B").ToLowerInvariant();
-            }
-        }
-
-        internal string RemoteContactEPIDString
-        {
-            get
-            {
-                if (TransferStackVersion == P2PVersion.P2PV1)
-                {
-                    return RemoteContact.Mail.ToLowerInvariant();
-                }
-
-                return RemoteContact.Mail.ToLowerInvariant() + ";" + RemoteContactEndPointID.ToString("B").ToLowerInvariant();
-            }
-
-        }
-
-
-    }
+    #region P2PTransferSessionEventArgs
 
     /// <summary>
     /// Used as event argument when a P2PTransferSession is affected.
@@ -563,218 +182,7 @@ namespace MSNPSharp.DataTransfer
         }
     }
 
-
-    /// <summary>
-    /// Used as event argument when an invitation is received.
-    /// </summary>
-    /// <remarks>
-    /// The client programmer must set the Accept property to true (accept) or false (reject) to response to the invitation. By default the invitation is rejected.
-    /// </remarks>
-    [Serializable()]
-    public class MSNSLPInvitationEventArgs : EventArgs
-    {
-        /// <summary>
-        /// </summary>
-        private MSNSLPTransferProperties transferProperties;
-
-        /// <summary>
-        /// The affected transfer session
-        /// </summary>
-        public MSNSLPTransferProperties TransferProperties
-        {
-            get
-            {
-                return transferProperties;
-            }
-            set
-            {
-                transferProperties = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private MSNObject msnObject;
-
-        /// <summary>
-        /// The corresponding msnobject defined in the invitation. Only available in case of an msn object transfer (image display, emoticons).
-        /// </summary>
-        /// <remarks>
-        /// Created from the Context property of the <see cref="MSNSLPTransferProperties"/> object.
-        /// </remarks>
-        public MSNObject MSNObject
-        {
-            get
-            {
-                return msnObject;
-            }
-            set
-            {
-                msnObject = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private string filename;
-
-        /// <summary>
-        /// Name of the file the remote contact wants to send. Only available in case of a filetransfer session.
-        /// </summary>
-        public string Filename
-        {
-            get
-            {
-                return filename;
-            }
-            set
-            {
-                filename = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private long fileSize;
-
-        /// <summary>
-        /// The total size of the file in bytes. Only available in case of a filetransfer session.
-        /// </summary>
-        public long FileSize
-        {
-            get
-            {
-                return fileSize;
-            }
-            set
-            {
-                fileSize = value;
-            }
-        }
-
-        private ActivityInfo activity = null;
-
-        /// <summary>
-        /// The activity properties.
-        /// </summary>
-        public ActivityInfo Activity
-        {
-            get
-            {
-                return activity;
-            }
-            set
-            {
-                activity = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private SLPMessage invitationMessage;
-
-        /// <summary>
-        /// The affected transfer session
-        /// </summary>
-        public SLPMessage InvitationMessage
-        {
-            get
-            {
-                return invitationMessage;
-            }
-            set
-            {
-                invitationMessage = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        [NonSerialized]
-        private P2PTransferSession transferSession = null;
-
-        /// <summary>
-        /// The p2p transfer session that will transfer the session data
-        /// </summary>
-        public P2PTransferSession TransferSession
-        {
-            get
-            {
-                return transferSession;
-            }
-            set
-            {
-                transferSession = value;
-            }
-        }
-
-        [NonSerialized]
-        private MSNSLPHandler transferhandler = null;
-
-        public MSNSLPHandler TransferHandler
-        {
-            get
-            {
-                return transferhandler;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private bool accept;
-
-        /// <summary>
-        /// Defines if the transfer is accepted. This must be set by the client programmer in a event handler. By default this property is set to false, which means the invitation is rejected. If this property is set to true, the invitation is accepted.
-        /// </summary>
-        public bool Accept
-        {
-            get
-            {
-                return accept;
-            }
-            set
-            {
-                accept = value;
-            }
-        }
-
-        private bool delayprocess;
-
-        /// <summary>
-        /// Whether process the invitation request right after the event was fired.
-        /// </summary>
-        public bool DelayProcess
-        {
-            get
-            {
-                return delayprocess;
-            }
-            set
-            {
-                delayprocess = value;
-            }
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="transferProperties"></param>
-        /// <param name="invitationMessage"></param>
-        /// <param name="transferSession"></param>
-        /// <param name="handler"></param>
-        public MSNSLPInvitationEventArgs
-            (MSNSLPTransferProperties transferProperties,
-            SLPMessage invitationMessage,
-            P2PTransferSession transferSession,
-            MSNSLPHandler handler)
-        {
-            this.transferProperties = transferProperties;
-            this.invitationMessage = invitationMessage;
-            this.transferSession = transferSession;
-            this.transferhandler = handler;
-        }
-    }
-
+    #endregion
 
     /// <summary>
     /// Handles invitations and requests for file transfers, emoticons, user displays and other msn objects.
@@ -782,14 +190,37 @@ namespace MSNPSharp.DataTransfer
     /// <remarks>
     /// MSNSLPHandler is responsible for communicating with the remote client about the transfer properties.
     /// This means receiving and sending details about filelength, filename, user display context, etc.
-    /// When an invitation request is received the client programmer is asked to accept or decline the invitation. This is done
-    /// through the TransferInvitationReceived event. The client programmer must handle this event and set the Accept and DataStream property in the event argument, see <see cref="MSNSLPInvitationEventArgs"/>.
-    /// When the receiver of the invitation has accepted a <see cref="P2PTransferSession"/> is created and used to actually send the data. In the case
-    /// of user displays or other msn objects the data transfer always goes over the switchboard. In case of a file transfer there will be negotiating about the direct connection to setup.
-    /// Depending on the connectivity of both clients, a request for a direct connection is send to associated the <see cref="P2PTransferSession"/> object.
+    /// When an invitation request is received the client programmer is asked to accept or decline the
+    /// invitation. This is done through the TransferInvitationReceived event. The client programmer must
+    /// handle this event and set the Accept and DataStream property in the event argument, see
+    /// <see cref="MSNSLPInvitationEventArgs"/>. When the receiver of the invitation has accepted a
+    /// <see cref="P2PTransferSession"/> is created and used to actually send the data. In the case of user
+    /// displays or other msn objects the data transfer always goes over the switchboard. In case of a file
+    /// transfer there will be negotiating about the direct connection to setup. Depending on the
+    /// connectivity of both clients, a request for a direct connection is send to associated the
+    /// <see cref="P2PTransferSession"/> object.
     /// </remarks>
     public class MSNSLPHandler : IMessageHandler, IDisposable
     {
+        #region Events
+
+        /// <summary>
+        /// Occurs when a transfer session is created.
+        /// </summary>
+        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionCreated;
+
+        /// <summary>
+        /// Occurs when a transfer session is closed. Either because the transfer has finished or aborted.
+        /// </summary>
+        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionClosed;
+
+        /// <summary>
+        /// Occurs when a remote client has send an invitation for a transfer session.
+        /// </summary>
+        public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
+
+        #endregion
+
         #region Properties
         /// <summary>
         /// </summary>
@@ -942,20 +373,7 @@ namespace MSNPSharp.DataTransfer
         }
 
 
-        /// <summary>
-        /// Occurs when a transfer session is created.
-        /// </summary>
-        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionCreated;
-
-        /// <summary>
-        /// Occurs when a transfer session is closed. Either because the transfer has finished or aborted.
-        /// </summary>
-        public event EventHandler<P2PTransferSessionEventArgs> TransferSessionClosed;
-
-        /// <summary>
-        /// Occurs when a remote client has send an invitation for a transfer session.
-        /// </summary>
-        public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
+        
 
         /// <summary>
         /// Sends the remote contact a request for the given context. The invitation message is send over the current MessageProcessor.
@@ -1716,12 +1134,17 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         protected virtual void SendDCInvitation(MSNSLPTransferProperties transferProperties)
         {
-            // create a new branch, but keep the same callid as the first invitation
+            // Create a new branch, but keep the same callid as the first invitation
             transferProperties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
+
+            // We support Hashed-Nonce. Unless supported by remote contact, he ignores Hashed-Nonce field.
+            transferProperties.Nonce = Guid.NewGuid();
+            transferProperties.HashedNonce = HashedNonceGenerator.HashNonce(transferProperties.Nonce);
 
             string connectionType = "Unknown-Connect";
 
-            // check and determine connectivity
+            #region Check and determine connectivity
+
             if (LocalEndPoint == null || this.ExternalEndPoint == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "LocalEndPoint or ExternalEndPoint are not set. Connection type will be set to unknown.", GetType().Name);
@@ -1742,10 +1165,13 @@ namespace MSNPSharp.DataTransfer
                     else
                         connectionType = "Symmetric-NAT";
                 }
+
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Connection type set to " + connectionType + " for session " + transferProperties.SessionId.ToString(CultureInfo.InvariantCulture), GetType().Name);
             }
 
-            // create the message
+            #endregion
+
+            // Create the message
             SLPRequestMessage slpMessage = new SLPRequestMessage(transferProperties.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
             slpMessage.ToMail = transferProperties.RemoteContactEPIDString;
             slpMessage.FromMail = transferProperties.LocalContactEPIDString;
@@ -1754,11 +1180,27 @@ namespace MSNPSharp.DataTransfer
             slpMessage.CallId = transferProperties.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
-            slpMessage.BodyValues["Bridges"] = "TRUDPV1 TCPv1";
+
+            slpMessage.BodyValues["Bridges"] = "SBBridge TRUDPV1 TCPv1";
+            slpMessage.BodyValues["Capabilities-Flags"] = "1";
             slpMessage.BodyValues["NetID"] = "2042264281"; // unknown variable
             slpMessage.BodyValues["Conn-Type"] = connectionType;
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
+            slpMessage.BodyValues["Hashed-Nonce"] = transferProperties.HashedNonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+
+            /* WLM2009:
+            Bridges: TRUDPv1 TCPv1 SBBridge TURNv1
+Capabilities-Flags: 1
+Conn-Type: Port-Restrict-NAT
+Hashed-Nonce: {74A98A0B-BB28-E485-A527-3F5EF770DF1D}
+ICF: false
+IPv6-global: 2001::395e
+Nat-Trav-Msg-Type: WLX-Nat-Trav-Msg-Direct-Connect-Req
+NetID: -1580793919
+TCP-Conn-Type: Port-Restrict-NAT
+UPnPNat: true
+            */
 
             P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
@@ -1775,7 +1217,7 @@ namespace MSNPSharp.DataTransfer
                 {
                     p2pMessage.V2Header.PackageNumber = 0;
                 }
-                
+
             }
 
             /////P2PTransferSession.GetNextSLPRequestDataPacketNumber();
@@ -1849,7 +1291,7 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         private Dictionary<Guid, MSNSLPTransferProperties> transferProperties = new Dictionary<Guid, MSNSLPTransferProperties>();
 
-        private int directConnectionExpireInterval = 12000;
+        private int directConnectionExpireInterval = 6000;
 
         /// <summary>
         /// Extracts the checksum (SHA1C/SHA1D field) from the supplied context.
@@ -2199,8 +1641,7 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Returns a port number which can be used to listen for a new direct connection.
         /// </summary>
-        /// <remarks>Throws an SocketException when no ports can be found.</remarks>
-        /// <returns></returns>
+        /// <returns>0 when no ports can be found</returns>
         protected virtual int GetNextDirectConnectionPort(IPAddress ipAddress)
         {
             int portAvail = 0;
@@ -2248,34 +1689,33 @@ namespace MSNPSharp.DataTransfer
                 }
             }
 
-            if (portAvail == 0 &&
-                Settings.PublicPortPriority == PublicPortPriority.Last)
+            if (portAvail == 0 && Settings.PublicPortPriority == PublicPortPriority.Last)
             {
                 portAvail = TryPublicPorts(ipAddress);
-
-                if (portAvail != 0)
-                {
-                    return portAvail;
-                }
             }
 
-            throw new SocketException(10048);
+            return portAvail;
         }
 
         private int TryPublicPorts(IPAddress localIP)
         {
             foreach (int p in Settings.PublicPorts)
             {
-                Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                Socket s = null;
                 try
                 {
+                    s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                     s.Bind(new IPEndPoint(localIP, p));
-                    s.Close();
                     return p;
                 }
                 catch (SocketException)
                 {
+                }
+                finally
+                {
+                    if (s != null)
+                        s.Close();
                 }
             }
             return 0;
@@ -2290,7 +1730,8 @@ namespace MSNPSharp.DataTransfer
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
             SLPStatusMessage slpMessage = new SLPStatusMessage(message.ToMail, 200, "OK");
-            Guid nonce = Guid.Empty;
+
+            Guid nonce = Guid.NewGuid();
             string nonceFieldName = "Nonce";
             bool hashed = false;
 
@@ -2300,37 +1741,47 @@ namespace MSNPSharp.DataTransfer
             }
             else if (message.BodyValues.ContainsKey("Hashed-Nonce"))
             {
+                // We support Hashed-Nonce feature, so response with it.
                 nonce = new Guid(message.BodyValues["Hashed-Nonce"].Value);
                 nonceFieldName = "Hashed-Nonce";
                 hashed = true;
+                // If we don't support it, create NONCE=NEWGUID.
+                // nonce = Guid.NewGuid();
+                // nonceFieldName = "Nonce";
+                // hashed = false;
             }
 
-            // Properties . ishashed *************
+
+            MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
+            if (properties != null)
+            {
+            }
 
             // Find host by name
             IPAddress ipAddress = LocalEndPoint.Address;
+            int port;
 
-            if (!ipAddress.Equals(ExternalEndPoint.Address))
+            if (false == ipAddress.Equals(ExternalEndPoint.Address) ||
+                (0 == (port = GetNextDirectConnectionPort(ipAddress))))
             {
                 slpMessage.BodyValues["Listening"] = "false";
-                slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                slpMessage.BodyValues[nonceFieldName] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
             }
             else
             {
                 // Let's listen
-                int port = GetNextDirectConnectionPort(ipAddress);
-
-
                 MessageSession.ListenForDirectConnection(ipAddress, port, nonce, hashed);
+
                 slpMessage.BodyValues["Listening"] = "true";
                 slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
                 slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
                 slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
+                // slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
 
                 // check if client is behind firewall (NAT-ted)
                 // if so, send the public ip also the client, so it can try to connect to that ip
-                if (ExternalEndPoint != null && ExternalEndPoint.Address != ipAddress)
+                if (ExternalEndPoint != null && !ExternalEndPoint.Address.Equals(ipAddress))
                 {
                     slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
                     slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -2346,6 +1797,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
 
+            //slpMessage.BodyValues["Bridge"] = "TCPv1 SBBridge";
             slpMessage.BodyValues["Bridge"] = "TCPv1 SBBridge";
 
             P2PMessage p2pReplyMessage = new P2PMessage(Version);
@@ -2373,46 +1825,72 @@ namespace MSNPSharp.DataTransfer
         protected virtual void OnDCResponse(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-
-            // read the values
             MimeDictionary bodyValues = message.BodyValues;
 
-            // check the protocol
-            if (bodyValues.ContainsKey("Bridge") && bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0)
+            // Check the protocol
+            if (bodyValues.ContainsKey("Bridge") &&
+                bodyValues["Bridge"].ToString().IndexOf("TCPv1") >= 0 &&
+                bodyValues.ContainsKey("Listening") &&
+                bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
             {
-                if (bodyValues.ContainsKey("IPv4Internal-Addrs") &&
-                    bodyValues.ContainsKey("Listening") && bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
+                if (bodyValues.ContainsKey("IPv4Internal-Addrs") || bodyValues.ContainsKey("srddA-lanretnI4vPI"))
                 {
-                    // we must connect to the remote client
+                    // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
-                    settings.Host = bodyValues["IPv4Internal-Addrs"].ToString();
-                    settings.Port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                    if (bodyValues.ContainsKey("IPv4Internal-Addrs"))
+                    {
+                        settings.Host = bodyValues["IPv4Internal-Addrs"].ToString();
+                        settings.Port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        char[] revHost = bodyValues["srddA-lanretnI4vPI"].ToString().ToCharArray();
+                        Array.Reverse(revHost);
+                        settings.Host = new string(revHost);
 
-                    // let the message session connect
+                        char[] revPort = bodyValues["troP-lanretnI4vPI"].ToString().ToCharArray();
+                        Array.Reverse(revPort);
+                        settings.Port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+                    }
+
+                    // Let the message session connect
                     MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
 
-
-                    Guid nonce = Guid.Empty;
-                    bool hashed = false;
+                    Guid nonce = properties.Nonce;
+                    Guid remoteHashedNonce = Guid.Empty;
+                    bool needHash = false;
 
                     if (bodyValues.ContainsKey("Nonce"))
                     {
+                        // Hashed-Nonce is not supported by remote contact, fallback...
                         nonce = new Guid(bodyValues["Nonce"].Value);
+                        properties.Nonce = nonce;
+                        properties.HashedNonce = Guid.Empty;
                     }
                     else if (bodyValues.ContainsKey("Hashed-Nonce"))
                     {
-                        nonce = new Guid(bodyValues["Hashed-Nonce"].Value);
-                        hashed = true;
+                        remoteHashedNonce = new Guid(bodyValues["Hashed-Nonce"].Value);
                     }
 
-                    properties.Nonce = nonce;
+                    if (properties.HashedNonce == remoteHashedNonce)
+                    {
+                        // Supported... We will send our Nonce and remote contact will hash it.
+                        // If they are equal, auth is OK.
+                        needHash = false; // We have already hash it.
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            String.Format("Can't macth our Hashed-Nonce {0} and their Hashed-Nonce {1}",
+                            properties.HashedNonce, remoteHashedNonce), GetType().Name);
+                    }
 
-                    // create the handshake message to send upon connection                    
+                    // Create the handshake message (NONCE) to send upon connection                    
                     P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(p2pMessage.Version);
                     hsMessage.Guid = properties.Nonce;
                     MessageSession.HandshakeMessage = hsMessage;
 
-                    MessageSession.CreateDirectConnection(settings.Host, settings.Port, nonce, hashed);
+                    MessageSession.CreateDirectConnection(settings.Host, settings.Port, nonce, needHash);
                 }
             }
         }
