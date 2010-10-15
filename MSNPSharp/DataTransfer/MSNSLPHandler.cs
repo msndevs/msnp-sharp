@@ -48,6 +48,13 @@ namespace MSNPSharp.DataTransfer
     using MSNPSharp;
     using MSNPSharp.Core;
 
+    public enum DCNonceType
+    {
+        None = 0,
+        Plain = 1,
+        Sha1 = 2
+    }
+
     #region DataTransferType
 
     /// <summary>
@@ -1116,6 +1123,25 @@ namespace MSNPSharp.DataTransfer
             throw new MSNPSharpException("SHA field could not be extracted from the specified context: " + context);
         }
 
+        internal static Guid ParseDCNonce(MimeDictionary bodyValues, out DCNonceType dcNonceType)
+        {
+            dcNonceType = DCNonceType.None;
+            Guid nonce = Guid.Empty;
+
+            if (bodyValues.ContainsKey("Hashed-Nonce"))
+            {
+                nonce = new Guid(bodyValues["Hashed-Nonce"].Value);
+                dcNonceType = DCNonceType.Sha1;
+            }
+            else if (bodyValues.ContainsKey("Nonce"))
+            {
+                nonce = new Guid(bodyValues["Nonce"].Value);
+                dcNonceType = DCNonceType.Plain;
+            }
+
+            return nonce;
+        }
+
         /// <summary>
         /// Parses the incoming invitation message. This will set the class's properties for later retrieval in following messages.
         /// </summary>
@@ -1183,11 +1209,12 @@ namespace MSNPSharp.DataTransfer
             // Create a new branch, but keep the same callid as the first invitation
             transferProperties.LastBranch = Guid.NewGuid().ToString("B").ToUpper(CultureInfo.InvariantCulture);
 
-            // We support Hashed-Nonce. Unless supported by remote contact, he ignores Hashed-Nonce field.
+            transferProperties.DCNonceType = DCNonceType.Plain; // We prefer this :)
             transferProperties.Nonce = Guid.NewGuid();
             transferProperties.HashedNonce = HashedNonceGenerator.HashNonce(transferProperties.Nonce);
 
             string connectionType = "Unknown-Connect";
+            string netId = "2042264281"; // unknown variable
 
             #region Check and determine connectivity
 
@@ -1207,7 +1234,10 @@ namespace MSNPSharp.DataTransfer
                 else
                 {
                     if (LocalEndPoint.Port == ExternalEndPoint.Port)
+                    {
+                        netId = "0";
                         connectionType = "IP-Restrict-NAT";
+                    }
                     else
                         connectionType = "Symmetric-NAT";
                 }
@@ -1227,26 +1257,15 @@ namespace MSNPSharp.DataTransfer
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
 
-            slpMessage.BodyValues["Bridges"] = "SBBridge TRUDPV1 TCPv1";
-            slpMessage.BodyValues["Capabilities-Flags"] = "1";
-            slpMessage.BodyValues["NetID"] = "2042264281"; // unknown variable
+            slpMessage.BodyValues["Bridges"] = "SBBridge TCPv1";
+            slpMessage.BodyValues["NetID"] = netId;
             slpMessage.BodyValues["Conn-Type"] = connectionType;
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
-            slpMessage.BodyValues["Hashed-Nonce"] = transferProperties.HashedNonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
-
-            /* WLM2009:
-            Bridges: TRUDPv1 TCPv1 SBBridge TURNv1
-Capabilities-Flags: 1
-Conn-Type: Port-Restrict-NAT
-Hashed-Nonce: {74A98A0B-BB28-E485-A527-3F5EF770DF1D}
-ICF: false
-IPv6-global: 2001::395e
-Nat-Trav-Msg-Type: WLX-Nat-Trav-Msg-Direct-Connect-Req
-NetID: -1580793919
-TCP-Conn-Type: Port-Restrict-NAT
-UPnPNat: true
-            */
+            if (transferProperties.DCNonceType == DCNonceType.Sha1)
+            {
+                slpMessage.BodyValues["Hashed-Nonce"] = transferProperties.HashedNonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            }
 
             P2PMessage p2pMessage = new P2PMessage(Version);
             p2pMessage.InnerMessage = slpMessage;
@@ -1265,10 +1284,6 @@ UPnPNat: true
                 }
 
             }
-
-            /////P2PTransferSession.GetNextSLPRequestDataPacketNumber();
-
-            //*************************
 
             MessageProcessor.SendMessage(p2pMessage);
         }
@@ -1433,92 +1448,74 @@ UPnPNat: true
         protected virtual void OnDCRequest(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-            SLPStatusMessage slpMessage = new SLPStatusMessage(message.ToMail, 200, "OK");
-
-            Guid nonce = Guid.NewGuid();
-            string nonceFieldName = "Nonce";
-            bool hashed = false;
-
-            if (message.BodyValues.ContainsKey("Nonce"))
+            
+            if (message.BodyValues.ContainsKey("Bridges") &&
+                message.BodyValues["Bridges"].ToString().Contains("TCPv1"))
             {
-                nonce = new Guid(message.BodyValues["Nonce"].Value);
-            }
-            else if (message.BodyValues.ContainsKey("Hashed-Nonce"))
-            {
-                // We support Hashed-Nonce feature, so response with it.
-                nonce = new Guid(message.BodyValues["Hashed-Nonce"].Value);
-                nonceFieldName = "Hashed-Nonce";
-                hashed = true;
-                // If we don't support it, create NONCE=NEWGUID.
-                // nonce = Guid.NewGuid();
-                // nonceFieldName = "Nonce";
-                // hashed = false;
-            }
+                SLPStatusMessage slpMessage = new SLPStatusMessage(message.ToMail, 200, "OK");
 
+                // Initial NonceType. Remote side prefers this. But I prefer Nonce :)
+                DCNonceType dcNonceType;
+                Guid nonce = ParseDCNonce(message.BodyValues, out dcNonceType);
 
-            MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
-            if (properties != null)
-            {
-            }
-
-            // Find host by name
-            IPAddress ipAddress = LocalEndPoint.Address;
-            int port;
-
-            if (false == ipAddress.Equals(ExternalEndPoint.Address) ||
-                (0 == (port = GetNextDirectConnectionPort(ipAddress))))
-            {
-                slpMessage.BodyValues["Listening"] = "false";
-                slpMessage.BodyValues[nonceFieldName] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
-            }
-            else
-            {
-                // Let's listen
-                MessageSession.ListenForDirectConnection(ipAddress, port, nonce, hashed);
-
-                slpMessage.BodyValues["Listening"] = "true";
-                slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
-                slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
-                slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-                // slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
-
-                // check if client is behind firewall (NAT-ted)
-                // if so, send the public ip also the client, so it can try to connect to that ip
-                if (ExternalEndPoint != null && !ExternalEndPoint.Address.Equals(ipAddress))
+                if (dcNonceType == DCNonceType.None)
                 {
-                    slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
-                    slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    nonce = Guid.NewGuid();
                 }
+                bool hashed = false;
+                string nonceFieldName = "Nonce";
+
+                // Find host by name
+                IPAddress ipAddress = LocalEndPoint.Address;
+                int port;
+
+                if (false == ipAddress.Equals(ExternalEndPoint.Address) ||
+                    (0 == (port = GetNextDirectConnectionPort(ipAddress))))
+                {
+                    slpMessage.BodyValues["Listening"] = "false";
+                    slpMessage.BodyValues[nonceFieldName] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    // Let's listen
+                    MessageSession.ListenForDirectConnection(ipAddress, port, nonce, hashed);
+
+                    slpMessage.BodyValues["Listening"] = "true";
+                    slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                    slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
+                    slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                    // check if client is behind firewall (NAT-ted)
+                    // if so, send the public ip also the client, so it can try to connect to that ip
+                    if (ExternalEndPoint != null)
+                    {
+                        slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
+                        slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                }
+
+                slpMessage.ToMail = message.FromMail;
+                slpMessage.FromMail = message.ToMail;
+                slpMessage.Branch = message.Branch;
+                slpMessage.CSeq = 1;
+                slpMessage.CallId = message.CallId;
+                slpMessage.MaxForwards = 0;
+                slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
+
+                slpMessage.BodyValues["Bridge"] = "TCPv1";
+
+                P2PMessage p2pReplyMessage = new P2PMessage(Version);
+                p2pReplyMessage.InnerMessage = slpMessage;
+
+                if (Version == P2PVersion.P2PV2)
+                {
+                    p2pReplyMessage.V2Header.TFCombination = TFCombination.First;
+                    p2pReplyMessage.V2Header.PackageNumber = P2PTransferSession.GetNextSLPStatusDataPacketNumber(p2pMessage.V2Header.PackageNumber);
+                }
+
+                // and notify the remote client that he can connect
+                MessageProcessor.SendMessage(p2pReplyMessage);
             }
-
-
-            slpMessage.ToMail = message.FromMail;
-            slpMessage.FromMail = message.ToMail;
-            slpMessage.Branch = message.Branch;
-            slpMessage.CSeq = 1;
-            slpMessage.CallId = message.CallId;
-            slpMessage.MaxForwards = 0;
-            slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
-
-            //slpMessage.BodyValues["Bridge"] = "TCPv1 SBBridge";
-            slpMessage.BodyValues["Bridge"] = "TCPv1 SBBridge";
-
-            P2PMessage p2pReplyMessage = new P2PMessage(Version);
-            p2pReplyMessage.InnerMessage = slpMessage;
-
-            if (Version == P2PVersion.P2PV2)
-            {
-                p2pReplyMessage.V2Header.TFCombination = TFCombination.First;
-                p2pReplyMessage.V2Header.PackageNumber = P2PTransferSession.GetNextSLPStatusDataPacketNumber(p2pMessage.V2Header.PackageNumber);
-            }
-
-            P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(Version);
-            hsMessage.Guid = nonce;
-            MessageSession.HandshakeMessage = hsMessage;
-
-            // and notify the remote client that he can connect
-            MessageProcessor.SendMessage(p2pReplyMessage);
         }
 
         #endregion
@@ -1533,6 +1530,18 @@ UPnPNat: true
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
             MimeDictionary bodyValues = message.BodyValues;
+            //MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
+
+            DCNonceType dcNonceType;
+            Guid nonce = ParseDCNonce(message.BodyValues, out dcNonceType);
+
+            if (dcNonceType == DCNonceType.Sha1)
+            {
+                // Always needed
+                //properties.RemoteNonce = nonce;
+                //properties.DCNonceType = dcNonceType;
+            }
+
 
             // Check the protocol
             if (bodyValues.ContainsKey("Bridge") &&
@@ -1540,67 +1549,161 @@ UPnPNat: true
                 bodyValues.ContainsKey("Listening") &&
                 bodyValues["Listening"].ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("true") >= 0)
             {
-                if (bodyValues.ContainsKey("IPv4Internal-Addrs") || bodyValues.ContainsKey("srddA-lanretnI4vPI"))
+                if (dcNonceType == DCNonceType.Plain)
+                {
+                    // Only needed for listening side
+                    //properties.Nonce = nonce;
+                    //properties.DCNonceType = dcNonceType;
+                }
+
+                IPEndPoint selectedPoint = SelectIPEndPoint(bodyValues);
+                if (selectedPoint != null)
                 {
                     // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
-                    if (bodyValues.ContainsKey("IPv4Internal-Addrs"))
-                    {
-                        settings.Host = bodyValues["IPv4Internal-Addrs"].ToString();
-                        settings.Port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
-                    }
-                    else
-                    {
-                        char[] revHost = bodyValues["srddA-lanretnI4vPI"].ToString().ToCharArray();
-                        Array.Reverse(revHost);
-                        settings.Host = new string(revHost);
+                    settings.Host = selectedPoint.Address.ToString();
+                    settings.Port = selectedPoint.Port;
 
-                        char[] revPort = bodyValues["troP-lanretnI4vPI"].ToString().ToCharArray();
-                        Array.Reverse(revPort);
-                        settings.Port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
-                    }
-
-                    // Let the message session connect
-                    MSNSLPTransferProperties properties = GetTransferProperties(message.CallId);
-
-                    Guid nonce = properties.Nonce;
-                    Guid remoteHashedNonce = Guid.Empty;
-                    bool needHash = false;
-
-                    if (bodyValues.ContainsKey("Nonce"))
-                    {
-                        // Hashed-Nonce is not supported by remote contact, fallback...
-                        nonce = new Guid(bodyValues["Nonce"].Value);
-                        properties.Nonce = nonce;
-                        properties.HashedNonce = Guid.Empty;
-                    }
-                    else if (bodyValues.ContainsKey("Hashed-Nonce"))
-                    {
-                        remoteHashedNonce = new Guid(bodyValues["Hashed-Nonce"].Value);
-                    }
-
-                    if (properties.HashedNonce == remoteHashedNonce)
-                    {
-                        // Supported... We will send our Nonce and remote contact will hash it.
-                        // If they are equal, auth is OK.
-                        needHash = false; // We have already hash it.
-                    }
-                    else
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                            String.Format("Can't macth our Hashed-Nonce {0} and their Hashed-Nonce {1}",
-                            properties.HashedNonce, remoteHashedNonce), GetType().Name);
-                    }
-
-                    // Create the handshake message (NONCE) to send upon connection                    
-                    P2PDCHandshakeMessage hsMessage = new P2PDCHandshakeMessage(p2pMessage.Version);
-                    hsMessage.Guid = properties.Nonce;
-                    MessageSession.HandshakeMessage = hsMessage;
-
-                    MessageSession.CreateDirectConnection(settings.Host, settings.Port, nonce, needHash);
+                    MessageSession.CreateDirectConnection(settings.Host, settings.Port, nonce, (dcNonceType == DCNonceType.Sha1));
                 }
             }
         }
+
+        private IPEndPoint SelectIPEndPoint(MimeDictionary bodyValues)
+        {
+            List<IPAddress> ipAddrs = new List<IPAddress>();
+            string[] addrs = new string[0];
+            int port = 0;
+
+            if (bodyValues.ContainsKey("IPv4External-Addrs") || bodyValues.ContainsKey("srddA-lanretxE4vPI"))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    "Using external IP addresses", GetType().Name);
+
+                if (bodyValues.ContainsKey("IPv4External-Addrs"))
+                {
+                    addrs = bodyValues["IPv4External-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    port = int.Parse(bodyValues["IPv4External-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    char[] revHost = bodyValues["srddA-lanretxE4vPI"].ToString().ToCharArray();
+                    Array.Reverse(revHost);
+                    addrs = new string(revHost).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    char[] revPort = bodyValues["troP-lanretxE4vPI"].ToString().ToCharArray();
+                    Array.Reverse(revPort);
+                    port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                       String.Format("{0} external IP addresses found, with port {1}", addrs.Length, port), GetType().Name);
+
+                for (int i = 0; i < addrs.Length; i++)
+                {
+                    IPAddress ip;
+                    if (IPAddress.TryParse(addrs[i], out ip))
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i], GetType().Name);
+
+                        ipAddrs.Add(ip);
+
+                        if (ip.Equals(LocalEndPoint.Address))
+                        {
+                            // External IP matches our own, clearing external IPs
+                            //addrs = new string[0];
+                            //ipAddrs.Clear();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ((ipAddrs.Count == 0) &&
+                (bodyValues.ContainsKey("IPv4Internal-Addrs") || bodyValues.ContainsKey("srddA-lanretnI4vPI")))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    "Using internal IP addresses", GetType().Name);
+
+                if (bodyValues.ContainsKey("IPv4Internal-Addrs"))
+                {
+                    addrs = bodyValues["IPv4Internal-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    char[] revHost = bodyValues["srddA-lanretnI4vPI"].ToString().ToCharArray();
+                    Array.Reverse(revHost);
+                    addrs = new string(revHost).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    char[] revPort = bodyValues["troP-lanretnI4vPI"].ToString().ToCharArray();
+                    Array.Reverse(revPort);
+                    port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+                }
+            }
+
+            if (addrs.Length == 0)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                   "Unable to find any remote IP addresses", GetType().Name);
+
+                // Failed
+                return null;
+            }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                      String.Format("{0} internal IP addresses found, with port {1}",
+                      addrs.Length, port), GetType().Name);
+
+            for (int i = 0; i < addrs.Length; i++)
+            {
+                IPAddress ip;
+                if (IPAddress.TryParse(addrs[i], out ip))
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i], GetType().Name);
+
+                    ipAddrs.Add(ip);
+                }
+            }
+
+            if (addrs.Length == 0)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                   "Unable to find any remote IP addresses", GetType().Name);
+
+                // Failed
+                return null;
+            }
+
+            // Try to find the correct IP
+            IPAddress ipAddr = null;
+            byte[] localBytes = LocalEndPoint.Address.GetAddressBytes();
+
+            foreach (IPAddress ip in ipAddrs)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    // This is an IPv4 address
+                    // Check if the first 3 octets match our local IP address
+                    // If so, make use of that address (it's on our LAN)
+
+                    byte[] bytes = ip.GetAddressBytes();
+
+                    if ((bytes[0] == localBytes[0]) && (bytes[1] == localBytes[1]) && (bytes[2] == localBytes[2]))
+                    {
+                        ipAddr = ip;
+                        break;
+                    }
+                }
+            }
+
+            if (ipAddr == null)
+                ipAddr = ipAddrs[0];
+
+            return new IPEndPoint(ipAddr, port);
+        }
+
+    
 
         #endregion
 
@@ -1625,7 +1728,7 @@ UPnPNat: true
                 {
                     Guid callGuid = message.CallId;
                     MSNSLPTransferProperties properties = GetTransferProperties(callGuid);
-
+                    
                     if (properties == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Cannot find request transfer property, Guid: " + callGuid.ToString("B"));
@@ -1642,7 +1745,7 @@ UPnPNat: true
 
 
                     #region File and Activity are invitor send
-
+                    
                     int waitCounter = 0;
                     Timer timer = new Timer(1000);
                     timer.Elapsed += delegate(object sender, ElapsedEventArgs e)
