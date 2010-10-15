@@ -59,7 +59,9 @@ namespace MSNPSharp.DataTransfer
         private int lastCSeq = 0;
         private Guid nonce = Guid.Empty;
         private Guid hashedNonce = Guid.Empty;
+        private Guid remoteNonce = Guid.Empty;
         private Guid callId = Guid.Empty;
+        private DCNonceType dcNonceType = DCNonceType.Plain;
         private string lastBranch = Guid.Empty.ToString("B").ToUpper(CultureInfo.InvariantCulture);
 
         private uint dataSize = 0;
@@ -226,8 +228,20 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        public DCNonceType DCNonceType
+        {
+            get
+            {
+                return dcNonceType;
+            }
+            set
+            {
+                dcNonceType = value;
+            }
+        }
+
         /// <summary>
-        /// The GUID used in the handshake message for direct connections.
+        /// The Nonce used in the handshake message for direct connections.
         /// </summary>
         public Guid Nonce
         {
@@ -242,7 +256,7 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// The HASHED GUID used in the handshake message for direct connections. This is SHA1 value of
+        /// The Hashed-Nonce used in the handshake message for direct connections. This is SHA1 value of
         /// <see cref="Nonce"/> if remote contact supports hashed-guids, otherwise this is Guid.Empty.
         /// </summary>
         public Guid HashedNonce
@@ -254,6 +268,21 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 hashedNonce = value;
+            }
+        }
+
+        /// <summary>
+        /// The remote user's Hashed-Nonce used in the handshake message for direct connections.
+        /// </summary>
+        public Guid RemoteNonce
+        {
+            get
+            {
+                return remoteNonce;
+            }
+            set
+            {
+                remoteNonce = value;
             }
         }
 

@@ -42,6 +42,15 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp.Core;
 
+    public enum DirectConnectionState
+    {
+        None = 0,
+        Closed = 0,
+        Foo = 1,
+        Handshake = 2,
+        HandshakeReply = 3,
+        Established = 4
+    }
 
     [Serializable]
     public class P2PHandshakeMessageEventArgs : EventArgs
@@ -69,25 +78,52 @@ namespace MSNPSharp.DataTransfer
     {
         public event EventHandler<P2PHandshakeMessageEventArgs> HandshakeCompleted;
 
-
         private P2PVersion version = P2PVersion.P2PV1;
         private Guid nonce = Guid.Empty;
         private bool needHash = false;
         private Timer socketExpireTimer = new Timer(12000);
         private ProxySocket socketListener = null;
-        private Socket dcSocket = null;
         private bool isListener = false;
-        private bool fooHandled = false;
-        private bool authenticated = false;
+        private Socket dcSocket = null;
+        private DirectConnectionState dcState = DirectConnectionState.Closed;
 
-        private void socketExpireTimer_Elapsed(object sender, ElapsedEventArgs e)
+        public P2PVersion Version
         {
-            socketExpireTimer.Elapsed -= socketExpireTimer_Elapsed;
+            get
+            {
+                return version;
+            }
+        }
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                "I was waiting for " + (socketExpireTimer.Interval / 1000) + " seconds, but no one has connected!", GetType().Name);
+        public DirectConnectionState DCState
+        {
+            get
+            {
+                return dcState;
+            }
+            protected internal set
+            {
+                dcState = value;
+            }
+        }
 
-            Dispose();
+        public Guid Nonce
+        {
+            get
+            {
+                return nonce;
+            }
+        }
+
+        /// <summary>
+        /// Returns whether this processor was initiated as listening (true) or connecting (false).
+        /// </summary>
+        public bool IsListener
+        {
+            get
+            {
+                return isListener;
+            }
         }
 
         /// <summary>
@@ -109,20 +145,6 @@ namespace MSNPSharp.DataTransfer
             Dispose(false);
         }
 
-        /// <summary>
-        /// Returns whether this processor was initiated as listening (true) or connecting (false).
-        /// </summary>
-        public bool IsListener
-        {
-            get
-            {
-                return isListener;
-            }
-            set
-            {
-                isListener = value;
-            }
-        }
 
         /// <summary>
         /// Starts listening at the specified port in the connectivity settings.
@@ -142,6 +164,16 @@ namespace MSNPSharp.DataTransfer
             socketExpireTimer.AutoReset = false;
             socketExpireTimer.Enabled = true; // After accepted, DISABLE timer.
             socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
+        }
+
+        private void socketExpireTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            socketExpireTimer.Elapsed -= socketExpireTimer_Elapsed;
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                "I was waiting for " + (socketExpireTimer.Interval / 1000) + " seconds, but no one has connected!", GetType().Name);
+
+            Dispose();
         }
 
         private void StopListening()
@@ -175,6 +207,11 @@ namespace MSNPSharp.DataTransfer
                 // Disable timer. Otherwise, data transfer will be broken after 12 secs.
                 // Huge datas can't transmit within 12 secs :) 
                 socketExpireTimer.Enabled = false;
+
+                dcState = DirectConnectionState.Foo;
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    "I have listened on " + dcSocket.LocalEndPoint + " and setup a DC with " + dcSocket.RemoteEndPoint, GetType().Name);
 
                 // Stop listening
                 StopListening();
@@ -223,21 +260,83 @@ namespace MSNPSharp.DataTransfer
 
         protected override void OnConnected()
         {
-            if (!IsListener && !fooHandled)
+            if (!IsListener && dcState == DirectConnectionState.Closed)
             {
-                // Send foo0: datalen + data
+                this.dcState = DirectConnectionState.Foo;
                 SendSocketData(new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 });
-                fooHandled = true;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "foo0 sent", GetType().Name);
+
+                this.dcState = DirectConnectionState.Handshake;
             }
+
             base.OnConnected();
         }
 
         protected override void OnDisconnected()
         {
-            fooHandled = false;
-            authenticated = false;
-
+            dcState = DirectConnectionState.Closed;
             base.OnDisconnected();
+        }
+
+        private P2PDCHandshakeMessage VerifyHandshake(byte[] data)
+        {
+            P2PVersion authVersion = P2PVersion.P2PV1;
+            P2PDCHandshakeMessage ret = null;
+
+            if (data.Length == 48)
+            {
+                authVersion = P2PVersion.P2PV1;
+            }
+            else if (data.Length == 16)
+            {
+                authVersion = P2PVersion.P2PV2;
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    "Invalid handshake length, the data was: " + Encoding.ASCII.GetString(data), GetType().Name);
+
+                return null;
+            }
+
+            if (authVersion != this.version)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    String.Format("Received version is {0}, expected {1}", authVersion, this.version), GetType().Name);
+
+                return null;
+            }
+
+            P2PDCHandshakeMessage incomingHandshake = new P2PDCHandshakeMessage(version);
+            incomingHandshake.ParseBytes(data);
+
+            Guid incomingGuid = incomingHandshake.Guid;
+
+            if (incomingHandshake.Version == P2PVersion.P2PV1 && (P2PFlag.DirectHandshake != (incomingHandshake.V1Header.Flags & P2PFlag.DirectHandshake)))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                   "Handshake flag not set for v1, the flag was: " + incomingHandshake.V1Header.Flags, GetType().Name);
+
+                return null;
+            }
+
+            Guid compareGuid = incomingGuid;
+            if (needHash)
+            {
+                compareGuid = HashedNonceGenerator.HashNonce(compareGuid);
+            }
+
+            if (this.nonce == compareGuid)
+            {
+                ret = new P2PDCHandshakeMessage(version);
+                ret.ParseBytes(data); // copy identifiers
+                ret.Guid = compareGuid; // set new guid (hashed)
+                ret.GetBytes();
+                return ret; // OK this is our handshake message
+            }
+
+            return null;
+
         }
 
         /// <summary>
@@ -246,124 +345,89 @@ namespace MSNPSharp.DataTransfer
         /// <param name="data"></param>
         protected override void OnMessageReceived(byte[] data)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "analyzing message", GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "Analyzing message in DC state <" + dcState + ">", GetType().Name);
 
-            // Foo state
-            if (!fooHandled)
+            switch (dcState)
             {
-                string initialData = Encoding.ASCII.GetString(data);
+                case DirectConnectionState.Established:
+                    {
+                        // Convert to a p2pdc message
+                        P2PDCMessage dcMessage = new P2PDCMessage(version);
+                        dcMessage.ParseBytes(data);
 
-                if (data.Length == 4 && initialData == "foo\0")
-                {
-                    fooHandled = true;
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "foo0 handled", GetType().Name);
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "foo0 expected, but it was: " + initialData, GetType().Name);
-                    Dispose();
-                }
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, dcMessage.ToDebugString(), GetType().Name);
 
-                return;
+                        lock (MessageHandlers)
+                        {
+                            foreach (IMessageHandler handler in MessageHandlers)
+                            {
+                                handler.HandleMessage(this, dcMessage);
+                            }
+                        }
+                    }
+                    break;
+
+                case DirectConnectionState.HandshakeReply:
+                    {
+                        P2PDCHandshakeMessage match = VerifyHandshake(data);
+
+                        if (match == null)
+                        {
+                            Dispose();
+                            return;
+                        }
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "Handshake Completed: " + match.Guid + "; My Nonce: " + this.nonce + "; Need Hash: " + needHash, GetType().Name);
+
+                        this.dcState = DirectConnectionState.Established;
+                        OnHandshakeCompleted(new P2PHandshakeMessageEventArgs(match));
+                    }
+                    break;
+
+                case DirectConnectionState.Handshake:
+                    {
+                        P2PDCHandshakeMessage match = VerifyHandshake(data);
+
+                        if (match == null)
+                        {
+                            Dispose();
+                            return;
+                        }
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "Handshake Completed: " + match.Guid + "; My Nonce: " + this.nonce + "; Need Hash: " + needHash, GetType().Name);
+
+                        this.dcState = DirectConnectionState.Established;
+                        OnHandshakeCompleted(new P2PHandshakeMessageEventArgs(match));
+                    }
+                    break;
+
+                case DirectConnectionState.Foo:
+                    {
+                        string initialData = Encoding.ASCII.GetString(data);
+
+                        if (data.Length == 4 && initialData == "foo\0")
+                        {
+                            this.dcState = DirectConnectionState.Handshake;
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "foo0 handled", GetType().Name);
+                        }
+                        else
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "foo0 expected, but it was: " + initialData, GetType().Name);
+                            Dispose();
+                            return;
+                        }
+                    }
+                    break;
+
+                case DirectConnectionState.Closed:
+                    break;
             }
 
-
-            // Auth state
-            if (!authenticated)
-            {
-                P2PVersion authVersion = P2PVersion.P2PV1;
-
-                if (data.Length == 48)
-                {
-                    authVersion = P2PVersion.P2PV1;
-                }
-                else if (data.Length == 16)
-                {
-                    authVersion = P2PVersion.P2PV2;
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                        "Invalid handshake length, the data was: " + Encoding.ASCII.GetString(data), GetType().Name);
-                    Dispose();
-                    return;
-                }
-
-                if (authVersion != this.version)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                        String.Format("Received version is {0}, expected {1}", authVersion, this.version), GetType().Name);
-                    Dispose();
-                    return;
-                }
-
-                P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(version);
-                hm.ParseBytes(data);
-
-                Guid incomingGuid = hm.Guid;
-
-                if (hm.Version == P2PVersion.P2PV1 && (P2PFlag.DirectHandshake != (hm.V1Header.Flags & P2PFlag.DirectHandshake)))
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                       "Handshake flag not set for v1, the flag was: " + hm.V1Header.Flags, GetType().Name);
-                    Dispose();
-                    return;
-                }
-
-                if (IsListener && needHash)
-                {
-                    incomingGuid = HashedNonceGenerator.HashNonce(incomingGuid);
-                }
-
-                
-
-                if (!IsListener)
-                {
-                    authenticated = true;
-
-                    hm = new P2PDCHandshakeMessage(version);
-                    hm.Guid = this.nonce;                   
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                        String.Format("[DC --> CONNECT] AUTH OK; Received ack: {0}", hm.Guid), GetType().Name);
-
-                    OnHandshakeCompleted(new P2PHandshakeMessageEventArgs(hm));
-                    return;
-                }
-
-                if (nonce == incomingGuid)
-                {
-                    authenticated = true;
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                        String.Format("[DC <-- LISTEN] AUTH OK; Received nonce: {0}, hashed {1}", hm.Guid, incomingGuid), GetType().Name);
-
-                    OnHandshakeCompleted(new P2PHandshakeMessageEventArgs(hm));
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                        String.Format("Received nonce is {0}, expected {1}", incomingGuid, nonce), GetType().Name);
-
-                    Dispose();
-                }
-                return;
-            }
-
-            // Data state: convert to a p2pdc message
-            P2PDCMessage dcMessage = new P2PDCMessage(version);
-            dcMessage.ParseBytes(data);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, dcMessage.ToDebugString(), GetType().Name);
-
-            lock (MessageHandlers)
-            {
-                foreach (IMessageHandler handler in MessageHandlers)
-                {
-                    handler.HandleMessage(this, dcMessage);
-                }
-            }
         }
+
 
         /// <summary>
         /// Sends the P2PMessage directly over the socket. Accepts P2PDCMessage and P2PMessage objects.
@@ -375,9 +439,8 @@ namespace MSNPSharp.DataTransfer
             P2PDCMessage p2pMessage = message as P2PDCMessage;
             if (p2pMessage == null)
             {
-                p2pMessage = new P2PDCMessage((P2PMessage)message);
+                p2pMessage = new P2PDCMessage(message as P2PMessage);
             }
-
 
             // prepare the message
             p2pMessage.PrepareMessage();
