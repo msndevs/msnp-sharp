@@ -177,7 +177,7 @@ namespace MSNPSharp.DataTransfer
         {
             if (DirectConnected)
             {
-                CleanUpDirectConnection(true);
+                CleanUpDirectConnection();
             }
         }
 
@@ -339,9 +339,9 @@ namespace MSNPSharp.DataTransfer
         /// <summary>
         /// Sets the message processor back to the switchboard message processor.
         /// </summary>
-        private void CleanUpDirectConnection(bool wasDirectConnected)
+        private void CleanUpDirectConnection()
         {
-            if (wasDirectConnected)
+            if (DirectConnected)
             {
                 lock (this)
                 {
@@ -367,11 +367,9 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         private void OnDirectProcessorDisconnected(object sender, EventArgs e)
         {
-            bool wasDirectConnected = DirectConnected;
-
             ((SocketMessageProcessor)sender).ConnectionClosed -= (OnDirectProcessorDisconnected);
 
-            CleanUpDirectConnection(wasDirectConnected);
+            CleanUpDirectConnection();
         }
 
 
@@ -404,7 +402,7 @@ namespace MSNPSharp.DataTransfer
         {
             ((SocketMessageProcessor)sender).ConnectingException -= (OnDirectProcessorException);
 
-            CleanUpDirectConnection(true);
+            CleanUpDirectConnection();
             directConnectionAttempt = true;
 
             if (DirectConnectionFailed != null)

@@ -706,7 +706,7 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         protected virtual NetworkMessage WrapToProcessorMessage(NetworkMessage message)
         {
-            if (DirectConnected)
+            if (MessageProcessor is P2PDirectProcessor)
             {
                 return new P2PDCMessage(message as P2PMessage);
             }
