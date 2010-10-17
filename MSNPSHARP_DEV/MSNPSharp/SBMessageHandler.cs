@@ -942,15 +942,13 @@ namespace MSNPSharp
             }
 
             //Add "this contact"
-            SetRosterProperty(contact.Mail.ToLowerInvariant() + ";" + contact.MachineGuid.ToString("B").ToLowerInvariant(),
-                ContactConversationState.Invited.ToString(),
-                RosterProperties.Status);
+            SetRosterProperty(fullaccount, ContactConversationState.Invited.ToString(), RosterProperties.Status);
 
             if (endPoint == Guid.Empty)
             {
                 //Add "all contact"
                 SetRosterProperty(contact.Mail.ToLowerInvariant(), ContactConversationState.Invited.ToString(), RosterProperties.Status);
-                if (contact.HasSignedInWithMultipleEndPoints)
+                if (contact.HasSignedInWithMultipleEndPoints)  //Set every enpoints as Invited.
                 {
                     foreach (Guid epId in contact.EndPointData.Keys)
                     {
