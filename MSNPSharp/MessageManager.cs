@@ -510,7 +510,7 @@ namespace MSNPSharp.Utilities
                 throw new ArgumentNullException("cId is null.");
             }
 
-            //If the mesenger is not signed in, this calling will throw an exception.
+            //If the messenger is not signed in, this calling will throw an exception.
             CheckMessengerStatus();
 
             lock (SyncObject)
