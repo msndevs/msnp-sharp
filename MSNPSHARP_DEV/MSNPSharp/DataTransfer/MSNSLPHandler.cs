@@ -952,7 +952,7 @@ namespace MSNPSharp.DataTransfer
             }
 
             OnTransferSessionCreated(transferSession);
-            transferSession.AcceptInviation(SLPStatusMessage.CreateAcceptanceMessage(properties));
+            transferSession.AcceptInvitation(SLPStatusMessage.CreateAcceptanceMessage(properties));
         }
 
         #endregion

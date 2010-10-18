@@ -331,7 +331,6 @@ namespace MSNPSharp.DataTransfer
                 ret = new P2PDCHandshakeMessage(version);
                 ret.ParseBytes(data); // copy identifiers
                 ret.Guid = compareGuid; // set new guid (hashed)
-                ret.GetBytes();
                 return ret; // OK this is our handshake message
             }
 

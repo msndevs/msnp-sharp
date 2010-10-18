@@ -30,22 +30,25 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
 namespace MSNPSharp.DataTransfer
 {
-    using System;
-    using System.Collections;
-    using MSNPSharp.Core;
     using MSNPSharp;
+    using MSNPSharp.Core;
 
     /// <summary>
     /// A pool for P2P Direct-connection messages.
     /// </summary>
     /// <remarks>
-    /// This message pool will read in the first 4 bytes for the length of the message. And after that the lenth is read and inserted in a buffer.
+    /// This message pool will read in the first 4 bytes for the length of the message. And after that the
+    /// lenth is read and inserted in a buffer.
     /// </remarks>
     public class P2PDCPool : MSNPSharp.Core.MessagePool
     {
-        private Queue messages = new Queue(2);
+        private Queue<byte[]> messages = new Queue<byte[]>();
         private byte[] lastMessage;
         private int bytesLeft;
 
@@ -106,19 +109,13 @@ namespace MSNPSharp.DataTransfer
                     messages.Enqueue(message);
                 }
             }
-
         }
 
-        /// <summary>
-        /// </summary>
-        /// <returns></returns>
         public override byte[] GetNextMessageData()
         {
-            return (byte[])messages.Dequeue();
+            return messages.Dequeue();
         }
 
-        /// <summary>
-        /// </summary>
         public override bool MessageAvailable
         {
             get
@@ -126,6 +123,5 @@ namespace MSNPSharp.DataTransfer
                 return messages.Count > 0;
             }
         }
-
     }
 };

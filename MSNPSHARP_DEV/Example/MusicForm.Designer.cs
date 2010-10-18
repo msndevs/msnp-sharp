@@ -122,7 +122,7 @@ namespace MSNPSharpClient
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "MusicForm";
-            this.Text = "Set music";
+            this.Text = "I am Listening...";
             this.ResumeLayout(false);
             this.PerformLayout();
 

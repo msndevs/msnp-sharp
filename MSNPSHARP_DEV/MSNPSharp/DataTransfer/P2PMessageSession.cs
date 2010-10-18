@@ -37,6 +37,7 @@ using System.Text;
 using System.Threading;
 using System.Collections;
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Globalization;
 using System.Collections.Generic;
 
@@ -44,22 +45,35 @@ namespace MSNPSharp.DataTransfer
 {
     using MSNPSharp;
     using MSNPSharp.Core;
-    using System.Net.Sockets;
 
     /// <summary>
-    /// P2PMessageSession routes all messages in the p2p framework between the local client and a single remote client.<br/>
-    /// It is the Transfer Layer of MSNP2P Protocol.
+    /// P2PMessageSession routes all messages in the p2p framework between the local client and a single
+    /// remote client. It is the Transfer Layer of MSNP2P Protocol.
     /// </summary>
     /// <remarks>
-    /// A single message session can hold multiple p2p transfer sessions. This for example occurs when a contact sends
-    /// two files directly after each other in the same switchboard session.
-    /// This class keeps track of the message identifiers, dispatches messages to registered message handlers and routes
-    /// data messages to the correct <see cref="P2PTransferSession"/> objects. Usually this class is a handler of a switchboard processor.
-    /// A common handler for this class is <see cref="MSNSLPHandler"/>.
+    /// A single message session can hold multiple p2p transfer sessions. This for example occurs when a
+    /// contact sends two files directly after each other in the same switchboard session. This class keeps
+    /// track of the message identifiers, dispatches messages to registered message handlers and routes data
+    /// messages to the correct <see cref="P2PTransferSession"/> objects. Usually this class is a handler
+    /// of a switchboard processor. A common handler for this class is <see cref="MSNSLPHandler"/>.
     /// </remarks>
     public partial class P2PMessageSession : IMessageHandler, IMessageProcessor
     {
-        #region Properties
+        #region Events
+
+        /// <summary>
+        /// Occurs when the processor has been marked as invalid. Due to connection error, or message processor being null.
+        /// </summary>
+        public event EventHandler<EventArgs> ProcessorInvalid;
+
+        /// <summary>
+        /// Occurs when a P2P session is closed.
+        /// </summary>
+        public event EventHandler<P2PSessionAffectedEventArgs> SessionClosed;
+
+        #endregion
+
+        #region Members
 
         private uint localBaseIdentifier = 0;
         private uint localIdentifier = 0;
@@ -71,22 +85,72 @@ namespace MSNPSharp.DataTransfer
         private Guid remoteContactEndPointID = Guid.Empty;
         private NSMessageHandler nsMessageHandler = null;
         private P2PVersion version = P2PVersion.P2PV1;
-        private OperationCode transferLayerState = OperationCode.SYN | OperationCode.RAK;
+
+        private MSNSLPHandler masterSession = null;
+
 
         /// <summary>
-        /// Occurs when a P2P session is closed.
+        /// Keeps track of unsend messages
         /// </summary>
-        public event EventHandler<P2PSessionAffectedEventArgs> SessionClosed;
+        private Queue<NetworkMessage> sendMessages = new Queue<NetworkMessage>();
+
+        private bool processorValid = true;
+
+        /// This is the processor used before a direct connection. Usually a SB processor.
+        /// It is a fallback variables in case a direct connection fails.
+        private IMessageProcessor preDCProcessor = null;
+
+        /// A collection of all transfersessions
+        private Dictionary<uint, P2PTransferSession> transferSessions = new Dictionary<uint, P2PTransferSession>();
+
+        #endregion
+
+        #region Constructor
+
+        protected P2PMessageSession()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
+        }
+
+        public P2PMessageSession(Contact local, Guid localEPID, Contact remote, Guid remoteEPID, NSMessageHandler handler)
+        {
+            version = MSNSLPTransferProperties.JudgeP2PStackVersion(local, localEPID, remote, remoteEPID, true);
+
+            localContact = local;
+            localContactEndPointID = localEPID;
+            remoteContact = remote;
+            remoteContactEndPointID = remoteEPID;
+
+            nsMessageHandler = handler;
+            NSMessageHandler.ContactOffline += (NSMessageHandler_ContactOffline);
+
+            masterSession = new MSNSLPHandler(Version, NSMessageHandler.P2PInvitationSchedulerId, NSMessageHandler.ContactList.Owner.ClientIP);
+            masterSession.MessageProcessor = this;
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Initializing P2P Transfer Layer object, version = " + Version.ToString(), GetType().Name);
+        }
+
+
+        #endregion
+
+        #region Properties
+
 
 
         public Guid LocalContactEndPointID
         {
-            get { return localContactEndPointID; }
+            get
+            {
+                return localContactEndPointID;
+            }
         }
 
         public Guid RemoteContactEndPointID
         {
-            get { return remoteContactEndPointID; }
+            get
+            {
+                return remoteContactEndPointID;
+            }
         }
 
         /// <summary>
@@ -94,27 +158,44 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public P2PVersion Version
         {
-            get { return version; }
+            get
+            {
+                return version;
+            }
         }
 
         protected NSMessageHandler NSMessageHandler
         {
-            get { return nsMessageHandler; }
+            get
+            {
+                return nsMessageHandler;
+            }
         }
 
         /// <summary>
-        /// This is the processor used before a direct connection. Usually a SB processor.
-        /// It is a fallback variables in case a direct connection fails.
+        /// Get the <see cref="MSNSLPHandler"/> of the transfer layer, each transfer layer have only one <see cref="MSNSLPHandler"/>
         /// </summary>
-        private IMessageProcessor preDCProcessor;
+        /// <returns></returns>
+        public MSNSLPHandler MasterSession
+        {
+            get
+            {
+                return masterSession;
+            }
+        }
 
         /// <summary>
-        /// A collection of all transfersessions
+        /// Indicates whether the processor is invalid
         /// </summary>
-        private Dictionary<uint, P2PTransferSession> transferSessions = new Dictionary<uint, P2PTransferSession>();
+        public bool ProcessorValid
+        {
+            get
+            {
+                return processorValid;
+            }
+        }
 
-        private MSNSLPHandler masterSession = null;
-        
+
         /// <summary>
         /// The sequence number that local transfer starts from.
         /// </summary>
@@ -221,90 +302,226 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        private void CreateMasterSession()
+
+
+        #endregion
+
+        #region IMessageProcessor Members
+
+        private List<IMessageHandler> handlers = new List<IMessageHandler>();
+
+        /// <summary>
+        /// Registers a message handler. After registering the handler will receive incoming messages.
+        /// </summary>
+        /// <param name="handler"></param>
+        public void RegisterHandler(IMessageHandler handler)
         {
-            masterSession = new MSNSLPHandler(Version, NSMessageHandler.P2PInvitationSchedulerId, NSMessageHandler.ContactList.Owner.ClientIP);
-            masterSession.MessageProcessor = this;
+            if (handler != null && !handlers.Contains(handler))
+            {
+                lock (handlers)
+                {
+                    handlers.Add(handler);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                       handler.ToString() + " added to handler list.", GetType().Name);
+
+                }
+            }
+        }
+
+        /// <summary>
+        /// Unregisters a message handler. After registering the handler will no longer receive incoming messages.
+        /// </summary>
+        /// <param name="handler"></param>
+        public void UnregisterHandler(IMessageHandler handler)
+        {
+            if (handler != null)
+            {
+                lock (handlers)
+                {
+                    while (handlers.Remove(handler))
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                            handler.ToString() + " removed from handler list.", GetType().Name);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends incoming p2p messages to the remote contact.
+        /// </summary>
+        /// <remarks>
+        /// Before the message is send a couple of things are checked. If there is no identifier available,
+        /// the local identifier will be increased by one and set as the message identifier.
+        /// Second, if the acknowledgement identifier is not set it will be set to a random value. After this
+        /// the method will check for the total length of the message. If the total length is too large,
+        /// the message will be splitted into multiple messages. The maximum size for p2p messages over a
+        /// switchboard is 1202 bytes. The maximum size for p2p messages over a direct connection is 1352
+        /// bytes. As a result the length of the splitted messages will be 1202 or 1352 bytes or smaller,
+        /// depending on the availability of a direct connection.
+        /// 
+        /// If a direct connection is available the message is wrapped in a <see cref="P2PDCMessage"/> object
+        /// and send over the direct connection. Otherwise it will be send over a switchboard session.
+        /// If there is no switchboard session available, or it has become invalid, a new switchboard session
+        /// will be requested by asking this to the nameserver handler. Messages will be buffered until a
+        /// switchboard session, or a direct connection, becomes available. Upon a new connection the
+        /// buffered messages are directly send to the remote contact over the new connection.
+        /// </remarks>
+        /// <param name="message">The P2PMessage to send to the remote contact.</param>
+        public void SendMessage(NetworkMessage message)
+        {
+            P2PMessage p2pMessage = (P2PMessage)message;
+
+            SetSequenceNumber(p2pMessage);
+
+            if (Version == P2PVersion.P2PV1)
+            {
+                DeliverMessageV1(p2pMessage);
+            }
+            else if (Version == P2PVersion.P2PV2)
+            {
+                DeliverMessageV2(p2pMessage);
+            }
         }
 
         #endregion
 
-        #region Public
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        protected P2PMessageSession()
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object", GetType().Name);
-        }
+        #region IMessageHandler Members
+
+        private IMessageProcessor messageProcessor = null;
 
         /// <summary>
-        /// Constructor.
+        /// The message processor that sends the P2P messages to the remote contact.
         /// </summary>
-        public P2PMessageSession(Contact local, Guid localEPID, Contact remote, Guid remoteEPID, NSMessageHandler handler)
+        public IMessageProcessor MessageProcessor
         {
-            version = MSNSLPTransferProperties.JudgeP2PStackVersion(local, localEPID, remote, remoteEPID, true);
-
-            localContact = local;
-            localContactEndPointID = localEPID;
-            remoteContact = remote;
-            remoteContactEndPointID = remoteEPID;
-
-            nsMessageHandler = handler;
-            NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(NSMessageHandler_ContactOffline);
-
-            CreateMasterSession();
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Initializing P2P Transfer Layer object, version = " + Version.ToString(), GetType().Name);
-        }
-
-
-
-        /// <summary>
-        /// Cleans up p2p resources associated with the offline contact.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        protected virtual void NSMessageHandler_ContactOffline(object sender, ContactEventArgs e)
-        {
-            if (e.Contact.IsSibling(RemoteContact))
+            get
             {
-                CleanUp();
+                return messageProcessor;
+            }
+            set
+            {
+                messageProcessor = value;
+
+                if (messageProcessor != null &&
+                    messageProcessor.GetType() != typeof(NSMessageProcessor))
+                {
+                    ValidateProcessor();
+                    SendBuffer();
+                }
             }
         }
 
         /// <summary>
-        /// Removes references to handlers and the messageprocessor. Also closes running transfer sessions and pending processors establishing connections.
+        /// Handles P2PMessages. Other messages are ignored.
+        /// All incoming messages are supposed to belong to this session.
         /// </summary>
-        public virtual void CleanUp()
+        public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
         {
-            NSMessageHandler.ContactOffline -= NSMessageHandler_ContactOffline;
-            OnSessionClosed(this);
-            NSMessageHandler.P2PHandler.OnSessionClosed(this);
+            P2PMessage p2pMessage = message as P2PMessage;
 
-            StopAllPendingProcessors();
-            AbortAllTransfers();
+            Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", GetType().Name);
 
-            lock (handlers)
-                handlers.Clear();
+            if (p2pMessage.Version == P2PVersion.P2PV1)
+            {
+                // Keep track of the remote identifier
+                RemoteIdentifier = p2pMessage.Header.Identifier;
 
-            MessageProcessor = null;
+                if (p2pMessage.V1Header.Flags == P2PFlag.Error)
+                {
+                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
+                    if (session != null)
+                    {
+                        session.AbortTransfer();
+                    }
+                    return;
+                }
 
-            lock (transferSessions)
-                transferSessions.Clear();
+                // Check if it is a content message
+                if (p2pMessage.Header.SessionId > 0)
+                {
+                    // Get the session to handle this message
+                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
+
+                    if (session != null)
+                        session.HandleMessage(this, p2pMessage);
+
+                    return;
+                }
+            }
+            else if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                // Keep track of the remote identifier
+                RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
+
+                // Check if it is a content message
+                if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0)
+                {
+                    // Get the session to handle this message
+                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
+
+                    if (session != null)
+                        session.HandleMessage(this, p2pMessage);
+
+                    return;
+                }
+            }
+
+            // It is not a datamessage. Extract the messages one-by-one and dispatch
+            // it to all handlers. Usually the MSNSLP handler.
+            IMessageHandler[] cpHandlers = handlers.ToArray();
+            foreach (IMessageHandler handler in cpHandlers)
+                handler.HandleMessage(this, p2pMessage);
+        }
+
+        #endregion
+
+        #region Get/Add/Remove TransferSession
+
+        /// <summary>
+        /// Returns the transfer session associated with the specified session identifier.
+        /// </summary>
+        public P2PTransferSession GetTransferSession(uint sessionId)
+        {
+            return transferSessions.ContainsKey(sessionId) ? transferSessions[sessionId] : null;
         }
 
         /// <summary>
-        /// Aborts all running transfer sessions.
+        /// Adds the specified transfer session to the collection and sets the transfer session's message
+        /// processor to be the message processor of the p2p message session. This is usally a SB message
+        /// processor. 
         /// </summary>
-        public virtual void AbortAllTransfers()
+        /// <param name="session"></param>
+        public void AddTransferSession(P2PTransferSession session)
         {
-            List<P2PTransferSession> transferSessions_copy = new List<P2PTransferSession>(transferSessions.Values);
-            foreach (P2PTransferSession session in transferSessions_copy)
+            if (session != null)
             {
-                session.AbortTransfer();
+                session.MessageProcessor = this;
+                transferSessions.Add(session.TransferProperties.SessionId, session);
             }
         }
+
+        /// <summary>
+        /// Removes the specified transfer session from the collection.
+        /// </summary>
+        public void RemoveTransferSession(P2PTransferSession session)
+        {
+            if (session != null)
+            {
+                session.MessageProcessor = null;
+
+                lock (transferSessions)
+                    transferSessions.Remove(session.TransferProperties.SessionId);
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, session.GetType() + " with SessionId = " +
+                    session.TransferProperties.SessionId + " has been removed\r\n" + "There is(are) " +
+                    transferSessions.Count + " P2PTransferSession still in this " + GetType());
+            }
+        }
+
+        #endregion
+
+        #region Correct/Increase LocalIdentifier
 
         /// <summary>
         /// Corrects the local identifier with the specified correction.
@@ -328,56 +545,9 @@ namespace MSNPSharp.DataTransfer
                 localIdentifier++;
         }
 
-        /// <summary>
-        /// Adds the specified transfer session to the collection and sets the transfer session's message processor to be the
-        /// message processor of the p2p message session. This is usally a SB message processor. 
-        /// </summary>
-        /// <param name="session"></param>
-        public void AddTransferSession(P2PTransferSession session)
-        {
-            session.MessageProcessor = this;
-            transferSessions.Add(session.TransferProperties.SessionId, session);
-        }
+        #endregion
 
-        /// <summary>
-        /// Removes the specified transfer session from the collection.
-        /// </summary>
-        public void RemoveTransferSession(P2PTransferSession session)
-        {
-            if (session != null)
-            {
-                session.MessageProcessor = null;
-
-                lock (transferSessions)
-                    transferSessions.Remove(session.TransferProperties.SessionId);
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, session.GetType() + " with SessionId = " +
-                    session.TransferProperties.SessionId + " has been removed\r\n" + "There is(are) " +
-                    transferSessions.Count + " P2PTransferSession still in this " + GetType());
-            }
-        }
-
-        /// <summary>
-        /// Returns the transfer session associated with the specified session identifier.
-        /// </summary>
-        /// <param name="sessionId"></param>
-        /// <returns></returns>
-        public P2PTransferSession GetTransferSession(uint sessionId)
-        {
-            return transferSessions.ContainsKey(sessionId) ? transferSessions[sessionId] : null;
-        }
-
-        /// <summary>
-        /// Get the <see cref="MSNSLPHandler"/> of the transfer layer, each transfer layer have only one <see cref="MSNSLPHandler"/>
-        /// </summary>
-        /// <returns></returns>
-        public MSNSLPHandler MasterSession
-        {
-            get
-            {
-                return masterSession;
-            }
-        }
+        #region SelectEndPointID
 
         public Guid SelectEndPointID(Contact contact)
         {
@@ -395,222 +565,58 @@ namespace MSNPSharp.DataTransfer
 
         #endregion
 
-        #region Protected
+        #region Clean Up
 
         /// <summary>
-        /// Wraps a P2PMessage in a MSGMessage and SBMessage.
+        /// Aborts all running transfer sessions.
         /// </summary>
-        /// <returns></returns>
-        protected P2PMimeMessage WrapMessage(NetworkMessage networkMessage)
+        public virtual void AbortAllTransfers()
         {
-            return new P2PMimeMessage(RemoteContactEPIDString, LocalContactEPIDString, networkMessage);
-        }
-
-        #endregion
-
-        #region Private
-        
-
-        
-        #endregion
-
-        #region IMessageHandler Members
-        private IMessageProcessor messageProcessor;
-        /// <summary>
-        /// The message processor that sends the P2P messages to the remote contact.
-        /// </summary>
-        public IMessageProcessor MessageProcessor
-        {
-            get
+            List<P2PTransferSession> transferSessions_copy = new List<P2PTransferSession>(transferSessions.Values);
+            foreach (P2PTransferSession session in transferSessions_copy)
             {
-                return messageProcessor;
-            }
-            set
-            {
-                messageProcessor = value;
-
-                if (MessageProcessor != null && MessageProcessor.GetType() != typeof(NSMessageProcessor))
-                {
-                    ValidateProcessor();
-                    SendBuffer();
-                }
+                session.AbortTransfer();
             }
         }
 
-
         /// <summary>
-        /// Handles P2PMessages. Other messages are ignored.
-        /// All incoming messages are supposed to belong to this session.
+        /// Removes references to handlers and the messageprocessor. Also closes running transfer sessions
+        /// and pending processors establishing connections.
         /// </summary>
-        public void HandleMessage(IMessageProcessor sender, NetworkMessage message)
+        public virtual void CleanUp()
         {
-            P2PMessage p2pMessage = message as P2PMessage;
+            NSMessageHandler.ContactOffline -= (NSMessageHandler_ContactOffline);
+            OnSessionClosed(this);
+            NSMessageHandler.P2PHandler.OnSessionClosed(this);
 
-            Debug.Assert(p2pMessage != null, "Incoming message is not a P2PMessage", "");
+            StopAllPendingProcessors();
+            AbortAllTransfers();
 
-            if (p2pMessage.Version == P2PVersion.P2PV1)
-            {
-                // Keep track of the remote identifier
-                RemoteIdentifier = p2pMessage.Header.Identifier;
-
-               
-
-                if (p2pMessage.V1Header.Flags == P2PFlag.Error)
-                {
-                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
-                    if (session != null)
-                    {
-                        session.AbortTransfer();
-                    }
-
-                    return;
-                }
-
-                // check if it is a content message
-                if (p2pMessage.Header.SessionId > 0)
-                {
-                    // get the session to handle this message
-                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
-
-                    if (session != null)
-                        session.HandleMessage(this, p2pMessage);
-
-                    return;
-                }
-            }
-
-            if (p2pMessage.Version == P2PVersion.P2PV2)
-            {
-                // Keep track of the remote identifier
-                RemoteIdentifier = p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize;
-
-                // Check if it is a content message
-                if (p2pMessage.InnerBody != null && p2pMessage.Header.SessionId > 0) //Data messages.
-                {
-                    // get the session to handle this message
-                    P2PTransferSession session = GetTransferSession(p2pMessage.Header.SessionId);
-
-                    if (session != null)
-                        session.HandleMessage(this, p2pMessage);
-
-                    return;
-                }
-            }
-
-            // It is not a datamessage. Extract the messages one-by-one and dispatch
-            // it to all handlers. Usually the MSNSLP handler.
-            IMessageHandler[] cpHandlers = handlers.ToArray();
-            foreach (IMessageHandler handler in cpHandlers)
-                handler.HandleMessage(this, p2pMessage);
-        }
-
-        #endregion
-
-        #region IMessageProcessor Members
-
-        private List<IMessageHandler> handlers = new List<IMessageHandler>();
-
-        /// <summary>
-        /// Registers a message handler. After registering the handler will receive incoming messages.
-        /// </summary>
-        /// <param name="handler"></param>
-        public void RegisterHandler(IMessageHandler handler)
-        {
             lock (handlers)
+                handlers.Clear();
+
+            MessageProcessor = null;
+
+            lock (transferSessions)
+                transferSessions.Clear();
+        }
+
+        /// <summary>
+        /// Cleans up p2p resources associated with the offline contact.
+        /// </summary>
+        private void NSMessageHandler_ContactOffline(object sender, ContactEventArgs e)
+        {
+            if (e.Contact.IsSibling(RemoteContact))
             {
-                if (false == handlers.Contains(handler))
-                {
-                    handlers.Add(handler);
-                }
+                CleanUp();
             }
         }
 
-        /// <summary>
-        /// Unregisters a message handler. After registering the handler will no longer receive incoming messages.
-        /// </summary>
-        /// <param name="handler"></param>
-        public void UnregisterHandler(IMessageHandler handler)
-        {
-            lock (handlers)
-            {
-                handlers.Remove(handler);
-            }
-        }
+        #endregion
 
+        #region Protected Methods
 
-
-
-        /// <summary>
-        /// Sends incoming p2p messages to the remote contact.
-        /// </summary>
-        /// <remarks>
-        /// Before the message is send a couple of things are checked. If there is no identifier available, the local identifier will be increased by one and set as the message identifier.
-        /// Second, if the acknowledgement identifier is not set it will be set to a random value. After this the method will check for the total length of the message. If the total length
-        /// is too large, the message will be splitted into multiple messages. The maximum size for p2p messages over a switchboard is 1202 bytes. The maximum size for p2p messages over a
-        /// direct connection is 1352 bytes. As a result the length of the splitted messages will be 1202 or 1352 bytes or smaller, depending on the availability of a direct connection.
-        /// 
-        /// If a direct connection is available the message is wrapped in a <see cref="P2PDCMessage"/> object and send over the direct connection. Otherwise it will be send over a switchboard session.
-        /// If there is no switchboard session available, or it has become invalid, a new switchboard session will be requested by asking this to the nameserver handler.
-        /// Messages will be buffered until a switchboard session, or a direct connection, becomes available. Upon a new connection the buffered messages are directly send to the remote contact
-        /// over the new connection.
-        /// </remarks>
-        /// <param name="message">The P2PMessage to send to the remote contact.</param>
-        public void SendMessage(NetworkMessage message)
-        {
-            P2PMessage p2pMessage = (P2PMessage)message;
-
-            SetSequenceNumber(p2pMessage);
-
-            // split up large messages which go to the SB
-            if (Version == P2PVersion.P2PV1)
-            {
-                DeliverMessageV1(p2pMessage);
-            } 
-
-            if (Version == P2PVersion.P2PV2)
-            {
-                DeliverMessageV2(p2pMessage);
-            }
-        }
-
-        /// <summary>
-        /// Occurs when the processor has been marked as invalid. Due to connection error, or message processor being null.
-        /// </summary>
-        public event EventHandler<EventArgs> ProcessorInvalid;
-
-        /// <summary>
-        /// Keeps track of unsend messages
-        /// </summary>
-        private Queue sendMessages = new Queue();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool processorValid = true;
-
-        /// <summary>
-        /// Indicates whether the processor is invalid
-        /// </summary>
-        public bool ProcessorValid
-        {
-            get
-            {
-                return processorValid;
-            }
-        }
-
-        /// <summary>
-        /// Sets the processor as invalid, and requests the p2phandler for a new request.
-        /// </summary>
-        protected virtual void InvalidateProcessor()
-        {
-            if (!ProcessorValid)
-                return;
-
-            processorValid = false;
-            OnProcessorInvalid();
-
-        }
+        #region Event Handlers
 
         /// <summary>
         /// Sets the processor as valid.
@@ -621,12 +627,24 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
+        /// Sets the processor as invalid, and requests the p2phandler for a new request.
+        /// </summary>
+        protected virtual void InvalidateProcessor()
+        {
+            if (ProcessorValid)
+            {
+                processorValid = false;
+                OnProcessorInvalid();
+            }
+        }
+
+        /// <summary>
         /// Fires the ProcessorInvalid event.
         /// </summary>
         protected virtual void OnProcessorInvalid()
         {
             if (ProcessorInvalid != null)
-                ProcessorInvalid(this, new EventArgs());
+                ProcessorInvalid(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -639,23 +657,42 @@ namespace MSNPSharp.DataTransfer
                 SessionClosed(this, new P2PSessionAffectedEventArgs(session));
         }
 
-        
+        #endregion
+
+        #region Wrap Message
+
+        /// <summary>
+        /// Wraps a P2PMessage in a MSGMessage and SBMessage.
+        /// </summary>
+        /// <returns></returns>
+        protected P2PMimeMessage WrapToMimeMessage(NetworkMessage networkMessage)
+        {
+            return new P2PMimeMessage(RemoteContactEPIDString, LocalContactEPIDString, networkMessage);
+        }
+
+        /// <summary>
+        /// Wrap the message to a P2P direct connection message or a switchboard message base on the transfer bridge.
+        /// </summary>
+        /// <param name="message">The message to wrap.</param>
+        /// <returns></returns>
+        protected virtual NetworkMessage WrapToProcessorMessage(NetworkMessage message)
+        {
+            if (MessageProcessor is P2PDirectProcessor)
+            {
+                return new P2PDCMessage(message as P2PMessage);
+            }
+
+            MimeMessage mimeMessage = WrapToMimeMessage(message);
+            SBMessage sbMessage = new SBMessage();
+            sbMessage.Acknowledgement = "D";
+
+            sbMessage.InnerMessage = mimeMessage;
+            return sbMessage;
+        }
 
         #endregion
 
-        #region Protected Methods
-
-        /// <summary>
-        /// Buffer messages that can not be send because of an invalid message processor.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void BufferMessage(NetworkMessage message)
-        {
-            if (sendMessages.Count >= 100)
-                System.Threading.Thread.CurrentThread.Join(200);
-
-            sendMessages.Enqueue(message);
-        }
+        #region SendBuffer / BufferMessage / TrySend
 
         /// <summary>
         /// Try to resend any messages that were stored in the buffer.
@@ -669,7 +706,7 @@ namespace MSNPSharp.DataTransfer
             {
                 while (sendMessages.Count > 0)
                 {
-                    NetworkMessage p2pMessage = sendMessages.Dequeue() as NetworkMessage;
+                    NetworkMessage p2pMessage = sendMessages.Dequeue();
                     MessageProcessor.SendMessage(WrapToProcessorMessage(p2pMessage));
                 }
             }
@@ -677,6 +714,18 @@ namespace MSNPSharp.DataTransfer
             {
                 InvalidateProcessor();
             }
+        }
+
+        /// <summary>
+        /// Buffer messages that can not be send because of an invalid message processor.
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void BufferMessage(NetworkMessage message)
+        {
+            if (sendMessages.Count >= 100)
+                System.Threading.Thread.CurrentThread.Join(200);
+
+            sendMessages.Enqueue(message);
         }
 
         /// <summary>
@@ -697,26 +746,6 @@ namespace MSNPSharp.DataTransfer
         {
             BufferMessage(message);
             SendBuffer();
-        }
-
-        /// <summary>
-        /// Wrap the message to a P2P direct connection message or a switchboard message base on the transfer bridge.
-        /// </summary>
-        /// <param name="message">The message to wrap.</param>
-        /// <returns></returns>
-        protected virtual NetworkMessage WrapToProcessorMessage(NetworkMessage message)
-        {
-            if (MessageProcessor is P2PDirectProcessor)
-            {
-                return new P2PDCMessage(message as P2PMessage);
-            }
-
-            MimeMessage mimeMessage = WrapMessage(message);
-            SBMessage sbMessage = new SBMessage();
-            sbMessage.Acknowledgement = "D";
-
-            sbMessage.InnerMessage = mimeMessage;
-            return sbMessage;
         }
 
         /// <summary>
@@ -748,58 +777,7 @@ namespace MSNPSharp.DataTransfer
             return false;
         }
 
-        protected virtual void DeliverMessageV1(P2PMessage p2pMessage)
-        {
-            if (!(CheckTransferLayerVersion(P2PVersion.P2PV1) && CheckTransferLayerVersion(p2pMessage))) return;
-
-            // check whether we have a direct connection (send p2pdc messages) or not (send sb messages)
-            int maxSize = DirectConnected ? 1352 : 1202;
-
-            // split up large messages which go to the SB
-            if (Version == P2PVersion.P2PV1)
-            {
-                if (p2pMessage.Header.MessageSize > maxSize)
-                {
-                    P2PMessage[] messages = p2pMessage.SplitMessage(maxSize);
-                    foreach (P2PMessage chunkMessage in messages)
-                    {
-                        // now send it to propbably a SB processor
-                        TrySend(chunkMessage);
-                    }
-                }
-                else
-                {
-                    TrySend(p2pMessage);
-                }
-            } 
-        }
-
-        protected virtual void DeliverMessageV2(P2PMessage p2pMessage)
-        {
-            if (!(CheckTransferLayerVersion(P2PVersion.P2PV2) && CheckTransferLayerVersion(p2pMessage))) return;
-
-            int maxSize = DirectConnected ? 1352 : 1202;
-            if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > maxSize)
-            {
-                CorrectLocalIdentifier(-(int)p2pMessage.V2Header.MessageSize);
-
-                P2PMessage[] messages = p2pMessage.SplitMessage(maxSize);
-
-                foreach (P2PMessage chunkMessage in messages)
-                {
-                    //chunkMessage.V2Header.Identifier = LocalIdentifier;
-                    LocalIdentifier = chunkMessage.V2Header.Identifier + chunkMessage.V2Header.MessageSize;
-                    // CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
-
-                    // now send it to propbably a SB processor
-                    TrySend(chunkMessage);
-                }
-            }
-            else
-            {
-                TrySend(p2pMessage);
-            }
-        }
+        #endregion
 
         #endregion
 
@@ -833,9 +811,66 @@ namespace MSNPSharp.DataTransfer
             return true;
         }
 
-        private P2PMessage SetSequenceNumber(P2PMessage p2pMessage)
+
+        private void DeliverMessageV1(P2PMessage p2pMessage)
         {
-            // check whether the sequence number is already set. This is important to check for acknowledge messages.
+            if (!(CheckTransferLayerVersion(P2PVersion.P2PV1) && CheckTransferLayerVersion(p2pMessage)))
+                return;
+
+            // check whether we have a direct connection (send p2pdc messages) or not (send sb messages)
+            int maxSize = DirectConnected ? 1352 : 1202;
+
+            // split up large messages which go to the SB
+            if (Version == P2PVersion.P2PV1)
+            {
+                if (p2pMessage.Header.MessageSize > maxSize)
+                {
+                    P2PMessage[] messages = p2pMessage.SplitMessage(maxSize);
+                    foreach (P2PMessage chunkMessage in messages)
+                    {
+                        // now send it to propbably a SB processor
+                        TrySend(chunkMessage);
+                    }
+                }
+                else
+                {
+                    TrySend(p2pMessage);
+                }
+            }
+        }
+
+        private void DeliverMessageV2(P2PMessage p2pMessage)
+        {
+            if (!(CheckTransferLayerVersion(P2PVersion.P2PV2) && CheckTransferLayerVersion(p2pMessage)))
+                return;
+
+            int maxSize = DirectConnected ? 1352 : 1202;
+            if (p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength > maxSize)
+            {
+                CorrectLocalIdentifier(-(int)p2pMessage.V2Header.MessageSize);
+
+                P2PMessage[] messages = p2pMessage.SplitMessage(maxSize);
+
+                foreach (P2PMessage chunkMessage in messages)
+                {
+                    //chunkMessage.V2Header.Identifier = LocalIdentifier;
+                    LocalIdentifier = chunkMessage.V2Header.Identifier + chunkMessage.V2Header.MessageSize;
+                    // CorrectLocalIdentifier((int)chunkMessage.V2Header.MessageSize);
+
+                    // now send it to propbably a SB processor
+                    TrySend(chunkMessage);
+                }
+            }
+            else
+            {
+                TrySend(p2pMessage);
+            }
+        }
+
+
+        private void SetSequenceNumber(P2PMessage p2pMessage)
+        {
+            // Check whether the sequence number is already set. This is important to check for acknowledge messages.
             if (p2pMessage.Header.Identifier == 0)
             {
                 if (Version == P2PVersion.P2PV1)
@@ -843,8 +878,7 @@ namespace MSNPSharp.DataTransfer
                     IncreaseLocalIdentifier();
                     p2pMessage.Header.Identifier = LocalIdentifier;
                 }
-
-                if (Version == P2PVersion.P2PV2)
+                else if (Version == P2PVersion.P2PV2)
                 {
                     p2pMessage.V2Header.Identifier = LocalIdentifier;
                     CorrectLocalIdentifier((int)p2pMessage.V2Header.MessageSize);
@@ -855,8 +889,6 @@ namespace MSNPSharp.DataTransfer
             {
                 p2pMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
             }
-
-            return p2pMessage;
         }
 
         #endregion

@@ -125,6 +125,12 @@
     <Compile Include="ConversationForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FileTransferForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FileTransferForm.Designer.cs">
+      <DependentUpon>FileTransferForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="DotMSNClient.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -176,6 +182,10 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ConversationForm.resx">
       <DependentUpon>ConversationForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileTransferForm.resx">
+      <DependentUpon>FileTransferForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="DotMSNClient.resx">

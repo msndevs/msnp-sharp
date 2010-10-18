@@ -452,22 +452,29 @@ namespace MSNPSharp.Core
 
         public virtual void RegisterHandler(IMessageHandler handler)
         {
-            lock (messageHandlers)
+            if (handler != null && !messageHandlers.Contains(handler))
             {
-                if (messageHandlers.Contains(handler))
-                    return;
-
-                // add the handler
-                messageHandlers.Add(handler);
+                lock (messageHandlers)
+                {
+                    messageHandlers.Add(handler);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                       handler.ToString() + " added to handler list.", GetType().Name);
+                }
             }
         }
 
         public virtual void UnregisterHandler(IMessageHandler handler)
         {
-            lock (messageHandlers)
+            if (handler != null)
             {
-                // remove from the collection
-                messageHandlers.Remove(handler);
+                lock (messageHandlers)
+                {
+                    while (messageHandlers.Remove(handler))
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                            handler.ToString() + " removed from handler list.", GetType().Name);
+                    }
+                }
             }
         }
 

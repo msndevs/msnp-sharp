@@ -226,8 +226,9 @@ namespace MSNPSharpClient
 
             // Move PM panel to SignIn window...
             pnlNameAndPM.Location = panel1.Location;
+
             Version dllVersion = messenger.GetType().Assembly.GetName().Version;
-            Text += "(v" + dllVersion.Major + "." + dllVersion.Minor + "." + dllVersion.Build + " r" + dllVersion.Revision + ")";
+            Text += " (v" + dllVersion.Major + "." + dllVersion.Minor + "." + dllVersion.Build + " r" + dllVersion.Revision + ")";
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             comboStatus.SelectedIndex = 0;
@@ -1177,12 +1178,6 @@ namespace MSNPSharpClient
             return conversationForm;
         }
 
-        private delegate DialogResult ShowFileDialogDelegate(FileDialog dialog);
-
-        private DialogResult ShowFileDialog(FileDialog dialog)
-        {
-            return dialog.ShowDialog();
-        }
 
         /// <summary>
         /// Asks the user to accept or deny the incoming filetransfer invitation.
@@ -1191,25 +1186,19 @@ namespace MSNPSharpClient
         /// <param name="e"></param>
         private void messenger_TransferInvitationReceived(object sender, MSNSLPInvitationEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived), sender, e);
+                return;
+            }
+
             if (e.TransferProperties.DataType == DataTransferType.File)
             {
-                if (MessageBox.Show(
-                    e.TransferProperties.RemoteContact.Name +
-                    " wants to send you a file.\r\nFilename: " +
-                    e.Filename + "\r\nLength (bytes): " + e.FileSize,
-                    "Filetransfer invitation",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    // by setting the Accept property in the EventArgs to true we give the transfer a green light				
-                    saveFileDialog.FileName = e.Filename;
-                    if ((DialogResult)Invoke(new ShowFileDialogDelegate(ShowFileDialog), new object[] { saveFileDialog }) == DialogResult.OK)
-                    {
-                        e.TransferSession.DataStream = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
-                        //e.Handler.AcceptTransfer (e);
-                        e.Accept = true;
-                        e.TransferSession.AutoCloseStream = true;
-                    }
-                }
+                e.DelayProcess = true;
+
+                FileTransferForm ftf = new FileTransferForm(e);
+                ftf.Show(this);
+
             }
             else if (e.TransferProperties.DataType == DataTransferType.Activity)
             {

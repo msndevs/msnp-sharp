@@ -155,9 +155,6 @@ namespace MSNPSharp.DataTransfer
 
             P2PDirectProcessor processor = new P2PDirectProcessor(cs, Version, nonce, hashed);
 
-            // we want this session to listen to incoming messages
-            processor.RegisterHandler(this);
-
             // add to the list of processors trying to establish a connection
             AddPendingProcessor(processor);
 
@@ -276,14 +273,14 @@ namespace MSNPSharp.DataTransfer
 
             P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(p2pDP.Version);
             hm.Guid = p2pDP.Nonce;
-            hm.GetBytes();
 
             if (hm.Version == P2PVersion.P2PV1)
             {
                 IncreaseLocalIdentifier();
 
                 hm.Header.Identifier = LocalIdentifier;
-                hm.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                //hm.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+                // AckSessionId is set by hm.Guid=NONCE...
                 DCHandshakeAckV1 = hm.V1Header.AckSessionId;
             }
 
