@@ -329,7 +329,6 @@ namespace MSNPSharp
 
         protected SocketMessageProcessor messageProcessor = null;
         private NSMessageHandler nsMessageHandler = null;
-        private Contact transferSessionRemoteOwner = null;
 
         private string sessionId = string.Empty;
         private string sessionHash = string.Empty;

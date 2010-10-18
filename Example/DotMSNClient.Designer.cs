@@ -68,7 +68,6 @@ namespace MSNPSharpClient
             this.lblPM = new System.Windows.Forms.TextBox();
             this.lblName = new System.Windows.Forms.TextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
             this.tmrNews = new System.Windows.Forms.Timer(this.components);
@@ -725,7 +724,6 @@ namespace MSNPSharpClient
         private PictureBox pictureBox;
         private PictureBox displayImageBox;
         private OpenFileDialog openFileDialog;
-        private SaveFileDialog saveFileDialog;
         private OpenFileDialog openImageDialog;
         private System.Windows.Forms.Timer tmrKeepOnLine;
         private System.Windows.Forms.Timer tmrNews;

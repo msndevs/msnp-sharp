@@ -132,7 +132,6 @@ namespace MSNPSharp.DataTransfer
             {
                 return header;
             }
-
             private set
             {
                 if ((Version == P2PVersion.P2PV1 && value is P2Pv1Header)
@@ -192,7 +191,7 @@ namespace MSNPSharp.DataTransfer
                 if (version == P2PVersion.P2PV1)
                 {
                     header.MessageSize = (uint)value.Length;
-                    header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+                    header.TotalSize = Math.Max(header.TotalSize, (ulong)value.Length);
                 }
                 else if (version == P2PVersion.P2PV2)
                 {
@@ -200,7 +199,8 @@ namespace MSNPSharp.DataTransfer
                     {
                         header.MessageSize = (uint)value.Length; // DataPacketHeaderLength depends on MessageSize
                         header.MessageSize += (uint)V2Header.DataPacketHeaderLength;
-                        header.TotalSize = Math.Max(header.TotalSize, header.MessageSize);
+
+                        header.TotalSize = Math.Max(header.TotalSize, (ulong)value.Length);
                     }
                     else
                     {
@@ -552,15 +552,35 @@ namespace MSNPSharp.DataTransfer
         }
 
         /// <summary>
-        /// Writes data in the inner message buffer.
+        /// Reads data from the stream and writes it to the inner body. Sets offset, total size, message size
+        /// and data remaining properly.
         /// </summary>
-        /// <param name="ioStream"></param>
-        /// <param name="maxLength"></param>
+        /// <param name="ioStream">The stream to read from</param>
+        /// <param name="maxLength">Maximum read length</param>
         public int WriteBytes(Stream ioStream, int maxLength)
         {
-            long readLength = Math.Min(maxLength, ioStream.Length - ioStream.Position);
-            InnerBody = new byte[readLength];
-            return ioStream.Read(InnerBody, 0, (int)readLength);
+            ulong streamLen = (ulong)ioStream.Length;
+            ulong streamPos = (ulong)ioStream.Position;
+            int minReadable = (int)Math.Min((ulong)maxLength, (ulong)(streamLen - streamPos));
+
+            if (Version == P2PVersion.P2PV1)
+            {
+                V1Header.Offset = streamPos;
+                V1Header.TotalSize = streamLen;
+            }
+            else if (Version == P2PVersion.P2PV2)
+            {
+                // We must calculate DataRemaining before setting InnerBody for p2pv2.
+                // Otherwise, MessageSize will be calculated incorrectly.
+                V2Header.DataRemaining = (ulong)(streamLen - (streamPos + (ulong)minReadable));
+            }
+
+            InnerBody = new byte[minReadable];
+            int read = ioStream.Read(InnerBody, 0, (int)minReadable);
+
+            Debug.Assert(read == minReadable, "Calculated incorrectly?");
+
+            return read;
         }
 
         public override string ToString()
@@ -658,6 +678,18 @@ namespace MSNPSharp.DataTransfer
             set
             {
                 guid = value;
+
+                if (Version == P2PVersion.P2PV1)
+                {
+                    // Copy this guid to the last 16 bytes of this message. 
+                    // Affected fields: AckSessionId, AckIdentifier, AckTotalSize
+
+                    byte[] guidData = guid.ToByteArray();
+
+                    V1Header.AckSessionId = BitUtility.ToUInt32(guidData, 0, BitConverter.IsLittleEndian);
+                    V1Header.AckIdentifier = BitUtility.ToUInt32(guidData, 4, BitConverter.IsLittleEndian);
+                    V1Header.AckTotalSize = BitUtility.ToUInt64(guidData, 8, BitConverter.IsLittleEndian);
+                }
             }
         }
 
