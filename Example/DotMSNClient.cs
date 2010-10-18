@@ -232,7 +232,6 @@ namespace MSNPSharpClient
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
             comboStatus.SelectedIndex = 0;
-            comboProtocol.SelectedIndex = 0;
 
             if (toolStripSortByStatus.Checked)
                 SortByStatus(null);
@@ -729,7 +728,7 @@ namespace MSNPSharpClient
                         }
 
                         // set the credentials, this is ofcourse something every MSNPSharp program will need to implement.
-                        messenger.Credentials = new Credentials(accountTextBox.Text, passwordTextBox.Text, (MsnProtocol)Enum.Parse(typeof(MsnProtocol), comboProtocol.Text));
+                        messenger.Credentials = new Credentials(accountTextBox.Text, passwordTextBox.Text, MsnProtocol.MSNP18);
                        
                         // inform the user what is happening and try to connecto to the messenger network.
                         SetStatus("Connecting to server");
