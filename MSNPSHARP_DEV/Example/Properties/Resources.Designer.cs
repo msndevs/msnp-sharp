@@ -144,6 +144,13 @@ namespace MSNPSharpClient.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap MSNPSharp_banner {
+            get {
+                object obj = ResourceManager.GetObject("MSNPSharp_banner", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Icon MSNPSharp_logo_small_ico {
             get {
                 object obj = ResourceManager.GetObject("MSNPSharp_logo_small_ico", resourceCulture);
