@@ -47,7 +47,7 @@ namespace MSNPSharp.Core
     public abstract class SocketMessageProcessor : IMessageProcessor, IDisposable
     {
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
-        private byte[] socketBuffer = new byte[1500];
+        private byte[] socketBuffer = new byte[8192];
         private bool hasFiredDisconnectEvent = false;
         private IPEndPoint proxyEndPoint = null;
         private ProxySocket socket = null;

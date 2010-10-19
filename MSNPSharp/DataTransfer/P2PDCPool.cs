@@ -48,7 +48,7 @@ namespace MSNPSharp.DataTransfer
     /// </remarks>
     public class P2PDCPool : MSNPSharp.Core.MessagePool
     {
-        private Queue<byte[]> messages = new Queue<byte[]>();
+        private Queue messages = Queue.Synchronized(new Queue());
         private byte[] lastMessage;
         private int bytesLeft;
 
@@ -65,55 +65,57 @@ namespace MSNPSharp.DataTransfer
         /// <param name="reader"></param>
         public override void BufferData(System.IO.BinaryReader reader)
         {
-            // make sure we read the last retrieved message if available
-            if (bytesLeft > 0 && lastMessage != null)
+            lock (reader.BaseStream)
             {
-                // make sure no overflow occurs
-                int length = (int)Math.Min(bytesLeft, (uint)(reader.BaseStream.Length - reader.BaseStream.Position));
-
-                // read in the bytes
-                reader.Read(lastMessage, lastMessage.Length - bytesLeft, (int)length);
-
-                bytesLeft -= length;
-
-                if (bytesLeft == 0)
+                // make sure we read the last retrieved message if available
+                if (bytesLeft > 0 && lastMessage != null)
                 {
-                    // insert it into the temporary buffer for later retrieval
-                    messages.Enqueue(lastMessage);
-                    lastMessage = null;
+                    // make sure no overflow occurs
+                    int length = (int)Math.Min(bytesLeft, (uint)(reader.BaseStream.Length - reader.BaseStream.Position));
+                    reader.Read(lastMessage, lastMessage.Length - bytesLeft, (int)length);
+                    bytesLeft -= length;
+
+
+                    if (bytesLeft == 0)
+                    {
+                        // insert it into the temporary buffer for later retrieval
+                        messages.Enqueue(lastMessage);
+                        lastMessage = null;
+                    }
                 }
-            }
 
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
-            {
-                // read the length of the message
-                uint messageLength = reader.ReadUInt32();
 
-                // make sure no overflow occurs
-                int length = (int)Math.Min(messageLength, (uint)(reader.BaseStream.Length - reader.BaseStream.Position));
-
-                // read in the bytes
-                byte[] message = new byte[messageLength];
-                reader.Read(message, 0, (int)length);
-
-                if (length < messageLength)
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
                 {
-                    bytesLeft = (int)messageLength - length;
-                    lastMessage = message;
-                }
-                else
-                {
-                    lastMessage = null;
+                    // read the length of the message
+                    uint messageLength = reader.ReadUInt32();
 
-                    // insert it into the temporary buffer for later retrieval
-                    messages.Enqueue(message);
+                    // make sure no overflow occurs
+                    int length = (int)Math.Min(messageLength, (uint)(reader.BaseStream.Length - reader.BaseStream.Position));
+
+                    // read in the bytes
+                    byte[] message = new byte[messageLength];
+                    reader.Read(message, 0, (int)length);
+
+                    if (length < messageLength)
+                    {
+                        bytesLeft = (int)messageLength - length;
+                        lastMessage = message;
+                    }
+                    else
+                    {
+                        lastMessage = null;
+
+                        // insert it into the temporary buffer for later retrieval
+                        messages.Enqueue(message);
+                    }
                 }
             }
         }
 
         public override byte[] GetNextMessageData()
         {
-            return messages.Dequeue();
+            return (byte[])messages.Dequeue();
         }
 
         public override bool MessageAvailable

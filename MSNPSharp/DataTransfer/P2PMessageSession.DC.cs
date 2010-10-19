@@ -70,6 +70,9 @@ namespace MSNPSharp.DataTransfer
         // Tracked to know when an acknowledgement for the handshake is received.
         private uint DCHandshakeAckV1;
 
+        // Tracked to know when an acknowledgement for the handshake is received.
+        internal P2PMessage DCHandshakeAckV2;
+
         #region Properties
 
         /// <summary>
@@ -325,6 +328,16 @@ namespace MSNPSharp.DataTransfer
 
             if (p2pMessage.Version == P2PVersion.P2PV2)
             {
+                if (DCHandshakeAckV2 != null)
+                {
+                    DCHandshakeAckV2.V2Header.OperationCode = (byte)OperationCode.RAK;
+                    dp.SendMessage(DCHandshakeAckV2);
+                    DCHandshakeAckV2 = null;
+
+                    UsePendingProcessor(dp);
+                    return;
+                }
+
                 if (AutoHandshake)
                 {
                     UsePendingProcessor(dp);

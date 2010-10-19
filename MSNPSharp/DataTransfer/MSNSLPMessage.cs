@@ -261,11 +261,16 @@ namespace MSNPSharp.DataTransfer
         /// <returns></returns>
         public override byte[] GetBytes()
         {
+            return GetBytes(true);
+        }
+
+        public byte[] GetBytes(bool appendNull)
+        {
             string body = mimeBodies.ToString();
 
             // Update the Content-Length header, +1 the additional 0x00
             // mimeBodylength + \r\n\0
-            mimeHeaders[MimeHeaderStrings.Content_Length] = (body.Length + 3).ToString();
+            mimeHeaders[MimeHeaderStrings.Content_Length] = (body.Length + (appendNull ? 3 : 2)).ToString();
 
             StringBuilder builder = new StringBuilder(512);
             builder.Append(StartLine.Trim());
@@ -279,11 +284,18 @@ namespace MSNPSharp.DataTransfer
             byte[] message = Encoding.GetBytes(builder.ToString());
 
             // add the additional 0x00
-            byte[] totalMessage = new byte[message.Length + 1];
-            message.CopyTo(totalMessage, 0);
-            totalMessage[message.Length] = 0x00;
+            if (appendNull)
+            {
+                byte[] totalMessage = new byte[message.Length + 1];
+                message.CopyTo(totalMessage, 0);
+                totalMessage[message.Length] = 0x00;
 
-            return totalMessage;
+                return totalMessage;
+            }
+            else
+            {
+                return message;
+            }
         }
 
         /// <summary>

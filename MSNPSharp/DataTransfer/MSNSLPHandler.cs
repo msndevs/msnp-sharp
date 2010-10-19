@@ -1258,8 +1258,10 @@ namespace MSNPSharp.DataTransfer
             slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
 
             slpMessage.BodyValues["Bridges"] = "SBBridge TCPv1";
+            slpMessage.BodyValues["Capabilities-Flags"] = "1";
             slpMessage.BodyValues["NetID"] = netId;
             slpMessage.BodyValues["Conn-Type"] = connectionType;
+            slpMessage.BodyValues["TCP-Conn-Type"] = connectionType;
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
             if (transferProperties.DCNonceType == DCNonceType.Sha1)
@@ -1318,7 +1320,7 @@ namespace MSNPSharp.DataTransfer
                     Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     try
                     {
-                        s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                        //s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                         s.Bind(new IPEndPoint(ipAddress, p));
                         //s.Bind(new IPEndPoint(IPAddress.Any, p));
                         s.Close();
@@ -1357,7 +1359,7 @@ namespace MSNPSharp.DataTransfer
                 try
                 {
                     s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                    //s.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                     s.Bind(new IPEndPoint(localIP, p));
                     return p;
                 }
@@ -1448,7 +1450,7 @@ namespace MSNPSharp.DataTransfer
         protected virtual void OnDCRequest(P2PMessage p2pMessage)
         {
             SLPMessage message = SLPMessage.Parse(p2pMessage.InnerBody);
-            
+
             if (message.BodyValues.ContainsKey("Bridges") &&
                 message.BodyValues["Bridges"].ToString().Contains("TCPv1"))
             {
@@ -1469,7 +1471,8 @@ namespace MSNPSharp.DataTransfer
                 IPAddress ipAddress = LocalEndPoint.Address;
                 int port;
 
-                if (false == ipAddress.Equals(ExternalEndPoint.Address) ||
+                if (p2pMessage.Version == P2PVersion.P2PV2 ||
+                    false == ipAddress.Equals(ExternalEndPoint.Address) ||
                     (0 == (port = GetNextDirectConnectionPort(ipAddress))))
                 {
                     slpMessage.BodyValues["Listening"] = "false";
@@ -1480,19 +1483,25 @@ namespace MSNPSharp.DataTransfer
                     // Let's listen
                     MessageSession.ListenForDirectConnection(ipAddress, port, nonce, hashed);
 
+                    
                     slpMessage.BodyValues["Listening"] = "true";
+                    slpMessage.BodyValues["NeedConnectingEndpointInfo"] = "false";
+                    slpMessage.BodyValues["Conn-Type"] = "Direct-Connect";
+                    slpMessage.BodyValues["TCP-Conn-Type"] = "Direct-Connect";
                     slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
                     slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
                     slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
                     // check if client is behind firewall (NAT-ted)
                     // if so, send the public ip also the client, so it can try to connect to that ip
-                    if (ExternalEndPoint != null)
+                    if (ExternalEndPoint != null && !ExternalEndPoint.Address.Equals(localEndPoint.Address))
                     {
                         slpMessage.BodyValues["IPv4External-Addrs"] = ExternalEndPoint.Address.ToString();
                         slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     }
                 }
+
+                slpMessage.BodyValues["Bridge"] = "TCPv1";
 
                 slpMessage.ToMail = message.FromMail;
                 slpMessage.FromMail = message.ToMail;
@@ -1501,8 +1510,6 @@ namespace MSNPSharp.DataTransfer
                 slpMessage.CallId = message.CallId;
                 slpMessage.MaxForwards = 0;
                 slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
-
-                slpMessage.BodyValues["Bridge"] = "TCPv1";
 
                 P2PMessage p2pReplyMessage = new P2PMessage(Version);
                 p2pReplyMessage.InnerMessage = slpMessage;
@@ -1515,6 +1522,8 @@ namespace MSNPSharp.DataTransfer
 
                 // and notify the remote client that he can connect
                 MessageProcessor.SendMessage(p2pReplyMessage);
+
+                MessageSession.DCHandshakeAckV2 = p2pReplyMessage;
             }
         }
 
