@@ -80,7 +80,7 @@ namespace MSNPSharp
         private OIMService oimService = null;
         private MSNStorageService storageService = null;
         private WhatsUpService whatsUpService = null;
-        private ClientCapacities defaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.SupportP2PUUNBootstrap | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
+        private ClientCapacities defaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
         private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
 
         private List<Regex> censorWords = new List<Regex>(0);
@@ -1903,7 +1903,7 @@ namespace MSNPSharp
         /// Called when a UBN command has been received.
         /// </summary>
         /// <remarks>
-        /// <code>UBN [account;{GUID}] [1:xml data,2:sip invite, 3: MSNP2P SLP data, 4:logout, 10: unknown] [PayloadLegth]</code>
+        /// <code>UBN [account;{GUID}] [1:xml data,2:sip invite, 3: MSNP2P SLP data, 4:logout, 10: TURN] [PayloadLegth]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnUBNReceived(NSMessage message)
@@ -1918,6 +1918,7 @@ namespace MSNPSharp
                             SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
                             if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
                             {
+                                
                                 string account = message.CommandValues[0].ToString();
                                 if (account.Contains(";"))
                                     account = account.Split(';')[0];
@@ -1931,7 +1932,7 @@ namespace MSNPSharp
                                         return;
                                     }
                                 }
-                                SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.FromMail, 200, "OK");
+                                SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.FromMail, 500, "Internal Error");
                                 slpResponseMessage.FromMail = slpMessage.ToMail;
                                 slpResponseMessage.Via = slpMessage.Via;
                                 slpResponseMessage.CSeq = slpMessage.CSeq;
@@ -1957,12 +1958,8 @@ namespace MSNPSharp
                                     slpResponseMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B");
                                 }
 
-                                byte[] slpBytes = slpResponseMessage.GetBytes();
-                                byte[] slpTextBytes = new byte[slpBytes.Length - 1];
-                                Array.Copy(slpBytes, slpTextBytes, slpTextBytes.Length);
-
                                 NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
-                                    System.Text.Encoding.UTF8.GetString(slpTextBytes));
+                                    System.Text.Encoding.UTF8.GetString(slpResponseMessage.GetBytes(false)));
 
                                 MessageProcessor.SendMessage(uunResponse);
                             }
@@ -1979,19 +1976,15 @@ namespace MSNPSharp
                                 slpResponseMessage.BodyValues["stroPdnAsrddAlanretnI4vPI"] = "0435:001.2.861.291";
                                 slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Updated-Connecting-Port";
 
-                                byte[] slpBytes = slpResponseMessage.GetBytes();
-                                byte[] slpTextBytes = new byte[slpBytes.Length - 1];
-                                Array.Copy(slpBytes, slpTextBytes, slpTextBytes.Length);
-
                                 NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
-                                    System.Text.Encoding.UTF8.GetString(slpTextBytes));
+                                    System.Text.Encoding.UTF8.GetString(slpResponseMessage.GetBytes(false)));
 
                                 MessageProcessor.SendMessage(uunResponse);
                             }
-
-
                             break;
                         }
+
+
                     case "4":
                     case "8":
                         {

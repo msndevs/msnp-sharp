@@ -648,7 +648,7 @@ namespace MSNPSharp.DataTransfer
 
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                                 "Data received, " + (ulong)DataStream.Position +
-                                " of " + (ulong)DataStream.Position + p2pMessage.V2Header.DataRemaining);
+                                " of " + ((ulong)DataStream.Position + p2pMessage.V2Header.DataRemaining));
 
 
                         }
@@ -791,9 +791,15 @@ namespace MSNPSharp.DataTransfer
         /// </summary>
         public void AbortTransfer()
         {
-            if (transferThread != null && transferThread.IsAlive)
+            if (transferThread != null)
             {
-                AbortTransferThread();
+                if (transferThread.IsAlive)
+                {
+                    Thread.BeginCriticalRegion();
+                    abortThread = 1; //transferThread.Abort();
+                    Thread.EndCriticalRegion();
+                }
+                transferThread = null;
                 OnTransferAborted();
             }
 
@@ -858,6 +864,8 @@ namespace MSNPSharp.DataTransfer
         #endregion
 
         #region SendMessage / Wrap Message / DeliverToTransferLayer
+
+
 
         public P2PMessage SendMessage(P2PMessage p2pMessage)
         {
@@ -1070,6 +1078,7 @@ namespace MSNPSharp.DataTransfer
                 long lastPosition = dataStream.Length;
                 uint currentACK = (DataPreparationAck > 0) ? DataPreparationAck : (uint)new Random().Next(50000, int.MaxValue);
 
+                int rakCounter = 128;
                 TFCombination tfComb = TFCombination.First;
                 if (MessageFlag == (uint)P2PFlag.MSNObjectData)
                 {
@@ -1107,6 +1116,12 @@ namespace MSNPSharp.DataTransfer
                     }
                     else if (Version == P2PVersion.P2PV2)
                     {
+                        if (--rakCounter < 0)
+                        {
+                            p2pDataMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
+                            rakCounter = 128;
+                        }
+
                         // Always sets to 1.
                         p2pDataMessage.V2Header.PackageNumber = 1;
                         p2pDataMessage.V2Header.TFCombination = tfComb;
@@ -1177,18 +1192,7 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
-        /// <summary>
-        /// Aborts a running data transfer thread.
-        /// </summary>
-        protected virtual void AbortTransferThread()
-        {
-            if (transferThread != null && transferThread.IsAlive)
-            {
-                Thread.BeginCriticalRegion();
-                abortThread = 1; //transferThread.Abort();
-                Thread.EndCriticalRegion();
-            }
-        }
+        
 
         #endregion
 
