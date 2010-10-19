@@ -60,6 +60,9 @@ namespace MSNPSharp.IO
 
         [NonSerialized]
         private bool useCache;
+		
+		[NonSerialized]
+		private object syncObject = new object();
 
         private string version = "1.0";
 
@@ -114,6 +117,14 @@ namespace MSNPSharp.IO
                 useCache = value;
             }
         }
+		
+		public object SyncObject
+		{
+			get
+			{
+				return syncObject;
+			}
+		}
 
         /// <summary>
         /// The version of serialized object in the mcl file.
