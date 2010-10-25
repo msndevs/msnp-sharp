@@ -194,23 +194,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The owner of the contactlist. This is the identity that logged into the messenger network.
-        /// </summary>
-        [Obsolete("Obsoleted in 3.1, please use NSMessageHandler.ContactList.Owner instead.\r\n" +
-            "The Owner property's behavior changed a little." + 
-            "It will remain null until user successfully login." +
-            "You may need to change your code if you see this notic." +
-            "For more information and example, please refer to the example client."
-            , true)]
-        public Owner Owner
-        {
-            get
-            {
-                return ContactList.Owner;
-            }
-        }
-
-        /// <summary>
         /// A collection of all contactgroups which are defined by the user who logged into the messenger network.
         /// </summary>
         public ContactGroupList ContactGroups
@@ -1914,11 +1897,11 @@ namespace MSNPSharp
                 switch (message.CommandValues[1].ToString())
                 {
                     case "3":
+                    case "10":
                         {
                             SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
                             if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
                             {
-                                
                                 string account = message.CommandValues[0].ToString();
                                 if (account.Contains(";"))
                                     account = account.Split(';')[0];
@@ -1981,8 +1964,44 @@ namespace MSNPSharp
 
                                 MessageProcessor.SendMessage(uunResponse);
                             }
-                            break;
+                            else if (slpMessage.ContentType == "application/x-msnmsgr-turnsetup")
+                            {
+                                SLPRequestMessage request = slpMessage as SLPRequestMessage;
+                                if (request != null && request.Method == "ACK")
+                                {
+                                    HttpWebRequest wr = (HttpWebRequest)WebRequest.Create("https://" + request.BodyValues["ServerAddress"].Value);
+                                    wr.Proxy = ConnectivitySettings.WebProxy;
+                                    //wr.Credentials = new NetworkCredential(request.BodyValues["SessionUsername"].Value, request.BodyValues["SessionPassword"].Value);
+
+                                    wr.Credentials = new NetworkCredential(
+                                        "INVALIDUSERNAME" + request.BodyValues["SessionUsername"].Value,
+                                        "INVALIDPASSWORD" + request.BodyValues["SessionPassword"].Value
+                                    );
+
+                                    wr.BeginGetResponse(delegate(IAsyncResult result)
+                                    {
+                                        try
+                                        {
+                                            using (Stream stream = ((WebRequest)result.AsyncState).EndGetResponse(result).GetResponseStream())
+                                            {
+                                                using (StreamReader r = new StreamReader(stream, Encoding.UTF8))
+                                                {
+                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                                    "TURN response: " + r.ReadToEnd(), GetType().Name);
+                                                }
+                                            }
+                                            wr.Abort();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                                "TURN error: " + ex.ToString(), GetType().Name);
+                                        }
+                                    }, wr);
+                                }
+                            }
                         }
+                        break;
 
 
                     case "4":
@@ -1999,6 +2018,9 @@ namespace MSNPSharp
                 }
             }
         }
+    
+
+        
 
         /// <summary>
         /// Called when a UUN command has been received.

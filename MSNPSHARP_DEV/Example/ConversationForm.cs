@@ -728,19 +728,16 @@ namespace MSNPSharpClient
 
         private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
         {
-            if (remoteContact.ClientType == ClientType.PassportMember && updateImage != remoteContact.UserTileLocation)
+            if (remoteContact.ClientType == ClientType.PassportMember &&
+                updateImage != remoteContact.UserTileLocation)
             {
                 if (updateImage == null)
                     updateImage = remoteContact.DisplayImage;
 
-                // create a MSNSLPHandler. This handler takes care of the filetransfer protocol.
-                // The MSNSLPHandler makes use of the underlying P2P framework.
-                MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(remoteContact);
-
                 // by sending an invitation a P2PTransferSession is automatically created.
                 // the session object takes care of the actual data transfer to the remote client,
                 // in contrast to the msnslpHandler object, which only deals with the protocol chatting.
-                P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, remoteContact, updateImage);
+                P2PTransferSession session = _messenger.RequestMsnObject(remoteContact, updateImage);
             }
         }
 
@@ -892,7 +889,7 @@ namespace MSNPSharpClient
                 List<Contact> contacts = new List<Contact>();
                 foreach (Contact contact in activeConversation.Contacts)
                 {
-                    if (contact.Online && contact.ClientType == ClientType.PassportMember && 
+                    if (contact.Online && contact.ClientType == ClientType.PassportMember &&
                         contact.Mail != _messenger.ContactList.Owner.Mail)
                     {
                         contacts.Add(contact);
@@ -911,9 +908,8 @@ namespace MSNPSharpClient
                     {
                         foreach (string filename in openFileDialog.FileNames)
                         {
-                            MSNSLPHandler msnslpHandler = _messenger.GetMSNSLPHandler(contact);
                             FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                            P2PTransferSession session = msnslpHandler.SendInvitation(_messenger.ContactList.Owner, contact, Path.GetFileName(filename), fileStream);
+                            P2PTransferSession session = _messenger.SendFile(contact, filename, fileStream);
                         }
                     }
                 }

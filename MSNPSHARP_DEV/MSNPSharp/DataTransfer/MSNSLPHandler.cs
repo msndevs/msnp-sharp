@@ -1257,7 +1257,7 @@ namespace MSNPSharp.DataTransfer
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
 
-            slpMessage.BodyValues["Bridges"] = "SBBridge TCPv1";
+            slpMessage.BodyValues["Bridges"] = "TCPv1 SBBridge";
             slpMessage.BodyValues["Capabilities-Flags"] = "1";
             slpMessage.BodyValues["NetID"] = netId;
             slpMessage.BodyValues["Conn-Type"] = connectionType;
@@ -1485,6 +1485,11 @@ namespace MSNPSharp.DataTransfer
 
                     
                     slpMessage.BodyValues["Listening"] = "true";
+                    slpMessage.BodyValues["Capabilities-Flags"] = "1";
+                    slpMessage.BodyValues["IPv6-global"] = string.Empty;
+                    slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
+                    slpMessage.BodyValues["UPnPNat"] = "false";
+
                     slpMessage.BodyValues["NeedConnectingEndpointInfo"] = "false";
                     slpMessage.BodyValues["Conn-Type"] = "Direct-Connect";
                     slpMessage.BodyValues["TCP-Conn-Type"] = "Direct-Connect";
