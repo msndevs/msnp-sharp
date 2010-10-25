@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.IO;
 using System.Collections;
 using System.Diagnostics;
 
@@ -47,8 +48,7 @@ namespace MSNPSharp
     /// </summary>
     public class ConversationCreatedEventArgs : EventArgs
     {
-        /// <summary>
-        /// </summary>
+        private object _initiator;
         private Conversation _conversation;
 
         /// <summary>
@@ -67,11 +67,8 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// </summary>
-        private object _initiator;
-
-        /// <summary>
-        /// The object that requested the switchboard. Null if the conversation was initiated by a remote client.
+        /// The object that requested the switchboard. Null if the conversation was initiated by a
+        /// remote client.
         /// </summary>
         public object Initiator
         {
@@ -109,66 +106,15 @@ namespace MSNPSharp
     /// </remarks>
     public class Messenger
     {
-        #region Members
-
-        private NSMessageProcessor nsMessageProcessor = null;
-        private NSMessageHandler nsMessageHandler = null;
-        private ConnectivitySettings connectivitySettings = new ConnectivitySettings();  //If you have local IP for binding, please use other constructors and set it here.
-        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
-        private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
-        private MessageManager messageManager = null;
-
-        #endregion
-
-        #region .ctor
-        /// <summary>
-        /// Basic constructor to instantiate a Messenger object.
-        /// </summary>
-        public Messenger()
-        {
-            #region Initialize
-
-            nsMessageProcessor = new NSMessageProcessor(new ConnectivitySettings());
-            nsMessageHandler = new NSMessageHandler(this);
-            messageManager = new MessageManager(this);
-
-            #endregion
-
-            #region private events
-
-            Nameserver.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
-            {
-
-                // check if the request is remote or on our initiative
-                if (ce.Initiator != null)
-                {
-                    return;
-                }
-
-                // create a conversation object to handle with the switchboard
-                Conversation c = new Conversation(this, ce.Switchboard);
-
-                // fire event to notify client programmer
-                OnConversationCreated(c, ce.Initiator);
-
-                return;
-            };
-
-            #endregion
-        }
-
-        #endregion
-
-        #region Public
-
         #region Events
+
         /// <summary>
         /// Occurs when a new conversation is created. Either by a local or remote invitation.
         /// </summary>
         /// <remarks>
-        /// You can check the initiator object in the event arguments to see which party initiated the conversation.
-        /// This event is called after the messenger server has created a switchboard handler, so there is
-        /// always a valid messageprocessor.
+        /// You can check the initiator object in the event arguments to see which party initiated the
+        /// conversation. This event is called after the messenger server has created a switchboard handler,
+        /// so there is always a valid messageprocessor.
         /// </remarks>
         public event EventHandler<ConversationCreatedEventArgs> ConversationCreated;
 
@@ -181,6 +127,52 @@ namespace MSNPSharp
         {
             if (TransferInvitationReceived != null)
                 TransferInvitationReceived(sender, args);
+        }
+
+        protected virtual void OnConversationCreated(Conversation conversation, object initiator)
+        {
+            if (ConversationCreated != null)
+                ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
+        }
+
+        #endregion
+
+        #region Members
+
+        private NSMessageProcessor nsMessageProcessor = null;
+        private NSMessageHandler nsMessageHandler = null;
+        private ConnectivitySettings connectivitySettings = null;
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
+        private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
+        private MessageManager messageManager = null;
+
+        #endregion
+
+        #region .ctor
+
+        /// <summary>
+        /// Basic constructor to instantiate a Messenger object.
+        /// </summary>
+        public Messenger()
+        {
+            connectivitySettings = new ConnectivitySettings();
+            nsMessageProcessor = new NSMessageProcessor(connectivitySettings);
+            nsMessageHandler = new NSMessageHandler(this);
+            messageManager = new MessageManager(this);
+
+            Nameserver.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
+            {
+                // check if the request is remote or on our initiative
+                if (ce.Initiator != null)
+                {
+                    return;
+                }
+
+                // create a conversation object to handle with the switchboard
+                Conversation c = new Conversation(this, ce.Switchboard);
+                OnConversationCreated(c, ce.Initiator);
+                return;
+            };
         }
 
         #endregion
@@ -235,10 +227,11 @@ namespace MSNPSharp
         /// The credentials which identify the messenger account and the client authentication.
         /// </summary>
         /// <remarks>
-        /// This property must be set before logging in the messenger service. <b>Both</b> the account properties and
-        /// the client identifier codes must be set. The first, the account, specifies the account which represents the local user,
-        /// for example 'account@hotmail.com'. The second, the client codes, specifies how this client will authenticate itself
-        /// against the messenger server. See <see cref="Credentials"/> for more information about this.
+        /// This property must be set before logging in the messenger service. <b>Both</b> the account 
+        /// properties and the client identifier codes must be set. The first, the account, specifies the
+        /// account which represents the local user, for example 'account@hotmail.com'. The second, the
+        /// client codes, specifies how this client will authenticate itself against the messenger server.
+        /// See <see cref="Credentials"/> for more information about this.
         /// </remarks>
         public Credentials Credentials
         {
@@ -251,7 +244,6 @@ namespace MSNPSharp
                 credentials = value;
             }
         }
-
 
         /// <summary>
         /// The message handler that is used to handle incoming nameserver messages.
@@ -330,6 +322,9 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// What's Up service
+        /// </summary>
         public WhatsUpService WhatsUpService
         {
             get
@@ -341,9 +336,6 @@ namespace MSNPSharp
         /// <summary>
         /// Contact service.
         /// </summary>
-        /// <remarks>
-        /// This property is a reference to the ContactService object in the <see cref="Nameserver"/> property.
-        /// </remarks>
         public ContactService ContactService
         {
             get
@@ -353,12 +345,8 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The local user logged into the network.
+        /// The local user logged into the network. It will remain null until user successfully login.
         /// </summary>
-        /// <remarks>
-        /// This property is a reference to the Owner object in the <see cref="Nameserver"/> property.
-        /// </remarks>
-        [Obsolete("To avoid confuse, this property was obsoleted in 3.1, please use NSMessageHandler.ContactList.Owner instead.")]
         public Owner Owner
         {
             get
@@ -370,9 +358,6 @@ namespace MSNPSharp
         /// <summary>
         /// The handler that handles all incoming P2P framework messages.
         /// </summary>
-        /// <remarks>
-        /// This property is a reference to the P2PHandler object in the <see cref="Nameserver"/> property. This property is added here for convenient access.
-        /// </remarks>
         public P2PHandler P2PHandler
         {
             get
@@ -383,7 +368,10 @@ namespace MSNPSharp
 
         public ArrayList Conversations
         {
-            get { return conversations; }
+            get
+            {
+                return conversations;
+            }
         }
 
         #endregion
@@ -447,17 +435,15 @@ namespace MSNPSharp
         /// <returns></returns>
         public Conversation CreateConversation()
         {
-
             Conversation conversation = new Conversation(this);
-            
             OnConversationCreated(conversation, this);
-
             return conversation;
         }
 
 
         /// <summary>
-        /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send or receive invitations from the remote contact.
+        /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send
+        /// or receive invitations from the remote contact.
         /// </summary>
         /// <param name="remoteContact"></param>
         /// <returns></returns>
@@ -470,28 +456,18 @@ namespace MSNPSharp
             return p2pSession.MasterSession;
         }
 
-        #endregion
-
-        #endregion
-
-        #region Protected
-
-        /// <summary>
-        /// Fires the ConversationCreated event.
-        /// </summary>
-        /// <param name="conversation"></param>
-        /// <param name="initiator"></param>
-        protected virtual void OnConversationCreated(Conversation conversation, object initiator)
+        public P2PTransferSession SendFile(Contact remoteContact, string filename, FileStream fileStream)
         {
-            if (ConversationCreated != null)
-                ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
+            MSNSLPHandler msnslpHandler = GetMSNSLPHandler(remoteContact);
+            return msnslpHandler.SendInvitation(Owner, remoteContact, Path.GetFileName(filename), fileStream);
+        }
+
+        public P2PTransferSession RequestMsnObject(Contact remoteContact, MSNObject msnObject)
+        {
+            MSNSLPHandler msnslpHandler = GetMSNSLPHandler(remoteContact);
+            return msnslpHandler.SendInvitation(Owner, remoteContact, msnObject);
         }
 
         #endregion
-
-        #region Private
-
-        #endregion
-
     }
 };

@@ -40,6 +40,23 @@ namespace MSNPSharp
 
     partial class NSMessageHandler
     {
+
+        /// <summary>
+        /// The owner of the contactlist. This is the identity that logged into the messenger network.
+        /// </summary>
+        [Obsolete(@"Obsoleted in 3.1, please use Messenger.Owner instead.
+        The Owner property's behavior changed a little.
+        It will remain null until user successfully login.
+        You may need to change your code if you see this notice.
+        For more information and example, please refer to the example client.", true)]
+        public Owner Owner
+        {
+            get
+            {
+                return ContactList.Owner;
+            }
+        }
+
         [Obsolete("MSNP18 no more supported", true)]
         protected virtual void OnILNReceived(NSMessage message)
         {
