@@ -44,14 +44,14 @@ namespace MSNPSharp.IO
     /// Object serializer/deserializer class.
     /// </summary>
     /// <remarks>
-    /// This class was used to save/load an object into/from a hidden mcl file.
-    /// Any object needs to be serialized as a hidden mcl file should derive from this class.
+    /// This class was used to save/load an object into/from a mcl file.
+    /// Any object needs to be serialized as a mcl file should derive from this class.
     /// </remarks>
     [Serializable]
     public abstract class MCLSerializer
     {
-        #region Common
-        
+        #region Members
+
         [NonSerialized]
         private MclSerialization serializationType;
 
@@ -69,8 +69,44 @@ namespace MSNPSharp.IO
 
         private string version = "1.0";
 
+        #endregion
+
         protected MCLSerializer()
         {
+        }
+
+        #region Properties
+
+        /// <summary>
+        /// The version of serialized object in the mcl file.
+        /// </summary>
+        [XmlAttribute("Version")]
+        public string Version
+        {
+            get
+            {
+                return version;
+            }
+            set
+            {
+                version = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets an object that can be used to synchronize access to this class.
+        /// </summary>
+        public object SyncObject
+        {
+            get
+            {
+                if (syncObject == null)
+                {
+                    Interlocked.CompareExchange(ref syncObject, new object(), null);
+                }
+
+                return syncObject;
+            }
         }
 
         protected string FileName
@@ -121,65 +157,9 @@ namespace MSNPSharp.IO
             }
         }
 
-        public object SyncObject
-        {
-            get
-            {
-                if (syncObject == null)
-                {
-                    Interlocked.CompareExchange(ref syncObject, new object(), null);
-                }
+        #endregion
 
-                return syncObject;
-            }
-        }
-
-        /// <summary>
-        /// The version of serialized object in the mcl file.
-        /// </summary>
-        [XmlAttribute("Version")]
-        public string Version
-        {
-            get
-            {
-                return version;
-            }
-            set
-            {
-                version = value;
-            }
-        }
-
-        protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler, bool useCache)
-        {
-            DateTime beginTime = DateTime.Now;
-            MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
-            if (Settings.NoSave == false && File.Exists(filename))
-            {
-                MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password, useCache);
-
-                DateTime deserializeBegin = DateTime.Now;
-                if (file.Content != null)
-                {
-                    using (MemoryStream ms = new MemoryStream(file.Content))
-                    {
-                        ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
-                    }
-                }
-
-                TimeSpan deserializeTimeConsume = DateTime.Now - deserializeBegin;
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Deserialize time (by ticks): " + deserializeTimeConsume.Ticks);
-            }
-
-            ret.SerializationType = st;
-            ret.FileName = filename;
-            ret.NSMessageHandler = handler;
-            ret.UseCache = useCache;
-            TimeSpan timeConsume = DateTime.Now - beginTime;
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Total loading time (by ticks): " + timeConsume.Ticks + "\r\n");
-
-            return ret;
-        }
+        #region Methods
 
         /// <summary>
         /// Serialize and save the class into a file.
@@ -199,18 +179,53 @@ namespace MSNPSharp.IO
             SaveToMCL(filename, false);
         }
 
+        protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler, bool useCache)
+        {
+            int beginTick = Environment.TickCount;
+            MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
+            if (Settings.NoSave == false && File.Exists(filename))
+            {
+                MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password, useCache);
+
+                int deserializeTick = Environment.TickCount;
+
+                if (file.Content != null)
+                {
+                    using (MemoryStream ms = new MemoryStream(file.Content))
+                    {
+                        ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
+                    }
+                }
+
+                int deserializeTickConsume = Environment.TickCount - deserializeTick;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Deserialize time (by ticks): " + deserializeTickConsume);
+            }
+
+            ret.SerializationType = st;
+            ret.FileName = filename;
+            ret.NSMessageHandler = handler;
+            ret.UseCache = useCache;
+
+            int tickConsume = Environment.TickCount - beginTick;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Total loading time (by ticks): " + tickConsume + "\r\n");
+
+            return ret;
+        }
+
+
+
         private void SaveToMCL(string filename, bool saveToHiddenFile)
         {
-            DateTime beginTime = DateTime.Now;
+            int beginTime = Environment.TickCount;
             if (!Settings.NoSave)
             {
-                DateTime serializeBegin = DateTime.Now;
+                int serializeBegin = Environment.TickCount;
                 XmlSerializer ser = new XmlSerializer(this.GetType());
                 MemoryStream ms = new MemoryStream();
                 ser.Serialize(ms, this);
 
-                TimeSpan serializeTimeConsume = DateTime.Now - serializeBegin;
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> serialize time (by ticks): " + serializeTimeConsume.Ticks);
+                int serializeTickConsume = Environment.TickCount - serializeBegin;
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> serialize time (by ticks): " + serializeTickConsume);
 
                 MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, NSMessageHandler.Credentials.Password, UseCache);
                 file.Content = ms.ToArray();
@@ -218,8 +233,8 @@ namespace MSNPSharp.IO
                 ms.Close();
             }
 
-            TimeSpan timeConsume = DateTime.Now - beginTime;
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> Total saving time (by ticks): " + timeConsume.Ticks + "\r\n");
+            int tickConsume = Environment.TickCount - beginTime;
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> Total saving time (by ticks): " + tickConsume + "\r\n");
         }
 
         #endregion
