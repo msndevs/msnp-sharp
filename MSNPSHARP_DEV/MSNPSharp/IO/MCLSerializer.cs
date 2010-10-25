@@ -31,24 +31,27 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.IO;
-using System.Xml.Serialization;
+using System.Threading;
 using System.Diagnostics;
+using System.Xml.Serialization;
+using System.Collections.Generic;
 
 namespace MSNPSharp.IO
 {
     /// <summary>
     /// Object serializer/deserializer class.
-    /// <remarks>This class was used to save/load an object into/from a hidden mcl file.
-    /// Any object needs to be serialized as a hidden mcl file should derive from this class.</remarks>
     /// </summary>
+    /// <remarks>
+    /// This class was used to save/load an object into/from a hidden mcl file.
+    /// Any object needs to be serialized as a hidden mcl file should derive from this class.
+    /// </remarks>
     [Serializable]
     public abstract class MCLSerializer
     {
         #region Common
-
+        
         [NonSerialized]
         private MclSerialization serializationType;
 
@@ -60,9 +63,9 @@ namespace MSNPSharp.IO
 
         [NonSerialized]
         private bool useCache;
-		
-		[NonSerialized]
-		private object syncObject = new object();
+
+        [NonSerialized]
+        private object syncObject;
 
         private string version = "1.0";
 
@@ -117,14 +120,19 @@ namespace MSNPSharp.IO
                 useCache = value;
             }
         }
-		
-		public object SyncObject
-		{
-			get
-			{
-				return syncObject;
-			}
-		}
+
+        public object SyncObject
+        {
+            get
+            {
+                if (syncObject == null)
+                {
+                    Interlocked.CompareExchange(ref syncObject, new object(), null);
+                }
+
+                return syncObject;
+            }
+        }
 
         /// <summary>
         /// The version of serialized object in the mcl file.
