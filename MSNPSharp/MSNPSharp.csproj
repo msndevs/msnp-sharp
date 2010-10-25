@@ -70,7 +70,6 @@
     <Compile Include="EndPointData.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="EventArgs.cs" />
-    <Compile Include="Core\Factory.cs" />
     <Compile Include="Core\IMessageHandler.cs" />
     <Compile Include="Framework.cs" />
     <Compile Include="IO\DeltasList.cs" />
