@@ -55,7 +55,6 @@ using System.Drawing;
         private SerializableDictionary<string, byte[]> userTileSlots = new SerializableDictionary<string, byte[]>(MaxSlot);
         private SerializableDictionary<string, uint> visitCount = new SerializableDictionary<string, uint>(MaxSlot);
         private SerializableDictionary<string, string> userImageRelationships = new SerializableDictionary<string, string>();
-        private object syncObject = new object();
 
         public SerializableDictionary<string, string> UserImageRelationships
         {
@@ -77,13 +76,6 @@ using System.Drawing;
         {
             get { return userTileSlots; }
             set { userTileSlots = value; }
-        }
-
-
-
-        public object SyncObject
-        {
-            get { return syncObject; }
         }
 
         /// <summary>
