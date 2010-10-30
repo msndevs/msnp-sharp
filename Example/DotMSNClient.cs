@@ -101,6 +101,7 @@ namespace MSNPSharpClient
             // You can send a Ping by using Messenger.Nameserver.SendPing().
             messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
 
+            messenger.Nameserver.OwnerVerified += new EventHandler<EventArgs>(Nameserver_OwnerVerified);
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
 
@@ -555,10 +556,26 @@ namespace MSNPSharpClient
             Application.Run(new ClientForm());
         }
 
+        void Nameserver_OwnerVerified(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<EventArgs>(Nameserver_OwnerVerified), sender, e);
+                return;
+            }
+
+            Messenger.ContactList.Owner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged);
+            Messenger.ContactList.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            Messenger.ContactList.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            Messenger.ContactList.Owner.PlacesChanged += new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged);
+            Messenger.ContactList.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
+        }
+
         void Nameserver_ContactOnline(object sender, ContactEventArgs e)
         {
             BeginInvoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), new object[] { sender, e });
         }
+
         void Nameserver_ContactOffline(object sender, ContactEventArgs e)
         {
             Invoke(new EventHandler<ContactEventArgs>(ContactOnlineOffline), new object[] { sender, e });
@@ -1014,11 +1031,6 @@ namespace MSNPSharpClient
             pnlNameAndPM.Visible = true;
             comboPlaces.Visible = true;
 
-            Messenger.ContactList.Owner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged);
-            Messenger.ContactList.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            Messenger.ContactList.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            Messenger.ContactList.Owner.PlacesChanged += new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged);
-            Messenger.ContactList.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
             Messenger.ContactList.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
             propertyGrid.SelectedObject = Messenger.ContactList.Owner;

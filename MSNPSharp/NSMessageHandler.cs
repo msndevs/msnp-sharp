@@ -391,6 +391,11 @@ namespace MSNPSharp
         public event EventHandler<ExceptionEventArgs> AuthenticationError;
 
         /// <summary>
+        /// Occurs when the user finished the authentication step, the owner was created
+        /// </summary>
+        public event EventHandler<EventArgs> OwnerVerified;
+
+        /// <summary>
         /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method
         /// </summary>
         public event EventHandler<PingAnswerEventArgs> PingAnswer;
@@ -1185,6 +1190,7 @@ namespace MSNPSharp
                 {
                     // set the owner's name and CID
                     ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnticket.OwnerCID, this));
+                    OnOwnerVerified();
                 }
                 ContactList.Owner.PassportVerified = message.CommandValues[2].Equals("1");
             }
@@ -3784,6 +3790,15 @@ namespace MSNPSharp
                 AuthenticationError(this, e);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
+        }
+
+        /// <summary>
+        /// Fires the <see cref="AuthenticationSuccess"/> event.
+        /// </summary>
+        protected virtual void OnOwnerVerified()
+        {
+            if (OwnerVerified != null)
+                OwnerVerified(this, new EventArgs());
         }
 
         #endregion
