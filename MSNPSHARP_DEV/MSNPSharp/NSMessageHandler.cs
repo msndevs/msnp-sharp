@@ -1410,16 +1410,22 @@ namespace MSNPSharp
 
                     //Get endpoint data.
                     bool isPrivateEndPoint = (contact is Owner);
-                    List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(contact.Mail, xmlDoc, isPrivateEndPoint);
-                    if (endPoints.Count > 0)
-                    {
-                        foreach (EndPointData epData in endPoints)
-                        {
-                            contact.EndPointData[epData.Id] = epData;
-                        }
-                    }
 
-                    
+                    #region Regular contacts
+
+                    if (!isPrivateEndPoint)
+                    {
+                        List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(contact.Mail, xmlDoc, isPrivateEndPoint);
+                        if (endPoints.Count > 0)
+                        {
+                            foreach (EndPointData epData in endPoints)
+                            {
+                                contact.EndPointData[epData.Id] = epData;
+                            }
+                        }
+                    } 
+
+                    #endregion
 
                     #region Only for Owner, set private endpoint info.
 
