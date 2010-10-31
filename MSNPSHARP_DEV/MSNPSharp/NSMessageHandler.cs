@@ -3171,8 +3171,8 @@ namespace MSNPSharp
 
                     if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.Message_Subtype))
                     {
-                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString() == "text/x-msmsgscontrol" &&
-                            mimeDic[MimeHeaderStrings.Message_Subtype].ToString() == "Typing")
+                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant() == "text/x-msmsgscontrol" &&
+                            mimeDic[MimeHeaderStrings.Message_Subtype].ToString().ToLowerInvariant() == "typing")
                         {
                             //Typing
                             OnCircleTypingMessageReceived(arg);
@@ -3183,8 +3183,8 @@ namespace MSNPSharp
 
                     if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.Message_Type))
                     {
-                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().IndexOf("Text/plain;") > -1 &&
-                            mimeDic[MimeHeaderStrings.Message_Type].ToString() == "Text")
+                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
+                            mimeDic[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "text")
                         {
                             //Text message.
                             TextMessage txtMessage = new TextMessage(contentString);
@@ -3202,8 +3202,8 @@ namespace MSNPSharp
 
                         }
 
-                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().IndexOf("Text/plain;") > -1 &&
-                            mimeDic[MimeHeaderStrings.Message_Type].ToString() == "Nudge")
+                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
+                            mimeDic[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "nudge")
                         {
                             //Nudge
                             OnCircleNudgeReceived(arg);
