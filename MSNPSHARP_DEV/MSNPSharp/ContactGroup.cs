@@ -124,7 +124,7 @@ namespace MSNPSharp
         /// <summary>
         /// The notification message handler which controls this contact object
         /// </summary>
-        public NSMessageHandler NSMessageHandler
+        internal NSMessageHandler NSMessageHandler
         {
             get
             {
