@@ -269,7 +269,7 @@ namespace MSNPSharp
 
         #region Properties
 
-        public NSMessageHandler NSMessageHandler
+        internal NSMessageHandler NSMessageHandler
         {
             get
             {

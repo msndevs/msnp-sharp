@@ -343,7 +343,7 @@ namespace MSNPSharp
         /// <summary>
         /// The nameserver that received the request for the switchboard session
         /// </summary>
-        public NSMessageHandler NSMessageHandler
+        internal NSMessageHandler NSMessageHandler
         {
             get
             {

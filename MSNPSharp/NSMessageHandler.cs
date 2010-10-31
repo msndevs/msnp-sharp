@@ -245,7 +245,7 @@ namespace MSNPSharp
         /// <summary>
         /// A service that provide contact operations.
         /// </summary>
-        public ContactService ContactService
+        internal ContactService ContactService
         {
             get
             {
@@ -256,7 +256,7 @@ namespace MSNPSharp
         /// <summary>
         /// Offline message service.
         /// </summary>
-        public OIMService OIMService
+        internal OIMService OIMService
         {
             get
             {
@@ -267,7 +267,7 @@ namespace MSNPSharp
         /// <summary>
         /// Storage Service for get/update display name, personal status, display picture etc.
         /// </summary>
-        public MSNStorageService StorageService
+        internal MSNStorageService StorageService
         {
             get
             {
@@ -275,7 +275,7 @@ namespace MSNPSharp
             }
         }
 
-        public WhatsUpService WhatsUpService
+        internal WhatsUpService WhatsUpService
         {
             get
             {

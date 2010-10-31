@@ -188,14 +188,14 @@ namespace MSNPSharp
             }
         }
 
-        public NSMessageHandler NSMessageHandler
+        internal NSMessageHandler NSMessageHandler
         {
             get
             {
                 return nsMessageHandler;
             }
 
-            internal protected set
+            set
             {
                 nsMessageHandler = value;
             }

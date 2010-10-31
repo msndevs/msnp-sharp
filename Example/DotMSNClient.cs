@@ -2252,7 +2252,7 @@ namespace MSNPSharpClient
 
             if (profileObject is Image)
             {
-                bool updateResult = messenger.Nameserver.StorageService.UpdateProfile(profileObject as Image, "MyPhoto");
+                bool updateResult = messenger.StorageService.UpdateProfile(profileObject as Image, "MyPhoto");
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update displayimage completed. Result = " + updateResult);
             }
 
