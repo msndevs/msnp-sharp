@@ -92,6 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MSNPSharp_logo.ico" />
+    <None Include="Resources\app_banner.png" />
     <None Include="Resources\MSNPSharp_banner.png" />
     <None Include="Resources\loading.gif" />
     <None Include="Resources\listbg.png" />
