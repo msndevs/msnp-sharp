@@ -444,6 +444,7 @@ namespace MSNPSharpClient
             this.txtSearch.Text = "Search contacts";
             this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
             this.txtSearch.Enter += new System.EventHandler(this.txtSearch_Enter);
+			this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
             // 
             // btnAddNew
             // 
