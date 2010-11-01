@@ -32,16 +32,7 @@ namespace MSNPSharpClient
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.ListPanel = new System.Windows.Forms.Panel();
-            this.SortPanel = new System.Windows.Forms.Panel();
-            this.txtSearch = new System.Windows.Forms.TextBox();
-            this.btnAddNew = new System.Windows.Forms.Button();
-            this.btnSortBy = new System.Windows.Forms.Button();
-            this.treeViewPanel = new System.Windows.Forms.Panel();
-            this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
             this.ImageList1 = new System.Windows.Forms.ImageList(this.components);
-            this.treeViewFilterList = new System.Windows.Forms.TreeView();
-            this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sendIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sendOIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -53,197 +44,83 @@ namespace MSNPSharpClient
             this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unblockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.ContactPanel = new System.Windows.Forms.Panel();
-            this.propertyGrid = new System.Windows.Forms.PropertyGrid();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.displayImageBox = new System.Windows.Forms.PictureBox();
-            this.cbRobotMode = new System.Windows.Forms.CheckBox();
-            this.accountTextBox = new System.Windows.Forms.TextBox();
-            this.loginButton = new System.Windows.Forms.Button();
-            this.passwordTextBox = new System.Windows.Forms.TextBox();
-            this.comboStatus = new System.Windows.Forms.ComboBox();
-            this.pnlNameAndPM = new System.Windows.Forms.Panel();
-            this.btnSetMusic = new System.Windows.Forms.Button();
-            this.lblPM = new System.Windows.Forms.TextBox();
-            this.lblName = new System.Windows.Forms.TextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
             this.tmrNews = new System.Windows.Forms.Timer(this.components);
-            this.statusBar = new System.Windows.Forms.StatusBar();
-            this.OwnerPanel = new System.Windows.Forms.Panel();
             this.sortContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripSortByStatus = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSortBygroup = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDeleteGroup = new System.Windows.Forms.ToolStripMenuItem();
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.pictureBox = new System.Windows.Forms.PictureBox();
             this.toolTipChangePhoto = new System.Windows.Forms.ToolTip(this.components);
-            this.pbNewsPicture = new System.Windows.Forms.PictureBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.WhatsUpPanel = new System.Windows.Forms.Panel();
             this.lblNewsLink = new System.Windows.Forms.LinkLabel();
             this.lblNews = new System.Windows.Forms.Label();
+            this.pbNewsPicture = new System.Windows.Forms.PictureBox();
             this.cmdNext = new System.Windows.Forms.Button();
             this.cmdPrev = new System.Windows.Forms.Button();
             this.lblWhatsup = new System.Windows.Forms.Label();
-            this.ListPanel.SuspendLayout();
-            this.SortPanel.SuspendLayout();
-            this.treeViewPanel.SuspendLayout();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.propertyGrid = new System.Windows.Forms.PropertyGrid();
+            this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.SortPanel = new System.Windows.Forms.Panel();
+            this.txtSearch = new System.Windows.Forms.TextBox();
+            this.btnAddNew = new System.Windows.Forms.Button();
+            this.btnSortBy = new System.Windows.Forms.Button();
+            this.pnlFavListContainer = new System.Windows.Forms.Panel();
+            this.pnlFilterListContainer = new System.Windows.Forms.Panel();
+            this.treeViewFilterList = new System.Windows.Forms.TreeView();
+            this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
+            this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
+            this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
+            this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
+            this.displayImageBox = new System.Windows.Forms.PictureBox();
+            this.statusBar = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
+            this.pnlLogin = new System.Windows.Forms.Panel();
+            this.cbRobotMode = new System.Windows.Forms.CheckBox();
+            this.accountTextBox = new System.Windows.Forms.TextBox();
+            this.loginButton = new System.Windows.Forms.Button();
+            this.passwordTextBox = new System.Windows.Forms.TextBox();
+            this.tableLayoutPanel7 = new System.Windows.Forms.TableLayoutPanel();
+            this.comboPlaces = new System.Windows.Forms.ComboBox();
+            this.comboStatus = new System.Windows.Forms.ComboBox();
+            this.pnlNameAndPM = new System.Windows.Forms.Panel();
+            this.btnSetMusic = new System.Windows.Forms.Button();
+            this.lblPM = new System.Windows.Forms.TextBox();
+            this.lblName = new System.Windows.Forms.TextBox();
             this.userMenuStrip.SuspendLayout();
-            this.ContactPanel.SuspendLayout();
-            this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).BeginInit();
-            this.pnlNameAndPM.SuspendLayout();
-            this.OwnerPanel.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pbNewsPicture)).BeginInit();
+            this.tableLayoutPanel1.SuspendLayout();
             this.WhatsUpPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbNewsPicture)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
+            this.tableLayoutPanel2.SuspendLayout();
+            this.SortPanel.SuspendLayout();
+            this.pnlFavListContainer.SuspendLayout();
+            this.pnlFilterListContainer.SuspendLayout();
+            this.tableLayoutPanel3.SuspendLayout();
+            this.tableLayoutPanel4.SuspendLayout();
+            this.tableLayoutPanel5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).BeginInit();
+            this.panel1.SuspendLayout();
+            this.tableLayoutPanel6.SuspendLayout();
+            this.pnlLogin.SuspendLayout();
+            this.tableLayoutPanel7.SuspendLayout();
+            this.pnlNameAndPM.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // ListPanel
-            // 
-            this.ListPanel.BackColor = System.Drawing.SystemColors.Control;
-            this.ListPanel.Controls.Add(this.SortPanel);
-            this.ListPanel.Controls.Add(this.treeViewPanel);
-            this.ListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ListPanel.Location = new System.Drawing.Point(305, 144);
-            this.ListPanel.Name = "ListPanel";
-            this.ListPanel.Size = new System.Drawing.Size(338, 418);
-            this.ListPanel.TabIndex = 0;
-            // 
-            // SortPanel
-            // 
-            this.SortPanel.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.SortPanel.Controls.Add(this.txtSearch);
-            this.SortPanel.Controls.Add(this.btnAddNew);
-            this.SortPanel.Controls.Add(this.btnSortBy);
-            this.SortPanel.Dock = System.Windows.Forms.DockStyle.Top;
-            this.SortPanel.Location = new System.Drawing.Point(0, 0);
-            this.SortPanel.Name = "SortPanel";
-            this.SortPanel.Size = new System.Drawing.Size(338, 27);
-            this.SortPanel.TabIndex = 1;
-            // 
-            // txtSearch
-            // 
-            this.txtSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtSearch.ForeColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtSearch.Location = new System.Drawing.Point(12, 2);
-            this.txtSearch.Name = "txtSearch";
-            this.txtSearch.Size = new System.Drawing.Size(231, 20);
-            this.txtSearch.TabIndex = 9;
-            this.txtSearch.Text = "Search contacts";
-            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
-            this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
-            this.txtSearch.Enter += new System.EventHandler(this.txtSearch_Enter);
-            // 
-            // btnAddNew
-            // 
-            this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddNew.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnAddNew.Location = new System.Drawing.Point(292, 1);
-            this.btnAddNew.Name = "btnAddNew";
-            this.btnAddNew.Size = new System.Drawing.Size(36, 21);
-            this.btnAddNew.TabIndex = 7;
-            this.btnAddNew.Text = "+";
-            this.toolTipChangePhoto.SetToolTip(this.btnAddNew, "Add new contact");
-            this.btnAddNew.UseVisualStyleBackColor = true;
-            this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
-            // 
-            // btnSortBy
-            // 
-            this.btnSortBy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSortBy.BackColor = System.Drawing.SystemColors.Control;
-            this.btnSortBy.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnSortBy.Location = new System.Drawing.Point(248, 1);
-            this.btnSortBy.Name = "btnSortBy";
-            this.btnSortBy.Size = new System.Drawing.Size(38, 21);
-            this.btnSortBy.TabIndex = 0;
-            this.btnSortBy.Text = "sort";
-            this.btnSortBy.UseVisualStyleBackColor = true;
-            this.btnSortBy.Click += new System.EventHandler(this.btnSortBy_Click);
-            // 
-            // treeViewPanel
-            // 
-            this.treeViewPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.treeViewPanel.Controls.Add(this.treeViewFavoriteList);
-            this.treeViewPanel.Controls.Add(this.treeViewFilterList);
-            this.treeViewPanel.Location = new System.Drawing.Point(0, 27);
-            this.treeViewPanel.Name = "treeViewPanel";
-            this.treeViewPanel.Size = new System.Drawing.Size(338, 391);
-            this.treeViewPanel.TabIndex = 2;
-            // 
-            // treeViewFavoriteList
-            // 
-            this.treeViewFavoriteList.AllowDrop = true;
-            this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
-            this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewFavoriteList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.treeViewFavoriteList.FullRowSelect = true;
-            this.treeViewFavoriteList.HideSelection = false;
-            this.treeViewFavoriteList.ImageIndex = 0;
-            this.treeViewFavoriteList.ImageList = this.ImageList1;
-            this.treeViewFavoriteList.Indent = 15;
-            this.treeViewFavoriteList.ItemHeight = 20;
-            this.treeViewFavoriteList.Location = new System.Drawing.Point(0, 0);
-            this.treeViewFavoriteList.Name = "treeViewFavoriteList";
-            this.treeViewFavoriteList.SelectedImageIndex = 0;
-            this.treeViewFavoriteList.ShowLines = false;
-            this.treeViewFavoriteList.ShowPlusMinus = false;
-            this.treeViewFavoriteList.ShowRootLines = false;
-            this.treeViewFavoriteList.Size = new System.Drawing.Size(338, 391);
-            this.treeViewFavoriteList.TabIndex = 0;
-            this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
-            this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
-            this.treeViewFavoriteList.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragEnter);
-            this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
-            this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
-            this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
             // 
             // ImageList1
             // 
             this.ImageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
             this.ImageList1.ImageSize = new System.Drawing.Size(10, 10);
             this.ImageList1.TransparentColor = System.Drawing.Color.Transparent;
-            // 
-            // treeViewFilterList
-            // 
-            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
-            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.treeViewFilterList.FullRowSelect = true;
-            this.treeViewFilterList.HideSelection = false;
-            this.treeViewFilterList.Indent = 20;
-            this.treeViewFilterList.ItemHeight = 20;
-            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
-            this.treeViewFilterList.Name = "treeViewFilterList";
-            this.treeViewFilterList.ShowLines = false;
-            this.treeViewFilterList.ShowPlusMinus = false;
-            this.treeViewFilterList.ShowRootLines = false;
-            this.treeViewFilterList.Size = new System.Drawing.Size(338, 391);
-            this.treeViewFilterList.TabIndex = 0;
-            this.treeViewFilterList.Visible = false;
-            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
-            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
-            // 
-            // comboPlaces
-            // 
-            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboPlaces.DropDownWidth = 170;
-            this.comboPlaces.FormattingEnabled = true;
-            this.comboPlaces.Location = new System.Drawing.Point(129, 53);
-            this.comboPlaces.Name = "comboPlaces";
-            this.comboPlaces.Size = new System.Drawing.Size(113, 21);
-            this.comboPlaces.TabIndex = 5;
-            this.toolTipChangePhoto.SetToolTip(this.comboPlaces, "Places you signed on");
-            this.comboPlaces.Visible = false;
-            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
             // 
             // userMenuStrip
             // 
@@ -259,13 +136,13 @@ namespace MSNPSharpClient
             this.unblockMenuItem,
             this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 192);
+            this.userMenuStrip.Size = new System.Drawing.Size(202, 192);
             // 
             // sendIMMenuItem
             // 
             this.sendIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendIMMenuItem.Name = "sendIMMenuItem";
-            this.sendIMMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.sendIMMenuItem.Size = new System.Drawing.Size(201, 22);
             this.sendIMMenuItem.Text = "Send Instant Message";
             this.sendIMMenuItem.Click += new System.EventHandler(this.sendMessageToolStripMenuItem_Click);
             // 
@@ -273,7 +150,7 @@ namespace MSNPSharpClient
             // 
             this.sendOIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendOIMMenuItem.Name = "sendOIMMenuItem";
-            this.sendOIMMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.sendOIMMenuItem.Size = new System.Drawing.Size(201, 22);
             this.sendOIMMenuItem.Text = "Send Offline Message";
             this.sendOIMMenuItem.Click += new System.EventHandler(this.sendOfflineMessageToolStripMenuItem_Click);
             // 
@@ -281,212 +158,54 @@ namespace MSNPSharpClient
             // 
             this.sendMIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendMIMMenuItem.Name = "sendMIMMenuItem";
-            this.sendMIMMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.sendMIMMenuItem.Size = new System.Drawing.Size(201, 22);
             this.sendMIMMenuItem.Text = "Send Mobile Message";
             this.sendMIMMenuItem.Click += new System.EventHandler(this.sendMIMMenuItem_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(197, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(198, 6);
             // 
             // importContactsMenuItem
             // 
             this.importContactsMenuItem.Name = "importContactsMenuItem";
-            this.importContactsMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.importContactsMenuItem.Size = new System.Drawing.Size(201, 22);
             this.importContactsMenuItem.Text = "Import Contacts";
             this.importContactsMenuItem.Click += new System.EventHandler(this.importContactsMenuItem_Click);
             // 
             // createCircleMenuItem
             // 
             this.createCircleMenuItem.Name = "createCircleMenuItem";
-            this.createCircleMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.createCircleMenuItem.Size = new System.Drawing.Size(201, 22);
             this.createCircleMenuItem.Text = "Circle Tests";
             this.createCircleMenuItem.Click += new System.EventHandler(this.createCircleMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(197, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(198, 6);
             // 
             // blockMenuItem
             // 
             this.blockMenuItem.Name = "blockMenuItem";
-            this.blockMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.blockMenuItem.Size = new System.Drawing.Size(201, 22);
             this.blockMenuItem.Text = "Block";
             this.blockMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
             // 
             // unblockMenuItem
             // 
             this.unblockMenuItem.Name = "unblockMenuItem";
-            this.unblockMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.unblockMenuItem.Size = new System.Drawing.Size(201, 22);
             this.unblockMenuItem.Text = "Unblock";
             this.unblockMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
             // 
             // deleteMenuItem
             // 
             this.deleteMenuItem.Name = "deleteMenuItem";
-            this.deleteMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.deleteMenuItem.Size = new System.Drawing.Size(201, 22);
             this.deleteMenuItem.Text = "Delete";
             this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
-            // 
-            // ContactPanel
-            // 
-            this.ContactPanel.BackColor = System.Drawing.SystemColors.Control;
-            this.ContactPanel.Controls.Add(this.propertyGrid);
-            this.ContactPanel.Dock = System.Windows.Forms.DockStyle.Left;
-            this.ContactPanel.Location = new System.Drawing.Point(0, 144);
-            this.ContactPanel.Name = "ContactPanel";
-            this.ContactPanel.Size = new System.Drawing.Size(305, 418);
-            this.ContactPanel.TabIndex = 2;
-            // 
-            // propertyGrid
-            // 
-            this.propertyGrid.BackColor = System.Drawing.SystemColors.Control;
-            this.propertyGrid.CommandsBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            this.propertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
-            this.propertyGrid.Location = new System.Drawing.Point(0, 0);
-            this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(305, 418);
-            this.propertyGrid.TabIndex = 4;
-            // 
-            // panel1
-            // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel1.BackColor = System.Drawing.Color.LightBlue;
-            this.panel1.Controls.Add(this.displayImageBox);
-            this.panel1.Controls.Add(this.cbRobotMode);
-            this.panel1.Controls.Add(this.comboPlaces);
-            this.panel1.Controls.Add(this.accountTextBox);
-            this.panel1.Controls.Add(this.loginButton);
-            this.panel1.Controls.Add(this.passwordTextBox);
-            this.panel1.Controls.Add(this.comboStatus);
-            this.panel1.Location = new System.Drawing.Point(311, 12);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(330, 81);
-            this.panel1.TabIndex = 5;
-            // 
-            // displayImageBox
-            // 
-            this.displayImageBox.BackColor = System.Drawing.Color.White;
-            this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.displayImageBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.displayImageBox.Location = new System.Drawing.Point(249, 0);
-            this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(81, 81);
-            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.displayImageBox.TabIndex = 2;
-            this.displayImageBox.TabStop = false;
-            this.toolTipChangePhoto.SetToolTip(this.displayImageBox, "Click to change the photo");
-            this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
-            // 
-            // cbRobotMode
-            // 
-            this.cbRobotMode.AutoSize = true;
-            this.cbRobotMode.Location = new System.Drawing.Point(129, 31);
-            this.cbRobotMode.Name = "cbRobotMode";
-            this.cbRobotMode.Size = new System.Drawing.Size(123, 17);
-            this.cbRobotMode.TabIndex = 7;
-            this.cbRobotMode.Text = "Provisioned account";
-            this.toolTipChangePhoto.SetToolTip(this.cbRobotMode, "If your account is provisioned, check this. This sets AutoSynchronize property to" +
-                    " false when connected; that will make MSNPSharp don\'t use Address Book anymore, " +
-                    "so your contact list isn\'t loaded.");
-            this.cbRobotMode.UseVisualStyleBackColor = true;
-            this.cbRobotMode.CheckedChanged += new System.EventHandler(this.cbRobotMode_CheckedChanged);
-            // 
-            // accountTextBox
-            // 
-            this.accountTextBox.Location = new System.Drawing.Point(6, 6);
-            this.accountTextBox.Name = "accountTextBox";
-            this.accountTextBox.Size = new System.Drawing.Size(120, 20);
-            this.accountTextBox.TabIndex = 2;
-            this.accountTextBox.Text = "testmsnpsharp@live.cn";
-            this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
-            // 
-            // loginButton
-            // 
-            this.loginButton.Location = new System.Drawing.Point(129, 6);
-            this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(114, 21);
-            this.loginButton.TabIndex = 1;
-            this.loginButton.Tag = "0";
-            this.loginButton.Text = "> Sign in";
-            this.loginButton.UseVisualStyleBackColor = true;
-            this.loginButton.Click += new System.EventHandler(this.loginButton_Click);
-            // 
-            // passwordTextBox
-            // 
-            this.passwordTextBox.Location = new System.Drawing.Point(6, 28);
-            this.passwordTextBox.Name = "passwordTextBox";
-            this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(120, 20);
-            this.passwordTextBox.TabIndex = 3;
-            this.passwordTextBox.Text = "tstmsnpsharp";
-            this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
-            // 
-            // comboStatus
-            // 
-            this.comboStatus.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboStatus.FormattingEnabled = true;
-            this.comboStatus.ItemHeight = 15;
-            this.comboStatus.Items.AddRange(new object[] {
-            "Online",
-            "Busy",
-            "Away",
-            "Hidden",
-            "Offline"});
-            this.comboStatus.Location = new System.Drawing.Point(6, 53);
-            this.comboStatus.Name = "comboStatus";
-            this.comboStatus.Size = new System.Drawing.Size(120, 21);
-            this.comboStatus.TabIndex = 4;
-            this.toolTipChangePhoto.SetToolTip(this.comboStatus, "Your status");
-            this.comboStatus.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboStatus_DrawItem);
-            this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
-            this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
-            // 
-            // pnlNameAndPM
-            // 
-            this.pnlNameAndPM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlNameAndPM.BackColor = System.Drawing.Color.LightBlue;
-            this.pnlNameAndPM.Controls.Add(this.btnSetMusic);
-            this.pnlNameAndPM.Controls.Add(this.lblPM);
-            this.pnlNameAndPM.Controls.Add(this.lblName);
-            this.pnlNameAndPM.Location = new System.Drawing.Point(13, 12);
-            this.pnlNameAndPM.Name = "pnlNameAndPM";
-            this.pnlNameAndPM.Size = new System.Drawing.Size(246, 48);
-            this.pnlNameAndPM.TabIndex = 1;
-            this.pnlNameAndPM.Visible = false;
-            // 
-            // btnSetMusic
-            // 
-            this.btnSetMusic.Location = new System.Drawing.Point(217, 24);
-            this.btnSetMusic.Name = "btnSetMusic";
-            this.btnSetMusic.Size = new System.Drawing.Size(26, 21);
-            this.btnSetMusic.TabIndex = 5;
-            this.btnSetMusic.Tag = "0";
-            this.btnSetMusic.Text = "M";
-            this.toolTipChangePhoto.SetToolTip(this.btnSetMusic, "Set music");
-            this.btnSetMusic.UseVisualStyleBackColor = true;
-            this.btnSetMusic.Click += new System.EventHandler(this.btnSetMusic_Click);
-            // 
-            // lblPM
-            // 
-            this.lblPM.Location = new System.Drawing.Point(3, 25);
-            this.lblPM.Name = "lblPM";
-            this.lblPM.Size = new System.Drawing.Size(208, 20);
-            this.lblPM.TabIndex = 1;
-            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
-            // 
-            // lblName
-            // 
-            this.lblName.Location = new System.Drawing.Point(3, 2);
-            this.lblName.Name = "lblName";
-            this.lblName.Size = new System.Drawing.Size(240, 20);
-            this.lblName.TabIndex = 0;
-            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
             // 
             // openFileDialog
             // 
@@ -508,24 +227,6 @@ namespace MSNPSharpClient
             this.tmrNews.Interval = 5000;
             this.tmrNews.Tick += new System.EventHandler(this.tmrNews_Tick);
             // 
-            // statusBar
-            // 
-            this.statusBar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.statusBar.Location = new System.Drawing.Point(0, 0);
-            this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(643, 26);
-            this.statusBar.TabIndex = 5;
-            // 
-            // OwnerPanel
-            // 
-            this.OwnerPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(163)))), ((int)(((byte)(186)))));
-            this.OwnerPanel.Controls.Add(this.statusBar);
-            this.OwnerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.OwnerPanel.Location = new System.Drawing.Point(0, 608);
-            this.OwnerPanel.Name = "OwnerPanel";
-            this.OwnerPanel.Size = new System.Drawing.Size(643, 26);
-            this.OwnerPanel.TabIndex = 1;
-            // 
             // sortContextMenu
             // 
             this.sortContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -534,7 +235,7 @@ namespace MSNPSharpClient
             this.sortContextMenu.Name = "sortContextMenu";
             this.sortContextMenu.ShowCheckMargin = true;
             this.sortContextMenu.ShowImageMargin = false;
-            this.sortContextMenu.Size = new System.Drawing.Size(140, 48);
+            this.sortContextMenu.Size = new System.Drawing.Size(151, 48);
             // 
             // toolStripSortByStatus
             // 
@@ -543,7 +244,7 @@ namespace MSNPSharpClient
             this.toolStripSortByStatus.CheckState = System.Windows.Forms.CheckState.Checked;
             this.toolStripSortByStatus.Name = "toolStripSortByStatus";
             this.toolStripSortByStatus.ShowShortcutKeys = false;
-            this.toolStripSortByStatus.Size = new System.Drawing.Size(139, 22);
+            this.toolStripSortByStatus.Size = new System.Drawing.Size(150, 22);
             this.toolStripSortByStatus.Text = "Sort by status";
             this.toolStripSortByStatus.Click += new System.EventHandler(this.toolStripSortByStatus_Click);
             // 
@@ -552,14 +253,14 @@ namespace MSNPSharpClient
             this.toolStripSortBygroup.CheckOnClick = true;
             this.toolStripSortBygroup.Name = "toolStripSortBygroup";
             this.toolStripSortBygroup.ShowShortcutKeys = false;
-            this.toolStripSortBygroup.Size = new System.Drawing.Size(139, 22);
+            this.toolStripSortBygroup.Size = new System.Drawing.Size(150, 22);
             this.toolStripSortBygroup.Text = "Sort by group";
             this.toolStripSortBygroup.Click += new System.EventHandler(this.toolStripSortBygroup_Click);
             // 
             // toolStripDeleteGroup
             // 
             this.toolStripDeleteGroup.Name = "toolStripDeleteGroup";
-            this.toolStripDeleteGroup.Size = new System.Drawing.Size(142, 22);
+            this.toolStripDeleteGroup.Size = new System.Drawing.Size(153, 22);
             this.toolStripDeleteGroup.Text = "Delete group";
             this.toolStripDeleteGroup.Click += new System.EventHandler(this.toolStripDeleteGroup_Click);
             // 
@@ -570,38 +271,31 @@ namespace MSNPSharpClient
             this.groupContextMenu.Name = "sortContextMenu";
             this.groupContextMenu.ShowCheckMargin = true;
             this.groupContextMenu.ShowImageMargin = false;
-            this.groupContextMenu.Size = new System.Drawing.Size(143, 26);
+            this.groupContextMenu.Size = new System.Drawing.Size(154, 26);
             // 
-            // pictureBox
+            // tableLayoutPanel1
             // 
-            this.pictureBox.BackColor = System.Drawing.Color.LightBlue;
-            this.pictureBox.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pictureBox.Image = global::MSNPSharpClient.Properties.Resources.MSNPSharp_banner;
-            this.pictureBox.Location = new System.Drawing.Point(0, 0);
-            this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(643, 144);
-            this.pictureBox.TabIndex = 5;
-            this.pictureBox.TabStop = false;
-            // 
-            // pbNewsPicture
-            // 
-            this.pbNewsPicture.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.pbNewsPicture.BackColor = System.Drawing.SystemColors.Highlight;
-            this.pbNewsPicture.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pbNewsPicture.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbNewsPicture.Location = new System.Drawing.Point(598, 1);
-            this.pbNewsPicture.Name = "pbNewsPicture";
-            this.pbNewsPicture.Size = new System.Drawing.Size(42, 42);
-            this.pbNewsPicture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pbNewsPicture.TabIndex = 3;
-            this.pbNewsPicture.TabStop = false;
-            this.toolTipChangePhoto.SetToolTip(this.pbNewsPicture, "Display Picture");
+            this.tableLayoutPanel1.CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.Single;
+            this.tableLayoutPanel1.ColumnCount = 1;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Controls.Add(this.WhatsUpPanel, 0, 2);
+            this.tableLayoutPanel1.Controls.Add(this.splitContainer1, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel3, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.statusBar, 0, 3);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 4;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 160F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(643, 634);
+            this.tableLayoutPanel1.TabIndex = 3;
             // 
             // WhatsUpPanel
             // 
-            this.WhatsUpPanel.BackColor = System.Drawing.Color.LightBlue;
-            this.WhatsUpPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.WhatsUpPanel.BackColor = System.Drawing.SystemColors.Control;
             this.WhatsUpPanel.Controls.Add(this.lblNewsLink);
             this.WhatsUpPanel.Controls.Add(this.lblNews);
             this.WhatsUpPanel.Controls.Add(this.pbNewsPicture);
@@ -609,17 +303,17 @@ namespace MSNPSharpClient
             this.WhatsUpPanel.Controls.Add(this.cmdPrev);
             this.WhatsUpPanel.Controls.Add(this.lblWhatsup);
             this.WhatsUpPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.WhatsUpPanel.Location = new System.Drawing.Point(0, 562);
+            this.WhatsUpPanel.Location = new System.Drawing.Point(4, 549);
             this.WhatsUpPanel.Name = "WhatsUpPanel";
-            this.WhatsUpPanel.Size = new System.Drawing.Size(643, 46);
-            this.WhatsUpPanel.TabIndex = 1;
+            this.WhatsUpPanel.Size = new System.Drawing.Size(635, 50);
+            this.WhatsUpPanel.TabIndex = 8;
             // 
             // lblNewsLink
             // 
             this.lblNewsLink.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblNewsLink.Location = new System.Drawing.Point(534, 23);
+            this.lblNewsLink.Location = new System.Drawing.Point(506, 27);
             this.lblNewsLink.Name = "lblNewsLink";
-            this.lblNewsLink.Size = new System.Drawing.Size(58, 20);
+            this.lblNewsLink.Size = new System.Drawing.Size(69, 21);
             this.lblNewsLink.TabIndex = 5;
             this.lblNewsLink.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblNewsLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lblNewsLink_LinkClicked);
@@ -629,19 +323,33 @@ namespace MSNPSharpClient
             this.lblNews.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.lblNews.AutoEllipsis = true;
-            this.lblNews.BackColor = System.Drawing.Color.LightBlue;
-            this.lblNews.Location = new System.Drawing.Point(81, 3);
+            this.lblNews.BackColor = System.Drawing.Color.Transparent;
+            this.lblNews.Location = new System.Drawing.Point(97, 3);
             this.lblNews.Name = "lblNews";
-            this.lblNews.Size = new System.Drawing.Size(447, 39);
+            this.lblNews.Size = new System.Drawing.Size(402, 42);
             this.lblNews.TabIndex = 4;
             this.lblNews.Text = " *";
             this.lblNews.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // pbNewsPicture
+            // 
+            this.pbNewsPicture.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pbNewsPicture.BackColor = System.Drawing.Color.Transparent;
+            this.pbNewsPicture.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pbNewsPicture.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.pbNewsPicture.Location = new System.Drawing.Point(583, 1);
+            this.pbNewsPicture.Name = "pbNewsPicture";
+            this.pbNewsPicture.Size = new System.Drawing.Size(50, 47);
+            this.pbNewsPicture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pbNewsPicture.TabIndex = 3;
+            this.pbNewsPicture.TabStop = false;
+            // 
             // cmdNext
             // 
-            this.cmdNext.Location = new System.Drawing.Point(42, 20);
+            this.cmdNext.Location = new System.Drawing.Point(50, 22);
             this.cmdNext.Name = "cmdNext";
-            this.cmdNext.Size = new System.Drawing.Size(29, 23);
+            this.cmdNext.Size = new System.Drawing.Size(35, 24);
             this.cmdNext.TabIndex = 2;
             this.cmdNext.Text = ">";
             this.cmdNext.UseVisualStyleBackColor = true;
@@ -649,9 +357,9 @@ namespace MSNPSharpClient
             // 
             // cmdPrev
             // 
-            this.cmdPrev.Location = new System.Drawing.Point(11, 20);
+            this.cmdPrev.Location = new System.Drawing.Point(13, 22);
             this.cmdPrev.Name = "cmdPrev";
-            this.cmdPrev.Size = new System.Drawing.Size(29, 23);
+            this.cmdPrev.Size = new System.Drawing.Size(35, 24);
             this.cmdPrev.TabIndex = 1;
             this.cmdPrev.Text = "<";
             this.cmdPrev.UseVisualStyleBackColor = true;
@@ -661,60 +369,462 @@ namespace MSNPSharpClient
             // 
             this.lblWhatsup.AutoSize = true;
             this.lblWhatsup.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.lblWhatsup.Location = new System.Drawing.Point(9, 3);
+            this.lblWhatsup.Location = new System.Drawing.Point(11, 3);
             this.lblWhatsup.Name = "lblWhatsup";
             this.lblWhatsup.Size = new System.Drawing.Size(66, 13);
             this.lblWhatsup.TabIndex = 0;
             this.lblWhatsup.Text = "What\'s Up";
             // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(4, 165);
+            this.splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.propertyGrid);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.tableLayoutPanel2);
+            this.splitContainer1.Size = new System.Drawing.Size(635, 373);
+            this.splitContainer1.SplitterDistance = 252;
+            this.splitContainer1.TabIndex = 0;
+            // 
+            // propertyGrid
+            // 
+            this.propertyGrid.BackColor = System.Drawing.SystemColors.Control;
+            this.propertyGrid.CommandsBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
+            this.propertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.propertyGrid.LineColor = System.Drawing.SystemColors.ScrollBar;
+            this.propertyGrid.Location = new System.Drawing.Point(0, 0);
+            this.propertyGrid.Name = "propertyGrid";
+            this.propertyGrid.Size = new System.Drawing.Size(252, 373);
+            this.propertyGrid.TabIndex = 5;
+            // 
+            // tableLayoutPanel2
+            // 
+            this.tableLayoutPanel2.ColumnCount = 1;
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel2.Controls.Add(this.SortPanel, 0, 0);
+            this.tableLayoutPanel2.Controls.Add(this.pnlFavListContainer, 0, 1);
+            this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutPanel2.Name = "tableLayoutPanel2";
+            this.tableLayoutPanel2.RowCount = 2;
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(379, 373);
+            this.tableLayoutPanel2.TabIndex = 0;
+            // 
+            // SortPanel
+            // 
+            this.SortPanel.BackColor = System.Drawing.SystemColors.Control;
+            this.SortPanel.Controls.Add(this.txtSearch);
+            this.SortPanel.Controls.Add(this.btnAddNew);
+            this.SortPanel.Controls.Add(this.btnSortBy);
+            this.SortPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.SortPanel.Location = new System.Drawing.Point(3, 3);
+            this.SortPanel.Name = "SortPanel";
+            this.SortPanel.Size = new System.Drawing.Size(373, 34);
+            this.SortPanel.TabIndex = 2;
+            // 
+            // txtSearch
+            // 
+            this.txtSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtSearch.ForeColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtSearch.Location = new System.Drawing.Point(3, 5);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(263, 21);
+            this.txtSearch.TabIndex = 9;
+            this.txtSearch.Text = "Search contacts";
+            this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
+            this.txtSearch.Enter += new System.EventHandler(this.txtSearch_Enter);
+            // 
+            // btnAddNew
+            // 
+            this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAddNew.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnAddNew.Location = new System.Drawing.Point(323, 3);
+            this.btnAddNew.Name = "btnAddNew";
+            this.btnAddNew.Size = new System.Drawing.Size(44, 23);
+            this.btnAddNew.TabIndex = 7;
+            this.btnAddNew.Text = "+";
+            this.btnAddNew.UseVisualStyleBackColor = true;
+            this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
+            // 
+            // btnSortBy
+            // 
+            this.btnSortBy.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSortBy.BackColor = System.Drawing.SystemColors.Control;
+            this.btnSortBy.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnSortBy.Location = new System.Drawing.Point(272, 3);
+            this.btnSortBy.Name = "btnSortBy";
+            this.btnSortBy.Size = new System.Drawing.Size(45, 23);
+            this.btnSortBy.TabIndex = 0;
+            this.btnSortBy.Text = "sort";
+            this.btnSortBy.UseVisualStyleBackColor = true;
+            this.btnSortBy.Click += new System.EventHandler(this.btnSortBy_Click);
+            // 
+            // pnlFavListContainer
+            // 
+            this.pnlFavListContainer.Controls.Add(this.pnlFilterListContainer);
+            this.pnlFavListContainer.Controls.Add(this.treeViewFavoriteList);
+            this.pnlFavListContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlFavListContainer.Location = new System.Drawing.Point(3, 43);
+            this.pnlFavListContainer.Name = "pnlFavListContainer";
+            this.pnlFavListContainer.Size = new System.Drawing.Size(373, 327);
+            this.pnlFavListContainer.TabIndex = 3;
+            // 
+            // pnlFilterListContainer
+            // 
+            this.pnlFilterListContainer.Controls.Add(this.treeViewFilterList);
+            this.pnlFilterListContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlFilterListContainer.Location = new System.Drawing.Point(0, 0);
+            this.pnlFilterListContainer.Name = "pnlFilterListContainer";
+            this.pnlFilterListContainer.Size = new System.Drawing.Size(373, 327);
+            this.pnlFilterListContainer.TabIndex = 5;
+            this.pnlFilterListContainer.Visible = false;
+            // 
+            // treeViewFilterList
+            // 
+            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
+            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.treeViewFilterList.FullRowSelect = true;
+            this.treeViewFilterList.HideSelection = false;
+            this.treeViewFilterList.Indent = 20;
+            this.treeViewFilterList.ItemHeight = 20;
+            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
+            this.treeViewFilterList.Name = "treeViewFilterList";
+            this.treeViewFilterList.ShowLines = false;
+            this.treeViewFilterList.ShowPlusMinus = false;
+            this.treeViewFilterList.ShowRootLines = false;
+            this.treeViewFilterList.Size = new System.Drawing.Size(373, 327);
+            this.treeViewFilterList.TabIndex = 1;
+            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            // 
+            // treeViewFavoriteList
+            // 
+            this.treeViewFavoriteList.AllowDrop = true;
+            this.treeViewFavoriteList.BackColor = System.Drawing.SystemColors.Info;
+            this.treeViewFavoriteList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFavoriteList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFavoriteList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.treeViewFavoriteList.FullRowSelect = true;
+            this.treeViewFavoriteList.HideSelection = false;
+            this.treeViewFavoriteList.ImageIndex = 0;
+            this.treeViewFavoriteList.ImageList = this.ImageList1;
+            this.treeViewFavoriteList.Indent = 15;
+            this.treeViewFavoriteList.ItemHeight = 20;
+            this.treeViewFavoriteList.Location = new System.Drawing.Point(0, 0);
+            this.treeViewFavoriteList.Name = "treeViewFavoriteList";
+            this.treeViewFavoriteList.SelectedImageIndex = 0;
+            this.treeViewFavoriteList.ShowLines = false;
+            this.treeViewFavoriteList.ShowPlusMinus = false;
+            this.treeViewFavoriteList.ShowRootLines = false;
+            this.treeViewFavoriteList.Size = new System.Drawing.Size(373, 327);
+            this.treeViewFavoriteList.TabIndex = 4;
+            this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
+            this.treeViewFavoriteList.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragEnter);
+            this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
+            this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
+            // 
+            // tableLayoutPanel3
+            // 
+            this.tableLayoutPanel3.BackColor = System.Drawing.Color.White;
+            this.tableLayoutPanel3.BackgroundImage = global::MSNPSharpClient.Properties.Resources.app_banner;
+            this.tableLayoutPanel3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.tableLayoutPanel3.ColumnCount = 2;
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 380F));
+            this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel4, 1, 0);
+            this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(4, 4);
+            this.tableLayoutPanel3.Name = "tableLayoutPanel3";
+            this.tableLayoutPanel3.RowCount = 1;
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(635, 154);
+            this.tableLayoutPanel3.TabIndex = 9;
+            // 
+            // tableLayoutPanel4
+            // 
+            this.tableLayoutPanel4.ColumnCount = 1;
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel4.Controls.Add(this.tableLayoutPanel5, 0, 1);
+            this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(258, 3);
+            this.tableLayoutPanel4.Name = "tableLayoutPanel4";
+            this.tableLayoutPanel4.RowCount = 3;
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 126F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(374, 148);
+            this.tableLayoutPanel4.TabIndex = 0;
+            // 
+            // tableLayoutPanel5
+            // 
+            this.tableLayoutPanel5.ColumnCount = 2;
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 87F));
+            this.tableLayoutPanel5.Controls.Add(this.displayImageBox, 1, 0);
+            this.tableLayoutPanel5.Controls.Add(this.panel1, 0, 0);
+            this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel5.Location = new System.Drawing.Point(3, 14);
+            this.tableLayoutPanel5.Name = "tableLayoutPanel5";
+            this.tableLayoutPanel5.RowCount = 1;
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel5.Size = new System.Drawing.Size(368, 120);
+            this.tableLayoutPanel5.TabIndex = 0;
+            // 
+            // displayImageBox
+            // 
+            this.displayImageBox.BackColor = System.Drawing.Color.White;
+            this.displayImageBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.displayImageBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.displayImageBox.Location = new System.Drawing.Point(284, 3);
+            this.displayImageBox.Name = "displayImageBox";
+            this.displayImageBox.Size = new System.Drawing.Size(81, 114);
+            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.displayImageBox.TabIndex = 3;
+            this.displayImageBox.TabStop = false;
+            this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
+            // 
+            // statusBar
+            // 
+            this.statusBar.AutoSize = true;
+            this.statusBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.statusBar.Location = new System.Drawing.Point(4, 603);
+            this.statusBar.Name = "statusBar";
+            this.statusBar.Size = new System.Drawing.Size(635, 30);
+            this.statusBar.TabIndex = 10;
+            this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.tableLayoutPanel6);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel1.Location = new System.Drawing.Point(3, 3);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(275, 114);
+            this.panel1.TabIndex = 4;
+            // 
+            // tableLayoutPanel6
+            // 
+            this.tableLayoutPanel6.ColumnCount = 1;
+            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel6.Controls.Add(this.pnlLogin, 0, 0);
+            this.tableLayoutPanel6.Controls.Add(this.tableLayoutPanel7, 0, 1);
+            this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel6.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutPanel6.Name = "tableLayoutPanel6";
+            this.tableLayoutPanel6.RowCount = 2;
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
+            this.tableLayoutPanel6.Size = new System.Drawing.Size(275, 114);
+            this.tableLayoutPanel6.TabIndex = 5;
+            // 
+            // pnlLogin
+            // 
+            this.pnlLogin.Controls.Add(this.pnlNameAndPM);
+            this.pnlLogin.Controls.Add(this.cbRobotMode);
+            this.pnlLogin.Controls.Add(this.accountTextBox);
+            this.pnlLogin.Controls.Add(this.loginButton);
+            this.pnlLogin.Controls.Add(this.passwordTextBox);
+            this.pnlLogin.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlLogin.Location = new System.Drawing.Point(3, 3);
+            this.pnlLogin.Name = "pnlLogin";
+            this.pnlLogin.Size = new System.Drawing.Size(269, 76);
+            this.pnlLogin.TabIndex = 1;
+            // 
+            // cbRobotMode
+            // 
+            this.cbRobotMode.AutoSize = true;
+            this.cbRobotMode.Location = new System.Drawing.Point(3, 54);
+            this.cbRobotMode.Name = "cbRobotMode";
+            this.cbRobotMode.Size = new System.Drawing.Size(136, 19);
+            this.cbRobotMode.TabIndex = 11;
+            this.cbRobotMode.Text = "Provisioned Account";
+            this.cbRobotMode.UseVisualStyleBackColor = true;
+            this.cbRobotMode.CheckedChanged += new System.EventHandler(this.cbRobotMode_CheckedChanged);
+            // 
+            // accountTextBox
+            // 
+            this.accountTextBox.Location = new System.Drawing.Point(3, 2);
+            this.accountTextBox.Name = "accountTextBox";
+            this.accountTextBox.Size = new System.Drawing.Size(263, 21);
+            this.accountTextBox.TabIndex = 9;
+            this.accountTextBox.Text = "testmsnpsharp@live.cn";
+            this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
+            // 
+            // loginButton
+            // 
+            this.loginButton.Location = new System.Drawing.Point(145, 50);
+            this.loginButton.Name = "loginButton";
+            this.loginButton.Size = new System.Drawing.Size(121, 23);
+            this.loginButton.TabIndex = 8;
+            this.loginButton.Tag = "0";
+            this.loginButton.Text = "> Sign in";
+            this.loginButton.UseVisualStyleBackColor = true;
+            this.loginButton.Click += new System.EventHandler(this.loginButton_Click);
+            // 
+            // passwordTextBox
+            // 
+            this.passwordTextBox.Location = new System.Drawing.Point(3, 27);
+            this.passwordTextBox.Name = "passwordTextBox";
+            this.passwordTextBox.PasswordChar = '*';
+            this.passwordTextBox.Size = new System.Drawing.Size(263, 21);
+            this.passwordTextBox.TabIndex = 10;
+            this.passwordTextBox.Text = "tstmsnpsharp";
+            this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
+            // 
+            // tableLayoutPanel7
+            // 
+            this.tableLayoutPanel7.ColumnCount = 2;
+            this.tableLayoutPanel7.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel7.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel7.Controls.Add(this.comboPlaces, 0, 0);
+            this.tableLayoutPanel7.Controls.Add(this.comboStatus, 0, 0);
+            this.tableLayoutPanel7.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel7.Location = new System.Drawing.Point(3, 85);
+            this.tableLayoutPanel7.Name = "tableLayoutPanel7";
+            this.tableLayoutPanel7.RowCount = 1;
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel7.Size = new System.Drawing.Size(269, 26);
+            this.tableLayoutPanel7.TabIndex = 0;
+            // 
+            // comboPlaces
+            // 
+            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboPlaces.DropDownWidth = 170;
+            this.comboPlaces.FormattingEnabled = true;
+            this.comboPlaces.Location = new System.Drawing.Point(137, 3);
+            this.comboPlaces.Name = "comboPlaces";
+            this.comboPlaces.Size = new System.Drawing.Size(129, 23);
+            this.comboPlaces.TabIndex = 6;
+            this.comboPlaces.Visible = false;
+            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
+            // 
+            // comboStatus
+            // 
+            this.comboStatus.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboStatus.FormattingEnabled = true;
+            this.comboStatus.ItemHeight = 15;
+            this.comboStatus.Items.AddRange(new object[] {
+            "Online",
+            "Busy",
+            "Away",
+            "Hidden",
+            "Offline"});
+            this.comboStatus.Location = new System.Drawing.Point(3, 3);
+            this.comboStatus.Name = "comboStatus";
+            this.comboStatus.Size = new System.Drawing.Size(128, 21);
+            this.comboStatus.TabIndex = 5;
+            this.comboStatus.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboStatus_DrawItem);
+            this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
+            this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
+            // 
+            // pnlNameAndPM
+            // 
+            this.pnlNameAndPM.Controls.Add(this.btnSetMusic);
+            this.pnlNameAndPM.Controls.Add(this.lblPM);
+            this.pnlNameAndPM.Controls.Add(this.lblName);
+            this.pnlNameAndPM.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlNameAndPM.Location = new System.Drawing.Point(0, 0);
+            this.pnlNameAndPM.Name = "pnlNameAndPM";
+            this.pnlNameAndPM.Size = new System.Drawing.Size(269, 76);
+            this.pnlNameAndPM.TabIndex = 15;
+            this.pnlNameAndPM.Visible = false;
+            // 
+            // btnSetMusic
+            // 
+            this.btnSetMusic.Location = new System.Drawing.Point(233, 25);
+            this.btnSetMusic.Name = "btnSetMusic";
+            this.btnSetMusic.Size = new System.Drawing.Size(33, 22);
+            this.btnSetMusic.TabIndex = 8;
+            this.btnSetMusic.Tag = "0";
+            this.btnSetMusic.Text = "M";
+            this.btnSetMusic.UseVisualStyleBackColor = true;
+            this.btnSetMusic.Click += new System.EventHandler(this.btnSetMusic_Click);
+            // 
+            // lblPM
+            // 
+            this.lblPM.Location = new System.Drawing.Point(3, 26);
+            this.lblPM.Name = "lblPM";
+            this.lblPM.Size = new System.Drawing.Size(228, 21);
+            this.lblPM.TabIndex = 7;
+            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
+            // lblName
+            // 
+            this.lblName.Location = new System.Drawing.Point(3, 1);
+            this.lblName.Name = "lblName";
+            this.lblName.Size = new System.Drawing.Size(263, 21);
+            this.lblName.TabIndex = 6;
+            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
             // ClientForm
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
+            this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
             this.ClientSize = new System.Drawing.Size(643, 634);
-            this.Controls.Add(this.pnlNameAndPM);
-            this.Controls.Add(this.ListPanel);
-            this.Controls.Add(this.ContactPanel);
-            this.Controls.Add(this.WhatsUpPanel);
-            this.Controls.Add(this.panel1);
-            this.Controls.Add(this.OwnerPanel);
-            this.Controls.Add(this.pictureBox);
+            this.Controls.Add(this.tableLayoutPanel1);
+            this.Font = new System.Drawing.Font("Arial", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.MinimumSize = new System.Drawing.Size(640, 480);
             this.Name = "ClientForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MSNPSharp Example Client for MSNP18";
             this.Load += new System.EventHandler(this.ClientForm_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ClientForm_FormClosing);
-            this.ListPanel.ResumeLayout(false);
-            this.SortPanel.ResumeLayout(false);
-            this.SortPanel.PerformLayout();
-            this.treeViewPanel.ResumeLayout(false);
             this.userMenuStrip.ResumeLayout(false);
-            this.ContactPanel.ResumeLayout(false);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
-            this.pnlNameAndPM.ResumeLayout(false);
-            this.pnlNameAndPM.PerformLayout();
-            this.OwnerPanel.ResumeLayout(false);
             this.sortContextMenu.ResumeLayout(false);
             this.groupContextMenu.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pbNewsPicture)).EndInit();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
             this.WhatsUpPanel.ResumeLayout(false);
             this.WhatsUpPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbNewsPicture)).EndInit();
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.ResumeLayout(false);
+            this.tableLayoutPanel2.ResumeLayout(false);
+            this.SortPanel.ResumeLayout(false);
+            this.SortPanel.PerformLayout();
+            this.pnlFavListContainer.ResumeLayout(false);
+            this.pnlFilterListContainer.ResumeLayout(false);
+            this.tableLayoutPanel3.ResumeLayout(false);
+            this.tableLayoutPanel4.ResumeLayout(false);
+            this.tableLayoutPanel5.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
+            this.panel1.ResumeLayout(false);
+            this.tableLayoutPanel6.ResumeLayout(false);
+            this.pnlLogin.ResumeLayout(false);
+            this.pnlLogin.PerformLayout();
+            this.tableLayoutPanel7.ResumeLayout(false);
+            this.pnlNameAndPM.ResumeLayout(false);
+            this.pnlNameAndPM.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private Panel ListPanel;
-        private Panel ContactPanel;
-        private PictureBox pictureBox;
-        private PictureBox displayImageBox;
         private OpenFileDialog openFileDialog;
         private OpenFileDialog openImageDialog;
         private System.Windows.Forms.Timer tmrKeepOnLine;
         private System.Windows.Forms.Timer tmrNews;
-        private TreeView treeViewFavoriteList;
         private ImageList ImageList1;
         private ContextMenuStrip userMenuStrip;
         private ToolStripMenuItem sendIMMenuItem;
@@ -724,42 +834,53 @@ namespace MSNPSharpClient
         private ToolStripMenuItem sendOIMMenuItem;
         private ToolStripSeparator toolStripMenuItem3;
         private ToolStripMenuItem sendMIMMenuItem;
-        private StatusBar statusBar;
-        private Panel OwnerPanel;
-        private Panel panel1;
-        private TextBox accountTextBox;
-        private Button loginButton;
-        private TextBox passwordTextBox;
-        private PropertyGrid propertyGrid;
-        private Panel SortPanel;
-        private Panel treeViewPanel;
-        private Button btnSortBy;
         private ContextMenuStrip sortContextMenu;
         private ToolStripMenuItem toolStripSortByStatus;
         private ToolStripMenuItem toolStripSortBygroup;
         private ToolStripMenuItem toolStripDeleteGroup;
         private ContextMenuStrip groupContextMenu;
-        private Button btnAddNew;
         private ToolStripMenuItem importContactsMenuItem;
         private ToolStripMenuItem createCircleMenuItem;
-        private TreeView treeViewFilterList;
-        private TextBox txtSearch;
         private ToolStripMenuItem deleteMenuItem;
-        private ComboBox comboStatus;
-        private Panel pnlNameAndPM;
-        private TextBox lblName;
-        private TextBox lblPM;
         private ToolTip toolTipChangePhoto;
-        private ComboBox comboPlaces;
+        private TableLayoutPanel tableLayoutPanel1;
         private Panel WhatsUpPanel;
-        private Label lblWhatsup;
+        private LinkLabel lblNewsLink;
+        private Label lblNews;
+        private PictureBox pbNewsPicture;
         private Button cmdNext;
         private Button cmdPrev;
-        private PictureBox pbNewsPicture;
-        private Label lblNews;
-        private LinkLabel lblNewsLink;
+        private Label lblWhatsup;
+        private SplitContainer splitContainer1;
+        private PropertyGrid propertyGrid;
+        private TableLayoutPanel tableLayoutPanel2;
+        private Panel SortPanel;
+        private TextBox txtSearch;
+        private Button btnAddNew;
+        private Button btnSortBy;
+        private TableLayoutPanel tableLayoutPanel3;
+        private TableLayoutPanel tableLayoutPanel4;
+        private TableLayoutPanel tableLayoutPanel5;
+        private PictureBox displayImageBox;
+        private Panel pnlFavListContainer;
+        private TreeView treeViewFavoriteList;
+        private Panel pnlFilterListContainer;
+        private TreeView treeViewFilterList;
+        private Label statusBar;
+        private Panel panel1;
+        private TableLayoutPanel tableLayoutPanel6;
+        private Panel pnlLogin;
         private CheckBox cbRobotMode;
+        private TextBox accountTextBox;
+        private Button loginButton;
+        private TextBox passwordTextBox;
+        private TableLayoutPanel tableLayoutPanel7;
+        private ComboBox comboPlaces;
+        private ComboBox comboStatus;
+        private Panel pnlNameAndPM;
         private Button btnSetMusic;
+        private TextBox lblPM;
+        private TextBox lblName;
 
     }
 }

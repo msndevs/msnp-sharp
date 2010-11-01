@@ -225,9 +225,6 @@ namespace MSNPSharpClient
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.hidden);
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.offline);
 
-            // Move PM panel to SignIn window...
-            pnlNameAndPM.Location = panel1.Location;
-
             Version dllVersion = messenger.GetType().Assembly.GetName().Version;
             Text += " (v" + dllVersion.Major + "." + dllVersion.Minor + "." + dllVersion.Build + " r" + dllVersion.Revision + ")";
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
@@ -1505,8 +1502,8 @@ namespace MSNPSharpClient
 
         private void btnSortBy_Click(object sender, EventArgs e)
         {
-            int x = ((base.Location.X + ListPanel.Location.X) + treeViewFavoriteList.Location.X) + 5;
-            int y = ((base.Location.Y + ListPanel.Location.Y) + treeViewFavoriteList.Location.Y) + (3 * btnSortBy.Height);
+            int x = ((base.Location.X + splitContainer1.Panel2.Left) + treeViewFavoriteList.Location.X) + 5;
+            int y = ((base.Location.Y + splitContainer1.Panel2.Top) + treeViewFavoriteList.Location.Y) + (3 * btnSortBy.Height);
             sortContextMenu.Show(x, y);
             sortContextMenu.Focus();
         }
@@ -2160,14 +2157,14 @@ namespace MSNPSharpClient
             if (txtSearch.Text == String.Empty || txtSearch.Text == "Search contacts")
             {
                 treeViewFilterList.Nodes.Clear();
-                treeViewFavoriteList.Visible = true;
-                treeViewFilterList.Visible = false;
+                pnlFavListContainer.Visible = true;
+                pnlFilterListContainer.Visible = false;
             }
             else
             {
                 treeViewFilterList.Nodes.Clear();
-                treeViewFavoriteList.Visible = false;
-                treeViewFilterList.Visible = true;
+                pnlFavListContainer.Visible = false;
+                pnlFilterListContainer.Visible = true;
                 TreeNode foundnode = treeViewFilterList.Nodes.Add("0", "Search Results:");
 
                 foreach (Contact contact in messenger.ContactList.All)

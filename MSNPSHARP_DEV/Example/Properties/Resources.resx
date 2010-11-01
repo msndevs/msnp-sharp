@@ -184,10 +184,7 @@
   <data name="inner_emoticon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\inner_emoicon.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="listbg" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\listbg.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="MSNPSharp_banner" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\MSNPSharp_banner.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="app_banner" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\app_banner.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
