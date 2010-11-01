@@ -77,10 +77,13 @@ namespace MSNPSharpClient
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.displayImageBox = new System.Windows.Forms.PictureBox();
-            this.statusBar = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
             this.pnlLogin = new System.Windows.Forms.Panel();
+            this.pnlNameAndPM = new System.Windows.Forms.Panel();
+            this.btnSetMusic = new System.Windows.Forms.Button();
+            this.lblPM = new System.Windows.Forms.TextBox();
+            this.lblName = new System.Windows.Forms.TextBox();
             this.cbRobotMode = new System.Windows.Forms.CheckBox();
             this.accountTextBox = new System.Windows.Forms.TextBox();
             this.loginButton = new System.Windows.Forms.Button();
@@ -88,10 +91,7 @@ namespace MSNPSharpClient
             this.tableLayoutPanel7 = new System.Windows.Forms.TableLayoutPanel();
             this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.comboStatus = new System.Windows.Forms.ComboBox();
-            this.pnlNameAndPM = new System.Windows.Forms.Panel();
-            this.btnSetMusic = new System.Windows.Forms.Button();
-            this.lblPM = new System.Windows.Forms.TextBox();
-            this.lblName = new System.Windows.Forms.TextBox();
+            this.statusBar = new System.Windows.Forms.Label();
             this.userMenuStrip.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
@@ -112,8 +112,8 @@ namespace MSNPSharpClient
             this.panel1.SuspendLayout();
             this.tableLayoutPanel6.SuspendLayout();
             this.pnlLogin.SuspendLayout();
-            this.tableLayoutPanel7.SuspendLayout();
             this.pnlNameAndPM.SuspendLayout();
+            this.tableLayoutPanel7.SuspendLayout();
             this.SuspendLayout();
             // 
             // ImageList1
@@ -602,16 +602,6 @@ namespace MSNPSharpClient
             this.displayImageBox.TabStop = false;
             this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
             // 
-            // statusBar
-            // 
-            this.statusBar.AutoSize = true;
-            this.statusBar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.statusBar.Location = new System.Drawing.Point(4, 603);
-            this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(635, 30);
-            this.statusBar.TabIndex = 10;
-            this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
             // panel1
             // 
             this.panel1.Controls.Add(this.tableLayoutPanel6);
@@ -648,6 +638,45 @@ namespace MSNPSharpClient
             this.pnlLogin.Name = "pnlLogin";
             this.pnlLogin.Size = new System.Drawing.Size(269, 76);
             this.pnlLogin.TabIndex = 1;
+            // 
+            // pnlNameAndPM
+            // 
+            this.pnlNameAndPM.Controls.Add(this.btnSetMusic);
+            this.pnlNameAndPM.Controls.Add(this.lblPM);
+            this.pnlNameAndPM.Controls.Add(this.lblName);
+            this.pnlNameAndPM.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlNameAndPM.Location = new System.Drawing.Point(0, 0);
+            this.pnlNameAndPM.Name = "pnlNameAndPM";
+            this.pnlNameAndPM.Size = new System.Drawing.Size(269, 76);
+            this.pnlNameAndPM.TabIndex = 15;
+            this.pnlNameAndPM.Visible = false;
+            // 
+            // btnSetMusic
+            // 
+            this.btnSetMusic.Location = new System.Drawing.Point(233, 25);
+            this.btnSetMusic.Name = "btnSetMusic";
+            this.btnSetMusic.Size = new System.Drawing.Size(33, 22);
+            this.btnSetMusic.TabIndex = 8;
+            this.btnSetMusic.Tag = "0";
+            this.btnSetMusic.Text = "M";
+            this.btnSetMusic.UseVisualStyleBackColor = true;
+            this.btnSetMusic.Click += new System.EventHandler(this.btnSetMusic_Click);
+            // 
+            // lblPM
+            // 
+            this.lblPM.Location = new System.Drawing.Point(3, 26);
+            this.lblPM.Name = "lblPM";
+            this.lblPM.Size = new System.Drawing.Size(228, 21);
+            this.lblPM.TabIndex = 7;
+            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
+            // 
+            // lblName
+            // 
+            this.lblName.Location = new System.Drawing.Point(3, 1);
+            this.lblName.Name = "lblName";
+            this.lblName.Size = new System.Drawing.Size(263, 21);
+            this.lblName.TabIndex = 6;
+            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
             // 
             // cbRobotMode
             // 
@@ -737,44 +766,15 @@ namespace MSNPSharpClient
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
             // 
-            // pnlNameAndPM
+            // statusBar
             // 
-            this.pnlNameAndPM.Controls.Add(this.btnSetMusic);
-            this.pnlNameAndPM.Controls.Add(this.lblPM);
-            this.pnlNameAndPM.Controls.Add(this.lblName);
-            this.pnlNameAndPM.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlNameAndPM.Location = new System.Drawing.Point(0, 0);
-            this.pnlNameAndPM.Name = "pnlNameAndPM";
-            this.pnlNameAndPM.Size = new System.Drawing.Size(269, 76);
-            this.pnlNameAndPM.TabIndex = 15;
-            this.pnlNameAndPM.Visible = false;
-            // 
-            // btnSetMusic
-            // 
-            this.btnSetMusic.Location = new System.Drawing.Point(233, 25);
-            this.btnSetMusic.Name = "btnSetMusic";
-            this.btnSetMusic.Size = new System.Drawing.Size(33, 22);
-            this.btnSetMusic.TabIndex = 8;
-            this.btnSetMusic.Tag = "0";
-            this.btnSetMusic.Text = "M";
-            this.btnSetMusic.UseVisualStyleBackColor = true;
-            this.btnSetMusic.Click += new System.EventHandler(this.btnSetMusic_Click);
-            // 
-            // lblPM
-            // 
-            this.lblPM.Location = new System.Drawing.Point(3, 26);
-            this.lblPM.Name = "lblPM";
-            this.lblPM.Size = new System.Drawing.Size(228, 21);
-            this.lblPM.TabIndex = 7;
-            this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
-            // 
-            // lblName
-            // 
-            this.lblName.Location = new System.Drawing.Point(3, 1);
-            this.lblName.Name = "lblName";
-            this.lblName.Size = new System.Drawing.Size(263, 21);
-            this.lblName.TabIndex = 6;
-            this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
+            this.statusBar.AutoSize = true;
+            this.statusBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.statusBar.Location = new System.Drawing.Point(4, 603);
+            this.statusBar.Name = "statusBar";
+            this.statusBar.Size = new System.Drawing.Size(635, 30);
+            this.statusBar.TabIndex = 10;
+            this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // ClientForm
             // 
@@ -812,9 +812,9 @@ namespace MSNPSharpClient
             this.tableLayoutPanel6.ResumeLayout(false);
             this.pnlLogin.ResumeLayout(false);
             this.pnlLogin.PerformLayout();
-            this.tableLayoutPanel7.ResumeLayout(false);
             this.pnlNameAndPM.ResumeLayout(false);
             this.pnlNameAndPM.PerformLayout();
+            this.tableLayoutPanel7.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
