@@ -1502,8 +1502,9 @@ namespace MSNPSharpClient
 
         private void btnSortBy_Click(object sender, EventArgs e)
         {
-            int x = ((base.Location.X + splitContainer1.Panel2.Left) + treeViewFavoriteList.Location.X) + 5;
-            int y = ((base.Location.Y + splitContainer1.Panel2.Top) + treeViewFavoriteList.Location.Y) + (3 * btnSortBy.Height);
+            Button sortByButton = sender as Button;
+            int x = ((base.Location.X + splitContainer1.Panel1.Width + sortByButton.Left)) + 15;
+            int y = (base.Location.Y + tableLayoutPanel3.Height + sortByButton.Top) + 3 * btnSortBy.Height;
             sortContextMenu.Show(x, y);
             sortContextMenu.Focus();
         }
