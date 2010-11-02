@@ -2158,14 +2158,14 @@ namespace MSNPSharpClient
             if (txtSearch.Text == String.Empty || txtSearch.Text == "Search contacts")
             {
                 treeViewFilterList.Nodes.Clear();
-                pnlFavListContainer.Visible = true;
-                pnlFilterListContainer.Visible = false;
+                treeViewFavoriteList.Visible = true;
+                treeViewFilterList.Visible = false;
             }
             else
             {
                 treeViewFilterList.Nodes.Clear();
-                pnlFavListContainer.Visible = false;
-                pnlFilterListContainer.Visible = true;
+                treeViewFavoriteList.Visible = false;
+                treeViewFilterList.Visible = true;
                 TreeNode foundnode = treeViewFilterList.Nodes.Add("0", "Search Results:");
 
                 foreach (Contact contact in messenger.ContactList.All)

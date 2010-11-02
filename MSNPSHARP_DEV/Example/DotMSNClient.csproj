@@ -93,9 +93,7 @@
   <ItemGroup>
     <Content Include="MSNPSharp_logo.ico" />
     <None Include="Resources\app_banner.png" />
-    <None Include="Resources\MSNPSharp_banner.png" />
     <None Include="Resources\loading.gif" />
-    <None Include="Resources\listbg.png" />
     <None Include="Resources\YahooMessenger_logo.png" />
     <None Include="Resources\msn_ico.ico" />
     <None Include="Resources\MSNPSharp_logo_small.ico" />
