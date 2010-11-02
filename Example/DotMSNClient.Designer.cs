@@ -69,9 +69,7 @@ namespace MSNPSharpClient
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnAddNew = new System.Windows.Forms.Button();
             this.btnSortBy = new System.Windows.Forms.Button();
-            this.pnlFavListContainer = new System.Windows.Forms.Panel();
-            this.pnlFilterListContainer = new System.Windows.Forms.Panel();
-            this.treeViewFilterList = new System.Windows.Forms.TreeView();
+            this.pnlTreeViewsContainer = new System.Windows.Forms.Panel();
             this.treeViewFavoriteList = new System.Windows.Forms.TreeView();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
@@ -92,6 +90,7 @@ namespace MSNPSharpClient
             this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.comboStatus = new System.Windows.Forms.ComboBox();
             this.statusBar = new System.Windows.Forms.Label();
+            this.treeViewFilterList = new System.Windows.Forms.TreeView();
             this.userMenuStrip.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
@@ -103,8 +102,7 @@ namespace MSNPSharpClient
             this.splitContainer1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.SortPanel.SuspendLayout();
-            this.pnlFavListContainer.SuspendLayout();
-            this.pnlFilterListContainer.SuspendLayout();
+            this.pnlTreeViewsContainer.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
             this.tableLayoutPanel5.SuspendLayout();
@@ -408,7 +406,7 @@ namespace MSNPSharpClient
             this.tableLayoutPanel2.ColumnCount = 1;
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel2.Controls.Add(this.SortPanel, 0, 0);
-            this.tableLayoutPanel2.Controls.Add(this.pnlFavListContainer, 0, 1);
+            this.tableLayoutPanel2.Controls.Add(this.pnlTreeViewsContainer, 0, 1);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel2.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
@@ -442,9 +440,9 @@ namespace MSNPSharpClient
             this.txtSearch.Size = new System.Drawing.Size(263, 21);
             this.txtSearch.TabIndex = 9;
             this.txtSearch.Text = "Search contacts";
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
             this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
             this.txtSearch.Enter += new System.EventHandler(this.txtSearch_Enter);
-			this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
             // 
             // btnAddNew
             // 
@@ -474,45 +472,15 @@ namespace MSNPSharpClient
             this.btnSortBy.UseVisualStyleBackColor = true;
             this.btnSortBy.Click += new System.EventHandler(this.btnSortBy_Click);
             // 
-            // pnlFavListContainer
+            // pnlTreeViewsContainer
             // 
-            this.pnlFavListContainer.Controls.Add(this.pnlFilterListContainer);
-            this.pnlFavListContainer.Controls.Add(this.treeViewFavoriteList);
-            this.pnlFavListContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlFavListContainer.Location = new System.Drawing.Point(3, 43);
-            this.pnlFavListContainer.Name = "pnlFavListContainer";
-            this.pnlFavListContainer.Size = new System.Drawing.Size(373, 327);
-            this.pnlFavListContainer.TabIndex = 3;
-            // 
-            // pnlFilterListContainer
-            // 
-            this.pnlFilterListContainer.Controls.Add(this.treeViewFilterList);
-            this.pnlFilterListContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlFilterListContainer.Location = new System.Drawing.Point(0, 0);
-            this.pnlFilterListContainer.Name = "pnlFilterListContainer";
-            this.pnlFilterListContainer.Size = new System.Drawing.Size(373, 327);
-            this.pnlFilterListContainer.TabIndex = 5;
-            this.pnlFilterListContainer.Visible = false;
-            // 
-            // treeViewFilterList
-            // 
-            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
-            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.treeViewFilterList.FullRowSelect = true;
-            this.treeViewFilterList.HideSelection = false;
-            this.treeViewFilterList.Indent = 20;
-            this.treeViewFilterList.ItemHeight = 20;
-            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
-            this.treeViewFilterList.Name = "treeViewFilterList";
-            this.treeViewFilterList.ShowLines = false;
-            this.treeViewFilterList.ShowPlusMinus = false;
-            this.treeViewFilterList.ShowRootLines = false;
-            this.treeViewFilterList.Size = new System.Drawing.Size(373, 327);
-            this.treeViewFilterList.TabIndex = 1;
-            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
-            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            this.pnlTreeViewsContainer.Controls.Add(this.treeViewFilterList);
+            this.pnlTreeViewsContainer.Controls.Add(this.treeViewFavoriteList);
+            this.pnlTreeViewsContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlTreeViewsContainer.Location = new System.Drawing.Point(3, 43);
+            this.pnlTreeViewsContainer.Name = "pnlTreeViewsContainer";
+            this.pnlTreeViewsContainer.Size = new System.Drawing.Size(373, 327);
+            this.pnlTreeViewsContainer.TabIndex = 3;
             // 
             // treeViewFavoriteList
             // 
@@ -777,6 +745,27 @@ namespace MSNPSharpClient
             this.statusBar.TabIndex = 10;
             this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // treeViewFilterList
+            // 
+            this.treeViewFilterList.BackColor = System.Drawing.SystemColors.Info;
+            this.treeViewFilterList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.treeViewFilterList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewFilterList.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.treeViewFilterList.FullRowSelect = true;
+            this.treeViewFilterList.HideSelection = false;
+            this.treeViewFilterList.Indent = 20;
+            this.treeViewFilterList.ItemHeight = 20;
+            this.treeViewFilterList.Location = new System.Drawing.Point(0, 0);
+            this.treeViewFilterList.Name = "treeViewFilterList";
+            this.treeViewFilterList.ShowLines = false;
+            this.treeViewFilterList.ShowPlusMinus = false;
+            this.treeViewFilterList.ShowRootLines = false;
+            this.treeViewFilterList.Size = new System.Drawing.Size(373, 327);
+            this.treeViewFilterList.TabIndex = 5;
+            this.treeViewFilterList.Visible = false;
+            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+            this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
@@ -803,8 +792,7 @@ namespace MSNPSharpClient
             this.tableLayoutPanel2.ResumeLayout(false);
             this.SortPanel.ResumeLayout(false);
             this.SortPanel.PerformLayout();
-            this.pnlFavListContainer.ResumeLayout(false);
-            this.pnlFilterListContainer.ResumeLayout(false);
+            this.pnlTreeViewsContainer.ResumeLayout(false);
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel4.ResumeLayout(false);
             this.tableLayoutPanel5.ResumeLayout(false);
@@ -863,10 +851,8 @@ namespace MSNPSharpClient
         private TableLayoutPanel tableLayoutPanel4;
         private TableLayoutPanel tableLayoutPanel5;
         private PictureBox displayImageBox;
-        private Panel pnlFavListContainer;
+        private Panel pnlTreeViewsContainer;
         private TreeView treeViewFavoriteList;
-        private Panel pnlFilterListContainer;
-        private TreeView treeViewFilterList;
         private Label statusBar;
         private Panel panel1;
         private TableLayoutPanel tableLayoutPanel6;
@@ -882,6 +868,7 @@ namespace MSNPSharpClient
         private Button btnSetMusic;
         private TextBox lblPM;
         private TextBox lblName;
+        private TreeView treeViewFilterList;
 
     }
 }
