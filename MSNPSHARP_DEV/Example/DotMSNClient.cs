@@ -946,15 +946,18 @@ namespace MSNPSharpClient
                     Messenger.ContactList.Owner.Status = PresenceStatus.Offline;
                     comboPlaces.Visible = false;
                 }
-                else if (comboPlaces.SelectedIndex == comboPlaces.Items.Count - 1)
+                else if (comboPlaces.SelectedIndex >= 1)
                 {
-                    Messenger.ContactList.Owner.SignoutFromEverywhere();
-                    comboPlaces.Visible = false;
-                }
-                else if (comboPlaces.SelectedIndex >= 2)
-                {
-
-                    Messenger.ContactList.Owner.SignoutFrom(places[comboPlaces.SelectedIndex - 2]);  //places does not contain the current places.
+                    Guid placeId = places[comboPlaces.SelectedIndex - 2];
+                    if (placeId == Guid.Empty)
+                    {
+                        comboPlaces.Visible = false;
+                        Messenger.ContactList.Owner.SignoutFromEverywhere();
+                    }
+                    else
+                    {
+                        Messenger.ContactList.Owner.SignoutFrom(placeId);  //places does not contain the current places.
+                    }
                 }
             }
         }
@@ -991,7 +994,6 @@ namespace MSNPSharpClient
                     }
                 }
 
-                comboPlaces.Items.Add("Signout from everywhere");
                 comboPlaces.SelectedIndex = 0;
                 comboPlaces.Visible = true;
                 comboPlaces.EndUpdate();

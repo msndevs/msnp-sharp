@@ -241,6 +241,12 @@ namespace MSNPSharp
         /// <param name="endPointID">The EndPoint guid to be signed out</param>
         public void SignoutFrom(Guid endPointID)
         {
+            if (endPointID == Guid.Empty)
+            {
+                SignoutFromEverywhere();
+                return;
+            }
+
             if (EndPointData.ContainsKey(endPointID))
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",

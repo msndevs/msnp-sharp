@@ -149,6 +149,7 @@ namespace MSNPSharp
     public class PrivateEndPointData : EndPointData
     {
         private string name = string.Empty;
+        public const string EveryWherePlace = "Everywhere";
 
         /// <summary>
         /// The EpName xml node of UBX command payload.
@@ -192,6 +193,15 @@ namespace MSNPSharp
         public PrivateEndPointData(string account, Guid epId)
             : base(account, epId)
         {
+            if (epId == NSMessageHandler.MachineGuid)
+            {
+                Name = Environment.MachineName;
+            }
+
+            if (epId == Guid.Empty)
+            {
+                Name = EveryWherePlace;
+            }
         }
 
         public PrivateEndPointData(string uniqueEPIDString)
