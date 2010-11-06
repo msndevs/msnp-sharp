@@ -1439,9 +1439,8 @@ namespace MSNPSharp
 
                     if (privateEndPoints.Count > 0)
                     {
-                        Guid lastSignedInPlace = Guid.Empty; // For AutoLogoff
-                        int placeCounter = 0;
-
+                        PlaceChangedReason placechangeReason = (privateEndPoints.Count >= contact.EndPointData.Count ? PlaceChangedReason.SignedIn : PlaceChangedReason.SignedOut);
+                        Dictionary<Guid, PrivateEndPointData> epList = new Dictionary<Guid, PrivateEndPointData>(0);
                         foreach (XmlNode pepdNode in privateEndPoints)
                         {
                             Guid id = new Guid(pepdNode.Attributes["id"].Value);
@@ -1450,48 +1449,18 @@ namespace MSNPSharp
                             privateEndPoint.Idle = (pepdNode["Idle"] == null) ? false : bool.Parse(pepdNode["Idle"].InnerText);
                             privateEndPoint.ClientType = (pepdNode["ClientType"] == null) ? "1" : pepdNode["ClientType"].InnerText;
                             privateEndPoint.State = (pepdNode["State"] == null) ? PresenceStatus.Unknown : ParseStatus(pepdNode["State"].InnerText);
-
-                            if (!contact.EndPointData.ContainsKey(id))
-                            {
-                                if (contact is Owner)
-                                {
-                                    (contact as Owner).SetChangedPlace(id, privateEndPoint.Name, PlaceChangedReason.SignedIn);
-                                }
-
-                            }
-
-                            contact.EndPointData[id] = privateEndPoint;
-
-                            if (placeCounter == 0)
-                            {
-                                lastSignedInPlace = id;
-                            }
-
-                            placeCounter++;
-
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Place: " + privateEndPoint.Name + " " + id, GetType().Name);
+                            epList[id] = privateEndPoint;
                         }
 
-                        Dictionary<Guid, EndPointData> epDataClone = new Dictionary<Guid, EndPointData>(contact.EndPointData);
 
-                        if (contact is Owner)
+                        if (contact is Owner )
                         {
-                            if (contact.HasSignedInWithMultipleEndPoints && ContactList.Owner.MPOPMode == MPOP.AutoLogoff)  //The minimal count of EndPointData is 1.
+                            TriggerPlaceChangeEvent(epList);
+
+                            if (placechangeReason == PlaceChangedReason.SignedIn &&
+                                ContactList.Owner.MPOPMode == MPOP.AutoLogoff)
                             {
-                                if (lastSignedInPlace != MachineGuid)
-                                {
-                                    ContactList.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
-                                }
-                                else
-                                {
-                                    foreach (Guid id in contact.EndPointData.Keys)
-                                    {
-                                        if (id != MachineGuid && id != Guid.Empty)
-                                        {
-                                            ContactList.Owner.SignoutFrom(id);
-                                        }
-                                    }
-                                }
+                                OwnersSignOut();
                             }
                         }
                     } 
@@ -1504,6 +1473,55 @@ namespace MSNPSharp
                 }
             }
            
+        }
+
+        private void OwnersSignOut()
+        {
+            if (ContactList.Owner == null)
+                return;
+            Dictionary<Guid, EndPointData> epDataClone = new Dictionary<Guid, EndPointData>(ContactList.Owner.EndPointData);
+            if (ContactList.Owner.HasSignedInWithMultipleEndPoints)  //The minimal count of EndPointData is 1.
+            {
+                if (ContactList.Owner.MPOPMode == MPOP.AutoLogoff)
+                {
+                    ContactList.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
+                }
+            }
+        }
+
+        private void TriggerPlaceChangeEvent(Dictionary<Guid, PrivateEndPointData> epList)
+        {
+            if (ContactList.Owner == null)
+                return;
+
+            Dictionary<Guid, EndPointData> epDataClone = new Dictionary<Guid, EndPointData>(ContactList.Owner.EndPointData);
+            foreach (Guid id in epDataClone.Keys)
+            {
+                if (id == Guid.Empty)
+                    continue;
+
+                if (!epList.ContainsKey(id))
+                {
+                    if (id == NSMessageHandler.MachineGuid)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        ContactList.Owner.SetChangedPlace(id, (epDataClone[id] as PrivateEndPointData).Name, PlaceChangedReason.SignedOut);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "The account was signed out at another place: " + (epDataClone[id] as PrivateEndPointData).Name + " " + id, GetType().Name);
+                    }
+                }
+            }
+
+            foreach (Guid id in epList.Keys)
+            {
+                if (!epDataClone.ContainsKey(id))
+                {
+                    ContactList.Owner.SetChangedPlace(id, (epList[id] as PrivateEndPointData).Name, PlaceChangedReason.SignedIn);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "The account was signed in at another place: " + (epList[id] as PrivateEndPointData).Name + " " + id, GetType().Name);
+                }
+            }
         }
 
         private string GetFriendlyNameFromUBXXmlData(XmlDocument ubxData)
