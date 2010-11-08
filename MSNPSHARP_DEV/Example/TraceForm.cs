@@ -241,11 +241,11 @@ namespace MSNPSharpClient
                 this.WriteIndent ();
             }
    
-			if (!Settings.IsMono)
-			{
+            if (!Settings.IsMono)
+            {
                 this.writer.Write ("[" + DateTime.Now.ToString ("u") + "] " + message);
-			}
-		}
+            }
+        }
 
         public override void WriteLine(string message)
         {
