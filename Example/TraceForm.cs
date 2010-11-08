@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -232,15 +232,20 @@ namespace MSNPSharpClient
             return encoding2;
         }
 
-        public override void Write(string message)
+        public override void Write (string message)
         {
-            if (!EnsureWriter()) return;
+            if (!EnsureWriter ())
+                return;
             if (base.NeedIndent)
             {
-                this.WriteIndent();
+                this.WriteIndent ();
             }
-            this.writer.Write("[" + DateTime.Now.ToString("u") + "] " + message);
-        }
+   
+			if (!Settings.IsMono)
+			{
+                this.writer.Write ("[" + DateTime.Now.ToString ("u") + "] " + message);
+			}
+		}
 
         public override void WriteLine(string message)
         {
