@@ -435,6 +435,9 @@ namespace MSNPSharp.DataTransfer
                 return;
             }
 
+            if (NSMessageHandler.ContactList.Owner == null)
+                return;
+
             // create a MSGMessage from the sb message
             MimeMessage msgMessage = new MimeMessage();
             try
