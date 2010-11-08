@@ -476,6 +476,23 @@ namespace MSNPSharp
             Deltas.Truncate();
         }
 
+        /// <summary>
+        /// The indicator of whether the initial contact ADL has been processed. <br/>
+        /// If the contact ADL was not processed, ignore the circle ADL.
+        /// </summary>
+        bool contactADLProcessed = false;
+        Scenario ignoredSenario = Scenario.None;
+        
+        /// <summary>
+        /// Send the initial ADL command to NS server. 
+        /// </summary>
+        /// <param name="scene">
+        /// A <see cref="Scenario"/>
+        /// </param>
+        /// <remarks>
+        /// The first ADL command MUST be a contact ADL. If you send a circle ADL instead,
+        /// you will receive 201 server error for the following circle PUT command.
+        /// </remarks>
         internal void SendInitialADL(Scenario scene)
         {
             if (scene == Scenario.None)
@@ -529,9 +546,14 @@ namespace MSNPSharp
                         if (firstADLKey == 0)
                         {
                             firstADLKey = message.TransactionID;
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                "#################### first contact ADL trasID: " +
+                                firstADLKey + " ############################");
                         }
                     }
                 }
+                contactADLProcessed = true;
+                scene |= ignoredSenario;
             } 
 
             #endregion
@@ -540,40 +562,48 @@ namespace MSNPSharp
 
             if ((scene & Scenario.SendInitialCirclesADL) != Scenario.None)
             {
-                // Combine initial ADL for Circles
-                if (NSMessageHandler.CircleList.Count > 0)
+                if(contactADLProcessed)
                 {
-                    hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
-                    lock (NSMessageHandler.CircleList.SyncRoot)
+                    // Combine initial ADL for Circles
+                    if (NSMessageHandler.CircleList.Count > 0)
                     {
-                        foreach (Circle circle in NSMessageHandler.CircleList)
+                        hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
+                        lock (NSMessageHandler.CircleList.SyncRoot)
                         {
-                            if (circle.ADLCount == 0)
-                                continue;
-
-                            circle.ADLCount--;
-                            string ch = circle.Hash;
-                            MSNLists l = circle.Lists;
-                            hashlist.Add(ch, l);
-                        }
-                    }
-
-                    string[] circleadls = ConstructLists(hashlist, true);
-
-                    if (circleadls.Length > 0)
-                    {
-                        foreach (string payload in circleadls)
-                        {
-                            NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                            message.TransactionID = nsmp.IncreaseTransactionID();
-                            initialADLs.Add(message.TransactionID, message);
-
-                            if (firstADLKey == 0)
+                            foreach (Circle circle in NSMessageHandler.CircleList)
                             {
-                                firstADLKey = message.TransactionID;
+                                if (circle.ADLCount == 0)
+                                    continue;
+    
+                                circle.ADLCount--;
+                                string ch = circle.Hash;
+                                MSNLists l = circle.Lists;
+                                hashlist.Add(ch, l);
+                            }
+                        }
+    
+                        string[] circleadls = ConstructLists(hashlist, true);
+    
+                        if (circleadls.Length > 0)
+                        {
+                            foreach (string payload in circleadls)
+                            {
+                                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                                message.TransactionID = nsmp.IncreaseTransactionID();
+                                initialADLs.Add(message.TransactionID, message);
+    
+                                if (firstADLKey == 0)
+                                {
+                                    firstADLKey = message.TransactionID;
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                    "#################### first circle ADL trasID: " +
+                                    firstADLKey + " ############################");
+                                }
                             }
                         }
                     }
+                }else{
+                    ignoredSenario |= Scenario.SendInitialCirclesADL;
                 }
             }
 
@@ -586,6 +616,9 @@ namespace MSNPSharp
             {
                 NSPayLoadMessage firstADL = initialADLs[firstADLKey];
                 nsmp.SendMessage(firstADL, firstADL.TransactionID);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                "#################### ADL trasID choosen: " +
+                                firstADLKey + " ############################");
             }
         }
 
