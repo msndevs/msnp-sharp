@@ -35,9 +35,6 @@ namespace MSNPSharpClient
         private PictureBox displayOwner;
         private PictureBox displayUser;
 
-        private ToolStripDropDown emotionDropDown = new ToolStripDropDown();
-        private ToolStripDropDown onlineUsersDropDown = new ToolStripDropDown();
-
         private OpenFileDialog openFileDialog;
         private ToolStrip tsMessage;
         private ToolStripComboBox cbMessageFontName;
@@ -55,6 +52,13 @@ namespace MSNPSharpClient
         private Button btnInviteUsers;
         private Button btnCustomEmoticon;
         private Button btnActivityTest;
+        private ToolStripDropDown emotionDropDown;
+        private ToolStripDropDown onlineUsersDropDown;
+        private ToolStripButton tsbSmiley;
+        private ToolStripButton tsbBiggrin;
+        private ToolStripButton tsbSad;
+        private ToolStripButton tsbWink;
+        private ToolStripButton tsbTongueOut;
         private ColorDialog dlgColor;
 
 
@@ -88,11 +92,19 @@ namespace MSNPSharpClient
             this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.dlgColor = new System.Windows.Forms.ColorDialog();
+            this.emotionDropDown = new System.Windows.Forms.ToolStripDropDown();
+            this.onlineUsersDropDown = new System.Windows.Forms.ToolStripDropDown();
+            this.tsbSmiley = new System.Windows.Forms.ToolStripButton();
+            this.tsbBiggrin = new System.Windows.Forms.ToolStripButton();
+            this.tsbSad = new System.Windows.Forms.ToolStripButton();
+            this.tsbWink = new System.Windows.Forms.ToolStripButton();
+            this.tsbTongueOut = new System.Windows.Forms.ToolStripButton();
             this.panel1.SuspendLayout();
             this.tsMessage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayUser)).BeginInit();
+            this.emotionDropDown.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -378,6 +390,66 @@ namespace MSNPSharpClient
             // 
             this.openFileDialog.Multiselect = true;
             // 
+            // emotionDropDown
+            // 
+            this.emotionDropDown.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsbSmiley,
+            this.tsbBiggrin,
+            this.tsbSad,
+            this.tsbWink,
+            this.tsbTongueOut});
+            this.emotionDropDown.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Table;
+            this.emotionDropDown.Name = "toolStripDropDown1";
+            this.emotionDropDown.Size = new System.Drawing.Size(25, 119);
+            // 
+            // onlineUsersDropDown
+            // 
+            this.onlineUsersDropDown.Name = "toolStripDropDown2";
+            this.onlineUsersDropDown.Size = new System.Drawing.Size(27, 106);
+            // 
+            // tsbSmiley
+            // 
+            this.tsbSmiley.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsbSmiley.Image = global::MSNPSharpClient.Properties.Resources.smiley;
+            this.tsbSmiley.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbSmiley.Name = "tsbSmiley";
+            this.tsbSmiley.Size = new System.Drawing.Size(23, 20);
+            this.tsbSmiley.ToolTipText = "Smiley :)";
+            this.tsbSmiley.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // tsbBiggrin
+            // 
+            this.tsbBiggrin.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsbBiggrin.Image = global::MSNPSharpClient.Properties.Resources.biggrin;
+            this.tsbBiggrin.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbBiggrin.Name = "tsbBiggrin";
+            this.tsbBiggrin.Size = new System.Drawing.Size(23, 20);
+            this.tsbBiggrin.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // tsbSad
+            // 
+            this.tsbSad.Image = global::MSNPSharpClient.Properties.Resources.sad;
+            this.tsbSad.Name = "tsbSad";
+            this.tsbSad.Size = new System.Drawing.Size(23, 20);
+            this.tsbSad.ToolTipText = "Sad :d";
+            this.tsbSad.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // tsbWink
+            // 
+            this.tsbWink.Image = global::MSNPSharpClient.Properties.Resources.wink;
+            this.tsbWink.Name = "tsbWink";
+            this.tsbWink.Size = new System.Drawing.Size(23, 20);
+            this.tsbWink.ToolTipText = "Wink ;)";
+            this.tsbWink.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // tsbTongueOut
+            // 
+            this.tsbTongueOut.Image = global::MSNPSharpClient.Properties.Resources.tongueout;
+            this.tsbTongueOut.Name = "tsbTongueOut";
+            this.tsbTongueOut.Size = new System.Drawing.Size(23, 20);
+            this.tsbTongueOut.ToolTipText = "Tongue Out :p";
+            this.tsbTongueOut.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
             // ConversationForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
@@ -396,6 +468,7 @@ namespace MSNPSharpClient
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).EndInit();
             this.panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.displayUser)).EndInit();
+            this.emotionDropDown.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -666,15 +739,8 @@ namespace MSNPSharpClient
                 richTextHistory.Emotions[":p"] = Properties.Resources.tongueout;
             }
 
-            emotionDropDown.ImageScalingSize = new Size(15, 15);
-            emotionDropDown.LayoutStyle = ToolStripLayoutStyle.Table;
-            foreach (string str in richTextHistory.Emotions.Keys)
-            {
-                emotionDropDown.Items.Add(null, richTextHistory.Emotions[str], emotionDropDown_Click).ToolTipText = str;
-            }
-            ((TableLayoutSettings)emotionDropDown.LayoutSettings).ColumnCount = 3;
 
-            onlineUsersDropDown.LayoutStyle = ToolStripLayoutStyle.VerticalStackWithOverflow;
+            ((TableLayoutSettings)emotionDropDown.LayoutSettings).ColumnCount = 3;
 
             foreach (FontFamily ff in FontFamily.Families)
             {
