@@ -11,6 +11,8 @@ using System.Runtime.InteropServices;
 
 namespace MSNPSharpClient
 {
+	using MSNPSharp;
+	
     public class RtfRichTextBox : RichTextBox
     {
         [DllImport("gdiplus.dll")]
@@ -22,8 +24,12 @@ namespace MSNPSharpClient
         {
             try
             {
-                GdipEmfToWmfBits(IntPtr.Zero, 0, null, 0, 0);
-                hasGdiPlus = true;
+				if(!Settings.IsMono)
+				{
+					//We are in M$ Windows!
+	                GdipEmfToWmfBits(IntPtr.Zero, 0, null, 0, 0);
+	                hasGdiPlus = true;
+				}
             }
             catch (Exception)
             {
