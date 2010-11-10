@@ -22,12 +22,9 @@ namespace MSNPSharpClient
     /// </summary>
     public class ConversationForm : System.Windows.Forms.Form
     {
+        private IContainer components;
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private Container components = null;
         private Panel panel1;
         private TextBox inputTextBox;
         private Panel panel2;
@@ -39,26 +36,25 @@ namespace MSNPSharpClient
         private ToolStrip tsMessage;
         private ToolStripComboBox cbMessageFontName;
         private ToolStripComboBox cbMessageFontSize;
-        private ToolStripButton bMessageFontColor;
         private ToolStripSeparator tssMessageSeperator1;
         private ToolStripButton bMessageBold;
         private ToolStripButton bMessageItalic;
         private ToolStripButton bMessageUnderline;
         private ToolStripSeparator tssMessageSeperator2;
         private ToolStripButton bMessageSend;
-        private ToolStripButton bMessageInsertEmoticon;
         private ToolStripButton bMessageSendNudge;
         private Button btnSendFiles;
         private Button btnInviteUsers;
         private Button btnCustomEmoticon;
         private Button btnActivityTest;
-        private ToolStripDropDown emotionDropDown;
-        private ToolStripDropDown onlineUsersDropDown;
-        private ToolStripButton tsbSmiley;
-        private ToolStripButton tsbBiggrin;
-        private ToolStripButton tsbSad;
-        private ToolStripButton tsbWink;
-        private ToolStripButton tsbTongueOut;
+        private ToolStripDropDownButton bMessageInsertEmoticon;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem bigRinToolStripMenuItem;
+        private ToolStripMenuItem sadToolStripMenuItem;
+        private ToolStripMenuItem winkToolStripMenuItem;
+        private ToolStripMenuItem tongueOutToolStripMenuItem;
+        private ContextMenuStrip onlineUsersDropDown;
+        private ToolStripButton bMessageFontColor;
         private ColorDialog dlgColor;
 
 
@@ -68,12 +64,17 @@ namespace MSNPSharpClient
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tsMessage = new System.Windows.Forms.ToolStrip();
-            this.bMessageInsertEmoticon = new System.Windows.Forms.ToolStripButton();
+            this.bMessageInsertEmoticon = new System.Windows.Forms.ToolStripDropDownButton();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.bigRinToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.winkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tongueOutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bMessageSendNudge = new System.Windows.Forms.ToolStripButton();
             this.tssMessageSeperator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.bMessageFontColor = new System.Windows.Forms.ToolStripButton();
             this.bMessageBold = new System.Windows.Forms.ToolStripButton();
             this.bMessageItalic = new System.Windows.Forms.ToolStripButton();
             this.bMessageUnderline = new System.Windows.Forms.ToolStripButton();
@@ -87,24 +88,18 @@ namespace MSNPSharpClient
             this.btnActivityTest = new System.Windows.Forms.Button();
             this.btnCustomEmoticon = new System.Windows.Forms.Button();
             this.btnInviteUsers = new System.Windows.Forms.Button();
+            this.onlineUsersDropDown = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.btnSendFiles = new System.Windows.Forms.Button();
             this.displayUser = new System.Windows.Forms.PictureBox();
-            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.dlgColor = new System.Windows.Forms.ColorDialog();
-            this.emotionDropDown = new System.Windows.Forms.ToolStripDropDown();
-            this.tsbSmiley = new System.Windows.Forms.ToolStripButton();
-            this.tsbBiggrin = new System.Windows.Forms.ToolStripButton();
-            this.tsbSad = new System.Windows.Forms.ToolStripButton();
-            this.tsbWink = new System.Windows.Forms.ToolStripButton();
-            this.tsbTongueOut = new System.Windows.Forms.ToolStripButton();
-            this.onlineUsersDropDown = new System.Windows.Forms.ToolStripDropDown();
+            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
+            this.bMessageFontColor = new System.Windows.Forms.ToolStripButton();
             this.panel1.SuspendLayout();
             this.tsMessage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayUser)).BeginInit();
-            this.emotionDropDown.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -141,20 +136,68 @@ namespace MSNPSharpClient
             this.tsMessage.Location = new System.Drawing.Point(131, 3);
             this.tsMessage.Name = "tsMessage";
             this.tsMessage.Padding = new System.Windows.Forms.Padding(3, 0, 1, 0);
-            this.tsMessage.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
             this.tsMessage.Size = new System.Drawing.Size(527, 27);
             this.tsMessage.TabIndex = 8;
             // 
             // bMessageInsertEmoticon
             // 
             this.bMessageInsertEmoticon.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.bMessageInsertEmoticon.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem1,
+            this.bigRinToolStripMenuItem,
+            this.sadToolStripMenuItem,
+            this.winkToolStripMenuItem,
+            this.tongueOutToolStripMenuItem});
             this.bMessageInsertEmoticon.Image = global::MSNPSharpClient.Properties.Resources.smiley;
-            this.bMessageInsertEmoticon.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.bMessageInsertEmoticon.ImageTransparentColor = System.Drawing.Color.White;
+            this.bMessageInsertEmoticon.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.bMessageInsertEmoticon.Name = "bMessageInsertEmoticon";
-            this.bMessageInsertEmoticon.Size = new System.Drawing.Size(23, 24);
-            this.bMessageInsertEmoticon.Text = "Insert an &emoticon";
-            this.bMessageInsertEmoticon.Click += new System.EventHandler(this.bMessageInsertEmoticon_Click);
+            this.bMessageInsertEmoticon.Size = new System.Drawing.Size(29, 24);
+            this.bMessageInsertEmoticon.Text = "toolStripDropDownButton1";
+            // 
+            // toolStripMenuItem1
+            // 
+            this.toolStripMenuItem1.Image = global::MSNPSharpClient.Properties.Resources.smiley;
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(145, 22);
+            this.toolStripMenuItem1.Text = "Simley";
+            this.toolStripMenuItem1.ToolTipText = ":)";
+            this.toolStripMenuItem1.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // bigRinToolStripMenuItem
+            // 
+            this.bigRinToolStripMenuItem.Image = global::MSNPSharpClient.Properties.Resources.biggrin;
+            this.bigRinToolStripMenuItem.Name = "bigRinToolStripMenuItem";
+            this.bigRinToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
+            this.bigRinToolStripMenuItem.Text = "Big Grin";
+            this.bigRinToolStripMenuItem.ToolTipText = ":d";
+            this.bigRinToolStripMenuItem.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // sadToolStripMenuItem
+            // 
+            this.sadToolStripMenuItem.Image = global::MSNPSharpClient.Properties.Resources.sad;
+            this.sadToolStripMenuItem.Name = "sadToolStripMenuItem";
+            this.sadToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
+            this.sadToolStripMenuItem.Text = "Sad";
+            this.sadToolStripMenuItem.ToolTipText = ":(";
+            this.sadToolStripMenuItem.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // winkToolStripMenuItem
+            // 
+            this.winkToolStripMenuItem.Image = global::MSNPSharpClient.Properties.Resources.wink;
+            this.winkToolStripMenuItem.Name = "winkToolStripMenuItem";
+            this.winkToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
+            this.winkToolStripMenuItem.Text = "Wink";
+            this.winkToolStripMenuItem.ToolTipText = ";)";
+            this.winkToolStripMenuItem.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // tongueOutToolStripMenuItem
+            // 
+            this.tongueOutToolStripMenuItem.Image = global::MSNPSharpClient.Properties.Resources.tongueout;
+            this.tongueOutToolStripMenuItem.Name = "tongueOutToolStripMenuItem";
+            this.tongueOutToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
+            this.tongueOutToolStripMenuItem.Text = "Tongue Out";
+            this.tongueOutToolStripMenuItem.ToolTipText = ":p";
+            this.tongueOutToolStripMenuItem.Click += new System.EventHandler(this.emotionDropDown_Click);
             // 
             // bMessageSendNudge
             // 
@@ -171,16 +214,6 @@ namespace MSNPSharpClient
             // 
             this.tssMessageSeperator1.Name = "tssMessageSeperator1";
             this.tssMessageSeperator1.Size = new System.Drawing.Size(6, 27);
-            // 
-            // bMessageFontColor
-            // 
-            this.bMessageFontColor.Image = global::MSNPSharpClient.Properties.Resources.Color_fontHS;
-            this.bMessageFontColor.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageFontColor.Name = "bMessageFontColor";
-            this.bMessageFontColor.Size = new System.Drawing.Size(60, 24);
-            this.bMessageFontColor.Text = "Color";
-            this.bMessageFontColor.ToolTipText = "Font Color";
-            this.bMessageFontColor.Click += new System.EventHandler(this.bMessageFontColor_Click);
             // 
             // bMessageBold
             // 
@@ -252,7 +285,7 @@ namespace MSNPSharpClient
             "72"});
             this.cbMessageFontSize.MaxDropDownItems = 12;
             this.cbMessageFontSize.Name = "cbMessageFontSize";
-            this.cbMessageFontSize.Size = new System.Drawing.Size(90, 27);
+            this.cbMessageFontSize.Size = new System.Drawing.Size(90, 25);
             this.cbMessageFontSize.ToolTipText = "Font Size";
             this.cbMessageFontSize.SelectedIndexChanged += new System.EventHandler(this.cbMessageFontSize_SelectedIndexChanged);
             this.cbMessageFontSize.Validating += new System.ComponentModel.CancelEventHandler(this.cbMessageFontSize_Validating);
@@ -337,6 +370,7 @@ namespace MSNPSharpClient
             // 
             // btnInviteUsers
             // 
+            this.btnInviteUsers.ContextMenuStrip = this.onlineUsersDropDown;
             this.btnInviteUsers.Location = new System.Drawing.Point(4, 75);
             this.btnInviteUsers.Name = "btnInviteUsers";
             this.btnInviteUsers.Size = new System.Drawing.Size(120, 25);
@@ -344,6 +378,11 @@ namespace MSNPSharpClient
             this.btnInviteUsers.Text = "Invite Users";
             this.btnInviteUsers.UseVisualStyleBackColor = true;
             this.btnInviteUsers.Click += new System.EventHandler(this.btnInviteUsers_Click);
+            // 
+            // onlineUsersDropDown
+            // 
+            this.onlineUsersDropDown.Name = "onlineUsersDropDown";
+            this.onlineUsersDropDown.Size = new System.Drawing.Size(61, 4);
             // 
             // btnSendFiles
             // 
@@ -367,6 +406,10 @@ namespace MSNPSharpClient
             this.displayUser.TabIndex = 0;
             this.displayUser.TabStop = false;
             // 
+            // openFileDialog
+            // 
+            this.openFileDialog.Multiselect = true;
+            // 
             // richTextHistory
             // 
             this.richTextHistory.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
@@ -385,70 +428,14 @@ namespace MSNPSharpClient
             this.richTextHistory.Text = "";
             this.richTextHistory.TextColor = MSNPSharpClient.RtfRichTextBox.RtfColor.Black;
             // 
-            // openFileDialog
+            // bMessageFontColor
             // 
-            this.openFileDialog.Multiselect = true;
-            // 
-            // emotionDropDown
-            // 
-            this.emotionDropDown.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsbSmiley,
-            this.tsbBiggrin,
-            this.tsbSad,
-            this.tsbWink,
-            this.tsbTongueOut});
-            this.emotionDropDown.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Table;
-            this.emotionDropDown.Name = "toolStripDropDown1";
-            this.emotionDropDown.Size = new System.Drawing.Size(25, 119);
-            // 
-            // tsbSmiley
-            // 
-            this.tsbSmiley.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.tsbSmiley.Image = global::MSNPSharpClient.Properties.Resources.smiley;
-            this.tsbSmiley.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbSmiley.Name = "tsbSmiley";
-            this.tsbSmiley.Size = new System.Drawing.Size(23, 20);
-            this.tsbSmiley.ToolTipText = "Smiley :)";
-            this.tsbSmiley.Click += new System.EventHandler(this.emotionDropDown_Click);
-            // 
-            // tsbBiggrin
-            // 
-            this.tsbBiggrin.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.tsbBiggrin.Image = global::MSNPSharpClient.Properties.Resources.biggrin;
-            this.tsbBiggrin.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbBiggrin.Name = "tsbBiggrin";
-            this.tsbBiggrin.Size = new System.Drawing.Size(23, 20);
-            this.tsbBiggrin.Click += new System.EventHandler(this.emotionDropDown_Click);
-            // 
-            // tsbSad
-            // 
-            this.tsbSad.Image = global::MSNPSharpClient.Properties.Resources.sad;
-            this.tsbSad.Name = "tsbSad";
-            this.tsbSad.Size = new System.Drawing.Size(23, 20);
-            this.tsbSad.ToolTipText = "Sad :d";
-            this.tsbSad.Click += new System.EventHandler(this.emotionDropDown_Click);
-            // 
-            // tsbWink
-            // 
-            this.tsbWink.Image = global::MSNPSharpClient.Properties.Resources.wink;
-            this.tsbWink.Name = "tsbWink";
-            this.tsbWink.Size = new System.Drawing.Size(23, 20);
-            this.tsbWink.ToolTipText = "Wink ;)";
-            this.tsbWink.Click += new System.EventHandler(this.emotionDropDown_Click);
-            // 
-            // tsbTongueOut
-            // 
-            this.tsbTongueOut.Image = global::MSNPSharpClient.Properties.Resources.tongueout;
-            this.tsbTongueOut.Name = "tsbTongueOut";
-            this.tsbTongueOut.Size = new System.Drawing.Size(23, 20);
-            this.tsbTongueOut.ToolTipText = "Tongue Out :p";
-            this.tsbTongueOut.Click += new System.EventHandler(this.emotionDropDown_Click);
-            // 
-            // onlineUsersDropDown
-            // 
-            this.onlineUsersDropDown.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
-            this.onlineUsersDropDown.Name = "toolStripDropDown2";
-            this.onlineUsersDropDown.Size = new System.Drawing.Size(2, 4);
+            this.bMessageFontColor.Image = global::MSNPSharpClient.Properties.Resources.Color_fontHS;
+            this.bMessageFontColor.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bMessageFontColor.Name = "bMessageFontColor";
+            this.bMessageFontColor.Size = new System.Drawing.Size(60, 24);
+            this.bMessageFontColor.Text = "Color";
+            this.bMessageFontColor.Click += new System.EventHandler(this.bMessageFontColor_Click);
             // 
             // ConversationForm
             // 
@@ -468,7 +455,6 @@ namespace MSNPSharpClient
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).EndInit();
             this.panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.displayUser)).EndInit();
-            this.emotionDropDown.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -739,9 +725,6 @@ namespace MSNPSharpClient
                 richTextHistory.Emotions[":p"] = Properties.Resources.tongueout;
             }
 
-
-            ((TableLayoutSettings)emotionDropDown.LayoutSettings).ColumnCount = 3;
-
             foreach (FontFamily ff in FontFamily.Families)
             {
                 cbMessageFontName.Items.Add(ff.Name);
@@ -880,14 +863,6 @@ namespace MSNPSharpClient
             PrintText(_messenger.ContactList.Owner, message);
 
 
-        }
-
-        private void bMessageInsertEmoticon_Click(object sender, EventArgs e)
-        {
-            int x = Location.X + richTextHistory.Location.X + bMessageInsertEmoticon.Width;
-            int y = Location.Y + richTextHistory.Height + emotionDropDown.Height + 20;
-            emotionDropDown.Show(x, y);
-            emotionDropDown.Focus();
         }
 
         private void btnInviteUsers_Click(object sender, EventArgs e)
