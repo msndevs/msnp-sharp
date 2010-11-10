@@ -102,6 +102,13 @@ namespace MSNPSharpClient.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap Color_fontHS {
+            get {
+                object obj = ResourceManager.GetObject("Color_fontHS", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap file {
             get {
                 object obj = ResourceManager.GetObject("file", resourceCulture);

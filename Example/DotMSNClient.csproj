@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MSNPSharp_logo.ico" />
+    <None Include="Resources\Color_fontHS.png" />
     <None Include="Resources\app_banner.png" />
     <None Include="Resources\loading.gif" />
     <None Include="Resources\YahooMessenger_logo.png" />
