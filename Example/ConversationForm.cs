@@ -64,7 +64,6 @@ namespace MSNPSharpClient
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConversationForm));
             this.panel1 = new System.Windows.Forms.Panel();
             this.tsMessage = new System.Windows.Forms.ToolStrip();
             this.bMessageInsertEmoticon = new System.Windows.Forms.ToolStripButton();
@@ -176,7 +175,6 @@ namespace MSNPSharpClient
             this.bMessageBold.CheckOnClick = true;
             this.bMessageBold.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.bMessageBold.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bMessageBold.Image = ((System.Drawing.Image)(resources.GetObject("bMessageBold.Image")));
             this.bMessageBold.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.bMessageBold.Name = "bMessageBold";
             this.bMessageBold.Size = new System.Drawing.Size(23, 24);
@@ -189,7 +187,6 @@ namespace MSNPSharpClient
             this.bMessageItalic.CheckOnClick = true;
             this.bMessageItalic.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.bMessageItalic.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bMessageItalic.Image = ((System.Drawing.Image)(resources.GetObject("bMessageItalic.Image")));
             this.bMessageItalic.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.bMessageItalic.Name = "bMessageItalic";
             this.bMessageItalic.Size = new System.Drawing.Size(23, 24);
@@ -202,7 +199,6 @@ namespace MSNPSharpClient
             this.bMessageUnderline.CheckOnClick = true;
             this.bMessageUnderline.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.bMessageUnderline.Font = new System.Drawing.Font("Times New Roman", 9.75F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bMessageUnderline.Image = ((System.Drawing.Image)(resources.GetObject("bMessageUnderline.Image")));
             this.bMessageUnderline.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.bMessageUnderline.Name = "bMessageUnderline";
             this.bMessageUnderline.Size = new System.Drawing.Size(23, 24);
@@ -260,7 +256,6 @@ namespace MSNPSharpClient
             this.bMessageSend.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.bMessageSend.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.bMessageSend.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.bMessageSend.Image = ((System.Drawing.Image)(resources.GetObject("bMessageSend.Image")));
             this.bMessageSend.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.bMessageSend.Name = "bMessageSend";
             this.bMessageSend.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
