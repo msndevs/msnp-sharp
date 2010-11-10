@@ -93,12 +93,12 @@ namespace MSNPSharpClient
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.dlgColor = new System.Windows.Forms.ColorDialog();
             this.emotionDropDown = new System.Windows.Forms.ToolStripDropDown();
-            this.onlineUsersDropDown = new System.Windows.Forms.ToolStripDropDown();
             this.tsbSmiley = new System.Windows.Forms.ToolStripButton();
             this.tsbBiggrin = new System.Windows.Forms.ToolStripButton();
             this.tsbSad = new System.Windows.Forms.ToolStripButton();
             this.tsbWink = new System.Windows.Forms.ToolStripButton();
             this.tsbTongueOut = new System.Windows.Forms.ToolStripButton();
+            this.onlineUsersDropDown = new System.Windows.Forms.ToolStripDropDown();
             this.panel1.SuspendLayout();
             this.tsMessage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
@@ -292,7 +292,6 @@ namespace MSNPSharpClient
             this.inputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.inputTextBox.Font = new System.Drawing.Font("Trebuchet MS", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.inputTextBox.Location = new System.Drawing.Point(131, 33);
             this.inputTextBox.Multiline = true;
             this.inputTextBox.Name = "inputTextBox";
@@ -402,11 +401,6 @@ namespace MSNPSharpClient
             this.emotionDropDown.Name = "toolStripDropDown1";
             this.emotionDropDown.Size = new System.Drawing.Size(25, 119);
             // 
-            // onlineUsersDropDown
-            // 
-            this.onlineUsersDropDown.Name = "toolStripDropDown2";
-            this.onlineUsersDropDown.Size = new System.Drawing.Size(27, 106);
-            // 
             // tsbSmiley
             // 
             this.tsbSmiley.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
@@ -449,6 +443,12 @@ namespace MSNPSharpClient
             this.tsbTongueOut.Size = new System.Drawing.Size(23, 20);
             this.tsbTongueOut.ToolTipText = "Tongue Out :p";
             this.tsbTongueOut.Click += new System.EventHandler(this.emotionDropDown_Click);
+            // 
+            // onlineUsersDropDown
+            // 
+            this.onlineUsersDropDown.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
+            this.onlineUsersDropDown.Name = "toolStripDropDown2";
+            this.onlineUsersDropDown.Size = new System.Drawing.Size(2, 4);
             // 
             // ConversationForm
             // 
@@ -1041,7 +1041,7 @@ namespace MSNPSharpClient
 
         private void cbMessageFontName_Validating(object sender, CancelEventArgs e)
         {
-            if (cbMessageFontName.FindStringExact(cbMessageFontName.Text) == -1)
+            if (cbMessageFontName.FindStringExact(cbMessageFontName.Text) == -1 && cbMessageFontName.Tag != null)
             {
                 cbMessageFontName.Text = cbMessageFontName.Tag.ToString();
             }
@@ -1065,7 +1065,7 @@ namespace MSNPSharpClient
             float fontSize = float.MinValue;
             float.TryParse(cbMessageFontSize.Text, out fontSize);
 
-            if (fontSize < 8f || fontSize > 72f)
+            if (fontSize < 8f || fontSize > 72f && cbMessageFontSize.Tag != null)
             {
                 cbMessageFontSize.Text = cbMessageFontSize.Tag.ToString();
             }
