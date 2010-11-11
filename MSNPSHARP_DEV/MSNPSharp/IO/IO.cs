@@ -567,8 +567,6 @@ namespace MSNPSharp.IO
         /// <remarks>This method is thread safe</remarks>
         public static MclFile Open(string filePath, FileAccess access, MclSerialization st, string password, bool useCache)
         {
-            filePath = filePath.ToLowerInvariant();
-
             if (useCache)
             {
                 if (storage.ContainsKey(filePath))
