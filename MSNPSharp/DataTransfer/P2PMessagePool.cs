@@ -178,8 +178,8 @@ namespace MSNPSharp.DataTransfer
                     }
 
                     P2PMessage totalMessage = incompletedP2PV1Messages[p2pMessage.Header.Identifier];
-                    if ((p2pMessage.V1Header.TotalSize == totalMessage.V1Header.TotalSize) &&
-                        (p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize) == totalMessage.Header.TotalSize)
+                    if (p2pMessage.V1Header.TotalSize == totalMessage.V1Header.TotalSize &&
+                        (p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize) <= totalMessage.Header.TotalSize)
                     {
                         Array.Copy(p2pMessage.InnerBody, 0, totalMessage.InnerBody, (long)p2pMessage.V1Header.Offset, (long)p2pMessage.V1Header.MessageSize);
                         totalMessage.V1Header.Offset = p2pMessage.V1Header.Offset + p2pMessage.V1Header.MessageSize;
