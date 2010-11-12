@@ -107,7 +107,7 @@ namespace MSNPSharpClient
                     trace.Remove(0, trace.Length);
                 }
 
-                Thread.Sleep(Settings.IsMono ? 5000 : 100); //Mono is really bad implemented in some OS.
+                Thread.Sleep(100);
             }
         }
 
