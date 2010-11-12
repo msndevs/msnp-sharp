@@ -40,6 +40,7 @@ namespace MSNPSharp
     /// <summary>
     /// Represent the information of a certain endpoint.
     /// </summary>
+    [Serializable]
     public class EndPointData
     {
         #region Fields and Properties
@@ -51,7 +52,10 @@ namespace MSNPSharp
         /// </summary>
         public Guid Id
         {
-            get { return id; }
+            get
+            {
+                return id;
+            }
         }
 
         private ClientCapacities clientCapacities = ClientCapacities.None;
@@ -61,11 +65,14 @@ namespace MSNPSharp
         /// </summary>
         public ClientCapacities ClientCapacities
         {
-            get { return clientCapacities; }
+            get
+            {
+                return clientCapacities;
+            }
 
-            internal set 
-            { 
-                clientCapacities = value; 
+            internal set
+            {
+                clientCapacities = value;
             }
         }
 
@@ -76,8 +83,14 @@ namespace MSNPSharp
         /// </summary>
         public ClientCapacitiesEx ClientCapacitiesEx
         {
-            get { return clientCapacitiesEx; }
-            internal set { clientCapacitiesEx = value; }
+            get
+            {
+                return clientCapacitiesEx;
+            }
+            internal set
+            {
+                clientCapacitiesEx = value;
+            }
         }
 
         private string account = string.Empty;
@@ -87,7 +100,10 @@ namespace MSNPSharp
         /// </summary>
         public string Account
         {
-            get { return account; }
+            get
+            {
+                return account;
+            }
         }
 
         #endregion
@@ -103,8 +119,7 @@ namespace MSNPSharp
         /// <param name="epId">The endpoint Id.</param>
         public EndPointData(string account, Guid epId)
         {
-            //OMG.. I forgot this..
-            id = epId;
+            this.id = epId;
             this.account = account.ToLowerInvariant();
         }
 
@@ -144,8 +159,14 @@ namespace MSNPSharp
                 return Guid.Empty;
             }
         }
+
+        public override string ToString()
+        {
+            return Account + ";" + Id.ToString("B") + " " + ClientCapacities + ":" + ClientCapacitiesEx;
+        }
     }
 
+    [Serializable]
     public class PrivateEndPointData : EndPointData
     {
         private string name = string.Empty;
@@ -156,8 +177,14 @@ namespace MSNPSharp
         /// </summary>
         public string Name
         {
-            get { return name; }
-            set { name = value; }
+            get
+            {
+                return name;
+            }
+            set
+            {
+                name = value;
+            }
         }
 
         private string clientType = string.Empty;
@@ -167,8 +194,14 @@ namespace MSNPSharp
         /// </summary>
         public string ClientType
         {
-            get { return clientType; }
-            set { clientType = value; }
+            get
+            {
+                return clientType;
+            }
+            set
+            {
+                clientType = value;
+            }
         }
 
         private bool idle = false;
@@ -178,16 +211,28 @@ namespace MSNPSharp
         /// </summary>
         public bool Idle
         {
-            get { return idle; }
-            set { idle = value; }
+            get
+            {
+                return idle;
+            }
+            set
+            {
+                idle = value;
+            }
         }
 
         private PresenceStatus state = PresenceStatus.Unknown;
 
         public PresenceStatus State
         {
-            get { return state; }
-            set { state = value; }
+            get
+            {
+                return state;
+            }
+            set
+            {
+                state = value;
+            }
         }
 
         public PrivateEndPointData(string account, Guid epId)
@@ -209,4 +254,4 @@ namespace MSNPSharp
         {
         }
     }
-}
+};
