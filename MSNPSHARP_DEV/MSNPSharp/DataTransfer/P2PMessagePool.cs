@@ -102,7 +102,7 @@ namespace MSNPSharp.DataTransfer
                             if (incompletedP2PV2Messages[p2pMessage.V2Header.Identifier].V2Header.PackageNumber == p2pMessage.V2Header.PackageNumber)
                             {
                                 P2PMessage totalMessage = incompletedP2PV2Messages[p2pMessage.V2Header.Identifier];
-                                ulong dataSize = (ulong)(p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength);
+                                ulong dataSize = Math.Min(((ulong)(p2pMessage.V2Header.MessageSize - p2pMessage.V2Header.DataPacketHeaderLength)), totalMessage.V2Header.DataRemaining);
                                 ulong offSet = ((ulong)totalMessage.InnerBody.LongLength) - totalMessage.V2Header.DataRemaining;
 
                                 // Check range and buffer overflow...
