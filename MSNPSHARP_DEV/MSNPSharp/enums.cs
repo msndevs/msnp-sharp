@@ -285,11 +285,11 @@ namespace MSNPSharp
         CanViewInkISF = 0x08,
         CanVideoConference = 0x10,
         CanMultiPacketMSG = 0x20,
-        IsMobileDevice = 0x40,
-        IsDirectDevice = 0x80,
-        UNKNOWN100 = 0x100,
+        IsMobileEnabled = 0x40,
+        IsDirectDeviceEnabled = 0x80,
+        IsMobileMessagingDisabled = 0x100,
         IsWebClient = 0x200,
-        UNKNOWN400 = 0x400,
+        IsMobileDevice = 0x400,
         IsTGWClient = 0x800,
         HasMSNSpaces = 0x1000,
         UsingXPMediaCenter = 0x2000,
@@ -305,11 +305,11 @@ namespace MSNPSharp
         CanSIP = 0x100000,
         CanTunneledSip = 0x200000,
         CanShareFolders = 0x400000,
-        UNKNOWN800000 = 0x800000,
+        PageModeMessaging = 0x800000,
         HasOneCare = 0x1000000,
         SupportP2PTURN = 0x2000000,
         SupportP2PUUNBootstrap = 0x4000000,
-        UNKNOWN8000000 = 0x8000000,
+        IsUsingAlias = 0x8000000,
 
         /// <summary>
         /// MSN 6.0
@@ -348,9 +348,18 @@ namespace MSNPSharp
         /// </summary>
         CanHandleMSNC9 = 0x90000000,
         /// <summary>
-        /// MSN 12.0 (MSNP18)
+        /// MSN 14.0 - Wave 3 (MSNP18)
         /// </summary>
         CanHandleMSNC10 = 0xA0000000,
+        /// <summary>
+        /// MSN 15.0 - Wave 4 (MSNP21)
+        /// </summary>
+        CanHandleMSNC11 = 0xB0000000,
+
+        CanHandleMSNC12 = 0xC0000000,
+        CanHandleMSNC13 = 0xD0000000,
+        CanHandleMSNC14 = 0xE0000000,
+
         /// <summary>
         /// Mask for MSNC
         /// </summary>
