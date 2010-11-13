@@ -107,7 +107,7 @@ namespace MSNPSharpClient
                     trace.Remove(0, trace.Length);
                 }
 
-                Thread.Sleep(100);
+                Thread.Sleep(Settings.IsMono ? 5000 : 100);
             }
         }
 
