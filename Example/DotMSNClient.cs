@@ -80,6 +80,9 @@ namespace MSNPSharpClient
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.Compression | MSNPSharp.IO.MclSerialization.Cryptography;
 #endif
 
+            // If you want to use it in an environment that does not have write permission, set NoSave to true.
+            //Settings.NoSave = true;
+
             // set the events that we will handle
             // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
             // a switchboard server handles the individual conversation sessions.
