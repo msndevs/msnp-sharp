@@ -860,7 +860,7 @@ namespace MSNPSharp
 
         protected virtual void SendSwitchBoardClosedNotifyToNS()
         {
-            NSMessageHandler.SenSwitchBoardClosedNotify(SessionId.ToString());
+            NSMessageHandler.SendSwitchBoardClosedNotify(SessionId.ToString());
         }
 
         protected virtual void SetNewProcessor()
