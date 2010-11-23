@@ -1015,7 +1015,7 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SHA", "A", nonce }));
         }
 
-        internal void SenSwitchBoardClosedNotify(string sessionId)
+        internal void SendSwitchBoardClosedNotify(string sessionId)
         {
             string host = GetSessionHost(sessionId);
             if (string.IsNullOrEmpty(host))
