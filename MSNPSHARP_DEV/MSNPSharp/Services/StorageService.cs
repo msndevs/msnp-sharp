@@ -260,47 +260,54 @@ namespace MSNPSharp
                 // Display photo
                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                 {
-                    if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL)
+                    foreach (DocumentStream docStream in response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams)
                     {
-
-                        DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
-
-                        NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
-                    }
-                    else
-                    {
-                        string requesturi = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-                        if (requesturi.StartsWith("/"))
+                        if (docStream.DocumentStreamType != "UserTileStatic")
                         {
-                            requesturi = "http://blufiles.storage.msn.com" + requesturi;  //I found it http://byfiles.storage.msn.com is also ok
+                            continue;
                         }
 
-                        // Don't urlencode t= :))
-                        string usertitleURL = requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2));
-                        SyncUserTile(usertitleURL,
-                            delegate(object nullParam)
-                            {
-                                NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = response.GetProfileResult.ExpressionProfile.Photo.Name;
-                                NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
-                                NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
-                                NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
+                        if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == docStream.PreAuthURL)
+                        {
 
-                                SerializableMemoryStream ms = new SerializableMemoryStream();
-                                NSMessageHandler.ContactList.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.ContactList.Owner.DisplayImage.Image.RawFormat);
-                                NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
-                                NSMessageHandler.ContactService.Deltas.Save(true);
-                            },
-                            null,
-                            delegate(object param)
+                            DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
+
+                            NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
+                        }
+                        else
+                        {
+                            string requesturi = docStream.PreAuthURL;
+                            if (requesturi.StartsWith("/"))
                             {
-                                Exception ex = param as Exception;
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
-                                if (NSMessageHandler.ContactList.Owner.UserTileURL != null)
+                                requesturi = "http://blufiles.storage.msn.com" + requesturi;  //I found it http://byfiles.storage.msn.com is also ok
+                            }
+
+                            // Don't urlencode t= :))
+                            string usertitleURL = requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2));
+                            SyncUserTile(usertitleURL,
+                                delegate(object nullParam)
                                 {
-                                    SyncUserTile(NSMessageHandler.ContactList.Owner.UserTileURL.AbsoluteUri, null, null, null);
-                                }
-                            });
+                                    NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = response.GetProfileResult.ExpressionProfile.Photo.Name;
+                                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
+                                    NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
+                                    NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = docStream.PreAuthURL;
+                                    SerializableMemoryStream ms = new SerializableMemoryStream();
+                                    NSMessageHandler.ContactList.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.ContactList.Owner.DisplayImage.Image.RawFormat);
+                                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+                                    NSMessageHandler.ContactService.Deltas.Save(true);
+                                },
+                                null,
+                                delegate(object param)
+                                {
+                                    Exception ex = param as Exception;
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
+                                    if (NSMessageHandler.ContactList.Owner.UserTileURL != null)
+                                    {
+                                        SyncUserTile(NSMessageHandler.ContactList.Owner.UserTileURL.AbsoluteUri, null, null, null);
+                                    }
+                                });
 
+                        }
                     }
                 } 
 
@@ -649,7 +656,29 @@ namespace MSNPSharp
                 {
                     OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("UpdateDynamicItem", ex));
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "UpdateDynamicItem error: You don't receive any contact updates, vice versa! " + ex.Message, GetType().Name);
-                    return false;
+
+                    AddDynamicItemRequestType addDynamicItemRequest = new AddDynamicItemRequestType();
+                    addDynamicItemRequest.abId = updateDyItemRequest.abId;
+                    addDynamicItemRequest.dynamicItems = updateDyItemRequest.dynamicItems;
+                    foreach (BaseDynamicItemType dynamicItem in addDynamicItemRequest.dynamicItems)
+                    {
+                        dynamicItem.Notifications = null;
+                        dynamicItem.Changes = null;
+                        dynamicItem.LastChanged = null;
+                    }
+
+                    try
+                    {
+                        ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, addDynamicItemRequest);
+                        abService.AddDynamicItem(addDynamicItemRequest);
+                    }
+                    catch (Exception exAddDynamicItem)
+                    {
+                        OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("AddDynamicItem", exAddDynamicItem));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "AddDynamicItem error: You don't receive any contact updates, vice versa! " + exAddDynamicItem.Message, GetType().Name);
+                        return false;
+                    }
+                    return true;
                 }
                 return true;
             }
@@ -797,106 +826,6 @@ namespace MSNPSharp
 
         private OwnerProfile GetProfileImpl(PartnerScenario scenario)
         {
-            #region old
-
-            //try
-            //{
-            //    MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
-            //    StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
-
-            //    GetProfileRequestType request = new GetProfileRequestType();
-            //    request.profileHandle = new Handle();
-            //    request.profileHandle.Alias = new Alias();
-            //    request.profileHandle.Alias.Name = Convert.ToString(NSMessageHandler.ContactList.Owner.CID);
-            //    request.profileHandle.Alias.NameSpace = "MyCidStuff";
-            //    request.profileHandle.RelationshipName = "MyProfile";
-            //    request.profileAttributes = new profileAttributes();
-            //    request.profileAttributes.ExpressionProfileAttributes = CreateFullExpressionProfileAttributes();
-
-            //    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(storageService, MsnServiceType.Storage, serviceState, request);
-            //    GetProfileResponse response = storageService.GetProfile(request);
-
-            //    if (response.GetProfileResult.ExpressionProfile == null)
-            //    {
-            //        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Get profile cannot get expression profile of this owner.");
-            //        NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
-            //        NSMessageHandler.ContactService.Deltas.Profile.DisplayName = NSMessageHandler.ContactList.Owner.Name;
-            //        return NSMessageHandler.ContactService.Deltas.Profile;
-            //    }
-            //    else
-            //    {
-            //        NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = true;
-            //    }
-
-            //    NSMessageHandler.ContactService.Deltas.Profile.DateModified = response.GetProfileResult.ExpressionProfile.DateModified;
-            //    NSMessageHandler.ContactService.Deltas.Profile.ResourceID = response.GetProfileResult.ExpressionProfile.ResourceID;
-
-            //    // Display name
-            //    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = response.GetProfileResult.ExpressionProfile.DisplayName;
-
-            //    // Personal status
-            //    NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = response.GetProfileResult.ExpressionProfile.PersonalStatus;
-
-            //    // Display photo
-            //    if (null != response.GetProfileResult.ExpressionProfile.Photo)
-            //    {
-            //        if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL)
-            //        {
-            //            System.Drawing.Image fileImage = System.Drawing.Image.FromStream(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
-            //            DisplayImage newDisplayImage = new DisplayImage();
-            //            newDisplayImage.Image = fileImage;
-
-            //            NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
-            //        }
-            //        else
-            //        {
-            //            string requesturi = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-            //            if (requesturi.StartsWith("/"))
-            //            {
-            //                requesturi = "http://blufiles.storage.msn.com" + requesturi;  //I found it http://byfiles.storage.msn.com is also ok
-            //            }
-
-            //            // Don't urlencode t= :))
-            //            string usertitleURL = requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2));
-            //            SyncUserTile(usertitleURL,
-            //                delegate(object nullParam)
-            //                {
-            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = response.GetProfileResult.ExpressionProfile.Photo.Name;
-            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
-            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
-            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = response.GetProfileResult.ExpressionProfile.Photo.DocumentStreams[0].PreAuthURL;
-
-            //                    SerializableMemoryStream ms = new SerializableMemoryStream();
-            //                    NSMessageHandler.ContactList.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.ContactList.Owner.DisplayImage.Image.RawFormat);
-            //                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
-            //                    NSMessageHandler.ContactService.Deltas.Save(true);
-            //                },
-            //                null,
-            //                delegate(object param)
-            //                {
-            //                    Exception ex = param as Exception;
-            //                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
-            //                    if (NSMessageHandler.ContactList.Owner.UserTile != null)
-            //                    {
-            //                        SyncUserTile(NSMessageHandler.ContactList.Owner.UserTile.AbsoluteUri, null, null, null);
-            //                    }
-            //                });
-
-            //        }
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    if (ex.Message.ToLowerInvariant().Contains("does not exist"))
-            //    {
-            //        CreateProfile();
-            //    }
-
-            //    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
-            //} 
-
-            #endregion
-
             string expressProfileId = string.Empty;
             string profileResourceId = string.Empty;
             InternalOperationReturnValues result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId);
@@ -1064,12 +993,7 @@ namespace MSNPSharp
         /// Update the display photo of current user.
         /// <list type="bullet">
         /// <item>GetProfile with scenario = "RoamingIdentityChanged"</item>
-        /// <item>UpdateProfile - Update the profile resource with Flags = 1</item>
-        /// <item>DeleteRelationships - delete the photo resource</item>
-        /// <item>DeleteRelationships - delete the expression profile resource (profile resource)</item>
-        /// <item>CreateDocument</item>
-        /// <item>CreateRelationships</item>
-        /// <item>UpdateProfile - Update the profile resource again with Flags = 0</item>
+        /// <item>UpdateDynamicItem</item>
         /// </list>
         /// </summary>
         /// <param name="photo">New photo to display</param>
@@ -1115,54 +1039,19 @@ namespace MSNPSharp
 
 
                     // UpdateDynamicItem
-                    UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
-                              NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
-                              "Update", 0); // 1= begin transaction, 0=commit transaction
+                    UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
 
-                    return true;
                 }
 
-                // 2. UpdateProfile
-                // To keep the order, we need a sync function.
-                UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
-                                  NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
-                                  "Update", 1); // 1= begin transaction, 0=commit transaction
-
-                // 3. DeleteRelationships. If an error occurs, don't return, continue...
-                if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
+                if (String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID) &&
+                    NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile)
                 {
-                    // 3.1 UserTiles -> Photo
-                    DeleteRelationshipByNameSync(PartnerScenario.RoamingIdentityChanged, 
-                        "/UserTiles", 
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID);
-                    
-
-                    //3.2 Profile -> Photo
-                    DeleteRelationshipByResourceIdSync(PartnerScenario.RoamingIdentityChanged,
-                        NSMessageHandler.ContactService.Deltas.Profile.ResourceID,
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID);
+                    string resourceId = string.Empty;
+                    CreatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged, out resourceId, photoName, mem.ToArray());
+                    UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
                 }
 
-                // 4. CreateDocument
-                string documentResourceId = string.Empty;
-
-
-                CreatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged, out documentResourceId, photoName, mem.ToArray());
-                
-
-                // 5. CreateRelationships, create a relationship between ProfileExpression role member and the new document.
-                if (documentResourceId != string.Empty && 
-                    string.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.ResourceID) == false)
-                {
-                    CreateRelationshipsSync(PartnerScenario.RoamingIdentityChanged, 
-                        NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.ResourceID, 
-                        documentResourceId);
-                }
-
-                //6. ok, done - Updateprofile again
-                UpdateProfileImpl(NSMessageHandler.ContactService.Deltas.Profile.DisplayName,
-                                  NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage,
-                                  "Update", 0); // 1= begin transaction, 0=commit transaction
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
 
                 return true;
             }

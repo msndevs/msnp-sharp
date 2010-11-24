@@ -3811,7 +3811,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fires the <see cref="AuthenticationSuccess"/> event.
+        /// Fires the <see cref="OwnerVerified"/> event.
         /// </summary>
         protected virtual void OnOwnerVerified()
         {
