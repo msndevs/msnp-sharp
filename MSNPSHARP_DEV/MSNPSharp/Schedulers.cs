@@ -38,7 +38,7 @@ using System.Diagnostics;
 
 namespace MSNPSharp
 {
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
     using MSNPSharp.Core;
 
     /// <summary>

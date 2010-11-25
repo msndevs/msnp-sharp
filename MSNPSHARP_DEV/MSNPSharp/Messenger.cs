@@ -37,8 +37,9 @@ using System.Diagnostics;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.P2P;
+    using MSNPSharp.Apps;
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
     using MSNPSharp.Utilities;
 
     #region ConversationCreatedEvent
@@ -117,17 +118,6 @@ namespace MSNPSharp
         /// so there is always a valid messageprocessor.
         /// </remarks>
         public event EventHandler<ConversationCreatedEventArgs> ConversationCreated;
-
-        /// <summary>
-        /// Occurs when a remote client has send an invitation for a filetransfer session.
-        /// </summary>
-        public event EventHandler<MSNSLPInvitationEventArgs> TransferInvitationReceived;
-
-        internal void OnTransferInvitationReceived(object sender, MSNSLPInvitationEventArgs args)
-        {
-            if (TransferInvitationReceived != null)
-                TransferInvitationReceived(sender, args);
-        }
 
         protected virtual void OnConversationCreated(Conversation conversation, object initiator)
         {
@@ -440,32 +430,22 @@ namespace MSNPSharp
             return conversation;
         }
 
-
-        /// <summary>
-        /// Returns a MSNSLPHandler, associated with a P2P session. The returned object can be used to send
-        /// or receive invitations from the remote contact.
-        /// </summary>
-        /// <param name="remoteContact"></param>
-        /// <returns></returns>
-        public MSNSLPHandler GetMSNSLPHandler(Contact remoteContact)
+        public ObjectTransfer RequestMsnObject(Contact remoteContact, MSNObject msnObject)
         {
-            if (!Nameserver.ContactList.HasContact(remoteContact.Mail, remoteContact.ClientType))
-                throw new MSNPSharpException("Function not supported. Only MSN user can create a P2P session.");
+            ObjectTransfer objectTransferApp = new ObjectTransfer(msnObject, remoteContact);
 
-            P2PMessageSession p2pSession = nsMessageHandler.P2PHandler.GetSession(Nameserver.ContactList.Owner, Nameserver.ContactList.Owner.MachineGuid, remoteContact, remoteContact.SelectRandomEPID());
-            return p2pSession.MasterSession;
+            P2PHandler.AddTransfer(objectTransferApp);
+
+            return objectTransferApp;
         }
 
-        public P2PTransferSession SendFile(Contact remoteContact, string filename, FileStream fileStream)
+        public FileTransfer SendFile(Contact remoteContact, string filename, FileStream fileStream)
         {
-            MSNSLPHandler msnslpHandler = GetMSNSLPHandler(remoteContact);
-            return msnslpHandler.SendInvitation(Owner, remoteContact, Path.GetFileName(filename), fileStream);
-        }
+            FileTransfer fileTransferApp = new FileTransfer(remoteContact, fileStream, Path.GetFileName(filename));
 
-        public P2PTransferSession RequestMsnObject(Contact remoteContact, MSNObject msnObject)
-        {
-            MSNSLPHandler msnslpHandler = GetMSNSLPHandler(remoteContact);
-            return msnslpHandler.SendInvitation(Owner, remoteContact, msnObject);
+            P2PHandler.AddTransfer(fileTransferApp);
+
+            return fileTransferApp;
         }
 
         #endregion

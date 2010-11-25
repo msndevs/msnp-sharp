@@ -41,7 +41,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     #region Event argument classes
     /// <summary>
@@ -221,7 +221,9 @@ namespace MSNPSharp
             SetNewProcessor();
 
             ResigerHandlersToProcessor(MessageProcessor);
+            /*NEWP2P,TODO,XXX:
             NSMessageHandler.P2PHandler.AddSwitchboardSession(this);
+             */
             NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(ContactOfflineHandler);
         }
 
@@ -315,6 +317,11 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<SBMessageDeliverResultEventArgs> MessageAcknowledgementReceived;
 
+        /// <summary>
+        /// Fired when a P2P message is received.
+        /// </summary>
+        public event EventHandler<P2PMessageEventArgs> P2PMessageReceived;
+
         #endregion
 
         #region Members
@@ -407,7 +414,7 @@ namespace MSNPSharp
                 sessionHash = value;
             }
         }
-
+        /*NEWP2P,TODO,XXX:
         /// <summary>
         /// Implements the P2P framework. This object is automatically created when a succesfull connection was made to the switchboard.
         /// </summary>
@@ -423,7 +430,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Please use Messenger.P2PHandler.");
             }
         }
-
+        */
         #endregion
 
         #region Invitation
@@ -782,6 +789,12 @@ namespace MSNPSharp
                 MessageAcknowledgementReceived(this, args);
         }
 
+        protected virtual void OnP2PMessageReceived(P2PMessageEventArgs e)
+        {
+            if (P2PMessageReceived != null)
+                P2PMessageReceived(this, e);
+        }
+
         /// <summary>
         /// Fires the SessionClosed event.
         /// </summary>
@@ -877,7 +890,9 @@ namespace MSNPSharp
             if (processor != null)
             {
                 processor.RegisterHandler(this);
+                /*NEWP2P,TODO,XXX:
                 processor.RegisterHandler(NSMessageHandler.P2PHandler);
+                 */
             }
         }
 
@@ -1449,7 +1464,6 @@ namespace MSNPSharp
                     multiPacketMessages.Add(sbMSGMessage.MimeHeader["Message-ID"] + "/0", sbMSGMessage);
                     return;
                 }
-
                 else if (sbMSGMessage.MimeHeader.ContainsKey("Chunk"))
                 {
                     //Is this the last message?
@@ -1535,6 +1549,35 @@ namespace MSNPSharp
                         }
                         else if (message.CommandValues[2].Equals("1325"))
                             OnWinkReceived(sbMSGMessage, contact);
+                        break;
+
+                    case "application/x-msnmsgrp2p":
+                        if (P2PMessageReceived != null)
+                        {
+                            try
+                            {
+                                MimeMessage p2pMimeMessage = new MimeMessage();
+                                p2pMimeMessage.CreateFromParentMessage(sbMSGMessage);
+                                P2PVersion p2pVer = P2PVersion.P2PV1;
+
+                                if (sbMSGMessage.MimeHeader.ContainsKey("P2P-Dest") &&
+                                    sbMSGMessage.MimeHeader["P2P-Dest"].ToString().Contains(";"))
+                                    p2pVer = P2PVersion.P2PV2;
+
+                                if (sbMSGMessage.MimeHeader.ContainsKey("P2P-Src") &&
+                                    sbMSGMessage.MimeHeader["P2P-Src"].ToString().Contains(";"))
+                                    p2pVer = P2PVersion.P2PV2;
+
+                                P2PMessage p2pMessage = new P2PMessage(p2pVer);
+                                p2pMessage.ParseBytes(sbMSGMessage.InnerBody);
+                                OnP2PMessageReceived(new P2PMessageEventArgs(p2pMessage));
+                            }
+                            catch (Exception error)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                    error.ToString(), GetType().Name);
+                            }
+                        }
                         break;
 
                     default:
@@ -1687,7 +1730,6 @@ namespace MSNPSharp
             {
                 return messageProcessor;
             }
-            
             set
             {
                 throw new InvalidOperationException("This property is read-only.");

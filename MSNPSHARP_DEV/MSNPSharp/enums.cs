@@ -1561,9 +1561,9 @@ namespace MSNPSharp
         /// </summary>
         Acknowledgement = 0x2,
         /// <summary>
-        /// Waiting
+        /// Required Ack
         /// </summary>
-        Waiting = 0x4,
+        RequireAck = 0x4,
         /// <summary>
         /// Messages notifies a binary error.
         /// </summary>

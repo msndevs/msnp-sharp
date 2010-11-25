@@ -11,18 +11,21 @@ using System.Diagnostics;
 namespace MSNPSharpClient
 {
     using MSNPSharp;
+    using MSNPSharp.Apps;
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
 
     public partial class FileTransferForm : Form
     {
-        MSNSLPInvitationEventArgs invite;
+        private FileTransfer fileTransfer;
+        private P2PSession p2pSession;
         private bool transferFinished;
 
-        public FileTransferForm(MSNSLPInvitationEventArgs invite)
+        public FileTransferForm(P2PSession p2pSess)
         {
-            this.invite = invite;
+            this.p2pSession = p2pSess;
+            this.fileTransfer = p2pSess.Application as FileTransfer;
             InitializeComponent();
         }
 
@@ -30,14 +33,22 @@ namespace MSNPSharpClient
         {
             string appPath = Path.GetFullPath(".");
 
-            Text = "File Transfer: " + invite.TransferProperties.RemoteContact.Mail;
-            txtFilePath.Text = Path.Combine(appPath, invite.Filename);
-            lblSize.Text = invite.FileSize.ToString() + " bytes";
+            Text = "File Transfer: " + p2pSession.Remote.Mail;
+            txtFilePath.Text = Path.Combine(appPath, fileTransfer.Context.Filename);
+            lblSize.Text = fileTransfer.Context.FileSize + " bytes";
 
-            invite.TransferSession.TransferStarted += (TransferSession_TransferStarted);
-            invite.TransferSession.TransferProgressed += (TransferSession_TransferProgressed);
-            invite.TransferSession.TransferAborted += (TransferSession_TransferAborted);
-            invite.TransferSession.TransferFinished += (TransferSession_TransferFinished);
+            if (fileTransfer.Context.Preview.Length > 0)
+            {
+                pictureBox1.Image = Image.FromStream(new MemoryStream(fileTransfer.Context.Preview));
+                pictureBox1.Visible = true;
+            }
+
+            fileTransfer.TransferStarted += (TransferSession_TransferStarted);
+            fileTransfer.Progressed += (TransferSession_TransferProgressed);
+            fileTransfer.TransferAborted += (TransferSession_TransferProgressed);
+            fileTransfer.TransferFinished += (TransferSession_TransferFinished);
+
+            progressBar.Maximum = (int)fileTransfer.Context.FileSize;
         }
 
         void TransferSession_TransferStarted(object sender, EventArgs e)
@@ -52,16 +63,16 @@ namespace MSNPSharpClient
             lblSize.Text = "Transfer started";
         }
 
-        void TransferSession_TransferProgressed(object sender, P2PTransferProgressedEventArgs e)
+        void TransferSession_TransferProgressed(object sender, EventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<P2PTransferProgressedEventArgs>(TransferSession_TransferProgressed), sender, e);
+                Invoke(new EventHandler<EventArgs>(TransferSession_TransferProgressed), sender, e);
                 return;
             }
             progressBar.Visible = true;
-            progressBar.Value = e.Percent;
-            lblSize.Text = "Transferred: " + e.Transferred + " / " + e.TotalSize;
+            progressBar.Value = (int)fileTransfer.Transferred;
+            lblSize.Text = "Transferred: " + fileTransfer.Transferred + " / " + fileTransfer.Context.FileSize;
         }
 
         void TransferSession_TransferFinished(object sender, EventArgs e)
@@ -116,8 +127,7 @@ namespace MSNPSharpClient
             }
             else
             {
-                invite.Accept = false;
-                invite.TransferHandler.RejectTransfer(invite);
+                fileTransfer.Decline();
 
                 btnCancel.Visible = false;
                 Close();
@@ -130,10 +140,8 @@ namespace MSNPSharpClient
             {
                 case "OK":
 
-                    invite.TransferSession.DataStream = new FileStream(txtFilePath.Text, FileMode.Create, FileAccess.Write);
-                    invite.TransferSession.AutoCloseStream = true;
-                    invite.Accept = true;
-                    invite.TransferHandler.AcceptTransfer(invite);
+                    fileTransfer.DataStream = new FileStream(txtFilePath.Text, FileMode.Create, FileAccess.Write);
+                    fileTransfer.Accept();
 
                     btnCancel.Visible = false;
 
@@ -144,7 +152,9 @@ namespace MSNPSharpClient
                     break;
 
                 case "ABORT":
-                    invite.TransferHandler.CloseSession(invite.TransferSession);
+
+                    fileTransfer.Abort();
+
                     btnOK.Text = "Close";
                     btnOK.Tag = "CLOSE";
                     break;
@@ -162,10 +172,10 @@ namespace MSNPSharpClient
 
         private void FileTransferForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            invite.TransferSession.TransferStarted -= (TransferSession_TransferStarted);
-            invite.TransferSession.TransferProgressed -= (TransferSession_TransferProgressed);
-            invite.TransferSession.TransferAborted -= (TransferSession_TransferAborted);
-            invite.TransferSession.TransferFinished -= (TransferSession_TransferFinished);
+            fileTransfer.TransferStarted -= (TransferSession_TransferStarted);
+            fileTransfer.Progressed -= (TransferSession_TransferProgressed);
+            fileTransfer.TransferAborted -= (TransferSession_TransferProgressed);
+            fileTransfer.TransferFinished -= (TransferSession_TransferFinished);
         }
 
     }

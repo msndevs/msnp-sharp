@@ -113,7 +113,7 @@ namespace MSNPSharp.Utilities
             ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
             OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, NetworkMessageType.Nudge));
         }
-
+        /*NEWP2P,TODO,XXX:
         private void PassportMemberMSNObjectDataTransferCompleted(object sender, ConversationMSNObjectDataTransferCompletedEventArgs e)
         {
             ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
@@ -123,7 +123,7 @@ namespace MSNPSharp.Utilities
                 OnMessageArrived(new EmoticonArrivedEventArgs(id, e.RemoteContact, emoticon));
             }
         }
-
+        */
         #endregion
 
         protected virtual void OnMessageArrived(MessageArrivedEventArgs e)
@@ -285,7 +285,7 @@ namespace MSNPSharp.Utilities
                 conversation.NudgeReceived -= PassportMemberNudgeReceived;
                 conversation.UserTyping -= PassportMemberUserTyping;
                 conversation.ConversationEnded -= ConversationEnded;
-                conversation.MSNObjectDataTransferCompleted -= PassportMemberMSNObjectDataTransferCompleted;
+                /*NEWP2P,TODO,XXX:conversation.MSNObjectDataTransferCompleted -= PassportMemberMSNObjectDataTransferCompleted;*/
             }
         }
 
@@ -297,7 +297,7 @@ namespace MSNPSharp.Utilities
             conversation.NudgeReceived += new EventHandler<ContactEventArgs>(PassportMemberNudgeReceived);
             conversation.UserTyping += new EventHandler<ContactEventArgs>(PassportMemberUserTyping);
             conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(ConversationEnded);
-            conversation.MSNObjectDataTransferCompleted += new EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs>(PassportMemberMSNObjectDataTransferCompleted);
+            /*NEWP2P,TODO,XXX:conversation.MSNObjectDataTransferCompleted += new EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs>(PassportMemberMSNObjectDataTransferCompleted);*/
         }
 
 

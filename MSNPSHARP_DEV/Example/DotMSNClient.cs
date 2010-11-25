@@ -13,8 +13,9 @@ using System.Xml;
 namespace MSNPSharpClient
 {
     using MSNPSharp;
+    using MSNPSharp.Apps;
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.Utilities;
 
@@ -98,7 +99,7 @@ namespace MSNPSharpClient
             messenger.MessageManager.MessageArrived += new EventHandler<MSNPSharp.Utilities.MessageArrivedEventArgs>(MessageManager_MessageArrived);
 
             // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)
-            messenger.TransferInvitationReceived += new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived);
+            messenger.P2PHandler.InvitationReceived += new EventHandler<P2PSessionEventArgs>(p2pHandler_InvitationReceived);
 
             // Listen to ping answer event. In each ping answer, MSN will give you a number. That is the interval to send the next Ping.
             // You can send a Ping by using Messenger.Nameserver.SendPing().
@@ -1191,40 +1192,34 @@ namespace MSNPSharpClient
             return conversationForm;
         }
 
-
         /// <summary>
-        /// Asks the user to accept or deny the incoming filetransfer invitation.
+        /// Asks the user to accept or deny the incoming filetransfer/activity invitation.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void messenger_TransferInvitationReceived(object sender, MSNSLPInvitationEventArgs e)
+        private void p2pHandler_InvitationReceived(object sender, P2PSessionEventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<MSNSLPInvitationEventArgs>(messenger_TransferInvitationReceived), sender, e);
+                Invoke(new EventHandler<P2PSessionEventArgs>(p2pHandler_InvitationReceived), sender, e);
                 return;
             }
 
-            if (e.TransferProperties.DataType == DataTransferType.File)
+            if (e.P2PSession.Application is MSNPSharp.Apps.FileTransfer)
             {
-                e.DelayProcess = true;
-
-                FileTransferForm ftf = new FileTransferForm(e);
+                FileTransferForm ftf = new FileTransferForm(e.P2PSession);
                 ftf.Show(this);
-
             }
-            else if (e.TransferProperties.DataType == DataTransferType.Activity)
+            else if (e.P2PSession.Application is P2PApplication)
             {
                 if (MessageBox.Show(
-                    e.TransferProperties.RemoteContact.Name +
+                     e.P2PSession.Remote.Name +
                     " wants to invite you to join an activity.\r\nActivity name: " +
-                    e.Activity.ActivityName + "\r\nAppID: " + e.Activity.AppID,
+                    e.P2PSession.Application.ApplicationEufGuid + "\r\nAppID: " + e.P2PSession.Application.ApplicationId,
                     "Activity invitation",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    e.TransferSession.DataStream = new MemoryStream();
-                    e.Accept = true;
-                    e.TransferSession.AutoCloseStream = true;
+                    e.P2PSession.Accept();
                 }
             }
         }

@@ -38,7 +38,7 @@ using System.Security.Cryptography;
 
 namespace MSNPSharp.Core
 {
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     internal enum EscapeType
     {
