@@ -35,7 +35,7 @@ using System;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     /// <summary>
     /// Used when contact changed its status.
@@ -914,7 +914,7 @@ namespace MSNPSharp
             remoteEndPointID = remoteEPID;
         }
     }
-
+    /*NEWP2P,TODO,XXX:
     public class ConversationMSNObjectDataTransferCompletedEventArgs : MSNObjectDataTransferCompletedEventArgs
     {
         private P2PTransferSession transferSession = null;
@@ -938,7 +938,7 @@ namespace MSNPSharp
             TransferSession = sender;
         }
     }
-
+    */
     /// <summary>
     /// Use to notify a <see cref="Conversation"/> has ended.
     /// </summary>

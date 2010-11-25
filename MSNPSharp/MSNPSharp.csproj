@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -42,6 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Apps\FileTransfer.cs" />
+    <Compile Include="Apps\ObjectTransfer.cs" />
+    <Compile Include="Apps\P2PApplication.cs" />
     <Compile Include="Circle.cs" />
     <Compile Include="CircleList.cs" />
     <Compile Include="Comparers.cs" />
@@ -62,9 +65,6 @@
     <Compile Include="Core\TextPayloadMessage.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
-    <Compile Include="DataTransfer\MSNSLPInvitationEventArgs.cs" />
-    <Compile Include="DataTransfer\MSNSLPTransferProperties.cs" />
-    <Compile Include="DataTransfer\P2PHeader.cs" />
     <Compile Include="DisplayImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
@@ -89,11 +89,25 @@
     <Compile Include="Core\MSNMessage.cs" />
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />
+    <Compile Include="P2P\MSNSLPMessage.cs" />
+    <Compile Include="P2P\P2PBridge.cs" />
+    <Compile Include="P2P\P2PDCPool.cs" />
+    <Compile Include="P2P\P2PDirectProcessor.cs" />
+    <Compile Include="P2P\P2PHandler.New.cs" />
+    <Compile Include="P2P\P2PHeader.cs" />
+    <Compile Include="P2P\P2PMessage.cs" />
+    <Compile Include="P2P\P2PMessagePool.cs" />
+    <Compile Include="P2P\P2PSendQueue.cs" />
+    <Compile Include="P2P\P2PSession.cs" />
+    <Compile Include="P2P\P2PSession.DC.cs">
+      <DependentUpon>P2PSession.cs</DependentUpon>
+    </Compile>
+    <Compile Include="P2P\SBBridge.cs" />
+    <Compile Include="P2P\TCPv1Bridge.cs" />
+    <Compile Include="P2P\UUNBridge.cs" />
     <Compile Include="Services\ABServiceBindingWrapper.cs" />
     <Compile Include="Services\IPEndPointCallback.cs" />
     <Compile Include="Services\MSNService.cs" />
-    <Compile Include="DataTransfer\MSNSLPHandler.cs" />
-    <Compile Include="DataTransfer\MSNSLPMessage.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />
     <Compile Include="NSMessageHandler.cs" />
@@ -105,16 +119,6 @@
     <Compile Include="NSMessageProcessor.cs" />
     <Compile Include="Services\OIMService.cs" />
     <Compile Include="Owner.cs" />
-    <Compile Include="DataTransfer\P2PDCPool.cs" />
-    <Compile Include="DataTransfer\P2PDirectProcessor.cs" />
-    <Compile Include="DataTransfer\P2PHandler.cs" />
-    <Compile Include="DataTransfer\P2PMessage.cs" />
-    <Compile Include="DataTransfer\P2PMessagePool.cs" />
-    <Compile Include="DataTransfer\P2PMessageSession.cs" />
-    <Compile Include="DataTransfer\P2PMessageSession.DC.cs">
-      <DependentUpon>P2PMessageSession.cs</DependentUpon>
-    </Compile>
-    <Compile Include="DataTransfer\P2PTransferSession.cs" />
     <Compile Include="Schedulers.cs" />
     <Compile Include="PersonalMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

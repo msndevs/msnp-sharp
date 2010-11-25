@@ -41,6 +41,7 @@ using System.Diagnostics;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.P2P;
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
 
@@ -100,6 +101,7 @@ namespace MSNPSharp
         private object syncObject = new object();
 
         private NSMessageHandler nsMessageHandler = null;
+        private P2PBridge directBridge = null;
 
         #endregion
 
@@ -155,6 +157,9 @@ namespace MSNPSharp
         /// Fired after contact's display image has been changed.
         /// </summary>
         public event EventHandler<DisplayImageChangedEventArgs> DisplayImageChanged;
+
+
+        public event EventHandler<EventArgs> DirectBridgeEstablished;
 
         /// <summary>
         /// Fired after received contact's display image changed notification.
@@ -402,6 +407,47 @@ namespace MSNPSharp
             get
             {
                 return HasSignedInWithMultipleEndPoints ? EndPointData.Count - 1 : 1;
+            }
+        }
+
+        public P2PVersion P2PVersionSupported
+        {
+            get
+            {
+                Guid randGuid = SelectRandomEPID();
+
+                if (randGuid == Guid.Empty)
+                    return P2PVersion.P2PV1;
+
+                EndPointData epData = EndPointData[randGuid];
+
+                return (ClientCapacitiesEx.CanP2PV2 == (epData.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2))
+                    ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+            }
+        }
+
+
+        public P2PBridge DirectBridge
+        {
+            get
+            {
+                return directBridge;
+            }
+            internal set
+            {
+                if (directBridge != null)
+                {
+                    directBridge.BridgeOpened -= HandleDirectBridgeOpened;
+                    directBridge.BridgeClosed -= HandleDirectBridgeClosed;
+                }
+
+                directBridge = value;
+
+                if (directBridge != null)
+                {
+                    directBridge.BridgeOpened += HandleDirectBridgeOpened;
+                    directBridge.BridgeClosed += HandleDirectBridgeClosed;
+                }
             }
         }
 
@@ -1153,6 +1199,22 @@ namespace MSNPSharp
         {
             if (ContactUnBlocked != null)
                 ContactUnBlocked(this, new EventArgs());
+        }
+
+        protected void OnDirectBridgeEstablished(EventArgs e)
+        {
+            if (DirectBridgeEstablished != null)
+                DirectBridgeEstablished(this, e);
+        }
+
+        private void HandleDirectBridgeOpened(object sender, EventArgs e)
+        {
+            OnDirectBridgeEstablished(e);
+        }
+
+        private void HandleDirectBridgeClosed(object sender, EventArgs e)
+        {
+            DirectBridge = null;
         }
 
 

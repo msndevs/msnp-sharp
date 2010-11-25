@@ -46,7 +46,7 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     /// <summary>
     /// Handles the protocol messages from the notification server
@@ -59,10 +59,13 @@ namespace MSNPSharp
         #region Members
 
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
-        private SocketMessageProcessor messageProcessor = null;
+        private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
         private IPEndPoint externalEndPoint = null;
+        private SocketMessageProcessor messageProcessor = null;
+        
+        private UUNBridge uunBridge = null;
         private P2PHandler p2pHandler = null;
-        private Messenger messenger = null;
+        internal Messenger __internalMessenger = null;
 
         private CircleList circleList = null;
         private ContactGroupList contactGroups = null;
@@ -100,9 +103,11 @@ namespace MSNPSharp
             storageService = new MSNStorageService(this);
             whatsUpService = new WhatsUpService(this);
 
-            p2pHandler = new P2PHandler(this, parentMessenger);
+            uunBridge = new UUNBridge(this);
 
-            messenger = parentMessenger;
+            p2pHandler = new P2PHandler(this);
+
+            __internalMessenger = parentMessenger;
         }
 
         #endregion
@@ -168,6 +173,28 @@ namespace MSNPSharp
             get
             {
                 return externalEndPoint;
+            }
+        }
+
+        /// <summary>
+        /// The client's local end-point. This can differ from the external endpoint through the use of
+        /// routers. This value is used to determine how to set-up a direct connection.
+        /// </summary>
+        public IPEndPoint LocalEndPoint
+        {
+            get
+            {
+                IPAddress[] addrList = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
+
+                for (int i = 0; i < addrList.Length; i++)
+                {
+                    if (addrList[i].AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        localEndPoint.Address = addrList[i];
+                        break;
+                    }
+                }
+                return localEndPoint;
             }
         }
 
@@ -323,7 +350,6 @@ namespace MSNPSharp
                 return manager;
             }
         }
-
         /// <summary>
         /// The handler that handles all incoming P2P framework messages.
         /// </summary>
@@ -1203,8 +1229,8 @@ namespace MSNPSharp
         protected internal virtual void OnSignedIn(EventArgs e)
         {
             isSignedIn = true;
-            p2pInviteSchedulerId = Schedulers.P2PInvitationScheduler.Register(messenger);
-            sbRequestSchedulerId = Schedulers.SwitchBoardRequestScheduler.Register(messenger);
+            p2pInviteSchedulerId = Schedulers.P2PInvitationScheduler.Register(__internalMessenger);
+            sbRequestSchedulerId = Schedulers.SwitchBoardRequestScheduler.Register(__internalMessenger);
 
             if (SignedIn != null)
                 SignedIn(this, e);
@@ -1927,74 +1953,136 @@ namespace MSNPSharp
                 switch (message.CommandValues[1].ToString())
                 {
                     case "3":
+                        {
+                            SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
+
+                            if (slpMessage == null)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                                    "Received P2P UBN message with unknown payload:\r\n" + Encoding.UTF8.GetString(message.InnerBody), GetType().Name);
+                            }
+                            else
+                            {
+                                string source = message.CommandValues[0].ToString();
+                                if (String.IsNullOrEmpty(source))
+                                    source = slpMessage.Source;
+
+                                string sourceEmail = source;
+                                if (sourceEmail.Contains(";"))
+                                    sourceEmail = sourceEmail.Split(';')[0].ToLowerInvariant();
+
+                                Guid sourceGuid = slpMessage.FromEndPoint;
+                                Contact sourceContact;
+
+                                if (ContactList.HasContact(sourceEmail, ClientType.PassportMember))
+                                {
+                                    sourceContact = ContactList.GetContact(sourceEmail, ClientType.PassportMember);
+                                    if (sourceContact.Status == PresenceStatus.Hidden || sourceContact.Status == PresenceStatus.Offline)
+                                    {
+                                        // If not return, we will get a 217 error (User not online).
+                                        return;
+                                    }                                    
+                                }
+
+                                sourceContact = ContactList.GetContact(sourceEmail, ClientType.PassportMember);
+
+                                if (!P2PHandler.ProcessSLPMessage(uunBridge, sourceContact, sourceGuid, null, slpMessage))
+                                {
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                                        "Unable to process SLP message:\r\n" + slpMessage.ToDebugString(), GetType().Name);
+                                }
+                            }
+                        }
+                        break;
+
+
+                    /* NEWP2P,TODO,XXX
+                    if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
+                    {
+                        string account = message.CommandValues[0].ToString();
+                        if (account.Contains(";"))
+                            account = account.Split(';')[0];
+
+                        if (ContactList.HasContact(account, ClientType.PassportMember))
+                        {
+                            Contact sender = ContactList.GetContact(account, ClientType.PassportMember);
+                            if (sender.Status == PresenceStatus.Hidden || sender.Status == PresenceStatus.Offline)
+                            {
+                                //If not return, we will get a 217 error (User not online).
+                                return;
+                            }
+                        }
+                        SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.FromMail, 500, "Internal Error");
+                        slpResponseMessage.FromMail = slpMessage.ToMail;
+                        slpResponseMessage.Via = slpMessage.Via;
+                        slpResponseMessage.CSeq = slpMessage.CSeq;
+                        slpResponseMessage.CallId = slpMessage.CallId;
+                        slpResponseMessage.MaxForwards = slpMessage.MaxForwards;
+                        slpResponseMessage.ContentType = @"application/x-msnmsgr-transrespbody";
+
+                        slpResponseMessage.BodyValues["Listening"] = "false";
+                        slpResponseMessage.BodyValues["Conn-Type"] = "Firewall";
+                        slpResponseMessage.BodyValues["TCP-Conn-Type"] = "Firewall";
+                        slpResponseMessage.BodyValues["IPv6-global"] = string.Empty;
+                        slpResponseMessage.BodyValues["UPnPNat"] = "false";
+                        slpResponseMessage.BodyValues["Capabilities-Flags"] = "1";
+                        slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
+                        slpResponseMessage.BodyValues["Bridge"] = "TCPv1";
+
+                        if (slpMessage.BodyValues.ContainsKey("Hashed-Nonce"))
+                        {
+                            slpResponseMessage.BodyValues["Hashed-Nonce"] = slpMessage.BodyValues["Hashed-Nonce"].Value;
+                        }
+                        else
+                        {
+                            slpResponseMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B");
+                        }
+
+                        NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
+                            System.Text.Encoding.UTF8.GetString(slpResponseMessage.GetBytes(false)));
+
+                        MessageProcessor.SendMessage(uunResponse);
+                    }
+                    else if (slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
+                    {
+                        SLPRequestMessage slpResponseMessage = new SLPRequestMessage(slpMessage.FromMail, MSNSLPRequestMethod.ACK);
+                        slpResponseMessage.FromMail = slpMessage.ToMail;
+                        slpResponseMessage.Via = slpMessage.Via;
+                        slpResponseMessage.CSeq = 0;
+                        slpResponseMessage.CallId = Guid.Empty;
+                        slpResponseMessage.MaxForwards = 0;
+                        slpResponseMessage.ContentType = @"application/x-msnmsgr-transdestaddrupdate";
+
+                        slpResponseMessage.BodyValues["stroPdnAsrddAlanretnI4vPI"] = "0435:001.2.861.291";
+                        slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Updated-Connecting-Port";
+
+                        NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
+                            System.Text.Encoding.UTF8.GetString(slpResponseMessage.GetBytes(false)));
+
+                        MessageProcessor.SendMessage(uunResponse);
+                    }
+                }
+
+                     **/
+
+
+                    case "4":
+                    case "8":
+                        {
+                            string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
+                            if (logoutMsg.StartsWith("goawyplzthxbye") || logoutMsg == "gtfo")
+                            {
+                                if (messageProcessor != null)
+                                    messageProcessor.Disconnect();
+                            }
+                            return;
+                        }
+
                     case "10":
                         {
                             SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
-                            if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
-                            {
-                                string account = message.CommandValues[0].ToString();
-                                if (account.Contains(";"))
-                                    account = account.Split(';')[0];
-
-                                if (ContactList.HasContact(account, ClientType.PassportMember))
-                                {
-                                    Contact sender = ContactList.GetContact(account, ClientType.PassportMember);
-                                    if (sender.Status == PresenceStatus.Hidden || sender.Status == PresenceStatus.Offline)
-                                    {
-                                        //If not return, we will get a 217 error (User not online).
-                                        return;
-                                    }
-                                }
-                                SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.FromMail, 500, "Internal Error");
-                                slpResponseMessage.FromMail = slpMessage.ToMail;
-                                slpResponseMessage.Via = slpMessage.Via;
-                                slpResponseMessage.CSeq = slpMessage.CSeq;
-                                slpResponseMessage.CallId = slpMessage.CallId;
-                                slpResponseMessage.MaxForwards = slpMessage.MaxForwards;
-                                slpResponseMessage.ContentType = @"application/x-msnmsgr-transrespbody";
-
-                                slpResponseMessage.BodyValues["Listening"] = "false";
-                                slpResponseMessage.BodyValues["Conn-Type"] = "Firewall";
-                                slpResponseMessage.BodyValues["TCP-Conn-Type"] = "Firewall";
-                                slpResponseMessage.BodyValues["IPv6-global"] = string.Empty;
-                                slpResponseMessage.BodyValues["UPnPNat"] = "false";
-                                slpResponseMessage.BodyValues["Capabilities-Flags"] = "1";
-                                slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
-                                slpResponseMessage.BodyValues["Bridge"] = "TCPv1";
-
-                                if (slpMessage.BodyValues.ContainsKey("Hashed-Nonce"))
-                                {
-                                    slpResponseMessage.BodyValues["Hashed-Nonce"] = slpMessage.BodyValues["Hashed-Nonce"].Value;
-                                }
-                                else
-                                {
-                                    slpResponseMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B");
-                                }
-
-                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
-                                    System.Text.Encoding.UTF8.GetString(slpResponseMessage.GetBytes(false)));
-
-                                MessageProcessor.SendMessage(uunResponse);
-                            }
-                            else if (slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
-                            {
-                                SLPRequestMessage slpResponseMessage = new SLPRequestMessage(slpMessage.FromMail, MSNSLPRequestMethod.ACK);
-                                slpResponseMessage.FromMail = slpMessage.ToMail;
-                                slpResponseMessage.Via = slpMessage.Via;
-                                slpResponseMessage.CSeq = 0;
-                                slpResponseMessage.CallId = Guid.Empty;
-                                slpResponseMessage.MaxForwards = 0;
-                                slpResponseMessage.ContentType = @"application/x-msnmsgr-transdestaddrupdate";
-
-                                slpResponseMessage.BodyValues["stroPdnAsrddAlanretnI4vPI"] = "0435:001.2.861.291";
-                                slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Updated-Connecting-Port";
-
-                                NSPayLoadMessage uunResponse = new NSPayLoadMessage("UUN", new string[] { message.CommandValues[0].ToString(), "3" },
-                                    System.Text.Encoding.UTF8.GetString(slpResponseMessage.GetBytes(false)));
-
-                                MessageProcessor.SendMessage(uunResponse);
-                            }
-                            else if (slpMessage.ContentType == "application/x-msnmsgr-turnsetup")
+                            if (slpMessage != null &&
+                                slpMessage.ContentType == "application/x-msnmsgr-turnsetup")
                             {
                                 SLPRequestMessage request = slpMessage as SLPRequestMessage;
                                 if (request != null && request.Method == "ACK")
@@ -2032,19 +2120,6 @@ namespace MSNPSharp
                             }
                         }
                         break;
-
-
-                    case "4":
-                    case "8":
-                        {
-                            string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
-                            if (logoutMsg.StartsWith("goawyplzthxbye") || logoutMsg == "gtfo")
-                            {
-                                if (messageProcessor != null)
-                                    messageProcessor.Disconnect();
-                            }
-                            return;
-                        }
                 }
             }
         }
@@ -3475,7 +3550,7 @@ namespace MSNPSharp
         protected virtual void Clear()
         {
             // 1. Cancel transfers
-            p2pHandler.Clear();
+           /*NEWP2P,TODO,XXX: p2pHandler.Clear(); */
 
             // 2. Cancel web services. MSNTicket must be here.
             msnticket = MSNTicket.Empty;

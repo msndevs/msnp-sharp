@@ -39,7 +39,7 @@ using System.Collections.Generic;
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     /// <summary>
     /// Message with MIME headers.

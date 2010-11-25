@@ -40,7 +40,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
+    using MSNPSharp.P2P;
 
     internal abstract class MessageObject
     {
@@ -120,20 +120,21 @@ namespace MSNPSharp
         private void transferSession_TransferAborted(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
-
+            /*NEWP2P,TODO,XXX:
             P2PTransferSession session = sender as P2PTransferSession;
             OnMSNObjectDataTransferCompleted(sender,
                 new MSNObjectDataTransferCompletedEventArgs(session.ClientData as MSNObject, true, session.TransferProperties.RemoteContact, session.TransferProperties.RemoteContactEndPointID));
+             */
         }
 
         private void transferSession_TransferFinished(object sender, EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
-
+            /*NEWP2P,TODO,XXX:
             P2PTransferSession session = sender as P2PTransferSession;
             OnMSNObjectDataTransferCompleted(sender,
                 new MSNObjectDataTransferCompletedEventArgs(session.ClientData as MSNObject, false, session.TransferProperties.RemoteContact, session.TransferProperties.RemoteContactEndPointID));
-
+            */
         }
 
         private bool AddContact(Contact contact)
@@ -264,6 +265,9 @@ namespace MSNPSharp
             switchboard.TextMessageReceived += new EventHandler<TextMessageEventArgs>(OnTextMessageReceived);
             switchboard.UserTyping += new EventHandler<ContactEventArgs>(OnUserTyping);
             switchboard.WinkReceived += new EventHandler<WinkEventArgs>(OnWinkReceived);
+
+            switchboard.P2PMessageReceived += new EventHandler<P2PMessageEventArgs>(OnP2PMessageReceived);
+            switchboard.MessageAcknowledgementReceived += new EventHandler<SBMessageDeliverResultEventArgs>(OnMessageAcknowledgementReceived);
         }
 
         private void DetachEvents(SBMessageHandler switchboard)
@@ -280,6 +284,9 @@ namespace MSNPSharp
             switchboard.TextMessageReceived -= (OnTextMessageReceived);
             switchboard.UserTyping -= (OnUserTyping);
             switchboard.WinkReceived -= (OnWinkReceived);
+
+            switchboard.P2PMessageReceived -= (OnP2PMessageReceived);
+            switchboard.MessageAcknowledgementReceived -= (OnMessageAcknowledgementReceived);
         }
 
 
@@ -360,9 +367,10 @@ namespace MSNPSharp
         #region Protected
 
         protected void OnMSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
-        {
+        {/*NEWP2P,TODO,XXX:
             if (MSNObjectDataTransferCompleted != null)
                 MSNObjectDataTransferCompleted(this, new ConversationMSNObjectDataTransferCompletedEventArgs(sender as P2PTransferSession, e));
+          * */
         }
 
 
@@ -393,6 +401,24 @@ namespace MSNPSharp
         }
 
         #region Event operation
+
+        protected virtual void OnP2PMessageReceived(object sender, P2PMessageEventArgs e)
+        {
+            Messenger.Nameserver.P2PHandler.GetBridge(this);
+
+            if (P2PMessageReceived != null)
+            {                
+                P2PMessageReceived(this, e);
+            }
+        }
+
+        void OnMessageAcknowledgementReceived(object sender, SBMessageDeliverResultEventArgs e)
+        {
+            if (MessageAcknowledgementReceived != null)
+            {
+                MessageAcknowledgementReceived(this, e);
+            }
+        }
 
 
         protected virtual void OnWinkReceived(object sender, WinkEventArgs e)
@@ -440,8 +466,9 @@ namespace MSNPSharp
             if (SessionClosed != null)
                 SessionClosed(this, e);
 
+            /*NEWP2P,TODO,XXX:
             Messenger.P2PHandler.RemoveSwitchboardSession(_switchboard);
-
+            */
             OnConversationEnded(this);
         }
 
@@ -474,7 +501,7 @@ namespace MSNPSharp
             if (existing == null)
             {
                 e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
-
+                /*NEWP2P,TODO,XXX:
                 // create a session and send the invitation
                 P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.ContactList.Owner, Messenger.ContactList.Owner.MachineGuid, e.Sender, e.Sender.SelectRandomEPID());
 
@@ -492,6 +519,7 @@ namespace MSNPSharp
                 }
                 else
                     throw new MSNPSharpException("No MSNSLPHandler was attached to the p2p message session. An emoticon invitation message could not be send.");
+                 * */
             }
             else
             {
@@ -698,20 +726,33 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<ConversationRemoteOwnerChangedEventArgs> RemoteOwnerChanged;
 
+        public event EventHandler<P2PMessageEventArgs> P2PMessageReceived;
+
+        public event EventHandler<SBMessageDeliverResultEventArgs> MessageAcknowledgementReceived;
+
         #endregion
 
         #region Public
+        /*
         /// <summary>
         /// Fired when the data transfer for a MSNObject finished or aborted.
         /// </summary>
-        public event EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
-
+       NEWP2P,TODO,XXX: public event EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
+        */
         /// <summary>
         /// Occurs when a new conversation is ended (all contacts in the conversation have left or <see cref="Conversation.End()"/> is called).
         /// </summary>
         public event EventHandler<ConversationEndEventArgs> ConversationEnded;
 
         #region Properties
+
+        public List<Contact> PendingInviteContacts
+        {
+            get
+            {
+                return _pendingInviteContacts;
+            }
+        }
 
         /// <summary>
         /// Contacts once or currently in the conversation.

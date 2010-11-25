@@ -37,6 +37,8 @@ namespace MSNPSharpClient
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.label1 = new System.Windows.Forms.Label();
             this.lblSize = new System.Windows.Forms.Label();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // lblFile
@@ -59,9 +61,9 @@ namespace MSNPSharpClient
             // btnOK
             // 
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnOK.Location = new System.Drawing.Point(64, 102);
+            this.btnOK.Location = new System.Drawing.Point(182, 90);
             this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(164, 40);
+            this.btnOK.Size = new System.Drawing.Size(150, 40);
             this.btnOK.TabIndex = 6;
             this.btnOK.Tag = "OK";
             this.btnOK.Text = "OK";
@@ -71,9 +73,9 @@ namespace MSNPSharpClient
             // btnCancel
             // 
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(237, 102);
+            this.btnCancel.Location = new System.Drawing.Point(182, 136);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(97, 40);
+            this.btnCancel.Size = new System.Drawing.Size(150, 40);
             this.btnCancel.TabIndex = 7;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -122,13 +124,23 @@ namespace MSNPSharpClient
             this.lblSize.TabIndex = 11;
             this.lblSize.Text = "bytes";
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Location = new System.Drawing.Point(64, 90);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(100, 94);
+            this.pictureBox1.TabIndex = 12;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.Visible = false;
+            // 
             // FileTransferForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(345, 154);
+            this.ClientSize = new System.Drawing.Size(344, 196);
             this.ControlBox = false;
+            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.lblSize);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.button1);
@@ -143,6 +155,7 @@ namespace MSNPSharpClient
             this.Text = "File Transfer";
             this.Load += new System.EventHandler(this.FileTransferForm_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FileTransferForm_FormClosing);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -159,5 +172,6 @@ namespace MSNPSharpClient
         private System.Windows.Forms.SaveFileDialog saveFileDialog;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lblSize;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }

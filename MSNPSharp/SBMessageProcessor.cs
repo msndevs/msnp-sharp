@@ -38,8 +38,7 @@ using System.Diagnostics;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    using MSNPSharp.DataTransfer;
-
+    using MSNPSharp.P2P;
 
     public class SBMessageProcessor : SocketMessageProcessor
     {
@@ -68,7 +67,7 @@ namespace MSNPSharp
         }
 
 
-        protected int IncreaseTransactionID()
+        protected internal int IncreaseTransactionID()
         {
             return ++transactionID;
         }
@@ -116,11 +115,12 @@ namespace MSNPSharp
 
         protected virtual void DeliverToNetwork(SBMessage sbMessage)
         {
-            sbMessage.TransactionID = IncreaseTransactionID();
+            if (sbMessage.TransactionID < 1)
+                sbMessage.TransactionID = IncreaseTransactionID();
+
             sbMessage.Acknowledgement = sbMessage.Acknowledgement;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + sbMessage.ToDebugString() + "\r\n", GetType().Name);
-
 
             int x = 0;
 
@@ -129,16 +129,12 @@ namespace MSNPSharp
 
             Debug.Assert(x < 1500, "?");
 
-
-
             // prepare the message
             sbMessage.PrepareMessage();
 
             // convert to bytes and send it over the socket
             SendSocketData(sbMessage.GetBytes());
         }
-
-
 
         public override void SendMessage(NetworkMessage message)
         {
