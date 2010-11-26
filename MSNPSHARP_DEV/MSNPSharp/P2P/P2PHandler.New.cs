@@ -91,17 +91,8 @@ namespace MSNPSharp.P2P
                 return;
             }
 
-            SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
-
-            // RAK: Ack this message (if it isn't an ack itself and isn't an SLP message)
-            // SLP are handled by p2p sessions.
-            if (p2pMessage.Header.RequireAck && slp == null)
-            {
-                //P2PSession session2 = FindSession(p2pMessage, slp);
-                //bridge.Send(null, source, sourceGuid, p2pMessage.CreateAcknowledgement());
-            }
-
             // CHECK SLP: Check destination, source, endpoints
+            SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
             if (slp != null)
             {
                 if (!CheckSLPMessage(bridge, source, sourceGuid, p2pMessage, slp))

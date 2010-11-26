@@ -268,7 +268,7 @@ namespace MSNPSharp.Apps
             return ret;
         }
 
-        public abstract bool ProcessP2PMessage(P2PBridge bridge, P2PMessage p2pMessage);
+        public abstract bool ProcessData(P2PBridge bridge, byte[] data);
 
         public void SendMessage(P2PMessage p2pMessage)
         {

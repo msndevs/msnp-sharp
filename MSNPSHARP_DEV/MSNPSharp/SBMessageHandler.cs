@@ -1556,8 +1556,6 @@ namespace MSNPSharp
                         {
                             try
                             {
-                                MimeMessage p2pMimeMessage = new MimeMessage();
-                                p2pMimeMessage.CreateFromParentMessage(sbMSGMessage);
                                 P2PVersion p2pVer = P2PVersion.P2PV1;
 
                                 if (sbMSGMessage.MimeHeader.ContainsKey("P2P-Dest") &&

@@ -694,6 +694,8 @@ namespace MSNPSharp.P2P
                 return false;
             }
 
+            #region SESSION SLP LOOP
+
             if (slp != null)
             {
                 if (slp is SLPRequestMessage)
@@ -784,8 +786,14 @@ namespace MSNPSharp.P2P
                 return true;
             }
 
+            #endregion
+
+            // CONTROL RAK for APPLICATIONS (not SLP)
+            // Transfer finished or OperationCode.RAK
+            bool handled = false;
             if (p2pMessage.Header.RequireAck)
             {
+                handled = true;
                 Send(p2pMessage.CreateAcknowledgement());
             }
 
@@ -794,12 +802,22 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                       String.Format("P2PSession {0}: Received message for P2P app, but it's either been disposed or not created", sessionId), GetType().Name);
 
-                return false;
+                return handled;
             }
+            else
+            {
+                // Application data
+                if (p2pMessage.Header.MessageSize > 0 && p2pMessage.Header.SessionId > 0)
+                {
+                    byte[] appData = new byte[p2pMessage.InnerBody.Length];
+                    Buffer.BlockCopy(p2pMessage.InnerBody, 0, appData, 0, appData.Length);
+                    handled = p2pApplication.ProcessData(bridge, appData);
+                }
 
-            // P2PDataMessage(offset, totalsize, chunksize, chunk);
-
-            return p2pApplication.ProcessP2PMessage(bridge, p2pMessage);
+                return handled;
+                // return p2pApplication.ProcessP2PMessage(bridge, p2pMessage);
+                // P2PDataMessage(offset, totalsize, chunksize, chunk);
+            }
         }
 
 
