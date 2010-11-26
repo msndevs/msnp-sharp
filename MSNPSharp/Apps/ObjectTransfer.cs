@@ -179,16 +179,16 @@ namespace MSNPSharp.Apps
             }
         }
 
-        public override bool ProcessP2PMessage(P2PBridge bridge, P2PMessage msg)
+        public override bool ProcessData(P2PBridge bridge, byte[] data)
         {
-            if (msg.InnerBody.Length == 4 && (BitUtility.ToInt32(msg.InnerBody, 0, true) == 0))
+            if (data.Length == 4 && (BitUtility.ToInt32(data, 0, true) == 0))
             {
                 // Data prep
                 return true;
             }
-            else if (msg.Header.SessionId == P2PSession.SessionId && msg.InnerBody.Length > 0)
+            else
             {
-                objStream.Write(msg.InnerBody, 0, msg.InnerBody.Length);
+                objStream.Write(data, 0, data.Length);
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                     String.Format("Received {0} / {1}", objStream.Length, msnObject.Size), GetType().Name);
@@ -196,12 +196,12 @@ namespace MSNPSharp.Apps
                 if (objStream.Length == msnObject.Size)
                 {
                     // Finished transfer
-                    byte[] data = new byte[msnObject.Size];
+                    byte[] allData = new byte[msnObject.Size];
 
                     objStream.Seek(0, SeekOrigin.Begin);
-                    objStream.Read(data, 0, data.Length);
+                    objStream.Read(allData, 0, allData.Length);
 
-                    string dataSha = Convert.ToBase64String(new SHA1Managed().ComputeHash(data));
+                    string dataSha = Convert.ToBase64String(new SHA1Managed().ComputeHash(allData));
 
                     if (dataSha != msnObject.Sha)
                     {
@@ -211,7 +211,7 @@ namespace MSNPSharp.Apps
                         return false;
                     }
 
-                    MemoryStream ms = new MemoryStream(data);
+                    MemoryStream ms = new MemoryStream(allData);
                     ms.Position = 0;
 
                     // Data CHECKSUM is ok, update MsnObject

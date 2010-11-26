@@ -369,26 +369,20 @@ namespace MSNPSharp.Apps
         }
 
 
-        public override bool ProcessP2PMessage(P2PBridge bridge, P2PMessage msg)
+        public override bool ProcessData(P2PBridge bridge, byte[] data)
         {
-            if (msg.Header.SessionId == P2PSession.SessionId &&
-                msg.InnerBody.Length > 0)
+            _dataStream.Write(data, 0, data.Length);
+
+            OnProgressed(EventArgs.Empty);
+
+            if (_dataStream.Length == (long)_context.FileSize)
             {
-                _dataStream.Write(msg.InnerBody, 0, msg.InnerBody.Length);
-
-                OnProgressed(EventArgs.Empty);
-
-                if (_dataStream.Length == (long)_context.FileSize)
-                {
-                    // Finished transfer
-                    OnTransferFinished(EventArgs.Empty);
-                    P2PSession.Close();
-                }
-
-                return true;
+                // Finished transfer
+                OnTransferFinished(EventArgs.Empty);
+                P2PSession.Close();
             }
 
-            return false;
+            return true;
         }
     }
 };
