@@ -371,21 +371,6 @@ namespace MSNPSharp.P2P
 
                         OnP2PMessageReceived(new P2PMessageEventArgs(dcMessage));
 
-                        // If request ack is wanted send ack.
-                        if (dcMessage.Version == P2PVersion.P2PV2 &&
-                            dcMessage.V2Header.OperationCode == (byte)OperationCode.RAK)
-                        {
-                            SendMessage(dcMessage.CreateAcknowledgement());
-
-                            if (!dcMessage.IsSLPData)
-                            {
-                                goto DISPATCH;
-                            }
-                            return;
-                        }
-
-                    DISPATCH:
-
                         lock (MessageHandlers)
                         {
                             foreach (IMessageHandler handler in MessageHandlers)
