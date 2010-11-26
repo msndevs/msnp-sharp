@@ -55,6 +55,7 @@ namespace MSNPSharpClient
         private ToolStripMenuItem tongueOutToolStripMenuItem;
         private ContextMenuStrip onlineUsersDropDown;
         private ToolStripButton bMessageFontColor;
+        private OpenFileDialog openCustomEmoticonDialog;
         private ColorDialog dlgColor;
 
 
@@ -75,6 +76,7 @@ namespace MSNPSharpClient
             this.tongueOutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bMessageSendNudge = new System.Windows.Forms.ToolStripButton();
             this.tssMessageSeperator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.bMessageFontColor = new System.Windows.Forms.ToolStripButton();
             this.bMessageBold = new System.Windows.Forms.ToolStripButton();
             this.bMessageItalic = new System.Windows.Forms.ToolStripButton();
             this.bMessageUnderline = new System.Windows.Forms.ToolStripButton();
@@ -91,10 +93,10 @@ namespace MSNPSharpClient
             this.onlineUsersDropDown = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.btnSendFiles = new System.Windows.Forms.Button();
             this.displayUser = new System.Windows.Forms.PictureBox();
+            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.dlgColor = new System.Windows.Forms.ColorDialog();
-            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
-            this.bMessageFontColor = new System.Windows.Forms.ToolStripButton();
+            this.openCustomEmoticonDialog = new System.Windows.Forms.OpenFileDialog();
             this.panel1.SuspendLayout();
             this.tsMessage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
@@ -215,6 +217,15 @@ namespace MSNPSharpClient
             this.tssMessageSeperator1.Name = "tssMessageSeperator1";
             this.tssMessageSeperator1.Size = new System.Drawing.Size(6, 27);
             // 
+            // bMessageFontColor
+            // 
+            this.bMessageFontColor.Image = global::MSNPSharpClient.Properties.Resources.Color_fontHS;
+            this.bMessageFontColor.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bMessageFontColor.Name = "bMessageFontColor";
+            this.bMessageFontColor.Size = new System.Drawing.Size(60, 24);
+            this.bMessageFontColor.Text = "Color";
+            this.bMessageFontColor.Click += new System.EventHandler(this.bMessageFontColor_Click);
+            // 
             // bMessageBold
             // 
             this.bMessageBold.CheckOnClick = true;
@@ -285,7 +296,7 @@ namespace MSNPSharpClient
             "72"});
             this.cbMessageFontSize.MaxDropDownItems = 12;
             this.cbMessageFontSize.Name = "cbMessageFontSize";
-            this.cbMessageFontSize.Size = new System.Drawing.Size(90, 25);
+            this.cbMessageFontSize.Size = new System.Drawing.Size(90, 27);
             this.cbMessageFontSize.ToolTipText = "Font Size";
             this.cbMessageFontSize.SelectedIndexChanged += new System.EventHandler(this.cbMessageFontSize_SelectedIndexChanged);
             this.cbMessageFontSize.Validating += new System.ComponentModel.CancelEventHandler(this.cbMessageFontSize_Validating);
@@ -406,10 +417,6 @@ namespace MSNPSharpClient
             this.displayUser.TabIndex = 0;
             this.displayUser.TabStop = false;
             // 
-            // openFileDialog
-            // 
-            this.openFileDialog.Multiselect = true;
-            // 
             // richTextHistory
             // 
             this.richTextHistory.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
@@ -428,14 +435,14 @@ namespace MSNPSharpClient
             this.richTextHistory.Text = "";
             this.richTextHistory.TextColor = MSNPSharpClient.RtfRichTextBox.RtfColor.Black;
             // 
-            // bMessageFontColor
+            // openFileDialog
             // 
-            this.bMessageFontColor.Image = global::MSNPSharpClient.Properties.Resources.Color_fontHS;
-            this.bMessageFontColor.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.bMessageFontColor.Name = "bMessageFontColor";
-            this.bMessageFontColor.Size = new System.Drawing.Size(60, 24);
-            this.bMessageFontColor.Text = "Color";
-            this.bMessageFontColor.Click += new System.EventHandler(this.bMessageFontColor_Click);
+            this.openFileDialog.Multiselect = true;
+            // 
+            // openCustomEmoticonDialog
+            // 
+            this.openCustomEmoticonDialog.Filter = "Image File (*.png, *.jpg, *.bmp, *.gif|*.png;*.jpg;*.bmp;*.gif";
+            this.openCustomEmoticonDialog.Title = "Open Image to transfer as an custom emoticon";
             // 
             // ConversationForm
             // 
@@ -961,16 +968,20 @@ namespace MSNPSharpClient
 
         private void bMessageSendCustomEmoticon_Click(object sender, EventArgs e)
         {
+            if (openCustomEmoticonDialog.ShowDialog() != DialogResult.OK)
+                return;
+
             MemoryStream mem = new MemoryStream();
-            Properties.Resources.inner_emoticon.Save(mem, ImageFormat.Png);
-            Emoticon emotest = new Emoticon(_messenger.ContactList.Owner.Mail, mem, "0", "test_em");
+            Bitmap img = new Bitmap(Image.FromFile(openCustomEmoticonDialog.FileName));
+            img.Save(mem, ImageFormat.Png);
+            Emoticon emotest = new Emoticon(_messenger.Owner.Mail, mem, Path.GetFileName(openCustomEmoticonDialog.FileName), Path.GetFileName(openCustomEmoticonDialog.FileName));
             MSNObjectCatalog.GetInstance().Add(emotest);
             List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
 
             if (!richTextHistory.Emotions.ContainsKey(emotest.Shortcut))
             {
-                richTextHistory.Emotions[emotest.Shortcut] = Properties.Resources.inner_emoticon;
+                richTextHistory.Emotions[emotest.Shortcut] = img;
             }
 
             try
@@ -978,7 +989,7 @@ namespace MSNPSharpClient
                 ConversationID = _messenger.MessageManager.SendEmoticonDefinitions(ConversationID, emolist, EmoticonType.StaticEmoticon);
                 TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
                 ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, emotxt);
-                DisplaySystemMessage("You send a custom emoticon with text message: Hey, this is a custom emoticon: [test_em].");
+                DisplaySystemMessage("You send a custom emoticon with text message: Hey, this is a custom emoticon: [" + emotest.Shortcut + "].");
             }
             catch (Exception)
             {

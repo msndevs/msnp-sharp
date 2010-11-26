@@ -1038,7 +1038,10 @@ namespace MSNPSharp.DataTransfer
                 #region data preparation message for SB
 
                 // Send the data preparation (4 x 0x00) message
-                if (direct == false && TransferProperties.DataType == DataTransferType.DisplayImage)
+                // This is a MUST for all the MSNObject transfer (DisplayImage, CustomEmoticon.. etc)
+                if (direct == false && 
+                    (TransferProperties.DataType == DataTransferType.DisplayImage || 
+                    TransferProperties.DataType == DataTransferType.Emoticon))
                 {
                     P2PDataMessage p2pDataMessage = new P2PDataMessage(Version);
                     p2pDataMessage.WritePreparationBytes();
