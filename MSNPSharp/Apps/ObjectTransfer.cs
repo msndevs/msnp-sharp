@@ -184,6 +184,7 @@ namespace MSNPSharp.Apps
             if (data.Length == 4 && (BitUtility.ToInt32(data, 0, true) == 0))
             {
                 // Data prep
+                objStream.SetLength(0);
                 return true;
             }
             else
