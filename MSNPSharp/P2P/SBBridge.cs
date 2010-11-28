@@ -186,7 +186,7 @@ namespace MSNPSharp.P2P
             sbHandler.Messenger.Nameserver.P2PHandler.ProcessP2PMessage(this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
         }
 
-        public override void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
+        public override void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, AckHandler ackHandler)
         {
             if (sbHandler == null)
             {
@@ -197,7 +197,7 @@ namespace MSNPSharp.P2P
                 sbHandler.Invite(remote);
             }
 
-            base.Send(session, remote, remoteGuid, msg);
+            base.Send(session, remote, remoteGuid, msg, ackHandler);
         }
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
