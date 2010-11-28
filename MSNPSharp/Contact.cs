@@ -421,7 +421,7 @@ namespace MSNPSharp
 
                 EndPointData epData = EndPointData[randGuid];
 
-                return (ClientCapacitiesEx.CanP2PV2 == (epData.ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2))
+                return (ClientCapacities.CanHandleMSNC9 >= (epData.ClientCapacities & ClientCapacities.CanHandleMSNC9))
                     ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
             }
         }
