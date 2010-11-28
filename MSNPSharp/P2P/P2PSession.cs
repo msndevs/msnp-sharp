@@ -832,15 +832,10 @@ namespace MSNPSharp.P2P
 
             SetSequenceNumber(msg);
 
-            if (ackHandler != null)
-            {
-                nsMessageHandler.P2PHandler.RegisterAckHandler(msg, ackHandler);
-            }
-
             if (p2pBridge == null)
                 MigrateToOptimalBridge();
 
-            p2pBridge.Send(this, Remote, RemoteContactEndPointID, msg);
+            p2pBridge.Send(this, Remote, RemoteContactEndPointID, msg, ackHandler);
         }
 
         private void SetSequenceNumber(P2PMessage p2pMessage)
