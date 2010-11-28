@@ -149,12 +149,19 @@ namespace MSNPSharp.P2P
             return IsOpen && (sendingQueues[session].Count < queueSize) && (!stoppedSessions.Contains(session));
         }
 
-        public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
+        public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, AckHandler ackHandler)
         {
             if (remote == null)
                 throw new ArgumentNullException("remote");
 
+
             P2PMessage[] msgs = msg.SplitMessage(MaxDataSize);
+
+            if (ackHandler != null)
+            {
+                P2PMessage firstMessage = msgs[0];
+                remote.NSMessageHandler.P2PHandler.RegisterAckHandler(firstMessage, ackHandler);
+            }
 
             if (session == null)
             {
@@ -168,7 +175,9 @@ namespace MSNPSharp.P2P
 
                 // Bypass queueing
                 foreach (P2PMessage m in msgs)
+                {
                     SendOnePacket(null, remote, remoteGuid, m);
+                }
 
                 return;
             }
@@ -185,6 +194,12 @@ namespace MSNPSharp.P2P
 
             foreach (P2PMessage m in msgs)
                 sendQueues[session].Enqueue(remote, remoteGuid, m);
+
+            if (msg.Version == P2PVersion.P2PV2)
+            {
+                P2PMessage lastMsg = msgs[msgs.Length - 1];
+                session.LocalIdentifier = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
+            }
 
             ProcessSendQueues();
         }

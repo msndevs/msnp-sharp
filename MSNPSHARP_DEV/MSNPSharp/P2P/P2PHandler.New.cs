@@ -91,6 +91,10 @@ namespace MSNPSharp.P2P
                 return;
             }
 
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                String.Format("Received MSG\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
+
+
             // CHECK SLP: Check destination, source, endpoints
             SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
             if (slp != null)
@@ -106,9 +110,7 @@ namespace MSNPSharp.P2P
                 return;
             }
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                String.Format("Received MSG\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
-
+            
             // FIND SESSION: Search session by SessionId/ExpectedIdentifier
             P2PSession session = FindSession(p2pMessage, slp);
 
@@ -380,7 +382,7 @@ namespace MSNPSharp.P2P
                 }
                 else
                 {
-                    bridge.Send(null, source, sourceGuid, msg.CreateAcknowledgement());
+                    bridge.Send(null, source, sourceGuid, msg.CreateAcknowledgement(), null);
                     SendStatus(bridge, msg, source, sourceGuid, 404, "Not Found");
                 }
 
@@ -426,7 +428,7 @@ namespace MSNPSharp.P2P
             }
 
             //RegisterAckHandler(msg, delegate {});
-            bridge.Send(null, dest, destGuid, response);
+            bridge.Send(null, dest, destGuid, response, null);
         }
 
 
