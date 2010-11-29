@@ -141,7 +141,7 @@ namespace MSNPSharpClient
                 case "OK":
 
                     fileTransfer.DataStream = new FileStream(txtFilePath.Text, FileMode.Create, FileAccess.Write);
-                    fileTransfer.Accept();
+                    fileTransfer.Accept(true);
 
                     btnCancel.Visible = false;
 
