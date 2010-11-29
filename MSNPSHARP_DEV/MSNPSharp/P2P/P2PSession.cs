@@ -376,7 +376,7 @@ namespace MSNPSharp.P2P
 
                 if (p2pApplication.AutoAccept)
                 {
-                    Accept();
+                    Accept(false);
                 }
                 else
                 {
@@ -453,7 +453,7 @@ namespace MSNPSharp.P2P
             }
         }
 
-        public void Accept()
+        public void Accept(bool sendDCInvite)
         {
             if (status != P2PSessionStatus.WaitingForLocal)
             {
@@ -475,6 +475,9 @@ namespace MSNPSharp.P2P
 
                 Send(WrapSLPMessage(slpMessage), delegate(P2PMessage ack)
                 {
+                    if (sendDCInvite)
+                        SendDirectInvite();
+
                     OnActive(EventArgs.Empty);
 
                     if (p2pApplication != null)

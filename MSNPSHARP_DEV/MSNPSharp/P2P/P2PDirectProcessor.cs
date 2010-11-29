@@ -463,6 +463,18 @@ namespace MSNPSharp.P2P
                 p2pMessage = new P2PDCMessage(message as P2PMessage);
             }
 
+            SendMessage(p2pMessage, null);
+        }
+
+        public virtual void SendMessage(P2PMessage msg, P2PMessageSessionEventArgs se)
+        {
+            // if it is a regular message convert it
+            P2PDCMessage p2pMessage = msg as P2PDCMessage;
+            if (p2pMessage == null)
+            {
+                p2pMessage = new P2PDCMessage(msg);
+            }
+
             // prepare the message
             p2pMessage.PrepareMessage();
 
@@ -470,9 +482,9 @@ namespace MSNPSharp.P2P
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
 
             if (dcSocket != null)
-                SendSocketData(dcSocket, p2pMessage.GetBytes());
+                SendSocketData(dcSocket, p2pMessage.GetBytes(), se);
             else
-                SendSocketData(p2pMessage.GetBytes());
+                SendSocketData(p2pMessage.GetBytes(), se);
         }
 
         protected virtual void OnHandshakeCompleted(EventArgs e)

@@ -141,10 +141,12 @@ namespace MSNPSharp.P2P
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
             slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Req";
 
-            Send(WrapSLPMessage(slpMessage), null);
+            Send(WrapSLPMessage(slpMessage));
+
+            P2PMessage ping = new P2PMessage(Version);
+            Send(ping);
 
             _directNegotiationTimer = new Timer(new TimerCallback(DirectNegotiationTimedOut), this, directNegotiationTimeout, directNegotiationTimeout);
-
             // Stop sending until we receive a response to the direct invite or the timeout expires
             p2pBridge.StopSending(this);
         }

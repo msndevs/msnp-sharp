@@ -5,6 +5,8 @@ using System.Text;
 
 namespace MSNPSharp.P2P
 {
+    using MSNPSharp.Core;
+
     public class TCPv1Bridge : P2PBridge
     {
         private P2PSession startupSession = null;
@@ -14,7 +16,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return (directConnection != null && 
+                return (directConnection != null &&
                     directConnection.DCState == DirectConnectionState.Established);
             }
         }
@@ -57,6 +59,28 @@ namespace MSNPSharp.P2P
             directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, authNonce, isNeedHash, p2pSession);
             directConnection.HandshakeCompleted += new EventHandler<EventArgs>(directConnection_HandshakeCompleted);
             directConnection.P2PMessageReceived += new EventHandler<P2PMessageEventArgs>(directConnection_P2PMessageReceived);
+            directConnection.SendCompleted += new EventHandler<MSNPSharp.Core.ObjectEventArgs>(directConnection_SendCompleted);
+
+            directConnection.ConnectionClosed += new EventHandler<EventArgs>(directConnection_ConnectionClosed);
+            directConnection.ConnectingException += new EventHandler<ExceptionEventArgs>(directConnection_ConnectingException);
+            directConnection.ConnectionException += new EventHandler<ExceptionEventArgs>(directConnection_ConnectionException);
+        }
+
+        void directConnection_ConnectionException(object sender, ExceptionEventArgs e)
+        {
+            OnBridgeClosed(EventArgs.Empty);        
+
+        }
+
+        void directConnection_ConnectingException(object sender, ExceptionEventArgs e)
+        {
+            OnBridgeClosed(EventArgs.Empty);  
+
+        }
+
+        void directConnection_ConnectionClosed(object sender, EventArgs e)
+        {
+            OnBridgeClosed(EventArgs.Empty);  
         }
 
         public void Listen(IPAddress address, int port)
@@ -82,14 +106,12 @@ namespace MSNPSharp.P2P
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
         {
-            directConnection.SendMessage(msg);
-            try
-            {
-                OnBridgeSent(new P2PMessageSessionEventArgs(msg, session));
-            }
-            catch
-            {
-            }
+            directConnection.SendMessage(msg, new P2PMessageSessionEventArgs(msg, session));
+        }
+
+        private void directConnection_SendCompleted(object sender, ObjectEventArgs e)
+        {
+            OnBridgeSent(e.Object as P2PMessageSessionEventArgs);
         }
     }
 };
