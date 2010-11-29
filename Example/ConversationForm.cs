@@ -920,8 +920,7 @@ namespace MSNPSharpClient
 
         private void bMessageSendFiles_Click(object sender, EventArgs e)
         {
-            Conversation activeConversation = _messenger.MessageManager.GetConversation(activeconversationID);
-            if (activeConversation == null)
+            if (ConversationID.RemoteOwner.Online == false || ConversationID.RemoteOwner == null)
             {
                 DisplaySystemMessage("All contacts are offline or this contact doesn't support receiving files.");
                 return;
@@ -929,31 +928,14 @@ namespace MSNPSharpClient
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                List<Contact> contacts = new List<Contact>();
-                foreach (Contact contact in activeConversation.Contacts)
-                {
-                    if (contact.Online && contact.ClientType == ClientType.PassportMember &&
-                        contact.Mail != _messenger.ContactList.Owner.Mail)
-                    {
-                        contacts.Add(contact);
-                    }
-                }
-
-                if (contacts.Count == 0)
-                {
-                    DisplaySystemMessage("All contacts are offline or this contact doesn't support receiving files.");
-                    return;
-                }
 
                 try
                 {
-                    foreach (Contact contact in contacts)
+
+                    foreach (string filename in openFileDialog.FileNames)
                     {
-                        foreach (string filename in openFileDialog.FileNames)
-                        {
-                            FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                            P2PTransferSession session = _messenger.SendFile(contact, filename, fileStream);
-                        }
+                        FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        P2PTransferSession session = _messenger.SendFile(ConversationID.RemoteOwner, filename, fileStream);
                     }
                 }
                 catch (MSNPSharpException ex)
