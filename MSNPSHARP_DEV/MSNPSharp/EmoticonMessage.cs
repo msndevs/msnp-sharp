@@ -140,11 +140,8 @@ namespace MSNPSharp
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < emoticons.Count; i++)
             {
-                if (i > 0)
-                    builder.Append('\t');
-
                 Emoticon emoticon = (Emoticon)emoticons[i];
-                builder.Append(emoticon.Shortcut).Append('\t').Append(emoticon.ContextPlain);
+                builder.Append(emoticon.Shortcut).Append('\t').Append(emoticon.ContextPlain).Append('\t');
             }
             return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
         }

@@ -1796,22 +1796,21 @@ namespace MSNPSharp
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
             Contact contact = null;
             Circle circle = null;
-            ClientCapacities oldcaps = ClientCapacities.None;
-            ClientCapacitiesEx oldcapsex = ClientCapacitiesEx.None;
+            ClientCapacities newCaps = ClientCapacities.None;
+            ClientCapacitiesEx newCapsEx = ClientCapacitiesEx.None;
 
             if (message.CommandValues.Count >= 2)
             {
                 if (message.CommandValues[1].ToString().Contains(":"))
                 {
-                    oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
-                    oldcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
+                    newCaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
+                    newCapsEx = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
                 }
                 else
                 {
-                    oldcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
+                    newCaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
                 }
             }
-
 
             if (fullaccount.Contains(CircleString.ViaCircleGroupSplitter))
             {
@@ -1889,6 +1888,14 @@ namespace MSNPSharp
 
                 if (contact != null)
                 {
+                    lock (contact.EndPointData)
+                    {
+                        contact.EndPointData.Clear();
+                        contact.EndPointData[Guid.Empty] = new EndPointData(contact.Mail.ToLowerInvariant(), Guid.Empty);
+                        contact.EndPointData[Guid.Empty].ClientCapacities = newCaps;
+                        contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newCapsEx;
+                    }
+
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 3 && type == ClientType.EmailMember)
                     {
                         string newdp = message.CommandValues[2].ToString();

@@ -415,14 +415,18 @@ namespace MSNPSharp
             get
             {
                 Guid randGuid = SelectRandomEPID();
-
-                if (randGuid == Guid.Empty)
-                    return P2PVersion.P2PV1;
-
                 EndPointData epData = EndPointData[randGuid];
+                ClientCapacities msnc = (epData.ClientCapacities & ClientCapacities.CanHandleMSNCMask);
 
-                return (ClientCapacities.CanHandleMSNC9 >= (epData.ClientCapacities & ClientCapacities.CanHandleMSNC9))
-                    ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+                if (msnc > ClientCapacities.None)
+                {
+                    return (msnc < ClientCapacities.CanHandleMSNC9) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                }
+
+                // Caps hasn't received yet or user is offline. Caps are received by:
+                // NS: UBX
+                // SB: JOI/IRO
+                return P2PVersion.None;
             }
         }
 
