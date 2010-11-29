@@ -104,23 +104,26 @@ namespace MSNPSharp.Apps
         {
             bool ret = base.ValidateInvitation(invite);
 
-            MSNObject validObject = new MSNObject();
-            msnObject.SetContext(invite.BodyValues["Context"].Value, true);
-
-
-            if ((msnObject.ObjectType == MSNObjectType.UserDisplay || msnObject.ObjectType == MSNObjectType.Unknown))
+            if (ret)
             {
-                validObject = Local.DisplayImage;
-                objStream = Local.DisplayImage.OpenStream();
-                ret |= true;
-            }
-            else if (msnObject.ObjectType == MSNObjectType.Emoticon &&
-                Local.Emoticons.ContainsKey(validObject.Sha))
-            {
-                msnObject = Local.Emoticons[msnObject.Sha];
-                objStream = ((Emoticon)msnObject).OpenStream();
+                MSNObject validObject = new MSNObject();
+                validObject.SetContext(invite.BodyValues["Context"].Value, true);
 
-                ret |= true;
+                if (validObject.ObjectType == MSNObjectType.UserDisplay ||
+                    validObject.ObjectType == MSNObjectType.Unknown)
+                {
+                    msnObject = Local.DisplayImage;
+                    objStream = Local.DisplayImage.OpenStream();
+                    ret |= true;
+                }
+                else if (validObject.ObjectType == MSNObjectType.Emoticon &&
+                    Local.Emoticons.ContainsKey(validObject.Sha))
+                {
+                    msnObject = Local.Emoticons[msnObject.Sha];
+                    objStream = ((Emoticon)msnObject).OpenStream();
+
+                    ret |= true;
+                }
             }
 
             return ret;
