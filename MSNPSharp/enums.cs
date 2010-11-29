@@ -937,12 +937,13 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// The current p2p version used in sb data transfer
+    /// The current p2p version used in p2p bridge.
     /// </summary>
     public enum P2PVersion
     {
-        P2PV1,
-        P2PV2
+        None = 0,
+        P2PV1 = 1,
+        P2PV2 = 2
     }
 
 
