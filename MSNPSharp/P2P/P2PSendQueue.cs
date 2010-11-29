@@ -72,15 +72,21 @@ namespace MSNPSharp.P2P
     {
         public void Add(Contact remote, Guid remoteGuid, P2PMessage message)
         {
-            base.Add(new P2PSendItem(remote, remoteGuid, message));
+            lock (this)
+            {
+                base.Add(new P2PSendItem(remote, remoteGuid, message));
+            }
         }
 
         public bool Contains(P2PMessage msg)
         {
-            foreach (P2PSendItem item in this)
+            lock (this)
             {
-                if (item.P2PMessage == msg)
-                    return true;
+                foreach (P2PSendItem item in this)
+                {
+                    if (item.P2PMessage == msg)
+                        return true;
+                }
             }
 
             return false;
@@ -88,12 +94,15 @@ namespace MSNPSharp.P2P
 
         public void Remove(P2PMessage msg)
         {
-            foreach (P2PSendItem item in this)
+            lock (this)
             {
-                if (item.P2PMessage == msg)
+                foreach (P2PSendItem item in this)
                 {
-                    Remove(item);
-                    return;
+                    if (item.P2PMessage == msg)
+                    {
+                        Remove(item);
+                        return;
+                    }
                 }
             }
 

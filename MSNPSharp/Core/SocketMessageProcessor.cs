@@ -44,6 +44,24 @@ namespace MSNPSharp.Core
 {
     using MSNPSharp;
 
+    public class ObjectEventArgs : EventArgs
+    {
+        private object _object;
+
+        public ObjectEventArgs(object obj)
+        {
+            _object = obj;
+        }
+
+        public object Object
+        {
+            get
+            {
+                return _object;
+            }
+        }
+    };
+
     public abstract class SocketMessageProcessor : IMessageProcessor, IDisposable
     {
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
@@ -58,6 +76,8 @@ namespace MSNPSharp.Core
         public event EventHandler<EventArgs> ConnectionClosed;
         public event EventHandler<ExceptionEventArgs> ConnectingException;
         public event EventHandler<ExceptionEventArgs> ConnectionException;
+
+        public event EventHandler<ObjectEventArgs> SendCompleted;
 
         public SocketMessageProcessor(ConnectivitySettings connectivitySettings)
         {
@@ -167,11 +187,42 @@ namespace MSNPSharp.Core
 
         protected virtual void EndSendCallback(IAsyncResult ar)
         {
-            ProxySocket socket = (ProxySocket)ar.AsyncState;
-            socket.EndSend(ar);
+            SocketSendState state = (SocketSendState)ar.AsyncState;
+            Socket socket = state.Socket;
+            try
+            {
+                socket.EndSend(ar);
+
+                if (state.UserData != null)
+                {
+                    OnSendCompleted(new ObjectEventArgs(state.UserData));
+                }
+            }
+            catch (SocketException sex)
+            {
+                if (sex.NativeErrorCode != 10035)  //10035: WSAEWOULDBLOCK
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error while sending network message. Error message: " + sex.Message);
+                    OnDisconnected();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // the connection is closed
+                OnDisconnected();
+            }
+            catch (Exception e)
+            {
+                throw new MSNPSharpException("Error while sending network message. See the inner exception for more details.", e);
+            }
         }
 
         protected void SendSocketData(byte[] data)
+        {
+            SendSocketData(socket, data, null);
+        }
+
+        protected void SendSocketData(byte[] data, object userState)
         {
             if (socket == null || !Connected)
             {
@@ -180,10 +231,10 @@ namespace MSNPSharp.Core
                 return;
             }
 
-            SendSocketData(socket, data);
+            SendSocketData(socket, data, userState);
         }
 
-        protected void SendSocketData(Socket psocket, byte[] data)
+        protected void SendSocketData(Socket psocket, byte[] data, object userState)
         {
             try
             {
@@ -191,7 +242,8 @@ namespace MSNPSharp.Core
                 {
                     lock (psocket)
                     {
-                        psocket.Send(data);
+                        SocketSendState state = new SocketSendState(psocket, userState);
+                        psocket.BeginSend(data, 0, data.Length, SocketFlags.None, EndSendCallback, state);
                     }
                 }
                 else
@@ -208,6 +260,11 @@ namespace MSNPSharp.Core
                 }
 
                 return;
+            }
+            catch (ObjectDisposedException)
+            {
+                // the connection is closed
+                OnDisconnected();
             }
             catch (Exception e)
             {
@@ -342,6 +399,12 @@ namespace MSNPSharp.Core
 
             if (ConnectionClosed != null)
                 ConnectionClosed(this, new EventArgs());
+        }
+
+        protected virtual void OnSendCompleted(ObjectEventArgs e)
+        {
+            if (SendCompleted != null)
+                SendCompleted(this, e);
         }
 
         public ConnectivitySettings ConnectivitySettings
@@ -564,6 +627,18 @@ namespace MSNPSharp.Core
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        private class SocketSendState
+        {
+            public Socket Socket;
+            public object UserData;
+
+            public SocketSendState(Socket socket, object userData)
+            {
+                this.Socket = socket;
+                this.UserData = userData;
+            }
         }
     }
 };
