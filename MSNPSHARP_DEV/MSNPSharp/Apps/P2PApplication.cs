@@ -305,9 +305,9 @@ namespace MSNPSharp.Apps
             OnTransferStarted(EventArgs.Empty);
         }
 
-        public virtual void Accept()
+        public virtual void Accept(bool sendDCInvite)
         {
-            p2pSession.Accept();
+            p2pSession.Accept(sendDCInvite);
         }
 
         public virtual void Decline()
