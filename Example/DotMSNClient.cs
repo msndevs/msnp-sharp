@@ -1219,7 +1219,7 @@ namespace MSNPSharpClient
                     "Activity invitation",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    e.P2PSession.Accept();
+                    e.P2PSession.Accept(false);
                 }
             }
         }
