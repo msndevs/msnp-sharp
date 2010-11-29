@@ -104,22 +104,25 @@ namespace MSNPSharp.Apps
         {
             bool ret = base.ValidateInvitation(invite);
 
-            /*
-            MSNObject obj = MsnObject.Load(invite.Session, EncodingUtility.Base64DecodeSafe(invite.MIMEBody["Context"].Value));
+            MSNObject validObject = new MSNObject();
+            msnObject.SetContext(invite.BodyValues["Context"].Value, true);
 
-            if (obj != null)
-            {
-                // Invite is valid if the objects creator is the local account & the object has data
-                ret &= (obj.Creator == invite.Session.Account) && (obj.Data != null) && (obj.Data.Length > 0);
-            }
-            else
-            {
-                // Sometimes (especially with bots) the invite doesn't give us the object in the context
-                // so we accept that and send them the account display pic if we have one
 
-                ret &= invite.Session.Account.DisplayImage is MsnDisplayImage;
+            if ((msnObject.ObjectType == MSNObjectType.UserDisplay || msnObject.ObjectType == MSNObjectType.Unknown))
+            {
+                validObject = Local.DisplayImage;
+                objStream = Local.DisplayImage.OpenStream();
+                ret |= true;
             }
-            */
+            else if (msnObject.ObjectType == MSNObjectType.Emoticon &&
+                Local.Emoticons.ContainsKey(validObject.Sha))
+            {
+                msnObject = Local.Emoticons[msnObject.Sha];
+                objStream = ((Emoticon)msnObject).OpenStream();
+
+                ret |= true;
+            }
+
             return ret;
         }
 
@@ -169,7 +172,6 @@ namespace MSNPSharp.Apps
 
                 SendMessage(msg, delegate(P2PMessage ack)
                 {
-                    Abort();
                     OnTransferFinished(EventArgs.Empty);
                 });
             }
