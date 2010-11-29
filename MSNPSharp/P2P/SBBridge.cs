@@ -233,15 +233,12 @@ namespace MSNPSharp.P2P
 
                 if (e.Success)
                 {
-                    p2pAckMessages.Remove(e.MessageID);
                     OnBridgeSent(p2pe);
                 }
                 else
                 {
-                    p2pAckMessages.Remove(e.MessageID);
-
-                    // Try Again???
-                    // sbHandler.Switchboard.MessageProcessor.SendMessage(p2pAckMessages[ackId].P2PMessage);
+                    // Try Again...
+                    SendOnePacket(p2pe.P2PSession, p2pe.P2PSession.Remote, p2pe.P2PSession.RemoteContactEndPointID, p2pe.P2PMessage);
                 }
             }
         }
