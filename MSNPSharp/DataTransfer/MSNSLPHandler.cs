@@ -1782,7 +1782,7 @@ namespace MSNPSharp.DataTransfer
                                 if (MessageSession.DirectConnected == false && MessageSession.DirectConnectionAttempt == false)
                                     SendDCInvitation(properties);
 
-                                session.StartDataTransfer(true);
+                                session.StartDataTransfer(false);
 
                                 break;
 
