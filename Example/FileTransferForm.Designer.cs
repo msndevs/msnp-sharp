@@ -44,9 +44,9 @@ namespace MSNPSharpClient
             // lblFile
             // 
             this.lblFile.AutoSize = true;
-            this.lblFile.Location = new System.Drawing.Point(18, 9);
+            this.lblFile.Location = new System.Drawing.Point(18, 8);
             this.lblFile.Name = "lblFile";
-            this.lblFile.Size = new System.Drawing.Size(23, 13);
+            this.lblFile.Size = new System.Drawing.Size(29, 12);
             this.lblFile.TabIndex = 0;
             this.lblFile.Text = "File";
             // 
@@ -54,16 +54,16 @@ namespace MSNPSharpClient
             // 
             this.txtFilePath.Location = new System.Drawing.Point(64, 6);
             this.txtFilePath.Name = "txtFilePath";
-            this.txtFilePath.Size = new System.Drawing.Size(270, 20);
+            this.txtFilePath.Size = new System.Drawing.Size(270, 21);
             this.txtFilePath.TabIndex = 3;
             this.txtFilePath.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // btnOK
             // 
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnOK.Location = new System.Drawing.Point(182, 90);
+            this.btnOK.Location = new System.Drawing.Point(182, 83);
             this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(150, 40);
+            this.btnOK.Size = new System.Drawing.Size(150, 37);
             this.btnOK.TabIndex = 6;
             this.btnOK.Tag = "OK";
             this.btnOK.Text = "OK";
@@ -73,9 +73,9 @@ namespace MSNPSharpClient
             // btnCancel
             // 
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(182, 136);
+            this.btnCancel.Location = new System.Drawing.Point(182, 126);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(150, 40);
+            this.btnCancel.Size = new System.Drawing.Size(150, 37);
             this.btnCancel.TabIndex = 7;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -83,9 +83,9 @@ namespace MSNPSharpClient
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(64, 61);
+            this.progressBar.Location = new System.Drawing.Point(64, 56);
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(270, 23);
+            this.progressBar.Size = new System.Drawing.Size(270, 21);
             this.progressBar.Step = 1;
             this.progressBar.TabIndex = 8;
             this.progressBar.Visible = false;
@@ -93,9 +93,9 @@ namespace MSNPSharpClient
             // button1
             // 
             this.button1.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.button1.Location = new System.Drawing.Point(254, 32);
+            this.button1.Location = new System.Drawing.Point(254, 30);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(80, 23);
+            this.button1.Size = new System.Drawing.Size(80, 21);
             this.button1.TabIndex = 9;
             this.button1.Text = "Browse...";
             this.button1.UseVisualStyleBackColor = true;
@@ -103,42 +103,41 @@ namespace MSNPSharpClient
             // 
             // saveFileDialog
             // 
-            this.saveFileDialog.CheckFileExists = true;
             this.saveFileDialog.RestoreDirectory = true;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(18, 37);
+            this.label1.Location = new System.Drawing.Point(18, 34);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(27, 13);
+            this.label1.Size = new System.Drawing.Size(29, 12);
             this.label1.TabIndex = 10;
             this.label1.Text = "Size";
             // 
             // lblSize
             // 
             this.lblSize.AutoSize = true;
-            this.lblSize.Location = new System.Drawing.Point(61, 37);
+            this.lblSize.Location = new System.Drawing.Point(61, 34);
             this.lblSize.Name = "lblSize";
-            this.lblSize.Size = new System.Drawing.Size(32, 13);
+            this.lblSize.Size = new System.Drawing.Size(35, 12);
             this.lblSize.TabIndex = 11;
             this.lblSize.Text = "bytes";
             // 
             // pictureBox1
             // 
-            this.pictureBox1.Location = new System.Drawing.Point(64, 90);
+            this.pictureBox1.Location = new System.Drawing.Point(64, 83);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(100, 94);
+            this.pictureBox1.Size = new System.Drawing.Size(100, 87);
             this.pictureBox1.TabIndex = 12;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Visible = false;
             // 
             // FileTransferForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(344, 196);
+            this.ClientSize = new System.Drawing.Size(344, 181);
             this.ControlBox = false;
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.lblSize);
