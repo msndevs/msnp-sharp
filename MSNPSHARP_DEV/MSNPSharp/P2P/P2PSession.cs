@@ -323,8 +323,20 @@ namespace MSNPSharp.P2P
                 remoteContactEndPointID = slp.FromEndPoint;
             }
 
-            localBaseIdentifier = (uint)random.Next(50000, int.MaxValue);
-            localIdentifier = localBaseIdentifier;
+            P2PBridge bridge = (remoteContact.DirectBridge != null)
+                ? remoteContact.DirectBridge : ns.P2PHandler.GetBridge(this);
+
+            if (bridge != null && bridge.localIDBridge != 0)
+            {
+                localBaseIdentifier = bridge.localIDBridge;
+                localIdentifier = localBaseIdentifier;
+            }
+            else
+            {
+                localBaseIdentifier = (uint)random.Next(50000, int.MaxValue);
+                localIdentifier = localBaseIdentifier;
+            }
+
             if (!uint.TryParse(slp.BodyValues["SessionID"].Value, out sessionId))
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
