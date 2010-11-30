@@ -297,6 +297,9 @@ namespace MSNPSharp.Apps
 
         private void SendChunk()
         {
+            if (!_sendingData)
+                return;
+
             P2PDataMessage p2pChunk = new P2PDataMessage(P2PVersion);
 
             long offset = _dataStream.Position;
@@ -343,13 +346,15 @@ namespace MSNPSharp.Apps
 
             if (_dataStream.Position == _dataStream.Length)
             {
+                _sendingData = false;
+                SendMessage(p2pChunk);
+
                 // This is the last chunk of data, register the ACKHandler
-                SendMessage(p2pChunk, delegate
+                P2PMessage rak = new P2PMessage(P2PVersion);
+                SendMessage(rak, delegate(P2PMessage ack)
                 {
                     OnTransferFinished(EventArgs.Empty);
                 });
-
-                _sendingData = false;
             }
             else
             {

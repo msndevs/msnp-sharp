@@ -39,7 +39,7 @@ using System.Runtime.InteropServices;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
-    
+
     [Serializable()]
     public class DisplayImage : MSNObject
     {
@@ -50,12 +50,11 @@ namespace MSNPSharp
 
         public bool IsDefaultImage
         {
-            get 
-            { 
-                return isDefaultImage; 
+            get
+            {
+                return isDefaultImage;
             }
-
-            internal set
+            protected internal set
             {
                 isDefaultImage = value;
             }
@@ -116,6 +115,13 @@ namespace MSNPSharp
 
                     return image == null ? null : image.Clone() as Image;
                 }
+            }
+            internal protected set
+            {
+                image = value;
+                image.Save(DataStream, image.RawFormat);
+
+                RetrieveImage();
             }
         }
 

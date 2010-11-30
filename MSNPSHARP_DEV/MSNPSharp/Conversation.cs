@@ -39,6 +39,7 @@ using System.Collections.Generic;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.Apps;
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
 
@@ -48,7 +49,10 @@ namespace MSNPSharp
 
         public object InnerObject
         {
-            get { return innerObject; }
+            get
+            {
+                return innerObject;
+            }
         }
     }
 
@@ -57,7 +61,9 @@ namespace MSNPSharp
 
     }
 
-    internal class NudgeObject : MessageObject { }
+    internal class NudgeObject : MessageObject
+    {
+    }
     internal class TextMessageObject : MessageObject
     {
         public TextMessageObject(TextMessage message)
@@ -72,7 +78,10 @@ namespace MSNPSharp
 
         public EmoticonType Type
         {
-            get { return type; }
+            get
+            {
+                return type;
+            }
         }
         public EmoticonObject(List<Emoticon> iconlist, EmoticonType icontype)
         {
@@ -114,35 +123,16 @@ namespace MSNPSharp
         private ConversationType _type = ConversationType.None;
         private int keepalivePeriod = 30000;
 
-        private Timer keepaliveTimer = null; 
+        private Timer keepaliveTimer = null;
         #endregion
-
-        private void transferSession_TransferAborted(object sender, EventArgs e)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
-            /*NEWP2P,TODO,XXX:
-            P2PTransferSession session = sender as P2PTransferSession;
-            OnMSNObjectDataTransferCompleted(sender,
-                new MSNObjectDataTransferCompletedEventArgs(session.ClientData as MSNObject, true, session.TransferProperties.RemoteContact, session.TransferProperties.RemoteContactEndPointID));
-             */
-        }
-
-        private void transferSession_TransferFinished(object sender, EventArgs e)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
-            /*NEWP2P,TODO,XXX:
-            P2PTransferSession session = sender as P2PTransferSession;
-            OnMSNObjectDataTransferCompleted(sender,
-                new MSNObjectDataTransferCompletedEventArgs(session.ClientData as MSNObject, false, session.TransferProperties.RemoteContact, session.TransferProperties.RemoteContactEndPointID));
-            */
-        }
 
         private bool AddContact(Contact contact)
         {
             lock (_contacts)
             {
                 if (_contacts.Contains(contact))
-                    return false; ;
+                    return false;
+
                 _contacts.Add(contact);
             }
 
@@ -170,7 +160,7 @@ namespace MSNPSharp
             {
                 if ((convers.Type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
                 {
-                    if (convers.conversationState >= ConversationState.SwitchboardRequestSent && 
+                    if (convers.conversationState >= ConversationState.SwitchboardRequestSent &&
                         convers.conversationState < ConversationState.SwitchboardEnded)
                     {
                         convers._switchboard.SendKeepAliveMessage();
@@ -298,7 +288,7 @@ namespace MSNPSharp
                 {
                     Switchboard.Close();
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -367,16 +357,16 @@ namespace MSNPSharp
         #region Protected
 
         protected void OnMSNObjectDataTransferCompleted(object sender, MSNObjectDataTransferCompletedEventArgs e)
-        {/*NEWP2P,TODO,XXX:
+        {
             if (MSNObjectDataTransferCompleted != null)
-                MSNObjectDataTransferCompleted(this, new ConversationMSNObjectDataTransferCompletedEventArgs(sender as P2PTransferSession, e));
-          * */
+                MSNObjectDataTransferCompleted(this, new ConversationMSNObjectDataTransferCompletedEventArgs((Conversation)sender, e));
         }
 
 
         protected virtual void OnConversationEnded(Conversation conversation)
         {
-            if (Ended) return;
+            if (Ended)
+                return;
             Ended = true;
 
             conversationState = ConversationState.ConversationEnded;
@@ -388,7 +378,7 @@ namespace MSNPSharp
 
             _messenger.Conversations.Remove(this);
 
-            
+
             ClearContacts();
 
             lock (_pendingInviteContacts)
@@ -407,7 +397,7 @@ namespace MSNPSharp
             Messenger.Nameserver.P2PHandler.GetBridge(this);
 
             if (P2PMessageReceived != null)
-            {                
+            {
                 P2PMessageReceived(this, e);
             }
         }
@@ -491,45 +481,52 @@ namespace MSNPSharp
                 ExceptionOccurred(this, e);
         }
 
-        protected virtual void OnEmoticonDefinitionReceived(object sender, EmoticonDefinitionEventArgs e)
+        protected virtual void OnEmoticonDefinitionReceived(object sender, EmoticonDefinitionEventArgs ex)
         {
             _type |= ConversationType.Chat;
             if (AutoRequestEmoticons == false)
                 return;
 
-            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
+            MSNObject existing = MSNObjectCatalog.GetInstance().Get(ex.Emoticon.CalculateChecksum());
             if (existing == null)
             {
-                e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
-                /*NEWP2P,TODO,XXX:
+                ex.Sender.Emoticons[ex.Emoticon.Sha] = ex.Emoticon;
+
                 // create a session and send the invitation
-                P2PMessageSession session = Messenger.P2PHandler.GetSession(Messenger.ContactList.Owner, Messenger.ContactList.Owner.MachineGuid, e.Sender, e.Sender.SelectRandomEPID());
+                ObjectTransfer emoticonTransfer = _messenger.RequestMsnObject(ex.Sender, ex.Emoticon);
+                emoticonTransfer.TransferAborted += new EventHandler<ContactEventArgs>(transferSession_TransferAborted);
+                emoticonTransfer.TransferFinished += new EventHandler<EventArgs>(transferSession_TransferFinished);
 
-                MSNSLPHandler msnslpHandler = session.MasterSession;
-                if (msnslpHandler != null)
-                {
-                    P2PTransferSession transferSession = msnslpHandler.SendInvitation(session.LocalContact, session.RemoteContact, e.Emoticon);
-                    transferSession.DataStream = e.Emoticon.OpenStream();
-                    transferSession.ClientData = e.Emoticon;
-
-                    transferSession.TransferAborted += new EventHandler<EventArgs>(transferSession_TransferAborted);
-                    transferSession.TransferFinished += new EventHandler<EventArgs>(transferSession_TransferFinished);
-
-                    MSNObjectCatalog.GetInstance().Add(e.Emoticon);
-                }
-                else
-                    throw new MSNPSharpException("No MSNSLPHandler was attached to the p2p message session. An emoticon invitation message could not be send.");
-                 * */
+                MSNObjectCatalog.GetInstance().Add(ex.Emoticon);
             }
             else
             {
                 //If exists, fire the event.
-                OnMSNObjectDataTransferCompleted(sender, new MSNObjectDataTransferCompletedEventArgs(existing, false, e.Sender, Guid.Empty));
+                OnMSNObjectDataTransferCompleted(this, new MSNObjectDataTransferCompletedEventArgs(existing, false, ex.Sender, Guid.Empty));
             }
 
-
             if (EmoticonDefinitionReceived != null)
-                EmoticonDefinitionReceived(this, e);
+                EmoticonDefinitionReceived(this, ex);
+        }
+
+        private void transferSession_TransferAborted(object objectTransfer, ContactEventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
+
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+
+            OnMSNObjectDataTransferCompleted(this,
+                new MSNObjectDataTransferCompletedEventArgs(session.Object, true, session.Remote, session.remoteEP));
+        }
+
+        private void transferSession_TransferFinished(object objectTransfer, EventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
+
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+
+            OnMSNObjectDataTransferCompleted(this,
+                new MSNObjectDataTransferCompletedEventArgs(session.Object, false, session.Remote, session.remoteEP));
         }
 
         protected virtual void OnContactLeft(object sender, ContactConversationEventArgs e)
@@ -733,12 +730,12 @@ namespace MSNPSharp
         #endregion
 
         #region Public
-        /*
+
         /// <summary>
         /// Fired when the data transfer for a MSNObject finished or aborted.
         /// </summary>
-       NEWP2P,TODO,XXX: public event EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
-        */
+        public event EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs> MSNObjectDataTransferCompleted;
+
         /// <summary>
         /// Occurs when a new conversation is ended (all contacts in the conversation have left or <see cref="Conversation.End()"/> is called).
         /// </summary>
@@ -759,9 +756,9 @@ namespace MSNPSharp
         /// </summary>
         public List<Contact> Contacts
         {
-            get 
-            { 
-                return _contacts; 
+            get
+            {
+                return _contacts;
             }
         }
 
@@ -770,7 +767,10 @@ namespace MSNPSharp
         /// </summary>
         public ConversationType Type
         {
-            get { return _type; }
+            get
+            {
+                return _type;
+            }
         }
 
         /// <summary>
@@ -779,7 +779,7 @@ namespace MSNPSharp
         /// </summary>
         public bool Ended
         {
-            get 
+            get
             {
                 lock (_syncObject)
                     return ended;
@@ -862,7 +862,10 @@ namespace MSNPSharp
         /// </summary>
         public int KeepAliveMessagePeriod
         {
-            get { return keepalivePeriod / 1000; }
+            get
+            {
+                return keepalivePeriod / 1000;
+            }
             set
             {
                 keepalivePeriod = value * 1000;
@@ -912,7 +915,10 @@ namespace MSNPSharp
         /// </summary>
         public Contact RemoteOwner
         {
-            get { return _firstContact; }
+            get
+            {
+                return _firstContact;
+            }
         }
 
         #endregion
@@ -952,14 +958,14 @@ namespace MSNPSharp
         /// <exception cref="NotSupportedException">Inviting mutiple YIM users into a YIM conversation, invite YIM users to a switchboard conversation, or passport members are invited into YIM conversation.</exception>
         public SBMessageHandler Invite(string contactMail, ClientType type)
         {
-            if ((_type & ConversationType.YIM) == ConversationType.YIM && 
+            if ((_type & ConversationType.YIM) == ConversationType.YIM &&
                 type != ClientType.EmailMember)
             {
                 throw new NotSupportedException("Only Yahoo messenger users can be invited in a YIM conversation.");
             }
 
 
-            if ((_type & ConversationType.YIM) == ConversationType.YIM && 
+            if ((_type & ConversationType.YIM) == ConversationType.YIM &&
                 type == ClientType.EmailMember)
             {
                 if (_contacts.Count > 1)
@@ -967,7 +973,7 @@ namespace MSNPSharp
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard &&
-                (type != ClientType.PassportMember && 
+                (type != ClientType.PassportMember &&
                 type != ClientType.LCS))
             {
                 throw new NotSupportedException("Only Passport members can be invited in a switchboard conversation.");
@@ -1032,10 +1038,10 @@ namespace MSNPSharp
                     {
                         _type |= ConversationType.MutipleUsers;
                     }
-                   
+
 
                 }
-                 #endregion
+                #endregion
 
             }
 
