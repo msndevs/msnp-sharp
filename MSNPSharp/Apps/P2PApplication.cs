@@ -141,7 +141,7 @@ namespace MSNPSharp.Apps
                 "Application created: " + ver, GetType().Name);
         }
 
-        
+
         #endregion
 
         #region Properties
@@ -307,17 +307,27 @@ namespace MSNPSharp.Apps
 
         public virtual void Accept(bool sendDCInvite)
         {
+            if (WarnIfP2PSessionDisposed("accept"))
+                return;
+
             p2pSession.Accept(sendDCInvite);
         }
 
         public virtual void Decline()
         {
+            if (WarnIfP2PSessionDisposed("decline"))
+                return;
+
             p2pSession.Decline();
         }
 
         public virtual void Abort()
         {
             OnTransferAborted(new ContactEventArgs(Local));
+
+            if (WarnIfP2PSessionDisposed("abort"))
+                return;
+
             p2pSession.Close();
         }
 
@@ -410,6 +420,18 @@ namespace MSNPSharp.Apps
             }
         }
 
+        private bool WarnIfP2PSessionDisposed(string actionRequested)
+        {
+            if (p2pSession == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    String.Format("P2P session disposed, so you cannot {0}. Application status: {1}", actionRequested, ApplicationStatus), GetType().Name);
+
+                return true;
+            }
+            return false;
+        }
+
         #endregion
 
         #region Static
@@ -436,13 +458,13 @@ namespace MSNPSharp.Apps
             try
             {
                 int added = AddApplication(Assembly.GetExecutingAssembly());
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, 
-                    String.Format("Added {0} built-in p2p applications", added), "P2PApplication");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    String.Format("Registered {0} built-in p2p applications", added), "P2PApplication");
             }
             catch (Exception e)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
-                    "Error loading built-in p2p applications: " + e.Message, "P2PApplication");
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    "Error registering built-in p2p applications: " + e.Message, "P2PApplication");
             }
         }
 

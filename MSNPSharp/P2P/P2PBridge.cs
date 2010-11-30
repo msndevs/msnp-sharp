@@ -84,6 +84,8 @@ namespace MSNPSharp.P2P
 
         private static uint bridgeCount = 0;
 
+        protected internal uint localIDBridge = 0;
+
         protected uint bridgeID = ++bridgeCount;
         protected int queueSize = 0;
         protected Dictionary<P2PSession, P2PSendQueue> sendQueues = new Dictionary<P2PSession, P2PSendQueue>();
@@ -198,6 +200,7 @@ namespace MSNPSharp.P2P
             if (msg.Version == P2PVersion.P2PV2)
             {
                 P2PMessage lastMsg = msgs[msgs.Length - 1];
+                localIDBridge = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
                 session.LocalIdentifier = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
             }
 
