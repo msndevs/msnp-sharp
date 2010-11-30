@@ -31,6 +31,9 @@ namespace MSNPSharp.Apps
         {
             get
             {
+                if (msnObject.ObjectType == MSNObjectType.UserDisplay)
+                    return Convert.ToBase64String(Encoding.UTF8.GetBytes(Remote.UserTileLocation));
+
                 return Convert.ToBase64String(Encoding.UTF8.GetBytes(msnObject.ContextPlain));
             }
         }
