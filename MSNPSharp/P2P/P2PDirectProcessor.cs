@@ -68,6 +68,7 @@ namespace MSNPSharp.P2P
         private bool isListener = false;
         private Socket dcSocket = null;
         private P2PSession startupSession = null;
+        private NSMessageHandler nsMessageHandler = null;
         private DirectConnectionState dcState = DirectConnectionState.Closed;
 
         public P2PVersion Version
@@ -122,7 +123,8 @@ namespace MSNPSharp.P2P
             ConnectivitySettings connectivitySettings,
             P2PVersion p2pVersion,
             Guid authNonce, bool isNeedHash,
-            P2PSession p2pMessageSession)
+            P2PSession p2pMessageSession,
+            NSMessageHandler nsMessageHandler)
             : base(connectivitySettings)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
@@ -131,6 +133,7 @@ namespace MSNPSharp.P2P
             this.nonce = authNonce;
             this.needHash = isNeedHash;
             this.startupSession = p2pMessageSession;
+            this.nsMessageHandler = nsMessageHandler;
             this.MessagePool = new P2PDCPool();
         }
 

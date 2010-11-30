@@ -9,6 +9,7 @@ namespace MSNPSharp.P2P
 
     public class TCPv1Bridge : P2PBridge
     {
+        private NSMessageHandler nsMessageHandler = null;
         private P2PSession startupSession = null;
         private P2PDirectProcessor directConnection = null;
 
@@ -29,14 +30,16 @@ namespace MSNPSharp.P2P
             }
         }
 
+        private Contact remote = null;
         public override Contact Remote
         {
             get
             {
+                if (remote != null)
+                    return remote;
+
                 if (startupSession != null)
-                {
                     return startupSession.Remote;
-                }
 
                 foreach (P2PSession s in SendQueues.Keys)
                 {
@@ -51,12 +54,16 @@ namespace MSNPSharp.P2P
             ConnectivitySettings connectivitySettings,
             P2PVersion p2pVersion,
             Guid authNonce, bool isNeedHash,
-            P2PSession p2pSession)
+            P2PSession p2pSession,
+            NSMessageHandler ns,
+            Contact remote)
             : base(0)
         {
-            startupSession = p2pSession;
+            this.startupSession = p2pSession;
+            this.nsMessageHandler = ns;
+            this.remote = remote;
 
-            directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, authNonce, isNeedHash, p2pSession);
+            directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, authNonce, isNeedHash, p2pSession, nsMessageHandler);
             directConnection.HandshakeCompleted += new EventHandler<EventArgs>(directConnection_HandshakeCompleted);
             directConnection.P2PMessageReceived += new EventHandler<P2PMessageEventArgs>(directConnection_P2PMessageReceived);
             directConnection.SendCompleted += new EventHandler<MSNPSharp.Core.ObjectEventArgs>(directConnection_SendCompleted);
@@ -68,19 +75,19 @@ namespace MSNPSharp.P2P
 
         void directConnection_ConnectionException(object sender, ExceptionEventArgs e)
         {
-            OnBridgeClosed(EventArgs.Empty);        
+            OnBridgeClosed(EventArgs.Empty);
 
         }
 
         void directConnection_ConnectingException(object sender, ExceptionEventArgs e)
         {
-            OnBridgeClosed(EventArgs.Empty);  
+            OnBridgeClosed(EventArgs.Empty);
 
         }
 
         void directConnection_ConnectionClosed(object sender, EventArgs e)
         {
-            OnBridgeClosed(EventArgs.Empty);  
+            OnBridgeClosed(EventArgs.Empty);
         }
 
         public void Listen(IPAddress address, int port)
@@ -100,8 +107,7 @@ namespace MSNPSharp.P2P
 
         private void directConnection_P2PMessageReceived(object sender, P2PMessageEventArgs e)
         {
-            startupSession.NSMessageHandler.P2PHandler.ProcessP2PMessage(
-                this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
+            nsMessageHandler.P2PHandler.ProcessP2PMessage(this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
         }
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
