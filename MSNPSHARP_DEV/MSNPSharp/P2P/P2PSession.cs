@@ -725,6 +725,11 @@ namespace MSNPSharp.P2P
                             slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
                             Send(WrapSLPMessage(slpMessage));
+
+                            P2PMessage lastACK = new P2PMessage(p2pMessage.Version);
+                            lastACK.Header.AckIdentifier = remoteIdentifier;
+
+                            Send(lastACK);
                         }
 
                         OnClosed(new ContactEventArgs(Remote));
