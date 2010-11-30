@@ -744,7 +744,7 @@ namespace MSNPSharp.P2P
                         if (slpRequest.ContentType == "application/x-msnmsgr-transreqbody" ||
                             slpRequest.ContentType == "application/x-msnmsgr-transrespbody")
                         {
-                            ProcessDirectInvite(slpRequest); // Direct connection invite
+                            ProcessDirectInvite(slpRequest, nsMessageHandler, this); // Direct connection invite
                             return true;
                         }
                         else if (slpRequest.Method == "ACK")
@@ -764,7 +764,7 @@ namespace MSNPSharp.P2P
                     {
                         if (slpStatus.ContentType == "application/x-msnmsgr-transrespbody")
                         {
-                            ProcessDirectInvite(slpStatus);
+                            ProcessDirectInvite(slpStatus, nsMessageHandler, this);
                         }
                         else
                         {

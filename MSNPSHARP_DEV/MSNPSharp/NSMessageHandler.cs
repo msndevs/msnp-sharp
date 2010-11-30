@@ -372,6 +372,14 @@ namespace MSNPSharp
             }
         }
 
+        public UUNBridge UUNBridge
+        {
+            get
+            {
+                return uunBridge;
+            }
+        }
+
         internal MSNTicket MSNTicket
         {
             get
@@ -1998,6 +2006,10 @@ namespace MSNPSharp
 
                                 if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
                                 {
+                                    P2PSession.ProcessDirectInvite(slpMessage, this, null);
+
+                                    /*
+
                                     SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.Source, 500, "Internal Error");
                                     slpResponseMessage.Target = slpMessage.Target;
                                     slpResponseMessage.Via = slpMessage.Via;
@@ -2028,6 +2040,7 @@ namespace MSNPSharp
                                     msg.InnerMessage = slpResponseMessage;
 
                                     uunBridge.Send(null, sourceContact, sourceGuid, msg, null);
+                                     * */
                                 }
                                 else if (slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
                                 {

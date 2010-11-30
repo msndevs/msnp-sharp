@@ -19,9 +19,6 @@ namespace MSNPSharp.P2P
 
     partial class P2PSession
     {
-        private const int directNegotiationTimeout = 10000;
-        private Timer _directNegotiationTimer;
-
         public static Guid ParseDCNonce(MimeDictionary bodyValues, out DCNonceType dcNonceType)
         {
             dcNonceType = DCNonceType.None;
@@ -41,44 +38,28 @@ namespace MSNPSharp.P2P
             return nonce;
         }
 
-        private void ProcessDirectInvite(SLPMessage slp)
+        internal static void ProcessDirectInvite(
+            SLPMessage slp,
+            NSMessageHandler nsMessageHandler,
+            P2PSession startupSession)
         {
             if (slp.ContentType == "application/x-msnmsgr-transreqbody")
-                ProcessDirectReqInvite(slp);
+                ProcessDirectReqInvite(slp, nsMessageHandler, startupSession);
             else if (slp.ContentType == "application/x-msnmsgr-transrespbody")
-                ProcessDirectRespInvite(slp);
+                ProcessDirectRespInvite(slp, nsMessageHandler, startupSession);
         }
 
         private void DirectNegotiationSuccessful()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Direct connection negotiation was successful", GetType().Name);
-
-            if (_directNegotiationTimer != null)
-            {
-                _directNegotiationTimer.Dispose();
-                _directNegotiationTimer = null;
-            }
         }
 
-        private void DirectNegotiationFailed()
+        internal void DirectNegotiationFailed()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Direct connection negotiation was unsuccessful", GetType().Name);
 
-            if (_directNegotiationTimer != null)
-            {
-                _directNegotiationTimer.Dispose();
-                _directNegotiationTimer = null;
-            }
-
             if (p2pBridge != null)
                 p2pBridge.ResumeSending(this);
-        }
-
-        private void DirectNegotiationTimedOut(object p2pSess)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Direct connection negotiation timed out", GetType().Name);
-
-            DirectNegotiationFailed();
         }
 
         internal void SendDirectInvite()
@@ -146,18 +127,20 @@ namespace MSNPSharp.P2P
             Thread.CurrentThread.Join(900);
 
             // Stop sending until we receive a response to the direct invite or the timeout expires
-            _directNegotiationTimer = new Timer(new TimerCallback(DirectNegotiationTimedOut), this, directNegotiationTimeout, directNegotiationTimeout);
             p2pBridge.StopSending(this);
         }
 
-        private void ProcessDirectReqInvite(SLPMessage message)
+        private static void ProcessDirectReqInvite(
+            SLPMessage message,
+            NSMessageHandler nsMessageHandler,
+            P2PSession startupSession)
         {
             if (message.BodyValues.ContainsKey("Bridges") &&
                 message.BodyValues["Bridges"].ToString().Contains("TCPv1"))
             {
-                SLPStatusMessage slpMessage = new SLPStatusMessage(RemoteContactEPIDString, 200, "OK");
-                slpMessage.Target = RemoteContactEPIDString;
-                slpMessage.Source = LocalContactEPIDString;
+                SLPStatusMessage slpMessage = new SLPStatusMessage(message.Source, 200, "OK");
+                slpMessage.Target = message.Source;
+                slpMessage.Source = message.Target;
                 slpMessage.Branch = message.Branch;
                 slpMessage.CSeq = 1;
                 slpMessage.CallId = message.CallId;
@@ -181,6 +164,14 @@ namespace MSNPSharp.P2P
                 IPAddress ipAddress = nsMessageHandler.LocalEndPoint.Address;
                 int port;
 
+
+                Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                Guid remoteGuid = message.FromEndPoint;
+
+                P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
+                    ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+
+
                 if (false == ipAddress.Equals(nsMessageHandler.ExternalEndPoint.Address) ||
                     (0 == (port = GetNextDirectConnectionPort(ipAddress))))
                 {
@@ -189,10 +180,11 @@ namespace MSNPSharp.P2P
                 }
                 else
                 {
-                    // Let's listen
-                    Remote.DirectBridge = ListenForDirectConnection(ipAddress, port, nonce, hashed);
 
-                    _directNegotiationTimer = new Timer(new TimerCallback(DirectNegotiationTimedOut), this, directNegotiationTimeout, directNegotiationTimeout);
+                    // Let's listen
+                    remote.DirectBridge = ListenForDirectConnection(remote, nsMessageHandler, ver, startupSession, ipAddress, port, nonce, hashed);
+
+                    //NEWP2P,XXX,TODO:_directNegotiationTimer = new Timer(new TimerCallback(DirectNegotiationTimedOut), this, directNegotiationTimeout, directNegotiationTimeout);
 
                     slpMessage.BodyValues["Listening"] = "true";
                     slpMessage.BodyValues["Capabilities-Flags"] = "1";
@@ -216,16 +208,34 @@ namespace MSNPSharp.P2P
                     }
                 }
 
-                P2PMessage p2pMessage = WrapSLPMessage(slpMessage);
-                Send(p2pMessage);
+                P2PMessage p2pMessage = new P2PMessage(ver);
+                p2pMessage.InnerMessage = slpMessage;
+
+                if (ver == P2PVersion.P2PV2)
+                {
+                    p2pMessage.V2Header.TFCombination = TFCombination.First;
+                }
+                else if (ver == P2PVersion.P2PV1)
+                {
+                    p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
+                }
+
+                if (startupSession != null)
+                    startupSession.Send(p2pMessage);
+                else
+                    nsMessageHandler.UUNBridge.Send(null, remote, remoteGuid, p2pMessage, null);
             }
             else
             {
-                DirectNegotiationFailed();
+                if (startupSession != null)
+                    startupSession.DirectNegotiationFailed();
             }
         }
 
-        private void ProcessDirectRespInvite(SLPMessage message)
+        private static void ProcessDirectRespInvite(
+            SLPMessage message,
+            NSMessageHandler nsMessageHandler,
+            P2PSession startupSession)
         {
             MimeDictionary bodyValues = message.BodyValues;
 
@@ -252,58 +262,70 @@ namespace MSNPSharp.P2P
                     //properties.DCNonceType = dcNonceType;
                 }
 
-                IPEndPoint selectedPoint = SelectIPEndPoint(bodyValues);
+                IPEndPoint selectedPoint = SelectIPEndPoint(bodyValues, nsMessageHandler);
 
                 if (selectedPoint != null)
                 {
+                    P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
+                        ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+
+                    Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                    Guid remoteGuid = message.FromEndPoint;
+
                     // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
                     settings.Host = selectedPoint.Address.ToString();
                     settings.Port = selectedPoint.Port;
 
-                    Remote.DirectBridge = CreateDirectConnection(settings.Host, settings.Port, nonce, (dcNonceType == DCNonceType.Sha1));
+                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings.Host, settings.Port, nonce, (dcNonceType == DCNonceType.Sha1), nsMessageHandler, startupSession);
                     return;
                 }
             }
 
-            DirectNegotiationFailed();
+            if (startupSession != null)
+                startupSession.DirectNegotiationFailed();
         }
 
-        private TCPv1Bridge ListenForDirectConnection(IPAddress host, int port, Guid nonce, bool hashed)
+        private static TCPv1Bridge ListenForDirectConnection(
+            Contact remote,
+            NSMessageHandler nsMessageHandler,
+            P2PVersion ver,
+            P2PSession startupSession,
+            IPAddress host, int port, Guid nonce, bool hashed)
         {
             ConnectivitySettings cs = new ConnectivitySettings();
-            if (NSMessageHandler.ConnectivitySettings.LocalHost == string.Empty)
+            if (nsMessageHandler.ConnectivitySettings.LocalHost == string.Empty)
             {
                 cs.LocalHost = host.ToString();
                 cs.LocalPort = port;
             }
             else
             {
-                cs.LocalHost = NSMessageHandler.ConnectivitySettings.LocalHost;
-                cs.LocalPort = NSMessageHandler.ConnectivitySettings.LocalPort;
+                cs.LocalHost = nsMessageHandler.ConnectivitySettings.LocalHost;
+                cs.LocalPort = nsMessageHandler.ConnectivitySettings.LocalPort;
             }
 
-            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, Version, nonce, hashed, this);
+            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, nonce, hashed, startupSession, nsMessageHandler, remote);
 
             tcpBridge.Listen(IPAddress.Parse(cs.LocalHost), cs.LocalPort);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Listening on " + cs.LocalHost + ":" + cs.LocalPort.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Listening on " + cs.LocalHost + ":" + cs.LocalPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
             return tcpBridge;
         }
 
-        private TCPv1Bridge CreateDirectConnection(string host, int port, Guid nonce, bool hashed)
+        private static TCPv1Bridge CreateDirectConnection(Contact remote, P2PVersion ver, string host, int port, Guid nonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
         {
-            TCPv1Bridge tcpBridge = new TCPv1Bridge(new ConnectivitySettings(host, port), Version, nonce, hashed, this);
+            TCPv1Bridge tcpBridge = new TCPv1Bridge(new ConnectivitySettings(host, port), ver, nonce, hashed, startupSession, nsMessageHandler, remote);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
             tcpBridge.Connect();
 
             return tcpBridge;
         }
 
-        private int GetNextDirectConnectionPort(IPAddress ipAddress)
+        private static int GetNextDirectConnectionPort(IPAddress ipAddress)
         {
             int portAvail = 0;
 
@@ -358,7 +380,7 @@ namespace MSNPSharp.P2P
             return portAvail;
         }
 
-        private int TryPublicPorts(IPAddress localIP)
+        private static int TryPublicPorts(IPAddress localIP)
         {
             foreach (int p in Settings.PublicPorts)
             {
@@ -382,7 +404,7 @@ namespace MSNPSharp.P2P
             return 0;
         }
 
-        private IPEndPoint SelectIPEndPoint(MimeDictionary bodyValues)
+        private static IPEndPoint SelectIPEndPoint(MimeDictionary bodyValues, NSMessageHandler nsMessageHandler)
         {
             List<IPAddress> ipAddrs = new List<IPAddress>();
             string[] addrs = new string[0];
@@ -390,8 +412,7 @@ namespace MSNPSharp.P2P
 
             if (bodyValues.ContainsKey("IPv4External-Addrs") || bodyValues.ContainsKey("srddA-lanretxE4vPI"))
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                    "Using external IP addresses", GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Using external IP addresses");
 
                 if (bodyValues.ContainsKey("IPv4External-Addrs"))
                 {
@@ -410,14 +431,14 @@ namespace MSNPSharp.P2P
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                       String.Format("{0} external IP addresses found, with port {1}", addrs.Length, port), GetType().Name);
+                       String.Format("{0} external IP addresses found, with port {1}", addrs.Length, port));
 
                 for (int i = 0; i < addrs.Length; i++)
                 {
                     IPAddress ip;
                     if (IPAddress.TryParse(addrs[i], out ip))
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i], GetType().Name);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i]);
 
                         ipAddrs.Add(ip);
 
@@ -435,8 +456,7 @@ namespace MSNPSharp.P2P
             if ((ipAddrs.Count == 0) &&
                 (bodyValues.ContainsKey("IPv4Internal-Addrs") || bodyValues.ContainsKey("srddA-lanretnI4vPI")))
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                    "Using internal IP addresses", GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Using internal IP addresses");
 
                 if (bodyValues.ContainsKey("IPv4Internal-Addrs"))
                 {
@@ -457,8 +477,7 @@ namespace MSNPSharp.P2P
 
             if (addrs.Length == 0)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                   "Unable to find any remote IP addresses", GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Unable to find any remote IP addresses");
 
                 // Failed
                 return null;
@@ -466,14 +485,14 @@ namespace MSNPSharp.P2P
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                       String.Format("{0} internal IP addresses found, with port {1}",
-                      addrs.Length, port), GetType().Name);
+                      addrs.Length, port));
 
             for (int i = 0; i < addrs.Length; i++)
             {
                 IPAddress ip;
                 if (IPAddress.TryParse(addrs[i], out ip))
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i], GetType().Name);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i]);
 
                     ipAddrs.Add(ip);
                 }
@@ -481,8 +500,7 @@ namespace MSNPSharp.P2P
 
             if (addrs.Length == 0)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                   "Unable to find any remote IP addresses", GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Unable to find any remote IP addresses");
 
                 // Failed
                 return null;
