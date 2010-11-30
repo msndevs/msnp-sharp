@@ -84,7 +84,8 @@ namespace MSNPSharp.P2P
 
         private static uint bridgeCount = 0;
 
-        protected internal uint localIDBridge = 0;
+        protected internal uint localPacketNo = 0;
+        protected internal uint remotePacketNo = 0;
 
         protected uint bridgeID = ++bridgeCount;
         protected int queueSize = 0;
@@ -118,6 +119,8 @@ namespace MSNPSharp.P2P
         protected P2PBridge(int queueSize)
         {
             this.queueSize = queueSize;
+            this.localPacketNo = (uint)new Random().Next(1000, int.MaxValue);
+            this.remotePacketNo = 0;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("P2PBridge {0} created", this.ToString()), GetType().Name);
@@ -200,7 +203,7 @@ namespace MSNPSharp.P2P
             if (msg.Version == P2PVersion.P2PV2)
             {
                 P2PMessage lastMsg = msgs[msgs.Length - 1];
-                localIDBridge = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
+                this.localPacketNo = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
                 session.LocalIdentifier = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
             }
 

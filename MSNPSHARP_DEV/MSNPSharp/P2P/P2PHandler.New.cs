@@ -147,7 +147,7 @@ namespace MSNPSharp.P2P
                 if (req.ContentType == "application/x-msnmsgr-sessionreqbody")
                 {
                     // Start a new session
-                    P2PSession session = new P2PSession(req, msg, nsMessageHandler);
+                    P2PSession session = new P2PSession(req, msg, nsMessageHandler, bridge.localPacketNo);
                     session.Closed += P2PSessionClosed;
 
                     if (session.Version == P2PVersion.P2PV2)
