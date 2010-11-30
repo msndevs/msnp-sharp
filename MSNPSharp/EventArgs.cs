@@ -34,6 +34,7 @@ using System;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.Apps;
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
 
@@ -62,7 +63,7 @@ namespace MSNPSharp
 
         public ContactStatusChangedEventArgs(Contact contact,
                                             PresenceStatus oldStatus)
-            :base(oldStatus)
+            : base(oldStatus)
         {
             Contact = contact;
         }
@@ -113,11 +114,14 @@ namespace MSNPSharp
 
         public Guid EndPoint
         {
-            get { return epoint; }
+            get
+            {
+                return epoint;
+            }
         }
 
         public ContactConversationEventArgs(Contact contact, Guid endPoint)
-            :base(contact)
+            : base(contact)
         {
             epoint = endPoint;
         }
@@ -134,18 +138,27 @@ namespace MSNPSharp
 
         public PlaceChangedReason Reason
         {
-            get { return reason; }
+            get
+            {
+                return reason;
+            }
         }
 
         public string PlaceName
         {
-            get { return placeName; }
+            get
+            {
+                return placeName;
+            }
         }
 
 
         public Guid PlaceId
         {
-            get { return placeId; }
+            get
+            {
+                return placeId;
+            }
         }
 
         private PlaceChangedEventArgs()
@@ -304,7 +317,7 @@ namespace MSNPSharp
         }
 
         public WinkEventArgs(Contact contact, Wink wink)
-            :base(contact)
+            : base(contact)
         {
             this.wink = wink;
         }
@@ -342,7 +355,7 @@ namespace MSNPSharp
         /// <param name="sender"></param>
         /// <param name="emoticon"></param>
         public EmoticonDefinitionEventArgs(Contact sender, Emoticon emoticon)
-            :base(sender)
+            : base(sender)
         {
             this.emoticon = emoticon;
         }
@@ -565,7 +578,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="circle"></param>
         internal CircleEventArgs(Circle circle)
-            :base(circle)
+            : base(circle)
         {
         }
 
@@ -575,7 +588,7 @@ namespace MSNPSharp
         /// <param name="circle"></param>
         /// <param name="remote">The affected Contact.</param>
         internal CircleEventArgs(Circle circle, Contact remote)
-            :base(circle)
+            : base(circle)
         {
             remoteMember = remote;
         }
@@ -605,7 +618,7 @@ namespace MSNPSharp
     }
 
     [Serializable()]
-    public class CircleStatusChangedEventArgs: StatusChangedEventArgs
+    public class CircleStatusChangedEventArgs : StatusChangedEventArgs
     {
         protected Circle circle = null;
 
@@ -614,7 +627,10 @@ namespace MSNPSharp
         /// </summary>
         public Circle Circle
         {
-            get { return circle; }
+            get
+            {
+                return circle;
+            }
         }
 
         internal CircleStatusChangedEventArgs(Circle circle, PresenceStatus oldStatus)
@@ -631,7 +647,10 @@ namespace MSNPSharp
 
         protected Contact CircleMember
         {
-            get { return circleMember; }
+            get
+            {
+                return circleMember;
+            }
         }
 
         internal CircleMemberStatusChanged(Circle circle, Contact member, PresenceStatus oldStatus)
@@ -654,7 +673,10 @@ namespace MSNPSharp
         /// </summary>
         public CircleInviter Inviter
         {
-            get { return remoteMember as CircleInviter; }
+            get
+            {
+                return remoteMember as CircleInviter;
+            }
         }
 
         internal JoinCircleInvitationEventArgs(Circle circle, CircleInviter invitor)
@@ -711,9 +733,9 @@ namespace MSNPSharp
 
         public DisplayImage NewDisplayImage
         {
-            get 
-            { 
-                return newDisplayImage; 
+            get
+            {
+                return newDisplayImage;
             }
         }
 
@@ -722,9 +744,9 @@ namespace MSNPSharp
         /// </summary>
         public DisplayImageChangedType Status
         {
-            get 
-            { 
-                return status; 
+            get
+            {
+                return status;
             }
         }
 
@@ -733,9 +755,9 @@ namespace MSNPSharp
         /// </summary>
         internal bool CallFromContactManager
         {
-            get 
-            { 
-                return callFromContactManager; 
+            get
+            {
+                return callFromContactManager;
             }
         }
 
@@ -777,7 +799,10 @@ namespace MSNPSharp
         /// </summary>
         public Contact From
         {
-            get { return from; }
+            get
+            {
+                return from;
+            }
         }
 
         private Contact to = null;
@@ -787,7 +812,10 @@ namespace MSNPSharp
         /// </summary>
         public Contact To
         {
-            get { return to; }
+            get
+            {
+                return to;
+            }
         }
 
         private int messageType = 0;
@@ -797,9 +825,9 @@ namespace MSNPSharp
         /// </summary>
         public NetworkMessageType MessageType
         {
-            get 
-            { 
-                return (NetworkMessageType)messageType; 
+            get
+            {
+                return (NetworkMessageType)messageType;
             }
         }
 
@@ -811,7 +839,10 @@ namespace MSNPSharp
         /// </summary>
         public NetworkMessage Message
         {
-            get { return message; }
+            get
+            {
+                return message;
+            }
         }
 
         /// <summary>
@@ -871,7 +902,10 @@ namespace MSNPSharp
         /// </summary>
         public Contact RemoteContact
         {
-            get { return remote; }
+            get
+            {
+                return remote;
+            }
         }
 
         /// <summary>
@@ -879,7 +913,10 @@ namespace MSNPSharp
         /// </summary>
         public Guid RemoteContactEndPointID
         {
-            get { return remoteEndPointID; }
+            get
+            {
+                return remoteEndPointID;
+            }
         }
 
         /// <summary>
@@ -887,7 +924,10 @@ namespace MSNPSharp
         /// </summary>
         public bool Aborted
         {
-            get { return aborted; }
+            get
+            {
+                return aborted;
+            }
         }
 
         /// <summary>
@@ -895,7 +935,10 @@ namespace MSNPSharp
         /// </summary>
         public MSNObject ClientData
         {
-            get { return clientData; }
+            get
+            {
+                return clientData;
+            }
         }
 
         protected MSNObjectDataTransferCompletedEventArgs()
@@ -914,31 +957,26 @@ namespace MSNPSharp
             remoteEndPointID = remoteEPID;
         }
     }
-    /*NEWP2P,TODO,XXX:
+
     public class ConversationMSNObjectDataTransferCompletedEventArgs : MSNObjectDataTransferCompletedEventArgs
     {
-        private P2PTransferSession transferSession = null;
+        private Conversation conversation = null;
 
-        public P2PTransferSession TransferSession
+        public Conversation Conversation
         {
-            get 
-            { 
-                return transferSession; 
-            }
-
-            private set 
-            { 
-                transferSession = value; 
+            get
+            {
+                return conversation;
             }
         }
 
-        public ConversationMSNObjectDataTransferCompletedEventArgs(P2PTransferSession sender, MSNObjectDataTransferCompletedEventArgs e)
+        public ConversationMSNObjectDataTransferCompletedEventArgs(Conversation conv, MSNObjectDataTransferCompletedEventArgs e)
             : base(e.ClientData, e.Aborted, e.RemoteContact, e.RemoteContactEndPointID)
         {
-            TransferSession = sender;
+            conversation = conv;
         }
     }
-    */
+
     /// <summary>
     /// Use to notify a <see cref="Conversation"/> has ended.
     /// </summary>
@@ -948,7 +986,10 @@ namespace MSNPSharp
 
         public Conversation Conversation
         {
-            get { return conversation; }
+            get
+            {
+                return conversation;
+            }
         }
 
         protected ConversationEndEventArgs()
@@ -974,7 +1015,10 @@ namespace MSNPSharp
         /// </summary>
         public Contact OldRemoteOwner
         {
-            get { return oldRemoteOwner; }
+            get
+            {
+                return oldRemoteOwner;
+            }
         }
 
         private Contact newRemoteOwner = null;
@@ -984,7 +1028,10 @@ namespace MSNPSharp
         /// </summary>
         public Contact NewRemoteOwner
         {
-            get { return newRemoteOwner; }
+            get
+            {
+                return newRemoteOwner;
+            }
         }
 
         private ConversationRemoteOwnerChangedEventArgs()

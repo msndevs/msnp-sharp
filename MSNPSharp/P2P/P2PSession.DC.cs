@@ -142,12 +142,11 @@ namespace MSNPSharp.P2P
             slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Req";
 
             Send(WrapSLPMessage(slpMessage));
+            // Wait a bit, otherwise SLP message queued when called p2pBridge.StopSending(this);
+            Thread.CurrentThread.Join(900);
 
-            P2PMessage ping = new P2PMessage(Version);
-            Send(ping);
-
-            _directNegotiationTimer = new Timer(new TimerCallback(DirectNegotiationTimedOut), this, directNegotiationTimeout, directNegotiationTimeout);
             // Stop sending until we receive a response to the direct invite or the timeout expires
+            _directNegotiationTimer = new Timer(new TimerCallback(DirectNegotiationTimedOut), this, directNegotiationTimeout, directNegotiationTimeout);
             p2pBridge.StopSending(this);
         }
 

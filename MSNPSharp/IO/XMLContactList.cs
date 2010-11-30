@@ -1186,12 +1186,9 @@ namespace MSNPSharp.IO
 
         public void AddGroup(Dictionary<Guid, GroupType> range)
         {
-            lock(SyncObject)
+            foreach (GroupType group in range.Values)
             {
-                foreach (GroupType group in range.Values)
-                {
-                    AddGroup(group);
-                }
+                AddGroup(group);
             }
         }
 
@@ -1231,23 +1228,13 @@ namespace MSNPSharp.IO
 
         public XMLContactList Merge(ABFindContactsPagedResultType forwardList)
         {
-            lock(SyncObject)
-            {
-                Initialize();
-    
-                #region AddressBook changed
-    
-                DateTime dt1 = WebServiceDateTimeConverter.ConvertToDateTime(GetAddressBookLastChange(forwardList.Ab.abId));
-                DateTime dt2 = WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange);
-    
-                MergeIndividualAddressBook(forwardList);
-                MergeGroupAddressBook(forwardList);
-                #endregion
-    
-                //NO DynamicItems any more
-    
-                return this;
-            }
+            Initialize();
+
+            MergeIndividualAddressBook(forwardList);
+
+            MergeGroupAddressBook(forwardList);
+
+            return this;
         }
 
         /// <summary>

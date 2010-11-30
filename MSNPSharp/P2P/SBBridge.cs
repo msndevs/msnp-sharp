@@ -40,11 +40,8 @@ namespace MSNPSharp.P2P
 
     public class SBBridge : P2PBridge
     {
-#if DEBUG
-        private const int sbQueueSize = 2; // Step by step :)
-#else
         private const int sbQueueSize = 9;
-#endif
+
         private Conversation sbHandler = null;
 
         private Dictionary<int, P2PMessageSessionEventArgs> p2pAckMessages = new Dictionary<int, P2PMessageSessionEventArgs>();

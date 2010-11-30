@@ -31,7 +31,7 @@ namespace MSNPSharp.Apps
         {
             get
             {
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes(Remote.UserTileLocation));
+                return Convert.ToBase64String(Encoding.UTF8.GetBytes(msnObject.ContextPlain));
             }
         }
 
@@ -86,9 +86,21 @@ namespace MSNPSharp.Apps
         public ObjectTransfer(MSNObject obj, Contact remote)
             : base(remote.P2PVersionSupported, remote, remote.SelectRandomEPID())
         {
-            msnObject = new MSNObject();
-            msnObject.SetContext(remote.UserTileLocation, false);
+            msnObject = obj;
 
+            if (msnObject.ObjectType == MSNObjectType.UserDisplay)
+            {
+                applicationId = 12;
+                msnObject.SetContext(remote.UserTileLocation, false);
+            }
+            else if (msnObject.ObjectType == MSNObjectType.Emoticon)
+            {
+                applicationId = 11;
+            }
+            else
+            {
+                applicationId = 1;
+            }
 
             sending = false;
         }
@@ -137,6 +149,7 @@ namespace MSNPSharp.Apps
             {
                 ushort packNum = base.P2PSession.IncreaseDataPacketNumber();
 
+                // Data prep
                 P2PDataMessage p2pData = new P2PDataMessage(P2PVersion);
                 p2pData.WritePreparationBytes();
 
@@ -149,6 +162,7 @@ namespace MSNPSharp.Apps
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Data prep sent", GetType().Name);
                 SendMessage(p2pData);
 
+                // All chunks
                 byte[] allData = new byte[msnObject.Size];
                 lock (objStream)
                 {
@@ -160,10 +174,10 @@ namespace MSNPSharp.Apps
                 }
 
                 P2PDataMessage msg = new P2PDataMessage(P2PVersion);
-
                 if (P2PVersion == P2PVersion.P2PV1)
                 {
                     msg.V1Header.Flags = P2PFlag.Data;
+                    msg.V1Header.AckSessionId = (uint)new Random().Next(50, int.MaxValue);
                 }
                 else if (P2PVersion == P2PVersion.P2PV2)
                 {
@@ -172,8 +186,11 @@ namespace MSNPSharp.Apps
                 }
 
                 msg.InnerBody = allData;
+                SendMessage(msg);
 
-                SendMessage(msg, delegate(P2PMessage ack)
+                // Register the ACKHandler
+                P2PMessage rak = new P2PMessage(P2PVersion);
+                SendMessage(rak, delegate(P2PMessage ack)
                 {
                     OnTransferFinished(EventArgs.Empty);
                 });
@@ -230,7 +247,7 @@ namespace MSNPSharp.Apps
                     }
                     else if (msnObject.ObjectType == MSNObjectType.Emoticon)
                     {
-                        // TODO ((Emoticon)msnObject).Image = Image.FromStream(objStream);
+                        ((Emoticon)msnObject).Image = Image.FromStream(objStream);
                     }
 
                     objStream.Close();
@@ -240,8 +257,6 @@ namespace MSNPSharp.Apps
 
                 return true;
             }
-
-            return false;
         }
     }
 };

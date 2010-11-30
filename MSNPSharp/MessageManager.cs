@@ -29,14 +29,20 @@ namespace MSNPSharp.Utilities
         /// </summary>
         public Messenger Messenger
         {
-            get { return messenger; }
+            get
+            {
+                return messenger;
+            }
         }
 
         private object syncObject = new object();
 
         protected object SyncObject
         {
-            get { return syncObject; }
+            get
+            {
+                return syncObject;
+            }
         }
 
 
@@ -96,34 +102,6 @@ namespace MSNPSharp.Utilities
 
         }
 
-        private void PassportMemberUserTyping(object sender, ContactEventArgs e)
-        {
-            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
-            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, NetworkMessageType.Typing));
-        }
-
-        private void PassportMemberTextMessageReceived(object sender, TextMessageEventArgs e)
-        {
-            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
-            OnMessageArrived(new TextMessageArrivedEventArgs(id, e.Sender, e.Message));
-        }
-
-        private void PassportMemberNudgeReceived(object sender, ContactEventArgs e)
-        {
-            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
-            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, NetworkMessageType.Nudge));
-        }
-        /*NEWP2P,TODO,XXX:
-        private void PassportMemberMSNObjectDataTransferCompleted(object sender, ConversationMSNObjectDataTransferCompletedEventArgs e)
-        {
-            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
-            if (e.ClientData is Emoticon)
-            {
-                Emoticon emoticon = e.ClientData as Emoticon;
-                OnMessageArrived(new EmoticonArrivedEventArgs(id, e.RemoteContact, emoticon));
-            }
-        }
-        */
         #endregion
 
         protected virtual void OnMessageArrived(MessageArrivedEventArgs e)
@@ -149,7 +127,7 @@ namespace MSNPSharp.Utilities
                     {
                         //What happends?!
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[ProcessArrivedConversation Error]: A conversation is both in pending and created status.");
-                        
+
                     }
 
                     RemovePendingConversation(cId);
@@ -191,7 +169,7 @@ namespace MSNPSharp.Utilities
         {
             lock (SyncObject)
             {
-                if (conversationIndex.ContainsKey(id)) 
+                if (conversationIndex.ContainsKey(id))
                     return false;
                 conversationIndex[id] = conversation;
                 return true;
@@ -285,7 +263,7 @@ namespace MSNPSharp.Utilities
                 conversation.NudgeReceived -= PassportMemberNudgeReceived;
                 conversation.UserTyping -= PassportMemberUserTyping;
                 conversation.ConversationEnded -= ConversationEnded;
-                /*NEWP2P,TODO,XXX:conversation.MSNObjectDataTransferCompleted -= PassportMemberMSNObjectDataTransferCompleted;*/
+                conversation.MSNObjectDataTransferCompleted -= PassportMemberMSNObjectDataTransferCompleted;
             }
         }
 
@@ -297,7 +275,36 @@ namespace MSNPSharp.Utilities
             conversation.NudgeReceived += new EventHandler<ContactEventArgs>(PassportMemberNudgeReceived);
             conversation.UserTyping += new EventHandler<ContactEventArgs>(PassportMemberUserTyping);
             conversation.ConversationEnded += new EventHandler<ConversationEndEventArgs>(ConversationEnded);
-            /*NEWP2P,TODO,XXX:conversation.MSNObjectDataTransferCompleted += new EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs>(PassportMemberMSNObjectDataTransferCompleted);*/
+            conversation.MSNObjectDataTransferCompleted += new EventHandler<ConversationMSNObjectDataTransferCompletedEventArgs>(PassportMemberMSNObjectDataTransferCompleted);
+        }
+
+        private void PassportMemberUserTyping(object sender, ContactEventArgs e)
+        {
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
+            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, NetworkMessageType.Typing));
+        }
+
+        private void PassportMemberTextMessageReceived(object sender, TextMessageEventArgs e)
+        {
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
+            OnMessageArrived(new TextMessageArrivedEventArgs(id, e.Sender, e.Message));
+        }
+
+        private void PassportMemberNudgeReceived(object sender, ContactEventArgs e)
+        {
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
+            OnMessageArrived(new MessageArrivedEventArgs(id, e.Contact, NetworkMessageType.Nudge));
+        }
+
+        private void PassportMemberMSNObjectDataTransferCompleted(object sender, ConversationMSNObjectDataTransferCompletedEventArgs e)
+        {
+            ConversationID id = ProcessArrivedConversation(new ConversationID(sender as Conversation));
+
+            if (e.ClientData is Emoticon)
+            {
+                Emoticon emoticon = e.ClientData as Emoticon;
+                OnMessageArrived(new EmoticonArrivedEventArgs(id, e.RemoteContact, emoticon));
+            }
         }
 
 
@@ -742,7 +749,7 @@ namespace MSNPSharp.Utilities
 
         #endregion
 
-        #region IDisposable ≥…‘±
+        #region IDisposable
 
         public void Dispose()
         {
@@ -757,4 +764,4 @@ namespace MSNPSharp.Utilities
 
         #endregion
     }
-}
+};
