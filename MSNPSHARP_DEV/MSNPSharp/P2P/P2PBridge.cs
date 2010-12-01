@@ -203,7 +203,6 @@ namespace MSNPSharp.P2P
             if (msg.Version == P2PVersion.P2PV2)
             {
                 P2PMessage lastMsg = msgs[msgs.Length - 1];
-                this.localPacketNo = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
                 session.LocalIdentifier = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
             }
 
@@ -347,6 +346,12 @@ namespace MSNPSharp.P2P
 
         protected virtual void OnBridgeSent(P2PMessageSessionEventArgs e)
         {
+            if (e.P2PMessage.Header.Identifier != 0)
+            {
+                this.localPacketNo = (e.P2PMessage.Version == P2PVersion.P2PV1)
+                    ? e.P2PMessage.Header.Identifier + 1 : e.P2PMessage.Header.Identifier + e.P2PMessage.Header.MessageSize;
+            }
+
             P2PSession session = e.P2PSession;
 
             if ((session != null) && sendingQueues.ContainsKey(session))
