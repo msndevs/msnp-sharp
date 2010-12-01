@@ -69,7 +69,6 @@ namespace MSNPSharp
 
         private UUNBridge uunBridge = null;
         private P2PHandler p2pHandler = null;
-        internal Messenger __internalMessenger = null;
 
         private CircleList circleList = null;
         private ContactGroupList contactGroups = null;
@@ -82,6 +81,7 @@ namespace MSNPSharp
         private bool isSignedIn = false;
         private MSNTicket msnticket = MSNTicket.Empty;
         private Queue pendingSwitchboards = new Queue();
+        private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
 
         private ContactService contactService = null;
         private OIMService oimService = null;
@@ -93,7 +93,7 @@ namespace MSNPSharp
         private Guid p2pInviteSchedulerId = Guid.Empty;
         private Guid sbRequestSchedulerId = Guid.Empty;
 
-        protected internal NSMessageHandler(Messenger parentMessenger)
+        protected internal NSMessageHandler()
         {
             circleList = new CircleList(this);
             contactGroups = new ContactGroupList(this);
@@ -107,8 +107,6 @@ namespace MSNPSharp
 
             uunBridge = new UUNBridge(this);
             p2pHandler = new P2PHandler(this);
-
-            __internalMessenger = parentMessenger;
         }
 
         #endregion
@@ -372,6 +370,14 @@ namespace MSNPSharp
             }
         }
 
+        public ArrayList Conversations
+        {
+            get
+            {
+                return conversations;
+            }
+        }
+
         public UUNBridge UUNBridge
         {
             get
@@ -504,6 +510,16 @@ namespace MSNPSharp
         /// Occurs when a switchboard session has been created
         /// </summary>
         public event EventHandler<SBCreatedEventArgs> SBCreated;
+
+        /// <summary>
+        /// Occurs when a new conversation is created. Either by a local or remote invitation.
+        /// </summary>
+        /// <remarks>
+        /// You can check the initiator object in the event arguments to see which party initiated the
+        /// conversation. This event is called after the messenger server has created a switchboard handler,
+        /// so there is always a valid messageprocessor.
+        /// </remarks>
+        public event EventHandler<ConversationCreatedEventArgs> ConversationCreated;
 
         /// <summary>
         /// Occurs when the server notifies the client with the status of the owner's mailbox.
@@ -745,8 +761,22 @@ namespace MSNPSharp
         }
         #endregion
 
-        #region RequestSwitchboard & SendPing
+        #region CreateConversation & RequestSwitchboard & SendPing
 
+
+
+        public Conversation CreateConversation()
+        {
+            Conversation conversation = new Conversation(this);
+            OnConversationCreated(conversation, this);
+            return conversation;
+        }
+
+        protected internal virtual void OnConversationCreated(Conversation conversation, object initiator)
+        {
+            if (ConversationCreated != null)
+                ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
+        }
 
         /// <summary>
         /// Sends a request to the server to start a new switchboard session. The specified switchboard handler will be associated with the new switchboard session.
@@ -760,8 +790,6 @@ namespace MSNPSharp
 
             Schedulers.SwitchBoardRequestScheduler.Enqueue(MessageProcessor, new NSMessage("XFR", new string[] { "SB" }), SwitchBoardRequestSchedulerId);
         }
-
-
 
         /// <summary>
         /// Sends PNG (ping) command.
@@ -1238,8 +1266,8 @@ namespace MSNPSharp
         protected internal virtual void OnSignedIn(EventArgs e)
         {
             isSignedIn = true;
-            p2pInviteSchedulerId = Schedulers.P2PInvitationScheduler.Register(__internalMessenger);
-            sbRequestSchedulerId = Schedulers.SwitchBoardRequestScheduler.Register(__internalMessenger);
+            p2pInviteSchedulerId = Schedulers.P2PInvitationScheduler.Register(this);
+            sbRequestSchedulerId = Schedulers.SwitchBoardRequestScheduler.Register(this);
 
             if (SignedIn != null)
                 SignedIn(this, e);

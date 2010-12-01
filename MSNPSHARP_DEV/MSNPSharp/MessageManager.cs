@@ -22,16 +22,16 @@ namespace MSNPSharp.Utilities
         private Dictionary<ConversationID, Contact> pendingConversations = new Dictionary<ConversationID, Contact>(100, new ConversationIDComparer());
         private List<Conversation> conversations = new List<Conversation>(100);
 
-        private Messenger messenger = null;
+        private NSMessageHandler _nsHandler = null;
 
         /// <summary>
-        /// The <see cref="Messenger"/> instance this manager connected to.
+        /// The <see cref="NSMessageHandler"/> instance this manager connected to.
         /// </summary>
-        public Messenger Messenger
+        public NSMessageHandler NSMessageHandler
         {
             get
             {
-                return messenger;
+                return _nsHandler;
             }
         }
 
@@ -57,13 +57,13 @@ namespace MSNPSharp.Utilities
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="messenger">The <see cref="Messenger"/> instance this manager connected to.</param>
-        public MessageManager(Messenger messenger)
+        /// <param name="handler">The <see cref="NSMessageHandler"/> instance this manager connected to.</param>
+        public MessageManager(NSMessageHandler handler)
         {
-            this.messenger = messenger;
-            Messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(ConversationCreated);
-            Messenger.Nameserver.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(CrossNetworkMessageReceived);
-            Messenger.Nameserver.MobileMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(CrossNetworkMessageReceived);
+            this._nsHandler = handler;
+            handler.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(ConversationCreated);
+            handler.CrossNetworkMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(CrossNetworkMessageReceived);
+            handler.MobileMessageReceived += new EventHandler<CrossNetworkMessageEventArgs>(CrossNetworkMessageReceived);
         }
 
         #endregion
@@ -314,7 +314,7 @@ namespace MSNPSharp.Utilities
         /// <exception cref="InvalidOperationException">Messenger not sign in.</exception>
         private void CheckMessengerStatus()
         {
-            if (!Messenger.Nameserver.IsSignedIn)
+            if (!NSMessageHandler.IsSignedIn)
             {
                 throw new InvalidOperationException("Messenger not sign in. Please sign in first.");
             }
@@ -371,17 +371,17 @@ namespace MSNPSharp.Utilities
 
                     if (messageObject is NudgeObject)
                     {
-                        Messenger.Nameserver.SendCrossNetworkMessage(yimContact, NetworkMessageType.Nudge);
+                        NSMessageHandler.SendCrossNetworkMessage(yimContact, NetworkMessageType.Nudge);
                     }
 
                     if (messageObject is UserTypingObject)
                     {
-                        Messenger.Nameserver.SendCrossNetworkMessage(yimContact, NetworkMessageType.Typing);
+                        NSMessageHandler.SendCrossNetworkMessage(yimContact, NetworkMessageType.Typing);
                     }
 
                     if (messageObject is TextMessageObject)
                     {
-                        Messenger.Nameserver.SendCrossNetworkMessage(yimContact, messageObject.InnerObject as TextMessage);
+                        NSMessageHandler.SendCrossNetworkMessage(yimContact, messageObject.InnerObject as TextMessage);
                     }
 
                 }
@@ -416,7 +416,7 @@ namespace MSNPSharp.Utilities
 
                 try
                 {
-                    Messenger.Nameserver.SendMobileMessage(mobileContact, (messageObject.InnerObject as TextMessage).Text);
+                    NSMessageHandler.SendMobileMessage(mobileContact, (messageObject.InnerObject as TextMessage).Text);
 
                 }
 
@@ -499,7 +499,7 @@ namespace MSNPSharp.Utilities
             //Process OIM.
             if (contact.Status == PresenceStatus.Offline)
             {
-                Messenger.Nameserver.OIMService.SendOIMMessage(contact, (messageObject as TextMessageObject).InnerObject as TextMessage);
+                NSMessageHandler.OIMService.SendOIMMessage(contact, (messageObject as TextMessageObject).InnerObject as TextMessage);
                 return;
             }
         }
@@ -579,7 +579,7 @@ namespace MSNPSharp.Utilities
             if (created || otherNetwork)
                 return pendingId;
 
-            pendingId.SetConversation(Messenger.CreateConversation());
+            pendingId.SetConversation(NSMessageHandler.CreateConversation());
             AddConversationToConversationIndex(pendingId, pendingId.Conversation);
             pendingId.Conversation.Invite(pendingId.RemoteOwner);
 
@@ -753,11 +753,11 @@ namespace MSNPSharp.Utilities
 
         public void Dispose()
         {
-            if (Messenger != null)
+            if (NSMessageHandler != null)
             {
-                Messenger.ConversationCreated -= ConversationCreated;
-                Messenger.Nameserver.CrossNetworkMessageReceived -= CrossNetworkMessageReceived;
-                Messenger.Nameserver.MobileMessageReceived -= CrossNetworkMessageReceived;
+                NSMessageHandler.ConversationCreated -= ConversationCreated;
+                NSMessageHandler.CrossNetworkMessageReceived -= CrossNetworkMessageReceived;
+                NSMessageHandler.MobileMessageReceived -= CrossNetworkMessageReceived;
             }
 
         }
