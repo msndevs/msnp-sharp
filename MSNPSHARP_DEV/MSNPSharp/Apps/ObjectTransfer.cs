@@ -200,6 +200,7 @@ namespace MSNPSharp.Apps
                 SendMessage(rak, delegate(P2PMessage ack)
                 {
                     OnTransferFinished(EventArgs.Empty);
+                    P2PSession.Close();
                 });
             }
             else
