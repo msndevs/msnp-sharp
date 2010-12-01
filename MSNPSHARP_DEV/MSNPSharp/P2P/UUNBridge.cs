@@ -41,6 +41,7 @@ namespace MSNPSharp.P2P
     public class UUNBridge : P2PBridge
     {
         private NSMessageHandler nsHandler;
+        private Dictionary<int, P2PMessageSessionEventArgs> p2pAckMessages = new Dictionary<int, P2PMessageSessionEventArgs>();
 
         public override bool IsOpen
         {
@@ -73,6 +74,17 @@ namespace MSNPSharp.P2P
             this.nsHandler = nsHandler;
         }
 
+        protected internal void ProcessUUN(int transId, bool ok)
+        {
+            if (p2pAckMessages.ContainsKey(transId))
+            {
+                P2PMessageSessionEventArgs p2pe = p2pAckMessages[transId];
+                p2pAckMessages.Remove(transId);
+
+                OnBridgeSent(p2pe);
+            }
+        }
+
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
         {
             SLPMessage slp = msg.InnerMessage as SLPMessage;
@@ -83,13 +95,19 @@ namespace MSNPSharp.P2P
                     :
                     remote.Mail.ToLowerInvariant() + ";" + remoteGuid.ToString("B");
 
+                NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
+                int transId = nsmp.IncreaseTransactionID();
+
                 NSPayLoadMessage uunCommand = new NSPayLoadMessage(
                     "UUN",
                     new string[] { target, "3" },
                     Encoding.UTF8.GetString(slp.GetBytes(false)));
 
-                nsHandler.MessageProcessor.SendMessage(uunCommand);
-                OnBridgeSent(new P2PMessageSessionEventArgs(msg, session));
+                uunCommand.TransactionID = transId;
+
+                p2pAckMessages[transId] = new P2PMessageSessionEventArgs(msg, session);
+
+                nsmp.SendMessage(uunCommand, uunCommand.TransactionID);
             }
         }
     }
