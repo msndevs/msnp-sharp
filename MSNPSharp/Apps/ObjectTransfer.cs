@@ -31,8 +31,11 @@ namespace MSNPSharp.Apps
         {
             get
             {
+
                 if (msnObject.ObjectType == MSNObjectType.UserDisplay)
-                    return Convert.ToBase64String(Encoding.UTF8.GetBytes(Remote.UserTileLocation));
+                {
+                    msnObject.SetContext(Remote.UserTileLocation, false);
+                }
 
                 return Convert.ToBase64String(Encoding.UTF8.GetBytes(msnObject.ContextPlain));
             }
@@ -184,6 +187,7 @@ namespace MSNPSharp.Apps
                 }
                 else if (P2PVersion == P2PVersion.P2PV2)
                 {
+                    msg.V2Header.OperationCode |= (byte)OperationCode.RAK;
                     msg.V2Header.TFCombination = TFCombination.MsnObject | TFCombination.First;
                     msg.V2Header.PackageNumber = packNum;
                 }
@@ -255,7 +259,7 @@ namespace MSNPSharp.Apps
 
                     objStream.Close();
                     OnTransferFinished(EventArgs.Empty);
-                    P2PSession.Close();
+                    // P2PSession.Close();
                 }
 
                 return true;
