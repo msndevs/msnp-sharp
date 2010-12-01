@@ -37,7 +37,7 @@ namespace MSNPSharpClient
             txtFilePath.Text = Path.Combine(appPath, fileTransfer.Context.Filename);
             lblSize.Text = fileTransfer.Context.FileSize + " bytes";
 
-            if (fileTransfer.Context.Preview.Length > 0)
+            if (fileTransfer.Context.Preview.Length > 0 && fileTransfer.Context.Preview[0] != 0)
             {
                 pictureBox1.Image = Image.FromStream(new MemoryStream(fileTransfer.Context.Preview));
                 pictureBox1.Visible = true;
