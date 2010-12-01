@@ -2156,6 +2156,8 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnUUNReceived(NSMessage message)
         {
+            bool ok = message.CommandValues.Count > 0 && message.CommandValues[0].ToString() == "OK";
+            uunBridge.ProcessUUN(message.TransactionID, ok);
         }
 
         /// <summary>
