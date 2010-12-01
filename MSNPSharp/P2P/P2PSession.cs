@@ -300,7 +300,7 @@ namespace MSNPSharp.P2P
         /// <summary>
         /// We are receiver. (Initiated remotely)
         /// </summary>
-        public P2PSession(SLPRequestMessage slp, P2PMessage msg, NSMessageHandler ns, uint bridgeLocalId)
+        public P2PSession(SLPRequestMessage slp, P2PMessage msg, NSMessageHandler ns, P2PBridge bridge)
         {
             nsMessageHandler = ns;
             invitation = slp;
@@ -323,7 +323,8 @@ namespace MSNPSharp.P2P
                 remoteContactEndPointID = slp.FromEndPoint;
             }
 
-            localBaseIdentifier = bridgeLocalId;
+            p2pBridge = bridge;
+            localBaseIdentifier = bridge.localPacketNo;
             localIdentifier = localBaseIdentifier;
             
 
